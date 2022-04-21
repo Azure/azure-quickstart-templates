@@ -1,5 +1,5 @@
 @description('Region where the mobile network will be deployed (must match the resource group region)')
-param location string = resourceGroup().location
+param location string
 
 @description('Name of the mobile network to which you are adding a site')
 param existingMobileNetworkName string
