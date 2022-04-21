@@ -1,15 +1,19 @@
+param _artifactsLocation         string = deployment().properties.templateLink.uri
+@secure()
+param _artifactsLocationSasToken string = ''
+
 param cmdGDKInstall              string
 param cmdTeradiciRegistration    string
-param _artifactsLocation         string
-param _artifactsLocationSasToken string
 param virtualMachineName         string
 param remoteAccessTechnology     string
 param location                   string
 param fileShareStorageAccount    string
+@secure()
 param fileShareStorageAccountKey string
 param fileShareName              string
 param p4Port                     string
 param p4Username                 string
+@secure()
 param p4Password                 string
 param p4Workspace                string
 param p4Stream                   string
