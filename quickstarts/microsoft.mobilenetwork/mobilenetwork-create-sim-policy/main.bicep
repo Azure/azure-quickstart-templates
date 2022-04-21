@@ -1,5 +1,5 @@
 @description('Region where the Mobile Network will be deployed (must match the resource group region)')
-param location string = resourceGroup().location
+param location string
 
 @description('Name of the Mobile Network to add a SIM policy to')
 param existingMobileNetworkName string
