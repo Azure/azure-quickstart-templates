@@ -157,15 +157,15 @@ param enableManagedIdentity bool = false
 param enableAAD             bool = false
 
 var vmImage = {
-    publisher: 'microsoft-agci-gaming'
-    offer: 'agci-gamedev-image'
-    sku: 'gamedev-${gameEngine}-${osType}'
-    version: 'latest'
+  "publisher": "microsoftcorporation1602274591143",
+  "offer": "game-dev-vm",
+  "sku": "[format('{0}_{1}', parameters('osType'), variables('environmentMapping')[parameters('gameEngine')])]",
+  "version": "latest"
 }
 var vmPlan = {
-  publisher: 'microsoft-agci-gaming'
-  product: 'agci-gamedev-image'
-  name: 'gamedev-${gameEngine}-${osType}'
+  "publisher": "microsoftcorporation1602274591143",
+  "product": "game-dev-vm",
+  "name": "[format('{0}_{1}', parameters('osType'), variables('environmentMapping')[parameters('gameEngine')])]"
 }
 
 var vmName_var = vmName
