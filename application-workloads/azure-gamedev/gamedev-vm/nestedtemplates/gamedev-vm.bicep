@@ -140,12 +140,6 @@ param publicIpNewOrExisting string = 'new'
 @description('Resource Group of the Public IP Address')
 param publicIpRGName string = resourceGroup().name
 
-@allowed([
-  'development'
-  'production'
-])
-param environment string = 'production'
-
 @description('Tags by resource.')
 param outTagsByResource object = {}
 
@@ -162,43 +156,17 @@ param unrealPixelStreamingEnabled bool = false
 param enableManagedIdentity bool = false
 param enableAAD             bool = false
 
-var environmentMapping = {
-  ue_4_27: 'unreal_4_27'
-  ue_5_0ea: 'unreal_5_0ea'
-  unity_2020_3_19f1: 'unity_2020_3_19f1'
+var vmImage = {
+    publisher: 'microsoft-agci-gaming'
+    offer: 'agci-gamedev-image'
+    sku: 'gamedev-${gameEngine}-${osType}'
+    version: 'latest'
 }
-
-var environments = {
-  development: {
-    vmImage: {
-      publisher: 'microsoft-agci-gaming'
-      offer: 'agci-gamedev-image'
-      sku: 'gamedev-${gameEngine}-${osType}'
-      version: 'latest'
-    }
-    vmPlan: {
-      publisher: 'microsoft-agci-gaming'
-      product: 'agci-gamedev-image'
-      name: 'gamedev-${gameEngine}-${osType}'
-    }
-  }
-  production: {
-    vmImage: {
-      publisher: 'microsoftcorporation1602274591143'
-      offer: 'game-dev-vm'
-      sku: '${osType}_${environmentMapping[gameEngine]}'
-      version: 'latest'
-    }
-    vmPlan: {
-      publisher: 'microsoftcorporation1602274591143'
-      product: 'game-dev-vm'
-      name: '${osType}_${environmentMapping[gameEngine]}'
-    }
-  }
+var vmPlan = {
+  publisher: 'microsoft-agci-gaming'
+  product: 'agci-gamedev-image'
+  name: 'gamedev-${gameEngine}-${osType}'
 }
-
-var vmImage = environments[environment].vmImage
-var vmPlan = environments[environment].vmPlan
 
 var vmName_var = vmName
 var ipconfName = '${vmName_var}-ipconf'
