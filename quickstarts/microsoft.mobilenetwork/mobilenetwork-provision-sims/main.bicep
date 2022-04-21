@@ -1,5 +1,5 @@
 @description('Region in which the mobile network is deployed (must match the resource group region)')
-param location string = resourceGroup().location
+param location string
 
 @description('Name of the mobile network for which you are provisioning SIMs')
 param existingMobileNetworkName string
