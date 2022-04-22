@@ -59,7 +59,7 @@ resource dataFactoryDataSetIn 'Microsoft.DataFactory/factories/datasets@2018-06-
     typeProperties: {
       location: {
         type: 'AzureBlobStorageLocation'
-        container: blobContainer.name
+        container: blobContainerName
         folderPath: 'input'
         fileName: 'emp.txt'
       }
@@ -79,7 +79,7 @@ resource dataFactoryDataSetOut 'Microsoft.DataFactory/factories/datasets@2018-06
     typeProperties: {
       location: {
         type: 'AzureBlobStorageLocation'
-        container: blobContainer.name
+        container: blobContainerName
         folderPath: 'output'
       }
     }
