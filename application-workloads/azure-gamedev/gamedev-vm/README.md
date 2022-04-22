@@ -1,3 +1,4 @@
+# Setup Azure Game Development Virtual Machine
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/azure-gamedev/gamedev-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/azure-gamedev/gamedev-vm/PublicDeployment.svg)
 
