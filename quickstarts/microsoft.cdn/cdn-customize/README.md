@@ -4,7 +4,7 @@ languages:
 - bicep
 - json
 products:
-- Azure
+- azure
 ---
 
 # Deployment of a CDN profile and a CDN endpoint
