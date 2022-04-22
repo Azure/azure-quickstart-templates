@@ -11,7 +11,7 @@ param dashboardDisplayName string = 'Private 5G Core Metrics'
 var dashboardName = guid(connectedClusterName, connectedClusterResourceGroup)
 
 @description('Region where the dashboard will be deployed')
-param location string = resourceGroup().location
+param location string
 
 resource existingClusterResource 'Microsoft.Kubernetes/connectedClusters@2021-10-01' existing = {
   name: connectedClusterName
@@ -50,7 +50,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                       existingClusterResource.id
+                      existingClusterResource.id
                     ]
                   }
                   isOptional: true
@@ -203,7 +203,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                       existingClusterResource.id
+                      existingClusterResource.id
                     ]
                   }
                   isOptional: true
@@ -339,7 +339,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                       existingClusterResource.id
+                      existingClusterResource.id
                     ]
                   }
                   isOptional: true
@@ -477,7 +477,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                       existingClusterResource.id
+                      existingClusterResource.id
                     ]
                   }
                   isOptional: true
@@ -609,7 +609,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                       existingClusterResource.id
+                      existingClusterResource.id
                     ]
                   }
                   isOptional: true
