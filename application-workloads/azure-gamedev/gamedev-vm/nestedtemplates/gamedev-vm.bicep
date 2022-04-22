@@ -140,6 +140,7 @@ param publicIpNewOrExisting string = 'new'
 @description('Resource Group of the Public IP Address')
 param publicIpRGName string = resourceGroup().name
 
+@description('Select Image Deployment for debugging only')
 @allowed([
   'development'
   'production'
@@ -150,7 +151,7 @@ param environment string = 'production'
 param outTagsByResource object = {}
 
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = deployment().properties.templateLink.id
 
 @description('The sasToken required to access _artifactsLocation.')
 @secure()
@@ -159,7 +160,10 @@ param _artifactsLocationSasToken string = ''
 @description('Enable or disable Unreal Pixel Streaming port.')
 param unrealPixelStreamingEnabled bool = false
 
+@description('Enable Managed Identity')
 param enableManagedIdentity bool = false
+
+@description('Enable Azure Active Directory Login')
 param enableAAD             bool = false
 
 var environmentMapping = {
@@ -196,6 +200,7 @@ var environments = {
     }
   }
 }
+
 var vmImage = environments[environment].vmImage
 var vmPlan = environments[environment].vmPlan
 

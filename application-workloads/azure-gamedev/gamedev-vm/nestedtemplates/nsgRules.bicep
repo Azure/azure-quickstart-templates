@@ -1,3 +1,4 @@
+@description('Enable Pick Streaming')
 param addPixelStreamingPorts bool = false
 
 var nsgRules = {
