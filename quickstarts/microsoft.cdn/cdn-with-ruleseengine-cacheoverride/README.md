@@ -21,5 +21,5 @@ languages:
 - bicep
 - json
 products:
-- Azure
+- azure
 ---
