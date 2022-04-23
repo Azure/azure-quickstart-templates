@@ -41,7 +41,6 @@ param p4Port string
 @description('Username for p4')
 param p4Username string
 
-
 @description('Password for p4')
 @secure()
 param p4Password string
