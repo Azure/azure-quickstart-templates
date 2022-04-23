@@ -164,7 +164,7 @@ param unrealPixelStreamingEnabled bool = false
 param enableManagedIdentity bool = false
 
 @description('Enable Azure Active Directory Login')
-param enableAAD             bool = false
+param enableAAD bool = false
 
 var environmentMapping = {
   ue_4_27: 'unreal_4_27'
