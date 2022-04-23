@@ -1,25 +1,62 @@
-param _artifactsLocation         string = deployment().properties.templateLink.uri
+@description('Deployment Location')
+param location string
+
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
+param _artifactsLocation string = deployment().properties.templateLink.uri
+
+@description('The sasToken required to access _artifactsLocation.')
 @secure()
 param _artifactsLocationSasToken string = ''
 
-param cmdGDKInstall              string
-param cmdTeradiciRegistration    string
-param virtualMachineName         string
-param remoteAccessTechnology     string
-param location                   string
-param fileShareStorageAccount    string
+@description('Toggle to Install GDK')
+param cmdGDKInstall string
+
+@description('Toggle to Register Teradici')
+param cmdTeradiciRegistration string
+
+@description('Name of Game Developer Virtual Machine')
+param virtualMachineName string
+
+@description('Remote Access technology')
+@allowed([
+  'RDP'
+  'Teradici'
+  'Parsec'
+])
+param remoteAccessTechnology string
+
+@description('Name of Storage Account to Link')
+param fileShareStorageAccount string
+
+@description('Key of Storage Account to Link')
 @secure()
 param fileShareStorageAccountKey string
-param fileShareName              string
-param p4Port                     string
-param p4Username                 string
+
+@description('Name of File Share')
+param fileShareName string
+
+@description('Port to use for p4')
+param p4Port string
+
+@description('Username for p4')
+param p4Username string
+
+
+@description('Password for p4')
 @secure()
-param p4Password                 string
-param p4Workspace                string
-param p4Stream                   string
-param p4ClientViews              string
+param p4Password string
+
+@description('p4 Workspace')
+param p4Workspace string
+
+@description('Stream for p4')
+param p4Stream string
+
+@description('Client View for p4')
+param p4ClientViews string
 
 var mountFileShareParams = '-storageAccount \'${fileShareStorageAccount}\' -storageAccountKey \'${fileShareStorageAccountKey}\' -fileShareName \'${fileShareName}\''
+
 var p4Params = '-p4Port \'${p4Port}\' -p4Username \'${p4Username}\' -p4Password \'${p4Password}\' -p4Workspace \'${p4Workspace}\' -p4Stream \'${p4Stream}\' -p4ClientViews \'${p4ClientViews}\''
 
 var remoteAccessExtension = {
