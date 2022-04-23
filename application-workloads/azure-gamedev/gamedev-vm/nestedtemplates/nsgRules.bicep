@@ -44,8 +44,6 @@ var nsgRules = {
       }
     }
   ]
-  
-  
   'nsgRules-Teradici': !addPixelStreamingPorts ? [
     {
       name: 'RDP'
@@ -192,7 +190,6 @@ var nsgRules = {
       }
     }
   ]
-  
   'nsgRules-Parsec': !addPixelStreamingPorts ? [
     {
       name: 'RDP'

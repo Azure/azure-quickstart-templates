@@ -60,9 +60,9 @@ var p4Params = '-p4Port \'${p4Port}\' -p4Username \'${p4Username}\' -p4Password 
 
 var remoteAccessExtension = {
   RDP: {
-    publisher              : 'Microsoft.Compute'
-    type                   : 'CustomScriptExtension'
-    typeHandlerVersion     : '1.10'
+    publisher: 'Microsoft.Compute'
+    type: 'CustomScriptExtension'
+    typeHandlerVersion: '1.10'
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
@@ -75,9 +75,9 @@ var remoteAccessExtension = {
     }
   }
   Teradici: {
-    publisher              : 'Microsoft.Compute'
-    type                   : 'CustomScriptExtension'
-    typeHandlerVersion     : '1.10'
+    publisher: 'Microsoft.Compute'
+    type: 'CustomScriptExtension'
+    typeHandlerVersion: '1.10'
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
@@ -93,9 +93,9 @@ var remoteAccessExtension = {
     }
   }
   Parsec: {
-    publisher              : 'Microsoft.Compute'
-    type                   : 'CustomScriptExtension'
-    typeHandlerVersion     : '1.10'
+    publisher: 'Microsoft.Compute'
+    type: 'CustomScriptExtension'
+    typeHandlerVersion: '1.10'
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
@@ -112,8 +112,8 @@ var remoteAccessExtension = {
 }
 
 resource virtualMachine_remoteAccessExtension 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = {
-  name      : '${virtualMachineName}/CustomScriptExtension-${remoteAccessTechnology}'
-  location  : location
+  name: '${virtualMachineName}/CustomScriptExtension-${remoteAccessTechnology}'
+  location: location
   properties: remoteAccessExtension[remoteAccessTechnology]
 }
 
