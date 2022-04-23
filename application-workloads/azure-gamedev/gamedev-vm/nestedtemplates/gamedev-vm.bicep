@@ -250,10 +250,10 @@ resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicIpNewOrExisting == 'new') {
   name: publicIpName
+  location: location
   sku: {
     name: publicIpSku
   }
-  location: location
   properties: {
     publicIPAllocationMethod: publicIpAllocationMethod
     dnsSettings: {
