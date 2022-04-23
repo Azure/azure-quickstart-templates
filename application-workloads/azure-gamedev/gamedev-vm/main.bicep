@@ -53,7 +53,7 @@ param passwordAdministratorLogin string
 param remoteAccessTechnology string = 'RDP'
 
 module gamedevvm './nestedtemplates/gamedev-vm.bicep'  = {
-  name    : 'gamingDevVM'
+  name: 'gamingDevVM'
   params: {
     location: location
     vmSize: vmSize
