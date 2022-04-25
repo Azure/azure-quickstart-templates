@@ -5,6 +5,7 @@ languages:
 - json
 products:
 - azure
+description: This template creates a CDN Profile and a CDN Endpoint with parameterized configuration settings
 ---
 
 # Deployment of a CDN profile and a CDN endpoint
