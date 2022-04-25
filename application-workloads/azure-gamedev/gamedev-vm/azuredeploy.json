@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.5.6.12127",
-      "templateHash": "8562583560199509810"
+      "templateHash": "14072181801581721908"
     }
   },
   "parameters": {
@@ -142,7 +142,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.5.6.12127",
-              "templateHash": "8835447811081303294"
+              "templateHash": "18412523657805442082"
             }
           },
           "parameters": {
@@ -524,12 +524,11 @@
             },
             "vmImage": "[variables('environments')[parameters('environment')].vmImage]",
             "vmPlan": "[variables('environments')[parameters('environment')].vmPlan]",
-            "vmName_var": "[parameters('vmName')]",
-            "ipconfName": "[format('{0}-ipconf', variables('vmName_var'))]",
-            "nicName_var": "[format('{0}-nic', variables('vmName_var'))]",
-            "nsgName_var": "[format('{0}-nsg', variables('vmName_var'))]",
-            "storageType_var": "[if(bool(greater(length(split(parameters('vmSize'), '_')), 2)), 'Premium_LRS', 'Standard_LRS')]",
-            "tags_var": {
+            "ipconfName": "[format('{0}-ipconf', parameters('vmName'))]",
+            "nicName": "[format('{0}-nic', parameters('vmName'))]",
+            "nsgName": "[format('{0}-nsg', parameters('vmName'))]",
+            "storageType": "[if(bool(greater(length(split(parameters('vmSize'), '_')), 2)), 'Premium_LRS', 'Standard_LRS')]",
+            "tags": {
               "solution": "Game Development Virtual Machine",
               "engine": "[parameters('gameEngine')]",
               "ostype": "[parameters('osType')]",
@@ -580,7 +579,7 @@
             {
               "type": "Microsoft.Network/networkSecurityGroups",
               "apiVersion": "2021-05-01",
-              "name": "[variables('nsgName_var')]",
+              "name": "[variables('nsgName')]",
               "location": "[parameters('location')]",
               "properties": {
                 "securityRules": "[reference(resourceId('Microsoft.Resources/deployments', 'nsg_rules')).outputs.nsgRules.value[format('nsgRules-{0}', parameters('remoteAccessTechnology'))]]"
@@ -614,7 +613,7 @@
             {
               "type": "Microsoft.Network/networkInterfaces",
               "apiVersion": "2021-05-01",
-              "name": "[variables('nicName_var')]",
+              "name": "[variables('nicName')]",
               "location": "[parameters('location')]",
               "properties": {
                 "enableAcceleratedNetworking": "[if(bool(greater(length(split(parameters('vmSize'), '_')), 2)), true(), false())]",
@@ -625,18 +624,18 @@
                   }
                 ],
                 "networkSecurityGroup": {
-                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName_var'))]"
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName_var'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
               ]
             },
             {
               "type": "Microsoft.Compute/virtualMachines",
               "apiVersion": "2021-11-01",
-              "name": "[variables('vmName_var')]",
+              "name": "[parameters('vmName')]",
               "location": "[parameters('location')]",
               "plan": "[variables('vmPlan')]",
               "identity": "[if(or(parameters('enableAAD'), parameters('enableManagedIdentity')), createObject('type', 'systemAssigned'), null())]",
@@ -658,17 +657,17 @@
                   ],
                   "imageReference": "[variables('vmImage')]",
                   "osDisk": {
-                    "name": "[format('{0}-osdisk', variables('vmName_var'))]",
+                    "name": "[format('{0}-osdisk', parameters('vmName'))]",
                     "createOption": "FromImage",
                     "caching": "ReadWrite",
                     "diskSizeGB": 255,
                     "managedDisk": {
-                      "storageAccountType": "[variables('storageType_var')]"
+                      "storageAccountType": "[variables('storageType')]"
                     }
                   }
                 },
                 "osProfile": {
-                  "computerName": "[variables('vmName_var')]",
+                  "computerName": "[parameters('vmName')]",
                   "adminUsername": "[parameters('adminName')]",
                   "adminPassword": "[parameters('adminPass')]"
                 },
@@ -676,21 +675,21 @@
                 "networkProfile": {
                   "networkInterfaces": [
                     {
-                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName_var'))]"
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
                     }
                   ]
                 }
               },
-              "tags": "[if(contains(parameters('outTagsByResource'), 'Microsoft.Compute/virtualMachines'), union(variables('tags_var'), parameters('outTagsByResource')['Microsoft.Compute/virtualMachines']), variables('tags_var'))]",
+              "tags": "[if(contains(parameters('outTagsByResource'), 'Microsoft.Compute/virtualMachines'), union(variables('tags'), parameters('outTagsByResource')['Microsoft.Compute/virtualMachines']), variables('tags'))]",
               "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName_var'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
               ]
             },
             {
               "condition": "[parameters('enableAAD')]",
               "type": "Microsoft.Compute/virtualMachines/extensions",
               "apiVersion": "2021-11-01",
-              "name": "[format('{0}/AADLoginForWindows', variables('vmName_var'))]",
+              "name": "[format('{0}/AADLoginForWindows', parameters('vmName'))]",
               "location": "[parameters('location')]",
               "properties": {
                 "publisher": "Microsoft.Azure.ActiveDirectory",
@@ -700,7 +699,7 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', 'runRemoteAccess')]",
-                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName_var'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
               ]
             },
             {
@@ -776,7 +775,7 @@
                     "value": "[parameters('_artifactsLocationSasToken')]"
                   },
                   "virtualMachineName": {
-                    "value": "[variables('vmName_var')]"
+                    "value": "[parameters('vmName')]"
                   },
                   "remoteAccessTechnology": {
                     "value": "[parameters('remoteAccessTechnology')]"
@@ -1001,7 +1000,7 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName_var'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
               ]
             }
           ],

@@ -204,14 +204,13 @@ var environments = {
 var vmImage = environments[environment].vmImage
 var vmPlan = environments[environment].vmPlan
 
-var vmName_var = vmName
-var ipconfName = '${vmName_var}-ipconf'
-var nicName_var = '${vmName_var}-nic'
-var nsgName_var = '${vmName_var}-nsg'
+var ipconfName = '${vmName}-ipconf'
+var nicName = '${vmName}-nic'
+var nsgName = '${vmName}-nsg'
 
-var storageType_var = (bool(length(split(vmSize, '_')) > 2) ? 'Premium_LRS' : 'Standard_LRS')
+var storageType = (bool(length(split(vmSize, '_')) > 2) ? 'Premium_LRS' : 'Standard_LRS')
 
-var tags_var = {
+var tags = {
   'solution': 'Game Development Virtual Machine'
   'engine': gameEngine
   'ostype': osType
@@ -270,7 +269,7 @@ module nsg_rules 'nsgRules.bicep' = {
 }
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
-  name: nsgName_var
+  name: nsgName
   location: location
   properties: {
     securityRules: nsg_rules.outputs.nsgRules['nsgRules-${remoteAccessTechnology}']
@@ -298,7 +297,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = if (vnetNewOrExis
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
-  name: nicName_var
+  name: nicName
   location: location
   dependsOn: [
     vnet
@@ -328,7 +327,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
 }
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
-  name: vmName_var
+  name: vmName
   location: location
   plan: vmPlan
   identity: enableAAD || enableManagedIdentity ? {
@@ -341,12 +340,12 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     storageProfile: {
       imageReference: vmImage
       osDisk: {
-        name: '${vmName_var}-osdisk'
+        name: '${vmName}-osdisk'
         createOption: 'FromImage'
         caching: 'ReadWrite'
         diskSizeGB: 255
         managedDisk: {
-          storageAccountType: storageType_var
+          storageAccountType: storageType
         }
       }
       dataDisks: [for i in range(0, numDataDisks): {
@@ -356,7 +355,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }]
     }
     osProfile: {
-      computerName: vmName_var
+      computerName: vmName
       adminUsername: adminName
       adminPassword: adminPass
     }
@@ -369,7 +368,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       ]
     }
   }
-  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags_var, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags_var)
+  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags)
 }
 
 module remoteAccess 'remoteAccessExtension.bicep' = {
