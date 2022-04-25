@@ -1,3 +1,12 @@
+---
+page_type: sample
+languages:
+- bicep
+- json
+products:
+- azure
+---
+
 # Deployment of a CDN profile and a CDN endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-customize/PublicLastTestDate.svg)
