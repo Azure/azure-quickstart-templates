@@ -104,7 +104,23 @@ var remoteAccessExtension = {
         uri(_artifactsLocation, 'scripts/p4DepotSync.ps1${_artifactsLocationSasToken}')
         uri(_artifactsLocation, 'scripts/ibSetup.ps1${_artifactsLocationSasToken}')
         uri(_artifactsLocation, 'scripts/PostInstall.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'scripts/PreInstall.zip${_artifactsLocationSasToken}')
+
+        uri(_artifactsLocation, 'scripts/parsec/Automatic-Shutdown.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/Clear-Proxy.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/CreateAutomaticShutdownScheduledTask.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/CreateClearProxyScheduledTask.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/ForeCloseShutDown.reg${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/gpt.ini${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/GPU-Update.ico${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/NetWorkRestore.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/NetworkRestore.reg${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/OneHour.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/Parsec.png${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/psscripts.ini${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/ShowDialog.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/TeamMachineSetup.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/WarningMessage.ps1${_artifactsLocationSasToken}')
+        
       ]
       commandToExecute: 'powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command "./CreateDataDisk.ps1;./MountFileShare.ps1 ${mountFileShareParams};./p4DepotSync.ps1 ${p4Params};./ibSetup.ps1;${cmdGDKInstall};./PostInstall.ps1"'
     }
