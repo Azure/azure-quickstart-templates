@@ -158,9 +158,6 @@ resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
   properties: {
     publicIPAllocationMethod: 'Dynamic'
-    dnsSettings: {
-      domainNameLabel: toLower(vmName)
-    }
   }
 }
 
