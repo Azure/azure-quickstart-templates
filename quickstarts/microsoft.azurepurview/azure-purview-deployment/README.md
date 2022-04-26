@@ -1,4 +1,4 @@
-# Deploy Mirosoft Purview with Azure Resource Manager (ARM)
+# Deploy Microsoft Purview with Azure Resource Manager (ARM)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurepurview/azure-purview-deployment/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurepurview/azure-purview-deployment/PublicDeployment.svg)
