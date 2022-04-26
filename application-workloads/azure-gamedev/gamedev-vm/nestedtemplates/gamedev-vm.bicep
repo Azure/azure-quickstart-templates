@@ -228,11 +228,6 @@ var Script2Run = 'TeradiciRegCAS.ps1'
 var CSEParams = ' -pcoip_registration_code ${teradiciRegKey}'
 var cmdTeradiciRegistration = './${Script2Run}${CSEParams}'
 
-var vnetId = resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks', vnetName)
-var subnetId = '${vnetId}/subnets/${subNetName}'
-
-var publicIpId = publicIpNewOrExisting == 'none' ? '' : resourceId(publicIpRGName, 'Microsoft.Network/publicIPAddresses', publicIpName)
-
 resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
   name: 'pid-7837dd60-4ba8-419a-a26f-237bbe170773-partnercenter'
   properties: {
@@ -531,7 +526,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
         name: ipconfName
         properties: {
           subnet: {
-            id: subnetId
+            id: '${resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks', vnetName)}/subnets/${subNetName}'
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: publicIpNewOrExisting == 'none' ? null: {
@@ -626,7 +621,3 @@ resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@
     autoUpgradeMinorVersion: true
   }
 }
-
-output Host_Name string = (!empty(publicIpId) ? reference(publicIpId, '2021-03-01').dnsSettings.fqdn : '')
-output UserName string = adminName
-output IPAddress string = (!empty(publicIpId) ? publicIpId : '')
