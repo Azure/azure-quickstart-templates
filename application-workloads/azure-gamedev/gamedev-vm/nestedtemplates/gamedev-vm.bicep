@@ -518,24 +518,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = if (vnetNewOrExis
   }
 }
 
-var publicIpProperties = (!empty(publicIpId)) ? {
-  publicIPAddress: {
-    id: publicIpId
-  }
-} : {}
-
-var ipConfigurations = [
-  {
-    name: ipconfName
-    properties: union(publicIpProperties, {
-      subnet: {
-        id: subnetId
-      }
-      privateIPAllocationMethod: 'Dynamic'
-    })
-  }
-]
-
 resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: nicName
   location: location
@@ -544,7 +526,20 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   ]
   properties: {
     enableAcceleratedNetworking: (bool(length(split(vmSize, '_')) > 2) ? true : false)
-    ipConfigurations: ipConfigurations
+    ipConfigurations: [
+      {
+        name: ipconfName
+        properties: {
+          subnet: {
+            id: subnetId
+          }
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: publicIpNewOrExisting == 'none' ? null: {
+            id: resourceId(publicIpRGName, 'Microsoft.Network/publicIpAddresses', publicIpName)
+          }
+        }
+      }
+    ]
     networkSecurityGroup: {
       id: nsg.id
     }
