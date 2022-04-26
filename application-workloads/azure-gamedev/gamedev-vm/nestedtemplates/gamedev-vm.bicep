@@ -134,7 +134,12 @@ param publicIpAllocationMethod string = 'Dynamic'
 ])
 param publicIpSku string = 'Basic'
 
-@description('Public IP New or Existing or None?')
+@description('Public IP With or None?')
+@allowed([
+  'new'
+  'existing'
+  'none'
+])
 param publicIpNewOrExisting string = 'new'
 
 @description('Resource Group of the Public IP Address')
@@ -223,17 +228,10 @@ var Script2Run = 'TeradiciRegCAS.ps1'
 var CSEParams = ' -pcoip_registration_code ${teradiciRegKey}'
 var cmdTeradiciRegistration = './${Script2Run}${CSEParams}'
 
-var vnetId = {
-  'new'     : resourceId('Microsoft.Network/virtualNetworks', vnetName)
-  'existing': resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks', vnetName)
-}
-var subnetId = '${vnetId[vnetNewOrExisting]}/subnets/${subNetName}'
+var vnetId = resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks', vnetName)
+var subnetId = '${vnetId}/subnets/${subNetName}'
 
-var publicIpId = {
-  'new': resourceId('Microsoft.Network/publicIPAddresses', publicIpName)
-  'existing': resourceId(publicIpRGName, 'Microsoft.Network/publicIPAddresses', publicIpName) 
-  'none': ''
-}[publicIpNewOrExisting]
+var publicIpId = publicIpNewOrExisting == 'none' ? '' : resourceId(publicIpRGName, 'Microsoft.Network/publicIPAddresses', publicIpName)
 
 resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
   name: 'pid-7837dd60-4ba8-419a-a26f-237bbe170773-partnercenter'
@@ -261,18 +259,242 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicI
   }
 }
 
-module nsg_rules 'nsgRules.bicep' = {
-  name: 'nsg_rules'
-  params: {
-    addPixelStreamingPorts: unrealPixelStreamingEnabled
-  }
-}
-
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: nsgName
   location: location
   properties: {
-    securityRules: nsg_rules.outputs.nsgRules['nsgRules-${remoteAccessTechnology}']
+    securityRules: {
+      'nsgRules-RDP': !unrealPixelStreamingEnabled ? [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+      ] : [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PixelStream'
+          properties: {
+            priority: 1020
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '80'
+          }
+        }
+      ]
+      'nsgRules-Teradici': !unrealPixelStreamingEnabled ? [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PCoIPtcp'
+          properties: {
+            priority: 1020
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'PCoIPudp'
+          properties: {
+            priority: 1030
+            protocol: 'UDP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'CertAuthHTTPS'
+          properties: {
+            priority: 1040
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '443'
+          }
+        }
+        {
+          name: 'TeradiciCom'
+          properties: {
+            priority: 1050
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '60443'
+          }
+        }
+      ] : [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PCoIPtcp'
+          properties: {
+            priority: 1020
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'PCoIPudp'
+          properties: {
+            priority: 1030
+            protocol: 'UDP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'CertAuthHTTPS'
+          properties: {
+            priority: 1040
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '443'
+          }
+        }
+        {
+          name: 'TeradiciCom'
+          properties: {
+            priority: 1050
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '60443'
+          }
+        }
+        {
+          name: 'PixelStream'
+          properties: {
+            priority: 1060
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '80'
+          }
+        }
+      ]
+      'nsgRules-Parsec': !unrealPixelStreamingEnabled ? [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+      ] : [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PixelStream'
+          properties: {
+            priority: 1020
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '80'
+          }
+        }
+      ]
+    }['nsgRules-${remoteAccessTechnology}']
   }
 }
 
@@ -296,6 +518,24 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = if (vnetNewOrExis
   }
 }
 
+var publicIpProperties = (!empty(publicIpId)) ? {
+  publicIPAddress: {
+    id: publicIpId
+  }
+} : {}
+
+var ipConfigurations = [
+  {
+    name: ipconfName
+    properties: union(publicIpProperties, {
+      subnet: {
+        id: subnetId
+      }
+      privateIPAllocationMethod: 'Dynamic'
+    })
+  }
+]
+
 resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: nicName
   location: location
@@ -304,22 +544,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   ]
   properties: {
     enableAcceleratedNetworking: (bool(length(split(vmSize, '_')) > 2) ? true : false)
-    ipConfigurations: [
-      {
-        name: ipconfName
-        properties: union( {
-              subnet: { 
-                id: subnetId
-              }
-            }, { 
-              privateIPAllocationMethod: 'Dynamic' 
-            }, (!empty(publicIpId)) ? { 
-              publicIPAddress: {
-                id: publicIpId
-              }
-            } : {} )
-      }
-    ]
+    ipConfigurations: ipConfigurations
     networkSecurityGroup: {
       id: nsg.id
     }
@@ -333,6 +558,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   identity: enableAAD || enableManagedIdentity ? {
     type: 'systemAssigned'
   } : null
+  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags)
   properties: {
     hardwareProfile: {
       vmSize: vmSize
@@ -368,7 +594,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       ]
     }
   }
-  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags)
 }
 
 module remoteAccess 'remoteAccessExtension.bicep' = {
@@ -393,10 +618,10 @@ module remoteAccess 'remoteAccessExtension.bicep' = {
   }
 }
 
-resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = if(enableAAD) {
-  name      : '${virtualMachine.name}/AADLoginForWindows'
-  location  : location
-  dependsOn : [
+resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = if (enableAAD) {
+  name: '${virtualMachine.name}/AADLoginForWindows'
+  location: location
+  dependsOn: [
     remoteAccess
   ]
   properties: {

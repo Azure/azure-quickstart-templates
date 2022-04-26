@@ -787,8 +787,7 @@ Function provider-specific {
 
 #7Zip is required to extract the Parsec-Windows.exe File
 function Install7Zip {
-    $url = Invoke-WebRequest -Uri https://www.7-zip.org/download.html
-    Invoke-WebRequest "https://www.7-zip.org/$($($($url.Links | Where-Object outertext -Like "Download")[1]).OuterHTML.split('"')[1])" -OutFile "C:\ParsecTemp\Apps\7zip.exe"
+    Invoke-WebRequest "https://7-zip.org/a/7z2107-x64.exe" -OutFile "C:\ParsecTemp\Apps\7zip.exe"
     Start-Process C:\ParsecTemp\Apps\7zip.exe -ArgumentList '/S /D="C:\Program Files\7-Zip"' -Wait
     }
 
