@@ -194,10 +194,20 @@ if (($gpu.supported -eq "UnOfficial") -eq $true) {
 (New-Object System.Net.WebClient).DownloadFile($($($URL.GoogleGRID).links | Where-Object href -like *server2016_64bit_international.exe*).href, "C:\ParsecTemp\Drivers\GoogleGRID.exe")
 }
 Else {
-#downloads driver from nvidia.com
-$Download.Link = Invoke-WebRequest -Uri $gpu.url -Method Get -UseBasicParsing | select @{N='Latest';E={$($_.links.href -match"www.nvidia.com/download/driverResults.aspx*")[0].substring(2)}}
-$download.Direct = Invoke-WebRequest -Uri $download.link.latest -Method Get -UseBasicParsing | select @{N= 'Download'; E={"http://us.download.nvidia.com" + $($_.links.href -match "/content/driverdownload*").split('=')[1].split('&')[0]}}
-(New-Object System.Net.WebClient).DownloadFile($($download.direct.download), $($system.Path) + "\NVIDIA_" + $($gpu.web_driver) + ".exe")
+# Downloads driver from nvidia.com per https://github.com/lord-carlos/nvidia-update/blob/master/nvidia.ps1
+# Checking latest driver version from Nvidia website
+$link = Invoke-WebRequest -Uri 'https://www.nvidia.com/Download/processFind.aspx?psid=101&pfid=816&osid=57&lid=1&whql=1&lang=en-us&ctk=0&dtcid=1' -Method GET -UseBasicParsing
+$link -match '<td class="gridItem">([^<]+?)</td>' | Out-Null
+$version = $matches[1]
+Write-Host "Latest version `t`t$version"
+
+# Generating the download link
+$url = "https://international.download.nvidia.com/Windows/$version/$version-desktop-$windowsVersion-$windowsArchitecture-international-dch-whql.exe"
+
+# Downloading the installer
+$dlFile = $($system.Path) + "\NVIDIA_" + $($gpu.web_driver) + ".exe"
+Write-Host "Downloading the latest version to $dlFile"
+Start-BitsTransfer -Source $url -Destination $dlFile
 }
 }
 
