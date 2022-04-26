@@ -109,7 +109,7 @@ var remoteAccessExtension = {
         uri(_artifactsLocation, 'scripts/parsec/Clear-Proxy.ps1${_artifactsLocationSasToken}')
         uri(_artifactsLocation, 'scripts/parsec/CreateAutomaticShutdownScheduledTask.ps1${_artifactsLocationSasToken}')
         uri(_artifactsLocation, 'scripts/parsec/CreateClearProxyScheduledTask.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'scripts/parsec/ForeCloseShutDown.reg${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/parsec/ForceCloseShutDown.reg${_artifactsLocationSasToken}')
         uri(_artifactsLocation, 'scripts/parsec/gpt.ini${_artifactsLocationSasToken}')
         uri(_artifactsLocation, 'scripts/parsec/GPU-Update.ico${_artifactsLocationSasToken}')
         uri(_artifactsLocation, 'scripts/parsec/NetWorkRestore.ps1${_artifactsLocationSasToken}')
