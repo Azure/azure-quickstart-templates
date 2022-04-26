@@ -1,6 +1,6 @@
 param (
     [string]$storageAccount, 
-    [string]$storageAccountKey,    
+    [SecureString]$storageAccountKey,    
     [string]$fileShareName)
 
 if ($storageAccount -and $storageAccountKey -and $fileShareName)
