@@ -10,8 +10,7 @@ param akvName string
 @description('The URI of the frontend KeyVault Certificate Secret Id')
 param frontEndCertificateSecretId string
 
-@description('The URI of the backend KeyVault Certificate Secret Id')
-param backEndCertificateSecretId string
+param backendIpAddress string
 
 @description('The location to deploy the resources to')
 param location string = resourceGroup().location
@@ -53,8 +52,8 @@ var appgwResourceId = resourceId('Microsoft.Network/applicationGateways', '${agw
 var frontendAgwCertificateName = 'frontend'
 var frontendAgwCertificateId = '${appgwResourceId}/sslCertificates/${frontendAgwCertificateName}'
 
-var backendAgwCertificateName = 'backend'
-var backendAgwCertificateId = '${appgwResourceId}/trustedRootCertificates/${backendAgwCertificateName}'
+// var backendAgwCertificateName = 'backend'
+// var backendAgwCertificateId = '${appgwResourceId}/trustedRootCertificates/${backendAgwCertificateName}'
 
 resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
   name: agwName
@@ -74,14 +73,14 @@ resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
           }
         }
       ]
-      trustedRootCertificates: [
-        {
-          name: backendAgwCertificateName
-          properties: {
-            keyVaultSecretId: backEndCertificateSecretId
-          }
-        }
-      ]
+      // trustedRootCertificates: [
+      //   {
+      //     name: backendAgwCertificateName
+      //     properties: {
+      //       keyVaultSecretId: backEndCertificateSecretId
+      //     }
+      //   }
+      // ]
       sku: {
         capacity: 1
         tier: 'Standard_v2'
@@ -116,22 +115,29 @@ resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
       backendAddressPools: [
         {
           name: 'defaultaddresspool'
+          properties: {
+            backendAddresses: [
+              {
+                ipAddress: backendIpAddress
+              }
+            ]
+          }
         }
       ]
       backendHttpSettingsCollection: [
         {
           name: 'defaulthttpsetting'
           properties: {
-            port: 443
-            protocol: 'Https'
+            port: 80
+            protocol: 'Http'
             cookieBasedAffinity: 'Disabled'
             requestTimeout: 30
             pickHostNameFromBackendAddress: true
-            trustedRootCertificates: [
-              {
-                id: backendAgwCertificateId
-              }
-            ]
+            // trustedRootCertificates: [
+            //   {
+            //     id: backendAgwCertificateId
+            //   }
+            // ]
           }
         }
       ]

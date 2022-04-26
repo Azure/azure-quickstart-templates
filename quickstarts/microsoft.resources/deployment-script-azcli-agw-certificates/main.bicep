@@ -4,30 +4,43 @@ param AgwName string = 'cr${uniqueString(resourceGroup().id)}'
 @description('The name of the Azure Application Gateway')
 param AkvName string = 'cr${uniqueString(resourceGroup().id)}'
 
-param FrontEndCertificate string = 'frontend'
-
-param BackEndCertificate string = 'backend'
+param FrontendCertificateName string = 'frontend'
 
 @description('The location to deploy the resources to')
 param Location string = resourceGroup().location
 
-// param DnsPrivateZoneName string = 'Contoso.local'
+param DnsPrivateZoneName string = 'Contoso.local'
 
-// resource dns 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-//   name: DnsPrivateZoneName
-//   location: 'global'
+resource dns 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: DnsPrivateZoneName
+  location: 'global'
   
-//   resource frontend 'A@2020-06-01' = {
-//     name: FrontEndCertificate
-//     properties: {
-//       aRecords: [
-//         {
-//           ipv4Address: agw.outputs.agwPip
-//         }
-//       ]
-//     }
-//   }
-// }
+  resource frontend 'A@2020-06-01' = {
+    name: FrontendCertificateName
+    properties: {
+      ttl: 60
+      aRecords: [
+        {
+          ipv4Address: agw.outputs.agwPip
+        }
+      ]
+    }
+  }
+  
+  resource appdirect 'A@2020-06-01' = {
+    name: 'appdirect'
+    properties: {
+      ttl: 60
+      aRecords: [
+        {
+          ipv4Address: app.outputs.IpAddress
+        }
+      ]
+    }
+  }
+}
+
+var FrontendCertificateFqdn = '${FrontendCertificateName}.${DnsPrivateZoneName}'
 
 resource akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   name: AkvName
@@ -45,19 +58,12 @@ resource akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
 }
 output akvName string = akv.name
 
-module akvCertFrontend 'br/public:deployment-scripts/create-kv-certificate:1.0.1' = {
+module akvCertFrontend 'br/public:deployment-scripts/create-kv-certificate:1.1.1' = {
   name: 'CreateFeKvCert'
   params: {
     akvName: akv.name
-    certificateName: FrontEndCertificate
-  }
-}
-
-module akvCertBackend 'br/public:deployment-scripts/create-kv-certificate:1.0.1' = {
-  name: 'CreateBeKvCert'
-  params: {
-    akvName: akv.name
-    certificateName: BackEndCertificate
+    certificateName: FrontendCertificateName
+    certificateCommonName: FrontendCertificateFqdn
   }
 }
 
@@ -66,7 +72,21 @@ module agw 'appgw.bicep' = {
   params: {
     location: Location
     akvName: akv.name
-    backEndCertificateSecretId: akvCertBackend.outputs.certificateSecretIdUnversioned
     frontEndCertificateSecretId: akvCertFrontend.outputs.certificateSecretIdUnversioned
+    backendIpAddress: app.outputs.IpAddress
+  }
+}
+output agwIp string = agw.outputs.agwPip
+
+resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  location: Location
+  name: 'id-app-SampleApp-4kogxjemf2t7a'
+}
+
+module app 'aciApp.bicep' = {
+  name: 'sampleApp2'
+  params: {
+    appName: 'SampleApp'
+    location: Location
   }
 }
