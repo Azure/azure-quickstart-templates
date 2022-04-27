@@ -1,4 +1,4 @@
-# Create a Consumption logic app workflow by using a template
+# Create a Consumption logic app workflow with a quickstart ARM template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-create/PublicDeployment.svg)
