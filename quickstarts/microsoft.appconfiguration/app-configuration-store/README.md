@@ -1,11 +1,11 @@
 ---
+description: This template creates an Azure App Configuration store.
 page_type: sample
 languages:
 - bicep
 - json
 products:
 - azure
-description: This template creates an Azure App Configuration store.
 ---
 
 # Azure App Configuration
