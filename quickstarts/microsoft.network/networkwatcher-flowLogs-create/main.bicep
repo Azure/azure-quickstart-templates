@@ -17,10 +17,10 @@ param RetentionDays int = 0
 
 @description('FlowLogs Version. Correct values are 1 or 2 (default)')
 @allowed([
-  '1'
-  '2'
+  1
+  2
 ])
-param FlowLogsversion string = '2'
+param FlowLogsversion int = 2
 
 @description('Storage Account type')
 @allowed([

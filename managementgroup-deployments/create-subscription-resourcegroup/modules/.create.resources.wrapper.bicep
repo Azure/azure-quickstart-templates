@@ -24,6 +24,9 @@ module rg '.microsoft.resources.resourcegroups.bicep' = {
 module storage '.microsoft.storage.storageaccounts.bicep' = {
   scope: resourceGroup(subscriptionId, rg.name)
   name: 'nested-createResourceGroup-${rg.name}'
+  params: {
+    location: location
+  }
 }
 
 output storageAccountId string = storage.outputs.storageAccountId
