@@ -526,7 +526,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
         name: ipconfName
         properties: {
           subnet: {
-            id: '${resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks', vnetName)}/subnets/${subNetName}'
+            id: resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks/subnets', vnetName, subNetName)
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: publicIpNewOrExisting == 'none' ? null: {
