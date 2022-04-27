@@ -456,7 +456,7 @@ function create-directories {
     }
 
     #Create ParsecTemp folder in C Drive
-function unzip-preinstall {
+function prepare-parsec {
     ProgressWriter -Status "Creating Directories (C:\ParsecTemp)" -PercentComplete $PercentComplete
     Copy-Item ".\scripts" "C:\ParsecTemp\PreInstall"
     }
@@ -974,7 +974,7 @@ Write-Host -foregroundcolor red "
 "   
 #PromptUserAutoLogon -DontPromptPasswordUpdateGPU:$DontPromptPasswordUpdateGPU
 $ScripttaskList = @(
-"unzip-preinstall";
+"prepare-parsec";
 "setupEnvironment";
 "addRegItems";
 "create-directories";
