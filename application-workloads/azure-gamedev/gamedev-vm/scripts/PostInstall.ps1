@@ -458,7 +458,7 @@ function create-directories {
     #Create ParsecTemp folder in C Drive
 function unzip-preinstall {
     ProgressWriter -Status "Creating Directories (C:\ParsecTemp)" -PercentComplete $PercentComplete
-    7z x ".\PreInstall.zip" "-oC:\ParsecTemp\PreInstall" -bd
+    Copy-Item ".\scripts" "C:\ParsecTemp\PreInstall"
     }
 
 #disable IE security
