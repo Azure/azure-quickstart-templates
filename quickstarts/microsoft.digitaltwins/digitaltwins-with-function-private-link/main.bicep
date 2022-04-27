@@ -18,7 +18,7 @@ param digitalTwinsInstanceName string = 'digitaltwins-${uniqueString(resourceGro
 
 @description('Azure function name')
 @maxLength(16)
-param functionName string ='${uniqueString(resourceGroup().id)}'
+param functionName string =uniqueString(resourceGroup().id)
 
 @description('Virtual Network name')
 param virtualNetworkName string = 'vnet-${uniqueString(resourceGroup().id)}'
