@@ -75,7 +75,7 @@ module keyvault 'modules/keyvault.bicep' = {
     keyvaultName: 'kv-${name}-${uniqueSuffix}'
     keyvaultPleName: 'ple-${name}-${uniqueSuffix}-kv'
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     tags: tags
   }
 }
@@ -89,7 +89,7 @@ module storage 'modules/storage.bicep' = {
     storagePleFileName: 'ple-${name}-${uniqueSuffix}-st-file'
     storageSkuName: 'Standard_LRS'
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     tags: tags
   }
 }
@@ -101,7 +101,7 @@ module containerRegistry 'modules/containerregistry.bicep' = {
     containerRegistryName: 'cr${name}${uniqueSuffix}'
     containerRegistryPleName: 'ple-${name}-${uniqueSuffix}-cr'
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     tags: tags
   }
 }
@@ -136,7 +136,7 @@ module azuremlWorkspace 'modules/machinelearning.bicep' = {
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
     computeSubnetId: '${vnet.outputs.id}/subnets/snet-training'
     aksSubnetId: '${vnet.outputs.id}/subnets/snet-scoring'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     machineLearningPleName: 'ple-${name}-${uniqueSuffix}-mlw'
 
     // compute
