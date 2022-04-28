@@ -1,4 +1,4 @@
-# Azure Traffic Manager with external endpoints
+# Azure Traffic Manager multi-value routing with nested profiles and min-child feature
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-minchild/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-minchild/PublicDeployment.svg)
