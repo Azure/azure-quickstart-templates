@@ -35,7 +35,7 @@ resource provisioningService 'Microsoft.Devices/provisioningServices@2021-10-15'
   properties: {
     iotHubs: [
       {
-        connectionString: 'HostName=${iotHub.properties.hostName};SharedAccessKeyName=${iotHubKey};SharedAccessKey=${iotHub.listkeys().value}'
+        connectionString: 'HostName=${iotHub.properties.hostName};SharedAccessKeyName=${iotHubKey};SharedAccessKey=${listkeys(resourceId('Microsoft.Devices/Iothubs/Iothubkeys', iotHubName, iotHubKey), '2021-07-02').primaryKey}'
         location: location
       }
     ]
