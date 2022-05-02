@@ -20,7 +20,6 @@ resource accountName_resource 'Microsoft.Maps/accounts@2021-02-01' = {
   location: 'global'
   sku: {
     name: 'G2'
-    tier: 'Standard'
   }
 }
 
