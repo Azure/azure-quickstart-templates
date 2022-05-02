@@ -91,7 +91,7 @@ var repoConfiguration = gitRepoType == 'FactoryVSTSConfiguration' ? {
   rootFolder: gitRootFolder
   type: 'FactoryGitHubConfiguration'
 }
-var lockName = toLower('${dataFactory.name}-${resourcelock}-lck}')
+var lockName = toLower('${dataFactory.name}-${resourcelock}-lck')
 var diagnosticsName = '${dataFactory.name}-dgs'
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
