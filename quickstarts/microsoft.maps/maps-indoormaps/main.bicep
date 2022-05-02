@@ -15,7 +15,7 @@ param creatorStorageUnits int = 1
 ])
 param creatorLocation string = 'East US 2'
 
-resource accountName_resource 'Microsoft.Maps/accounts@2021-02-01' = {
+resource mapsResource 'Microsoft.Maps/accounts@2021-02-01' = {
   name: accountName
   location: 'global'
   sku: {
@@ -23,8 +23,8 @@ resource accountName_resource 'Microsoft.Maps/accounts@2021-02-01' = {
   }
 }
 
-resource accountName_creator 'Microsoft.Maps/accounts/creators@2021-02-01' = {
-  parent: accountName_resource
+resource creatorResource 'Microsoft.Maps/accounts/creators@2021-02-01' = {
+  parent: mapsResource
   name: 'creator'
   location: creatorLocation
   properties: {
