@@ -1,5 +1,5 @@
 @description('The name for your Azure Maps account. This value must be globally unique.')
-param accountName string = 'uniqueString(resourceGroup().id)'
+param accountName string = uniqueString(resourceGroup().id)
 
 @description('Total available storage units shared across all Creator services. Allowable value between 1 and 100 units. Each unit corresponds to 1 MiB')
 @minValue(1)

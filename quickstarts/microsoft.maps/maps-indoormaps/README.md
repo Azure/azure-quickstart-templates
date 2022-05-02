@@ -14,7 +14,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.maps%2Fmaps-indoormaps%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.maps%2Fmaps-indoormaps%2Fazuredeploy.json)
 
-This template creates an Azure Maps service with the Azure Maps Creator feature that supports creating indoor maps. 
+This template creates an Azure Maps service with the Azure Maps Creator feature that supports creating indoor maps. After deployment, you should see two resources created, an "Azure Maps Account" and "Azure Maps Creator Resource".
 
 If you're new to Azure Maps, see:
 
