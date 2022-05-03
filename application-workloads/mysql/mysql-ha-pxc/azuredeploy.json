@@ -1,0 +1,780 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Connect to your cluster using dnsName.cloudapp.net"
+      }
+    },
+    "userName": {
+      "type": "string",
+      "metadata": {
+        "description": "user name to ssh to the VMs"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "size for the VMs"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "pxcvnet",
+      "metadata": {
+        "description": "Virtual network name for the cluster"
+      }
+    },
+    "dbSubnetName": {
+      "type": "string",
+      "defaultValue": "dbsubnet",
+      "metadata": {
+        "description": "subnet name for the MySQL nodes"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "IP address in CIDR for virtual network"
+      }
+    },
+    "dbSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "IP address in CIDR for db subnet"
+      }
+    },
+    "vmIP1": {
+      "type": "string",
+      "defaultValue": "10.0.1.4",
+      "metadata": {
+        "description": "IP address for VM1 must be available in db subnet"
+      }
+    },
+    "vmIP2": {
+      "type": "string",
+      "defaultValue": "10.0.1.5",
+      "metadata": {
+        "description": "IP address for VM2 must be available in db subnet"
+      }
+    },
+    "vmIP3": {
+      "type": "string",
+      "defaultValue": "10.0.1.6",
+      "metadata": {
+        "description": "IP address for VM3 must be available in db subnet"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "pxcnd",
+      "metadata": {
+        "description": "host name prefix for the VMs"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "allowedValues": [
+        "OpenLogic",
+        "Canonical"
+      ],
+      "metadata": {
+        "description": "publisher for the VM OS image"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "allowedValues": [
+        "CentOS",
+        "UbuntuServer"
+      ],
+      "metadata": {
+        "description": "VM OS name"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "allowedValues": [
+        "6.5",
+        "12.04.5-LTS",
+        "18.04-LTS"
+      ],
+      "metadata": {
+        "description": "VM OS version"
+      }
+    },
+    "mysqlFrontEndPort": {
+      "type": "int",
+      "defaultValue": 3306,
+      "metadata": {
+        "description": "MySQL public port"
+      }
+    },
+    "mysqlBackEndPort": {
+      "type": "int",
+      "defaultValue": 3306,
+      "metadata": {
+        "description": "MySQL private port"
+      }
+    },
+    "idleTimeoutInMinutesforILBRule": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "idel timeout for load balancer"
+      }
+    },
+    "probePort": {
+      "type": "int",
+      "defaultValue": 9200,
+      "metadata": {
+        "description": "cluster health check probe port exposed to load balancer"
+      }
+    },
+    "probeRequestPath": {
+      "type": "string",
+      "defaultValue": "/",
+      "metadata": {
+        "description": "cluster health check probe path"
+      }
+    },
+    "probeIntervalInSeconds": {
+      "type": "int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "health check probe interval"
+      }
+    },
+    "numberOfProbes": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "number of health check probes to consider failure"
+      }
+    },
+    "sshNatRuleFrontEndPort1": {
+      "type": "int",
+      "defaultValue": 64001,
+      "metadata": {
+        "description": "public ssh port for VM1"
+      }
+    },
+    "sshNatRuleFrontEndPort2": {
+      "type": "int",
+      "defaultValue": 64002,
+      "metadata": {
+        "description": "public ssh port for VM2"
+      }
+    },
+    "sshNatRuleFrontEndPort3": {
+      "type": "int",
+      "defaultValue": 64003,
+      "metadata": {
+        "description": "public ssh port for VM3"
+      }
+    },
+    "sshNatRuleBackEndPort": {
+      "type": "int",
+      "defaultValue": 22,
+      "metadata": {
+        "description": "private ssh port for the VMs"
+      }
+    },
+    "customScriptCommandToExecute": {
+      "type": "string",
+      "defaultValue": "bash azurepxc.sh",
+      "metadata": {
+        "description": "bash script command line"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "dbSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'),parameters('dbSubnetName'))]",
+    "lbPublicIPName": "[concat(variables('lbName'), '-publicIP')]",
+    "lbPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]",
+    "lbName": "[concat(parameters('vmNamePrefix'), '-lb')]",
+    "ilbBackendAddressPoolName": "[concat(parameters('vmNamePrefix'), '-ilbBackendPool')]",
+    "ilbBackendAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/', variables('lbName'), variables('ilbBackendAddressPoolName'))]",
+    "ilbRuleName": "[concat(parameters('vmNamePrefix'), '-ilbRule')]",
+    "probeName": "[concat(parameters('vmNamePrefix'), '-probe')]",
+    "probeID": "[resourceId('Microsoft.Network/loadBalancers/probes/', variables('lbName'), variables('probeName'))]",
+    "sshIPConfigName": "[concat(parameters('vmNamePrefix'), '-sshIPCfg')]",
+    "sshIPConfig": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('sshIPConfigName'))]",
+    "sshNatRuleName": "[concat(parameters('vmNamePrefix'), '-natRule')]",
+    "sshNatRuleName1": "[concat(variables('sshNatRuleName'), '-1')]",
+    "sshNatRuleName2": "[concat(variables('sshNatRuleName'), '-2')]",
+    "sshNatRuleName3": "[concat(variables('sshNatRuleName'), '-3')]",
+    "sshNatRuleID1": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules/', variables('lbName'), variables('sshNatRuleName1'))]",
+    "sshNatRuleID2": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules/', variables('lbName'), variables('sshNatRuleName2'))]",
+    "sshNatRuleID3": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules/', variables('lbName'), variables('sshNatRuleName3'))]",
+    "nicName": "[concat(parameters('vmNamePrefix'), '-nic')]",
+    "nicName1": "[concat(variables('nicName'),'-1')]",
+    "nicName2": "[concat(variables('nicName'),'-2')]",
+    "nicName3": "[concat(variables('nicName'),'-3')]",
+    "nicId1": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName1'))]",
+    "nicId2": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName2'))]",
+    "nicId3": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName3'))]",
+    "vmName1": "[concat('a-', parameters('vmNamePrefix'))]",
+    "vmName2": "[concat('k-', parameters('vmNamePrefix'))]",
+    "vmName3": "[concat('z-', parameters('vmNamePrefix'))]",
+    "availabilitySetName": "[concat(parameters('vmNamePrefix'), '-set')]",
+    "vmExtensionName": "[concat(parameters('vmNamePrefix'), '-ext')]",
+    "pxcClusterAddress": "[concat(parameters('vmIP1'), ',', parameters('vmIP2'), ',', parameters('vmIP3'))]",
+    "customScriptCommandCommon": "[concat(parameters('customScriptCommandToExecute'), ' ', variables('pxcClusterAddress'), ' ')]",
+    "mysqlConfigFilePath": "[uri(parameters('_artifactsLocation'), concat('my.cnf.template', parameters('_artifactsLocationSasToken')))]",
+    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', variables('mysqlConfigFilePath'))]",
+    "vmExtensionName1": "[concat(variables('vmName1'),'/', variables('vmExtensionName'))]",
+    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', variables('mysqlConfigFilePath'))]",
+    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', variables('mysqlConfigFilePath'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('userName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-02-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('lbPublicIPName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('dbSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('dbSubnetAddressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName1')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('vmIP1')]",
+              "subnet": {
+                "id": "[variables('dbSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('ilbBackendAddressPoolID')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[variables('sshNatRuleID1')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName2')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('vmIP2')]",
+              "subnet": {
+                "id": "[variables('dbSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('ilbBackendAddressPoolID')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[variables('sshNatRuleID2')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName3')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('vmIP3')]",
+              "subnet": {
+                "id": "[variables('dbSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('ilbBackendAddressPoolID')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[variables('sshNatRuleID3')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmName1')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName1'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName1')]",
+          "adminUsername": "[parameters('userName')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName1'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('vmName1'),'_DataDisk1')]",
+              "diskSizeGB": "1000",
+              "lun": 0,
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmName1'),'_DataDisk2')]",
+              "diskSizeGB": "1000",
+              "lun": 1,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicId1')]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[variables('vmExtensionName1')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName1'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat(variables('customScriptCommandCommon'), variables('customScriptParamVm1'))]"
+        }
+      }
+    },
+    {
+      "name": "[variables('vmName2')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName2'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName2')]",
+          "adminUsername": "[parameters('userName')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName2'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('vmName2'),'_DataDisk1')]",
+              "diskSizeGB": "1000",
+              "lun": 0,
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmName2'),'_DataDisk2')]",
+              "diskSizeGB": "1000",
+              "lun": 1,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicId2')]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName2'),'/', variables('vmExtensionName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName2'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('vmName1'), variables('vmExtensionName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat(variables('customScriptCommandCommon'), variables('customScriptParamVm2'))]"
+        }
+      }
+    },
+    {
+      "name": "[variables('vmName3')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName3'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName3')]",
+          "adminUsername": "[parameters('userName')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName3'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('vmName3'),'_DataDisk1')]",
+              "diskSizeGB": "1000",
+              "lun": 0,
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmName3'),'_DataDisk2')]",
+              "diskSizeGB": "1000",
+              "lun": 1,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicId3')]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName3'),'/', variables('vmExtensionName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName3'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('vmName1'), variables('vmExtensionName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat(variables('customScriptCommandCommon'), variables('customScriptParamVm3'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('lbName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('sshIPConfigName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('lbPublicIPRef')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('ilbBackendAddressPoolName')]"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "[variables('sshNatRuleName1')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
+              "backendPort": "[parameters('sshNatRuleBackEndPort')]",
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[variables('sshNatRuleName2')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": "[parameters('sshNatRuleFrontEndPort2')]",
+              "backendPort": "[parameters('sshNatRuleBackEndPort')]",
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[variables('sshNatRuleName3')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": "[parameters('sshNatRuleFrontEndPort3')]",
+              "backendPort": "[parameters('sshNatRuleBackEndPort')]",
+              "enableFloatingIP": false
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "[variables('ilbRuleName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('ilbBackendAddressPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": "[parameters('mysqlFrontEndPort')]",
+              "backendPort": "[parameters('mysqlBackEndPort')]",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": "[parameters('idleTimeoutInMinutesforILBRule')]",
+              "probe": {
+                "id": "[variables('probeID')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('probeName')]",
+            "properties": {
+              "protocol": "Http",
+              "port": "[parameters('probePort')]",
+              "intervalInSeconds": "[parameters('probeIntervalInSeconds')]",
+              "numberOfProbes": "[parameters('numberOfProbes')]",
+              "requestPath": "[parameters('probeRequestPath')]"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+

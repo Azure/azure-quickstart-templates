@@ -1,0 +1,151 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsRecoveryVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Assign a name for the ASR Recovery Vault"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specify the region for your Recovery Vault"
+      }
+    },
+    "omsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Assign a name for the Log Analytic Workspace Name"
+      }
+    },
+    "omsAutomationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Assign a name for the Automation account"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "azureAdmin": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your service admin user"
+      }
+    },
+    "azureAdminPwd": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Enter the pwd for the service admin user. The pwd is enrypted during runtime and in the Automation assets"
+      }
+    }
+  },
+  "variables": {
+    "nestedTemplates": {
+      "omsRecoveryServices": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/omsRecoveryServices.json', parameters('_artifactsLocationSasToken')))]",
+      "omsAutomation": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/omsAutomation.json', parameters('_artifactsLocationSasToken')))]",
+      "omsWorkspace": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/omsWorkspace.json', parameters('_artifactsLocationSasToken')))]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "omsWorkspace",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'omsRecoveryServices')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsWorkspace]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "omsRecoveryServices",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsRecoveryServices]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsRecoveryVaultName": {
+            "value": "[parameters('omsRecoveryVaultName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "omsAutomation",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'omsRecoveryServices')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'omsWorkspace')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsAutomation]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsAutomationAccountName": {
+            "value": "[parameters('omsAutomationAccountName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "omsRecoveryVaultName": {
+            "value": "[parameters('omsRecoveryVaultName')]"
+          },
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "azureAdmin": {
+            "value": "[parameters('azureAdmin')]"
+          },
+          "azureAdminPwd": {
+            "value": "[parameters('azureAdminPwd')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    }
+  ]
+}

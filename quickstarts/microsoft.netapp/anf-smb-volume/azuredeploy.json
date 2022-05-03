@@ -1,0 +1,212 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Same location of resource group for all resources"
+            }
+        },
+        "netappAccountName": {
+            "defaultValue": "[concat('anfacc', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Account. The account name must be unique within the subscription"
+            }
+        },
+        "adUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The value of Active Directory username"
+            }
+        },
+        "adPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The value of Active Directory password"
+            }
+        },
+        "smbServerName": {
+            "type": "string",
+            "metadata": {
+                "description": "SMB server name"
+            }
+        },
+        "netAppPoolName": {
+            "defaultValue": "[concat('pool', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the capacity pool. The capacity pool name must be unique for each NetApp account."
+            }
+        },
+        "poolSizeBytes": {
+            "type": "int",
+            "defaultValue": 4398046511104,
+            "minValue": 4398046511104,
+            "maxValue": 549755813888000,
+            "metadata": {
+                "description": "Size of the capacity pool. The minimum  size is 4 TiB."
+            }
+        },
+        "netAppVolumeName": {
+            "defaultValue": "[concat('volume', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Volume. A volume name must be unique within each capacity pool. It must be at aleast three characters long and you can use any alphanumeric characters."
+            }
+        },
+        "volSizeBytes": {
+            "type": "int",
+            "defaultValue": 107374182400,
+            "minValue": 107374182400,
+            "maxValue": 109951162777600,
+            "metadata": {
+                "description": "Amount of logical storage that is allocated to the volume."
+            }
+        },
+        "anfSubnetName": {
+            "type": "string",
+            "defaultValue": "[concat('anfsubnet', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the subnet where the ANF volume will be created. This subnet will be delegated to Microsoft.NetApp/volumes."
+            }
+        },
+        "anfSubnetAddressPrefix": {
+            "type": "String",
+            "metadata": {
+                "description": "Subnet address range."
+            }
+        },
+        "serviceLevel": {
+            "type": "string",
+            "allowedValues": [
+                "Premium",
+                "Ultra",
+                "Standard"
+            ],
+            "defaultValue": "Standard",
+            "metadata": {
+                "description": "Target performance for the capacity pool. Service level: Ultra, Premium, or Standard."
+            }
+        },
+        "dnsIpAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "IP Address of the existing AD DNS Controller"
+            }
+        },
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "description": "Domain name for AD"
+            }
+        },
+        "virtualNetworkSubscriptionId": {
+            "type": "string",
+            "metadata": {
+                "description": "SubscriptionId of the existing virtual network"
+            }
+        },
+        "virtualNetworkResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "ResourceGroup name of the existing virtual network"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing virtual network"
+            }
+        }
+    },
+    "resources": [
+        {
+            "subscriptionId": "[parameters('virtualNetworkSubscriptionId')]",
+            "resourceGroup": "[parameters('virtualNetworkResourceGroupName')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "name": "AddSubnet",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2020-05-01",
+                            "name": "[concat(parameters('virtualNetworkName'),'/',parameters('anfSubnetName'))]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "addressPrefix": "[parameters('anfSubnetAddressPrefix')]",
+                                "delegations": [
+                                    {
+                                        "name": "Microsoft.Netapp.volumes",
+                                        "properties": {
+                                            "serviceName": "Microsoft.Netapp/volumes"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.NetApp/netAppAccounts",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('netAppAccountName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "activeDirectories": [
+                    {
+                        "username": "[parameters('adUsername')]",
+                        "password": "[parameters('adPassword')]",
+                        "domain": "[parameters('domainName')]",
+                        "dns": "[parameters('dnsIpAddress')]",
+                        "smbServerName": "[parameters('smbServerName')]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.NetApp/netAppAccounts/capacityPools",
+            "apiVersion": "2020-06-01",
+            "name": "[concat(parameters('netAppAccountName'),'/',parameters('netAppPoolName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]"
+            ],
+            "properties": {
+                "serviceLevel": "[parameters('serviceLevel')]",
+                "size": "[parameters('poolSizeBytes')]"
+            }
+        },
+        {
+            "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+            "apiVersion": "2020-06-01",
+            "name": "[concat(parameters('netAppAccountName'),'/',parameters('netAppPoolName'),'/', parameters('netAppVolumeName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('netAppAccountName'), parameters('netAppPoolName'))]",
+                "AddSubnet"
+            ],
+            "properties": {
+                "serviceLevel": "[parameters('serviceLevel')]",
+                "creationToken": "[parameters('netAppVolumeName')]",
+                "usageThreshold": "[parameters('volSizeBytes')]",
+                "subnetId": "[resourceId(parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('anfSubnetName'))]"
+            }
+        }
+    ],
+    "outputs": {
+        "smbServerFQDN": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.NetApp/netAppAccounts/capacityPools/volumes', parameters('netAppAccountName'), parameters('netAppPoolName'), parameters('netAppVolumeName'))).mountTargets[0].smbServerFQDN]"
+        }
+    }
+}

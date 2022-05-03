@@ -1,0 +1,1019 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sapSystemId": {
+      "type": "string",
+      "maxLength": 3,
+      "minLength": 3,
+      "metadata": {
+        "description": "SAP System ID."
+      }
+    },
+    "stackType": {
+      "type": "string",
+      "allowedValues": [
+        "ABAP",
+        "JAVA",
+        "ABAP+JAVA"
+      ],
+      "defaultValue": "ABAP",
+      "metadata": {
+        "description": "The stack type of the SAP system."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [
+        "Windows Server 2012 Datacenter",
+        "Windows Server 2012 R2 Datacenter",
+        "Windows Server 2016 Datacenter",
+        "SLES 12",
+        "SLES 12 BYOS",
+        "RHEL 7.2",
+        "Oracle Linux 7.2"
+      ],
+      "defaultValue": "Windows Server 2012 R2 Datacenter",
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "dbType": {
+      "type": "string",
+      "allowedValues": [
+        "SQL",
+        "HANA"
+      ],
+      "defaultValue": "SQL",
+      "metadata": {
+        "description": "The database type you want to use on the cluster. This information is used to create the load balancer"
+      }
+    },
+    "sapSystemSize": {
+      "type": "string",
+      "allowedValues": [
+        "Demo",
+        "Small < 30.000 SAPS",
+        "Medium < 70.000 SAPS",
+        "Large < 180.000 SAPS",
+        "X-Large < 250.000 SAPS"
+      ],
+      "defaultValue": "Small < 30.000 SAPS",
+      "metadata": {
+        "description": "The size of the SAP System you want to deploy."
+      }
+    },
+    "systemAvailability": {
+      "type": "string",
+      "allowedValues": [
+        "HA",
+        "Not HA"
+      ],
+      "defaultValue": "Not HA",
+      "metadata": {
+        "description": "Determines whether this is a high available deployment or not. A HA deployment contains multiple instances of single point of failures."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "minLength": 12,
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The id of the subnet you want to use. Leave blank if you want to create a new virtual network and subnet"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "images": {
+      "Windows Server 2012 Datacenter": {
+        "sku": "2012-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
+        "OSType": "Windows",
+        "UsePlan": false
+      },
+      "Windows Server 2012 R2 Datacenter": {
+        "sku": "2012-R2-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
+        "OSType": "Windows",
+        "UsePlan": false
+      },
+      "Windows Server 2016 Datacenter": {
+        "sku": "2016-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
+        "OSType": "Windows",
+        "UsePlan": false
+      },
+      "SLES 12": {
+        "sku": "12-SP1",
+        "offer": "SLES-SAP",
+        "publisher": "SUSE",
+        "version": "latest",
+        "OSType": "Linux",
+        "UsePlan": false
+      },
+      "SLES 12 BYOS": {
+        "sku": "12-SP1",
+        "offer": "SLES-SAP-BYOS",
+        "publisher": "SUSE",
+        "OSType": "Linux",
+        "version": "latest",
+        "UsePlan": false
+      },
+      "RHEL 7.2": {
+        "sku": "7.2",
+        "offer": "RHEL",
+        "publisher": "RedHat",
+        "version": "latest",
+        "OSType": "Linux",
+        "UsePlan": false
+      },
+      "Oracle Linux 7.2": {
+        "sku": "7.2",
+        "offer": "Oracle-Linux",
+        "publisher": "Oracle",
+        "version": "latest",
+        "OSType": "Linux",
+        "UsePlan": false
+      }
+    },
+    "imageSku": "[variables('images')[parameters('osType')].sku]",
+    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
+    "imageOffer": "[variables('images')[parameters('osType')].offer]",
+    "imageVersion": "[variables('images')[parameters('osType')].version]",
+    "internalOSType": "[variables('images')[parameters('osType')].OSType]",
+    "csExtension": {
+      "Windows": {
+        "script": "[uri(parameters('_artifactsLocation'), concat('shared/noop.ps1', parameters('_artifactsLocationSasToken')))]",
+        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File shared/noop.ps1"
+      },
+      "Linux": {
+        "script": "[uri(parameters('_artifactsLocation'), concat('shared/noop.sh', parameters('_artifactsLocationSasToken')))]",
+        "scriptCall": "sh noop.sh"
+      }
+    },
+    "vmSizes": {
+      "Demo": {
+        "Not HA": {
+          "clserversize": "Standard_D4s_v3",
+          "clservercount": 1,
+          "clserverdisks": [
+            {
+              "size": 128
+            }
+          ],
+          "diserversize": "Standard_D2s_v3",
+          "diservercount": 1
+        },
+        "HA": {
+          "clserversize": "Standard_D4s_v3",
+          "clservercount": 2,
+          "clserverdisks": [
+            {
+              "size": 128
+            }
+          ],
+          "diserversize": "Standard_D2s_v3",
+          "diservercount": 2
+        }
+      },
+      "Small < 30.000 SAPS": {
+        "Not HA": {
+          "clserversize": "Standard_D8s_v3",
+          "clservercount": 1,
+          "clserverdisks": [
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            }
+          ],
+          "diserversize": "Standard_D8s_v3",
+          "diservercount": 1
+        },
+        "HA": {
+          "clserversize": "Standard_D8s_v3",
+          "clservercount": 2,
+          "clserverdisks": [
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            }
+          ],
+          "diserversize": "Standard_D8s_v3",
+          "diservercount": 2
+        }
+      },
+      "Medium < 70.000 SAPS": {
+        "Not HA": {
+          "clserversize": "Standard_D16s_v3",
+          "clservercount": 1,
+          "clserverdisks": [
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            }
+          ],
+          "diserversize": "Standard_D8s_v3",
+          "diservercount": 4
+        },
+        "HA": {
+          "clserversize": "Standard_D16s_v3",
+          "clservercount": 2,
+          "clserverdisks": [
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            },
+            {
+              "size": 512
+            }
+          ],
+          "diserversize": "Standard_D8s_v3",
+          "diservercount": 4
+        }
+      },
+      "Large < 180.000 SAPS": {
+        "Not HA": {
+          "clserversize": "Standard_GS4",
+          "clservercount": 1,
+          "clserverdisks": [
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 512
+            }
+          ],
+          "diserversize": "Standard_D16s_v3",
+          "diservercount": 6
+        },
+        "HA": {
+          "clserversize": "Standard_GS4",
+          "clservercount": 2,
+          "clserverdisks": [
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 512
+            }
+          ],
+          "diserversize": "Standard_D16s_v3",
+          "diservercount": 6
+        }
+      },
+      "X-Large < 250.000 SAPS": {
+        "Not HA": {
+          "clserversize": "Standard_GS5",
+          "clservercount": 1,
+          "clserverdisks": [
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            }
+          ],
+          "diserversize": "Standard_D16s_v3",
+          "diservercount": 10
+        },
+        "HA": {
+          "clserversize": "Standard_GS5",
+          "clservercount": 2,
+          "clserverdisks": [
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            },
+            {
+              "size": 1023
+            }
+          ],
+          "diserversize": "Standard_D16s_v3",
+          "diservercount": 10
+        }
+      }
+    },
+    "clvmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].clservercount]",
+    "clvmDataDisks": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].clserverdisks]",
+    "divmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diservercount]",
+    "sidlower": "[toLower(parameters('sapSystemId'))]",
+    "vmName": "[variables('sidlower')]",
+    "vnetName": "[concat(variables('sidlower'), '-vnet')]",
+    "publicIPAddressType": "Dynamic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "subnets": {
+      "true": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
+      "false": "[parameters('subnetId')]"
+    },
+    "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
+    "nestedDeploymentName": "nestedTemplate",
+    "nestedDeploymentNameVNet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
+    "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
+    "nestedDeploymentNameCL": "[concat(variables('nestedDeploymentName'), 'cl')]",
+    "nestedDeploymentNameDI": "[concat(variables('nestedDeploymentName'), 'di')]",
+    "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
+    "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
+    "nestedDeploymentNameNICCL": "[concat(variables('nestedDeploymentNameNIC'), 'cl')]",
+    "nestedDeploymentNameNICDI": "[concat(variables('nestedDeploymentNameNIC'), 'di')]",
+    "nestedDeploymentNameLBCL": "[concat(variables('nestedDeploymentName'), 'lbcl')]",
+    "publicIpNameCL": "[concat(variables('sidlower'), '-pip-cl')]",
+    "avSetNameCL": "[concat(variables('sidlower'), '-avset-cl')]",
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentNameCL'), 'nsg')]",
+    "nsgNameCL": "[concat(variables('sidlower'), '-nsg')]",
+    "loadBalancerNameCL": "[concat(variables('sidlower'), '-lb-cl')]",
+    "vmNameCL": "[concat(variables('vmName'), '-cl')]",
+    "nicNameCL": "[concat(variables('sidlower'), '-nic-cl')]",
+    "avSetNameDI": "[concat(variables('sidlower'), '-avset-di')]",
+    "nicNameDI": "[concat(variables('sidlower'), '-nic-di')]",
+    "vmNameDI": "[concat(variables('vmName'), '-di')]",
+    "osDiskType": "image"
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[variables('nestedDeploymentNameNSG')]",
+      "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/newnsg.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": {
+            "value": "[variables('nsgNameCL')]"
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[variables('nestedDeploymentNameVnet')]",
+      "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/newvnetnsg.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[variables('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          },
+          "nsgName": {
+            "value": "[variables('nsgNameCL')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameCL')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 20
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[concat(variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "pipLoop",
+        "count": "[variables('clvmCount')]"
+      },
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/newpip.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "publicIpName": {
+            "value": "[concat(variables('publicIpNameCL'), '-', copyIndex())]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[variables('nestedDeploymentNameLBCL')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/loadbalancer.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerNameCL')]"
+          },
+          "sapSystemCount": {
+            "value": 1
+          },
+          "stackType": {
+            "value": "[parameters('stackType')]"
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          },
+          "createXSCS": {
+            "value": true
+          },
+          "createDB": {
+            "value": true
+          },
+          "dbType": {
+            "value": "[parameters('dbType')]"
+          },
+          "subnetId": {
+            "value": "[variables('selectedSubnetId')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[concat(variables('nestedDeploymentNameNICCL'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicConfigCLLoop",
+        "count": "[variables('clvmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/nic-config.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "publicIpName": {
+            "value": "[concat(variables('publicIpNameCL'), '-', copyIndex())]"
+          },
+          "nsgName": {
+            "value": ""
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicNameCL'), '-', copyIndex())]",
+      "apiVersion": "2017-06-01",
+      "copy": {
+        "name": "nicCLLoop",
+        "count": "[variables('clvmCount')]"
+      },
+      "dependsOn": [
+        "pipLoop",
+        "nicConfigCLLoop",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBCL'))]"
+      ],
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('nestedDeploymentNameNICCL'), '-', copyIndex()))).outputs.selectedConfiguration.value.publicIPAddress]",
+              "subnet": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('nestedDeploymentNameNICCL'), '-', copyIndex()))).outputs.selectedConfiguration.value.subnet]",
+              "loadBalancerBackendAddressPools": "[reference(variables('nestedDeploymentNameLBCL')).outputs.nicBackAddressPools.value]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[concat(variables('nestedDeploymentNameProf'), '-cl-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "osDiskPartsCLLoop",
+        "count": "[variables('clvmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/os-disk-parts-md.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": {
+            "value": "[variables('imageSku')]"
+          },
+          "imagePublisher": {
+            "value": "[variables('imagePublisher')]"
+          },
+          "imageOffer": {
+            "value": "[variables('imageOffer')]"
+          },
+          "imageVersion": {
+            "value": "[variables('imageVersion')]"
+          },
+          "osDiskType": {
+            "value": "[variables('osDiskType')]"
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          },
+          "vmName": {
+            "value": "[concat(variables('vmNameCL'), '-', copyIndex())]"
+          },
+          "storageType": {
+            "value": "Premium_LRS"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[concat(variables('nestedDeploymentNameCL'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "vmCLLoop",
+        "count": "[variables('clvmCount')]"
+      },
+      "dependsOn": [
+        "nicCLLoop",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetNameCL'))]",
+        "osDiskPartsCLLoop"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/server-md.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageReference": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('nestedDeploymentNameProf'), '-cl-', copyIndex()))).outputs.imageReference.value]"
+          },
+          "osDisk": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('nestedDeploymentNameProf'), '-cl-', copyIndex()))).outputs.osDisk.value]"
+          },
+          "osDiskType": {
+            "value": "[variables('osDiskType')]"
+          },
+          "vmName": {
+            "value": "[concat(variables('vmNameCL'), '-', copyIndex())]"
+          },
+          "vmSize": {
+            "value": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].clserversize]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "csExtensionScript": {
+            "value": "[variables('csExtension')[variables('internalOSType')].script]"
+          },
+          "csExtensionscriptCall": {
+            "value": "[variables('csExtension')[variables('internalOSType')].scriptCall]"
+          },
+          "csExtensionscriptArgs": {
+            "value": ""
+          },
+          "avSetObj": {
+            "value": {
+              "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameCL'))]"
+            }
+          },
+          "useAVSet": {
+            "value": true
+          },
+          "nicName": {
+            "value": "[concat(variables('nicNameCL'), '-', copyIndex())]"
+          },
+          "dataDisksObj": {
+            "value": {
+              "copy": [
+                {
+                  "name": "dataDisks",
+                  "count": "[length(variables('clvmDataDisks'))]",
+                  "input": {
+                    "lun": "[copyIndex('dataDisks')]",
+                    "createOption": "Empty",
+                    "diskSizeGB": "[variables('clvmDataDisks')[copyIndex('dataDisks')].size]"
+                  }
+                }
+              ]
+            }
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameDI')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 20
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[concat(variables('nestedDeploymentNameNICDI'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicConfigDILoop",
+        "count": "[variables('divmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/nic-config.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "publicIpName": {
+            "value": ""
+          },
+          "nsgName": {
+            "value": ""
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicNameDI'), '-', copyindex())]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "nicConfigDILoop"
+      ],
+      "copy": {
+        "name": "nicDILoop",
+        "count": "[variables('divmCount')]"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('nestedDeploymentNameNICDI'), '-', copyIndex()))).outputs.selectedConfiguration.value.subnet]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "osDiskPartsDILoop",
+        "count": "[variables('divmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/os-disk-parts-md.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": {
+            "value": "[variables('imageSku')]"
+          },
+          "imagePublisher": {
+            "value": "[variables('imagePublisher')]"
+          },
+          "imageOffer": {
+            "value": "[variables('imageOffer')]"
+          },
+          "imageVersion": {
+            "value": "[variables('imageVersion')]"
+          },
+          "osDiskType": {
+            "value": "[variables('osDiskType')]"
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          },
+          "vmName": {
+            "value": "[concat(variables('vmNameDI'), '-', copyIndex())]"
+          },
+          "storageType": {
+            "value": "Premium_LRS"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "name": "[concat(variables('nestedDeploymentNameDI'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "vmDILoop",
+        "count": "[variables('divmCount')]"
+      },
+      "dependsOn": [
+        "nicDILoop",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]",
+        "osDiskPartsDILoop"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/server-md.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageReference": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex()))).outputs.imageReference.value]"
+          },
+          "osDisk": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex()))).outputs.osDisk.value]"
+          },
+          "osDiskType": {
+            "value": "[variables('osDiskType')]"
+          },
+          "vmName": {
+            "value": "[concat(variables('vmNameDI'), '-', copyIndex())]"
+          },
+          "vmSize": {
+            "value": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diserversize]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "csExtensionScript": {
+            "value": "[variables('csExtension')[variables('internalOSType')].script]"
+          },
+          "csExtensionscriptCall": {
+            "value": "[variables('csExtension')[variables('internalOSType')].scriptCall]"
+          },
+          "csExtensionscriptArgs": {
+            "value": ""
+          },
+          "avSetObj": {
+            "value": {
+              "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDI'))]"
+            }
+          },
+          "useAVSet": {
+            "value": true
+          },
+          "nicName": {
+            "value": "[concat(variables('nicNameDI'), '-', copyIndex())]"
+          },
+          "dataDisksObj": {
+            "value": {
+              "copy": [
+                {
+                  "name": "dataDisks",
+                  "count": 1,
+                  "input": {
+                    "lun": 0,
+                    "createOption": "Empty",
+                    "diskSizeGB": 128
+                  }
+                }
+              ]
+            }
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          },
+          "location":{
+            "value":"[parameters('location')]"
+          }
+        }
+      }
+    }
+  ]
+}
+

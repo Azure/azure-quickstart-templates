@@ -1,0 +1,340 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "1908625783801438696"
+    }
+  },
+  "parameters": {
+    "vmname": {
+      "type": "string",
+      "defaultValue": "myVM",
+      "metadata": {
+        "description": "Name of the virtual machine"
+      }
+    },
+    "vmsize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the virtual machine"
+      }
+    },
+    "vnetname": {
+      "type": "string",
+      "defaultValue": "myVnet",
+      "metadata": {
+        "description": "Name of the virtual network"
+      }
+    },
+    "subnetname": {
+      "type": "string",
+      "defaultValue": "mySubnet",
+      "metadata": {
+        "description": "Name of the subnet for virtual network"
+      }
+    },
+    "vnetaddressspace": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/16",
+      "metadata": {
+        "description": "Address space for virtual network"
+      }
+    },
+    "vnetsubnetprefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix for virtual network"
+      }
+    },
+    "natgatewayname": {
+      "type": "string",
+      "defaultValue": "myNATgateway",
+      "metadata": {
+        "description": "Name of the NAT gateway"
+      }
+    },
+    "networkinterfacename": {
+      "type": "string",
+      "defaultValue": "myvmNIC",
+      "metadata": {
+        "description": "Name of the virtual machine nic"
+      }
+    },
+    "publicipname": {
+      "type": "string",
+      "defaultValue": "myPublicIP",
+      "metadata": {
+        "description": "Name of the NAT gateway public IP"
+      }
+    },
+    "nsgname": {
+      "type": "string",
+      "defaultValue": "myVMnsg",
+      "metadata": {
+        "description": "Name of the virtual machine NSG"
+      }
+    },
+    "publicipvmname": {
+      "type": "string",
+      "defaultValue": "myPublicIPVM",
+      "metadata": {
+        "description": "Name of the virtual machine public IP"
+      }
+    },
+    "publicipprefixname": {
+      "type": "string",
+      "defaultValue": "myPublicIPPrefix",
+      "metadata": {
+        "description": "Name of the NAT gateway public IP"
+      }
+    },
+    "adminusername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator username for virtual machine"
+      }
+    },
+    "adminpassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Administrator password for virtual machine"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Name of resource group"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('nsgname')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('publicipname')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('publicipvmname')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPPrefixes",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('publicipprefixname')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "prefixLength": 31,
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-11-01",
+      "name": "[parameters('vmname')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmsize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[format('{0}_disk1', parameters('vmname'))]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 30
+          }
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmname')]",
+          "adminUsername": "[parameters('adminusername')]",
+          "adminPassword": "[parameters('adminpassword')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false,
+            "provisionVMAgent": true
+          },
+          "allowExtensionOperations": true
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkinterfacename'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkinterfacename'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('vnetname')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetaddressspace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetname')]",
+            "properties": {
+              "addressPrefix": "[parameters('vnetsubnetprefix')]",
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]"
+              },
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          }
+        ],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('natgatewayname')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIpAddresses": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipname'))]"
+          }
+        ],
+        "publicIpPrefixes": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPPrefixes', parameters('publicipprefixname'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipname'))]",
+        "[resourceId('Microsoft.Network/publicIPPrefixes', parameters('publicipprefixname'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', parameters('vnetname'), 'mySubnet')]",
+      "properties": {
+        "addressPrefix": "[parameters('vnetsubnetprefix')]",
+        "natGateway": {
+          "id": "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]"
+        },
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetname'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('networkinterfacename')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "192.168.0.4",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipvmname'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetname'), 'mySubnet')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgname'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetname'), 'mySubnet')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgname'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipvmname'))]"
+      ]
+    }
+  ]
+}

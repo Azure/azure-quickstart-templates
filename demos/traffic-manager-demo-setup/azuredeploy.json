@@ -1,0 +1,178 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsName": {
+      "type": "string",
+      "defaultValue": "[concat('tm-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Traffic Manager profile DNS name. Must be unique in .trafficmanager.net"
+      }
+    },
+    "primarylocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the primary endpoint"
+      }
+    },
+    "secondarylocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the secondary endpoint"
+      }
+    },
+    "trafficRoutingMethod": {
+      "type": "string",
+      "allowedValues": [
+        "Priority",
+        "Weighted",
+        "Performance"
+      ],
+      "defaultValue": "Weighted",
+      "metadata": {
+        "description": "Traffic routing methods available in Traffic Manager"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the backend Web servers"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the backend Web servers"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      },
+      "defaultValue": "[deployment().properties.templatelink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+
+    "backendDnsPrefix": "backend-",
+    "nestedTemplatesFolder": "nested",
+    "webServerTemplateName": "azuredeploywebserver.json",
+    "serverTestPageInfo": "<p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>",
+    "dnsPrefix": "[concat(variables('backendDnsPrefix'), uniqueString(resourceGroup().id))]",
+    "locations": [
+      "[parameters('primarylocation')]",
+      "[parameters('secondarylocation')]"
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-08-01",
+      "name": "[concat('webServer', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "wscopy",
+        "count": 2
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolder'), '/', variables('webServerTemplateName'), parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "dnsNameForPublicIP": {
+            "value": "[concat(variables('dnsPrefix'), '-', copyIndex(1))]"
+          },
+          "testPageBody": {
+            "value": "[variables('serverTestPageInfo')]"
+          },
+          "testPage": {
+            "value": "index.php"
+          },
+          "testPageTitle": {
+            "value": "[concat('Server ', copyIndex(1))]"
+          },
+          "installPHP": {
+            "value": true
+          },
+          "location": {
+            "value": "[variables('locations')[copyIndex()]]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-04-01",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "trafficManagerDemo",
+      "location": "global",
+      "dependsOn": [
+        "wscopy"
+      ],
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "[parameters('trafficRoutingMethod')]",
+        "dnsConfig": {
+          "relativeName": "[parameters('dnsName')]",
+          "ttl": 30
+        },
+        "monitorConfig": {
+          "protocol": "HTTP",
+          "port": 80,
+          "path": "/"
+        },
+        "endpoints": [
+          {
+            "name": "endpoint1",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "targetResourceId": "[resourceId('Microsoft.Network/publicIpAddresses', concat(variables('dnsPrefix'), '-1'))]",
+              "endpointStatus": "Enabled",
+              "weight": 1
+            }
+          },
+          {
+            "name": "endpoint2",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "targetResourceId": "[resourceId('Microsoft.Network/publicIpAddresses', concat(variables('dnsPrefix'), '-2'))]",
+              "endpointStatus": "Enabled",
+              "weight": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

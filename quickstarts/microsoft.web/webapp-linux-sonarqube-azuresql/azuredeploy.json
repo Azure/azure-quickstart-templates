@@ -1,0 +1,280 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string",
+            "defaultValue": "[concat('sonarqube-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of Azure Web App"
+            }
+        },
+        "sonarqubeImageVersion": {
+            "type": "string",
+            "defaultValue": "7.7-community",
+            "allowedValues": [
+                "7.7-community",
+                "7.6-community",
+                "7.5-community",
+                "7.4-community",
+                "7.1",
+                "7.1-alpine",
+                "7.0",
+                "7.0-alpine",
+                "6.7.5",
+                "6.7.5-alpine",
+                "6.7.4",
+                "6.7.4-alpine",
+                "6.7.3",
+                "6.7.3-alpine",
+                "6.7.2",
+                "6.7.2-alpine",
+                "6.7.1",
+                "6.7.1-alpine"
+            ],
+            "metadata": {
+                "description": "The version of the Sonarqube container image to use. Only versions of Sonarqube known to be compatible with Azure App Service Web App for Containers are available."
+            }
+        },
+        "servicePlanPricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "B1",
+                "B2",
+                "B3",
+                "S1",
+                "S2",
+                "S3",
+                "P1V2",
+                "P2V2",
+                "P2V3"
+            ],
+            "defaultValue": "S2",
+            "metadata": {
+                "description": "App Service Plan Pricing Tier"
+            }
+        },
+        "servicePlanCapacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 3,
+            "metadata": {
+                "description": "App Service Capacity"
+            }
+        },
+        "sqlServerAdministratorUsername": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Azure SQL Server Administrator Username"
+            }
+        },
+        "sqlServerAdministratorPassword": {
+            "type": "securestring",
+            "minLength": 12,
+            "maxLength": 128,
+            "metadata": {
+                "description": "Azure SQL Server Administrator Password"
+            }
+        },
+        "sqlDatabaseSkuName": {
+            "type": "string",
+            "defaultValue": "GP_S_Gen5_2",
+            "allowedValues": [
+                "GP_Gen4_1",
+                "GP_Gen4_2",
+                "GP_Gen4_3",
+                "GP_Gen4_4",
+                "GP_Gen4_5",
+                "GP_Gen4_6",
+                "GP_Gen4_7",
+                "GP_Gen4_8",
+                "GP_Gen4_9",
+                "GP_Gen4_10",
+                "GP_Gen4_16",
+                "GP_Gen4_24",
+                "GP_Gen5_2",
+                "GP_Gen5_4",
+                "GP_Gen5_6",
+                "GP_Gen5_8",
+                "GP_Gen5_10",
+                "GP_Gen5_12",
+                "GP_Gen5_14",
+                "GP_Gen5_16",
+                "GP_Gen5_18",
+                "GP_Gen5_20",
+                "GP_Gen5_24",
+                "GP_Gen5_32",
+                "GP_Gen5_40",
+                "GP_Gen5_80",
+                "GP_S_Gen5_1",
+                "GP_S_Gen5_2",
+                "GP_S_Gen5_4"
+            ],
+            "metadata": {
+                "description": "Azure SQL Database SKU Name"
+            }
+        },
+        "sqlDatabaseSkuSizeGB": {
+            "type": "int",
+            "minValue": 1,
+            "maxValue": 1024,
+            "defaultValue": 16,
+            "metadata": {
+                "description": "Azure SQL Database Storage Max Size in GB"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all the resources."
+            }
+        }
+    },
+    "variables": {
+        "databaseName": "sonarqube",
+        "sqlServerName": "[concat(parameters('siteName'), '-sql')]",
+        "servicePlanName": "[concat(parameters('siteName'), '-asp')]",
+        "servicePlanPricingTiers": {
+            "F1": {
+                "tier": "Free"
+            },
+            "B1": {
+                "tier": "Basic"
+            },
+            "B2": {
+                "tier": "Basic"
+            },
+            "B3": {
+                "tier": "Basic"
+            },
+            "S1": {
+                "tier": "Standard"
+            },
+            "S2": {
+                "tier": "Standard"
+            },
+            "S3": {
+                "tier": "Standard"
+            },
+            "P1V2": {
+                "tier": "Standard"
+            },
+            "P2V2": {
+                "tier": "Standard"
+            },
+            "P2V3": {
+                "tier": "Standard"
+            }
+        },
+        "sqlDatabaseServerlessTiers": [
+            "GP_S_Gen5_1",
+            "GP_S_Gen5_2",
+            "GP_S_Gen5_4"
+        ]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('servicePlanName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[variables('servicePlanName')]",
+                "workerSizeId": "1",
+                "reserved": true,
+                "numberOfWorkers": "1"
+            },
+            "sku": {
+                "name": "[parameters('servicePlanPricingTier')]",
+                "tier": "[variables('servicePlanPricingTiers')[parameters('servicePlanPricingTier')].tier]",
+                "capacity": "[parameters('servicePlanCapacity')]"
+            },
+            "kind": "linux"
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('siteName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('servicePlanName')]",
+                "[variables('sqlServerName')]"
+            ],
+            "properties": {
+                "siteConfig": {
+                    "linuxFxVersion": "[concat('DOCKER|sonarqube',':',parameters('sonarqubeImageVersion'))]"
+                },
+                "name": "[parameters('siteName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+            },
+            "resources": [
+                {
+                    "type": "config",
+                    "apiVersion": "2020-06-01",
+                    "name": "appsettings",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "SonarappSettings"
+                    },
+                    "properties": {
+                        "SONARQUBE_JDBC_URL": "[concat('jdbc:sqlserver://', reference(resourceId('Microsoft.Sql/servers',variables('sqlServerName'))).fullyQualifiedDomainName, ';databaseName=', variables('databaseName'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=', replace(reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName'))).fullyQualifiedDomainName, concat(variables('sqlServerName'), '.'), '*.'), ';loginTimeout=30;')]",
+                        "SONARQUBE_JDBC_USERNAME": "[parameters('sqlServerAdministratorUsername')]",
+                        "SONARQUBE_JDBC_PASSWORD": "[parameters('sqlServerAdministratorPassword')]",
+                        "sonar.path.data": "/home/sonarqube/data"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2020-02-02-preview",
+            "location": "[parameters('location')]",
+            "name": "[variables('sqlServerName')]",
+            "kind": "v12.0",
+            "properties": {
+                "administratorLogin": "[parameters('sqlServerAdministratorUsername')]",
+                "administratorLoginPassword": "[parameters('sqlServerAdministratorPassword')]",
+                "version": "12.0"
+            },
+            "resources": [
+                {
+                    "type": "firewallrules",
+                    "apiVersion": "2020-02-02-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(variables('sqlServerName'),'firewall')]",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    },
+                    "dependsOn": [
+                        "[variables('sqlServerName')]"
+                    ]
+                },
+                {
+                    "type": "databases",
+                    "apiVersion": "2020-02-02-preview",
+                    "name": "[variables('databaseName')]",
+                    "location": "[parameters('location')]",
+                    "sku": {
+                        "name": "[parameters('sqlDatabaseSkuName')]",
+                        "tier": "GeneralPurpose"
+                    },
+                    "kind": "[concat('v12.0,user,vcore',if(contains(variables('sqlDatabaseServerlessTiers'),parameters('sqlDatabaseSkuName')),',serverless',''))]",
+                    "properties": {
+                        "collation": "SQL_Latin1_General_CP1_CS_AS",
+                        "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
+                        "maxSizeBytes": "[mul(mul(mul(parameters('sqlDatabaseSkuSizeGB'),1024),1024),1024)]"
+                    },
+                    "dependsOn": [
+                        "[variables('sqlServerName')]"
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,428 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username used when provisioning virtual machines"
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "defaultValue": "es-vnet",
+      "metadata": {
+        "description": "Existing virtual network name to deploy into which contains Elasticsearch nodes"
+      }
+    },
+    "subNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "metadata": {
+        "description": "Number of subordinate JMeter nodes to provision"
+      }
+    },
+    "subNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "allowedValues": [
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7"
+      ],
+      "metadata": {
+        "description": "Size of the subordinate JMeter nodes"
+      }
+    },
+    "bossNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "allowedValues": [
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "Size of the boss JMeter node"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "jarball": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/elastic/elasticsearch-jmeter/resources/jarball.zip",
+      "metadata": {
+        "description": "The location of the test library and jar dependencies. This is extracted to every node under /opt/jmeter/apache-jmeter-2.13/lib/junit"
+      }
+    },
+    "testpack": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/elastic/elasticsearch-jmeter/resources/testpack.zip",
+      "metadata": {
+        "description": "The location of the test jmx and run properties. This is extracted to the JMeter master node only, in /opt/jmeter"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Name of the resource group used for the deployment."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat(substring(uniqueString(resourceGroup().id, 'jmeter'), 0, 6), 'jmeter')]",
+    "bossNodeIp": "10.0.4.10",
+    "subNodesIpPrefix": "10.0.4.2",
+    "networkSettings": {
+      "virtualNetworkName": "[parameters('existingVirtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "jmeter": {
+          "name": "jmeter",
+          "prefix": "10.0.4.0/24",
+          "vnet": "[parameters('existingVirtualNetworkName')]"
+        }
+      }
+    },
+    "subnetRef": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), 'jmeter')]",
+    "nicName": "jmeter-nic",
+    "vmName": "jmeter-vm",
+    "settings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.5-LTS",
+        "version": "latest"
+      },
+      "managementPort": "22",
+      "extensionSettings": {
+        "boss": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": [
+              "[uri(parameters('_artifactsLocation'), concat('jmeter-install.sh', parameters('_artifactsLocationSasToken')))]"
+            ],
+            "commandToExecute": "[concat('bash jmeter-install.sh -mr ', variables('subNodesIpPrefix'), '-', parameters('subNodeCount'), ' -j ', parameters('jarball'), ' -t ', parameters('testpack'))]"
+          }
+        },
+        "sub": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": [
+              "[uri(parameters('_artifactsLocation'), concat('jmeter-install.sh', parameters('_artifactsLocationSasToken')))]"
+            ],
+            "commandToExecute": "[concat('bash jmeter-install.sh -j ', parameters('jarball'))]"
+          }
+        }
+      }
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2021-02-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "jmeter-pip",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "jmeter-nsg",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "[variables('settings').managementPort]",
+              "destinationPortRange": "[variables('settings').managementPort]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('networkSettings').virtualNetworkName, '/jmeter')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressPrefix": "[variables('networkSettings').subnet.jmeter.prefix]"
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), '-sub', copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "subNodesNicLoop",
+        "count": "[parameters('subNodeCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, 'jmeter')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfigsub",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('subNodesIpPrefix'), copyindex())]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), '-boss')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', 'jmeter-pip')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', 'jmeter-nsg')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfigboss",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('bossNodeIp')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'jmeter-pip')]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'jmeter-nsg')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'), '-boss')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), '-boss'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('bossNodeSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('jmeter-boss')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('settings').imageReference]",
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'-boss','_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), '-boss'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmName'), '-boss', '/installjmeter')]",
+          "apiVersion": "2020-12-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), '-boss'))]"
+          ],
+          "properties": {
+            "publisher": "[variables('settings').extensionSettings.boss.publisher]",
+            "type": "[variables('settings').extensionSettings.boss.type]",
+            "typeHandlerVersion": "[variables('settings').extensionSettings.boss.typeHandlerVersion]",
+            "settings": {
+              "fileUris": "[variables('settings').extensionSettings.boss.settings.fileUris]",
+              "commandToExecute": "[concat(variables('settings').extensionSettings.boss.settings.commandToExecute)]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'), '-sub', copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "subVmLoop",
+        "count": "[parameters('subNodeCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), '-sub', copyindex()))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('subNodeSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('jmeter-sub', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('settings').imageReference]",
+          "osDisk": {
+            "name": "[concat(variables('vmName'), '-sub', copyindex(),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), '-sub', copyindex()))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmName'), '-sub', copyindex(), '/installjmeter')]",
+          "apiVersion": "2020-12-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), '-sub', copyindex()))]"
+          ],
+          "properties": {
+            "publisher": "[variables('settings').extensionSettings.sub.publisher]",
+            "type": "[variables('settings').extensionSettings.sub.type]",
+            "typeHandlerVersion": "[variables('settings').extensionSettings.sub.typeHandlerVersion]",
+            "settings": {
+              "fileUris": "[variables('settings').extensionSettings.sub.settings.fileUris]",
+              "commandToExecute": "[concat(variables('settings').extensionSettings.sub.settings.commandToExecute)]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "boss-pip": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses/', 'jmeter-pip')).ipAddress]"
+    }
+  }
+}
+

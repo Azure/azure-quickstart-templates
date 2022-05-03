@@ -1,0 +1,167 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.6.1.6515",
+      "templateHash": "4729344640992085062"
+    }
+  },
+  "parameters": {
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "[format('sql-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the SQL server"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The administrator username of the SQL Server."
+      }
+    },
+    "sqlAdministratorLoginPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "The administrator password of the SQL Server."
+      }
+    },
+    "omsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "[format('oms-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Log Analytics workspace name"
+      }
+    },
+    "workspaceRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the region for your OMS workspace"
+      }
+    },
+    "omsSku": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standalone",
+        "PerNode"
+      ],
+      "metadata": {
+        "description": "Select the SKU for OMS workspace"
+      }
+    },
+    "isMSDevOpsAuditEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Auditing of Microsoft support operations (DevOps)"
+      }
+    }
+  },
+  "variables": {
+    "diagnosticSettingsName": "SQLSecurityAuditEvents_3d229c42-c7e7-4c97-9a99-ec0d0d8b86c1"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-08-01",
+      "name": "[parameters('omsWorkspaceName')]",
+      "location": "[parameters('workspaceRegion')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('omsSku')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[parameters('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "tags": {
+        "DisplayName": "[parameters('sqlServerName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), 'master')]",
+      "location": "[parameters('location')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.Sql/servers/{0}/databases/{1}', parameters('sqlServerName'), 'master')]",
+      "name": "[variables('diagnosticSettingsName')]",
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName'))]",
+        "logs": [
+          {
+            "category": "SQLSecurityAuditEvents",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+          },
+          {
+            "category": "DevOpsOperationsAudit",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), 'master')]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/auditingSettings",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), 'default')]",
+      "properties": {
+        "state": "Enabled",
+        "isAzureMonitorTargetEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('isMSDevOpsAuditEnabled')]",
+      "type": "Microsoft.Sql/servers/devOpsAuditingSettings",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), 'default')]",
+      "properties": {
+        "state": "Enabled",
+        "isAzureMonitorTargetEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
+    }
+  ]
+}

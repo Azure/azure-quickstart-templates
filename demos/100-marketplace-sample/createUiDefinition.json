@@ -1,0 +1,181 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "vmName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Virtual Machine name",
+                "toolTip": "The name of the Virtual Machine.",
+                "defaultValue": "linux-vm",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-z0-9A-Z-]{3,79}$",
+                    "validationMessage": "The VM Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
+                }
+            },
+            {
+                "name": "adminUsername",
+                "type": "Microsoft.Compute.UserNameTextBox",
+                "label": "Username",
+                "toolTip": "Admin username for the machine",
+                "osPlatform": "Linux",
+                "constraints": {
+                    "required": true
+                }
+            },
+            {
+                "name": "SSHCredentials",
+                "type": "Microsoft.Compute.CredentialsCombo",
+                "label": {
+                    "authenticationType": "Authentication type",
+                    "password": "Password",
+                    "confirmPassword": "Confirm password",
+                    "sshPublicKey": "SSH public key"
+                },
+                "toolTip": {
+                    "authenticationType": "Authentication Type for the Virtual Machine",
+                    "password": "Password for the Virtual Machine",
+                    "sshPublicKey": "SSH Public Key for the Virtual Machine"
+                },
+                "constraints": {
+                    "required": true
+                },
+                "options": {
+                    "hideConfirmation": false
+                },
+                "osPlatform": "Linux"
+            }
+        ],
+        "steps": [
+            {
+                "name": "VirtualMachineConfig",
+                "label": "Virtual Machine Settings",
+                "subLabel": {
+                    "preValidation": "Configure the virtual machine's resources and settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Virtual Machine Settings",
+                "elements": [
+                    {
+                        "name": "vmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Virtual machine size",
+                        "toolTip": "The size of virtual machine to provision.",
+                        "recommendedSizes": [
+                            "Standard_D2_v2",
+                            "Standard_A2_v2"
+                        ],
+                        "osPlatform": "Linux",
+                        "count": "1"
+                    },
+                    {
+                        "name": "storageAccount",
+                        "type": "Microsoft.Storage.StorageAccountSelector",
+                        "label": "Diagnostic storage account",
+                        "toolTip": "Storage Account for the Virtual Machine's diagnostics",
+                        "defaultValue": {
+                            "type": "Standard_LRS",
+                            "name": "[concat(replace(basics('vmName'), '-', ''), take(replace(guid(), '-', ''), 10))]"
+                        },
+                        "constraints": {
+                            "allowedTypes": [
+                                "Standard_LRS",
+                                "Standard_GRS"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "publicIpAddress",
+                        "type": "Microsoft.Network.PublicIpAddressCombo",
+                        "label": {
+                            "publicIpAddress": "Public IP Address for the VM",
+                            "domainNameLabel": "DNS Prefix for the public IP Address"
+                        },
+                        "toolTip": {
+                            "publicIpAddress": "Public IP Address for the VM",
+                            "domainNameLabel": "DNS Prefix for the public IP Address, must be globally unique"
+                        },
+                        "defaultValue": {
+                            "publicIpAddressName": "[concat(basics('vmName'), '-ip')]",
+                            "domainNameLabel": "[concat(basics('vmName'), '-', take(replace(guid(), '-', ''), 10))]"
+                        },
+                        "options": {
+                            "hideExisting": false,
+                            "hideNone": false
+                        },
+                        "constraints": {
+                            "required": {
+                                "domainNameLabel": true
+                            }
+                        }
+                    },
+                    {
+                        "name": "virtualNetwork",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "Name of the virtual network",
+                            "subnets": "Subnets for the virtual network"
+                        },
+                        "defaultValue": {
+                            "name": "VirtualNetwork",
+                            "addressPrefixSize": "/16"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/16"
+                        },
+                        "subnets": {
+                            "subnet1": {
+                                "label": "Subnet",
+                                "defaultValue": {
+                                    "name": "Subnet-1",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "minAddressCount": 12,
+                                    "requireContiguousAddresses": false
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+
+            "location": "[location()]",
+            "vmName": "[basics('vmName')]",
+            "adminUsername": "[basics('adminUsername')]",
+            "authenticationType": "[basics('SSHCredentials').authenticationType]",
+            "adminPasswordOrKey": "[coalesce(basics('SSHCredentials').password, basics('SSHCredentials').sshPublicKey)]",
+
+            "vmSize": "[steps('VirtualMachineConfig').vmSize]",
+            "storageNewOrExisting": "[steps('VirtualMachineConfig').storageAccount.newOrExisting]",
+            "storageAccountName": "[steps('VirtualMachineConfig').storageAccount.name]",
+            "storageAccountType": "[steps('VirtualMachineConfig').storageAccount.type]",
+            "storageAccountResourceGroupName": "[steps('VirtualMachineConfig').storageAccount.resourceGroup]",
+
+            "virtualNetworkNewOrExisting": "[steps('VirtualMachineConfig').virtualNetwork.newOrExisting]",
+            "virtualNetworkName": "[steps('VirtualMachineConfig').virtualNetwork.name]",
+            "addressPrefixes": "[steps('VirtualMachineConfig').virtualNetwork.addressPrefixes]",
+            "subnetName": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.name]",
+            "subnetPrefix": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
+            "virtualNetworkResourceGroupName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
+
+            "publicIpNewOrExisting": "[steps('VirtualMachineConfig').publicIpAddress.newOrExistingOrNone]",
+            "publicIpName": "[steps('VirtualMachineConfig').publicIpAddress.name]",
+            "publicIpDns": "[steps('VirtualMachineConfig').publicIpAddress.domainNameLabel]",
+            "publicIpResourceGroupName": "[steps('VirtualMachineConfig').publicIpAddress.resourceGroup]",
+            "publicIPAllocationMethod": "[steps('VirtualMachineConfig').publicIpAddress.publicIPAllocationMethod]",
+            "publicIpSku": "[steps('VirtualMachineConfig').publicIpAddress.sku]"
+
+        }
+    }
+}

@@ -1,0 +1,104 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for the resources."
+            }
+        },
+        "numberOfZoness": {
+            "type": "int",
+            "defaultValue": 0,
+            "metadata": {
+                "description": "How many Zone to use. Use 0 for non zonal deployment."
+            }
+        },
+        "numberofHostsPerZone": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "How many hosts to create per zone."
+            }
+        },
+        "numberOfFDs": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "How many fault domains to use. "
+            }
+        },
+        "dhgNamePrefix": {
+            "type": "string",
+            "defaultValue": "myHostGroup",
+            "metadata": {
+                "description": "Name (prefix) for your host group."
+            }
+        },
+        "dhNamePrefix": {
+            "type": "string",
+            "defaultValue": "myHost",
+            "metadata": {
+                "description": "Name (prefix) for your host ."
+            }
+        },
+        "dhSKU": {
+            "type": "string",
+            "defaultValue": "DSv3-Type1",
+            "metadata": {
+                "description": "The type (family and generation) for your host ."
+            }
+        }
+    },
+    "variables": {
+        "numberOfHosts": "[if(equals(parameters('numberOfZoness'), 0), parameters('numberofHostsPerZone'), mul(parameters('numberOfZoness'), parameters('numberofHostsPerZone')))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('dhgNamePrefix'),copyIndex())]",
+            "type": "Microsoft.Compute/HostGroups",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('location')]",
+            "zones": 
+                "[if(equals(parameters('numberOfZoness'), 0), json('null'),array(copyindex(1)))]"            
+            ,
+            "copy": {
+                "name": "[parameters('dhgNamePrefix')]",
+                "count": "[if(equals(parameters('numberOfZoness'), 0), 1, parameters('numberOfZoness'))]"
+            },
+            "properties": {
+                "platformFaultDomainCount": "[parameters('numberOfFDs')]"
+            }            
+        },
+        {
+            "name": "[concat(parameters('dhgNamePrefix'),div(copyindex(), parameters('numberofHostsPerZone')),'/', parameters('dhNamePrefix'),div(copyindex(), parameters('numberofHostsPerZone')),mod(copyindex(), parameters('numberofHostsPerZone')))]",
+            "type": "Microsoft.Compute/Hostgroups/hosts",
+            "apiVersion": "2018-10-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/hostGroups',parameters('dhgNamePrefix'), copyindex(2))]"
+            ],
+            "sku": {
+                "name": "[parameters('dhSKU')]"
+            },
+            "copy": {
+                "name": "[parameters('dhgNamePrefix')]",
+                "count": "[variables('numberOfHosts')]"
+            },            
+            "properties": {
+                "platformFaultDomain": "[mod(copyindex(), parameters('numberOfFDs'))]"
+            }
+        }
+
+        
+    ],
+    "outputs": {
+            "hostCount": {
+              "type": "int",
+              "value": "[variables('numberOfHosts')]"
+            
+          }
+    }
+}

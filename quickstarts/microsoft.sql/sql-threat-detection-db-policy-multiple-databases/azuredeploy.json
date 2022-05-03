@@ -1,0 +1,100 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serverName": {
+            "type": "string",
+            "defaultValue": "[concat('server-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name for the SQL server"
+            }
+        },
+        "databaseNames": {
+            "type": "array",
+            "defaultValue": [
+                "[concat('db-', uniqueString(resourceGroup().id), '-1')]",
+                "[concat('db-', uniqueString(resourceGroup().id), '-2')]"
+            ],
+            "metadata": {
+                "description": "Array of names for the SQL databases"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for server and DBs"
+            }
+        },
+        "adminUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for admin"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for admin"
+            }
+        }
+    },
+    "variables": {
+        "databaseServerName": "[toLower(parameters('serverName'))]",
+        "databaseNames": "[parameters('databaseNames')]",
+        "databaseServerLocation": "[parameters('location')]",
+        "databaseServerAdminLogin": "[parameters('adminUser')]",
+        "databaseServerAdminLoginPassword": "[parameters('adminPassword')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2020-02-02-preview",
+            "location": "[variables('databaseServerLocation')]",
+            "name": "[variables('databaseServerName')]",
+            "properties": {
+                "administratorLogin": "[variables('databaseServerAdminLogin')]",
+                "administratorLoginPassword": "[variables('databaseServerAdminLoginPassword')]",
+                "version": "12.0"
+            },
+            "tags": {
+                "DisplayName": "[variables('databaseServerName')]"
+            }
+        },
+        {
+            "apiVersion": "2020-02-02-preview",
+            "type": "Microsoft.Sql/servers/databases",
+            "sku": {
+                "name": "S0",
+                "tier": "Standard"
+            },
+            "kind": "v12.0,user",
+            "location": "[variables('databaseServerLocation')]",
+            "name": "[concat(string(variables('databaseServerName')), '/', string(variables('databaseNames')[copyIndex()]))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', variables('databaseServerName'))]"
+            ],
+            "tags": {
+                "DisplayName": "[variables('databaseServerName')]"
+            },
+            "copy": {
+                "name": "databaseCopy",
+                "count": "[length(variables('databaseNames'))]"
+            },
+            "properties": {},
+            "resources": [
+                {
+                    "apiVersion": "2020-02-02-preview",
+                    "type": "securityAlertPolicies",
+                    "name": "default",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers/databases', variables('databaseServerName'), variables('databaseNames')[copyIndex()])]"
+                    ],
+                    "properties": {
+                        "state": "Enabled"
+                    }
+                }
+            ]
+        }
+    ]
+}

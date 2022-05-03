@@ -1,0 +1,169 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "commonSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Common settings object"
+      }
+    },
+    "networkSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Network settings object"
+      }
+    },
+    "machineSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Machine settings object"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nicMember', parameters('machineSettings').machineIndex)]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(parameters('networkSettings').machineIpPrefix, parameters('machineSettings').machineIndex)]",
+              "subnet": {
+                "id": "[parameters('networkSettings').subnetRef]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('vmMember', parameters('machineSettings').machineIndex)]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', 'nicMember', parameters('machineSettings').machineIndex)]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('commonSettings').availabilitySetName)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('machineSettings').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('machineSettings').machineNamePrefix, 'member', parameters('machineSettings').machineIndex)]",
+          "adminUsername": "[parameters('machineSettings').adminUsername]",
+          "adminPassword": "[parameters('machineSettings').adminPassword]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('machineSettings').osImageReference]",
+          "osDisk": {
+            "name":  "[concat('vmMember', parameters('machineSettings').machineIndex,'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name":  "[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk1')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 0,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk2')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 1,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk3')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 2,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk4')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 3,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk5')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 4,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk6')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 5,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk7')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 6,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name":"[concat('vmMember', parameters('machineSettings').machineIndex,'_DataDisk8')]",
+              "diskSizeGB": "[parameters('machineSettings').dataDiskSize]",
+              "lun": 7,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nicMember', parameters('machineSettings').machineIndex))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat('vmMember', parameters('machineSettings').machineIndex, '/installmongodb')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', 'vmMember', parameters('machineSettings').machineIndex)]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('machineSettings').vmScripts]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[parameters('machineSettings').commandToExecute]"
+        }
+      }
+    }
+  ]
+}

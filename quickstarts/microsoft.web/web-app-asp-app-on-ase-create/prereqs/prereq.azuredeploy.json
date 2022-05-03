@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+     "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "asename": "[concat('ase',uniqueString(resourceGroup().id))]",
+    "vnetname": "vnet",
+    "subnetname": "subnet1"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetname')]",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "192.168.250.0/23"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetname')]",
+            "properties": {
+              "addressPrefix": "192.168.250.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Web/hostingEnvironments",
+      "name": "[variables('asename')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetname'))]"
+      ],
+      "properties": {
+        "workerPools": [
+          {
+            "workerSizeId": 0,
+            "workerSize": "small",
+            "workerCount": 2
+          },
+          {
+            "workerSizeId": 1,
+            "workerSize": "medium",
+            "workerCount": 2
+          },
+          {
+            "workerSizeId": 2,
+            "workerSize": "large",
+            "workerCount": 0
+          }
+        ],
+        "MultiSize": "medium",
+        "MultiRoleCount": 2,
+        "name": "[variables('asename')]",
+        "location": "[parameters('location')]",
+        "VirtualNetwork": {
+          "Id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetname'), variables('subnetname'))]",
+          "Subnet": "[variables('subnetname')]"
+        },
+        "ipSslAddressCount": 1
+      }
+    }
+  ],
+  "outputs": {
+    "appServiceEnvironmentName": {
+      "type": "string",
+      "value": "[variables('asename')]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    }
+  }
+}

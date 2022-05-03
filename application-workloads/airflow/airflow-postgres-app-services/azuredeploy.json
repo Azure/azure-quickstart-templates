@@ -1,0 +1,227 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "airflowWebAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of Airflow web app"
+            }
+        },
+        "administratorLogin": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Database administrator login name"
+            }
+        },
+        "administratorLoginPassword": {
+            "type": "securestring",
+            "minLength": 8,
+            "maxLength": 128,
+            "metadata": {
+                "description": "Database administrator password"
+            }
+        },
+        "databaseSkuCapacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "allowedValues": [
+                1,
+                2,
+                4,
+                8,
+                16,
+                32
+            ],
+            "metadata": {
+                "description": "Azure database for PostgreSQL compute capacity in vCores (1, 2, 4, 8, 16, 32)"
+            }
+        },
+        "databaseSkuName": {
+            "type": "string",
+            "defaultValue": "B_Gen5_1",
+            "allowedValues": [
+                "GP_Gen5_2",
+                "GP_Gen5_4",
+                "GP_Gen5_8",
+                "GP_Gen5_16",
+                "GP_Gen5_32",
+                "MO_Gen5_2",
+                "MO_Gen5_4",
+                "MO_Gen5_8",
+                "MO_Gen5_16",
+                "MO_Gen5_32",
+                "B_Gen5_1",
+                "B_Gen5_2"
+            ],
+            "metadata": {
+                "description": "Azure database for PostgreSQL sku name "
+            }
+        },
+        "databaseSkuSizeMB": {
+            "type": "int",
+            "allowedValues": [
+                102400,
+                51200,
+                10240,
+                5120
+            ],
+            "defaultValue": 5120,
+            "metadata": {
+                "description": "Azure database for PostgreSQL Sku Size "
+            }
+        },
+        "databaseSkuTier": {
+            "type": "string",
+            "defaultValue": "Basic",
+            "allowedValues": [
+                "GeneralPurpose",
+                "MemoryOptimized",
+                "Basic"
+            ],
+            "metadata": {
+                "description": "Azure database for PostgreSQL pricing tier"
+            }
+        },
+        "databaseskuFamily": {
+            "type": "string",
+            "defaultValue": "Gen5",
+            "metadata": {
+                "description": "Azure database for PostgreSQL sku family"
+            }
+        },
+        "postgresqlVersion": {
+            "type": "string",
+            "allowedValues": [
+                "9.5",
+                "9.6",
+                "10",
+                "11"
+            ],
+            "defaultValue": "11",
+            "metadata": {
+                "description": "PostgreSQL version"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "databaseName": "[concat(parameters('airflowWebAppName'), 'database')]",
+        "serverName": "[concat(parameters('airflowWebAppName'), 'pgserver')]",
+        "hostingPlanName": "[concat(parameters('airflowWebAppName'), 'serviceplan')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('hostingPlanName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "Tier": "Standard",
+                "Name": "S1"
+            },
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSize": "1",
+                "reserved": true,
+                "numberOfWorkers": 1
+            }
+        },
+        {
+            "comments": "Airflow lauched based on the latest Docker image of apache/airflow.",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('airflowWebAppName')]",
+            "location": "[parameters('location')]",
+            "resources": [
+                {
+                    "comments": "This are the generated settings for the Airflow Web App",
+                    "type": "config",
+                    "apiVersion": "2019-08-01",
+                    "name": "appsettings",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('airflowWebAppName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "Airflow App Settings"
+                    },
+                    "properties": {
+                        "AIRFLOW__CORE__SQL_ALCHEMY_CONN": "[concat('postgresql://', parameters('administratorLogin'), '@', reference(resourceId('Microsoft.DBforPostgreSQL/servers',variables('serverName'))).fullyQualifiedDomainName,':', parameters('administratorLoginPassword'),'@',reference(resourceId('Microsoft.DBforPostgreSQL/servers',variables('serverName'))).fullyQualifiedDomainName,':5432/',variables('databaseName'))]",
+                        "AIRFLOW__CORE__SQL_ALCHEMY_POOL_SIZE": 20,
+                        "AIRFLOW__CORE__LOAD_EXAMPLES": "true",
+                        "AIRFLOW__CORE__EXECUTOR": "LocalExecutor",
+                        "WEBSITES_ENABLE_APP_SERVICE_STORAGE": "true"
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "name": "[parameters('airflowWebAppName')]",
+                "siteConfig": {
+                    "linuxFxVersion": "DOCKER|puckel/docker-airflow:latest",
+                    "requestTracingEnabled": true,
+                    "httpLoggingEnabled": true,
+                    "detailedErrorLoggingEnabled": true,
+                    "autoHealEnabled": true
+                },
+                "httpsOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers",
+            "apiVersion": "2017-12-01",
+            "name": "[variables('serverName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('databaseSkuName')]",
+                "tier": "[parameters('databaseSkuTier')]",
+                "capacity": "[parameters('databaseSkuCapacity')]",
+                "size": "[parameters('databaseSkuSizeMB')]",
+                "family": "[parameters('databaseskuFamily')]"
+            },
+            "resources": [
+                {
+                    "type": "firewallrules",
+                    "apiVersion": "2017-12-01",
+                    "name": "[concat(variables('serverName'),'firewall')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforPostgreSQL/servers',variables('serverName'))]"
+                    ],
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "255.255.255.255"
+                    }
+                },
+                {
+                    "type": "databases",
+                    "apiVersion": "2017-12-01",
+                    "name": "[variables('databaseName')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforPostgreSQL/servers',variables('serverName'))]"
+                    ],
+                    "properties": {
+                        "charset": "utf8",
+                        "collation": "English_United States.1252"
+                    }
+                }
+            ],
+            "properties": {
+                "version": "[parameters('postgresqlVersion')]",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "storageMB": "[parameters('databaseSkuSizeMB')]"
+            }
+        }
+    ]
+}

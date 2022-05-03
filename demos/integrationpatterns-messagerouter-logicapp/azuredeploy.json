@@ -1,0 +1,228 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "defaultValue": "MessageRouter",
+      "metadata": {
+        "description": "The name for the logic app."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "name": "[parameters('logicAppName')]",
+      "apiVersion": "2019-05-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "properties": {
+                    "Address": {
+                      "type": "string"
+                    },
+                    "City": {
+                      "type": "string"
+                    },
+                    "Name": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "actions": {
+            "Initialize_variable": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "ResultURL",
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "Response": {
+              "runAfter": {
+                "Switch": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Response",
+              "inputs": {
+                "body": {
+                  "Response": "Message can be seen at @{variables('ResultURL')}"
+                },
+                "statusCode": 200
+              }
+            },
+            "Switch": {
+              "runAfter": {
+                "Initialize_variable": [
+                  "Succeeded"
+                ]
+              },
+              "cases": {
+                "Amsterdam": {
+                  "case": "Amsterdam",
+                  "actions": {
+                    "Send_To_Amsterdam": {
+                      "type": "Http",
+                      "inputs": {
+                        "body": {
+                          "description": "Uploaded from Logic Apps",
+                          "files": {
+                            "Amsterdam.txt": {
+                              "content": "Name: @{triggerBody()?['Name']}\nAddress: @{triggerBody()?['Address']}\nCity: @{triggerBody()?['City']}"
+                            }
+                          },
+                          "public": true
+                        },
+                        "method": "POST",
+                        "uri": "https://api.github.com/gists"
+                      }
+                    },
+                    "Set_Amsterdam_Result": {
+                      "runAfter": {
+                        "Send_To_Amsterdam": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ResultURL",
+                        "value": "@{body('Send_To_Amsterdam')?['html_url']}"
+                      }
+                    }
+                  }
+                },
+                "New_York": {
+                  "case": "New York",
+                  "actions": {
+                    "Send_To_New_York": {
+                      "type": "Http",
+                      "inputs": {
+                        "body": {
+                          "description": "Uploaded from Logic Apps",
+                          "files": {
+                            "New York.txt": {
+                              "content": "Name: @{triggerBody()?['Name']}\nAddress: @{triggerBody()?['Address']}\nCity: @{triggerBody()?['City']}"
+                            }
+                          },
+                          "public": true
+                        },
+                        "method": "POST",
+                        "uri": "https://api.github.com/gists"
+                      }
+                    },
+                    "Set_New_York_Result": {
+                      "runAfter": {
+                        "Send_To_New_York": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ResultURL",
+                        "value": "@{body('Send_To_New_York')?['html_url']}"
+                      }
+                    }
+                  }
+                },
+                "Paris": {
+                  "case": "Paris",
+                  "actions": {
+                    "Send_To_Paris": {
+                      "type": "Http",
+                      "inputs": {
+                        "body": {
+                          "description": "Uploaded from Logic Apps",
+                          "files": {
+                            "Paris.txt": {
+                              "content": "Name: @{triggerBody()?['Name']}\nAddress: @{triggerBody()?['Address']}\nCity: @{triggerBody()?['City']}"
+                            }
+                          },
+                          "public": true
+                        },
+                        "method": "POST",
+                        "uri": "https://api.github.com/gists"
+                      }
+                    },
+                    "Set_Paris_Result": {
+                      "runAfter": {
+                        "Send_To_Paris": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ResultURL",
+                        "value": "@{body('Send_To_Paris')?['html_url']}"
+                      }
+                    }
+                  }
+                }
+              },
+              "default": {
+                "actions": {
+                  "Send_To_Other_Cities": {
+                    "type": "Http",
+                    "inputs": {
+                      "body": {
+                        "description": "Uploaded from Logic Apps",
+                        "files": {
+                          "Other Cities.txt": {
+                            "content": "Name: @{triggerBody()?['Name']}\nAddress: @{triggerBody()?['Address']}\nCity: @{triggerBody()?['City']}"
+                          }
+                        },
+                        "public": true
+                      },
+                      "method": "POST",
+                      "uri": "https://api.github.com/gists"
+                    }
+                  },
+                  "Set_Other_Cities_Result": {
+                    "runAfter": {
+                      "Send_To_Other_Cities": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "ResultURL",
+                      "value": "@{body('Send_To_Other_Cities')?['html_url']}"
+                    }
+                  }
+                }
+              },
+              "expression": "@triggerBody()?['City']",
+              "type": "Switch"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sku": {
+            "type": "object",
+            "metadata": {
+                "description": "SKU for the MySQL PaaS instance to be deployed."
+            }
+        },
+        "serverName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the MySQL PaaS instance to be deployed."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where the instance should be deployed."
+            }
+        },
+        "numberOfReplicas": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of replica instances to be deployed."
+            }
+        },
+        "backupRetentionDays": {
+            "type": "int",
+            "metadata": {
+                "description": "Backup retention period."
+            }
+        },
+        "geoRedundantBackup": {
+            "type": "string",
+            "metadata": {
+                "description": "Enable or disable geo redundant backups."
+            }
+        },
+        "sourceServerId": {
+            "type": "string",
+            "metadata": {
+                "description": "Reference ID of the MySQL PaaS instance being deployed."
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "copy": {
+                "name": "replicasLoop",
+                "count": "[if(equals(parameters('numberOfReplicas'),0),add(parameters('numberOfReplicas'),1),parameters('numberOfReplicas'))]",
+                "mode": "serial"
+            },
+            "type": "Microsoft.DBforMySQL/servers",
+            "sku": "[parameters('sku')]",
+            "name": "[concat(parameters('serverName'),'-',add(copyIndex(),1))]",
+            "apiVersion": "2017-12-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "createMode": "Replica",
+                "sourceServerId": "[parameters('sourceServerId')]",
+                "storageProfile": {
+                    "storageMB": "[parameters('sku').size]",
+                    "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

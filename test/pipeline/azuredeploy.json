@@ -1,0 +1,124 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin usernanme"
+            }
+        },
+        "adminPassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Secure adminPassword"
+            }
+        },
+        "managedDiskId": {
+            "type": "string",
+            "metadata": {
+                "description": "resourceId of the disk to use for the VMSS, must be in the same location as the vmss"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location of the managedDisk and the resources deployed in the template."
+            }
+        },
+        "agentPoolprefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Naming prefix for the vmss"
+            }
+        }
+    },
+    "variables": {
+        "vnetName": "[format('agent-pool-vnet-{0}', parameters('location'))]",
+        "subnetName": "[format('agent-pool-subnet-{0}', parameters('location'))]",
+        "vmssName": "[format('{0}-{1}', parameters('agentPoolprefix'), parameters('location'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2021-02-01",
+            "name": "[variables('vnetName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "apiVersion": "2020-12-01",
+            "name": "[variables('vmssName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('vnetName')]"
+            ],
+            "sku": {
+                "name": "Standard_D2s_v3",
+                "capacity": 2
+            },
+            "properties": {
+                "overprovision": false,
+                "upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "createOption": "FromImage",
+                            "caching": "ReadOnly",
+                            "managedDisk": {
+                                "storageAccountType": "StandardSSD_LRS"
+                            }
+                        },
+                        "imageReference": {
+                            "id": "[parameters('managedDiskId')]"
+                        }
+                    },
+                    "networkProfile": {
+                        "networkInterfaceConfigurations": [
+                            {
+                                "name": "agent-nic",
+                                "properties": {
+                                    "primary": true,
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "agent-ip-config",
+                                            "properties": {
+                                                "subnet": {
+                                                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "osProfile": {
+                        "computerNamePrefix": "[parameters('agentPoolprefix')]",
+                        "adminUsername": "[parameters('adminUsername')]",
+                        "adminPassword": "[parameters('adminPassword')]"
+                    }
+                },
+                "singlePlacementGroup": false,
+                "platformFaultDomainCount": 1
+            }
+        }
+    ]
+}

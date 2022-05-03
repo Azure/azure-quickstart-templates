@@ -1,0 +1,176 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "counter": {
+      "metadata": {
+        "description": "from the copyindex function of calling template"
+      },
+      "type": "int"
+    },
+    "moodleCommon": {
+      "metadata": {
+        "description": "Common Moodle values"
+      },
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "name": "[variables('nicName')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipcfggfs",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetSanRef')]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Gluster VM NIC"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[variables('vmName')]",
+      "properties": {
+        "availabilitySet": {
+          "id": "[variables('asRef')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('moodleCommon').glusterVmSku]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicRef')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "adminUsername": "[parameters('moodleCommon').sshUsername]",
+          "computerName": "[variables('vmName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('moodleCommon').osType]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "name": "[variables('vmName')]"
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('moodleCommon').fileServerDiskCount]",
+              "input": {
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                },
+                "diskSizeGB": "[parameters('moodleCommon').fileServerDiskSize]",
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        }
+      },
+      "tags": {
+        "displayName": "Gluster Virtual Machine"
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/',variables('vmName'))]"
+      ],
+      "name": "[concat(variables('vmName'),'-ScriptProcessor')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "vmName": {
+            "value": "[ variables('vmName')]"
+          },
+          "vmNumber": {
+            "value": "[parameters('counter')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'glustervmconfig.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/',variables('vmName'))]"
+      ],
+      "name": "[concat(variables('vmName'),'-Backup')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "vmName": {
+            "value": "[variables('vmName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    }
+  ],
+  "variables": {
+    "asRef": "[resourceId('Microsoft.Compute/availabilitySets', parameters('moodleCommon').gfxAvailabilitySetName)]",
+    "nicName": "[concat(variables('vmName'),'-nic')]",
+    "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+    "subnetSanRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('moodleCommon').vnetName, parameters('moodleCommon').subnetSan)]",
+    "vmName": "[concat(parameters('moodleCommon').gfsNameRoot,parameters('counter'))]"
+  }
+}

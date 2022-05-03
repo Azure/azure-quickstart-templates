@@ -1,0 +1,467 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "OS": {
+      "type": "string",
+      "defaultValue": "Ubuntu 20.04-LTS",
+      "allowedValues": [
+        "Ubuntu 20.04-LTS",
+        "Ubuntu 18.04-LTS",
+        "Debian 10",
+        "Debian 9",
+        "CentOS 8.1"
+      ],
+      "metadata": {
+        "description": "The Linux distribution for the VM. This will pick a fully patched image of the selected distribution."
+      }
+    },
+    "javaPackageName": {
+      "type": "string",
+      "defaultValue": "Azul_Zulu_OpenJDK-8-JDK",
+      "allowedValues": [
+        "Azul_Zulu_OpenJDK-7-JDK",
+        "Azul_Zulu_OpenJDK-7-JRE",
+        "Azul_Zulu_OpenJDK-7-JRE-Headless",
+        "Azul_Zulu_OpenJDK-8-JDK",
+        "Azul_Zulu_OpenJDK-8-JRE",
+        "Azul_Zulu_OpenJDK-8-JRE-Headless",
+        "Azul_Zulu_OpenJDK-11-JDK",
+        "Azul_Zulu_OpenJDK-11-JRE",
+        "Azul_Zulu_OpenJDK-11-JRE-Headless",
+        "Azul_Zulu_OpenJDK-13-JDK",
+        "Azul_Zulu_OpenJDK-13-JRE",
+        "Azul_Zulu_OpenJDK-13-JRE-Headless"
+      ],
+      "metadata": {
+        "description": "Azul Zulu OpenJDK JVM for Azure package name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size for the Virtual Machine."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "linux-zulu",
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password or SSH key for the Virtual Machine."
+      }
+    },
+    "storageNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "metadata": {
+        "description": "Determines whether or not a new storage account should be provisioned."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the storage account"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS"
+      ],
+      "metadata": {
+        "description": "Storage account type"
+      }
+    },
+    "storageAccountResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Name of the resource group for the existing storage account"
+      }
+    },
+    "virtualNetworkNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "metadata": {
+        "description": "Determines whether or not a new virtual network should be provisioned."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VirtualNetwork",
+      "metadata": {
+        "description": "Name of the virtual network"
+      }
+    },
+    "addressPrefixes": {
+      "type": "array",
+      "defaultValue": [
+        "10.0.0.0/16"
+      ],
+      "metadata": {
+        "description": "Address prefix of the virtual network"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "default",
+      "metadata": {
+        "description": "Name of the subnet"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix of the virtual network"
+      }
+    },
+    "virtualNetworkResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Name of the resource group for the existing virtual network"
+      }
+    },
+    "publicIpNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "metadata": {
+        "description": "Determines whether or not a new public ip should be provisioned."
+      }
+    },
+    "publicIpName": {
+      "type": "string",
+      "defaultValue": "PublicIp",
+      "metadata": {
+        "description": "Name of the public ip address"
+      }
+    },
+    "publicIpDns": {
+      "type": "string",
+      "defaultValue": "[concat('linux-vm-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "DNS of the public ip address for the VM"
+      }
+    },
+    "publicIpResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Name of the resource group for the public ip address"
+      }
+    },
+    "publicIpAllocationMethod": {
+      "type": "string",
+      "defaultValue": "Dynamic",
+      "allowedValues": [
+        "Dynamic",
+        "Static"
+      ],
+      "metadata": {
+        "description": "Allocation method for the public ip address"
+      }
+    },
+    "publicIpSku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Name of the resource group for the public ip address"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "imageReference": {
+      "Ubuntu 20.04-LTS": {
+        "publisher": "Canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts",
+        "version": "latest"
+      },
+      "Ubuntu 18.04-LTS": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "18.04-LTS",
+        "version": "latest"
+      },
+      "Debian 10": {
+        "publisher": "Debian",
+        "offer": "debian-10",
+        "sku": "10",
+        "version": "latest"
+      },
+      "Debian 9": {
+        "publisher": "credativ",
+        "offer": "Debian",
+        "sku": "9",
+        "version": "latest"
+      },
+      "CentOS 8.1": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "8_1",
+        "version": "latest"
+      }
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "networkSecurityGroupName": "[concat(parameters('vmName'), '-nsg')]",
+    "nicName": "[concat(parameters('vmName'), '-nic')]",
+    "publicIpAddressId": {
+      "id": "[resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+    },
+    "scriptFile": {
+      "Ubuntu 20.04-LTS": {
+        "scriptFileName": "apt-zulu-install.sh"
+      },
+      "Ubuntu 18.04-LTS": {
+        "scriptFileName": "apt-zulu-install.sh"
+      },
+      "Debian 9": {
+        "scriptFileName": "apt-zulu-install.sh"
+      },
+      "Debian 10": {
+        "scriptFileName": "apt-zulu-install.sh"
+      },
+      "CentOS 8.1": {
+        "scriptFileName": "yum-zulu-install.sh"
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "Storage",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-11-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('networkSecurityGroupName')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": "[parameters('addressPrefixes')]"
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('publicIpNewOrExisting'), 'new')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-11-01",
+      "name": "[parameters('publicIpName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('publicIpSku')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIpAllocationMethod')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicIpDns')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-11-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowSSH",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-11-01",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('publicIpName')]",
+        "[parameters('virtualNetworkName')]",
+        "[variables('networkSecurityGroupName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
+              },
+              "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId') , json('null'))]"
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-12-01",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('storageAccountName')]",
+        "[variables('nicName')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')[parameters('OS')]]",
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2019-06-01').primaryEndpoints.blob]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "apiVersion": "2019-12-01",
+          "name": "installScript",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('vmName')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('scriptFile')[parameters('OS')].scriptFileName, parameters('_artifactsLocationSasToken')))]"
+              ],
+              "commandToExecute": "[concat('bash ', variables('scriptFile')[parameters('OS')].scriptFileName, ' ', parameters('javaPackageName'))]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "ssh-command": {
+      "type": "string",
+      "value": "[if(equals(parameters('publicIpNewOrExisting'), 'none'), 'no public ip', concat('ssh ', parameters('adminUsername'), '@', reference(resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName')), '2019-11-01').dnsSettings.fqdn))]"
+    }
+  }
+}

@@ -1,0 +1,300 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moesifApplicationId": {
+            "type": "string",
+            "minLength": 50,
+            "metadata": {
+                "description": "Your Moesif Application Id which can be found within your Moesif Portal. After signing up for a Moesif account, your Moesif Application Id will be displayed during the onboarding steps. Sets environment variable APIMEVENTS-MOESIF-APPLICATION-ID in App Service"
+            }
+        },
+        "existingApiMgmtName": {
+            "type": "string",
+            "defaultValue": "",
+            "minLength": 0,
+            "metadata": {
+                "description": "Name of your existing Azure API Management service. If blank, the log-to-eventhub logger is not created. The API Management service must be in same Resource Group as the deployment"
+            }
+        },
+        "azureAppServiceSku": {
+            "type": "string",
+            "defaultValue": "B1",
+            "allowedValues": [
+                "B1",
+                "B2",
+                "B3",
+                "S1",
+                "S2",
+                "S3",
+                "P1v2",
+                "P2v2",
+                "P3v2",
+                "P1v3",
+                "P2v3",
+                "P3v3"
+            ],
+            "metadata": {
+                "description": "The instance / SKU name for Azure App Service eg: B1, B2, S1, P1V2. Note F1 and D1 shared plan are not supported as they do not support 'alwaysOn'"
+            }
+        },
+        "dnsNamePrefix": {
+            "type": "string",
+            "defaultValue": "[concat('moesiflog', uniqueString(resourceGroup().id))]",
+            "minLength": 6,
+            "metadata": {
+                "description": "A prefix that will be added to created resource names and DNS URLs. Allowed characters: alphabets and numbers only. Resulting name must be maximum 24 characters (storage account maximum)"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources. eg 'westus2'"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "[deployment().properties.templateLink.uri]",
+            "metadata": {
+                "description": "The base URL where templates are located. Should end with trailing '/'"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "moesifSessionToken": "optional",
+        "moesifApiVersion": "v1",
+        "apiManagementLoggerName": "moesif-log-to-event-hub",
+        "azureWebsitesDomainLookup": {
+            "AzureCloud": ".azurewebsites.net",
+            "AzureUSGovernment": ".azurewebsites.us"
+        },
+        "azureWebsitesDomain": "[variables('azureWebsitesDomainLookup')[environment().name]]",
+        "eventHubNS": "[parameters('dnsNamePrefix')]",
+        "eventHubName": "[parameters('dnsNamePrefix')]",
+        "eventHubSendPolicyName": "[concat(parameters('dnsNamePrefix'), '-send-policy')]",
+        "eventHubListenPolicy": "[concat(parameters('dnsNamePrefix'), '-listen-policy')]",
+        "azStorageTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.storage/storageaccounts.json', parameters('_artifactsLocationSasToken')))]",
+        "azEventHubTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.eventhub/namespaces.json', parameters('_artifactsLocationSasToken')))]",
+        "azApiMgmtLoggerInstallTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.apimanagement/service/loggers.json', parameters('_artifactsLocationSasToken')))]",
+        "azAppServicePlanTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/serverfarms.json', parameters('_artifactsLocationSasToken')))]",
+        "azAppServiceTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites.json', parameters('_artifactsLocationSasToken')))]",
+        "azAppServiceWebJobTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites/extensions.json', parameters('_artifactsLocationSasToken')))]",
+        "azAppServiceWebJobZipUri": "[uri(parameters('_artifactsLocation'), concat('scripts/apim-2-moesif-webjob-webdeploy.zip', parameters('_artifactsLocationSasToken')))]",
+        "storageAccountName": "[replace(parameters('dnsNamePrefix'), '-', '')]",
+        "apiMgrSpecified": "[greater(length(parameters('existingApiMgmtName')), 0)]",
+        "tags": { "purpose": "moesif" }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "storage-deploy",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('azStorageTemplUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "storageAccountName": {
+                        "value": "[variables('storageAccountName')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "eventhub-deploy",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('azEventHubTemplUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "eventHubNsName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubSendPolicyName": {
+                        "value": "[variables('eventHubSendPolicyName')]"
+                    },
+                    "eventHubListenPolicy": {
+                        "value": "[variables('eventHubListenPolicy')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "api-management-logger-deploy",
+            "condition": "[variables('apiMgrSpecified')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'eventhub-deploy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('azApiMgmtLoggerInstallTemplUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "existingApiMgmtName": {
+                        "value": "[parameters('existingApiMgmtName')]"
+                    },
+                    "logToEventhubLoggerName": {
+                        "value": "[variables('apiManagementLoggerName')]"
+                    },
+                    "eventHubNS": {
+                        "value": "[variables('eventHubNS')]"
+                    },
+                    "eventHubName": {
+                        "value": "[variables('eventHubName')]"
+                    },
+                    "eventHubSendPolicyName": {
+                        "value": "[variables('eventHubSendPolicyName')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "app-service-plan-deploy",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('azAppServicePlanTemplUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServicePlanName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "appServiceSkuName": {
+                        "value": "[parameters('azureAppServiceSku')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "app-service-deploy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'app-service-plan-deploy')]",
+                "[resourceId('Microsoft.Resources/deployments', 'storage-deploy')]",
+                "[resourceId('Microsoft.Resources/deployments', 'eventhub-deploy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('azAppServiceTemplUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServiceName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "appServicePlanName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubNamespace": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubListenPolicy": {
+                        "value": "[variables('eventHubListenPolicy')]"
+                    },
+                    "apimEvtStorName": {
+                        "value": "[variables('storageAccountName')]"
+                    },
+                    "apimEvtMoesifApplicationId": {
+                        "value": "[parameters('moesifApplicationId')]"
+                    },
+                    "apimEvtMoesifSessionToken": {
+                        "value": "[variables('moesifSessionToken')]"
+                    },
+                    "apimEvtMoesifApiVersion": {
+                        "value": "[variables('moesifApiVersion')]"
+                    },
+                    "azureWebsitesDomain": {
+                        "value": "[variables('azureWebsitesDomain')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "app-service-webjob-msdeploy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'app-service-deploy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('azAppServiceWebJobTemplUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServiceName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "webJobZipDeployUrl": {
+                        "value": "[variables('azAppServiceWebJobZipUri')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "logToEventhubLoggerName": {
+            "type": "string",
+            "condition": "[variables('apiMgrSpecified')]",
+            "value": "[variables('apiManagementLoggerName')]"
+        }
+    }
+}

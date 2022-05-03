@@ -1,0 +1,175 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "replSetName": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "mongoAdminUsername": {
+      "type": "string"
+    },
+    "mongoAdminPassword": {
+      "type": "securestring"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "vmbasename": {
+      "type": "string"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "numDataDisks": {
+      "type": "int"
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int"
+    },
+    "subnet": {
+      "type": "object"
+    },
+    "staticIp": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
+    },
+    "routerDnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Dns prefix of the router node to be used to create the ssl cert"
+      }
+    },
+    "roleType": {
+      "type": "string"
+    },
+    "mongoSSLCertPassword": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+  "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('subnet').vnet, parameters('subnet').name)]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[if(equals(parameters('roleType'), 'Primary'), 'Static', 'Dynamic')]",
+              "privateIPAddress": "[if(equals(parameters('roleType'), 'Primary'), parameters('staticIp'), json('null'))]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmbasename'), 'vm')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '_datadisk', copyIndex('dataDisks',1))]",
+                "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "caching": "ReadWrite",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
+            }
+          ]
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('namespace'), 'set'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/replica', parameters('roleType'), 'Install')]",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), parameters('vmbasename'), 'vm'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('osSettings').scripts]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[if(equals(parameters('roleType'), 'Primary'), concat('bash replica_primary.sh ', parameters('replSetName'), ' ', parameters('staticIp'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', parameters('routerDnsNamePrefix'), ' ', parameters('mongoSSLCertPassword')), concat('bash replica_secondary.sh ', parameters('replSetName'), ' ', parameters('routerDnsNamePrefix'), ' ', parameters('mongoSSLCertPassword')))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

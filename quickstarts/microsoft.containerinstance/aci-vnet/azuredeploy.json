@@ -1,0 +1,199 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "9027093124117826122"
+    }
+  },
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "aci-vnet",
+      "metadata": {
+        "description": "VNet name"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Address prefix"
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "aci-subnet",
+      "metadata": {
+        "description": "Subnet name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "containerGroupName": {
+      "type": "string",
+      "defaultValue": "aci-containergroup",
+      "metadata": {
+        "description": "Container group name"
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "defaultValue": "aci-container",
+      "metadata": {
+        "description": "Container name"
+      }
+    },
+    "image": {
+      "type": "string",
+      "defaultValue": "mcr.microsoft.com/azuredocs/aci-helloworld",
+      "metadata": {
+        "description": "Container image to deploy. Should be of the form accountName/imagename:tag for images stored in Docker Hub or a fully qualified URI for a private registry like the Azure Container Registry."
+      }
+    },
+    "port": {
+      "type": "int",
+      "defaultValue": 80,
+      "metadata": {
+        "description": "Port to open on the container."
+      }
+    },
+    "cpuCores": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of CPU cores to allocate to the container. Must be an integer."
+      }
+    },
+    "memoryInGb": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The amount of memory to allocate to the container in gigabytes."
+      }
+    }
+  },
+  "variables": {
+    "networkProfileName": "aci-networkProfile",
+    "interfaceConfigName": "eth0",
+    "interfaceIpConfig": "ipconfigprofile1"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-11-01",
+      "name": "[format('{0}/{1}', parameters('vnetName'), parameters('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetAddressPrefix')]",
+        "delegations": [
+          {
+            "name": "DelegationService",
+            "properties": {
+              "serviceName": "Microsoft.ContainerInstance/containerGroups"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkProfiles",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('networkProfileName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containerNetworkInterfaceConfigurations": [
+          {
+            "name": "[variables('interfaceConfigName')]",
+            "properties": {
+              "ipConfigurations": [
+                {
+                  "name": "[variables('interfaceIpConfig')]",
+                  "properties": {
+                    "subnet": {
+                      "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2019-12-01",
+      "name": "[parameters('containerGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('containerName')]",
+            "properties": {
+              "image": "[parameters('image')]",
+              "ports": [
+                {
+                  "port": "[parameters('port')]",
+                  "protocol": "TCP"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGB": "[parameters('memoryInGb')]"
+                }
+              }
+            }
+          }
+        ],
+        "osType": "Linux",
+        "networkProfile": {
+          "id": "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]"
+        },
+        "restartPolicy": "Always"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "containerIPv4Address": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('containerGroupName'))).ipAddress.ip]"
+    }
+  }
+}

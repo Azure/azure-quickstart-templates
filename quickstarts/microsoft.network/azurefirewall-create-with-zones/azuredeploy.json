@@ -1,0 +1,179 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "test-vnet",
+      "metadata": {
+        "description": "Virtual network name"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Virtual network address range"
+      }
+    },
+    "azureFirewallSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "AzureFirewallSubnet prefix"
+      }
+    },
+    "firewallName": {
+      "type": "string",
+      "defaultValue": "firewall1",
+      "metadata": {
+        "description": "Azure Firewall name"
+      }
+    },
+    "numberOfPublicIPAddresses": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of public IP addresses"
+      }
+    },
+    "publicIPNamePrefix": {
+      "type": "string",
+      "defaultValue": "publicIP",
+      "metadata": {
+        "description": "Public IP address name prefix - will be auto suffixed with a number (e.g. publicIP1)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources. Only certain regions support zones."
+      }
+    },
+    "availabilityZones": {
+      "type": "array",
+      "defaultValue": ["1", "2", "3"],
+      "metadata": {
+        "description": "Zone numbers e.g. 1,2,3."
+      }
+    }
+  },
+  "variables": {
+    "azureFirewallSubnetName": "AzureFirewallSubnet",
+    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
+    "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
+    "copy": [
+      {
+        "name": "azureFirewallIpConfigurations",
+        "count": "[parameters('numberOfPublicIPAddresses')]",
+        "input": {
+          "name": "[concat('IpConf', copyIndex('azureFirewallIpConfigurations'))]",
+          "properties": {
+            "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
+            "publicIPAddress": {
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('publicIPNamePrefix'), add(copyIndex('azureFirewallIpConfigurations'), 1)))]"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "[parameters('virtualNetworkName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('azureFirewallSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('azureFirewallSubnetAddressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(parameters('publicIPNamePrefix'), add(copyIndex(), 1))]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      },
+      "copy": {
+        "name": "publicIpCopy",
+        "count": "[parameters('numberOfPublicIPAddresses')]"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/azureFirewalls",
+      "name": "[parameters('firewallName')]",
+      "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "publicIpCopy"
+      ],
+      "properties": {
+        "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
+        "applicationRuleCollections": [
+          {
+            "name": "appRc1",
+            "properties": {
+              "priority": 101,
+              "action": { "type": "Allow" },
+              "rules": [
+                {
+                  "name": "appRule1",
+                  "protocols": [
+                    {
+                      "port": 80,
+                      "protocolType": "http"
+                    }
+                  ],
+                  "targetFqdns": [ "www.microsoft.com" ],
+                  "sourceAddresses": [ "10.0.0.0/24" ]
+                }
+              ]
+            }
+          }
+        ],
+        "networkRuleCollections": [
+          {
+            "name": "netRc1",
+            "properties": {
+              "priority": 200,
+              "action": { "type": "Allow" },
+              "rules": [
+                {
+                  "name": "netRule1",
+                  "protocols": [ "TCP" ],
+                  "sourceAddresses": [ "10.0.0.0/24" ],
+                  "destinationAddresses": [ "*" ],
+                  "destinationPorts": [ "8000-8999" ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

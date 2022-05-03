@@ -1,0 +1,1081 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the name of your existing OMS Automation account to store the configuration"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specify the region for your OMS workspace"
+      }
+    },
+    "omsSku": {
+      "type": "string",
+      "allowedValues": [
+        "free",
+        "standalone",
+        "pernode"
+      ],
+      "metadata": {
+        "description": "Select the SKU for your workspace"
+      }
+    },
+    "omsAutomationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the name of your Automation Account"
+      }
+    },
+    "jobGuid": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "GUID for the schedule creation - create a unique before deploy"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "assets": {
+      "psModules": {
+        "ingestionAPI": {
+          "name": "OMSIngestionAPI",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/omsingestionapi.1.5.0.nupkg"
+        },
+        "azureStorage": {
+          "name": "Azure.Storage",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azure.storage.2.8.0.nupkg"
+        },
+        "azureRmAutomation": {
+          "name": "AzureRM.Automation",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.2.8.0.nupkg"
+        },
+        "azureRmCompute": {
+          "name": "AzureRM.Compute",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.2.9.0.nupkg"
+        },
+        "azureRmProfile": {
+          "name": "AzureRM.Profile",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.2.8.0.nupkg"
+        },
+        "azureRmResources": {
+          "name": "AzureRM.Resources",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.3.8.0.nupkg"
+        },
+        "azureRmSql": {
+          "name": "AzureRM.Sql",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.sql.2.8.0.nupkg"
+        },
+        "azure": {
+          "name": "Azure",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azure.3.8.0.nupkg"
+        },
+        "azureRmServicebus": {
+          "name": "AzureRM.Servicebus",
+          "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.servicebus.0.2.0.nupkg"
+        }
+      },
+      "aaVariables": {
+        "OMSWorkspaceId": {
+          "name": "OMSWorkspaceId",
+          "description": "Workspace ID for the Log Analytics workspace"
+        },
+        "OMSWorkspaceKey": {
+          "name": "OMSWorkspaceKey",
+          "description": "Primary key for the Log Analytics workspace"
+        },
+        "AzureSubscriptionId": {
+          "name": "AzureSubscriptionId",
+          "description": "Azure subscription Id"
+        }
+      },
+      "runbooks": {
+        "scheduleRunbook": {
+          "name": "scheduleIngestion",
+          "version": "1.0.0.0",
+          "description": "schedule runbook",
+          "type": "PowerShell",
+          "Id": "",
+          "url": "[uri(parameters('_artifactsLocation'), concat('scripts/scheduleIngestion.ps1', parameters('_artifactsLocationSasToken')))]",
+          "ingestScheduleName": "ingestAPISchedule"
+        },
+        "ingestionRunbook": {
+          "name": "servicebusIngestion",
+          "version": "1.0.0.0",
+          "description": "runbook to ingest service bus data",
+          "type": "PowerShell",
+          "Id": "",
+          "url": "[uri(parameters('_artifactsLocation'), concat('scripts/servicebusIngestion.ps1', parameters('_artifactsLocationSasToken')))]"
+        }
+      }
+    },
+    "omsSolutions": {
+      "customSolution": {
+        "name": "Azure Service Bus",
+        "solutionName": "[concat('Azure Service Bus', '[', parameters('omsWorkspaceName'), ']')]",
+        "publisher": "tiandert@microsoft.com",
+        "displayName": "Azure Service Bus",
+        "description": "Azure Service Bus Monitoring",
+        "author": "tiandert@microsoft.com"
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('omsWorkspaceName')]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('omsSku')]"
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-11-01-preview",
+          "name": "[variables('omsSolutions').customSolution.name]",
+          "type": "views",
+          "id": "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsWorkspaceName'), variables('omsSolutions').customSolution.name)]",
+          "dependsOn": [
+            "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "properties": {
+            "Id": "Azure Service Bus Analytics",
+            "Name": "Azure Service Bus Analytics",
+            "Author": "tiandert@microsoft.com",
+            "Source": "Local",
+            "Version": 1,
+            "Dashboard": [
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Queue Messages",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Active Messages",
+                    "Subtitle": "Last 24hrs"
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS| measure max(ActiveMessageCount_d) by QueueName_s interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-15MINUTES | measure max(ActiveMessageCount_d) by QueueName_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Sum",
+                    "ColumnsTitle": {
+                      "Name": "Queue (last 15mins)",
+                      "Value": "Nr of Messages"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Queue Dead Letters",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Dead Letter Count",
+                    "Subtitle": "Last 24hrs"
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS| measure max(DeadLetterMessageCount_d) by QueueName_s interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-30MINUTES | Measure avg(DeadLetterMessageCount_d) as DeadLetterMessageCount by QueueName_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Sum",
+                    "ColumnsTitle": {
+                      "Name": "Queue (last 30mins)",
+                      "Value": "Nr of Messages"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Queue Scheduled Messages",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Scheduled Messages",
+                    "Subtitle": "Last 24hrs"
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS| measure max(ScheduledMessageCount_d) by QueueName_s interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-1HOUR | Measure avg(ScheduledMessageCount_d) as DeadLetterMessageCount by QueueName_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Queue (last 1hr)",
+                      "Value": "Nr of Messages"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Queue Free Space %",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Queue Free Space Remaining (last 24hrs)",
+                    "Subtitle": ""
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS | measure count() by QueueName_s,QueueFreeSpacePercentage_s interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-30MINUTES | measure countdistinct(QueueFreeSpacePercentage_s) by QueueName_s,QueueFreeSpacePercentage_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Last Sample",
+                    "ColumnsTitle": {
+                      "Name": "Queue (last 30mins)",
+                      "Value": "Samples"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": true,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Topic Messages",
+                    "newGroup": true,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Active Messages",
+                    "Subtitle": "Last 24hrs"
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS| measure max(ActiveMessageCount_d) by TopicName_s interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-30MINUTES | measure max(ActiveMessageCount_d) by TopicName_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Topic (last 30mins)",
+                      "Value": "Nr of Messages"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Topic Dead Letters",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Dead Letter Count",
+                    "Subtitle": "Last 24hrs"
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS| measure max(DeadLetterMessageCount_d) by TopicName_s interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-30MINUTES | Measure avg(DeadLetterMessageCount_d) as DeadLetterMessageCount by TopicName_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Topic (last 30mins)",
+                      "Value": "Nr of Messages"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Topic Scheduled Messages",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Scheduled Messages",
+                    "Subtitle": "Last 24hrs"
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS| measure max(ScheduledMessageCount_d) by TopicName_s interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-30MINUTES | Measure avg(ScheduledMessageCount_d) as ScheduledMessageCount by TopicName_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Topic",
+                      "Value": "Nr of Messages"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Topic Free Space %",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Free Space Remaining",
+                    "Subtitle": "Last 24hrs"
+                  },
+                  "LineChart": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-24HOURS | measure count() by TopicName_s,TopicFreeSpacePercentage_d interval 15MINUTES",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=servicebus_CL TimeGenerated>NOW-30MINUTES | measure countdistinct(TopicFreeSpacePercentage_s) by TopicName_s,TopicFreeSpacePercentage_d",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Topic",
+                      "Value": "Samples"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "NotableQueriesBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Azure Service Bus Queries",
+                    "newGroup": true,
+                    "preselectedFilters": "Type, Computer",
+                    "renderMode": "grid"
+                  },
+                  "queries": [
+                    {
+                      "query": "Type=servicebus_CL",
+                      "displayName": "All Service Bus data"
+                    },
+                    {
+                      "query": "Type:servicebus_CL | measure count() by ServiceBusName_s",
+                      "displayName": "All Service Bus namespaces"
+                    },
+                    {
+                      "query": "Type:servicebus_CL | Measure count() by QueueName_s",
+                      "displayName": "List of Queues"
+                    },
+                    {
+                      "query": "Type:servicebus_CL | Measure count() by ActiveMessageCount_d",
+                      "displayName": "Active Message Count"
+                    },
+                    {
+                      "query": "Type:servicebus_CL | Measure count() by DeadLetterMessageCount_d",
+                      "displayName": "Deadletter Count"
+                    },
+                    {
+                      "query": "Type=servicebus_CL SubscriptionName_s=* | Select TopicName_s,SubscriptionName_s | dedup SubscriptionName_s",
+                      "displayName": "All Topic Subscriptions"
+                    },
+                    {
+                      "query": "Type=servicebus_CL QueueFreeSpacePercentage_s>0 | Select QueueName_s,QueueFreeSpacePercentage_s | dedup QueueName_s",
+                      "displayName": "Queue Freespace"
+                    }
+                  ]
+                }
+              }
+            ],
+            "OverviewTile": {
+              "Id": "DoubleNumberBuilderTile",
+              "Type": "OverviewTile",
+              "Version": 0,
+              "Configuration": {
+                "TileOne": {
+                  "Legend": "Azure Service Bus Queue(s)",
+                  "Query": "Type=servicebus_CL TimeGenerated>NOW-1HOURS | measure count() by QueueName_s"
+                },
+                "TileTwo": {
+                  "Legend": "Azure Service Bus Topic(s)",
+                  "Query": "Type=servicebus_CL TimeGenerated>NOW-1HOURS | measure count() by TopicName_s"
+                },
+                "Advanced": {
+                  "DataFlowVerification": {
+                    "Enabled": true,
+                    "Query": "Type=servicebus_CL",
+                    "Message": "Waiting on the initial Service Bus data ingestion"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[parameters('omsAutomationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2015-10-31",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "Basic"
+        }
+      },
+      "resources": [
+        {
+          "name": "[variables('assets').aaVariables.OMSWorkspaceId.name]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "properties": {
+            "description": "[variables('assets').aaVariables.OMSWorkspaceId.description]",
+            "value": "[concat('\"',reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2020-08-01').customerId,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('assets').aaVariables.OMSWorkspaceKey.name]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "properties": {
+            "description": "Remote file for the passphrase",
+            "value": "[concat('\"',listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2020-08-01').primarySharedKey,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('assets').aaVariables.AzureSubscriptionId.name]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "properties": {
+            "description": "[variables('assets').aaVariables.AzureSubscriptionId.description]",
+            "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.ingestionAPI.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.ingestionAPI.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azureRmProfile.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azureRmProfile.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azureStorage.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureRmProfile.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azureStorage.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azureRmAutomation.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureStorage.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azureRmAutomation.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azureRmCompute.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureRmAutomation.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azureRmCompute.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azureRmResources.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureRmAutomation.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azureRmResources.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azureRmSql.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureRmAutomation.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azureRmSql.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azure.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureRmAutomation.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azure.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').psModules.azureRmServicebus.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureRmAutomation.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('assets').psModules.azureRmServicebus.uri]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').runbooks.scheduleRunbook.name]",
+          "type": "runbooks",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/',parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules',parameters('omsAutomationAccountName'),variables('assets').psModules.azureRmServicebus.name)]"
+          ],
+          "properties": {
+            "runbookType": "[variables('assets').runbooks.scheduleRunbook.type]",
+            "logProgress": "true",
+            "logVerbose": false,
+            "description": "[variables('assets').runbooks.scheduleRunbook.description]",
+            "publishContentLink": {
+              "uri": "[variables('assets').runbooks.scheduleRunbook.url]",
+              "version": "[variables('assets').runbooks.scheduleRunbook.version]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').runbooks.ingestionRunbook.name]",
+          "type": "runbooks",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/',parameters('omsAutomationAccountName'))]"
+          ],
+          "properties": {
+            "runbookType": "[variables('assets').runbooks.ingestionRunbook.type]",
+            "logProgress": "true",
+            "logVerbose": false,
+            "description": "[variables('assets').runbooks.ingestionRunbook.description]",
+            "publishContentLink": {
+              "uri": "[variables('assets').runbooks.ingestionRunbook.url]",
+              "version": "[variables('assets').runbooks.ingestionRunbook.version]"
+            }
+          }
+        },
+        {
+          "name": "[variables('assets').runbooks.scheduleRunbook.ingestScheduleName]",
+          "type": "schedules",
+          "apiVersion": "2015-10-31",
+          "properties": {
+            "description": "This schedule is intended to run only once to invoke a runbook which will create the actual schedules, after that it will be expired and can be safely deleted",
+            "startTime": "",
+            "expiryTime": "",
+            "isEnabled": true,
+            "frequency": "OneTime"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/',parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/runbooks',parameters('omsAutomationAccountName'),variables('assets').runbooks.scheduleRunbook.name)]"
+          ]
+        },
+        {
+          "name": "[parameters('jobGuid')]",
+          "type": "jobSchedules",
+          "apiVersion": "2015-10-31",
+          "properties": {
+            "runbook": {
+              "name": "[variables('assets').runbooks.scheduleRunbook.Name]"
+            },
+            "schedule": {
+              "name": "[variables('assets').runbooks.scheduleRunbook.ingestScheduleName]"
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/',parameters('omsAutomationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/runbooks',parameters('omsAutomationAccountName'),variables('assets').runbooks.scheduleRunbook.name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/schedules',parameters('omsAutomationAccountName'),variables('assets').runbooks.scheduleRunbook.ingestScheduleName)]"
+          ]
+        },
+        {
+          "name": "AzureAutomationResourceGroup",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "properties": {
+            "description": "The name of the resource group",
+            "isEncrypted": false,
+            "type": "string",
+            "value": "[concat('\"',resourceGroup().name,'\"')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/',parameters('omsAutomationAccountName'))]"
+          ]
+        },
+        {
+          "name": "AzureAutomationAccount",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "properties": {
+            "description": "The name of the Azure Automation Account",
+            "isEncrypted": false,
+            "type": "string",
+            "value": "[concat('\"',parameters('omsAutomationAccountName'),'\"')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/',parameters('omsAutomationAccountName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "[variables('omsSolutions').customSolution.solutionName]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('omsWorkspaceName'), variables('omsSolutions').customSolution.name)]",
+        "[resourceId('Microsoft.Automation/automationAccounts/schedules', parameters('omsAutomationAccountName'), variables('assets').runbooks.scheduleRunbook.ingestScheduleName)]"
+      ],
+      "plan": {
+        "name": "[variables('omsSolutions').customSolution.solutionName]",
+        "product": "[variables('omsSolutions').customSolution.name]",
+        "publisher": "[variables('omsSolutions').customSolution.publisher]",
+        "promotionCode": ""
+      },
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]",
+        "referencedResources": [
+          "[resourceId('Microsoft.Automation/automationAccounts/variables/', parameters('omsAutomationAccountName'), variables('assets').aaVariables.AzureSubscriptionId.name)]",
+          "[resourceId('Microsoft.Automation/automationAccounts/variables/', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceId.name)]",
+          "[resourceId('Microsoft.Automation/automationAccounts/variables/', parameters('omsAutomationAccountName'), variables('assets').aaVariables.OMSWorkspaceKey.name)]"
+        ],
+        "containedResources": [
+          "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsWorkspaceName'), variables('omsSolutions').customSolution.name)]"
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}

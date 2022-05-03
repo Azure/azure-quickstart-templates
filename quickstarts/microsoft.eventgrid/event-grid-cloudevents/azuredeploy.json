@@ -1,0 +1,125 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The region where resources are deployed"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "logicAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Logic App"
+      },
+      "defaultValue": "[concat('logicapp-', uniqueString(resourceGroup().id))]"
+    },
+    "eventGridTopicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Event Grid Topic"
+      },
+      "defaultValue": "[concat('eventgridtopic-', uniqueString(resourceGroup().id))]"
+    },
+    "eventGridSubscriptionName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Event Grid Subscription"
+      },
+      "defaultValue": "[concat('eventgridsubscription-', uniqueString(resourceGroup().id))]"
+    }
+  },
+  "variables": {
+    "logicApp": {
+      "name": "[parameters('logicAppName')]",
+      "resourceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
+      "location": "[parameters('location')]",
+      "triggerId": "[resourceId('Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'manual')]"
+    },
+    "eventGridTopic": {
+      "name": "[parameters('eventGridTopicName')]",
+      "resourceId": "[resourceId('Microsoft.EventGrid/topics', parameters('eventGridTopicName'))]",
+      "location": "[parameters('location')]"
+    },
+    "eventGridSubscription": {
+      "name": "[parameters('eventGridSubscriptionName')]",
+      "location": "[parameters('location')]"
+    },
+    "tags": {
+      "projectUrl": "https://github.com/Azure/azure-quickstart-templates",
+      "repositoryUrl": "https://github.com/Azure/azure-quickstart-templates",
+      "license": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/LICENSE"
+    }
+  },
+  "resources": [
+    {
+      "comments": "### RESOURCE - LOGIC APP - EVENT HANDLER ###",
+      "apiVersion": "2019-05-01",
+      "type": "Microsoft.Logic/workflows",
+      "name": "[variables('logicApp').name]",
+      "location": "[variables('logicApp').location]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "method": "POST"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "comments": "### RESOURCE - CUSTOM EVENT GRID TOPIC ###",
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.EventGrid/topics",
+      "name": "[variables('eventGridTopic').name]",
+      "location": "[variables('eventGridTopic').location]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "inputSchema": "CloudEventV01Schema"
+      }
+    },
+    {
+      "comments": "### RESOURCE - EVENT GRID SUBSCRIPTION ###",
+      "scope": "[format('Microsoft.EventGrid/topics/{0}', variables('eventGridTopic').name)]",
+      "type": "Microsoft.EventGrid/eventSubscriptions",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('eventGridSubscription').name]",
+      "location": "[variables('eventGridSubscription').location]",
+      "tags": "[variables('tags')]",
+      "dependsOn": [
+        "[variables('logicApp').name]",
+        "[variables('eventGridTopic').name]"
+      ],
+      "properties": {
+        "eventDeliverySchema": "CloudEventV01Schema",
+        "destination": {
+          "endpointType": "Webhook",
+          "properties": {
+            "endpointUrl": "[listCallbackUrl(variables('logicApp').triggerId, '2019-05-01').value]"
+          }
+        },
+        "filter": {
+          "isSubjectCaseSensitive": false
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "eventGridTopicEndpointUrl": {
+      "type": "string",
+      "value": "[reference(variables('eventGridTopic').name).endpoint]"
+    }
+  }
+}

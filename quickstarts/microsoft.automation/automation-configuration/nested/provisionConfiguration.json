@@ -1,0 +1,170 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString"
+    },
+    "automationAccountName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "secureString"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "compileName": {
+      "type": "string",
+      "defaultValue": "[guid(resourceGroup().id, deployment().name)]"
+    },
+    "devopsStoragePackagesBase": {
+      "type": "string",
+      "metadata": {
+        "description": "DC Resource URL"
+      }
+    }
+  },
+  "variables": {
+    "dscConfigurations": {
+      "DomainControllerConfig": {
+        "name": "DomainControllerConfig",
+        "description": "minimum viable configuration for a domain controller role",
+        "script": "nested/DomainControllerConfig.ps1"
+      }
+    },
+    "dscResources": {
+      "xActiveDirectory": {
+        "name": "xActiveDirectory",
+        "url": "[uri(parameters('devopsStoragePackagesBase'), 'xactivedirectory.2.17.0.nupkg')]"
+      },
+      "xStorage": {
+        "name": "xStorage",
+        "url": "[uri(parameters('devopsStoragePackagesBase'), 'xstorage.3.4.0.nupkg')]"
+      },
+      "xPendingReboot": {
+        "name": "xPendingReboot",
+        "url": "[uri(parameters('devopsStoragePackagesBase'), 'xpendingreboot.0.3.0.nupkg')]"
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('automationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiversion": "2020-01-13-preview",
+      "location": "[parameters('location')]",
+      "comments": "Automation account for OMS",
+      "properties": {
+        "sku": {
+          "name": "OMS"
+        }
+      },
+      "resources": [
+        {
+          "name": "[variables('dscResources').xActiveDirectory.name]",
+          "type": "modules",
+          "apiVersion": "2020-01-13-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').xActiveDirectory.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('dscResources').xStorage.name]",
+          "type": "modules",
+          "apiVersion": "2020-01-13-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').xStorage.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('dscResources').xPendingReboot.name]",
+          "type": "modules",
+          "apiVersion": "2020-01-13-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').xPendingReboot.url]"
+            }
+          }
+        },
+        {
+          "name": "Credential",
+          "type": "credentials",
+          "apiVersion": "2020-01-13-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]"
+          ],
+          "properties": {
+            "userName": "[parameters('adminUsername')]",
+            "password": "[parameters('adminPassword')]"
+          }
+        },
+        {
+          "name": "[variables('dscConfigurations').DomainControllerConfig.name]",
+          "type": "configurations",
+          "apiVersion": "2018-06-30",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]",
+            "[variables('dscResources').xActiveDirectory.name]",
+            "[variables('dscResources').xStorage.name]",
+            "[variables('dscResources').xPendingReboot.name]",
+            "Credential"
+          ],
+          "properties": {
+            "overwrite": true,
+            "source": {
+              "type": "uri",
+              "value": "[uri(parameters('_artifactsLocation'), concat(variables('dscConfigurations').DomainControllerConfig.script, parameters('_artifactsLocationSasToken')))]"
+            }
+          }
+        },
+
+        {
+          "name": "[parameters('compileName')]",
+          "type": "compilationjobs",
+          "apiVersion": "2020-01-13-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]",
+            "[variables('dscConfigurations').DomainControllerConfig.name]"
+          ],
+          "properties": {
+            "configuration": {
+              "name": "[variables('dscConfigurations').DomainControllerConfig.name]"
+            },
+            "parameters": {
+              "configurationData": "[concat('{\"AllNodes\":{\"nodename\":\"localhost\",\"domainname\":\"', parameters('domainName'), '\"}}')]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,629 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "numberOfSubnets": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 2,
+      "maxValue": 20,
+      "metadata": {
+        "description": "Number of subnets in the VNet. Must be between 2 and 20"
+      }
+    },
+    "memberServersPerSubnet": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 20,
+      "metadata": {
+        "description": "Member servers for each subnet. Must be between 1 and 20"
+      }
+    },
+    "storageCategory": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Storage type. Can be either Standard (HDD) or Premium (SSD)"
+      },
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ]
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "fabrikam.com",
+      "metadata": {
+        "description": "Domain to create for the Lab"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique public DNS label for the deployment. The fqdn will look something like 'dnsname.region.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "vnetName": "[uniqueString(resourceGroup().id, 'labVNet')]",
+    "labVNetPrefix": "172.16.0.0/12",
+    "storageAccountSuffix": "st",
+    "adDataDiskSize": "30",
+    "mbrDataDiskSize": "127"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-10-01",
+      "name": "sbn0",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('LabSubnet.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "labVNetPrefix": {
+            "value": "[variables('labVNetPrefix')]"
+          },
+          "subnets": {
+            "value": []
+          },
+          "addedSubnetName": {
+            "value": "sbn-Central"
+          },
+          "addedSubnetPrefix": {
+            "value": "172.16.0.0/24"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "dnsLabel": {
+            "value": "[parameters('dnsLabelPrefix')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "[concat('sbn', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "iter",
+        "count": "[add(parameters('numberOfSubnets'),-1)]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('LabSubnet.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "labVNetPrefix": {
+            "value": "[variables('labVNetPrefix')]"
+          },
+          "subnets": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', copyIndex()))).outputs.vnetSubnets.value]"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "dnsLabel": {
+            "value": "[parameters('dnsLabelPrefix')]"
+          },
+          "addedSubnetName": {
+            "value": "[concat('sbn-',copyIndex(1))]"
+          },
+          "addedSubnetPrefix": {
+            "value": "[concat('172.16.',copyIndex(1),'.0/24')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "LabStorage",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('Storage.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "storageAccountSuffix": {
+            "value": "[variables('storageAccountSuffix')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "Step0",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('AVSet.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.1"
+        },
+        "parameters": {
+          "availabilitySetName": {
+            "value": "AVSetDC"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "confDC0",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'sbn0')]",
+        "Microsoft.Resources/deployments/LabStorage",
+        "Microsoft.Resources/deployments/dc0"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('ConfigDC.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "indx": {
+            "value": 0
+          },
+          "vmNamePrefix": {
+            "value": ""
+          },
+          "computerName": {
+            "value": "dc"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "Step1",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/dc0"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('SetVNetDNS.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.1"
+        },
+        "parameters": {
+          "dnsServerAddresses": {
+            "value": [
+              "[reference('dc0').outputs.vmIPAddress.value]"
+            ]
+          },
+          "virtualNetworkName": {
+            "value": "[variables('vnetName')]"
+          },
+          "virtualNetworkSubnets": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
+          },
+          "virtualNetworkAddressRanges": {
+            "value": [
+              "[variables('labVNetPrefix')]"
+            ]
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "dc0",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/Step0"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('WinServ.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.2.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "indx": {
+            "value": 0
+          },
+          "bootDiagnostics": {
+            "value": "[equals(parameters('storageCategory'), 'Standard')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "lbName": {
+            "value": "[reference('sbn0').outputs.lbName.value]"
+          },
+          "computerName": {
+            "value": "dc"
+          },
+          "publicStartRdpPort": {
+            "value": 5000
+          },
+          "subnets": {
+            "value": "[reference('sbn0').outputs.vnetSubnets.value]"
+          },
+          "storageAccountName": {
+            "value": "[reference('LabStorage').outputs.storageAccountName.value]"
+          },
+          "availabilitySetName": {
+            "value": "AvSetDC"
+          },
+          "vmNamePrefix": {
+            "value": ""
+          },
+          "nicNamePrefix": {
+            "value": "nic"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "dDisks": {
+            "value": [
+              {
+                "name": "[concat('dc0','dataDisk', '0')]",
+                "caching": "None",
+                "createOption": "Empty",
+                "diskSizeGB": "[variables('adDataDiskSize')]",
+                "lun": 0
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "[concat('dc', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/Step1",
+        "Microsoft.Resources/deployments/dc0"
+      ],
+      "copy": {
+        "name": "otherDCs",
+        "count": "[add(parameters('numberOfSubnets'),-1)]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('WinServ.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.2.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "indx": {
+            "value": "[copyIndex(1)]"
+          },
+          "bootDiagnostics": {
+            "value": "[equals(parameters('storageCategory'), 'Standard')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "lbName": {
+            "value": "[reference('sbn0').outputs.lbName.value]"
+          },
+          "computerName": {
+            "value": "dc"
+          },
+          "publicStartRdpPort": {
+            "value": 5000
+          },
+          "subnets": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
+          },
+          "storageAccountName": {
+            "value": "[reference('LabStorage').outputs.storageAccountName.value]"
+          },
+          "availabilitySetName": {
+            "value": "AvSetDC"
+          },
+          "vmNamePrefix": {
+            "value": ""
+          },
+          "nicNamePrefix": {
+            "value": "nic"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "dDisks": {
+            "value": [
+              {
+                "name": "[concat('adDataDisk', copyIndex(1))]",
+                "caching": "None",
+                "createOption": "Empty",
+                "diskSizeGB": "[variables('adDataDiskSize')]",
+                "lun": 0
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "[concat('Members', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/Step1",
+        "Microsoft.Resources/deployments/dc0"
+      ],
+      "copy": {
+        "name": "members",
+        "count": "[mul(parameters('numberOfSubnets'),parameters('memberServersPerSubnet'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('WinServ.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.2.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "indx": {
+            "value": "[copyIndex()]"
+          },
+          "bootDiagnostics": {
+            "value":"[equals(parameters('storageCategory'), 'Standard')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "lbName": {
+            "value": "[reference('sbn0').outputs.lbName.value]"
+          },
+          "computerName": {
+            "value": "srvMbmr"
+          },
+          "publicStartRdpPort": {
+            "value": 6000
+          },
+          "subnets": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
+          },
+          "storageAccountName": {
+            "value": "[reference('LabStorage').outputs.storageAccountName.value]"
+          },
+          "availabilitySetName": {
+            "value": "AVSetDC"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "dDisks": {
+            "value": [
+              { 
+                "name": "[concat('dataDisk', copyIndex())]",
+                "caching": "None",
+                "createOption": "Empty",
+                "diskSizeGB": "[variables('mbrDataDiskSize')]",
+                "lun": 0
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "[concat('confDc', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/confDC0",
+        "[resourceId('Microsoft.Resources/deployments', concat('dc', copyIndex(1)))]"
+      ],
+      "copy": {
+        "name": "otherDCConfs",
+        "count": "[add(parameters('numberOfSubnets'),-1)]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('ConfigDC.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "indx": {
+            "value": "[copyIndex(1)]"
+          },
+          "computerName": {
+            "value": "dc"
+          },
+          "vmNamePrefix": {
+            "value": ""
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "[concat('confMembers', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/confDC0",
+        "[resourceId('Microsoft.Resources/deployments',concat('Members', copyIndex()))]"
+      ],
+      "copy": {
+        "name": "confMembers",
+        "count": "[mul(parameters('numberOfSubnets'),parameters('memberServersPerSubnet'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('confDomainMember.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "indx": {
+            "value": "[copyIndex()]"
+          },
+          "computerName": {
+            "value": "srvMbmr"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "domainJoinUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "domainJoinPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vmIPAddress": {
+      "type": "string",
+      "value": "[reference('dc0').outputs.vmIPAddress.value]"
+    },
+    "subnets": {
+      "type": "array",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn',add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
+    },
+    "lenVnetSubnets": {
+      "type": "int",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn',add(parameters('numberOfSubnets'),-1)))).outputs.vnetLength.value]"
+    }
+  }
+}
+

@@ -1,0 +1,226 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"OS": {
+			"type": "string",
+			"metadata": {
+				"description": "Operating System to install"
+			},
+			"defaultValue": "2016-Datacenter",
+			"allowedValues": [
+				"2016-Datacenter",
+				"2019-Datacenter",
+				"Linux CentOS"
+			]
+		},
+		"clusterNodes": {
+			"type": "int",
+			"metadata": {
+				"description": "number of VM nodes to create"
+			},
+			"defaultValue": 2,
+			"allowedValues": [
+				2,
+				3,
+				4
+			]
+		},
+		"vmSize": {
+			"type": "string",
+			"metadata": {
+				"description": "the VM size for all nodes"
+			},
+			"defaultValue": "Standard_D2_v3"
+		},
+		"adminUser": {
+			"type": "string",
+			"metadata": {
+				"description": "User for the Virtual Machines."
+			}
+		},
+		"adminPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password for the Virtual Machines."
+			}
+		},
+		"VIPDnsLabel": {
+			"type": "string",
+			"metadata": {
+				"description": "Public VIP dns label. VIP fqdn will be like <vipdnslabel>.<location>.cloudapp.azure.com and must be globally unique."
+			},
+			"defaultValue": "[concat(uniqueString(resourceGroup().id),'vip')]"
+		},
+		"VMDnsPrefix": {
+			"type": "string",
+			"metadata": {
+				"description": "Public VM IP dns label prefix. VM fqdn will be like <vmdnsprefix>vm<i>.<location>.cloudapp.azure.com and must be unique."
+			},
+			"defaultValue": "[uniqueString(resourceGroup().id)]"
+		},
+		"location": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "resources location (region must support Availability Zones)"
+			}
+		},
+		"safekitFileUri": {
+			"type": "string",
+			"metadata": {
+				"description": "url of SafeKit package (optional, default to the appropriate Evidian website url)."
+			},
+			"defaultValue": "default"
+		},
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "base URL of deployment resources (template,subtemplates,scripts)"
+			},
+			"defaultValue": "[deployment().properties.templateLink.uri]"
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+			},
+			"defaultValue": ""
+		}
+	},
+	"variables": {
+		"clusternodes": "[parameters('clusterNodes')]",
+		"vmname": "VM1",
+		"moduleName": "farm",
+		"cltemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/cluster.json' ,parameters('_artifactsLocationSasToken')))]",
+		"ostype": "[if(equals(parameters('OS'), 'Linux CentOS'),'linux','windows')]",
+		"skcfgmoduletemplate": "[uri(parameters('_artifactsLocation'),concat('nestedtemplates/cfgFarm.json' ,parameters('_artifactsLocationSasToken')))]",
+		"safekitpkgUrl": {
+			"windows": "https://support.evidian.com/solutions/downloads/safekit/cloud/platforms/windows/current_versions/safekit_cloud.msi",
+			"linux": "https://support.evidian.com/solutions/downloads/safekit/cloud/platforms/linux/current_versions/safekit_cloud.bin"
+		},
+		"farmUrl": {
+			"windows": "https://support.evidian.com/solutions/downloads/safekit/cloud/application_modules/windows/farm.safe",
+			"linux": "https://support.evidian.com/solutions/downloads/safekit/cloud/application_modules/linux/farm.safe"
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2021-01-01",
+			"name": "safekitCluster",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('cltemplate')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"OS": {
+						"value": "[parameters('OS')]"
+					},
+					"clusterNodes": {
+						"value": "[variables('clusterNodes')]"
+					},
+					"vmSize": {
+						"value": "[parameters('vmSize')]"
+					},
+					"adminUser": {
+						"value": "[parameters('adminUser')]"
+					},
+					"adminPassword": {
+						"value": "[parameters('adminPassword')]"
+					},
+					"moduleUrl": {
+						"value": "[variables('farmUrl')[variables('ostype')]]"
+					},
+					"moduleName": {
+						"value": "[variables('moduleName')]"
+					},
+					"VIPDnsLabel": {
+						"value": "[parameters('VIPDnsLabel')]"
+					},
+					"VMDnsPrefix": {
+						"value": "[parameters('VMDnsPrefix')]"
+					},
+					"Loadbalancer": {
+						"value": "External"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"safekitFileUri": {
+						"value": "[if(equals(parameters('safekitFileUri'),'default'),variables('safekitpkgUrl')[variables('ostype')],parameters('safekitFileUri'))]"
+					},
+					"_artifactsLocation": {
+						"value": "[parameters('_artifactsLocation')]"
+					},
+					"_artifactsLocationSasToken": {
+						"value": "[parameters('_artifactsLocationSasToken')]"
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "safekitModuleConfig",
+			"dependsOn": [
+				"safekitCluster"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('skcfgmoduletemplate')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"vmname": {
+						"value": "[variables('vmname')]"
+					},
+					"ostype": {
+						"value": "[variables('ostype')]"
+					},
+					"moduleName": {
+						"value": "[variables('moduleName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"_artifactsLocation": {
+						"value": "[parameters('_artifactsLocation')]"
+					},
+					"_artifactsLocationSasToken": {
+						"value": "[parameters('_artifactsLocationSasToken')]"
+					}
+				}
+			}
+		}
+	],
+	"outputs": {
+		"FIRST GET THE CREDENTIALS": {
+			"type": "string",
+			"value": "[reference('safekitCluster').outputs['Credentials Url'].value]"
+		},
+		"LOGIN TO GET THE CREDENTIALS": {
+			"type": "string",
+			"value": "[reference('safekitCluster').outputs['Credentials Url Login'].value]"
+		},
+		"START THE CONSOLE": {
+			"type": "string",
+			"value": "[concat(reference('safekitCluster').outputs['Console Url'].value,'?firewallDialog=false')]"
+		},
+		"TEST THE VIRTUAL IP": {
+			"type": "string",
+			"value": "[reference('safekitCluster').outputs['Mosaic URL'].value]"
+		},
+		"ADMINUSER": {
+			"type": "string",
+			"value": "[parameters('adminUser')]"
+		},
+		"VM1": {
+			"type": "string",
+			"value": "[reference('safekitCluster').outputs.fqdn.value]"
+		}
+	}
+}

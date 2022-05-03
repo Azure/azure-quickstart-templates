@@ -1,0 +1,304 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "String",
+            "metadata": {
+                "description": "Username for Hazelcast VMs"
+            }
+        },
+        "authenticationType": {
+            "defaultValue": "sshPublicKey",
+            "allowedValues": [
+                "password",
+                "sshPublicKey"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Type of authentication to use on the Hazelcast VMs."
+            }
+        },
+        "adminPasswordOrKey": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Password or ssh key for the Hazelcast VMs."
+            }
+        },
+        "hazelcastVersion": {
+            "defaultValue": "4.0",
+            "allowedValues": [
+                "4.0"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Hazelcast Version"
+            }
+        },
+        "clusterName": {
+            "defaultValue": "[concat(parameters('adminUsername'),uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "Cluster Name for hazelcast grid"
+            }
+        },
+        "dnsPrefix": {
+            "defaultValue": "hazelcast",
+            "type": "String",
+            "metadata": {
+                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+            }
+        },
+        "instanceCount": {
+            "defaultValue": 2,
+            "type": "Int",
+            "metadata": {
+                "description": "The number of hazelcast nodes in the grid"
+            }
+        },
+        "clusterPort": {
+            "defaultValue": "5701",
+            "type": "String",
+            "metadata": {
+                "description": "The cluster port to identify this cluster"
+            }
+        },
+        "vmSize": {
+            "defaultValue": "Standard_D2s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "The size of each instance VM"
+            }
+        },
+        "ubuntuOSVersion": {
+            "defaultValue": "16.04-LTS",
+            "allowedValues": [
+                "15.10",
+                "16.04-LTS",
+                "18.04-LTS"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "The Ubuntu OS version for the Hazelcast VM. This will pick a fully patched image of this given Ubuntu version."
+            }
+        },
+        "_artifactsLocation": {
+            "defaultValue": "[deployment().properties.templateLink.uri]",
+            "type": "String",
+            "metadata": {
+                "description": "The base URL for the bootstrap files"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "defaultValue": "",
+            "type": "SecureString",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            }
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "String",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "imagePublisher": "Canonical",
+        "imageOffer": "UbuntuServer",
+        "nicName": "hazelcastNic",
+        "addressPrefix": "10.0.0.0/16",
+        "subnetName": "Subnet",
+        "subnetPrefix": "10.0.1.0/24",
+        "publicIPAddressName": "hazelcastPubIp",
+        "publicIPAddressType": "Dynamic",
+        "vmName": "hazelcast",
+        "roleAssignmentName": "hazelcastRA",
+        "virtualNetworkName": "hazelcastVNet",
+        "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('adminPasswordOrKey')]"
+                    }
+                ]
+            }
+        },
+        "Reader": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+        "scriptParameters": "[concat(parameters('clusterName'), ' ', parameters('hazelcastVersion'), ' ', parameters('clusterPort'))]",
+        "bootstrapFiles": [
+            "[uri(parameters('_artifactsLocation'), concat('scripts/bootstrap_hazelcast', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/hazelcast.service', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/hazelcast.conf', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/hazelcast.xml', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install_hazelcast', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/logging.properties', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/modify_configuration', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/modify_version', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/pom.xml', parameters('_artifactsLocationSasToken')))]"
+        ]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-03-01",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-03-01",
+            "name": "[concat(variables('publicIPAddressName'), copyIndex(1))]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "createPubIps",
+                "count": "[parameters('instanceCount')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(parameters('dnsPrefix'), copyIndex(1), uniqueString(resourceGroup().id))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-03-01",
+            "name": "[concat(variables('nicName'), copyIndex(1))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('virtualNetworkName')]",
+                "createPubIps"
+            ],
+            "copy": {
+                "name": "createNics",
+                "count": "[parameters('instanceCount')]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[concat('ipconfig', copyIndex(1))]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex(1)))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(variables('vmName'), copyIndex(1))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "createNics"
+            ],
+            "copy": {
+                "name": "createVms",
+                "count": "[parameters('instanceCount')]"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPasswordOrKey')]",
+                    "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[parameters('ubuntuOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(variables('vmName'), copyIndex(1),'_OSDisk')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex(1)))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2018-07-01",
+            "name": "[guid(concat(variables('roleAssignmentName'), copyIndex(1)))]",
+            "dependsOn": [
+                "createVms"
+            ],
+            "copy": {
+                "name": "createRoles",
+                "count": "[parameters('instanceCount')]"
+            },
+            "properties": {
+                "roleDefinitionId": "[variables('Reader')]",
+                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyIndex(1))), '2019-12-01', 'Full').identity.principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(variables('vmName'), copyIndex(1),'/initHazelcast')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "createRoles"
+            ],
+            "copy": {
+                "name": "createExtensions",
+                "count": "[parameters('instanceCount')]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": "[variables('bootstrapFiles')]"
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('sh bootstrap_hazelcast ', variables('scriptParameters'))]"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,188 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "maxLength": 20,
+      "minLength": 2,
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards. The username must consist of digits, upper or lowercase letters, and/or the following special characters: (!#$%&'()-^_`{}~)."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "maxLength": 72,
+      "minLength": 6,
+      "metadata": {
+        "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name"
+      }
+    },    
+    "sshUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to remotely access the cluster."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "maxLength": 72,
+      "minLength": 6,
+      "metadata": {
+        "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name"
+      }
+    },
+    "adlAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Data Lake storage account."
+      }
+    },
+    "adlLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of the Azure Data Lake storage account."
+      }
+    },
+    "headNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_E8_v3",
+      "allowedValues": [
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E20_v3",
+        "Standard_E32_v3",
+        "Standard_E48_v3"
+      ],
+      "metadata": {
+        "description": "This is the headnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+      }
+    },
+    "workerNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_E8_v3",
+      "allowedValues": [
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E20_v3",
+        "Standard_E32_v3",
+        "Standard_E48_v3"
+      ],
+      "metadata": {
+        "description": "This is the workernode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+      }
+    },          
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "defaultStorageAccount": {
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    }
+  },
+  "resources": [
+    {
+       "type": "Microsoft.DataLakeStore/accounts",
+       "name": "[parameters('adlAccountName')]",
+       "location": "[parameters('adlLocation')]",
+       "apiVersion": "2016-11-01",
+       "properties": {
+           "newTier": "Consumption",
+           "encryptionState": "Disabled"
+       }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('defaultStorageAccount').name]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-08-01",
+      "sku": {
+        "name": "[variables('defaultStorageAccount').type]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.HDInsight/clusters",
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-06-01",
+      "properties": {
+        "clusterVersion": "4.0",
+        "osType": "Linux",
+        "tier": "Standard",
+        "clusterDefinition": {
+          "kind": "hadoop",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2021-08-01').primaryEndpoints.blob,'https:',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2021-08-01').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "[parameters('headNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "[parameters('workerNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsZoneName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the DNS Zone to create or update."
+      }
+    },
+    "ttl": {
+      "type": "int",
+      "defaultValue": 3600,
+      "metadata": {
+        "description": "Time to live value, in seconds"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "recordTypes": {
+      "type": "array",
+      "defaultValue": [
+        "mail",
+        "mdm",
+        "sfb"
+      ],
+      "metadata": {
+        "description": "A delimited list that defines the resources to create, acceptable values are (mail,mdm, and sfb). A combination of all or just one of the values can be used."
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-05-01",
+      "type": "Microsoft.Network/dnszones",
+      "name": "[parameters('dnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "name": "[concat('SettingUpDNSRecods','-',parameters('recordTypes')[copyIndex()])]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "recordcopies",
+        "count": "[length(parameters('recordTypes'))]"
+      },
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnszones', parameters('dnsZoneName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat(parameters('recordTypes')[copyIndex()],'.json',parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsZoneName": {
+            "value": "[parameters('dnsZoneName')]"
+          },
+          "ttl": {
+            "value": "[parameters('ttl')]"
+          }
+        }
+      }
+    }
+  ]
+}

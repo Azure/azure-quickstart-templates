@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "aseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the App Service Environment"
+      }
+    }
+  },
+  "variables": {
+    "existingVirtualNetworkName": "vnet",
+    "existingSubnetName": "subnet-ASE"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('existingVirtualNetworkName')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "comments": "Virtual network for overall solution",
+      "tags": {
+        "displayName": "Virtual Network"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('existingSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/25"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Web/hostingEnvironments",
+      "name": "[parameters('aseName')]",
+      "kind": "ASEV2",
+      "location": "[parameters('location')]",
+      "dependson": [
+        "[variables('existingVirtualNetworkName')]"
+      ],
+      "properties": {
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('existingVirtualNetworkName'), variables('existingSubnetName'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "aseName": {
+      "type": "string",
+      "value": "[parameters('aseName')]"
+    }
+  }
+}

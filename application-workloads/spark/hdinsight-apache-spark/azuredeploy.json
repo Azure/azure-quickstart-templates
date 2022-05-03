@@ -1,0 +1,219 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create."
+      }
+    },
+    "loginUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster, log into cluster dashboards, log into Ambari, and SSH into the cluster."
+      }
+    },
+    "loginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "clusterNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "allowedValues": [
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D16_v3"
+      ],
+      "metadata": {
+        "description": "All nodes will be deployed using the specified hardware profile: D12(4 CPU Cores, 28GB of RAM), D13(8 CPU Cores, 56GB of RAM), D14(16 CPU Cores, 112 GB of RAM)."
+      }
+    },
+    "clusterWorkerNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of worker nodes in the HDInsight cluster."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templatelink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "clusterType": "hadoop",
+    "clusterVnetSubnetName": "[concat(parameters('clusterName'),'-subnet')]",
+    "clusterVnetAddressSpace": "172.16.228.0/23",
+    "clusterVNetSubnetAddressRange": "172.16.229.0/24",
+    "clusterStorageAccountName": "[take(concat('store', parameters('clusterName')), 24)]",
+    "clusterVNetName": "[concat(parameters('clusterName'),'-vnet')]"
+  },
+  "resources": [
+    {
+      "name": "[variables('clusterVNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-06-01",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('clusterVNetAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('clusterVNetSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('clusterVNetSubnetAddressRange')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('clusterStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-04-01",
+      "kind": "Storage",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]"
+      ],
+      "properties": {
+        "clusterVersion": "3.6",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "[variables('clusterType')]",
+          "componentVersion": {
+            "Spark": "2.3"
+          },
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('loginUsername')]",
+              "restAuthCredential.password": "[parameters('loginPassword')]"
+            },
+            "hive-site": {
+              "hive.metastore.client.connect.retry.delay": "5",
+              "hive.execution.engine": "mr",
+              "hive.security.authorization.manager": "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName'))).primaryEndpoints.blob, 'https://', ''), '/', '')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-04-01').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "[parameters('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('loginUsername')]",
+                  "password": "[parameters('loginPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('clusterVNetName'), variables('clusterVNetSubnetName'))]"
+              },
+              "scriptActions": [
+                {
+                  "name": "Apache Spark 1.4.1",
+                  "uri": "[uri(parameters('_artifactsLocation'), concat('spark141-installer-v04.sh', parameters('_artifactsLocationSasToken')))]"
+                }
+              ]
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "[parameters('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('loginUsername')]",
+                  "password": "[parameters('loginPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('clusterVNetName'), variables('clusterVNetSubnetName'))]"
+              }
+            },
+            {
+              "name": "zookeepernode",
+              "targetInstanceCount": 3,
+              "hardwareProfile": {
+                "vmSize": "[parameters('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('loginUsername')]",
+                  "password": "[parameters('loginPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('clusterVNetName'), variables('clusterVNetSubnetName'))]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vnet": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')))]"
+    },
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters', parameters('clusterName')))]"
+    }
+  }
+}
+

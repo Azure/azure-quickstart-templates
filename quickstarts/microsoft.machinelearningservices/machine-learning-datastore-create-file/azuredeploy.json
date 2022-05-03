@@ -1,0 +1,77 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": {
+				"description": "Specifies the name of the Azure Machine Learning workspace which will hold this datastore target."
+			}
+		},
+		"datastoreName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the datastore, case insensitive, can only contain alphanumeric characters and underscore"
+			}
+		},
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the storage account."
+			}
+		},
+		"fileShareName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the file share."
+			}
+		},
+		"authenticationType": {
+			"type": "string",
+			"defaultValue": "SAS token",
+			"allowedValues": [
+				"SAS token",
+				"Account Key"
+			],
+			"metadata": {
+				"description": "Authentication type"
+			}
+		},
+		"sasTokenOrAccountKey": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Storage account SAS token or Account Key"
+			}
+		},
+		"skipValidation": {
+			"type": "bool",
+			"defaultValue": false,
+			"metadata": {
+				"description": "Optional : If set to true, the call will skip datastore validation. Defaults to false"
+			}
+		},
+		"location": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "The location of the Azure Machine Learning Workspace."
+			}
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.MachineLearningServices/workspaces/datastores",
+			"name": "[concat(parameters('workspaceName'), '/', parameters('datastoreName'))]",
+			"apiVersion": "2020-05-01-preview",
+			"location": "[parameters('location')]",
+			"properties": {
+				"DataStoreType": "file",
+				"SkipValidation": "[parameters('skipValidation')]",
+				"AccountName": "[parameters('storageAccountName')]",
+				"ShareName": "[parameters('fileShareName')]",
+				"AccountKey": "[if(equals(parameters('authenticationType'), 'Account Key'), parameters('sasTokenOrAccountKey'), json('null'))]",
+				"SasToken": "[if(equals(parameters('authenticationType'), 'SAS token'), parameters('sasTokenOrAccountKey'), json('null'))]"
+			}
+		}
+	]
+}

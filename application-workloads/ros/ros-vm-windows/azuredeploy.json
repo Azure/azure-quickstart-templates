@@ -1,0 +1,458 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+              "description": "Location for all resources."
+            }
+        },
+        "projectName": {
+            "type": "string",
+            "maxLength": 12,
+            "metadata": {
+              "description": "Specifies a name for generating resource names."
+            }
+        },
+        "virtualMachineSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2_v3",
+            "allowedValues": [
+                "Standard_D2_v3",
+                "Standard_D2_v3",
+                "Standard_NV6",
+                "Standard_NV12",
+                "Standard_NV24"
+            ],
+            "metadata": {
+                "description": "The virtual machine size."
+            }
+        },
+        "vmImage": {
+            "type": "string",
+            "defaultValue": "Windows10",
+            "allowedValues": [
+                "Windows10",
+                "VisualStudio2019"
+            ],
+            "metadata": {
+                "description": "The virutal machine image base."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "User name for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "pipelineProvider": {
+            "type": "string",
+            "defaultValue": "None",
+            "allowedValues": [
+                "None",
+                "AzurePipelines",
+                "GitHubRunner"
+            ],
+            "metadata": {
+                "description": "The continuous integration provider to register."
+            }
+        },
+        "vstsAccount": {
+            "type": "string",
+            "metadata": {
+                "description": "The Visual Studio Team Services account name, that is, the first part of your VSTSAccount.visualstudio.com"
+            },
+            "defaultValue": ""
+        },
+        "vstsPersonalAccessToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The personal access token to connect to VSTS"
+            },
+            "defaultValue": ""
+        },
+        "vstsPoolName": {
+            "type": "string",
+            "defaultValue": "Default",
+            "metadata": {
+                "description": "The Visual Studio Team Services build agent pool for this build agent to join. Use 'Default' if you don't have a separate pool."
+            }
+        },
+        "enableAutologon": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+              "description": "Enable autologon to run the build agent in interactive mode that can sustain machine reboots.<br>Set this to true if the agents will be used to run UI tests."
+            }
+        },
+        "githubRepo": {
+            "type": "string",
+            "metadata": {
+                "description": "The github account and repo alias."
+            },
+            "defaultValue": ""
+        },
+        "githubPersonalAccessToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The personal access token to connect to GitHub."
+            },
+            "defaultValue": ""
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templatelink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "location": "[parameters('location')]",
+        "networkInterfaceName": "[concat(parameters('projectName'), '-nic')]",
+        "networkSecurityGroupName": "[concat(parameters('projectName'), '-nsg')]",
+        "virtualNetworkName": "[concat(parameters('projectName'), '-vnet')]",
+        "publicIpAddressName": "[concat(parameters('projectName'), '-ip')]",
+        "virtualMachineName": "[concat(parameters('projectName'), '-vm')]",
+        "diagnosticsStorageAccountName": "[concat(uniqueString(resourceGroup().id),'diag')]",
+        "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'default')]",
+        "networkSecurityGroupRules": [
+            {
+                "name": "AllowRDP",
+                "properties": {
+                    "priority": 300,
+                    "protocol": "TCP",
+                    "access": "Allow",
+                    "direction": "Inbound",
+                    "sourceAddressPrefix": "*",
+                    "sourcePortRange": "*",
+                    "destinationAddressPrefix": "*",
+                    "destinationPortRange": "3389"
+                }
+            },
+            {
+                "name": "AllowPSRemoting",
+                "properties": {
+                    "priority": 301,
+                    "protocol": "Tcp",
+                    "access": "Allow",
+                    "direction": "Inbound",
+                    "sourceAddressPrefix": "*",
+                    "sourcePortRange": "*",
+                    "destinationAddressPrefix": "*",
+                    "destinationPortRange": "5986"
+                }
+              }
+        ],
+        "diagnosticsStorageAccountType": "Standard_LRS",
+        "diagnosticsStorageAccountKind": "Storage",
+        "addressPrefixes": [
+            "10.0.0.0/24"
+        ],
+        "subnets": [
+            {
+                "name": "default",
+                "properties": {
+                    "addressPrefix": "10.0.0.0/24"
+                }
+            }
+        ],
+        "publicIpAddressType": "Dynamic",
+        "publicIpAddressSku": "Basic",
+        "vmImageReferences": {
+            "VisualStudio2019": {
+                "publisher": "MicrosoftVisualStudio",
+                "offer": "visualstudio2019latest",
+                "sku": "vs-2019-comm-latest-ws2019",
+                "version": "latest"
+            },
+            "Windows10": {
+                "publisher": "MicrosoftWindowsDesktop",
+                "offer": "Windows-10",
+                "sku": "rs5-enterprise",
+                "version": "latest"
+            }
+        },
+        "osDiskType": "StandardSSD_LRS",
+        "rosScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('InstallROS.ps1', parameters('_artifactsLocationSasToken')))]",
+        "vstsScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('InstallVstsAgent.ps1', parameters('_artifactsLocationSasToken')))]",
+        "githubScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('InstallGitHubAgent.ps1', parameters('_artifactsLocationSasToken')))]",
+        "nvidiaGpuDriverWindowsUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/nvidiaGpuDriverWindows.json', parameters('_artifactsLocationSasToken')))]",
+        "extensionUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/customScriptExtension.json', parameters('_artifactsLocationSasToken')))]",
+        "vstsParameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -AgentName ', concat(parameters('projectName'), '-vsts'),' -PoolName ', parameters('vstsPoolName'), ' -runAsAutoLogon ', parameters('enableAutologon'), ' -vmAdminUserName ', parameters('adminUsername'), ' -vmAdminPassword ', parameters('adminPassword'))]",
+        "githubParameters": "[concat('-GitHubRepo ', parameters('githubRepo'), ' -GitHubPAT ', parameters('githubPersonalAccessToken'), ' -AgentName ', concat(parameters('projectName'), '-github'))]"
+    },
+    "resources": [
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-07-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "name": "[variables('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": "[variables('networkSecurityGroupRules')]"
+            }
+        },
+        {
+            "name": "[variables('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-04-01",
+            "location": "[variables('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[variables('addressPrefixes')]"
+                },
+                "subnets": "[variables('subnets')]"
+            }
+        },
+        {
+            "name": "[variables('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "location": "[variables('location')]",
+            "properties": {
+                "publicIpAllocationMethod": "[variables('publicIpAddressType')]"
+            },
+            "sku": {
+                "name": "[variables('publicIpAddressSku')]"
+            }
+        },
+        {
+            "name": "[variables('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[variables('osDiskType')]"
+                        }
+                    },
+                    "imageReference": "[variables('vmImageReferences')[parameters('vmImage')]]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "provisionVmAgent": true
+                    }
+                },
+                "licenseType": "Windows_Client",
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticsStorageAccountName')), '2021-01-01').primaryEndpoints['blob']]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[variables('diagnosticsStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-04-01",
+            "location": "[variables('location')]",
+            "properties": {},
+            "kind": "[variables('diagnosticsStorageAccountKind')]",
+            "sku": {
+                "name": "[variables('diagnosticsStorageAccountType')]"
+            }
+        },
+        {
+            "name": "[concat(variables('virtualMachineName'), '-ROSInstall')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('extensionUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[variables('location')]"
+                    },
+                    "extensionName": {
+                        "value": "cse"
+                    },
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "fileUris": {
+                        "value": [
+                            "[variables('rosScriptFileUri')]"
+                        ]
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('powershell -ExecutionPolicy Unrestricted -file ', 'InstallROS.ps1')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[contains(parameters('pipelineProvider'), 'AzurePipelines')]",
+            "name": "[concat(variables('virtualMachineName'), '-VSTSAgentInstall')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('virtualMachineName'), '-ROSInstall'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('extensionUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[variables('location')]"
+                    },
+                    "extensionName": {
+                        "value": "cse"
+                    },
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "fileUris": {
+                        "value": [
+                            "[variables('vstsScriptFileUri')]"
+                        ]
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& {', './', 'InstallVstsAgent.ps1', ' ', variables('vstsParameters'), '}\"')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[contains(parameters('pipelineProvider'), 'GitHubRunner')]",
+            "name": "[concat(variables('virtualMachineName'), '-GitHubAgentInstall')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('virtualMachineName'), '-ROSInstall'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('extensionUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[variables('location')]"
+                    },
+                    "extensionName": {
+                        "value": "cse"
+                    },
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "fileUris": {
+                        "value": [
+                            "[variables('githubScriptFileUri')]"
+                        ]
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& {', './', 'InstallGitHubAgent.ps1', ' ', variables('githubParameters'), '}\"')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[contains(parameters('virtualMachineSize'), 'Standard_NV')]",
+            "name": "nvidia-gpu-driver-windows",
+            "apiVersion": "2019-05-01",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('virtualMachineName'), '-ROSInstall'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nvidiaGpuDriverWindowsUri')]"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "location": {
+                        "value": "[variables('location')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}
+

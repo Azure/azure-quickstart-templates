@@ -1,0 +1,188 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingStorageAcctResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the exiting Storage Account to archieve captures"
+      }
+    },
+    "eventHubNamespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the EventHub namespace"
+      }
+    },
+    "eventhubSku": {
+      "type": "string",
+      "allowedValues": [ "Basic", "Standard" ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "allowedValues": [ 1, 2, 4 ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "MessagingUnits for premium namespace"
+      }
+    },
+    "isAutoInflateEnabled": {
+      "type": "string",
+      "defaultValue": "True",
+      "allowedValues": [ "True", "False" ],
+      "metadata": {
+        "description": "Enable or disable AutoInflate"
+      }
+    },
+    "maximumThroughputUnits": {
+      "type": "int",
+      "defaultValue": 10,
+      "minValue": 0,
+      "maxValue": 20,
+      "metadata": {
+        "description": "Upper limit of throughput units when AutoInflate is enabled, vaule should be within 0 to 20 throughput units."
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Event Hub"
+      }
+    },
+    "messageRetentionInDays": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 7,
+      "metadata": {
+        "description": "How long to retain the data in Event Hub"
+      }
+    },
+    "partitionCount": {
+      "type": "int",
+      "defaultValue": 4,
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of partitions chosen"
+      }
+    },
+    "captureEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable or disable the Capture feature for your Event Hub"
+      }
+    },
+    "captureEncodingFormat": {
+      "type": "string",
+      "defaultValue": "Avro",
+      "allowedValues": [ "Avro" ],
+      "metadata": {
+        "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
+      }
+    },
+    "captureTime": {
+      "type": "int",
+      "defaultValue": 300,
+      "minValue": 60,
+      "maxValue": 900,
+      "metadata": {
+        "description": "the time window in seconds for the archival"
+      }
+    },
+    "captureSize": {
+      "type": "int",
+      "defaultValue": 314572800,
+      "minValue": 10485760,
+      "maxValue": 524288000,
+      "metadata": {
+        "description": "the size window in bytes for evetn hub capture"
+      }
+    },
+    "blobContainerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Your existing storage container that you want the blobs archived in"
+      }
+    },
+    "captureNameFormat": {
+      "type": "string",
+      "defaultValue": "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}",
+      "metadata": {
+        "description": "A Capture Name Format must contain {Namespace}, {EventHub}, {PartitionId}, {Year}, {Month}, {Day}, {Hour}, {Minute} and {Second} fields. These can be arranged in any order with or without delimeters. E.g.  Prod_{EventHub}/{Namespace}\\{PartitionId}_{Year}_{Month}/{Day}/{Hour}/{Minute}/{Second}"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[parameters('eventHubNamespaceName')]",
+      "type": "Microsoft.EventHub/Namespaces",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('eventhubSku')]",
+        "tier": "[parameters('eventhubSku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "tags": {
+        "tag1": "value1",
+        "tag2": "value2"
+      },
+      "properties": {
+        "isAutoInflateEnabled": "[parameters('isAutoInflateEnabled')]",
+        "maximumThroughputUnits": "[parameters('maximumThroughputUnits')]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('eventHubName')]",
+          "type": "eventhubs",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+          ],
+          "properties": {
+            "messageRetentionInDays": "[parameters('messageRetentionInDays')]",
+            "partitionCount": "[parameters('partitionCount')]",
+            "captureDescription": {
+              "enabled": "[parameters('captureEnabled')]",
+              "skipEmptyArchives": false,
+              "encoding": "[parameters('captureEncodingFormat')]",
+              "intervalInSeconds": "[parameters('captureTime')]",
+              "sizeLimitInBytes": "[parameters('captureSize')]",
+              "destination": {
+                "name": "EventHubArchive.AzureBlockBlob",
+                "properties": {
+                  "storageAccountResourceId": "[parameters('existingStorageAcctResourceId')]",
+                  "blobContainer": "[parameters('blobContainerName')]",
+                  "archiveNameFormat": "[parameters('captureNameFormat')]"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "authRuleResourceId": {
+      "type": "string",
+      "value": "[variables('authRuleResourceId')]"
+    }
+  }
+}
