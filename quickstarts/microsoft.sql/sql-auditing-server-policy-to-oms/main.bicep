@@ -40,7 +40,7 @@ resource omsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
   }
 }
 
-resource sqlServer 'Microsoft.Sql/servers@2019-06-01-preview' = {
+resource sqlServer 'Microsoft.Sql/servers@2021-11-01-preview' = {
   location: location
   name: sqlServerName
   properties: {
@@ -53,14 +53,14 @@ resource sqlServer 'Microsoft.Sql/servers@2019-06-01-preview' = {
   }
 }
 
-resource masterDb 'Microsoft.Sql/servers/databases@2017-03-01-preview' = {
+resource masterDb 'Microsoft.Sql/servers/databases@2021-11-01-preview' = {
   parent: sqlServer
   location: location
   name: 'master'
   properties: {}
 }
 
-resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2017-05-01-preview' = {
+resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: masterDb
   name: diagnosticSettingsName
   properties: {
@@ -86,7 +86,7 @@ resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2017-05-01-pr
   }
 }
 
-resource auditingSettings 'Microsoft.Sql/servers/auditingSettings@2017-03-01-preview' = {
+resource auditingSettings 'Microsoft.Sql/servers/auditingSettings@2021-11-01-preview' = {
   parent: sqlServer
   name: 'default'
   properties: {
@@ -95,7 +95,7 @@ resource auditingSettings 'Microsoft.Sql/servers/auditingSettings@2017-03-01-pre
   }
 }
 
-resource devOpsAuditingSettings 'Microsoft.Sql/servers/devOpsAuditingSettings@2020-08-01-preview' = if (isMSDevOpsAuditEnabled) {
+resource devOpsAuditingSettings 'Microsoft.Sql/servers/devOpsAuditingSettings@2021-11-01-preview' = if (isMSDevOpsAuditEnabled) {
   parent: sqlServer
   name: 'default'
   properties: {
