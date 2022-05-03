@@ -132,12 +132,12 @@ resource managedIntegrationRuntime 'Microsoft.DataFactory/factories/integrationR
 }
 
 resource lock 'Microsoft.Authorization/locks@2017-04-01' = if (resourcelock != 'NotSpecified') {
+  scope: dataFactory
   name: lockName
   properties: {
     level: resourcelock
     notes: (resourcelock == 'CanNotDelete') ? 'Cannot delete resource or child resources.' : 'Cannot modify the resource or child resources.'
   }
-  scope: dataFactory
 }
 
 resource diagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enableDiagnostics) {
