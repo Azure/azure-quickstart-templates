@@ -19,11 +19,10 @@ param administratorLoginPassword string
 @description('Azure database for MySQL sku name ')
 param skuName string = 'Standard_B1s'
 
-@minValue(20)
-@description('Azure database for MySQL Sku Size ')
+@description('Azure database for MySQL storage Size ')
 param StorageSizeGB int = 20
 
-@minValue(360)
+@description('Azure database for MySQL storage Iops')
 param StorageIops int = 360
 
 @description('Azure database for MySQL pricing tier')
