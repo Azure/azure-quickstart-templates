@@ -90,6 +90,7 @@ resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in
   location: location
   zones: [
     ('1,2,3')
+    ('.')
   ]
   properties: {
     hardwareProfile: {
