@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.5.6.12127",
-      "templateHash": "5189187527010663629"
+      "templateHash": "4845672074065729646"
     }
   },
   "parameters": {
@@ -134,13 +134,6 @@
       "metadata": {
         "description": "Subnet Address Prefix"
       }
-    },
-    "mySqlServerIp": {
-      "type": "string",
-      "defaultValue": "10.0.0.4",
-      "metadata": {
-        "description": "First available IP address in the MySql delegated subnet address"
-      }
     }
   },
   "resources": [
@@ -163,42 +156,6 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/privateDnsZones/A",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('dnsZoneFqdn'), parameters('serverName'))]",
-      "properties": {
-        "ttl": 30,
-        "aRecords": [
-          {
-            "ipv4Address": "[parameters('mySqlServerIp')]"
-          }
-        ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateDnsZones', parameters('dnsZoneFqdn'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/privateDnsZones/SOA",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('dnsZoneFqdn'), '@')]",
-      "properties": {
-        "ttl": 3600,
-        "soaRecord": {
-          "email": "azureprivatedns-host.microsoft.com",
-          "expireTime": 2419200,
-          "host": "azureprivatedns.net",
-          "minimumTtl": 10,
-          "refreshTime": 3600,
-          "retryTime": 300,
-          "serialNumber": 1
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateDnsZones', parameters('dnsZoneFqdn'))]"
       ]
     },
     {
@@ -272,5 +229,27 @@
         "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dnsZoneFqdn'), parameters('virtualNetworkName'))]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "mysqlHostname": {
+      "type": "string",
+      "value": "[format('{0}.{1}', parameters('serverName'), parameters('dnsZoneFqdn'))]"
+    },
+    "mysqlSubnetId": {
+      "type": "string",
+      "value": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dnsZoneFqdn'), parameters('virtualNetworkName'))).virtualNetwork.id, parameters('subnetName'))]"
+    },
+    "vnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+    },
+    "privateDnsId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/privateDnsZones', parameters('dnsZoneFqdn'))]"
+    },
+    "privateDnsName": {
+      "type": "string",
+      "value": "[parameters('dnsZoneFqdn')]"
+    }
+  }
 }
