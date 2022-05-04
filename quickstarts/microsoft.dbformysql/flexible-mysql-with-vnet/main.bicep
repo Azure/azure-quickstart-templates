@@ -61,9 +61,6 @@ param vnetAddressPrefix string = '10.0.0.0/24'
 @description('Subnet Address Prefix')
 param mySqlSubnetPrefix string = '10.0.0.0/28'
 
-@description('First available IP address in the MySql delegated subnet address')
-param mySqlServerIp string = '10.0.0.4'
-
 @description('Composing the subnetId')
 var mysqlSubnetId =  '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
 
