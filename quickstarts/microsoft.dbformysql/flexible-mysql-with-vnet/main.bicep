@@ -75,7 +75,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
     }
   }
 
-  resource subnet 'subnets@2021-05-01' = {
+resource subnet 'subnets@2021-05-01' = {
     name: subnetName
     properties: {
       addressPrefix: mySqlSubnetPrefix
