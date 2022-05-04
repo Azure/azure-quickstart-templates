@@ -64,6 +64,9 @@ param mySqlSubnetPrefix string = '10.0.0.0/28'
 @description('First available IP address in the MySql delegated subnet address')
 param mySqlServerIp string = '10.0.0.4'
 
+@description('Composing the subnetId')
+var mysqlSubnetId =  '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
+
 resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
@@ -96,34 +99,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 resource dnszone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: dnsZoneFqdn
   location: 'global'
-  
-  resource dnsDbName 'A' = {
-    name: serverName
-    properties: {
-      ttl: 30
-      aRecords: [
-        {
-          ipv4Address: mySqlServerIp
-        }
-      ]
-    }
-  }
-  
-  resource dnsSoa 'SOA' = {
-    name: '@'
-    properties: {
-      ttl: 3600
-      soaRecord: {
-        email: 'azureprivatedns-host.microsoft.com'
-        expireTime: 2419200
-        host: 'azureprivatedns.net'
-        minimumTtl: 10
-        refreshTime: 3600
-        retryTime: 300
-        serialNumber: 1
-      }
-    }
-  }
 }
 
 resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
@@ -163,8 +138,14 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
       mode: 'Disabled'
     }
     network: {
-      delegatedSubnetResourceId: '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
+      delegatedSubnetResourceId: mysqlSubnetId
       privateDnsZoneResourceId: dnszone.id
     }
   }
 }
+
+output mysqlHostname string = '${serverName}.${dnszone.name}'
+output mysqlSubnetId string = mysqlSubnetId
+output vnetId string = vnet.id
+output privateDnsId string = dnszone.id
+output privateDnsName string = dnszone.name
