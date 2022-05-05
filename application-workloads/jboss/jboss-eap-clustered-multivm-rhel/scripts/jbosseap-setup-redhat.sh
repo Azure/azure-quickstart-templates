@@ -43,10 +43,8 @@ IP_ADDR=$(hostname -I)
 STORAGE_ACCOUNT_NAME=${15}
 CONTAINER_NAME=${16}
 STORAGE_ACCESS_KEY=$(echo "${17}" | openssl enc -d -base64)
-EAP_RHEL_VERSION=${18}
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> jbosseap.install.log
-echo "JBoss EAP on RHEL version you selected : " ${EAP_RHEL_VERSION} | adddate >> jbosseap.install.log
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | adddate >> jbosseap.install.log
 echo "Storage Container Name: " ${CONTAINER_NAME} | adddate >> jbosseap.install.log
 echo "RHSM_USER: " ${RHSM_USER} | adddate >> jbosseap.install.log
@@ -77,7 +75,7 @@ if [ $RHEL_OS_LICENSE_TYPE == "BYOS" ]
 then
     echo "Attaching Pool ID for RHEL OS" | adddate >> jbosseap.install.log
     echo "subscription-manager attach --pool=RHEL_POOL" | adddate  >> jbosseap.install.log
-    subscription-manager attach --pool=${19} >> jbosseap.install.log 2>&1
+    subscription-manager attach --pool=${18} >> jbosseap.install.log 2>&1
 fi
 echo "Subscribing the system to get access to JBoss EAP repos" | adddate >> jbosseap.install.log
 
@@ -85,26 +83,6 @@ echo "Install openjdk, wget, git, unzip, vim" | adddate >> jbosseap.install.log
 echo "sudo yum install java-1.8.0-openjdk wget unzip vim git -y" | adddate >> jbosseap.install.log
 sudo yum install java-1.8.0-openjdk wget unzip vim git -y | adddate >> jbosseap.install.log 2>&1
 
-if [ ${EAP_RHEL_VERSION} == "JBoss-EAP7.3-on-RHEL8.4" ]
-then
-# Install JBoss EAP 7.3
-echo "subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms" | adddate >> jbosseap.install.log
-subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms >> jbosseap.install.log 2>&1
-flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" | adddate >> jbosseap.install.log; exit $flag;  fi
-
-echo "Installing JBoss EAP 7.3 repos" | adddate >> jbosseap.install.log
-echo "yum groupinstall -y jboss-eap7" | adddate >> jbosseap.install.log
-yum groupinstall -y jboss-eap7 >> jbosseap.install.log 2>&1
-flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" | adddate >> jbosseap.install.log; exit $flag;  fi
-
-echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | adddate >> jbosseap.install.log
-sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
-echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | adddate >> jbosseap.install.log
-echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
-fi
-
-if [ ${EAP_RHEL_VERSION} == "JBoss-EAP7.4-on-RHEL8.4" ]
-then
 # Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | adddate >> jbosseap.install.log
 subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms >> jbosseap.install.log 2>&1
@@ -119,7 +97,6 @@ echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" 
 sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
 echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | adddate >> jbosseap.install.log
 echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
-fi
 
 echo "systemctl restart sshd" | adddate >> jbosseap.install.log
 systemctl restart sshd | adddate >> jbosseap.install.log 2>&1
