@@ -38,3 +38,4 @@ Enable Auditing of Microsoft support operations (isMSDevOpsAuditEnabled) to trac
 
 For more information on Auditing of Microsoft support operations, see the [official documentation]( https://docs.microsoft.com/azure/azure-sql/database/auditing-overview#auditing-of-microsoft-support-operations).
 
+
