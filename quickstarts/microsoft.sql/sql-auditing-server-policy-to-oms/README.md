@@ -1,4 +1,13 @@
-# Deploy an Azure SQL Server with Auditing enabled to write audit logs to Log Analytics
+---
+description: This template allows you to deploy an Azure SQL server with Auditing enabled to write audit logs to Log Analytics (OMS workspace)
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Azure SQL Server with Auditing written to Log Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/PublicDeployment.svg)
@@ -28,3 +37,4 @@ For more information on SQL database auditing, see the [official documentation](
 Enable Auditing of Microsoft support operations (isMSDevOpsAuditEnabled) to tracks Microsoft support engineers'(DevOps) operations on your server and write them to an audit log in your Log Analytics.
 
 For more information on Auditing of Microsoft support operations, see the [official documentation]( https://docs.microsoft.com/azure/azure-sql/database/auditing-overview#auditing-of-microsoft-support-operations).
+
