@@ -11,7 +11,7 @@ param dashboardDisplayName string = 'Private 5G Core Metrics'
 var dashboardName = guid(connectedClusterName, connectedClusterResourceGroup)
 
 @description('Region where the dashboard will be deployed')
-param location string
+param location string = resourceGroup().location
 
 resource existingClusterResource 'Microsoft.Kubernetes/connectedClusters@2021-10-01' existing = {
   name: connectedClusterName
