@@ -1,5 +1,5 @@
 @description('Cosmos DB account name')
-param accountName string = 'mongodb-${uniqueString(resourceGroup().id)}'
+param accountName string = toLower('mongodb-${uniqueString(resourceGroup().id)}')
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -10,7 +10,6 @@ param primaryRegion string
 @description('The secondary replica region for the Cosmos DB account.')
 param secondaryRegion string
 
-@description('The default consistency level of the Cosmos DB account.')
 @allowed([
   'Eventual'
   'ConsistentPrefix'
@@ -18,32 +17,34 @@ param secondaryRegion string
   'BoundedStaleness'
   'Strong'
 ])
+@description('The default consistency level of the Cosmos DB account.')
 param defaultConsistencyLevel string = 'Session'
 
-@description('Specifies the MongoDB server version to use.')
 @allowed([
   '3.2'
   '3.6'
   '4.0'
+  '4.2'
 ])
-param serverVersion string = '4.0'
+@description('Specifies the MongoDB server version to use.')
+param serverVersion string = '4.2'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
 @minValue(10)
 @maxValue(2147483647)
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
 param maxStalenessPrefix int = 100000
 
-@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
 @minValue(5)
 @maxValue(86400)
+@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
 param maxIntervalInSeconds int = 300
 
 @description('The name for the Mongo DB database')
 param databaseName string
 
-@description('The shared throughput for the Mongo DB database')
 @minValue(400)
 @maxValue(1000000)
+@description('The shared throughput for the Mongo DB database')
 param throughput int = 400
 
 @description('The name for the first Mongo DB collection')
@@ -52,7 +53,6 @@ param collection1Name string
 @description('The name for the second Mongo DB collection')
 param collection2Name string
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -85,8 +85,8 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account_resource 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
+  name: accountName
   location: location
   kind: 'MongoDB'
   properties: {
@@ -99,8 +99,9 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-04-15' = {
-  name: '${accountName_resource.name}/${databaseName}'
+resource database_resource 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-10-15' = {
+  parent: account_resource
+  name: databaseName
   properties: {
     resource: {
       id: databaseName
@@ -111,8 +112,9 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/mongodb
   }
 }
 
-resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  name: '${accountName_databaseName.name}/${collection1Name}'
+resource collection1_resource 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+  parent: database_resource
+  name: collection1Name
   properties: {
     resource: {
       id: collection1Name
@@ -163,8 +165,9 @@ resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/database
   }
 }
 
-resource accountName_databaseName_collection2Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  name: '${accountName_databaseName.name}/${collection2Name}'
+resource collection2_resource 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+  parent: database_resource
+  name: collection2Name
   properties: {
     resource: {
       id: collection2Name
