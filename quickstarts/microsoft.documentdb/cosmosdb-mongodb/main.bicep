@@ -85,7 +85,7 @@ var locations = [
   }
 ]
 
-resource account_resource 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
+resource account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
   name: accountName
   location: location
   kind: 'MongoDB'
@@ -99,8 +99,8 @@ resource account_resource 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
   }
 }
 
-resource database_resource 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-10-15' = {
-  parent: account_resource
+resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-10-15' = {
+  parent: account
   name: databaseName
   properties: {
     resource: {
@@ -112,8 +112,8 @@ resource database_resource 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabas
   }
 }
 
-resource collection1_resource 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
-  parent: database_resource
+resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+  parent: database
   name: collection1Name
   properties: {
     resource: {
@@ -165,8 +165,8 @@ resource collection1_resource 'Microsoft.DocumentDb/databaseAccounts/mongodbData
   }
 }
 
-resource collection2_resource 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
-  parent: database_resource
+resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+  parent: database
   name: collection2Name
   properties: {
     resource: {
