@@ -25,7 +25,7 @@ resource iotHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
   properties: {}
 }
 
-resource provisioningService 'Microsoft.Devices/provisioningServices@2021-10-15' = {
+resource provisioningService 'Microsoft.Devices/provisioningServices@2022-02-05' = {
   name: provisioningServiceName
   location: location
   sku: {
