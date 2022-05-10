@@ -362,7 +362,7 @@ var subnetPrefix = '10.0.0.0/24'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var useAlternateToken = 'false'
 
-resource publicIPName_resource 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -376,7 +376,7 @@ resource publicIPName_resource 'Microsoft.Network/publicIPAddresses@2020-06-01' 
   }
 }
 
-resource networkSecurityGroupName_resource 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -398,7 +398,7 @@ resource networkSecurityGroupName_resource 'Microsoft.Network/networkSecurityGro
   }
 }
 
-resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -413,7 +413,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2020-06-
         properties: {
           addressPrefix: subnetPrefix
           networkSecurityGroup: {
-            id: networkSecurityGroupName_resource.id
+            id: networkSecurityGroup.id
           }
         }
       }
@@ -421,7 +421,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2020-06-
   }
 }
 
-resource nicName_resource 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
   name: nicName
   location: location
   properties: {
@@ -431,7 +431,7 @@ resource nicName_resource 'Microsoft.Network/networkInterfaces@2020-06-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIPName_resource.id
+            id: publicIP.id
           }
           subnet: {
             id: subnetRef
@@ -441,11 +441,11 @@ resource nicName_resource 'Microsoft.Network/networkInterfaces@2020-06-01' = {
     ]
   }
   dependsOn: [
-    virtualNetworkName_resource
+    virtualNetwork
   ]
 }
 
-resource vmName_resource 'Microsoft.Compute/virtualMachines@2020-12-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
   name: vmName
   location: location
   identity: {
@@ -472,7 +472,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2020-12-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: nicName_resource.id
+          id: nic.id
         }
       ]
     }
@@ -486,8 +486,8 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2020-12-01' = {
   }
 }
 
-resource vmName_extensionName 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = if ((vTPM == 'true') && (secureBoot == 'true')) {
-  parent: vmName_resource
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = if (vTPM && secureBoot) {
+  parent: vm
   name: extensionName
   location: location
   properties: {
@@ -507,4 +507,4 @@ resource vmName_extensionName 'Microsoft.Compute/virtualMachines/extensions@2020
   }
 }
 
-output hostname string = publicIPName_resource.properties.dnsSettings.fqdn
+output hostname string = publicIP.properties.dnsSettings.fqdn
