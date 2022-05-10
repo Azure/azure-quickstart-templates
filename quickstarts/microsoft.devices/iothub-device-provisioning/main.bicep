@@ -15,7 +15,7 @@ param skuUnits int = 1
 
 var iotHubKey = 'iothubowner'
 
-resource iotHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
+resource iotHub 'Microsoft.Devices/IotHubs@2021-07-02-preview' = {
   name: iotHubName
   location: location
   sku: {
@@ -25,7 +25,7 @@ resource iotHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
   properties: {}
 }
 
-resource provisioningService 'Microsoft.Devices/provisioningServices@2022-02-05' = {
+resource provisioningService 'Microsoft.Devices/provisioningServices@2021-10-15' = {
   name: provisioningServiceName
   location: location
   sku: {
