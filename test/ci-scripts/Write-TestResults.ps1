@@ -111,8 +111,8 @@ if ($isPullRequest) {
 }
 
 # if the build was cancelled and this was a scheduled build, we need to set the metadata status back to "Live"
-if ($r -ne $null -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullRequest") {
-    if ($r.status -eq $null) {
+if ($null -ne $r -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullRequest") {
+    if ($null -eq $r.status) {
         Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
     }
     else {
@@ -148,7 +148,7 @@ if ($ValidationType -eq "Manual") {
 }
 
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
-if ($r -eq $null) {
+if ($null -eq $r) {
 
     Write-Host "No record found, adding a new one..."
     $results = New-Object -TypeName hashtable
@@ -195,7 +195,7 @@ if ($r -eq $null) {
 
     Write-Host "New Record: Dump results variable"
 
-    $results | fl *
+    $results | Format-List *
     $newResults = $results.PSObject.copy()
     Write-Host "New Record: Add-AzTableRow"
 
@@ -208,10 +208,10 @@ if ($r -eq $null) {
 else {
     # Update the existing row - need to check to make sure the columns exist
     Write-Host "Updating the existing record from:"
-    $r | fl *
+    $r | Format-List *
 
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
-        if ($r.BestPracticeResult -eq $null) {
+        if ($null -eq $r.BestPracticeResult) {
             Add-Member -InputObject $r -NotePropertyName 'BestPracticeResult' -NotePropertyValue $BestPracticeResult
         }
         else {
@@ -219,7 +219,7 @@ else {
         }
     }
     if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
-        if ($r.TemplateAnalyzerResult -eq $null) {
+        if ($null -eq $r.TemplateAnalyzerResult) {
             Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerResult' -NotePropertyValue $TemplateAnalyzerResult
         }
         else {
@@ -227,7 +227,7 @@ else {
         }
     }
     if (![string]::IsNullOrWhiteSpace($BicepVersion)) {
-        if ($r.BicepVersion -eq $null) {
+        if ($null -eq $r.BicepVersion) {
             Add-Member -InputObject $r -NotePropertyName 'BicepVersion' -NotePropertyValue $BicepVersion
         }
         else {
@@ -235,7 +235,7 @@ else {
         }
     }
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
-        if ($r.CredScanResult -eq $null) {
+        if ($null -eq $r.CredScanResult) {
             Add-Member -InputObject $r -NotePropertyName "CredScanResult" -NotePropertyValue $CredScanResult
         }
         else {
@@ -244,7 +244,7 @@ else {
     }
     # set the values for FF only if a result was passed
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
-        if ($r.FairfaxDeployment -eq $null) {
+        if ($null -eq $r.FairfaxDeployment) {
             Add-Member -InputObject $r -NotePropertyName "FairfaxDeployment" -NotePropertyValue $FairfaxDeployment
             Add-Member -InputObject $r -NotePropertyName "FairfaxLastTestDate" -NotePropertyValue $FairfaxLastTestDate -Force
         }
@@ -255,7 +255,7 @@ else {
     }
     # set the values for MAC only if a result was passed
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
-        if ($r.PublicDeployment -eq $null) {
+        if ($null -eq $r.PublicDeployment) {
             Add-Member -InputObject $r -NotePropertyName "PublicDeployment" -NotePropertyValue $PublicDeployment
             Add-Member -InputObject $r -NotePropertyName "PublicLastTestDate" -NotePropertyValue $PublicLastTestDate -Force
         }
@@ -266,25 +266,25 @@ else {
     }
 
     if ($BuildReason -eq "PullRequest") {
-        if ($r.status -eq $null) {
+        if ($null -eq $r.status) {
             Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue $BuildReason            
         }
         else {
             $r.status = $BuildReason
         }
         # set the pr number only if the column isn't present (should be true only for older prs before this column was added)
-        if ($r.pr -eq $null) {
+        if ($null -eq $r.pr) {
             Add-Member -InputObject $r -NotePropertyName "pr" -NotePropertyValue $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER            
         }
         
         # if it's a PR, set the build number, since it's not set before this outside of a scheduled build
-        if ($r.($ResultDeploymentParameter + "BuildNumber") -eq $null) {
+        if ($null -eq $r.($ResultDeploymentParameter + "BuildNumber")) {
             Add-Member -InputObject $r -NotePropertyName ($ResultDeploymentParameter + "BuildNumber") -NotePropertyValue $ENV:BUILD_BUILDNUMBER           
         }
         else {
             $r.($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
         }
-        if ($r.pr -eq $null) {
+        if ($null -eq $r.pr) {
             Add-Member -InputObject $r -NotePropertyName "pr" -NotePropertyValue $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
         }
         else {
@@ -294,7 +294,7 @@ else {
     }
     else {
         # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
-        if ($r.status -eq $null) {
+        if ($null -eq $r.status) {
             Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
         }
         else {
@@ -303,35 +303,35 @@ else {
     }
 
     # update metadata columns
-    if ($r.itemDisplayName -eq $null) { 
+    if ($null -eq $r.itemDisplayName) { 
         Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
     }
     else {
         $r.itemDisplayName = $Metadata.itemDisplayName
     }
 
-    if ($r.description -eq $null) {
+    if ($null -eq $r.description) {
         Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
     }
     else {
         $r.description = $Metadata.description
     }
 
-    if ($r.summary -eq $null) {
+    if ($null -eq $r.summary) {
         Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
     }
     else {
         $r.summary = $Metadata.summary
     }
 
-    if ($r.githubUsername -eq $null) {
+    if ($null -eq $r.githubUsername) {
         Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
     }
     else {
         $r.githubUsername = $Metadata.githubUsername
     }   
     
-    if ($r.dateUpdated -eq $null) {
+    if ($null -eq $r.dateUpdated) {
         Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
     }
     else {
@@ -339,7 +339,7 @@ else {
     }
 
     Write-Host "Updating to new results:"
-    $r | fl *
+    $r | Format-List *
     $r | Update-AzTableRow -table $cloudTable
 
     $newResults = $r.PSObject.copy()
@@ -355,7 +355,7 @@ $AnyRegressed = $BPRegressed -or $FairfaxRegressed -or $PublicRegresse
 
 if (!$isPullRequest) {
     Write-Host "Writing regression info to table '$RegressionsTableName'"
-    $regressionsTable = (Get-AzStorageTable –Name $RegressionsTableName –Context $ctx).CloudTable
+    $regressionsTable = (Get-AzStorageTable -Name $RegressionsTableName -Context $ctx).CloudTable
     $regressionsKey = Get-Date -Format "o"
     $regressionsRow = $newResults.PSObject.copy()
     $regressionsRow | Add-Member "Sample" $RowKey
@@ -385,9 +385,9 @@ $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowK
 $Badges = @{ }
 
 $na = "Not%20Tested"
-$naColor = "black"
+#$naColor = "black"
 
-if ($r.PublicLastTestDate -ne $null) {
+if ($null -ne $r.PublicLastTestDate) {
     $PublicLastTestDate = $r.PublicLastTestDate.Replace("-", ".")
     $PublicLastTestDateColor = "black"
 }
@@ -396,7 +396,7 @@ else {
     $PublicLastTestDateColor = "inactive"
 }
 
-if ($r.FairfaxLastTestDate -ne $null) {
+if ($null -ne $r.FairfaxLastTestDate) {
     $FairfaxLastTestDate = $r.FairfaxLastTestDate.Replace("-", ".")
     $FairfaxLastTestDateColor = "black"
 }
@@ -405,7 +405,7 @@ else {
     $FairfaxLastTestDateColor = "inactive"
 }
 
-if ($r.FairfaxDeployment -ne $null) {
+if ($null -ne $r.FairfaxDeployment) {
     # TODO can be removed when table is updated to string
     $FairfaxDeployment = ($r.FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -420,7 +420,7 @@ switch ($FairfaxDeployment) {
     }
 }
 
-if ($r.PublicDeployment -ne $null) {
+if ($null -ne $r.PublicDeployment) {
     # TODO can be removed when table is updated to string
     $PublicDeployment = ($r.PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -435,7 +435,7 @@ switch ($PublicDeployment) {
     }
 }
 
-if ($r.BestPracticeResult -ne $null) {
+if ($null -ne $r.BestPracticeResult) {
     # TODO can be removed when table is updated to string
     $BestPracticeResult = ($r.BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -448,7 +448,7 @@ switch ($BestPracticeResult) {
     }
 }
 
-if ($r.CredScanResult -ne $null) {
+if ($null -ne $r.CredScanResult) {
     # TODO can be removed when table is updated to string
     $CredScanResult = ($r.CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -530,7 +530,7 @@ foreach ($badge in $badges) {
 
     $blobName = "$badgePath/$($badge.filename)"
     Write-Output "Uploading badge to storage account '$($StorageAccountName)', container '$($containerName)', name '$($blobName)':"
-    $badge | fl | Write-Output
+    $badge | Format-List | Write-Output
     Set-AzStorageBlobContent -Container $containerName `
         -File $badgeTempPath `
         -Blob $blobName `

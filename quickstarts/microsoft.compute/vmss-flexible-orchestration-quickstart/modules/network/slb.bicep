@@ -47,13 +47,13 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
       {
         properties: {
           frontendIPConfiguration: {
-            id: '${resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, 'FrontEndConfig')}'
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, 'FrontEndConfig')
           }
           backendAddressPool: {
-            id: '${resourceId('Microsoft.Network/loadBalancers/backendAddressPools', slbName, 'bepool01')}'
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', slbName, 'bepool01')
           }
           probe: {
-            id: '${resourceId('Microsoft.Network/loadBalancers/probes', slbName, 'probe01')}'
+            id: resourceId('Microsoft.Network/loadBalancers/probes', slbName, 'probe01')
           }
           protocol: 'Tcp'
           loadDistribution: 'Default'

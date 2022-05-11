@@ -31,8 +31,8 @@ $Headers = @{
 # Get the storage table that contains the hashes
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey "$StorageAccountKey" -Environment AzureCloud
 $ctx | Out-String
-Get-AzStorageTable –Name $tableName –Context $ctx -Verbose
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+Get-AzStorageTable -Name $tableName -Context $ctx -Verbose
+$cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 
 # Find all metadata.json files - each metadata file indicates a sample
 $ArtifactFilePaths = Get-ChildItem -Path $RepoRoot .\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
@@ -83,7 +83,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
             Write-Output "Fetching row for: *$templateHash*"
 
             $r = Get-AzTableRow -table $cloudTable -ColumnName "RowKey" -Value "$templateHash" -Operator Equal -verbose 
-            if ($r -eq $null) {
+            if ($null -eq $r) {
                 # Add this as a new hash
                 Write-Output "$templateHash not found in table"
 

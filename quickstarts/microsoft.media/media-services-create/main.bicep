@@ -6,7 +6,7 @@ param location string = resourceGroup().location
 
 var storageAccountName = 'storage${uniqueString(resourceGroup().id)}'
 
-resource mediaService 'Microsoft.Media/mediaServices@2020-05-01' = {
+resource mediaService 'Microsoft.Media/mediaservices@2021-06-01' = {
   name: mediaServiceName
   location: location
   properties: {
@@ -19,7 +19,7 @@ resource mediaService 'Microsoft.Media/mediaServices@2020-05-01' = {
   }
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
   kind: 'StorageV2'

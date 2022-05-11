@@ -1,3 +1,13 @@
+---
+page_type: sample
+languages:
+- bicep
+- json
+products:
+- azure
+description: This template creates a CDN Profile and a CDN Endpoint with parameterized configuration settings
+---
+
 # Deployment of a CDN profile and a CDN endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-customize/PublicLastTestDate.svg)

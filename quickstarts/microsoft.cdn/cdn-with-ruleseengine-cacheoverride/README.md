@@ -15,4 +15,11 @@
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine with a path based rule and overrides cache expiration.
 
-
+---
+page_type: sample
+languages:
+- bicep
+- json
+products:
+- azure
+---
