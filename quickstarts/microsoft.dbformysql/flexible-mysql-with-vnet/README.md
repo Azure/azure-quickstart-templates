@@ -29,3 +29,4 @@ languages:
 This template provides a easy way to deploy the Flexible server Azure database for MySQL with VNet Integration. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/mysql/flexible-server/quickstart-create-arm-template) article.
 
 For more information about the Flexible Server Sku for Azure database for MySQL, and how it compares to the Single Server Sku see the [docs](https://docs.microsoft.com/azure/mysql/select-right-deployment-type)
+
