@@ -1,4 +1,13 @@
-# Azure Data Factory with Git and managed virtual network configuration
+---
+description: This template creates Azure Data Factory with Git configuration and managed virtual network.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Azure Data Factory with Git and managed vnet configuration
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-git-config-managed-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-git-config-managed-vnet/PublicDeployment.svg)
