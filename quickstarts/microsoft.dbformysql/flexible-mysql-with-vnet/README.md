@@ -1,4 +1,13 @@
-# Deploy Flexible server Azure Database for MySQL with VNet
+---
+description: This template provides a way to deploy a Flexible server Azure database for MySQL with VNet integration.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Deploy Azure Database for MySQL (flexible) with VNet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbformysql/flexible-mysql-with-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbformysql/flexible-mysql-with-vnet/PublicDeployment.svg)
