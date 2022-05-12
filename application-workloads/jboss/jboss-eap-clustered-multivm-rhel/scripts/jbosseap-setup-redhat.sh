@@ -82,6 +82,7 @@ echo "Subscribing the system to get access to JBoss EAP repos" | adddate >> jbos
 echo "Install openjdk, wget, git, unzip, vim" | adddate >> jbosseap.install.log
 echo "sudo yum install java-1.8.0-openjdk wget unzip vim git -y" | adddate >> jbosseap.install.log
 sudo yum install java-1.8.0-openjdk wget unzip vim git -y | adddate >> jbosseap.install.log 2>&1
+echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | adddate >> jbosseap.install.log
 
 # Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | adddate >> jbosseap.install.log
