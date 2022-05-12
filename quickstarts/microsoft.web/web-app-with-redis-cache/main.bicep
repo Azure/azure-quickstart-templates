@@ -89,7 +89,7 @@ resource appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
   }
 }
 
-resource cache 'Microsoft.Cache/Redis@2019-07-01' = {
+resource cache 'Microsoft.Cache/Redis@2021-06-01' = {
   name: cacheName
   location: location
   tags: {
