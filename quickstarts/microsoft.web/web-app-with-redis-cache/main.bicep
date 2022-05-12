@@ -73,8 +73,12 @@ resource webSite 'Microsoft.Web/sites@2021-03-01' = {
     'hidden-related:${resourceGroup().id}/providers/Microsoft.Web/serverfarms/${hostingPlanName}': 'empty'
     displayName: 'Website'
   }
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: hostingPlan.id
+    httpsOnly: true
   }
   dependsOn: [
     cache
@@ -86,6 +90,8 @@ resource appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
   name: 'appsettings'
   properties: {
     CacheConnection: '${cacheName}.redis.cache.windows.net,abortConnect=false,ssl=true,password=${cache.listKeys().primaryKey}'
+    minTlsVersion: '1.2'
+    ftpsState: 'FtpsOnly'
   }
 }
 
