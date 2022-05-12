@@ -85,11 +85,11 @@ resource project_vm_1_InstallWebServer 'Microsoft.Compute/virtualMachines/extens
   ]
 }]
 
-resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, 3): {
+resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(1, 3): {
   name: '${projectName}-vm${(i + 1)}'
   location: location
   zones: [
-    ('i + 1')
+    ('i')
   ]
   properties: {
     hardwareProfile: {
