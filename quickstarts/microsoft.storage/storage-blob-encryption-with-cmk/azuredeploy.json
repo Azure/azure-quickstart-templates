@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1008.15138",
-      "templateHash": "8265204902282047639"
+      "version": "0.5.6.12127",
+      "templateHash": "16023511331197397029"
     }
   },
   "parameters": {
@@ -26,39 +26,48 @@
     "userAssignedIdentityName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the User Assigned Identity."
+        "description": "The name of the existing User Assigned Identity."
+      }
+    },
+    "userAssignedIdentityResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the resource group for the User Assigned Identity."
       }
     },
     "keyVaultName": {
       "type": "string",
+      "defaultValue": "[format('vault-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Key Vault."
       }
     },
     "keyVaultKeyName": {
       "type": "string",
+      "defaultValue": "cmkey",
       "metadata": {
         "description": "Name of the key in the Key Vault"
       }
     },
+    "keyExpiration": {
+      "type": "int",
+      "defaultValue": "[dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))]",
+      "metadata": {
+        "description": "Expiration time of the key"
+      }
+    },
     "storageAccountName": {
       "type": "string",
+      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Storage Account"
       }
     }
   },
-  "functions": [],
   "resources": [
     {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2018-11-30",
-      "name": "[parameters('userAssignedIdentityName')]",
-      "location": "[parameters('location')]"
-    },
-    {
       "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2021-06-01-preview",
+      "apiVersion": "2021-10-01",
       "name": "[parameters('keyVaultName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -68,9 +77,7 @@
         },
         "enableSoftDelete": true,
         "enablePurgeProtection": true,
-        "enabledForDeployment": true,
         "enabledForDiskEncryption": true,
-        "enabledForTemplateDeployment": true,
         "tenantId": "[parameters('tenantId')]",
         "accessPolicies": [
           {
@@ -82,21 +89,19 @@
                 "get"
               ]
             },
-            "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName'))).principalId]"
+            "objectId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('userAssignedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName')), '2018-11-30').principalId]"
           }
         ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName'))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.KeyVault/vaults/keys",
-      "apiVersion": "2021-06-01-preview",
+      "apiVersion": "2021-10-01",
       "name": "[format('{0}/{1}', parameters('keyVaultName'), parameters('keyVaultKeyName'))]",
       "properties": {
         "attributes": {
-          "enabled": true
+          "enabled": true,
+          "exp": "[parameters('keyExpiration')]"
         },
         "keySize": 4096,
         "kty": "RSA"
@@ -117,7 +122,7 @@
       "identity": {
         "type": "UserAssigned",
         "userAssignedIdentities": {
-          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName')))]": {}
+          "[format('{0}', extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('userAssignedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName')))]": {}
         }
       },
       "properties": {
@@ -126,7 +131,7 @@
         "minimumTlsVersion": "TLS1_2",
         "encryption": {
           "identity": {
-            "userAssignedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName'))]"
+            "userAssignedIdentity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('userAssignedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName'))]"
           },
           "services": {
             "blob": {
@@ -142,8 +147,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-        "[resourceId('Microsoft.KeyVault/vaults/keys', parameters('keyVaultName'), parameters('keyVaultKeyName'))]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults/keys', parameters('keyVaultName'), parameters('keyVaultKeyName'))]"
       ]
     }
   ]
