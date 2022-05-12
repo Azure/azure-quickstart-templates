@@ -1,4 +1,4 @@
-// Creates a Data Science Virtual Machine jumpbox.
+// Creates a Data Science Virtual Machine jumpbox
 @description('Azure region of the deployment')
 param location string = resourceGroup().location
 
