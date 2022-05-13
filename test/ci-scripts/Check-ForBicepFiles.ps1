@@ -1,6 +1,6 @@
 <#
 
-    Detect which bicep files need to be compiled and compile them
+    Detect which bicep files need to be compiled and compile them - this should be run upon merge of a sample to auto-create azuredeploy.json
 
 #>
 
