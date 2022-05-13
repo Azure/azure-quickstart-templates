@@ -4,8 +4,6 @@ Determines the deployment file to use.
 For JSON samples, this is the JSON file included.
 For bicep samples:
   Build the bicep file to check for errors.
-  For PRs, verify that the JSON included in the sample has the same hash as the JSON we build.
-  Remove the built file.
 
 #>
 
@@ -13,21 +11,21 @@ For bicep samples:
 param (
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $MainTemplateFilenameBicep = $ENV:MAINTEMPLATE_FILENAME,
-    [string] $MainTemplateFilenameJson = $ENV:MAINTEMPLATE_FILENAME_JSON,
-    [string] $BuildReason = $ENV:BUILD_REASON,
+#    [string] $MainTemplateFilenameJson = $ENV:MAINTEMPLATE_FILENAME_JSON,
+#    [string] $BuildReason = $ENV:BUILD_REASON,
     [string] $BicepPath = $ENV:BICEP_PATH,
-    [string] $BicepVersion = $ENV:BICEP_VERSION,
+#    [string] $BicepVersion = $ENV:BICEP_VERSION,
     [switch] $bicepSupported = ($ENV:BICEP_SUPPORTED -eq "true")
 )
 
 $Error.Clear()
-$isPR = $BuildReason -eq "PullRequest"
+#$isPR = $BuildReason -eq "PullRequest"
 
 Write-Host "##vso[task.setvariable variable=label.bicep.warnings]false"
 
 if ($bicepSupported) {
     $MainTemplatePathBicep = "$($SampleFolder)/$($MainTemplateFilenameBicep)"
-    $MainTemplatePathJson = "$($SampleFolder)/$($MainTemplateFilenameJson)"
+    #$MainTemplatePathJson = "$($SampleFolder)/$($MainTemplateFilenameJson)"
     
     # Build a JSON version of the bicep file
     $CompiledJsonFilename = "$($MainTemplateFilenameBicep).temp.json"
@@ -76,31 +74,37 @@ if ($bicepSupported) {
         Write-Host "##vso[task.setvariable variable=label.bicep.warnings]true"
     }    
 
+
+
+# remove json checks since we will compile it - warning is in the check-languagesupport.ps1 task
+
+
+
     # If this is a PR, compare it against the JSON file included in the sample
-    if ($isPR) {
-        $templatesMatch = & $PSScriptRoot/Compare-Templates.ps1 `
-            -TemplateFilePathExpected $CompiledJsonPath `
-            -TemplateFilePathActual $MainTemplatePathJson `
-            -RemoveGeneratorMetadata `
-            -WriteToHost `
-            -ErrorAction Ignore # Ignore so we can write the following error message instead
-        if (!$templatesMatch) {
-            Write-Error ("The JSON in the sample does not match the JSON built from bicep.`n" `
-                    + "Either copy the expected output from the log into $MainTemplateFilenameJson or run the command ``bicep build $mainTemplateFilenameBicep --outfile $MainTemplateFilenameJson`` in your sample folder using bicep version $BicepVersion")
-        }
-    }
+    # if ($isPR) {
+    #     $templatesMatch = & $PSScriptRoot/Compare-Templates.ps1 `
+    #         -TemplateFilePathExpected $CompiledJsonPath `
+    #         -TemplateFilePathActual $MainTemplatePathJson `
+    #         -RemoveGeneratorMetadata `
+    #         -WriteToHost `
+    #         -ErrorAction Ignore # Ignore so we can write the following error message instead
+    #     if (!$templatesMatch) {
+    #         Write-Error ("The JSON in the sample does not match the JSON built from bicep.`n" `
+    #                 + "Either copy the expected output from the log into $MainTemplateFilenameJson or run the command ``bicep build $mainTemplateFilenameBicep --outfile $MainTemplateFilenameJson`` in your sample folder using bicep version $BicepVersion")
+    #     }
+    # }
     
     # Deploy the JSON file included in the sample, not the one we temporarily built
-    $fileToDeploy = $MainTemplateFilenameJson
+    #$fileToDeploy = $MainTemplateFilenameJson
 
     # Delete the temporary built JSON file
     Remove-Item $CompiledJsonPath
 }
-else {
+#else {
     # Just deploy the JSON file included in the sample
-    Write-Host "Bicep not supported in this sample, deploying to $MainTemplateFilenameJson"
-    $fileToDeploy = $MainTemplateFilenameJson
-}
+    #Write-Host "Bicep not supported in this sample, deploying to $MainTemplateFilenameJson"
+    #$fileToDeploy = $MainTemplateFilenameJson
+#}
 
-Write-Host "File to deploy: $fileToDeploy"
-Write-Host "##vso[task.setvariable variable=mainTemplate.deployment.filename]$fileToDeploy"
+#Write-Host "File to deploy: $fileToDeploy"
+#Write-Host "##vso[task.setvariable variable=mainTemplate.deployment.filename]$fileToDeploy"
