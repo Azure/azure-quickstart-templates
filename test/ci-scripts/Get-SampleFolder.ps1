@@ -90,3 +90,6 @@ Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 $sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "").Replace("$ENV:BUILD_SOURCESDIRECTORY/", "")
 Write-Output "Using sample name: $sampleName"
 Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"
+
+Write-Output "Using github PR#: $GitHubPRNumber"
+Write-Host "##vso[task.setvariable variable=github.pr.number]$GitHubPRNumber"
