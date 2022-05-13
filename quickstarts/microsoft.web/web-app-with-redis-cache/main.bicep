@@ -34,15 +34,8 @@ param cacheSKUName string = 'Basic'
 param cacheSKUFamily string = 'C'
 
 @description('The size of the new Azure Redis Cache instance. ')
-@allowed([
-  0
-  1
-  2
-  3
-  4
-  5
-  6
-])
+@minValue(0)
+@maxValue(6)
 param cacheSKUCapacity int = 0
 
 @description('Location for all resources.')
@@ -70,7 +63,7 @@ resource webSite 'Microsoft.Web/sites@2021-03-01' = {
   name: webSiteName
   location: location
   tags: {
-    'hidden-related:${resourceGroup().id}/providers/Microsoft.Web/serverfarms/${hostingPlanName}': 'empty'
+    'hidden-related:${hostingPlan.id}': 'empty'
     displayName: 'Website'
   }
   identity: {
