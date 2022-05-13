@@ -86,10 +86,10 @@ resource project_vm_1_InstallWebServer 'Microsoft.Compute/virtualMachines/extens
 }]
 
 resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(1, 3): {
-  name: '${projectName}-vm${(i + 1)}'
+  name: '${projectName}-vm${i}'
   location: location
   zones: [
-    ('i')
+    string(i)
   ]
   properties: {
     hardwareProfile: {
@@ -112,12 +112,12 @@ resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${projectName}-vm${(i + 1)}-networkInterface')
+          id: resourceId('Microsoft.Network/networkInterfaces', '${projectName}-vm${i}-networkInterface')
         }
       ]
     }
     osProfile: {
-      computerName: '${projectName}-vm${(i + 1)}'
+      computerName: '${projectName}-vm${i}'
       adminUsername: adminUsername
       adminPassword: adminPassword
       windowsConfiguration: {
