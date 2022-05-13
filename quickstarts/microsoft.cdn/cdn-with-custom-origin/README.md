@@ -1,4 +1,5 @@
 ---
+description: This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN.
 page_type: sample
 languages:
 - bicep
