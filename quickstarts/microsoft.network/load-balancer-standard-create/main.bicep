@@ -34,7 +34,7 @@ var vNetBastionSubnetAddressPrefix = '10.0.1.0/24'
 var bastionPublicIPAddressName = '${projectName}-bastionPublicIP'
 var vmStorageAccountType = 'Premium_LRS'
 
-resource project_vm_1_networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = [for i in range(0, 3): {
+resource project_vm_1_networkInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i in range(0, 3): {
   name: '${projectName}-vm${(i + 1)}-networkInterface'
   location: location
   properties: {
@@ -131,7 +131,7 @@ resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in
   ]
 }]
 
-resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
   parent: vNet
   name: bastionSubnetName
   properties: {
@@ -139,7 +139,7 @@ resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-
   }
 }
 
-resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
   parent: vNet
   name: vNetSubnetName
   properties: {
@@ -147,7 +147,7 @@ resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021
   }
 }
 
-resource bastion 'Microsoft.Network/bastionHosts@2021-05-01' = {
+resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
   name: bastionName
   location: location
   properties: {
@@ -171,7 +171,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-05-01' = {
   ]
 }
 
-resource bastionPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource bastionPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   name: bastionPublicIPAddressName
   location: location
   sku: {
@@ -183,7 +183,7 @@ resource bastionPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01'
   }
 }
 
-resource lb 'Microsoft.Network/loadBalancers@2021-05-01' = {
+resource lb 'Microsoft.Network/loadBalancers@2021-08-01' = {
   name: lbName
   location: location
   sku: {
@@ -273,7 +273,7 @@ resource lb 'Microsoft.Network/loadBalancers@2021-05-01' = {
   }
 }
 
-resource lbPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource lbPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   name: lbPublicIpAddressName
   location: location
   sku: {
@@ -285,7 +285,7 @@ resource lbPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
 }
 
-resource lbPublicIPAddressOutbound 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource lbPublicIPAddressOutbound 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   name: lbPublicIPAddressNameOutbound
   location: location
   sku: {
@@ -297,7 +297,7 @@ resource lbPublicIPAddressOutbound 'Microsoft.Network/publicIPAddresses@2021-05-
   }
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
   name: nsgName
   location: location
   properties: {
@@ -319,7 +319,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   }
 }
 
-resource vNet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vNet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: vNetName
   location: location
   properties: {
