@@ -65,6 +65,10 @@ param nodeDataDrive string = 'Temp'
 @description('The VM size to use for cluster nodes.')
 param nodeTypeSize string = 'Standard_D2_v3'
 
+param tenantId string
+param clusterApplication string
+param clientapplication string
+
 var dnsName = clusterName
 var vmName = 'vm'
 var virtualNetworkName = 'VNet'
@@ -493,6 +497,11 @@ resource cluster 'Microsoft.ServiceFabric/clusters@2021-06-01' = {
     clusterName: clusterName
   }
   properties: {
+    azureActiveDirectory: {
+      clientApplication: clientapplication
+      clusterApplication: clusterApplication
+      tenantId: tenantId
+    }
     certificate: {
       thumbprint: certificateThumbprint
       x509StoreName: certificateStoreValue
