@@ -29,9 +29,18 @@ if($gitStatus -like "*Changes not staged for commit:*" -or
     Write-Output "Committing changes..."
 
     # not sure we want to always add the PR# to the message but we're using it during testing so we can test multiple runs of the pipeline without another PR merge
+    # also add the files that were committed to the msg
+    $msg = " for ($SampleName) and PR (#$($ENV:GITHUB_PR_NUMBER))"
+    if($gitStatus -like "*azuredeploy.json"){
+        $msg = " azuredeploy.json $msg"
+    }
+    if($gitStatus -like "*readme.md*"){
+        $msg = " README.md $msg"
+    }
+    $msg = "update $msg"
 
     git add -A -v # for when we add azuredeploy.json for main.bicep samples
-    git commit -v -a -m "update README.md YAML header for ($SampleName) and PR (#$($ENV:GITHUB_PR_NUMBER))"
+    git commit -v -a -m $msg # "update README.md YAML header for ($SampleName) and PR (#$($ENV:GITHUB_PR_NUMBER))"
 
     Write-Output "Status after commit..."
     git status
