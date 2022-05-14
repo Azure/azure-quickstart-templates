@@ -12,7 +12,9 @@ git config core.autocrlf
 Write-Output "^^^^ autocrlf"
 #git config --system core.autocrlf input
         
-if($gitStatus -like "*modified:*"){
+if($gitStatus -like "*Changes not staged for commit:*" -or 
+   $gitStatus -like "*Untracked files:*"){
+
     Write-Output "found changes in $gitStatus"
             
     git config --worktree user.email "azure-quickstart-templates@noreply.github.com"
@@ -28,7 +30,9 @@ if($gitStatus -like "*modified:*"){
 
     # not sure we want to always add the PR# to the message but we're using it during testing so we can test multiple runs of the pipeline without another PR merge
 
-    git commit -a -m "update README.md YAML header for ($SampleName) and PR (#$($ENV:GITHUB_PR_NUMBER))"
+    git add -A -v # for when we add azuredeploy.json for main.bicep samples
+
+    git commit -v -a -m "update README.md YAML header for ($SampleName) and PR (#$($ENV:GITHUB_PR_NUMBER))"
     Write-Output "Status after commit..."
     git status
     Write-Output "Pushing..."
