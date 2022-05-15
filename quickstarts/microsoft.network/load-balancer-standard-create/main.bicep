@@ -58,13 +58,12 @@ resource project_vm_1_networkInterface 'Microsoft.Network/networkInterfaces@2021
       }
     ]
     networkSecurityGroup: {
-      id: nsgName
+      id: nsg.id
     }
   }
   dependsOn: [
     vNet
     lb
-    nsg
   ]
 }]
 
