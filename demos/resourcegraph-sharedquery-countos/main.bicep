@@ -7,7 +7,7 @@ param queryCode string = 'Resources | where type =~ \'Microsoft.Compute/virtualM
 @description('The description of the saved Azure Resource Graph query.')
 param queryDescription string = 'This shared query counts all virtual machine resources and summarizes by the OS type.'
 
-resource queryName_resource 'Microsoft.ResourceGraph/queries@2018-09-01-preview' = {
+resource query 'Microsoft.ResourceGraph/queries@2018-09-01-preview' = {
   name: queryName
   location: 'global'
   properties: {
