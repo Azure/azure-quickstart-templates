@@ -1,4 +1,4 @@
-# Data Science Linux Ubuntu 18.04
+# Data Science Linux Ubuntu
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/datascience/vm-ubuntu-DSVM-GPU-or-CPU/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/datascience/vm-ubuntu-DSVM-GPU-or-CPU/PublicDeployment.svg)
