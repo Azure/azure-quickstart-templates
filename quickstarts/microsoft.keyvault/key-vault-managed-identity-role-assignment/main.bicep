@@ -1,8 +1,11 @@
 @description('Specifies the name of the key vault.')
-param keyVaultName string
+param keyVaultName string = 'kv${uniqueString(resourceGroup().id)}'
 
 @description('Specifies the SKU to use for the key vault.')
-param keyVaultSku object
+param keyVaultSku object = {
+  name: 'standard'
+  family: 'A'
+}
 
 @description('Specifies the Azure location where the resources should be created.')
 param location string = resourceGroup().location
