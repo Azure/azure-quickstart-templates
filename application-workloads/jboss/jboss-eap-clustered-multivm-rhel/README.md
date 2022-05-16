@@ -35,25 +35,24 @@ Red Hat Subscription Management (RHSM) is a customer-driven, end-to-end solution
 
 ## Template Solution Architecture
 
-This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.3/ EAP 7.4 cluster running 'n' number of Red Hat Enterprise Linux (RHEL) 8.4 VM, where 'n' is decided by the user and all the VMs are added to the backend pool of a Load Balancer. The following resources are created by this template:
+This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.4 cluster running 'n' number of Red Hat Enterprise Linux (RHEL) 8.4 VM, where 'n' is decided by the user and all the VMs are added to the backend pool of a Load Balancer. The following resources are created by this template:
 
 - RHEL 8.4 Virtual Machines
 - 1 Load Balancer
 - Virtual Network with a single subnet
-- JBoss EAP 7.3/ EAP 7.4 cluster setup on the RHEL VMs
+- JBoss EAP 7.4 cluster setup on the RHEL VMs
 - Sample Java application called **eap-session-replication** deployed on JBoss EAP
 - Storage Account
 
-Note that the users also have the option to choose between the Red Hat Enterprise Linux version 8.4 and JBoss EAP versions 7.3 and 7.4. Users can select one of the following combinations for deployment
+Note that the users will use the Red Hat Enterprise Linux version 8.4 and JBoss EAP version 7.4 for deployment.
 
-- JBoss EAP 7.3 on RHEL 8.4
 - JBoss EAP 7.4 on RHEL 8.4
 
 Following is the Architecture:
 
 ![alt text](images/arch.png)
 
-To learn more about the JBoss Enterprise Application Platform, visit: [Documentation for JBoss EAP 7.3](https://access.redhat.com/documentation/red_hat_jboss_enterprise_application_platform/7.3/) and [Documentation for JBoss EAP 7.4](https://access.redhat.com/documentation/red_hat_jboss_enterprise_application_platform/7.4/).
+To learn more about the JBoss Enterprise Application Platform, visit: [Documentation for JBoss EAP 7.4](https://access.redhat.com/documentation/red_hat_jboss_enterprise_application_platform/7.4/).
 
 ## Subscriptions and Costs
 
@@ -123,7 +122,7 @@ JBoss EAP is available on Azure through BYOS model only; you need to supply your
     
 ## Deployment Steps
 
-Build your environment with JBoss EAP 7.3/ EAP 7.4 cluster setup on 'n' number of RHEL 8.4 VMs where 'n' is decided by the user and all the VMs are added to the backend pool of a Load Balancer on Azure in a few simple steps:
+Build your environment with JBoss EAP 7.4 cluster setup on 'n' number of RHEL 8.4 VMs where 'n' is decided by the user and all the VMs are added to the backend pool of a Load Balancer on Azure in a few simple steps:
 1. Launch the template by clicking the **Deploy to Azure** button.
 2. Complete the following parameter values and accept the Terms and Conditions before clicking on the **Purchase** button.
 
@@ -138,8 +137,6 @@ Build your environment with JBoss EAP 7.3/ EAP 7.4 cluster setup on 'n' number o
     - **Authentication Type** - Type of authentication to use on the VM (password or SSH key).
 
     - **Admin Password or SSH key** - User account password or SSH key data which is an SSH RSA public key for logging into the RHEL VM.
-
-    - **EAP on RHEL Version** - Select the EAP on RHEL version combination from the dropdown options, the default option selected here is JBoss EAP 7.3 on RHEL 8.4.
 
     - **JBoss EAP Username** - Username for JBoss EAP Admin Console.
 
@@ -310,7 +307,7 @@ Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VM
 
 If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Note that if you want to keep any resources in the resource group, you can delete other resources manually which does not have dependencies on the resources that you do not want to delete. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
 
-`Tags: JBoss, Red Hat, EAP 7.3, EAP 7.4, Cluster, Load Balancer, RHEL 8.4, Azure, Azure VM, Java EE`
+`Tags: JBoss, Red Hat, EAP 7.4, Cluster, Load Balancer, RHEL 8.4, Azure, Azure VM, Java EE`
 
 ## Support
 
