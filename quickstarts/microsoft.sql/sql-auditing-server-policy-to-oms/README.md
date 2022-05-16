@@ -7,6 +7,7 @@ languages:
 - json
 - bicep
 ---
+
 # Azure SQL Server with Auditing written to Log Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/PublicLastTestDate.svg)
