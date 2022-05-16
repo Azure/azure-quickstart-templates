@@ -86,7 +86,8 @@ languages:
         $YAML = $YAML.Replace('%description%', $metadataDescription)
 
         # prepend the YAML
-        $readme = "$YAML$readme"
+        # TODO - comment out for now until the issues are addressed
+        # $readme = "$YAML$readme"
 
         # commit the change
         #Write-Output $readme
