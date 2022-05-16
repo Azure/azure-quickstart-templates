@@ -12,7 +12,7 @@ param location string = resourceGroup().location
 
 var managedIdentityName = 'my-managed-identity'
 
-resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyVaultName
   location: location
   properties: {
