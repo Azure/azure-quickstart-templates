@@ -19,7 +19,7 @@ This template deploys a Lab for Azure Lab Services. The lab is a collection for 
 
 The following resources are deployed as part of the solution
 
-1. A Lab
+1. A Lab (April 2022 update)
 
 ## Deployment steps
 
