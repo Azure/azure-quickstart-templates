@@ -55,7 +55,7 @@ param allowedOrigins array = [
   'https://bar.com'
 ]
 
-resource name_resource 'Microsoft.SignalRService/signalR@2022-02-01' = {
+resource signalR 'Microsoft.SignalRService/signalR@2022-02-01' = {
   name: name
   location: location
   sku: {
