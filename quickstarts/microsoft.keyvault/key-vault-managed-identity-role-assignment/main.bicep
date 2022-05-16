@@ -36,7 +36,8 @@ resource keyVaultAdministratorRoleDefinition 'Microsoft.Authorization/roleDefini
 module roleAssignment 'modules/role-assignment.bicep' = {
   name: 'role-assignment'
   params: {
-    roleAssignmentName: guid(resourceGroup().id, managedIdentity.properties.principalId, keyVaultAdministratorRoleDefinition.id)
+    keyVaultName: keyVault.name
+    roleAssignmentName: guid(keyVault.id, managedIdentity.properties.principalId, keyVaultAdministratorRoleDefinition.id)
     roleDefinitionId: keyVaultAdministratorRoleDefinition.id
     principalId: managedIdentity.properties.principalId
   }
