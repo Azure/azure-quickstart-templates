@@ -46,6 +46,8 @@ if($gitStatus -like "*Changes not staged for commit:*" -or
     git status
     Write-Output "Pushing..."
     # this triggers the copy badges PR, which will fail every time (we shouldn't trigger it if at all possible) - or run them together
+    # TODO ? if multiple pipelines run at the same time, one push will fail since the branch is out of date
+    # we need to -f force push or pull first to remedy that, but for now we're batching changes in the CI trigger to account for it
     git push origin "master" 
     Write-Output "Status after push..."
     git status
