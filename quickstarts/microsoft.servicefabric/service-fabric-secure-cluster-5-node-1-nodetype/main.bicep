@@ -74,7 +74,7 @@ var vmName = 'vm'
 var virtualNetworkName = 'VNet'
 var addressPrefix = '10.0.0.0/16'
 var nicName = 'NIC'
-var lbIPName_var = 'PublicIP-LB-FE'
+var lbIPName = 'PublicIP-LB-FE'
 var overProvision = false
 var nt0applicationStartPort = 20000
 var nt0applicationEndPort = 30000
@@ -149,7 +149,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
 }
 
 resource lbIP 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
-  name: lbIPName_var
+  name: lbIPName
   location: location
   tags: {
     resourceType: 'Service Fabric'
