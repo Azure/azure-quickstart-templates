@@ -8,6 +8,7 @@ param location string = resourceGroup().location
 @allowed([
   'Free_F1'
   'Standard_S1'
+  'Premium_P1'
 ])
 param pricingTier string = 'Standard_S1'
 
