@@ -11,7 +11,7 @@ param adminUsername string
 @secure()
 param adminPassword string
 
-resource labName_resource 'Microsoft.LabServices/labs@2021-11-15-preview' = {
+resource labResource 'Microsoft.LabServices/labs@2021-11-15-preview' = {
   name: labName
   location: location
   tags: {}
