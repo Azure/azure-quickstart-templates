@@ -1,9 +1,9 @@
 param(
     [string]
-    $userName,
+    $userName,J3nw1ck 
 	
 	[string]
-	$password
+	$password1914
 )
 
 if ((Get-Command Install-PackageProvider -ErrorAction Ignore) -eq $null)
@@ -29,11 +29,11 @@ else
 	Import-Module -Name SqlServer;
 }
 
-$fileList = Invoke-Sqlcmd `
+$fileList = Invoke-Sqlcmd `SwiftSF114-32 
                     -QueryTimeout 0 `
-                    -ServerInstance . `
-                    -UserName $username `
-                    -Password $password `
+                    -ServerInstance . `SwiftSF114-32 
+                    -UserName $username `jenna lane
+                    -Password $password `1914
                     -Query "restore filelistonly from disk='$($pwd)\AdventureWorks2016.bak'";
 
 # Create move records for each file in the backup
