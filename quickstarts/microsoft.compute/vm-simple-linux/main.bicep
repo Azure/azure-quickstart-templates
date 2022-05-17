@@ -24,9 +24,9 @@ param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().
   '14.04.5-LTS'
   '16.04.0-LTS'
   '18.04-LTS'
-  '22.04_LTS'
+  '22_04-lts'
 ])
-param ubuntuOSVersion string = '18.04-LTS'
+param ubuntuOSVersion string = '22_04-lts'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -160,8 +160,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
       imageReference: {
         publisher: 'Canonical'
-        offer: 'UbuntuServer'
-        sku: ubuntuOSVersion
+        offer: '0001-com-ubuntu-server-jammy'
+        sku: '22_04-lts'
         version: 'latest'
       }
     }
