@@ -31,23 +31,11 @@ param capacity int = 1
 ])
 param serviceMode string = 'Default'
 
-@allowed([
-  'true'
-  'false'
-])
-param enableConnectivityLogs string = 'true'
+param enableConnectivityLogs bool = true
 
-@allowed([
-  'true'
-  'false'
-])
-param enableMessagingLogs string = 'true'
+param enableMessagingLogs bool = true
 
-@allowed([
-  'true'
-  'false'
-])
-param enableLiveTrace string = 'true'
+param enableLiveTrace bool = true
 
 @description('Set the list of origins that should be allowed to make cross-origin calls.')
 param allowedOrigins array = [
@@ -77,15 +65,15 @@ resource signalR 'Microsoft.SignalRService/signalR@2022-02-01' = {
       }
       {
         flag: 'EnableConnectivityLogs'
-        value: enableConnectivityLogs
+        value: string(enableConnectivityLogs)
       }
       {
         flag: 'EnableMessagingLogs'
-        value: enableMessagingLogs
+        value: string(enableMessagingLogs)
       }
       {
         flag: 'EnableLiveTrace'
-        value: enableLiveTrace
+        value: string(enableLiveTrace)
       }
     ]
     cors: {
