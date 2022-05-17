@@ -26,6 +26,10 @@ if (!(Test-Path $bicepPath)) {
 Write-Host "Using bicep at: $bicepPath"
 Write-Host "##vso[task.setvariable variable=bicep.path]$bicepPath"
 
+# add bicep to the path (for deployment scripts)
+$newPath = $ENV:PATH += ";$(Split-Path $bicepPath)"
+Write-Host "##vso[task.setvariable variable=path]$newPath"
+
 # Display and save bicep version
 & $bicepPath --version | Tee-Object -variable fullVersionString
 $fullVersionString | select-string -Pattern "(?<version>[0-9]+\.[-0-9a-z.]+)" | ForEach-Object { $_.matches.groups[1].value } | Tee-Object -variable bicepVersion
