@@ -9,10 +9,10 @@
 @description('The name for your new Web PubSub instance.')
 @maxLength(63)
 @minLength(3)
-param wpsName string = 'simpleWebPubSub'
+param wpsName string = ''
 
 @description('The region in which to create the new instance, defaults to the same location as the resource group.')
-param wpsLocation string = resourceGroup().location
+param wpsLocation string = ''
 
 @description('Unit count')
 @allowed([
