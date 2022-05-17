@@ -17,6 +17,9 @@ param workspaceName string
 @description('Name of the Azure Machine Learning attached compute')
 param computeName string
 
+@description('Size of the virtual machine')
+param vmSizeParam string // = 'Standard_DS2_v2'
+
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
   name: aksClusterName
   location: location
@@ -31,7 +34,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
       {
         name: toLower('agentpool')
         count: 3
-        vmSize: 'Standard_DS2_v2'
+        vmSize: vmSizeParam
         osDiskSizeGB: 128
         vnetSubnetID: aksSubnetId
         maxPods: 110
