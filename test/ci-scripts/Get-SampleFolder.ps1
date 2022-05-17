@@ -5,6 +5,8 @@ If the PR does not contain changes to a sample folder, it will currently fail bu
 pass the build in order to trigger a manual review
 #>
 
+# TODO - merge this script with Get-SampleFolder-CI.ps1, if possible
+
 # Get-ChildItem env: # debugging
 
 $GitHubRepository = $ENV:BUILD_REPOSITORY_NAME
