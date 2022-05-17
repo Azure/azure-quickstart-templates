@@ -12,6 +12,8 @@ param(
     $ttkFolder = $ENV:TTK_FOLDER
 )
 
+# there should be an ENV var to determine if bicep is used, checking directly s/b ok as well
+
 Write-Host "Checking for bicep files in: $sampleFolder"
 
 $bicepFullPath = "$sampleFolder\$mainTemplateFilenameBicep"
@@ -28,6 +30,8 @@ Write-Output "************************"
 if($isBicepFileFound -or $isBicepPrereqFileFound){
     # Install Bicep
     & "$ttKFolder\ci-scripts\Install-Bicep.ps1"
+
+    Get-Command bicep.exe
 
     if($isBicepFileFound){
         # build main.bicep to azuredeploy.json
