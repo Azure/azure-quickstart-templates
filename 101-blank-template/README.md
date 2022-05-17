@@ -1,3 +1,13 @@
+---
+description: This is a blank template.
+page_type: sample
+languages:
+- bicep
+- json
+products:
+- azure
+---
+
 # Blank Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-blank-template/PublicLastTestDate.svg)
