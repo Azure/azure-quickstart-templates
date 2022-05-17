@@ -24,6 +24,7 @@ param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().
   '14.04.5-LTS'
   '16.04.0-LTS'
   '18.04-LTS'
+  '22.04_LTS'
 ])
 param ubuntuOSVersion string = '18.04-LTS'
 
