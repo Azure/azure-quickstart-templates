@@ -238,7 +238,7 @@ $vnets = Get-AzVirtualNetwork -ResourceGroupName $ResourceGroupName -Verbose
 
 foreach ($vnet in $vnets) {
     Write-Host "Vnet Delegation..."
-    foreach ($subnet in $vnets.Subnets) {
+    foreach ($subnet in $vnet.Subnets) {
         $delegations = Get-AzDelegation -Subnet $subnet -Verbose
         foreach ($d in $delegations) {
             Write-Output "Removing VNet Delegation: $($d.name)"
