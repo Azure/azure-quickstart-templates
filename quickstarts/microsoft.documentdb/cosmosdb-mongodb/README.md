@@ -1,4 +1,4 @@
-# Create an Azure Cosmos account for MongoDB API with two collections
+# Create an Azure Cosmos account for MongoDB API
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-mongodb/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-mongodb/PublicDeployment.svg)
