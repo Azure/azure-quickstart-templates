@@ -1,4 +1,13 @@
-# Azure Traffic Manager with external endpoints
+---
+description: This template shows how to create an Azure Traffic Manager profile using external endpoints.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Azure Traffic Manager external endpoint example
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-external-endpoint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-external-endpoint/PublicDeployment.svg)
