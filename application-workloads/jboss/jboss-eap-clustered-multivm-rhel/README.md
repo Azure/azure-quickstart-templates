@@ -35,7 +35,7 @@ Red Hat Subscription Management (RHSM) is a customer-driven, end-to-end solution
 
 ## Template Solution Architecture
 
-This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.4 cluster running 'n' number of Red Hat Enterprise Linux (RHEL) 8.4 VM, where 'n' is decided by the user and all the VMs are added to the backend pool of a Load Balancer. The following resources are created by this template:
+This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.4 cluster running 'n' number of Red Hat Enterprise Linux (RHEL) 8.4 VMs, where 'n' is decided by the user and all the VMs are added to the backend pool of a Load Balancer. The following resources are created by this template:
 
 - RHEL 8.4 Virtual Machines
 - 1 Load Balancer
