@@ -19,12 +19,12 @@ This template creates an Azure Cosmos account for MongoDB API, provisioned for t
 
 Below are the parameters which can be user configured in the parameters file including:
 
-- **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
-- **Multi-Region:** Enter locations for primary and secondary regions.
-- **Automatic Failover:** Select whether to enable automatic failover on the account.
+- **Account Name:** Enter the account name. Must be globally unique.
+- **Primary Region:** Enter locations for primary region.
+- **Secondary Region:** Enter locations for secondary region.
 - **Database Name:** Enter the database name for the account.
-- **Throughput:** Enter the RU/s to share across the 2 containers (default is 400).
-- **Server Version:** Select the MongoDB server version (default is 4.0).
+- **Throughput:** Enter the RU/s to share across the 2 collections (default is 400).
+- **Server Version:** Select the MongoDB server version (default is 4.2).
 - **Collection 1 Name:** Enter the name for the first collection.
 - **Collection 2 Name:** Enter the name for the second collection.
 

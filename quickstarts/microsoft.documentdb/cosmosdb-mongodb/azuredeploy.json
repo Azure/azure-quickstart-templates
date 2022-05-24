@@ -4,14 +4,14 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "17061829898650158404"
+      "version": "0.6.1.6515",
+      "templateHash": "17224127947616092925"
     }
   },
   "parameters": {
     "accountName": {
       "type": "string",
-      "defaultValue": "[format('mongodb-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[toLower(format('mongodb-{0}', uniqueString(resourceGroup().id)))]",
       "metadata": {
         "description": "Cosmos DB account name"
       }
@@ -38,46 +38,47 @@
     "defaultConsistencyLevel": {
       "type": "string",
       "defaultValue": "Session",
+      "metadata": {
+        "description": "The default consistency level of the Cosmos DB account."
+      },
       "allowedValues": [
         "Eventual",
         "ConsistentPrefix",
         "Session",
         "BoundedStaleness",
         "Strong"
-      ],
-      "metadata": {
-        "description": "The default consistency level of the Cosmos DB account."
-      }
+      ]
     },
     "serverVersion": {
       "type": "string",
-      "defaultValue": "4.0",
+      "defaultValue": "4.2",
+      "metadata": {
+        "description": "Specifies the MongoDB server version to use."
+      },
       "allowedValues": [
         "3.2",
         "3.6",
-        "4.0"
-      ],
-      "metadata": {
-        "description": "Specifies the MongoDB server version to use."
-      }
+        "4.0",
+        "4.2"
+      ]
     },
     "maxStalenessPrefix": {
       "type": "int",
       "defaultValue": 100000,
-      "maxValue": 2147483647,
-      "minValue": 10,
       "metadata": {
         "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
-      }
+      },
+      "maxValue": 2147483647,
+      "minValue": 10
     },
     "maxIntervalInSeconds": {
       "type": "int",
       "defaultValue": 300,
-      "maxValue": 86400,
-      "minValue": 5,
       "metadata": {
         "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
-      }
+      },
+      "maxValue": 86400,
+      "minValue": 5
     },
     "databaseName": {
       "type": "string",
@@ -88,11 +89,11 @@
     "throughput": {
       "type": "int",
       "defaultValue": 400,
-      "maxValue": 1000000,
-      "minValue": 400,
       "metadata": {
         "description": "The shared throughput for the Mongo DB database"
-      }
+      },
+      "maxValue": 1000000,
+      "minValue": 400
     },
     "collection1Name": {
       "type": "string",
@@ -108,7 +109,6 @@
     }
   },
   "variables": {
-    "accountName_var": "[toLower(parameters('accountName'))]",
     "consistencyPolicy": {
       "Eventual": {
         "defaultConsistencyLevel": "Eventual"
@@ -144,8 +144,8 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-04-15",
-      "name": "[variables('accountName_var')]",
+      "apiVersion": "2021-10-15",
+      "name": "[parameters('accountName')]",
       "location": "[parameters('location')]",
       "kind": "MongoDB",
       "properties": {
@@ -159,8 +159,8 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', variables('accountName_var'), parameters('databaseName'))]",
+      "apiVersion": "2021-10-15",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('databaseName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('databaseName')]"
@@ -170,13 +170,13 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
       ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), parameters('collection1Name'))]",
+      "apiVersion": "2021-10-15",
+      "name": "[format('{0}/{1}/{2}', parameters('accountName'), parameters('databaseName'), parameters('collection1Name'))]",
       "properties": {
         "resource": {
           "id": "[parameters('collection1Name')]",
@@ -226,13 +226,13 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[0], split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[1])]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', parameters('accountName'), parameters('databaseName'))]"
       ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), parameters('collection2Name'))]",
+      "apiVersion": "2021-10-15",
+      "name": "[format('{0}/{1}/{2}', parameters('accountName'), parameters('databaseName'), parameters('collection2Name'))]",
       "properties": {
         "resource": {
           "id": "[parameters('collection2Name')]",
@@ -282,7 +282,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[0], split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[1])]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', parameters('accountName'), parameters('databaseName'))]"
       ]
     }
   ]
