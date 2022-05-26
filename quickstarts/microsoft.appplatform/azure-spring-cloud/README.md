@@ -1,3 +1,11 @@
+---
+description: This template deploys a simple Azure Spring Apps microservice application to run on Azure.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
 # Deploy a simple Azure Spring Apps microservice application
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/azure-spring-cloud/PublicLastTestDate.svg)
