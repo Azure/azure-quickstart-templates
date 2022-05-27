@@ -4,6 +4,7 @@ param(
     [string]$StorageAccountName = "azurequickstartshash",
     [string]$TableName = "QuickStartsTemplateHash",
     [string]$RepoRoot = $ENV:BUILD_REPOSITORY_LOCALPATH,
+    [string] $SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
     [string]$bearerToken,
     [Parameter(mandatory = $true)]$StorageAccountKey
 )
@@ -35,7 +36,16 @@ Get-AzStorageTable -Name $tableName -Context $ctx -Verbose
 $cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 
 # Find all metadata.json files - each metadata file indicates a sample
-$ArtifactFilePaths = Get-ChildItem -Path $RepoRoot .\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
+if ($ENV:BUILD_REASON -eq "Schedule" -or $ENV:BUILD_REASON -eq "Manual") { # calculate hash for everything in the repo on the scheduled build
+    
+    $ArtifactFilePaths = Get-ChildItem -Path $RepoRoot .\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
+
+} else { # calculate hash only for the sample that was submitted
+
+    $ArtifactFilePaths = Get-ChildItem -Path $SampleFolder .\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
+
+}
+
 foreach ($SourcePath in $ArtifactFilePaths) {
 
     if ($SourcePath -like "*\test\*") {

@@ -62,9 +62,6 @@ resource logAnalyticsWorkspaceDiagnostics 'Microsoft.Insights/diagnosticSettings
 resource solutionsVMInsights 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
   name: vmInsights.name
   location: location
-  dependsOn: [
-    logAnalyticsWorkspace
-  ]
   properties: {
     workspaceResourceId: logAnalyticsWorkspace.id
   }
@@ -79,9 +76,6 @@ resource solutionsVMInsights 'Microsoft.OperationsManagement/solutions@2015-11-0
 resource solutionsContainerInsights 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
   name: containerInsights.name
   location: location
-  dependsOn: [
-    logAnalyticsWorkspace
-  ]
   properties: {
     workspaceResourceId: logAnalyticsWorkspace.id
   }

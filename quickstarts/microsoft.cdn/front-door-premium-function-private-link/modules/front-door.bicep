@@ -123,4 +123,4 @@ resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
 }
 
 output frontDoorEndpointHostName string = endpoint.properties.hostName
-output frontDoorId string = profile.properties.frontdoorId
+output frontDoorId string = profile.properties.frontDoorId

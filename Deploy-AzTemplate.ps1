@@ -58,9 +58,12 @@ if ($isBicep){
     bicep build $TemplateFile
     # now point the deployment to the json file that was just build
     $TemplateFile = $TemplateFile.Replace('.bicep', '.json')
+    $fromBicep = "(from bicep build)"
+}else{
+    $fromBicep = ""
 }
 
-Write-Host "Using template file:  $TemplateFile"
+Write-Host "Using template file $($fromBicep):  $TemplateFile"
 
 #try a few different default options for param files when the -dev switch is use
 if ($Dev) {
