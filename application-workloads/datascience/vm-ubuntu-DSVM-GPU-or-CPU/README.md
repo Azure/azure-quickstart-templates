@@ -1,4 +1,13 @@
-# Data Science Linux Ubuntu
+---
+description: This template deploy a Ubuntu Server with some tools for Data Science. You can provide the username, password, virtual machine name and select between CPU or GPU computing.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Deploy a Ubuntu Linux DataScience VM 18.04.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/datascience/vm-ubuntu-DSVM-GPU-or-CPU/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/datascience/vm-ubuntu-DSVM-GPU-or-CPU/PublicDeployment.svg)
@@ -86,4 +95,4 @@ Now, you should see the graphical interface for your Ubuntu DSVM.
 
 ![Screen](./images/connect-x2go6.png)
 
-`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Data Science`
+`Tags:Azure4Student,virtual machine,Linux,Ubuntu Server,Beginner,Data Science,Microsoft.Network/networkInterfaces,Microsoft.Network/networkSecurityGroups,Microsoft.Network/virtualNetworks,Microsoft.Network/publicIPAddresses,Microsoft.Storage/storageAccounts,Microsoft.Compute/virtualMachines`
