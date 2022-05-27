@@ -1,8 +1,14 @@
 param(
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
     [string] $SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
-    [string] $ReadMeFileName = "README.md"
+    [string] $ReadMeFileName = "README.md",
+    [string] $ttkFolder = $ENV:TTK_FOLDER,
+    [string]$mainTemplateFilename = $ENV:MAINTEMPLATE_FILENAME_JSON,
+    [string]$prereqTemplateFileName = $ENV:PREREQ_TEMPLATE_FILENAME_JSON
 )
+
+# Need this for Find-JsonContent
+Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1"
 
 #Write-Host "StorageAccountName: $StorageAccountName"
 $bicepSupported = (Test-Path "$SampleFolder/main.bicep")
@@ -63,8 +69,8 @@ else {
     ---
     #>
 
-$YAML = 
-@"
+    $YAML = 
+    @"
 ---
 description: %description%
 page_type: sample
@@ -74,26 +80,82 @@ languages:
 - json
 "@
 
-        # add bicep to the list of languages as appropriate
-        if ($bicepSupported) {
-            $YAML = $YAML + "`n- bicep"
+    # add bicep to the list of languages as appropriate
+    if ($bicepSupported) {
+        $YAML = $YAML + "`n- bicep"
+    }
+
+    # close the YAML block
+    $YAML = $YAML + "`n---`n"
+
+    # update the description
+    $YAML = $YAML.Replace('%description%', $metadataDescription)
+
+    # prepend the YAML
+    # TODO - comment out for now until the issues are addressed
+    $readme = "$YAML$readme"
+
+    # add tags
+    $mainTemplatePath = "$sampleFolder\$mainTemplateFilename"
+    $prereqTemplatePath = "$sampleFolder\prereqs\$prereqTemplateFilename"
+
+    $mainTemplateResources = @{}
+    $prereqTemplateResources = @{}
+
+    if (Test-Path $mainTemplatePath) {
+        $mainTemplateObject = Get-Content -Path $mainTemplatePath -Raw | ConvertFrom-Json -Depth 100
+        $mainTemplateResources = Find-JsonContent -InputObject $mainTemplateObject -Key type -Value "*" -Like # this will get every type property, even those in a properties body
+    }
+
+    if (Test-Path $prereqTemplatePath) {
+        $prereqTemplateObject = Get-Content -Path $prereqTemplatePath -Raw | ConvertFrom-Json -Depth 100
+        $prereqTemplateResources = Find-JsonContent -InputObject $prereqTemplateObject.resources -Key type -Value "*" -Like # this will get every type property, even those in a properties body, we can filter below
+    }
+
+    # union the two
+    $allResources = $mainTemplateResources + $prereqTemplateResources
+
+    # Find Current Tags
+    $currentTags = ""
+    for ($i = 0; $i -lt $readmeArray.Length; $i++) {
+        if ($readmeArray[$i].StartsWith('`Tags:')) {
+            # Get the current Tags
+            $currentTags = $readmeArray[$i]
+            break
         }
+    }
 
-        # close the YAML block
-        $YAML = $YAML + "`n---`n"
+    $tagsArray = @($($currentTags -replace '`', '' -replace "Tags:", "").Split(",").Trim())
 
-        # update the description
-        $YAML = $YAML.Replace('%description%', $metadataDescription)
+    Write-Host "CurrentTags Array: *$tagsArray*"
+    foreach ($r in $allResources) {
+        $t = $r.Type
+        Write-Host "Checking for: $t at path $($r.jsonPath)"
+        if (!($tagsArray -contains $t) -and $t.length -ne 0 -and !($r.jsonPath -like "*parameters*") -and !($r.jsonPath -like "*outputs*")) {
+            Write-Host "Adding: $t, $($t.length)"
+            $tagsArray += $r.Type
+        }
+    }
+    
+    $newTags = '`Tags:' + $($tagsArray -join ",") + '`' -replace "Tags:,", "Tags:" # empty tags seem to add an empty element at the beginning
 
-        # prepend the YAML
-        # TODO - comment out for now until the issues are addressed
-        # $readme = "$YAML$readme"
+    Write-Host "New Tags string:`n$newTags"
 
-        # commit the change
-        #Write-Output $readme
-        $readme | Set-Content $readmePath -NoNewline
+    # replace the current Tags in the file if any
+    if ($currentTags -eq "") {
+        # Add to the end of the file
+        $readme = $readme += "`n`n$newTags" # if tags were not in the file then make sure we have line breaks
+    }
+    else {
+        #replace
+        $readme = $readme -replace $currentTags, $newTags
+    }
+        
+    #Write-Output $readme
+    $readme | Set-Content $readmePath -NoNewline
 
 }
+
 
 Write-Output '*****************************************************************************************'
 Write-Output '*****************************************************************************************'
