@@ -1,4 +1,12 @@
-# Create Azure NetApp Files resource for SAP HANA Cross Region Replication Storage
+---
+description: This template deploys storage for SAP HANA disaster recovery deployments. Storage is provided using Azure NetApp Files, built on NetApp ONTAP storage OS.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# SAP HANA Azure NetApp Files Cross Region Replication storage
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.netapp/anf-sap-hana/anf-sap-hana-crr-storage/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.netapp/anf-sap-hana/anf-sap-hana-crr-storage/PublicDeployment.svg)
@@ -219,4 +227,4 @@ A rule can have allowedClients, ruleIndex, unixReadOnly, unixReadWrite, nfsv3 an
 Note: For Data backup and Log backup volumes, user will have an option to choose between nfsv3 or nfsv41. However, for Data, Log and Shared volume default will be nfsv41.
 
 ## Deployment steps
-You can click the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/en-us/azure/azure-netapp-files/application-volume-group-introduction) article.
+You can click the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/en-us/azure/azure-netapp-files/application-volume-group-introduction) article.`Tags:,Microsoft.NetApp/netAppAccounts/volumeGroups,Microsoft.Network/virtualNetworks,Microsoft.NetApp/netAppAccounts,Microsoft.NetApp/netAppAccounts/capacityPools,Microsoft.NetApp/netAppAccounts/capacityPools/volumes,Microsoft.Compute/proximityPlacementGroups,Microsoft.Compute/availabilitySets,Microsoft.Network/networkInterfaces,Microsoft.Compute/virtualMachines`
