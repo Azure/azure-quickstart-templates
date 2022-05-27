@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.6.1.6515",
-      "templateHash": "15823252857627961082"
+      "templateHash": "8932523033389460641"
     }
   },
   "parameters": {
@@ -16,14 +16,59 @@
         "description": "Region where the mobile network will be deployed (must match the resource group region)"
       }
     },
-    "existingSiteName": {
+    "siteName": {
       "type": "string",
       "defaultValue": "myExampleSite",
       "metadata": {
-        "description": "The name for the existing packet core control plane / site name"
+        "description": "The name of the existing packet core / site."
       }
     },
-    "version": {
+    "existingMobileNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the mobile network."
+      }
+    },
+    "existingPacketCoreNetworkTechnology": {
+      "type": "string",
+      "defaultValue": "5GC",
+      "metadata": {
+        "description": "The mode in which the packet core instance will run."
+      }
+    },
+    "existingPacketCoreCustomLocationId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here."
+      }
+    },
+    "controlPlaneAccessInterfaceName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine."
+      }
+    },
+    "controlPlaneAccessIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface."
+      }
+    },
+    "accessSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The network address of the access subnet in CIDR notation"
+      }
+    },
+    "accessGateway": {
+      "type": "string",
+      "metadata": {
+        "description": "The access subnet default gateway"
+      }
+    },
+    "newVersion": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
@@ -35,72 +80,21 @@
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes",
       "apiVersion": "2022-03-01-preview",
-      "name": "[parameters('existingSiteName')]",
+      "name": "[parameters('siteName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "mobileNetwork": "[reference(resourceId('Microsoft.Resources/deployments', 'fetchExistingPacketCore')).outputs.existingMobileNetwork.value]",
-        "coreNetworkTechnology": "[if(contains(reference(resourceId('Microsoft.Resources/deployments', 'fetchExistingPacketCore')).outputs.existingCoreNetworkTechnology.value, '5GC'), '5GC', 'EPC')]",
-        "customLocation": "[if(empty(reference(resourceId('Microsoft.Resources/deployments', 'fetchExistingPacketCore')).outputs.existingCustomLocation.value), null(), reference(resourceId('Microsoft.Resources/deployments', 'fetchExistingPacketCore')).outputs.existingCustomLocation.value)]",
-        "controlPlaneAccessInterface": "[reference(resourceId('Microsoft.Resources/deployments', 'fetchExistingPacketCore')).outputs.existingControlPlaneAccessInterface.value]",
-        "version": "[parameters('version')]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'fetchExistingPacketCore')]"
-      ]
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "fetchExistingPacketCore",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
+        "mobileNetwork": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('existingMobileNetworkName'))]"
         },
-        "mode": "Incremental",
-        "parameters": {
-          "existingSiteName": {
-            "value": "[parameters('existingSiteName')]"
-          }
+        "coreNetworkTechnology": "[parameters('existingPacketCoreNetworkTechnology')]",
+        "customLocation": "[if(empty(parameters('existingPacketCoreCustomLocationId')), null(), createObject('id', parameters('existingPacketCoreCustomLocationId')))]",
+        "controlPlaneAccessInterface": {
+          "name": "[parameters('controlPlaneAccessInterfaceName')]",
+          "ipv4Address": "[parameters('controlPlaneAccessIpAddress')]",
+          "ipv4Subnet": "[parameters('accessSubnet')]",
+          "ipv4Gateway": "[parameters('accessGateway')]"
         },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.6.1.6515",
-              "templateHash": "12668405245583250943"
-            }
-          },
-          "parameters": {
-            "existingSiteName": {
-              "type": "string",
-              "defaultValue": "myExampleSite",
-              "metadata": {
-                "description": "The name for the existing packet core control plane / site name"
-              }
-            }
-          },
-          "resources": [],
-          "outputs": {
-            "existingMobileNetwork": {
-              "type": "object",
-              "value": "[reference(resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('existingSiteName')), '2022-03-01-preview').mobileNetwork]"
-            },
-            "existingCoreNetworkTechnology": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('existingSiteName')), '2022-03-01-preview').coreNetworkTechnology]"
-            },
-            "existingCustomLocation": {
-              "type": "object",
-              "value": "[if(contains(reference(resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('existingSiteName')), '2022-03-01-preview'), 'customLocation'), coalesce(reference(resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('existingSiteName')), '2022-03-01-preview').customLocation, createObject()), createObject())]"
-            },
-            "existingControlPlaneAccessInterface": {
-              "type": "object",
-              "value": "[reference(resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('existingSiteName')), '2022-03-01-preview').controlPlaneAccessInterface]"
-            }
-          }
-        }
+        "version": "[parameters('newVersion')]"
       }
     }
   ]
