@@ -227,4 +227,6 @@ A rule can have allowedClients, ruleIndex, unixReadOnly, unixReadWrite, nfsv3 an
 Note: For Data backup and Log backup volumes, user will have an option to choose between nfsv3 or nfsv41. However, for Data, Log and Shared volume default will be nfsv41.
 
 ## Deployment steps
-You can click the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/en-us/azure/azure-netapp-files/application-volume-group-introduction) article.`Tags:,Microsoft.NetApp/netAppAccounts/volumeGroups,Microsoft.Network/virtualNetworks,Microsoft.NetApp/netAppAccounts,Microsoft.NetApp/netAppAccounts/capacityPools,Microsoft.NetApp/netAppAccounts/capacityPools/volumes,Microsoft.Compute/proximityPlacementGroups,Microsoft.Compute/availabilitySets,Microsoft.Network/networkInterfaces,Microsoft.Compute/virtualMachines`
+You can click the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/en-us/azure/azure-netapp-files/application-volume-group-introduction) article.
+
+`Tags:Microsoft.NetApp/netAppAccounts/volumeGroups,Microsoft.Network/virtualNetworks,Microsoft.NetApp/netAppAccounts,Microsoft.NetApp/netAppAccounts/capacityPools,Microsoft.NetApp/netAppAccounts/capacityPools/volumes,Microsoft.Compute/proximityPlacementGroups,Microsoft.Compute/availabilitySets,Microsoft.Network/networkInterfaces,Microsoft.Compute/virtualMachines`
