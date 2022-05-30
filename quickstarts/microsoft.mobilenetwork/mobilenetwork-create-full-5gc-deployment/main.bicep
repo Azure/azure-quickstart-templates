@@ -108,12 +108,6 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01
     location: location
     properties: {
       servicePrecedence: 253
-      serviceQosPolicy: {
-        maximumBitRate: {
-          uplink: '2 Gbps'
-          downlink: '2 Gbps'
-        }
-      }
       pccRules: [
         {
           ruleName: 'All-traffic'
