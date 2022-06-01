@@ -44,7 +44,7 @@ param existingDiagnosticsStorageAccountName string
 param existingDiagnosticsStorageAccountResourceGroup string
 
 
-resource diagnosticsStorage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
+resource diagnosticsStorage 'Microsoft.Storage/storageAccounts@2021-09-01' existing = {
   scope: resourceGroup(existingDiagnosticsStorageAccountResourceGroup)
   name: existingDiagnosticsStorageAccountName
 }
@@ -64,7 +64,7 @@ resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = {
 }
 
 
-resource Microsoft_Insights_diagnosticsettings_redisCacheName 'Microsoft.Insights/diagnosticsettings@2017-05-01-preview' = {
+resource Microsoft_Insights_diagnosticsettings_redisCacheName 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: redisCache
   name: redisCache.name
   properties: {

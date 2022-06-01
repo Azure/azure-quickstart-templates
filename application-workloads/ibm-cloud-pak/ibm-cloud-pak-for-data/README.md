@@ -1,4 +1,4 @@
-# Cloud Pak for Data 4.0.2 on Azure
+# Cloud Pak for Data 4.0.5 on Azure
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ibm-cloud-pak/ibm-cloud-pak-for-data/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ibm-cloud-pak/ibm-cloud-pak-for-data/PublicDeployment.svg)
 

@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "4792719319076207049"
+    }
+  },
   "parameters": {
     "configStoreName": {
       "type": "string",
-      "defaultValue": "[concat('appconfig',uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('appconfig{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Specifies the name of the App Configuration store."
       }
@@ -41,25 +48,24 @@
   "resources": [
     {
       "type": "Microsoft.AppConfiguration/configurationStores",
-      "apiVersion": "2020-07-01-preview",
+      "apiVersion": "2021-10-01-preview",
       "name": "[parameters('configStoreName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "standard"
       },
-      "resources": [
-        {
-          "type": "keyValues",
-          "apiVersion": "2020-07-01-preview",
-          "name": "[concat('.appconfig.featureflag~2F', parameters('featureFlagKey'), '$', parameters('featureFlagLabel'))]",
-          "dependsOn": [
-            "[parameters('configStoreName')]"
-          ],
-          "properties": {
-            "value": "[string(variables('featureFlagValue'))]",
-            "contentType": "application/vnd.microsoft.appconfig.ff+json;charset=utf-8"
-          }
-        }
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2021-10-01-preview",
+      "name": "[format('{0}/{1}', parameters('configStoreName'), format('.appconfig.featureflag~2F{0}${1}', parameters('featureFlagKey'), parameters('featureFlagLabel')))]",
+      "properties": {
+        "value": "[string(variables('featureFlagValue'))]",
+        "contentType": "application/vnd.microsoft.appconfig.ff+json;charset=utf-8"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('configStoreName'))]"
       ]
     }
   ]

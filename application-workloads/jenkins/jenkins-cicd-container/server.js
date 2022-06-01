@@ -1,4 +1,3 @@
-
 var http = require('http');
 var mongoClient = require('mongodb').MongoClient;
 
