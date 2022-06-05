@@ -234,7 +234,10 @@ resource webApplication 'Microsoft.Web/sites@2021-03-01' = {
   properties: {
     virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, 'appNet')
     serverFarmId: appServicePlan.id
+    httpsOnly: true
     siteConfig: {
+      minTlsVersion: '1.2'
+      ftpsState: 'Disabled'
       linuxFxVersion: 'DOCKER|sonarqube'
       appSettings: [
         {
