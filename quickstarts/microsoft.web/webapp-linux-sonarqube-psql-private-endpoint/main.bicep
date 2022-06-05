@@ -23,7 +23,7 @@ param administratorLoginPassword string
   'GeneralPurpose'
   'MemoryOptimized'
 ])
-param postgresFlexibleServersSkuTier string
+param postgresFlexibleServersSkuTier string = 'Burstable'
 
 @description('The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3.')
 @allowed([
@@ -59,7 +59,7 @@ param postgresFlexibleServersSkuTier string
   'Standard_E48ds_v4'
   'Standard_E64ds_v4'
 ])
-param postgresFlexibleServersSkuName string
+param postgresFlexibleServersSkuName string = 'Standard_B1ms'
 
 @description('The version of a PostgreSQL server')
 @allowed([
@@ -67,7 +67,7 @@ param postgresFlexibleServersSkuName string
   '12'
   '13'
 ])
-param postgresFlexibleServersversion string
+param postgresFlexibleServersversion string = '13'
 
 @description('The mode to create a new PostgreSQL server.')
 @allowed([
@@ -76,7 +76,7 @@ param postgresFlexibleServersversion string
   'PointInTimeRestore'
   'Update'
 ])
-param createMode string
+param createMode string = 'Default'
 
 @description('Sku and size of App Service Plan (F1 does not support virtual network integration)')
 @allowed([
@@ -98,15 +98,13 @@ param createMode string
  'S2'
  'S3'
 ])
-param appServicePlanSkuName string
+param appServicePlanSkuName string = 'B1'
 
 var appServicePlanName = '${siteName}serviceplan'
 var virtualNetworkName = '${siteName}-vnet'
 var privateDNSZoneName = '${siteName}.private.postgres.database.azure.com'
 var privateDNSZoneLinkName = '${siteName}privatelink'
 var postgresFlexibleServersName = '${siteName}postgres'
-
-
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: virtualNetworkName
@@ -150,12 +148,12 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDNSZoneName
   location: 'global'
 }
 
-resource privateDNSZoneRecordA 'Microsoft.Network/privateDnsZones/A@2018-09-01' = {
+resource privateDNSZoneRecordA 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: privateDNSZone
   name: uniqueString(siteName)
   properties: {
@@ -167,7 +165,6 @@ resource privateDNSZoneRecordA 'Microsoft.Network/privateDnsZones/A@2018-09-01' 
     ]
   }
 }
-
 
 resource privateDNSZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDNSZone
@@ -261,4 +258,3 @@ resource webApplication 'Microsoft.Web/sites@2021-03-01' = {
     }
   }
 }
-
