@@ -232,8 +232,7 @@ resource webApplication 'Microsoft.Web/sites@2021-03-01' = {
   name: siteName
   location: location
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {}
+    type: 'SystemAssigned'
   }
   properties: {
     virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, 'appNet')
