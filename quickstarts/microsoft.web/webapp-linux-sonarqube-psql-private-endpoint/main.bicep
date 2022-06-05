@@ -231,6 +231,10 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
 resource webApplication 'Microsoft.Web/sites@2021-03-01' = {
   name: siteName
   location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {}
+  }
   properties: {
     virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, 'appNet')
     serverFarmId: appServicePlan.id
