@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @description('Name of Azure Web App')
 param siteName string
 
-@description('The location into which the resources should be deployed.')
+@description('The location into which the resources should be deployed')
 param location string = resourceGroup().location
 
 @description('Database administrator login name')
@@ -17,7 +17,7 @@ param administratorLogin string
 @secure()
 param administratorLoginPassword string
 
-@description('The tier of the particular SKU, e.g. Burstable.')
+@description('The tier of the particular SKU, e.g. Burstable')
 @allowed([
   'Burstable'
   'GeneralPurpose'
@@ -25,7 +25,7 @@ param administratorLoginPassword string
 ])
 param postgresFlexibleServersSkuTier string = 'Burstable'
 
-@description('The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3.')
+@description('The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3')
 @allowed([
   'Standard_B1ms'
   'Standard_B2s'
@@ -69,7 +69,7 @@ param postgresFlexibleServersSkuName string = 'Standard_B1ms'
 ])
 param postgresFlexibleServersversion string = '13'
 
-@description('The mode to create a new PostgreSQL server.')
+@description('The mode to create a new PostgreSQL server')
 @allowed([
   'Create'
   'Default'
@@ -211,6 +211,9 @@ resource postgresFlexibleServers 'Microsoft.DBforPostgreSQL/flexibleServers@2021
     }
     version: postgresFlexibleServersversion
   }
+  dependsOn: [
+    privateDNSZoneLink
+  ]
 }
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
