@@ -18,6 +18,10 @@
 
 This template provides easy to deploy SonarQube to Web App on Linux with PostgreSQL FlexibleServer, private endpoints and private DNS.
 
+This approach of running SonarQube keeps communication between App and database private.
+
+![SonarQube on Web App with PSQL Flexible Server and private link](images/sonarqube-with-private-endpoint-and-postgresql.png)
+
 **Notice** once deployed Sonar can take a while to start due the creation of the initial empty database, it can even fail if you try to access it directly, allow to start it before accessing it or even adjust the tier for the webapp or PostgreSQL accordingly.
 
 
@@ -34,4 +38,6 @@ This template provides easy to deploy SonarQube to Web App on Linux with Postgre
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json)
 
-`Tags: SonarQube, SAST, Flexible Servers`
+
+
+`Tags: Azure Web App, Azure PostgreSQL (Flexible Servers), Private DNS, SonarQube, SAST}`
