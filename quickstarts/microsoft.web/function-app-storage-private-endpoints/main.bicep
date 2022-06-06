@@ -366,6 +366,7 @@ resource functionApp 'Microsoft.Web/sites@2021-01-01' = {
   name: functionAppName
   kind: isReserved ? 'functionapp,linux' : 'functionapp'
   properties: {
+    httpsOnly: true
     serverFarmId: plan.id
     reserved: isReserved
     virtualNetworkSubnetId: virtualNetwork::functionSubnet.id
