@@ -101,7 +101,7 @@ param createMode string = 'Default'
 param appServicePlanSkuName string = 'B1'
 
 var appServicePlanName = '${siteName}serviceplan'
-var virtualNetworkName = '${siteName}-vnet'
+var virtualNetworkName = '${siteName}vnet'
 var privateDNSZoneName = '${siteName}.private.postgres.database.azure.com'
 var privateDNSZoneLinkName = '${siteName}privatelink'
 var postgresFlexibleServersName = '${siteName}postgres'
