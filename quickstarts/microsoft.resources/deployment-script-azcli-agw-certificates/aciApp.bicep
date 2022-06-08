@@ -18,8 +18,8 @@ resource aci 'Microsoft.ContainerInstance/containerGroups@2021-10-01' = {
           image: appImage
           resources: {
             requests: {
-              cpu: '1'
-              memoryInGB: '1.5'
+              cpu: json('1')
+              memoryInGB: json('1.5')
             }
           }
           
