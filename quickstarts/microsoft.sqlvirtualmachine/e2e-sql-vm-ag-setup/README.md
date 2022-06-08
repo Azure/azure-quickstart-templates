@@ -1,4 +1,4 @@
-# Create SQL VMs, failover cluster, availability group and availabiity group listener in Azure
+# End-to-End provision of Multi Subnet Availability Group for SQL Servers running on Azure Virtual Machines. 
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sqlvirtualmachine%2Fe2e-sql-vm-ag-setup%2Fazuredeploy.json)  
 
@@ -10,34 +10,45 @@
 
 This is an overview of the solution
 
-Create multiple SQL VMs
-Join the domain
-Storage account (if it doesn't exist already)
-Failover cluster
-Create Availability Group
-Create Availability Group Listener
+1.Creates availability set
+2.Creates multiple SQL VMs in availability set (Maximum number of VMs for this solution is 9, we recommend VM count > 3), each vm in a different subnet
+3.Join SQL VMs to the domain
+4.Creates Storage account (if it doesn't exist already) which will act as Witness for Failover Cluster
+5.Creates Windows server Failover cluster
+6.Runs necessary checks such as TEST Cluster to ensure the health of creation of cluster 
+7.Creates Availability Group
+8.Creates Availability Group Listener
+
+Best practices that were considered for this solution:
+1. This solution deploys SQL Server VMs to multiple subnets,thereby avoiding the dependency on an Azure Load Balancer or a distributed network name (DNN) to route traffic to your HADR solution.
+2. Use a single NIC per cluster node.
 
 The following resources are deployed as part of the solution:
-
-AvailabilitySet
-Virtual machine 
-SQL virtual machine 
-Network interface 
-Network security group 
-Disk 
-Storage account 
-Failovercluster - Microsoft.sqlvirtualmachine/sqlvirtualmachinegroups 
+1. AvailabilitySet
+2. Virtual machine 
+3. SQL virtual machine 
+4. Network interface 
+5. Network security group 
+6. Disk 
+7. Storage account 
+8. Failovercluster - Microsoft.sqlvirtualmachine/sqlvirtualmachinegroups 
 
 ## Prerequisites
 
-Before deploying the template you must have the following
+RBAC permissions required to deploy ARM template: Virtual machine contributor
 
+Before deploying the template you must have the following:
 1. A Virtual Network 
-2. A domain controller VM
+2. A domain controller VM in the same virtual network
 3. Accounts 
     SQL service
     DomainAdmin - This should have Create Computer object permissions.
-4. Subnets for VMs
+4. Subnets for VMs. Refer https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet
+
+Notes: 
+1. This [template] (https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/active-directory/active-directory-new-domain) is helpful for above steps 1,2,3
+2. New resources should be in the same region as virtual network
+3. Tutorial for a manual solution of this [template] (https://docs.microsoft.com/en-us/azure/azure-sql/virtual-machines/windows/availability-group-manually-configure-prerequisites-tutorial-multi-subnet?msclkid=7c862b87b6c711ecae6e6866d0d72ae8&view=azuresql)
 
 ## Deployment Steps
 
