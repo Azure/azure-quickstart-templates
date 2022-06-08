@@ -9,15 +9,14 @@
 ## Solution overview and deployed resources
 
 This is an overview of the solution
-
-1.Creates availability set
-2.Creates multiple SQL VMs in availability set (Maximum number of VMs for this solution is 9, we recommend VM count > 3), each vm in a different subnet
-3.Join SQL VMs to the domain
-4.Creates Storage account (if it doesn't exist already) which will act as Witness for Failover Cluster
-5.Creates Windows server Failover cluster
-6.Runs necessary checks such as TEST Cluster to ensure the health of creation of cluster 
-7.Creates Availability Group
-8.Creates Availability Group Listener
+1. Creates availability set
+2. Creates multiple SQL VMs in availability set, each vm in a different subnet (Maximum number of VMs for this solution is 9, we recommend VM count > 2)
+3. Join SQL VMs to the domain 
+4. Creates Storage account (if it doesn't exist already) which will act as Witness for Failover Cluster
+5. Creates Windows server Failover cluster
+6. Runs necessary checks such as TEST Cluster to ensure the health of creation of cluster 
+7. Creates Availability Group 
+8. Creates Availability Group Listener
 
 Best practices that were considered for this solution:
 1. This solution deploys SQL Server VMs to multiple subnets,thereby avoiding the dependency on an Azure Load Balancer or a distributed network name (DNN) to route traffic to your HADR solution.
@@ -57,5 +56,4 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 ## Usage
 
 Template can be deployed with multiple clients : Portal, CLI, Powershell, Rest API, Cloud Shell.
-
 Please refer https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-portal
