@@ -4,47 +4,90 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "5094209797347150279"
+      "version": "0.6.18.56646",
+      "templateHash": "10540484943723130016"
     }
   },
   "parameters": {
     "AgwName": {
       "type": "string",
-      "defaultValue": "[format('cr{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('agw-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Azure Application Gateway"
       }
     },
     "AkvName": {
       "type": "string",
-      "defaultValue": "[format('cr{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('akv-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Azure Application Gateway"
       }
     },
-    "FrontEndCertificate": {
+    "FrontendCertificateName": {
       "type": "string",
-      "defaultValue": "fronty"
+      "defaultValue": "frontend"
     },
-    "BackEndCertificate": {
-      "type": "string",
-      "defaultValue": "backy"
-    },
-    "location": {
+    "Location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "The location to deploy the resources to"
       }
+    },
+    "DnsPrivateZoneName": {
+      "type": "string",
+      "defaultValue": "Contoso.local"
     }
   },
+  "variables": {
+    "FrontendCertificateFqdn": "[format('{0}.{1}', parameters('FrontendCertificateName'), parameters('DnsPrivateZoneName'))]"
+  },
   "resources": [
+    {
+      "type": "Microsoft.Network/privateDnsZones/A",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('DnsPrivateZoneName'), parameters('FrontendCertificateName'))]",
+      "properties": {
+        "ttl": 60,
+        "aRecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.Resources/deployments', parameters('AgwName'))).outputs.agwPip.value]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', parameters('AgwName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('DnsPrivateZoneName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/A",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('DnsPrivateZoneName'), 'appdirect')]",
+      "properties": {
+        "ttl": 60,
+        "aRecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.Resources/deployments', 'sampleWebApplication')).outputs.IpAddress.value]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'sampleWebApplication')]",
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('DnsPrivateZoneName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('DnsPrivateZoneName')]",
+      "location": "global"
+    },
     {
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2021-11-01-preview",
       "name": "[parameters('AkvName')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('Location')]",
       "properties": {
         "sku": {
           "family": "A",
@@ -55,6 +98,12 @@
         "enableRbacAuthorization": true,
         "accessPolicies": []
       }
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "id-app-SampleApp-4kogxjemf2t7a",
+      "location": "[parameters('Location')]"
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -70,7 +119,10 @@
             "value": "[parameters('AkvName')]"
           },
           "certificateName": {
-            "value": "[parameters('FrontEndCertificate')]"
+            "value": "[parameters('FrontendCertificateName')]"
+          },
+          "certificateCommonName": {
+            "value": "[variables('FrontendCertificateFqdn')]"
           }
         },
         "template": {
@@ -80,7 +132,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.5.6.12127",
-              "templateHash": "2212439798834401119"
+              "templateHash": "9962724588709099443"
             }
           },
           "parameters": {
@@ -143,6 +195,13 @@
               "type": "string",
               "metadata": {
                 "description": "The name of the certificate to create"
+              }
+            },
+            "certificateCommonName": {
+              "type": "string",
+              "defaultValue": "[parameters('certificateName')]",
+              "metadata": {
+                "description": "The common name of the certificate to create"
               }
             },
             "initialScriptDelay": {
@@ -218,6 +277,10 @@
                     "value": "[parameters('certificateName')]"
                   },
                   {
+                    "name": "certCommonName",
+                    "value": "[parameters('certificateCommonName')]"
+                  },
+                  {
                     "name": "initialDelay",
                     "value": "[parameters('initialScriptDelay')]"
                   },
@@ -230,7 +293,7 @@
                     "value": "5s"
                   }
                 ],
-                "scriptContent": "      #!/bin/bash\n      set -e\n\n      echo \"Waiting on Identity RBAC replication ($initialDelay)\"\n      sleep $initialDelay\n\n      #Retry loop to catch errors (usually RBAC delays)\n      retryLoopCount=0\n      until [ $retryLoopCount -ge $retryMax ]\n      do\n        echo \"Creating AKV Cert $certName (attempt $retryLoopCount)...\"\n        az keyvault certificate create --vault-name $akvName -n $certName -p \"$(az keyvault certificate get-default-policy | sed -e s/CN=CLIGetDefaultPolicy/CN=${certName}/g )\" \\\n          && break\n\n        sleep $retrySleep\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      echo \"Getting Certificate $certName\";\n      retryLoopCount=0\n      createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n      while [ -z \"$(echo $createdCert | jq -r '.x509ThumbprintHex')\" ] && [ $retryLoopCount -lt $retryMax ]\n      do\n        echo \"Waiting for cert creation (attempt $retryLoopCount)...\"\n        sleep $retrySleep\n        createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      unversionedSecretId=$(echo $createdCert | jq -r \".sid\" | cut -d'/' -f-5) # remove the version from the url;\n      jsonOutputString=$(echo $createdCert | jq --arg usid $unversionedSecretId '{name: .name ,certSecretId: {versioned: .sid, unversioned: $usid }, thumbprint: .x509Thumbprint, thumbprintHex: .x509ThumbprintHex}')\n      echo $jsonOutputString > $AZ_SCRIPTS_OUTPUT_PATH\n    ",
+                "scriptContent": "      #!/bin/bash\n      set -e\n\n      echo \"Waiting on Identity RBAC replication ($initialDelay)\"\n      sleep $initialDelay\n\n      #Retry loop to catch errors (usually RBAC delays)\n      retryLoopCount=0\n      until [ $retryLoopCount -ge $retryMax ]\n      do\n        echo \"Creating AKV Cert $certName with CN $certCommonName (attempt $retryLoopCount)...\"\n        az keyvault certificate create --vault-name $akvName -n $certName -p \"$(az keyvault certificate get-default-policy | sed -e s/CN=CLIGetDefaultPolicy/CN=${certCommonName}/g )\" \\\n          && break\n\n        sleep $retrySleep\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      echo \"Getting Certificate $certName\";\n      retryLoopCount=0\n      createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n      while [ -z \"$(echo $createdCert | jq -r '.x509ThumbprintHex')\" ] && [ $retryLoopCount -lt $retryMax ]\n      do\n        echo \"Waiting for cert creation (attempt $retryLoopCount)...\"\n        sleep $retrySleep\n        createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      unversionedSecretId=$(echo $createdCert | jq -r \".sid\" | cut -d'/' -f-5) # remove the version from the url;\n      jsonOutputString=$(echo $createdCert | jq --arg usid $unversionedSecretId '{name: .name ,certSecretId: {versioned: .sid, unversioned: $usid }, thumbprint: .x509Thumbprint, thumbprintHex: .x509ThumbprintHex}')\n      echo $jsonOutputString > $AZ_SCRIPTS_OUTPUT_PATH\n    ",
                 "cleanupPreference": "[parameters('cleanupPreference')]"
               },
               "dependsOn": [
@@ -240,225 +303,13 @@
             }
           ],
           "outputs": {
-            "certificateSecretId": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.certSecretId.versioned]",
-              "metadata": {
-                "description": "KeyVault secret id to the created version"
-              }
-            },
-            "certificateSecretIdUnversioned": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.certSecretId.unversioned]",
-              "metadata": {
-                "description": "KeyVault secret id which uses the unversioned uri"
-              }
-            },
-            "certificateThumbprint": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.thumbprint]",
-              "metadata": {
-                "description": "Certificate Thumbprint"
-              }
-            },
-            "certificateThumbprintHex": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.thumbprintHex]",
-              "metadata": {
-                "description": "Certificate Thumbprint (in hex)"
-              }
-            }
-          }
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('AkvName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "CreateBeKvCert",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "akvName": {
-            "value": "[parameters('AkvName')]"
-          },
-          "certificateName": {
-            "value": "[parameters('BackEndCertificate')]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "2212439798834401119"
-            }
-          },
-          "parameters": {
-            "akvName": {
-              "type": "string",
-              "metadata": {
-                "description": "The name of the Azure Key Vault"
-              }
-            },
-            "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "The location to deploy the resources to"
-              }
-            },
-            "forceUpdateTag": {
-              "type": "string",
-              "defaultValue": "[utcNow()]",
-              "metadata": {
-                "description": "How the deployment script should be forced to execute"
-              }
-            },
-            "rbacRolesNeededOnKV": {
-              "type": "string",
-              "defaultValue": "a4417e6f-fecd-4de8-b567-7b0420556985",
-              "metadata": {
-                "description": "The RoleDefinitionId required for the DeploymentScript resource to interact with KeyVault"
-              }
-            },
-            "useExistingManagedIdentity": {
-              "type": "bool",
-              "defaultValue": false,
-              "metadata": {
-                "description": "Does the Managed Identity already exists, or should be created"
-              }
-            },
-            "managedIdentityName": {
-              "type": "string",
-              "defaultValue": "id-KeyVaultCertificateCreator",
-              "metadata": {
-                "description": "Name of the Managed Identity resource"
-              }
-            },
-            "existingManagedIdentitySubId": {
-              "type": "string",
-              "defaultValue": "[subscription().subscriptionId]",
-              "metadata": {
-                "description": "For an existing Managed Identity, the Subscription Id it is located in"
-              }
-            },
-            "existingManagedIdentityResourceGroupName": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().name]",
-              "metadata": {
-                "description": "For an existing Managed Identity, the Resource Group it is located in"
-              }
-            },
             "certificateName": {
               "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.name]",
               "metadata": {
-                "description": "The name of the certificate to create"
+                "description": "Certificate name"
               }
             },
-            "initialScriptDelay": {
-              "type": "string",
-              "defaultValue": "0",
-              "metadata": {
-                "description": "A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate"
-              }
-            },
-            "cleanupPreference": {
-              "type": "string",
-              "defaultValue": "OnSuccess",
-              "metadata": {
-                "description": "When the script resource is cleaned up"
-              },
-              "allowedValues": [
-                "OnSuccess",
-                "OnExpiration",
-                "Always"
-              ]
-            }
-          },
-          "resources": [
-            {
-              "condition": "[not(parameters('useExistingManagedIdentity'))]",
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2018-11-30",
-              "name": "[parameters('managedIdentityName')]",
-              "location": "[parameters('location')]",
-              "metadata": {
-                "description": "A new managed identity that will be created in this Resource Group, this is the default option"
-              }
-            },
-            {
-              "condition": "[not(empty(parameters('rbacRolesNeededOnKV')))]",
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2020-08-01-preview",
-              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('akvName'))]",
-              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), parameters('rbacRolesNeededOnKV'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]",
-              "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('rbacRolesNeededOnKV'))]",
-                "principalId": "[if(parameters('useExistingManagedIdentity'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId, reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId)]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Resources/deploymentScripts",
-              "apiVersion": "2020-10-01",
-              "name": "[format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-'))]",
-              "location": "[parameters('location')]",
-              "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                  "[format('{0}', if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]": {}
-                }
-              },
-              "kind": "AzureCLI",
-              "properties": {
-                "forceUpdateTag": "[parameters('forceUpdateTag')]",
-                "azCliVersion": "2.35.0",
-                "timeout": "PT10M",
-                "retentionInterval": "P1D",
-                "environmentVariables": [
-                  {
-                    "name": "akvName",
-                    "value": "[parameters('akvName')]"
-                  },
-                  {
-                    "name": "certName",
-                    "value": "[parameters('certificateName')]"
-                  },
-                  {
-                    "name": "initialDelay",
-                    "value": "[parameters('initialScriptDelay')]"
-                  },
-                  {
-                    "name": "retryMax",
-                    "value": "10"
-                  },
-                  {
-                    "name": "retrySleep",
-                    "value": "5s"
-                  }
-                ],
-                "scriptContent": "      #!/bin/bash\n      set -e\n\n      echo \"Waiting on Identity RBAC replication ($initialDelay)\"\n      sleep $initialDelay\n\n      #Retry loop to catch errors (usually RBAC delays)\n      retryLoopCount=0\n      until [ $retryLoopCount -ge $retryMax ]\n      do\n        echo \"Creating AKV Cert $certName (attempt $retryLoopCount)...\"\n        az keyvault certificate create --vault-name $akvName -n $certName -p \"$(az keyvault certificate get-default-policy | sed -e s/CN=CLIGetDefaultPolicy/CN=${certName}/g )\" \\\n          && break\n\n        sleep $retrySleep\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      echo \"Getting Certificate $certName\";\n      retryLoopCount=0\n      createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n      while [ -z \"$(echo $createdCert | jq -r '.x509ThumbprintHex')\" ] && [ $retryLoopCount -lt $retryMax ]\n      do\n        echo \"Waiting for cert creation (attempt $retryLoopCount)...\"\n        sleep $retrySleep\n        createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      unversionedSecretId=$(echo $createdCert | jq -r \".sid\" | cut -d'/' -f-5) # remove the version from the url;\n      jsonOutputString=$(echo $createdCert | jq --arg usid $unversionedSecretId '{name: .name ,certSecretId: {versioned: .sid, unversioned: $usid }, thumbprint: .x509Thumbprint, thumbprintHex: .x509ThumbprintHex}')\n      echo $jsonOutputString > $AZ_SCRIPTS_OUTPUT_PATH\n    ",
-                "cleanupPreference": "[parameters('cleanupPreference')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]",
-                "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), parameters('rbacRolesNeededOnKV'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))))]"
-              ]
-            }
-          ],
-          "outputs": {
             "certificateSecretId": {
               "type": "string",
               "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.certSecretId.versioned]",
@@ -505,16 +356,16 @@
         "mode": "Incremental",
         "parameters": {
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[parameters('Location')]"
           },
           "akvName": {
             "value": "[parameters('AkvName')]"
           },
-          "backEndCertificateSecretId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'CreateBeKvCert')).outputs.certificateSecretIdUnversioned.value]"
-          },
           "frontEndCertificateSecretId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'CreateFeKvCert')).outputs.certificateSecretIdUnversioned.value]"
+          },
+          "backendIpAddress": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'sampleWebApplication')).outputs.IpAddress.value]"
           }
         },
         "template": {
@@ -523,8 +374,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "15797154384350479160"
+              "version": "0.6.18.56646",
+              "templateHash": "1666207885782543447"
             }
           },
           "parameters": {
@@ -554,11 +405,8 @@
                 "description": "The URI of the frontend KeyVault Certificate Secret Id"
               }
             },
-            "backEndCertificateSecretId": {
-              "type": "string",
-              "metadata": {
-                "description": "The URI of the backend KeyVault Certificate Secret Id"
-              }
+            "backendIpAddress": {
+              "type": "string"
             },
             "location": {
               "type": "string",
@@ -570,11 +418,9 @@
           },
           "variables": {
             "appgwSubnetAddress": "10.0.1.0/24",
-            "appgwResourceId": "[resourceId('Microsoft.Network/applicationGateways', format('{0}', parameters('agwName')))]",
             "frontendAgwCertificateName": "frontend",
+            "appgwResourceId": "[resourceId('Microsoft.Network/applicationGateways', format('{0}', parameters('agwName')))]",
             "frontendAgwCertificateId": "[format('{0}/sslCertificates/{1}', variables('appgwResourceId'), variables('frontendAgwCertificateName'))]",
-            "backendAgwCertificateName": "backend",
-            "backendAgwCertificateId": "[format('{0}/trustedRootCertificates/{1}', variables('appgwResourceId'), variables('backendAgwCertificateName'))]",
             "keyVaultSecretsUserRole": "[resourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]"
           },
           "resources": [
@@ -607,7 +453,7 @@
             },
             {
               "type": "Microsoft.Network/applicationGateways",
-              "apiVersion": "2021-05-01",
+              "apiVersion": "2021-08-01",
               "name": "[parameters('agwName')]",
               "location": "[parameters('location')]",
               "identity": {
@@ -622,14 +468,6 @@
                     "name": "[variables('frontendAgwCertificateName')]",
                     "properties": {
                       "keyVaultSecretId": "[parameters('frontEndCertificateSecretId')]"
-                    }
-                  }
-                ],
-                "trustedRootCertificates": [
-                  {
-                    "name": "[variables('backendAgwCertificateName')]",
-                    "properties": {
-                      "keyVaultSecretId": "[parameters('backEndCertificateSecretId')]"
                     }
                   }
                 ],
@@ -659,23 +497,25 @@
                 ],
                 "backendAddressPools": [
                   {
-                    "name": "defaultaddresspool"
+                    "name": "defaultaddresspool",
+                    "properties": {
+                      "backendAddresses": [
+                        {
+                          "ipAddress": "[parameters('backendIpAddress')]"
+                        }
+                      ]
+                    }
                   }
                 ],
                 "backendHttpSettingsCollection": [
                   {
                     "name": "defaulthttpsetting",
                     "properties": {
-                      "port": 443,
-                      "protocol": "Https",
+                      "port": 80,
+                      "protocol": "Http",
                       "cookieBasedAffinity": "Disabled",
                       "requestTimeout": 30,
-                      "pickHostNameFromBackendAddress": true,
-                      "trustedRootCertificates": [
-                        {
-                          "id": "[variables('backendAgwCertificateId')]"
-                        }
-                      ]
+                      "pickHostNameFromBackendAddress": true
                     }
                   }
                 ],
@@ -701,6 +541,7 @@
                     "name": "appGwRoutingRuleName",
                     "properties": {
                       "ruleType": "Basic",
+                      "priority": 100,
                       "httpListener": {
                         "id": "[format('{0}/httpListeners/hlisten', variables('appgwResourceId'))]"
                       },
@@ -748,10 +589,6 @@
             }
           ],
           "outputs": {
-            "agwIdName": {
-              "type": "string",
-              "value": "[parameters('agwIdName')]"
-            },
             "agwId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Network/applicationGateways', parameters('agwName'))]"
@@ -759,21 +596,128 @@
             "agwName": {
               "type": "string",
               "value": "[parameters('agwName')]"
+            },
+            "agwPip": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('agwName')))).ipAddress]"
             }
           }
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('AkvName'))]",
-        "[resourceId('Microsoft.Resources/deployments', 'CreateBeKvCert')]",
-        "[resourceId('Microsoft.Resources/deployments', 'CreateFeKvCert')]"
+        "[resourceId('Microsoft.Resources/deployments', 'CreateFeKvCert')]",
+        "[resourceId('Microsoft.Resources/deployments', 'sampleWebApplication')]"
       ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "sampleWebApplication",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appName": {
+            "value": "SampleWebApp"
+          },
+          "location": {
+            "value": "[parameters('Location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.6.18.56646",
+              "templateHash": "13428682905926897957"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "appName": {
+              "type": "string"
+            },
+            "appImage": {
+              "type": "string",
+              "defaultValue": "mcr.microsoft.com/oss/nginx/nginx:1.9.15-alpine",
+              "allowedValues": [
+                "mcr.microsoft.com/oss/nginx/nginx:1.9.15-alpine",
+                "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerInstance/containerGroups",
+              "apiVersion": "2021-10-01",
+              "name": "[parameters('appName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "containers": [
+                  {
+                    "name": "t1",
+                    "properties": {
+                      "image": "[parameters('appImage')]",
+                      "resources": {
+                        "requests": {
+                          "cpu": "1",
+                          "memoryInGB": "1.5"
+                        }
+                      },
+                      "ports": [
+                        {
+                          "port": 80,
+                          "protocol": "TCP"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "restartPolicy": "OnFailure",
+                "sku": "Standard",
+                "ipAddress": {
+                  "type": "Public",
+                  "ports": [
+                    {
+                      "port": 80,
+                      "protocol": "TCP"
+                    }
+                  ]
+                },
+                "osType": "Linux"
+              }
+            }
+          ],
+          "outputs": {
+            "IpAddress": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('appName'))).ipAddress.ip]"
+            }
+          }
+        }
+      }
     }
   ],
   "outputs": {
     "akvName": {
       "type": "string",
       "value": "[parameters('AkvName')]"
+    },
+    "FrontendPrivateDnsFqdn": {
+      "type": "string",
+      "value": "[variables('FrontendCertificateFqdn')]"
+    },
+    "ApplicationGatewayPublicIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', parameters('AgwName'))).outputs.agwPip.value]"
     }
   }
 }
