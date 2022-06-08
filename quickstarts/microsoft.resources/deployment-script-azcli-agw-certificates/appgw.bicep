@@ -16,6 +16,10 @@ param backendIpAddress string
 param location string = resourceGroup().location
 
 var appgwSubnetAddress = '10.0.1.0/24'
+var frontendAgwCertificateName = 'frontend'
+
+var appgwResourceId = resourceId('Microsoft.Network/applicationGateways', '${agwName}')
+var frontendAgwCertificateId = '${appgwResourceId}/sslCertificates/${frontendAgwCertificateName}'
 
 resource akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = {
   name: akvName
@@ -45,17 +49,8 @@ resource agwId 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: agwIdName
   location: location
 }
-output agwIdName string = agwId.name
 
-var appgwResourceId = resourceId('Microsoft.Network/applicationGateways', '${agwName}')
-
-var frontendAgwCertificateName = 'frontend'
-var frontendAgwCertificateId = '${appgwResourceId}/sslCertificates/${frontendAgwCertificateName}'
-
-// var backendAgwCertificateName = 'backend'
-// var backendAgwCertificateId = '${appgwResourceId}/trustedRootCertificates/${backendAgwCertificateName}'
-
-resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
+resource agw 'Microsoft.Network/applicationGateways@2021-08-01' = {
   name: agwName
   location: location
   identity: {
@@ -73,14 +68,6 @@ resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
           }
         }
       ]
-      // trustedRootCertificates: [
-      //   {
-      //     name: backendAgwCertificateName
-      //     properties: {
-      //       keyVaultSecretId: backEndCertificateSecretId
-      //     }
-      //   }
-      // ]
       sku: {
         capacity: 1
         tier: 'Standard_v2'
@@ -133,11 +120,6 @@ resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
             cookieBasedAffinity: 'Disabled'
             requestTimeout: 30
             pickHostNameFromBackendAddress: true
-            // trustedRootCertificates: [
-            //   {
-            //     id: backendAgwCertificateId
-            //   }
-            // ]
           }
         }
       ]
@@ -163,6 +145,7 @@ resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
           name: 'appGwRoutingRuleName'
           properties: {
             ruleType: 'Basic'
+            priority: 100
             httpListener: {
               id: '${appgwResourceId}/httpListeners/hlisten'
             }

@@ -1,8 +1,8 @@
 @description('The name of the Azure Application Gateway')
-param AgwName string = 'cr${uniqueString(resourceGroup().id)}'
+param AgwName string = 'agw-${uniqueString(resourceGroup().id)}'
 
 @description('The name of the Azure Application Gateway')
-param AkvName string = 'cr${uniqueString(resourceGroup().id)}'
+param AkvName string = 'akv-${uniqueString(resourceGroup().id)}'
 
 param FrontendCertificateName string = 'frontend'
 
@@ -84,9 +84,9 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
 }
 
 module app 'aciApp.bicep' = {
-  name: 'sampleApp2'
+  name: 'sampleWebApplication'
   params: {
-    appName: 'SampleApp'
+    appName: 'SampleWebApp'
     location: Location
   }
 }

@@ -17,8 +17,10 @@
 
 ## Sample overview
 
-This template leverages the KeyVault Certificate module from the bicep registry to create a self-signed certificates which is then added to an Azure Application Gateway.
-A new Azure Application Gateway and Azure KeyVault are created, as well as a private DNS zone.
+This template leverages the KeyVault Certificate module from the bicep registry to create a self-signed certificate which is then added to an Azure Application Gateway.
+This demonstrates SSL termination, Key Vault - Application Gateway integration and the Key Vault capability of generating self-signed certificates.
+
+A new Azure Application Gateway and Azure KeyVault are created, as well as a **private** DNS zone.
 
 See the [Create-Kv-Certificate](https://github.com/Azure/bicep-registry-modules/tree/main/modules/deployment-scripts/create-kv-certificate) module in the Bicep Registry for more information.
 See the [docs](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template?tabs=CLI) for more information on the deployment script resource.
