@@ -159,8 +159,10 @@ resource agw 'Microsoft.Network/applicationGateways@2021-08-01' = {
           }
         }
       ]
-
   }
+  dependsOn: [
+    kvAppGwSecretsUserRole
+  ]
 }
 output agwId string = agw.id
 output agwName string = agw.name
