@@ -76,7 +76,7 @@ module agw 'appgw.bicep' = {
     backendIpAddress: app.outputs.IpAddress
   }
 }
-output agwIp string = agw.outputs.agwPip
+
 
 resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   location: Location
@@ -90,3 +90,6 @@ module app 'aciApp.bicep' = {
     location: Location
   }
 }
+
+output FrontendPrivateDnsFqdn string = FrontendCertificateFqdn
+output ApplicationGatewayPublicIp string = agw.outputs.agwPip
