@@ -30,3 +30,12 @@ See the [docs](https://docs.microsoft.com/en-us/azure/azure-resource-manager/tem
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 `Tags: ApplicationGateway, Certificate, AzureCli`
+
+## Notes
+
+After deploying the template, access the sample application from your browser using either
+- https://[application-gateway-public-ip]
+- Using the `ApplicationGatewayPublicIp` and `FrontendPrivateDnsFqdn` deployment outputs to configure your local host file with the private dns address.
+
+Here is what you can expect when accessing the sample application.
+![accessing via public ip](browser-screengrab.png)
