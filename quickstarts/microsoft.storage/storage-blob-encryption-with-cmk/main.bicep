@@ -62,10 +62,10 @@ resource kvKey 'Microsoft.KeyVault/vaults/keys@2021-10-01' = {
   properties: {
     attributes: {
       enabled: true
+      exp: keyExpiration
     }
     keySize: 4096
     kty: 'RSA'
-    exp: keyExpiration
   }
 }
 

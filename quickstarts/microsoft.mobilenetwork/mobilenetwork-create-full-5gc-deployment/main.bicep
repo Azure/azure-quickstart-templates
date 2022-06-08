@@ -17,7 +17,7 @@ param siteName string = 'myExampleSite'
 param serviceName string = 'Allow-all-traffic'
 
 @description('An array containing properties of the SIM(s) you wish to create')
-param simResources array
+param simResources array = []
 
 @description('The name of the SIM policy')
 param simPolicyName string = 'Default-policy'
