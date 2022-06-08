@@ -1,4 +1,13 @@
-# Function App with Azure Storage private endpoints
+---
+description: This template allows you to deploy an Azure Function App that communicates with Azure Storage over private endpoints.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Create Function App and private endpoint-secured Storage
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/PublicDeployment.svg)
@@ -65,3 +74,6 @@ The following DNS zones are created in this sample:
 ### Application Insights
 
 [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+
+
+`Tags: Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Web/sites/config, Microsoft.Network/virtualNetworks, Microsoft.Network/privateDnsZones, Microsoft.Network/privateEndpoints, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/fileServices/shares, Microsoft.Insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites`
