@@ -100,136 +100,78 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
       }
     ]
   }
+
+  resource functionSubnet 'subnets' existing = {
+    name: functionSubnetName
+  }
+
+  resource privateEndpointSubnet 'subnets' existing = {
+    name: privateEndpointSubnetName
+  }
 }
 
 // -- Private DNS Zones --
 resource storageFileDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageFileDnsZoneName
   location: 'global'
+
+  resource storageFileDnsZoneLink 'virtualNetworkLinks' = {
+    name: '${storageFileDnsZone.name}-link'
+    location: 'global'
+    properties: {
+      registrationEnabled: false
+      virtualNetwork: {
+        id: virtualNetwork.id
+      }
+    }
+  }
 }
 
 resource storageBlobDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageBlobDnsZoneName
   location: 'global'
+
+  resource storageBlobDnsZoneLink 'virtualNetworkLinks' = {
+    name: '${storageBlobDnsZone.name}-link'
+    location: 'global'
+    properties: {
+      registrationEnabled: false
+      virtualNetwork: {
+        id: virtualNetwork.id
+      }
+    }
+  }
 }
 
 resource storageQueueDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageQueueDnsZoneName
   location: 'global'
+
+  resource storageQueueDnsZoneLink 'virtualNetworkLinks' = {
+    name: '${storageQueueDnsZone.name}-link'
+    location: 'global'
+    properties: {
+      registrationEnabled: false
+      virtualNetwork: {
+        id: virtualNetwork.id
+      }
+    }
+  }
 }
 
 resource storageTableDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageTableDnsZoneName
   location: 'global'
-}
 
-// -- Private DNS Zone Links --
-resource storageFileDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageFileDnsZone
-  name: '${storageFileDnsZone.name}-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetwork.id
-    }
-  }
-}
-
-resource storageBlobDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageBlobDnsZone
-  name: '${storageBlobDnsZone.name}-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetwork.id
-    }
-  }
-}
-
-resource storageTableDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageTableDnsZone
-  name: '${storageTableDnsZone.name}-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetwork.id
-    }
-  }
-}
-
-resource storageQueueDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageQueueDnsZone
-  name: '${storageQueueDnsZone.name}-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetwork.id
-    }
-  }
-}
-
-// -- Private DNS Zone Groups --
-resource storageFilePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageFilePrivateEndpoint
-  name: 'filePrivateDnsZoneGroup'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config'
-        properties: {
-          privateDnsZoneId: storageFileDnsZone.id
-        }
+  resource storageTableDnsZoneLink 'virtualNetworkLinks' = {
+    name: '${storageTableDnsZone.name}-link'
+    location: 'global'
+    properties: {
+      registrationEnabled: false
+      virtualNetwork: {
+        id: virtualNetwork.id
       }
-    ]
-  }
-}
-
-resource storageBlobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageBlobPrivateEndpoint
-  name: 'blobPrivateDnsZoneGroup'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config'
-        properties: {
-          privateDnsZoneId: storageBlobDnsZone.id
-        }
-      }
-    ]
-  }
-}
-
-resource storageTablePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageTablePrivateEndpoint
-  name: 'tablePrivateDnsZoneGroup'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config'
-        properties: {
-          privateDnsZoneId: storageTableDnsZone.id
-        }
-      }
-    ]
-  }
-}
-
-resource storageQueuePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageQueuePrivateEndpoint
-  name: 'tablePrivateDnsZoneGroup'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config'
-        properties: {
-          privateDnsZoneId: storageQueueDnsZone.id
-        }
-      }
-    ]
+    }
   }
 }
 
@@ -239,7 +181,7 @@ resource storageFilePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
+      id: virtualNetwork::privateEndpointSubnet.id
     }
     privateLinkServiceConnections: [
       {
@@ -253,6 +195,20 @@ resource storageFilePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-
       }
     ]
   }
+
+  resource storageFilePrivateEndpointDnsZoneGroup 'privateDnsZoneGroups' = {
+    name: 'filePrivateDnsZoneGroup'
+    properties: {
+      privateDnsZoneConfigs: [
+        {
+          name: 'config'
+          properties: {
+            privateDnsZoneId: storageFileDnsZone.id
+          }
+        }
+      ]
+    }
+  }
 }
 
 resource storageTablePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
@@ -260,7 +216,7 @@ resource storageTablePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
+      id: virtualNetwork::privateEndpointSubnet.id
     }
     privateLinkServiceConnections: [
       {
@@ -274,6 +230,20 @@ resource storageTablePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02
       }
     ]
   }
+
+  resource storageTablePrivateEndpointDnsZoneGroup 'privateDnsZoneGroups' = {
+    name: 'tablePrivateDnsZoneGroup'
+    properties: {
+      privateDnsZoneConfigs: [
+        {
+          name: 'config'
+          properties: {
+            privateDnsZoneId: storageTableDnsZone.id
+          }
+        }
+      ]
+    }
+  }
 }
 
 resource storageQueuePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
@@ -281,7 +251,7 @@ resource storageQueuePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
+      id: virtualNetwork::privateEndpointSubnet.id
     }
     privateLinkServiceConnections: [
       {
@@ -295,6 +265,20 @@ resource storageQueuePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02
       }
     ]
   }
+
+  resource storageQueuePrivateEndpointDnsZoneGroup 'privateDnsZoneGroups' = {
+    name: 'queuePrivateDnsZoneGroup'
+    properties: {
+      privateDnsZoneConfigs: [
+        {
+          name: 'config'
+          properties: {
+            privateDnsZoneId: storageQueueDnsZone.id
+          }
+        }
+      ]
+    }
+  }
 }
 
 resource storageBlobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
@@ -302,7 +286,7 @@ resource storageBlobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
+      id: virtualNetwork::privateEndpointSubnet.id
     }
     privateLinkServiceConnections: [
       {
@@ -316,9 +300,23 @@ resource storageBlobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-
       }
     ]
   }
+
+  resource storageBlobPrivateEndpointDnsZoneGroup 'privateDnsZoneGroups' = {
+    name: 'blobPrivateDnsZoneGroup'
+    properties: {
+      privateDnsZoneConfigs: [
+        {
+          name: 'config'
+          properties: {
+            privateDnsZoneId: storageBlobDnsZone.id
+          }
+        }
+      ]
+    }
+  }
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: functionStorageAccountName
   location: location
   kind: 'StorageV2'
@@ -326,6 +324,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
     name: 'Standard_LRS'
   }
   properties: {
+    publicNetworkAccess: 'Disabled'
     networkAcls: {
       bypass: 'None'
       defaultAction: 'Deny'
@@ -366,23 +365,13 @@ resource functionApp 'Microsoft.Web/sites@2021-01-01' = {
   location: location
   name: functionAppName
   kind: isReserved ? 'functionapp,linux' : 'functionapp'
-  dependsOn: [
-    storageFilePrivateDnsZoneGroup
-    storageBlobPrivateDnsZoneGroup
-    storageQueuePrivateDnsZoneGroup
-    storageTablePrivateDnsZoneGroup
-
-    storageBlobDnsZoneLink
-    storageQueueDnsZoneLink
-    storageTableDnsZoneLink
-    storageQueueDnsZoneLink
-
-    functionContentShare
-  ]
   properties: {
+    httpsOnly: true
     serverFarmId: plan.id
     reserved: isReserved
+    virtualNetworkSubnetId: virtualNetwork::functionSubnet.id
     siteConfig: {
+      vnetRouteAllEnabled: true
       functionsRuntimeScaleMonitoringEnabled: true
       linuxFxVersion: isReserved ? 'dotnet|3.1' : json('null')
       appSettings: [
@@ -407,10 +396,6 @@ resource functionApp 'Microsoft.Web/sites@2021-01-01' = {
           value: 'dotnet'
         }
         {
-          name: 'WEBSITE_VNET_ROUTE_ALL'
-          value: '1'
-        }
-        {
           name: 'WEBSITE_CONTENTOVERVNET'
           value: '1'
         }
@@ -421,13 +406,12 @@ resource functionApp 'Microsoft.Web/sites@2021-01-01' = {
       ]
     }
   }
-}
 
-resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
-  parent: functionApp
-  name: 'virtualNetwork'
-  properties: {
-    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, functionSubnetName)
-    swiftSupported: true
+  resource config 'config' = {
+    name: 'web'
+    properties: {
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+    }
   }
 }
