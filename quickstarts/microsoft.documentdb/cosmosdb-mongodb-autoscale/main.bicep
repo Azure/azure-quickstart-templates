@@ -1,5 +1,5 @@
 @description('Cosmos DB account name')
-param accountName string = 'mongodb-${uniqueString(resourceGroup().id)}'
+param accountName string = toLower('mongodb-${uniqueString(resourceGroup().id)}')
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -15,8 +15,9 @@ param secondaryRegion string
   '3.2'
   '3.6'
   '4.0'
+  '4.2'
 ])
-param serverVersion string = '4.0'
+param serverVersion string = '4.2'
 
 @description('The default consistency level of the Cosmos DB account.')
 @allowed([
@@ -48,11 +49,10 @@ param collection1Name string
 param collection2Name string
 
 @description('Maximum throughput when using Autoscale Throughput Policy for the Database')
-@minValue(4000)
+@minValue(1000)
 @maxValue(1000000)
-param autoscaleMaxThroughput int = 4000
+param autoscaleMaxThroughput int = 1000
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -85,8 +85,8 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
+  name: accountName
   location: location
   kind: 'MongoDB'
   properties: {
@@ -99,8 +99,8 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-04-15' = {
-  parent: accountName_resource
+resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-10-15' = {
+  parent: account
   name: databaseName
   properties: {
     resource: {
@@ -114,8 +114,8 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/mongodb
   }
 }
 
-resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  parent: accountName_databaseName
+resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+  parent: database
   name: collection1Name
   properties: {
     resource: {
@@ -167,8 +167,8 @@ resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/database
   }
 }
 
-resource accountName_databaseName_collection2Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  parent: accountName_databaseName
+resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+  parent: database
   name: collection2Name
   properties: {
     resource: {

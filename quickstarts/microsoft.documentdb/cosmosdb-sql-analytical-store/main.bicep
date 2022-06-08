@@ -92,7 +92,4 @@ resource sqlContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/contai
     }
     options: throughput_Policy[throughputPolicy]
   }
-  dependsOn: [
-    databaseAccount
-  ]
 }
