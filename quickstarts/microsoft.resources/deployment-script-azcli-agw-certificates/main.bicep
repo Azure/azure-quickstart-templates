@@ -4,11 +4,13 @@ param AgwName string = 'agw-${uniqueString(resourceGroup().id)}'
 @description('The name of the Azure Application Gateway')
 param AkvName string = 'akv-${uniqueString(resourceGroup().id)}'
 
+@description('The name of the certificate to generate for the frontend AGW. Name will be used as a ARecord in a Private DNS zone.')
 param FrontendCertificateName string = 'frontend'
 
 @description('The location to deploy the resources to')
 param Location string = resourceGroup().location
 
+@description('The name of the DNS Private Zone to create')
 param DnsPrivateZoneName string = 'Contoso.local'
 
 resource dns 'Microsoft.Network/privateDnsZones@2020-06-01' = {

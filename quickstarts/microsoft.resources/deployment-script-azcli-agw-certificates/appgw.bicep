@@ -7,6 +7,7 @@ param agwIdName string = 'id-${agwName}'
 @description('The name of the Azure Key Vault')
 param akvName string
 
+@secure()
 @description('The URI of the frontend KeyVault Certificate Secret Id')
 param frontEndCertificateSecretId string
 
