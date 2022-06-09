@@ -1,4 +1,12 @@
-# Moesif API Analytics for Azure API Management
+---
+description: The template will log API calls from Azure API Management to Moesif API analytics so you can understand customer API usage and resolve customer issues quickly.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# Moesif API Analytics and Monetization
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-logs-to-moesif-using-eventhub-webapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-logs-to-moesif-using-eventhub-webapp/PublicDeployment.svg)
 
@@ -233,4 +241,4 @@ Before starting, make sure you fork the repo [ApimEventProcessor](https://github
 
 Deployment may take a few minutes. Double check your XML policy if there are any changes.
 
-`Tags: Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App`
+`Tags:Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App, Microsoft.Resources/deployments`
