@@ -35,4 +35,4 @@ You can configure GitHub Enterprise Server by visiting the public IP address ass
 [GitHub Enterprise](https://enterprise.github.com)
 
 
-`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/networkSecurityGroups`
+`Tags:Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/networkSecurityGroups`
