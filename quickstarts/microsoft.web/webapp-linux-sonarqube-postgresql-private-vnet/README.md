@@ -25,4 +25,4 @@ This approach of running SonarQube keeps communication between Sonar's App and d
 
 
 
-`Tags: Azure Web App, Azure PostgreSQL (Flexible Servers), VNet Integration, Private DNS, SonarQube, SAST}`
+`Tags: Azure Web App, Azure PostgreSQL (Flexible Servers), VNet Integration, Private DNS, SonarQube, SAST`

@@ -1,5 +1,3 @@
-targetScope = 'resourceGroup'
-
 @description('Name of Azure Web App')
 param siteName string
 
@@ -26,39 +24,6 @@ param administratorLoginPassword string
 param postgresFlexibleServersSkuTier string = 'Burstable'
 
 @description('The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3')
-@allowed([
-  'Standard_B1ms'
-  'Standard_B2s'
-  'Standard_D2s_v3'
-  'Standard_D4s_v3'
-  'Standard_D8s_v3'
-  'Standard_D16s_v3'
-  'Standard_D32s_v3'
-  'Standard_D48s_v3'
-  'Standard_D64s_v3'
-  'Standard_D2ds_v4'
-  'Standard_D4ds_v4'
-  'Standard_D8ds_v4'
-  'Standard_D16ds_v4'
-  'Standard_D32ds_v4'
-  'Standard_D48ds_v4'
-  'Standard_D64ds_v4'
-  'Standard_E2s_v3'
-  'Standard_E4s_v3'
-  'Standard_E8s_v3'
-  'Standard_E16s_v3'
-  'Standard_E32s_v3'
-  'Standard_E48s_v3'
-  'Standard_E64s_v3'
-  'Standard_E2ds_v4'
-  'Standard_E4ds_v4'
-  'Standard_E8ds_v4'
-  'Standard_E16ds_v4'
-  'Standard_E20ds_v4'
-  'Standard_E32ds_v4'
-  'Standard_E48ds_v4'
-  'Standard_E64ds_v4'
-])
 param postgresFlexibleServersSkuName string = 'Standard_B1ms'
 
 @description('The version of a PostgreSQL server')
