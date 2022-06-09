@@ -1,4 +1,13 @@
-# Deploy SonarQube on Web App with PostgreSQL (Flexible Servers), VNet integration and private DNS.
+---
+description: This template provides easy to deploy SonarQube to Web App on Linux with PostgreSQL Flexible Server, VNet integration and private DNS.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# SonarQube on Web App with PostgreSQL and VNet integration
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-postgresql-private-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-postgresql-private-vnet/PublicDeployment.svg)
