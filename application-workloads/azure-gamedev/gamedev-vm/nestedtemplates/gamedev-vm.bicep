@@ -337,6 +337,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicI
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: nsgName
+  location: location
   properties: {
     securityRules: {
       'nsgRules-RDP': !unrealPixelStreamingEnabled ? [
@@ -628,6 +629,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   identity: enableAAD || enableManagedIdentity ? {
     type: 'systemAssigned'
   } : null
+  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags)
   properties: {
     hardwareProfile: {
       vmSize: vmSize
@@ -669,7 +671,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       ]
     }
   }
-  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags)
 }
 
 resource virtualMachine_GDVMCustomization 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = if (deployedFromSolutionTemplate) {
