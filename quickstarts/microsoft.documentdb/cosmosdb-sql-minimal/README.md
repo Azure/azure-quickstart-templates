@@ -1,3 +1,12 @@
+---
+description: This template creates an Azure Cosmos DB account for the Core (SQL) API while only specifying the minimal required resource properties.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
 # Create a minimal Azure Cosmos DB account for Core (SQL) API
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-minimal/PublicLastTestDate.svg)
@@ -16,3 +25,6 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-sql-minimal%2Fazuredeploy.json)
 
 This template will create an Azure Cosmos account for Core (SQL) API provisioned for a single region. The template uses the minimum required resource properties to create an account. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/cosmos-db/quick-create-template) article.
+
+
+`Tags: Microsoft.DocumentDB/databaseAccounts`
