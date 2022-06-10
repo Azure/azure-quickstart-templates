@@ -670,7 +670,7 @@ resource virtualMachine_GDVMCustomization 'Microsoft.Compute/virtualMachines/ext
   }
 }
 
-resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = if(enableAAD) {
+resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = if (enableAAD) {
   name      : '${virtualMachine.name}/AADLoginForWindows'
   location: location
   dependsOn: [
