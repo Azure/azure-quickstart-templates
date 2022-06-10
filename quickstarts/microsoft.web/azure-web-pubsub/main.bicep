@@ -1,8 +1,4 @@
-/* This Bicep file deploys a new instance of Azure Web PubSub service. It's the template for "Quickstart: Create an Azure Web PubSub instance using Bicep" in the Azure documentation. Use it as a convenient starting point for tutorials, testing, or as a component of a more complex deployment.
-
-  WORK IN PROGRESS 05/05/2022
-
-*/
+/* This Bicep file deploys a new instance of Azure Web PubSub service. */
 
 // Parameters
 
@@ -33,13 +29,12 @@ param wpsUnitCount int = 1
 ])
 param wpsSkuName string = 'Free_F1'
 
-@description('Priciing tier')
+@description('Pricing tier')
 @allowed([
   'Free'
   'Standard'
 ])
 param wpsPricingTier string = 'Free'
-
 
 // Resource definition
 resource symbolicname 'Microsoft.SignalRService/webPubSub@2021-10-01' = {
