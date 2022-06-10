@@ -296,7 +296,6 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicI
   sku: {
     name: publicIpSku
   }
-  location: location
   properties: {
     publicIPAllocationMethod: publicIpAllocationMethod
     dnsSettings: {
@@ -307,7 +306,6 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicI
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: nsgName
-  location: location
   properties: {
         securityRules: {
       'nsgRules-RDP': !unrealPixelStreamingEnabled ? [
