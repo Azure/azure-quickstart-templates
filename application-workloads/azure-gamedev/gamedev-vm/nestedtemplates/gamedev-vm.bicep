@@ -138,6 +138,11 @@ param publicIpAllocationMethod string = 'Dynamic'
 param publicIpSku string = 'Basic'
 
 @description('Public IP New or Existing or None?')
+@allowed([
+  'new'
+  'existing'
+  'none'
+])
 param publicIpNewOrExisting string = 'new'
 
 @description('Resource Group of the Public IP Address')
@@ -216,21 +221,20 @@ var environments = {
 var vmImage = environments[environment].vmImage
 var vmPlan = environments[environment].vmPlan
 
-var vmName_var = vmName
-var ipconfName = '${vmName_var}-ipconf'
-var nicName_var = '${vmName_var}-nic'
-var nsgName_var = '${vmName_var}-nsg'
+var ipconfName = '${vmName}-ipconf'
+var nicName = '${vmName}-nic'
+var nsgName = '${vmName}-nsg'
 
-var storageType_var = (bool(length(split(vmSize, '_')) > 2) ? 'Premium_LRS' : 'Standard_LRS')
+var storageType = (bool(length(split(vmSize, '_')) > 2) ? 'Premium_LRS' : 'Standard_LRS')
 
-var tags_var = {
+var tags = {
   'solution': 'Game Development Virtual Machine'
   'engine': gameEngine
   'ostype': osType
   'remotesoftware': remoteAccessTechnology
 }
 
-var numDataDisks_var = (!startsWith(gameEngine, 'ue_') ? numDataDisks : numDataDisks+1)
+var numDataDisks = (!startsWith(gameEngine, 'ue_') ? numDataDisks : numDataDisks+1)
 
 var customData = format('''
 fileShareStorageAccount={0}
@@ -262,12 +266,6 @@ parsecIsGuestAccess={18}
 deployedFromSolutionTemplate={19}
 ''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsec_teamId, parsec_teamKey, parsec_host, parsec_userEmail, parsec_isGuestAccess, deployedFromSolutionTemplate)
 
-// var userData = 'team_id=${parsec_teamId}:key=${parsec_teamKey}:name=${parsec_host}:user_email=${parsec_userEmail}:is_guest_access=${parsec_isGuestAccess}:ibLicenseKey=${ibLicenseKey}'
-// var Script2Run = 'Task-RegisterTeradici.ps1'
-// var Sript2RunUri = uri(_artifactsLocation, '${Script2Run}${_artifactsLocationSasToken}')
-// var CSEParams = ' -pcoip_registration_code ${teradiciRegKey}'
-// var cmdTeradiciRegistration = './${Script2Run}${CSEParams}'
-
 var vnetId = {
   'new'     : resourceId('Microsoft.Network/virtualNetworks', vnetName)
   'existing': resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks', vnetName)
@@ -292,7 +290,7 @@ resource partnercenter 'Microsoft.Resources/deployments@2020-06-01' = {
   }
 }
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@2021-03-01' = if (publicIpNewOrExisting == 'new') {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicIpNewOrExisting == 'new') {
   name: publicIpName
   sku: {
     name: publicIpSku
@@ -306,23 +304,247 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-03-01' = if (publicI
   }
 }
 
-module nsg_rules './nsgRules.bicep' = {
-  name: 'nsg_rules'
-  params: {
-    addPixelStreamingPorts: unrealPixelStreamingEnabled
-  }
-}
-
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
-  name: nsgName_var
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+  name: nsgName
   location: location
   properties: {
-    securityRules: nsg_rules.outputs.nsgRules['nsgRules-${remoteAccessTechnology}']
+        securityRules: {
+      'nsgRules-RDP': !unrealPixelStreamingEnabled ? [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+      ] : [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PixelStream'
+          properties: {
+            priority: 1020
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '80'
+          }
+        }
+      ]
+      'nsgRules-Teradici': !unrealPixelStreamingEnabled ? [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PCoIPtcp'
+          properties: {
+            priority: 1020
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'PCoIPudp'
+          properties: {
+            priority: 1030
+            protocol: 'UDP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'CertAuthHTTPS'
+          properties: {
+            priority: 1040
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '443'
+          }
+        }
+        {
+          name: 'TeradiciCom'
+          properties: {
+            priority: 1050
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '60443'
+          }
+        }
+      ] : [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PCoIPtcp'
+          properties: {
+            priority: 1020
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'PCoIPudp'
+          properties: {
+            priority: 1030
+            protocol: 'UDP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '4172'
+          }
+        }
+        {
+          name: 'CertAuthHTTPS'
+          properties: {
+            priority: 1040
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '443'
+          }
+        }
+        {
+          name: 'TeradiciCom'
+          properties: {
+            priority: 1050
+            protocol: 'TCP'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '60443'
+          }
+        }
+        {
+          name: 'PixelStream'
+          properties: {
+            priority: 1060
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '80'
+          }
+        }
+      ]
+      'nsgRules-Parsec': !unrealPixelStreamingEnabled ? [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+      ] : [
+        {
+          name: 'RDP'
+          properties: {
+            priority: 1010
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '3389'
+          }
+        }
+        {
+          name: 'PixelStream'
+          properties: {
+            priority: 1020
+            protocol: '*'
+            access: 'Allow'
+            direction: 'Inbound'
+            sourceAddressPrefix: '*'
+            sourcePortRange: '*'
+            destinationAddressPrefix: '*'
+            destinationPortRange: '80'
+          }
+        }
+      ]
+    }['nsgRules-${remoteAccessTechnology}']
   }
 }
 
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = if (vnetNewOrExisting == 'new') {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = if (vnetNewOrExisting == 'new') {
   name: vnetName
   location: location
   properties: {
@@ -342,8 +564,8 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = if (vnetNewOrExis
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
-  name: nicName_var
+resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+  name: nicName
   location: location
   dependsOn: [
     vnet
@@ -353,17 +575,15 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
     ipConfigurations: [
       {
         name: ipconfName
-        properties: union( {
-              subnet: { 
-                id: subnetId
-              }
-            }, { 
-              privateIPAllocationMethod: 'Dynamic' 
-            }, (!empty(publicIpId)) ? { 
-              publicIPAddress: {
-                id: publicIpId
-              }
-            } : {} )
+        properties: {
+          subnet: {
+            id: resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks/subnets', vnetName, subNetName)
+          }
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: publicIpNewOrExisting == 'none' ? null: {
+            id: resourceId(publicIpRGName, 'Microsoft.Network/publicIpAddresses', publicIpName)
+          }
+        }
       }
     ]
     networkSecurityGroup: {
@@ -373,7 +593,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
 }
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
-  name: vmName_var
+  name: vmName
   location: location
   plan: vmPlan
   identity: enableAAD || enableManagedIdentity ? {
@@ -386,22 +606,22 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
     storageProfile: {
       imageReference: vmImage
       osDisk: {
-        name: '${vmName_var}-osdisk'
+        name: '${vmName}-osdisk'
         createOption: 'FromImage'
         caching: 'ReadWrite'
         diskSizeGB: 255
         managedDisk: {
-          storageAccountType: storageType_var
+          storageAccountType: storageType
         }
       }
-      dataDisks: [for i in range(0, numDataDisks_var): {
+      dataDisks: [for i in range(0, numDataDisks): {
         lun: i
         createOption: (startsWith(gameEngine, 'ue_') && i==0 ? 'FromImage' : 'Empty')
         diskSizeGB: (startsWith(gameEngine, 'ue_') && i==0 ? 255 : dataDiskSize)
       }]
     }
     osProfile: {
-      computerName: vmName_var
+      computerName: vmName
       adminUsername: adminName
       adminPassword: adminPass
       windowsConfiguration: {
@@ -421,7 +641,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
       ]
     }
   }
-  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags_var, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags_var)
+  tags: (contains(outTagsByResource, 'Microsoft.Compute/virtualMachines') ? union(tags, outTagsByResource['Microsoft.Compute/virtualMachines']) : tags)
 }
 
 resource virtualMachine_GDVMCustomization 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = if (deployedFromSolutionTemplate) {
