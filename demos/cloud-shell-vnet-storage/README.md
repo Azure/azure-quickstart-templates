@@ -18,7 +18,7 @@ This template deploys the necessary storage to run Azure Cloud Shell inside a cu
 ## Prerequisites
 
 In order to use this deployment there must be an existing resource group and a virtual network. Most users will already have a deesired resource group and virtual network they would like to connect to. If these resources do not exist, they must be created prior to running this template. Both the resource group and the virtual network must be in the same location.
-Important! While this functionality is in preview, only the following locations may be used: WestCentralUS, WestUS 
+> **Important!** Secondary storage regions are currently not supported in Cloud Shell VNET scenarios.
 
 ## Deployment steps
 
