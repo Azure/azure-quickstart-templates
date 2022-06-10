@@ -1,3 +1,11 @@
+---
+description: This template deploys storage for SAP HANA deployments. Storage is provided using Azure NetApp Files, built on NetApp ONTAP storage OS.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
 # Create Azure NetApp Files resource for SAP HANA Storage
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.netapp/anf-sap-hana/anf-sap-hana-storage/PublicLastTestDate.svg)
