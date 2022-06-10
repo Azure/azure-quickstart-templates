@@ -197,3 +197,5 @@ A rule can have allowedClients, ruleIndex, unixReadOnly, unixReadWrite, nfsv3 an
 | nfsv41         | true      | Version for NFS protocol (default is nfsv41). This attribute should be common for all export policies. | For Data backup and Log backup volumes the value will be chosen as part of Input Parameters. However, for data, log and shared volume value will be always true.   |
 
 Note: For Data backup and Log backup volumes, user will have an option to choose between nfsv3 or nfsv41. However, for Data, Log and Shared volume default will be nfsv41.
+
+`Tags:Microsoft.NetApp/netAppAccounts/volumeGroups,Microsoft.Network/virtualNetworks,Microsoft.NetApp/netAppAccounts,Microsoft.NetApp/netAppAccounts/capacityPools,Microsoft.NetApp/netAppAccounts/capacityPools/volumes,Microsoft.Compute/proximityPlacementGroups,Microsoft.Compute/availabilitySets,Microsoft.Network/networkInterfaces,Microsoft.Compute/virtualMachines`
