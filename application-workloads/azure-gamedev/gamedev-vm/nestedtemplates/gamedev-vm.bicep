@@ -22,11 +22,10 @@ param osType string = 'win10'
 
 @description('Game Engine')
 @allowed([
-  'ue_4_27'
-  'ue_5_0ea'
-  'unity_2020_3_19f1'
+  'ue_4_27_2'
+  'ue_5_0_1'
 ])
-param gameEngine string = 'ue_4_27'
+param gameEngine string = 'ue_4_27_2'
 
 @description('GDK Version')
 param gdkVersion string = 'June_2021_Update_4'
