@@ -337,7 +337,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicI
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: nsgName
   properties: {
-        securityRules: {
+    securityRules: {
       'nsgRules-RDP': !unrealPixelStreamingEnabled ? [
         {
           name: 'RDP'
@@ -572,7 +572,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   }
 }
 
-
 resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = if (vnetNewOrExisting == 'new') {
   name: vnetName
   location: location
@@ -621,7 +620,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: vmName
   location: location
   plan: vmPlan
