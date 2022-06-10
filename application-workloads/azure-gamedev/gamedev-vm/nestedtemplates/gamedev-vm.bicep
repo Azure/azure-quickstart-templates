@@ -630,7 +630,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
       customData: base64(customData)
     }
-    // userData: base64(userData)
     networkProfile: {
       networkInterfaces: [
         {
