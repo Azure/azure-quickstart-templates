@@ -185,7 +185,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-07-01' = {
       adminPassword: adminPassword
       windowsConfiguration: {
         enableAutomaticUpdates: true
-      }
+    }
     }
     diagnosticsProfile: {
       bootDiagnostics: {
