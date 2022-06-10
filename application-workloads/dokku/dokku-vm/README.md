@@ -1,4 +1,12 @@
-# Deploy a Dokku Instance
+---
+description: Dokku is a mini-heroku-style PaaS on a single VM.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# Dokku Instance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dokku/dokku-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dokku/dokku-vm/PublicDeployment.svg)
@@ -18,3 +26,6 @@
 Use the **Deploy to Azure** button above to get started. All you need to do is specify a unique name for the sub domain name for the VM's public IP address.
 
 Checkout Dokku's [official documentation](http://progrium.viewdocs.io/dokku/application-deployment/) to learn how to deploy apps.
+
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`
