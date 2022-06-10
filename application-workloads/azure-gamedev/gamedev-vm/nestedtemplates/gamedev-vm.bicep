@@ -171,8 +171,8 @@ param enableManagedIdentity bool = false
 param enableAAD bool = false
 
 var environmentMapping = {
-  ue_4_27: 'unreal_4_27'
-  ue_5_0ea: 'unreal_5_0ea'
+  ue_4_27_2: 'unreal_4_27_2'
+  ue_5_0_1: 'unreal_5_0_1'
   unity_2020_3_19f1: 'unity_2020_3_19f1'
 }
 
