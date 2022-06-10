@@ -148,6 +148,7 @@ param publicIpNewOrExisting string = 'new'
 @description('Resource Group of the Public IP Address')
 param publicIpRGName string = resourceGroup().name
 
+@description('Select Image Deployment for debugging only')
 @allowed([
   'development'
   'production'
