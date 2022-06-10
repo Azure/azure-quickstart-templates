@@ -645,7 +645,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
           storageAccountType: storageType
         }
       }
-      dataDisks: [for i in range(0, numDataDisks): {
+      dataDisks: [for i in range(0, countDataDisks): {
         lun: i
         createOption: (startsWith(gameEngine, 'ue_') && i==0 ? 'FromImage' : 'Empty')
         diskSizeGB: (startsWith(gameEngine, 'ue_') && i==0 ? 255 : dataDiskSize)
