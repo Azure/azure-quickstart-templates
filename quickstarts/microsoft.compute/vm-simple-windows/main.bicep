@@ -31,31 +31,36 @@ param publicIpSku string = 'Basic'
   '2008-R2-SP1'
   '2012-Datacenter'
   '2012-R2-Datacenter'
-  '2016-Nano-Server'
-  '2016-Datacenter-with-Containers'
   '2016-Datacenter'
-  '2019-datacenter-Core-With-Containers-Gen2'
-  '2019-Datacenter-with-Containers-Gen2'
+  '2016-datacenter-gensecond'
+  '2016-Datacenter-with-Containers'
+  '2016-Nano-Server'
   '2019-datacenter-Core-Gen2'
+  '2019-datacenter-core-gensecond',
+  '2019-datacenter-Core-With-Containers-Gen2'
+  '2019-datacenter-core-with-containers-gensecond',
   '2019-Datacenter-Gen2'
-  '2022-datacenter-cvm'
-  '2022-datacenter-azure-edition'
-  '2022-datacenter-azure-edition-core'
-  '2022-datacenter-azure-edition-core-smalldisk'
-  '2022-datacenter-azure-edition-smalldisk'
+  '2019-datacenter-gensecond',
+  '2019-Datacenter-with-Containers-Gen2'
+  '2019-datacenter-with-containers-gensecond',
+  '2022-datacenter',
+  '2022-datacenter-azure-edition',
+  '2022-datacenter-azure-edition-core',
+  '2022-datacenter-azure-edition-core-smalldisk',
+  '2022-datacenter-azure-edition-smalldisk',
   '2022-datacenter-core'
   '2022-datacenter-core-g2'
   '2022-datacenter-core-smalldisk'
   '2022-datacenter-core-smalldisk-g2'
+  '2022-datacenter-cvm'
   '2022-datacenter-g2'
   '2022-datacenter-smalldisk'
   '2022-datacenter-smalldisk-g2'
-  '2022-datacenter'
 ])
 param OSVersion string = '2022-datacenter-azure-edition-core'
 
 @description('Size of the virtual machine.')
-param vmSize string = 'Standard_D2_v3'
+param vmSize string = 'Standard_D2s_v5'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
