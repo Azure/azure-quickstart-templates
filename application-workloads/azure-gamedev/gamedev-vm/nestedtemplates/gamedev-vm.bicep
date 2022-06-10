@@ -279,7 +279,7 @@ var publicIpId = {
   'none': ''
 }[publicIpNewOrExisting]
 
-resource partnercenter 'Microsoft.Resources/deployments@2020-06-01' = {
+resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
   name: 'pid-7837dd60-4ba8-419a-a26f-237bbe170773-partnercenter'
   properties: {
     mode: 'Incremental'
