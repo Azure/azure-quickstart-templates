@@ -79,12 +79,7 @@ module agw 'appgw.bicep' = {
   }
 }
 
-
-resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  location: Location
-  name: 'id-app-SampleApp-4kogxjemf2t7a'
-}
-
+@description('This is just a *random* sample app to sit behind the Application Gateway.')
 module app 'aciApp.bicep' = {
   name: 'sampleWebApplication'
   params: {
