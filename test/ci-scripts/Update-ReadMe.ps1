@@ -137,7 +137,7 @@ languages:
         }
     }
     
-    $newTags = '`Tags:' + $($tagsArray -join ",") + '`' -replace "Tags:,", "Tags:" # empty tags seem to add an empty element at the beginning
+    $newTags = '`Tags:' + $($tagsArray -join ", ") + '`' -replace "Tags:,", "Tags:" # empty tags seem to add an empty element at the beginning
 
     Write-Host "New Tags string:`n$newTags"
 
