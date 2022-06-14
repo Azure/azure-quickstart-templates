@@ -1,3 +1,11 @@
+---
+description: Solution which shows how we can set up the Message Router pattern using a Service Bus Topic
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
 # Integration Patterns - Message Router - Service Bus
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/integrationpatterns-messagerouter-servicebus/PublicLastTestDate.svg)
@@ -36,6 +44,6 @@ To test, grab the connection string of the Service Bus namespace, and use a tool
 }
 ```
 
-`Tags: Service Bus, Integration Patterns, Service Bus Topics, Message Router, ServiceBus, IntegrationPatterns`
+`Tags:Service Bus, Integration Patterns, Service Bus Topics, Message Router, ServiceBus, IntegrationPatterns, Microsoft.ServiceBus/namespaces, Microsoft.ServiceBus/namespaces/topics, Microsoft.ServiceBus/namespaces/topics/subscriptions, Rules`
 
 
