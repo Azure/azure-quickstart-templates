@@ -53,7 +53,6 @@ resource symbolicname 'Microsoft.SignalRService/webPubSub@2021-10-01' = {
   }
   identity: {
     type: 'None'
-    userAssignedIdentities: {}
   }
   properties: {
     disableAadAuth: false
