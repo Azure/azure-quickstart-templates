@@ -1,4 +1,4 @@
-@description('Resource Location.')
+'@description('Resource Location.')
 param location string = resourceGroup().location
 
 @description('Virtual Machine Size.')
@@ -711,3 +711,4 @@ resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@
 
 output Host_Name string = publicIp.properties.dnsSettings.fqdn
 output UserName string = adminName
+output IPAddress string = publicIp.ipAddress
