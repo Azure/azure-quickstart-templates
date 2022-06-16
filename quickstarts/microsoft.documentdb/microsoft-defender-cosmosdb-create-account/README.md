@@ -31,4 +31,4 @@ Microsoft Defender for Azure Cosmos DB is a unified package for advanced Cosmos 
 `Tags : Azure Cosmos DB, Microsoft Defender for Azure Cosmos DB, Advanced Threat Protection`
 
 
-`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.Security/advancedThreatProtectionSettings`
+`Tags:Microsoft.DocumentDB/databaseAccounts, Microsoft.Security/advancedThreatProtectionSettings`
