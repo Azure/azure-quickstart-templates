@@ -267,11 +267,6 @@ parsecIsGuestAccess={18}
 deployedFromSolutionTemplate={19}
 ''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsec_teamId, parsec_teamKey, parsec_host, parsec_userEmail, parsec_isGuestAccess, deployedFromSolutionTemplate)
 
-var vnetId = {
-  'new'     : resourceId('Microsoft.Network/virtualNetworks', vnetName)
-  'existing': resourceId(vnetRGName, 'Microsoft.Network/virtualNetworks', vnetName)
-}
-var subnetId = '${vnetId[vnetNewOrExisting]}/subnets/${subNetName}'
 
 var publicIpId = {
   'new': resourceId('Microsoft.Network/publicIPAddresses', publicIpName)
