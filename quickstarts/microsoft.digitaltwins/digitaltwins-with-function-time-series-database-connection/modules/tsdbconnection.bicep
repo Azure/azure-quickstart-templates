@@ -12,9 +12,6 @@ param databaseName string
 @description('Name given to table in database')
 param databaseTableName string
 
-@description('Location of to be created resources')
-param location string
-
 // Gets Digital Twins resource
 resource digitalTwins 'Microsoft.DigitalTwins/digitalTwinsInstances@2022-05-31' existing = {
   name: digitalTwinsName

@@ -119,7 +119,6 @@ module tsdbConnection 'modules/tsdbconnection.bicep' = {
     adxClusterName: adxClusterName
     databaseName: databaseName
     databaseTableName: databaseTableName
-    location: location
   }
   dependsOn: [
     roleAssignment
