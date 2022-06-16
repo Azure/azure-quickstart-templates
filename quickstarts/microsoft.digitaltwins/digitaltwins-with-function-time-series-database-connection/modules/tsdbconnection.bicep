@@ -47,13 +47,13 @@ resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/dat
 }
 
 // Creates a time series database connection between the Digital Twin resource and Azure Data Explorer cluster table
-resource tsdbConnection 'Microsoft.DigitalTwins/digitalTwinsInstances/timeSeriesDatabaseConnections@2021-06-30-preview' = {
+resource tsdbConnection 'Microsoft.DigitalTwins/digitalTwinsInstances/timeSeriesDatabaseConnections@2022-05-31' = {
   name: '${digitalTwinsName}/${databaseTableName}'
   properties: {
     connectionType: 'AzureDataExplorer'
-    adxEndpointUri: 'https://${adxClusterName}.${location}.kusto.windows.net'
+    adxEndpointUri: adxCluster.properties.uri
     adxDatabaseName: databaseName
-    eventHubEndpointUri: 'sb://${eventHubsNamespaceName}.servicebus.windows.net'
+    eventHubEndpointUri: eventHubsNamespace.properties.serviceBusEndpoint
     eventHubEntityPath: eventHubName
     adxResourceId: adxCluster.id
     eventHubNamespaceResourceId: eventHubsNamespace.id
