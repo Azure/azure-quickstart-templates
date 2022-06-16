@@ -674,6 +674,6 @@ resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@
   }
 }
 
-output Host_Name string = publicIp.dnsSettings.fqdn
+output Host_Name string = publicIp.properties.dnsSettings.fqdn
 output UserName string = adminName
-output IPAddress string = publicIp.ipAddress
+output IPAddress string = publicIp.properties.ipAddress
