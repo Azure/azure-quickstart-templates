@@ -303,12 +303,6 @@ var vnetId = {
 }
 var subnetId = '${vnetId[vnetNewOrExisting]}/subnets/${subNetName}'
 
-var publicIpId = {
-  'new': resourceId('Microsoft.Network/publicIPAddresses', publicIpName)
-  'existing': resourceId(publicIpRGName, 'Microsoft.Network/publicIPAddresses', publicIpName) 
-  'none': ''
-}[publicIpNewOrExisting]
-
 resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
   name: 'pid-7837dd60-4ba8-419a-a26f-237bbe170773-partnercenter'
   properties: {
