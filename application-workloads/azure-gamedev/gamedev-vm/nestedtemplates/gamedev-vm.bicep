@@ -268,12 +268,6 @@ deployedFromSolutionTemplate={19}
 ''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsec_teamId, parsec_teamKey, parsec_host, parsec_userEmail, parsec_isGuestAccess, deployedFromSolutionTemplate)
 
 
-var publicIpId = {
-  'new': resourceId('Microsoft.Network/publicIPAddresses', publicIpName)
-  'existing': resourceId(publicIpRGName, 'Microsoft.Network/publicIPAddresses', publicIpName) 
-  'none': ''
-}[publicIpNewOrExisting]
-
 resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
   name: 'pid-7837dd60-4ba8-419a-a26f-237bbe170773-partnercenter'
   properties: {
@@ -680,6 +674,4 @@ resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@
   }
 }
 
-output Host_Name string = (!empty(publicIpId) ? reference(publicIpId, '2021-03-01').dnsSettings.fqdn : '')
 output UserName string = adminName
-output IPAddress string = (!empty(publicIpId) ? publicIpId : '')
