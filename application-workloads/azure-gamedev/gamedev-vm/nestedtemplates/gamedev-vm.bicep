@@ -632,7 +632,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-resource virtualMachine_GDVMCustomization 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = if (deployedFromSolutionTemplate) {
+resource virtualMachine_GDVMCustomization 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = if (deployedFromSolutionTemplate) {
   name      : '${virtualMachine.name}/GDVMCustomization'
   location  : location
   properties: {
