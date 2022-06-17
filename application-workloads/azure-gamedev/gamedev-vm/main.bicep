@@ -8,17 +8,17 @@ param vmSize string = 'Standard_NV12s_v3'
 param useVmToSysprepCustomImage bool = false
 
 @description('Virtual Machine Name.')
-param vmName string = 'gamedevvm'
+param virtualMachineName string = 'gamedevvm'
 
 @description('Virtual Machine User Name .')
-param adminName string
+param administratorLogin string
 
 @metadata({
   type: 'password'
   description: 'Admin password.'
 })
 @secure()
-param adminPass string
+param passwordAdministratorLogin string
 
 @description('Operating System type')
 param osType string = 'win10'
