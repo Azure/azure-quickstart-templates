@@ -24,7 +24,7 @@ param adminPassword string
 
 var aadLoginExtensionName = 'AADLoginForWindows'
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   name: '${virtualMachineName}-nic'
   location: location
   properties: {
