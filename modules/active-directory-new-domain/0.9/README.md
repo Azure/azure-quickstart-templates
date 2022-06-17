@@ -1,4 +1,12 @@
-# Create an AD Forest, Domain and DC on an Azure VM
+---
+description: This template creates a new Azure VM, it configures the VM to be an Active Directory Domain Controller for a new forest
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# Create an Azure VM with a new AD Forest
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicDeployment.svg)
@@ -49,3 +57,6 @@ This is an experimental module at the moment...
 | virtualNetworkAddressPrefixes | array | Address ranges for the virtualNetwork. The value of the virtualNetworkAddressRanges parameter. |
 
 ```apiVersion: n/a```
+
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Resources/deployments, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC`
