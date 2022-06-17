@@ -612,8 +612,8 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     }
     osProfile: {
       computerName: virtualMachineName
-      adminUsername: adminName
-      adminPassword: adminPass
+      adminUsername: administratorLogin
+      adminPassword: passwordAdministratorLogin
       windowsConfiguration: {
         enableAutomaticUpdates: (bool(windowsUpdateOption != 'Manual') ? true : false)
         patchSettings: {
