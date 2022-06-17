@@ -222,9 +222,9 @@ var environments = {
 var vmImage = environments[environment].vmImage
 var vmPlan = environments[environment].vmPlan
 
-var ipconfName = '${vmName}-ipconf'
-var nicName = '${vmName}-nic'
-var nsgName = '${vmName}-nsg'
+var ipconfName = '${virtualMachineName}-ipconf'
+var nicName = '${virtualMachineName}-nic'
+var nsgName = '${virtualMachineName}-nsg'
 
 var storageType = (bool(length(split(vmSize, '_')) > 2) ? 'Premium_LRS' : 'Standard_LRS')
 
@@ -582,7 +582,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
 }
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
-  name: vmName
+  name: virtualMachineName
   location: location
   plan: vmPlan
   identity: enableAAD || enableManagedIdentity ? {
@@ -596,7 +596,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     storageProfile: {
       imageReference: vmImage
       osDisk: {
-        name: '${vmName}-osdisk'
+        name: '${virtualMachineName}-osdisk'
         createOption: 'FromImage'
         caching: 'ReadWrite'
         diskSizeGB: 255
@@ -611,7 +611,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }]
     }
     osProfile: {
-      computerName: vmName
+      computerName: virtualMachineName
       adminUsername: adminName
       adminPassword: adminPass
       windowsConfiguration: {
