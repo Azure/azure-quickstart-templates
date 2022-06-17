@@ -55,7 +55,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' =
   }
 }
 
-resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-06-01' = {
+resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-08-01' = {
   name: containerRegistryPleName
   location: location
   tags: tags
@@ -82,7 +82,7 @@ resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-08-01' = {
   name: '${containerRegistryPrivateEndpoint.name}/${groupName}-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
