@@ -8,7 +8,7 @@
 param wpsName string = 'simpleWebPubSub01'
 
 @description('The region in which to create the new instance, defaults to the same location as the resource group.')
-param wpsLocation string = 'east us 2'
+param Location string = resourceGroup().location
 
 @description('Unit count')
 @allowed([
@@ -20,26 +20,26 @@ param wpsLocation string = 'east us 2'
   50
   100
 ])
-param wpsUnitCount int = 1
+param UnitCount int = 1
 
 @description('SKU name')
 @allowed([
   'Standard_S1'
   'Free_F1'
 ])
-param wpsSkuName string = 'Free_F1'
+param Sku string = 'Free_F1'
 
 @description('Pricing tier')
 @allowed([
   'Free'
   'Standard'
 ])
-param wpsPricingTier string = 'Free'
+param PricingTier string = 'Free'
 
 // Resource definition
-resource symbolicname 'Microsoft.SignalRService/webPubSub@2021-10-01' = {
+resource webpubsub 'Microsoft.SignalRService/webPubSub@2021-10-01' = {
   name: wpsName
-  location: wpsLocation
+  location: Location
   /*
   tags: {
     tagName1: 'tagValue1'
@@ -47,9 +47,9 @@ resource symbolicname 'Microsoft.SignalRService/webPubSub@2021-10-01' = {
   }
   */
   sku: {
-    capacity: wpsUnitCount
-    name: wpsSkuName
-    tier: wpsPricingTier
+    capacity: UnitCount
+    name: Sku
+    tier: PricingTier
   }
   identity: {
     type: 'None'
