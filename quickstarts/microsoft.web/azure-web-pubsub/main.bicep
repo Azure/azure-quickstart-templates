@@ -8,7 +8,7 @@
 param wpsName string = 'simpleWebPubSub01'
 
 @description('The region in which to create the new instance, defaults to the same location as the resource group.')
-param wpsLocation string = 'eastus'
+param wpsLocation string = 'east us 2'
 
 @description('Unit count')
 @allowed([
