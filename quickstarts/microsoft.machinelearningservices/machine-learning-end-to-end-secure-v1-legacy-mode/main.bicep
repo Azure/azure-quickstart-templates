@@ -1,4 +1,4 @@
-// Execute this main file to configure Azure Machine Learning end-to-end in a moderately secure set up
+// Execute this main file to configure Azure Machine Learning end-to-end in a moderately secure set up.
 
 // Parameters
 @minLength(2)
