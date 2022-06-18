@@ -40,12 +40,6 @@ param PricingTier string = 'Free'
 resource webpubsub 'Microsoft.SignalRService/webPubSub@2021-10-01' = {
   name: wpsName
   location: Location
-  /*
-  tags: {
-    tagName1: 'tagValue1'
-    tagName2: 'tagValue2'
-  }
-  */
   sku: {
     capacity: UnitCount
     name: Sku
