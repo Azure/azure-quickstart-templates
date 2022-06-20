@@ -27,7 +27,6 @@ param osType string = 'win10'
 @allowed([
   'ue_4_27_2'
   'ue_5_0_1'
-  'unity_2020_3_19f1'
 ])
 param gameEngine string = 'ue_4_27_2'
 
