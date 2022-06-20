@@ -1,4 +1,4 @@
-'@description('Resource Location.')
+@description('Resource Location.')
 param location string = resourceGroup().location
 
 @description('Virtual Machine Size.')
