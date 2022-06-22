@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('The name of the existing packet core / site.')
-param siteName string = 'myExampleSite'
+param existingSiteName string = 'myExampleSite'
 
 @description('The name of the mobile network.')
 param existingMobileNetworkName string
@@ -33,7 +33,7 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-0
 }
 
 resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-03-01-preview' = {
-  name: siteName
+  name: existingSiteName
   location: location
   properties: {
     mobileNetwork: {
