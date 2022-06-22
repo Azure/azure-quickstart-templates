@@ -22,6 +22,6 @@ As a part of this solution, a MedTech service with the required resources and re
 
 ## Deployment steps
 
-You can click the **Deploy to Azure** button at the beginning of this document to deploy an instance of the Azure API for FHIR®. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/healthcare-apis/fhir-paas-arm-template-quickstart?tabs=azure-portal) article.
+You can click the **Deploy to Azure** button at the beginning of this document to deploy an instance of the MedTech service.
 
-During deployment, you can specify the service names and Azure region location (optional). By default, the deployment will use the region of the Resource Group that is select for the deployment as the default). All other parameters for deployment are automatically configured for you.
+During the deployment, you can specify the service names and Azure region location (optional). By default, the deployment will use the region of the Resource Group that is select for the deployment as the default). All other parameters for deployment are automatically configured for you.
