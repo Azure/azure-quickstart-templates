@@ -1,0 +1,201 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "basename": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 3,
+            "metadata": {
+                "description": "Base name that is used to name provisioned resources. Should be alphanumeric, at least 3 characters and less than 16 characters."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location where the resources(s) are deployed."
+            }
+        },
+        "deviceMapping": {
+            "type": "object",
+            "defaultValue": {
+                "templateType": "CollectionContent",
+                "template": []
+            },
+            "metadata": {
+                "description": "The mapping JSON that determines how incoming device data is normalized."
+            }
+        },
+        "destinationMapping": {
+            "type": "object",
+            "defaultValue": {
+                "templateType": "CollectionFhir",
+                "template": []
+            },
+            "metadata": {
+                "description": "The mapping JSON that determines how normalized data is converted to FHIR Observations."
+            }
+        }
+    },
+    "variables": {
+        "eventHubName": "devicedata",
+        "eventHubNamespaceName": "[format('en-{0}', parameters('basename'))]",
+        "eventHubFullName": "[format('{0}/{1}', variables('eventhubNamespaceName'), variables('eventhubName'))]",
+        "eventHubAuthRuleName": "[format('{0}/{1}', variables('eventHubFullName'), 'devicedatasender')]",
+        "workspaceName": "[replace(format('hw-{0}', parameters('basename')), '-', '')]",
+        "fhirServiceName": "[format('{0}/fs-{1}', variables('workspaceName'), parameters('basename'))]",
+        "iotConnectorName": "[format('{0}/hi-{1}', variables('workspaceName'), parameters('basename'))]",
+        "fhirDestinationName": "[format('{0}/hd-{1}', variables('iotConnectorName'), parameters('basename'))]",
+        "workspaceResourceId": "[resourceId('Microsoft.HealthcareApis/workspaces', variables('workspaceName'))]",
+        "fhirServiceResourceId": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), split(variables('fhirServiceName'), '/')[1])]",
+        "iotConnectorResourceId": "[resourceId('Microsoft.HealthcareApis/workspaces/iotconnectors', variables('workspaceName'), split(variables('iotConnectorName'), '/')[1])]",
+        "eventHubResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', format('en-{0}', parameters('basename')), variables('eventhubName'))]",
+        "fhirWriterRoleId": "[format('{0}/providers/Microsoft.Authorization/roleDefinitions/{1}', subscription().id, '3f88fce4-5892-4214-ae73-ba5294559913')]",
+        "eventHubReceiverRoleId": "[format('{0}/providers/Microsoft.Authorization/roleDefinitions/{1}', subscription().id, 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[variables('eventhubNamespaceName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard",
+                "capacity": 2
+            },
+            "properties": {
+                "zoneRedundant": true,
+                "isAutoInflateEnabled": true,
+                "maximumThroughputUnits": 8,
+                "kafkaEnabled": false
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[variables('eventHubFullName')]",
+            "properties": {
+                "messageRetentionInDays": 1,
+                "partitionCount": 8
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', variables('eventhubNamespaceName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs/authorizationRules",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[variables('eventHubAuthRuleName')]",
+            "properties": {
+                "rights": [
+                    "Send"
+                ]
+            },
+            "dependsOn": [
+                "[variables('eventHubResourceId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.HealthcareApis/workspaces",
+            "apiVersion": "2022-05-15",
+            "name": "[variables('workspaceName')]",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.HealthcareApis/workspaces/fhirservices",
+            "apiVersion": "2022-05-15",
+            "name": "[variables('fhirServiceName')]",
+            "location": "[parameters('location')]",
+            "kind": "fhir-R4",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "authenticationConfiguration": {
+                    "authority": "[format('{0}{1}', environment().authentication.loginEndpoint, subscription().tenantId)]",
+                    "audience": "[format('https://{0}-fs-{1}.fhir.azurehealthcareapis.com', variables('workspaceName'), parameters('basename'))]",
+                    "smartProxyEnabled": false
+                }
+            },
+            "dependsOn": [
+                "[variables('workspaceResourceId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.HealthcareApis/workspaces/iotconnectors",
+            "apiVersion": "2022-05-15",
+            "name": "[variables('iotConnectorName')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "ingestionEndpointConfiguration": {
+                    "eventHubName": "[variables('eventhubName')]",
+                    "consumerGroup": "$Default",
+                    "fullyQualifiedEventHubNamespace": "[format('en-{0}.servicebus.windows.net', parameters('basename'))]"
+                },
+                "deviceMapping": {
+                    "content": "[parameters('deviceMapping')]"
+                }
+            },
+            "dependsOn": [
+                "[variables('workspaceResourceId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.HealthcareApis/workspaces/iotconnectors/fhirdestinations",
+            "apiVersion": "2022-05-15",
+            "name": "[variables('fhirDestinationName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "resourceIdentityResolutionType": "Create",
+                "fhirServiceResourceId": "[variables('fhirServiceResourceId')]",
+                "fhirMapping": {
+                    "content": "[parameters('destinationMapping')]"
+                }
+            },
+            "dependsOn": [
+                "[variables('workspaceResourceId')]",
+                "[variables('iotConnectorResourceId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-08-01-preview",
+            "scope": "[variables('fhirServiceResourceId')]",
+            "name": "[guid(format('{0}-FhirWriter', resourceGroup().id))]",
+            "properties": {
+                "roleDefinitionId": "[variables('fhirWriterRoleId')]",
+                "principalId": "[reference(variables('iotConnectorResourceId'), '2022-05-15', 'Full').identity.principalId]"
+            },
+            "dependsOn": [
+                "[variables('fhirServiceResourceId')]",
+                "[variables('iotConnectorResourceId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-08-01-preview",
+            "scope": "[variables('eventHubResourceId')]",
+            "name": "[guid(format('{0}-EventHubDataReceiver', resourceGroup().id))]",
+            "properties": {
+                "roleDefinitionId": "[variables('eventHubReceiverRoleId')]",
+                "principalId": "[reference(variables('iotConnectorResourceId'), '2022-05-15', 'Full').identity.principalId]"
+            },
+            "dependsOn": [
+                "[variables('eventHubResourceId')]",
+                "[variables('iotConnectorResourceId')]"
+            ]
+        }
+    ],
+    "outputs": {
+        "deviceDataConnectionString": {
+            "type": "string",
+            "value": "[listkeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('eventHubNamespaceName'), split(variables('eventHubAuthRuleName'), '/')[1], split(variables('eventHubAuthRuleName'), '/')[2]), '2017-04-01').primaryConnectionString]"
+        }
+    }
+}
