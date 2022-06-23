@@ -16,12 +16,16 @@ This template deploys an instance of the Azure Health Data Services MedTech serv
 
 ## Sample overview and deployed resources
 
-This template creates an instance of the Azure Health Data Services MedTech service. The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and persist the health data in a Fast Healthcare Interoperable Resources (FHIR®) service within the Azure Health Data Services.
+This template creates an instance of the Azure Health Data Services MedTech service. The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and persist the health data in a Fast Healthcare Interoperability Resources (FHIR®) service within the Azure Health Data Services.
 
-As a part of this solution, a MedTech service with the required resources and resource access permissions are created. The MedTech service will still require device and destination mapping files to be fully functional.
+As a part of this solution, a MedTech service with the required resources, a Sender role within the devicedata event hub, and MedTech service system managed identity access permissions are created.
+
+**NOTE:** The MedTech service will still require device and destination mapping files to be fully functional.
 
 ## Deployment steps
 
 You can click the **Deploy to Azure** button at the beginning of this document to deploy an instance of the MedTech service.
 
-During the deployment, you can specify the service names and Azure region location (optional). By default, the deployment will use the region of the Resource Group that is select for the deployment as the default). All other parameters for deployment are automatically configured for you.
+While in the final configuration stage within the Azure portal, you can specify the service names and Azure region location (optional). By default, the deployment will use the region of the Resource Group that is select for the deployment. All other parameters for deployment are automatically configured for you.
+
+(FHIR®) is a registered trademark of Health Level Seven International, registered in the U.S. Trademark Office and are used with their permission.
