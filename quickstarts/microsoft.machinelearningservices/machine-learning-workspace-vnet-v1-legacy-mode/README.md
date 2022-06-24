@@ -1,4 +1,12 @@
-# Azure Machine Learning workspace (secure network configuration)
+---
+description: This deployment template specifies an Azure Machine Learning workspace, and its associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry. This configuration describes the set of resources you require to get started with Azure Machine Learning in a network isolated set up.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# Create an Azure Machine Learning service workspace.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet-v1-legacy-mode/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet-v1-legacy-mode/PublicDeployment.svg)
@@ -105,3 +113,6 @@ If you are new to template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Create an Azure Machine Learning service workspace by using a template](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
+
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.ContainerRegistry/registries, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, [parameters('identityType')], Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`
