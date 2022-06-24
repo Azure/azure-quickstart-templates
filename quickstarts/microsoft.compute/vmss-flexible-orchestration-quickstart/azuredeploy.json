@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "2103684016920361473"
+      "version": "0.7.4.23292",
+      "templateHash": "13011212433525937845"
     }
   },
   "parameters": {
@@ -125,8 +125,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "11415335060014632797"
+              "version": "0.7.4.23292",
+              "templateHash": "11303518320404158019"
             }
           },
           "parameters": {
@@ -282,6 +282,9 @@
           },
           "location": {
             "value": "[parameters('location')]"
+          },
+          "osType": {
+            "value": "[parameters('os')]"
           }
         },
         "template": {
@@ -290,8 +293,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "18172447537098281941"
+              "version": "0.7.4.23292",
+              "templateHash": "3878165754653131925"
             }
           },
           "parameters": {
@@ -308,10 +311,25 @@
               "metadata": {
                 "description": "Location for the resources"
               }
+            },
+            "osType": {
+              "type": "string",
+              "defaultValue": "ubuntulinux",
+              "allowedValues": [
+                "ubuntulinux",
+                "windowsserver"
+              ],
+              "metadata": {
+                "description": "OS type. Used to set the correct NAT rule destination"
+              }
             }
           },
           "variables": {
-            "slbPIPName": "[format('{0}-PIP', parameters('slbName'))]"
+            "slbPIPName": "[format('{0}-PIP', parameters('slbName'))]",
+            "natRuleName": "[format('{0}-natrule', parameters('slbName'))]",
+            "natRuleBackendPort": "[if(equals(parameters('osType'), 'ubuntulinux'), 22, 3389)]",
+            "feConfigName": "FrontEndConfig",
+            "bePoolName": "bepool01"
           },
           "resources": [
             {
@@ -331,7 +349,7 @@
             },
             {
               "type": "Microsoft.Network/loadBalancers",
-              "apiVersion": "2021-02-01",
+              "apiVersion": "2021-08-01",
               "name": "[parameters('slbName')]",
               "location": "[parameters('location')]",
               "sku": {
@@ -348,22 +366,22 @@
                         "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('slbPIPName'))]"
                       }
                     },
-                    "name": "FrontEndConfig"
+                    "name": "[variables('feConfigName')]"
                   }
                 ],
                 "backendAddressPools": [
                   {
-                    "name": "bepool01"
+                    "name": "[variables('bePoolName')]"
                   }
                 ],
                 "loadBalancingRules": [
                   {
                     "properties": {
                       "frontendIPConfiguration": {
-                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('slbName'), 'FrontEndConfig')]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('slbName'), variables('feConfigName'))]"
                       },
                       "backendAddressPool": {
-                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('slbName'), 'bepool01')]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('slbName'), variables('bePoolName'))]"
                       },
                       "probe": {
                         "id": "[resourceId('Microsoft.Network/loadBalancers/probes', parameters('slbName'), 'probe01')]"
@@ -394,6 +412,27 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', variables('slbPIPName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+              "apiVersion": "2021-08-01",
+              "name": "[format('{0}/{1}', parameters('slbName'), variables('natRuleName'))]",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('slbName'), variables('feConfigName'))]"
+                },
+                "backendAddressPool": {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('slbName'), variables('bePoolName'))]"
+                },
+                "backendPort": "[variables('natRuleBackendPort')]",
+                "frontendPortRangeStart": 50000,
+                "frontendPortRangeEnd": 51000,
+                "protocol": "Tcp",
+                "idleTimeoutInMinutes": 4
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', parameters('slbName'))]"
               ]
             }
           ],
@@ -478,8 +517,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "1004630916434144821"
+              "version": "0.7.4.23292",
+              "templateHash": "11855597662150632502"
             }
           },
           "parameters": {

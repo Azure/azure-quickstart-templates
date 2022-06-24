@@ -61,6 +61,7 @@ module slb './modules/network/slb.bicep' = {
   params: {
     slbName: lbName
     location:location
+    osType:os
   }
 }
 
