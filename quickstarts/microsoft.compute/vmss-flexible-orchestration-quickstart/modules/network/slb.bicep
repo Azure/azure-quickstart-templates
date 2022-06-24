@@ -4,7 +4,18 @@ param slbName string = 'myLoadBalancer'
 @description('Location for the resources')
 param location string = resourceGroup().location
 
+@description('OS type. Used to set the correct NAT rule destination')
+@allowed([
+  'ubuntulinux'
+  'windowsserver'
+])
+param osType string = 'ubuntulinux'
+
 var slbPIPName = '${slbName}-PIP'
+var natRuleName = '${slbName}-natrule'
+var natRuleBackendPort = osType == 'ubuntulinux' ? 22 : 3389
+var feConfigName = 'FrontEndConfig'
+var bePoolName = 'bepool01'
 resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: slbPIPName
   location: location
@@ -18,7 +29,7 @@ resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
     idleTimeoutInMinutes: 4
   }
 }
-resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
+resource slb 'Microsoft.Network/loadBalancers@2021-08-01' = {
   name: slbName
   location: location
   sku: {
@@ -35,22 +46,22 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
             id: slbPIP.id
           }
         }
-        name: 'FrontEndConfig'
+        name: feConfigName
       }
     ]
     backendAddressPools: [
       {
-        name: 'bepool01'
+        name: bePoolName
       }
     ]
     loadBalancingRules: [
       {
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, 'FrontEndConfig')
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, feConfigName)
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', slbName, 'bepool01')
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', slbName, bePoolName)
           }
           probe: {
             id: resourceId('Microsoft.Network/loadBalancers/probes', slbName, 'probe01')
@@ -80,6 +91,24 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
     ]
   }
 }
+resource inboundNatRules 'Microsoft.Network/loadBalancers/inboundNatRules@2021-08-01' = {
+  name: natRuleName
+  parent: slb
+  properties: {
+    frontendIPConfiguration: {
+      id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, feConfigName)
+    }
+    backendAddressPool: {
+      id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', slbName, bePoolName)
+    }
+    backendPort:natRuleBackendPort
+    frontendPortRangeStart:50000
+    frontendPortRangeEnd:51000
+    protocol:'Tcp'
+    idleTimeoutInMinutes: 4
+  }
+}
+
 output slbId  string = slb.id
 output slbName string = slb.name
 output slbFeConfigName string = slb.properties.frontendIPConfigurations[0].name
