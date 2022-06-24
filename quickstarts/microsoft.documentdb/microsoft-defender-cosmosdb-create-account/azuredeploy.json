@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.7.4.23292",
+      "templateHash": "6738788278496051159"
+    }
+  },
+  "parameters": {
+    "accountName": {
+      "type": "string",
+      "defaultValue": "[format('cosmosdb-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Cosmos DB account name. max length 44 characters, only digits and letters, lowercase"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for your CosmosDB account."
+      }
+    },
+    "microsoftDefenderForAzureCosmosDBEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable or disable Microsoft Defender for Azure Cosmos DB."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2020-09-01",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "locations": [
+          {
+            "locationName": "[parameters('location')]"
+          }
+        ],
+        "databaseAccountOfferType": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('microsoftDefenderForAzureCosmosDBEnabled')]",
+      "type": "Microsoft.Security/advancedThreatProtectionSettings",
+      "apiVersion": "2019-01-01",
+      "scope": "[format('Microsoft.DocumentDB/databaseAccounts/{0}', parameters('accountName'))]",
+      "name": "current",
+      "properties": {
+        "isEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "cosmosDbAccountName": {
+      "type": "string",
+      "value": "[parameters('accountName')]"
+    },
+    "cosmosDbAccountId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+    }
+  }
+}

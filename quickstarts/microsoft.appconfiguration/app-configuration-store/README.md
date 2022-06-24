@@ -1,3 +1,13 @@
+---
+description: This template creates an Azure App Configuration store.
+page_type: sample
+languages:
+- bicep
+- json
+products:
+- azure
+---
+
 # Azure App Configuration
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store/PublicLastTestDate.svg)

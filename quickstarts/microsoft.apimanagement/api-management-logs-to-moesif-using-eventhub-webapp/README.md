@@ -1,4 +1,12 @@
-# Moesif API Analytics for Azure API Management
+---
+description: The template will log API calls from Azure API Management to Moesif API analytics so you can understand customer API usage and resolve customer issues quickly.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# Moesif API Analytics and Monetization
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-logs-to-moesif-using-eventhub-webapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-logs-to-moesif-using-eventhub-webapp/PublicDeployment.svg)
 
@@ -35,29 +43,34 @@ Within the Azure Template Deployment panel, set the following properties:
 
 ![Create a Custom Deployment in Azure](https://docs.moesif.com/images/docs/integration/azure-api-management-create-custom-deployment.png)
 
-* Set _Resource group_ to the same resource group that contains your exiting Azure APIM instance. This ensures the APIM logger, `moesif-log-to-event-hub`, is automatically created for you. 
+* Set _Resource group_ to the same resource group that contains your exiting Azure APIM instance. This ensures the APIM logger, `moesif-log-to-event-hub`, is automatically created for you.
 
 * Set _Moesif Application Id_ to the one displayed after logging into your Moesif account. You can create a free one on [Moesif's website](https://www.moesif.com/?language=azure-api-management)
 
-* Set _Existing Api Mgmt Name_ to the name of your Azure APIM instance. If blank, you will need to manually create the [APIM logger](https://docs.microsoft.com/en-us/azure/api-management/api-management-log-to-eventhub-sample#policy-declaration). 
+* Set _Existing Api Mgmt Name_ to the name of your Azure APIM instance. If blank, you will need to manually create the [APIM logger](https://docs.microsoft.com/en-us/azure/api-management/api-management-log-to-eventhub-sample#policy-declaration).
 
-Once done, click the _Review+create_ button at the bottom and finish the template creation wizard. 
+Once done, click the _Review+create_ button at the bottom and finish the template creation wizard.
 
-> Occasionally, Azure reports a failed deployment due to slow propagation of new DNS settings even though everything was deployed successfully. We recommend proceeding with rest of process. If you still have issues after last step, [view troubleshooting](#troubleshooting).
+> Occasionally, Azure reports a failed deployment due to slow propagation of new DNS settings even though everything was deployed successfully. We recommend proceeding with rest of process. If you still have issues after last step, [view troubleshooting](https://www.moesif.com/docs/server-integration/azure-api-management/#troubleshooting).
 
 ### 3. Add XML Policy
 
-Within the Azure portal, navigate to your existing Azure API Management instance.
-Then, add the below XML policies to all products or APIs that you want API logging enabled. 
+Within the Azure portal, navigate to your existing Azure API Management instance. 
+Select either a single API you want to add Moesif logging to, or select _All APIs_ to add Moesif globally. 
 
-> It's recommended to add the XML policy globally for all APIs. Then, use Moesif [dynamic sampling](https://www.moesif.com/docs/platform/dynamic-sampling/) if you want to create rules that selectively sample or suppress data collection. Rules are dynamically enabled based on specific customer behaviors, regex rules, and more.
+> It's recommended to add the XML policy globally for all APIs to reduce code replication. Then, use Moesif [dynamic sampling](https://www.moesif.com/docs/platform/dynamic-sampling/) to control what data is collected based on user behavior or regex rules. 
+
+Under the _Inbound Processing_ section, click the _Add Policy_ button. 
+Select _Other Policies_ which will open the XML editor.
+Paste in the XML code you see below. 
 
 More info on editing APIM policies is available on the [Azure docs](https://docs.microsoft.com/en-us/azure/api-management/set-edit-policies)
 
 ```xml
 <policies>
     <inbound>
-        <base />
+        <!-- Uncomment base element if policy added to a single API (i.e. not global) -->
+        <!-- <base /> -->
         <set-variable name="moesif-message-id" value="@(Guid.NewGuid())" />
         <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">@{
 var body = context.Request.Body?.As<string>(true);
@@ -69,6 +82,7 @@ var headers = context.Request.Headers
     .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\""))).ToArray<string>();
 var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
 var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : string.Empty);
+var companyId = (context.Subscription != null && context.Subscription.Id != null) ? context.Subscription.Id : string.Empty;
 var cru = new JObject();
 if (context.User != null) {
   cru.Add("Email", context.User.Email);
@@ -85,7 +99,7 @@ return new JObject(
   new JProperty("uri", context.Request.OriginalUrl.ToString()),
   new JProperty("user_id", userId),
   new JProperty("contextRequestUser", crus),
-  new JProperty("company_id", ""),
+  new JProperty("company_id", companyId),
   new JProperty("request_headers", string.Join(";;", headers)),
   new JProperty("request_body", requestBody),
   new JProperty("contextTimestamp", context.Timestamp.ToString("o")),
@@ -121,7 +135,8 @@ return new JObject(
         </choose>
     </outbound>
     <on-error>
-        <base />
+        <!-- Uncomment base element if policy added to a single API (i.e. not global) -->
+        <!-- <base /> -->
         <choose>
             <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
                 <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
@@ -147,7 +162,8 @@ return new JObject(
 </policies>
 ```
 
-That's it. Once the XML is added to your APIs, the logs should start showing up in Moesif. 
+That's it. Once the XML is added to your APIs, the logs should start showing up in Moesif.
+
 
 ## Configuration Options
 
@@ -225,4 +241,4 @@ Before starting, make sure you fork the repo [ApimEventProcessor](https://github
 
 Deployment may take a few minutes. Double check your XML policy if there are any changes.
 
-`Tags: Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App`
+`Tags:Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App, Microsoft.Resources/deployments`

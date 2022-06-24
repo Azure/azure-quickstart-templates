@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "4187161334981532249"
+    }
+  },
   "parameters": {
     "vmAdminUsername": {
       "type": "string",
@@ -39,25 +46,24 @@
     "backendSubnetName": "backendSubnet",
     "consumerSubnetPrefix": "10.0.0.0/24",
     "consumerSubnetName": "myPESubnet",
-    "loadbalancername": "myILB",
-    "backendpoolname": "myBackEndPool",
+    "loadbalancerName": "myILB",
+    "backendPoolName": "myBackEndPool",
     "loadBalancerFrontEndIpConfigurationName": "myFrontEnd",
     "healthProbeName": "myHealthProbe",
     "privateEndpointName": "myPrivateEndpoint",
-    "vmName": "[take(concat('myVm', uniqueString(resourceGroup().id)),15)]",
-    "networkInterfaceName": "[concat(variables('vmName'),'NetInt')]",
-    "vmConsumerName": "[take(concat('myConsumerVm', uniqueString(resourceGroup().id)),15)]",
-    "publicIpAddressConsumerName": "[concat(variables('vmConsumerName'), 'PublicIP' )]",
-    "networkInterfaceConsumerName": "[concat(variables('vmConsumerName'),'NetInt')]",
+    "vmName": "[take(format('myVm{0}', uniqueString(resourceGroup().id)), 15)]",
+    "networkInterfaceName": "[format('{0}NetInt', variables('vmName'))]",
+    "vmConsumerName": "[take(format('myConsumerVm{0}', uniqueString(resourceGroup().id)), 15)]",
+    "publicIpAddressConsumerName": "[format('{0}PublicIP', variables('vmConsumerName'))]",
+    "networkInterfaceConsumerName": "[format('{0}NetInt', variables('vmConsumerName'))]",
     "osDiskType": "StandardSSD_LRS",
-    "privatelinkservicename": "myPLS",
-    "loadbalancerId": "[resourceId('Microsoft.Network/loadBalancers', variables('loadbalancername'))]"
-
+    "privatelinkServiceName": "myPLS",
+    "loadbalancerId": "[resourceId('Microsoft.Network/loadBalancers', variables('loadbalancerName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -85,15 +91,12 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('loadbalancername')]",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('loadbalancerName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
-      "dependsOn": [
-        "[variables('vnetName')]"
-      ],
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -108,7 +111,7 @@
         ],
         "backendAddressPools": [
           {
-            "name": "[variables('backendpoolname')]"
+            "name": "[variables('backendPoolName')]"
           }
         ],
         "inboundNatRules": [
@@ -116,7 +119,7 @@
             "name": "RDP-VM0",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadbalancername'), variables('loadBalancerFrontEndIpConfigurationName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadbalancerName'), variables('loadBalancerFrontEndIpConfigurationName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 3389,
@@ -127,16 +130,16 @@
         ],
         "loadBalancingRules": [
           {
-            "Name": "myHTTPRule",
+            "name": "myHTTPRule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadbalancername'), variables('loadBalancerFrontEndIpConfigurationName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadbalancerName'), variables('loadBalancerFrontEndIpConfigurationName'))]"
               },
               "backendAddressPool": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadbalancername'), variables('backendpoolname'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadbalancerName'), variables('backendPoolName'))]"
               },
               "probe": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('healthProbeName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadbalancerName'), variables('healthProbeName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -156,16 +159,16 @@
             "name": "[variables('healthProbeName')]"
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('loadbalancername')]"
-      ],
       "tags": {
         "displayName": "[variables('networkInterfaceName')]"
       },
@@ -180,27 +183,27 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadbalancername'), variables('backendpoolname'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadbalancerName'), variables('backendPoolName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules/', variables('loadbalancername'), 'RDP-VM0')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules/', variables('loadbalancerName'), 'RDP-VM0')]"
                 }
               ]
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadbalancerName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-11-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
-      ],
       "tags": {
         "displayName": "[variables('vmName')]"
       },
@@ -221,7 +224,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'OsDisk')]",
+            "name": "[format('{0}OsDisk', variables('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -237,19 +240,19 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('vmName'),'/installcustomscript')]",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}', variables('vmName'), 'installcustomscript')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "install software for Windows VM"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-      ],
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
@@ -258,18 +261,21 @@
         "protectedSettings": {
           "commandToExecute": "powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateLinkServices",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('privatelinkservicename')]",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('privatelinkServiceName')]",
       "location": "[parameters('location')]",
       "properties": {
         "enableProxyProtocol": false,
         "loadBalancerFrontendIpConfigurations": [
           {
-            "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadbalancername'), variables('loadBalancerFrontEndIpConfigurationName'))]"
+            "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadbalancerName'), variables('loadBalancerFrontEndIpConfigurationName'))]"
           }
         ],
         "ipConfigurations": [
@@ -285,11 +291,14 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadbalancerName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('vnetConsumerName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -317,7 +326,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('publicIpAddressConsumerName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -326,19 +335,15 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[tolower(variables('vmConsumerName'))]"
+          "domainNameLabel": "[toLower(variables('vmConsumerName'))]"
         }
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('networkInterfaceConsumerName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('vnetConsumerName')]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressConsumerName'))]"
-      ],
       "tags": {
         "displayName": "[variables('networkInterfaceConsumerName')]"
       },
@@ -357,16 +362,17 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressConsumerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetConsumerName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-11-01",
       "name": "[variables('vmConsumerName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceConsumerName'))]"
-      ],
       "tags": {
         "displayName": "[variables('vmConsumerName')]"
       },
@@ -387,7 +393,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmConsumerName'),'OsDisk')]",
+            "name": "[format('{0}OsDisk', variables('vmConsumerName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -403,17 +409,16 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceConsumerName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('privateEndpointName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('vnetConsumerName')]",
-        "[variables('privatelinkservicename')]"
-      ],
       "properties": {
         "subnet": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetConsumerName'), variables('consumerSubnetName'))]"
@@ -422,12 +427,15 @@
           {
             "name": "[variables('privateEndpointName')]",
             "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.Network/privateLinkServices',variables('privatelinkservicename'))]"
+              "privateLinkServiceId": "[resourceId('Microsoft.Network/privateLinkServices', variables('privatelinkServiceName'))]"
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateLinkServices', variables('privatelinkServiceName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetConsumerName'))]"
+      ]
     }
   ]
 }
-
