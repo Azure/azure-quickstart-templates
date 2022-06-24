@@ -11,7 +11,7 @@ param adminUsername string
 @secure()
 param adminPassword string
 
-@description('Zone numbers e.g. 1,2,3.')
+@description('Availability zone numbers e.g. 1,2,3.')
 param availabilityZones array = [
   '1'
   '2'
