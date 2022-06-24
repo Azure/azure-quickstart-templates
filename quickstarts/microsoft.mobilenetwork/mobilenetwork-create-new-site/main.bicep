@@ -59,14 +59,14 @@ param naptEnabled string
 @description('The resource ID of the custom location that targets the Azure Kubernetes Service on Azure Stack HCI (AKS-HCI) cluster on the Azure Stack Edge Pro device in the site. If this parameter is not specified, the packet core instance will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01-preview' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
   name: existingMobileNetworkName
 
-  resource existingDataNetwork 'dataNetworks@2022-03-01-preview' existing = {
+  resource existingDataNetwork 'dataNetworks@2022-04-01-preview' existing = {
     name: existingDataNetworkName
   }
 
-  resource exampleSite 'sites@2022-03-01-preview' = {
+  resource exampleSite 'sites@2022-04-01-preview' = {
     name: siteName
     location: location
     properties: {
@@ -82,16 +82,20 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-0
   }
 }
 
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-03-01-preview' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {
   name: siteName
   location: location
   properties: {
     mobileNetwork: {
       id: existingMobileNetwork.id
     }
+    sku: 'EvaluationPackage'
     coreNetworkTechnology: coreNetworkTechnology
-    customLocation: empty(customLocation) ? null : {
-      id: customLocation
+    platform: {
+      type: 'AKS-HCI'
+      customLocation: empty(customLocation) ? null : {
+        id: customLocation
+      }
     }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
@@ -101,7 +105,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
   }
 
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-03-01-preview' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-04-01-preview' = {
     name: siteName
     location: location
     properties: {
@@ -113,7 +117,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     }
 
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-03-01-preview' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-04-01-preview' = {
       name: existingDataNetworkName
       location: location
       properties: {
