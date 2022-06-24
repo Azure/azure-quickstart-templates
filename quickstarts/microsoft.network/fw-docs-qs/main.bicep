@@ -150,7 +150,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i 
       computerName: '${virtualMachine_name}${i+1}'
       adminUsername: adminUsername
       adminPassword: adminPassword
-      windowsConfiguration: {resourceId
+      windowsConfiguration: {
         provisionVMAgent: true
         enableAutomaticUpdates: true
       }
