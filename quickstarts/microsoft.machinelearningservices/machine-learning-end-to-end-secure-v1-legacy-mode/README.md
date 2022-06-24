@@ -1,4 +1,13 @@
-# Azure Machine Learning workspace
+---
+description: This set of Bicep templates demonstrates how to set up Azure Machine Learning end-to-end in a secure set up. This reference implementation includes the Workspace, a compute cluster, compute instance and attached private AKS cluster.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Azure Machine Learning end-to-end secure setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-end-to-end-secure-v1-legacy-mode/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-end-to-end-secure-v1-legacy-mode/PublicDeployment.svg)
@@ -50,3 +59,6 @@ If you are new to template development, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
+
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.KeyVault/vaults, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Storage/storageAccounts, Microsoft.ContainerRegistry/registries, Notary, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, SystemAssigned, Microsoft.MachineLearningServices/workspaces/computes, Microsoft.ContainerService/managedClusters, VirtualMachineScaleSets, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, [variables('aadLoginExtensionName')], Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/publicIPAddresses, Microsoft.Network/bastionHosts`
