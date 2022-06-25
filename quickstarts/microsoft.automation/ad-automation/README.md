@@ -19,4 +19,4 @@ This template will provision the minimum infrastructure to host Active Directory
 The first will act as the Domain Controller. The second will be a member server to the newly created domain.
 The two VM's are configured via DSC. Specifically, an Azure Automation account is used to compile and distribute the DSC configurations.
 
-`Tags: empty, blank`
+`Tags: DSC, AD, Microsoft.Automation/automationAccounts`
