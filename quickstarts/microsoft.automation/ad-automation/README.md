@@ -1,4 +1,4 @@
-# Blank Template
+# Active Directory via Azure Automation
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.automation/ad-automation/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.automation/ad-automation/PublicDeployment.svg)
