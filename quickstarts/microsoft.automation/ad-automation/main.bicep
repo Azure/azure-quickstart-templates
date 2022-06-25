@@ -142,7 +142,7 @@ resource modules 'Microsoft.Automation/automationAccounts/modules@2020-01-13-pre
   location: location
   properties: {
     contentLink: {
-      uri: uri(uri('https://www.powershellgallery.com/api/v2/package/', item.name), item.version)
+      uri: uri('https://www.powershellgallery.com/api/v2/package/', '${item.name}/${item.version}')
       version: item.version
     }
   }
