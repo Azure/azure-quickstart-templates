@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "9429008150564765241"
+    }
+  },
   "parameters": {
     "vmName": {
       "type": "string",
@@ -71,30 +78,22 @@
       }
     },
     "adminPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "minLength": 12,
       "metadata": {
         "description": "Password for the virtual machine."
       }
     },
     "secureBoot": {
-      "type": "string",
-      "defaultValue": "true",
-      "allowedValues": [
-        "true",
-        "false"
-      ],
+      "type": "bool",
+      "defaultValue": true,
       "metadata": {
         "description": "Secure Boot setting of the virtual machine."
       }
     },
     "vTPM": {
-      "type": "string",
-      "defaultValue": "true",
-      "allowedValues": [
-        "true",
-        "false"
-      ],
+      "type": "bool",
+      "defaultValue": true,
       "metadata": {
         "description": "vTPM setting of the virtual machine."
       }
@@ -107,7 +106,7 @@
     },
     "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "[toLower(concat(parameters('vmName'), '-', uniqueString(resourceGroup().id)))]",
+      "defaultValue": "[toLower(format('{0}-{1}', parameters('vmName'), uniqueString(resourceGroup().id)))]",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the virtual machine."
       }
@@ -163,8 +162,8 @@
       }
     },
     "maaEndpoint": {
-      "defaultValue": "https://sharedeus2.eus2.attest.azure.net/",
       "type": "string",
+      "defaultValue": "https://sharedeus2.eus2.attest.azure.net/",
       "allowedValues": [
         "https://sharedcus.cus.attest.azure.net/",
         "https://sharedcae.cae.attest.azure.net/",
@@ -440,7 +439,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-06-01",
-      "name": "[parameters('publicIPName')]",
+      "name": "[parameters('publicIpName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('publicIpSku')]"
@@ -480,9 +479,6 @@
       "apiVersion": "2020-06-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -500,17 +496,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2020-06-01",
       "name": "[parameters('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -518,7 +513,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -526,7 +521,11 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
@@ -536,9 +535,6 @@
       "identity": {
         "type": "SystemAssigned"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -567,21 +563,21 @@
         "securityProfile": {
           "uefiSettings": {
             "secureBootEnabled": "[parameters('secureBoot')]",
-            "vTPMEnabled": "[parameters('VTPM')]"
+            "vTpmEnabled": "[parameters('vTPM')]"
           },
           "securityType": "TrustedLaunch"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+      ]
     },
     {
-      "condition": "[and(equals(parameters('VTPM'), 'true'), equals(parameters('secureBoot'), 'true'))]",
+      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'), '/', variables('extensionName'))]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
-      ],
       "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), variables('extensionName'))]",
+      "location": "[parameters('location')]",
       "properties": {
         "publisher": "[variables('extensionPublisher')]",
         "type": "[variables('extensionName')]",
@@ -596,13 +592,16 @@
             "disableAlerts": "[variables('disableAlerts')]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
     }
   ],
   "outputs": {
     "hostname": {
       "type": "string",
-      "value": "[reference(parameters('publicIPName')).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))).dnsSettings.fqdn]"
     }
   }
 }

@@ -220,9 +220,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
     }
   }
-  dependsOn: [
-    storageAccount
-  ]
 }
 
 output adminUsername string = adminUsername
