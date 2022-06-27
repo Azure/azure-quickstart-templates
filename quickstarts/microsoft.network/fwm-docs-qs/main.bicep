@@ -35,6 +35,9 @@ resource virtualHub 'Microsoft.Network/virtualHubs@2021-08-01' = {
 resource hubVNetconnection 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2021-08-01' = {
   parent: virtualHub
   name: 'hub-spoke'
+  dependsOn: [
+    firewall
+  ]
   properties: {
     remoteVirtualNetwork: {
       id: virtualNetwork.id
@@ -58,9 +61,6 @@ resource hubVNetconnection 'Microsoft.Network/virtualHubs/hubVirtualNetworkConne
       }
     }
   }
-  dependsOn: [
-    firewall
-  ]
 }
 
 resource policy 'Microsoft.Network/firewallPolicies@2021-08-01' = {
@@ -160,6 +160,9 @@ resource subnet_Workload_SN 'Microsoft.Network/virtualNetworks/subnets@2021-08-0
 resource subnet_Jump_SN 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
   parent: virtualNetwork
   name: 'Jump-SN'
+  dependsOn: [
+    subnet_Workload_SN
+  ]
   properties: {
     addressPrefix: '10.0.2.0/24'
     routeTable: {
@@ -168,9 +171,6 @@ resource subnet_Jump_SN 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' =
     privateEndpointNetworkPolicies: 'Enabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
   }
-  dependsOn: [
-    subnet_Workload_SN
-  ]
 }
 
 resource Jump_Srv 'Microsoft.Compute/virtualMachines@2022-03-01' = {
