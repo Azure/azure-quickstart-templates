@@ -6,7 +6,7 @@ products:
 languages:
 - json
 ---
-# Create an Azure VM with a new AD Forest
+# Create an Azure VM with a new Active Directory Forest
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicDeployment.svg)
