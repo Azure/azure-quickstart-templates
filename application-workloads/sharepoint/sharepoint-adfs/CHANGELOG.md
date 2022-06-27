@@ -1,5 +1,9 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in June 24, 2022
+
+* Fix the credentials decryption issue in DSC extension when using latest version of Windows Server images.
+
 ## Enhancements & bug-fixes - Published in January 10, 2022
 
 * Add SharePoint Server Subscription and make it the default choice.
