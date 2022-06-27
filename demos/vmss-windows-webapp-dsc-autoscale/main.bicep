@@ -198,7 +198,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
                     ]
                     loadBalancerInboundNatPools: [
                       {
-                        id: natPoolName
+                        id: resourceId('Microsoft.Network/loadBalancers/inboundNatPools', loadBalancerName, natPoolName)
                       }
                     ]
                   }
