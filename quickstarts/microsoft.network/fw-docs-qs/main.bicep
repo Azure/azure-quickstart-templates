@@ -30,7 +30,7 @@ var azureFirewallIpConfigurations = [for i in range(0, 2): {
   properties: {
     subnet: (((i + 1) == 1) ? azureFirewallSubnetJSON : json('null'))
     publicIPAddress: {
-      id: publicIPAddress[i+1].id
+      id: publicIPAddress[i].id
     }
   }
 }]
