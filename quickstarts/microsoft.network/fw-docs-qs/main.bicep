@@ -24,11 +24,12 @@ var vnet_prefix = '10.0.0.0/16'
 var fw_subnet_prefix = '10.0.0.0/24'
 var backend_subnet_prefix = '10.0.1.0/24'
 var azureFirewallSubnetId = subnet.id
-var azureFirewallSubnetJSON = json('{"id": "${azureFirewallSubnetId}"}')
 var azureFirewallIpConfigurations = [for i in range(0, 2): {
   name: 'IpConf${(i + 1)}'
   properties: {
-    subnet: (((i + 1) == 1) ? azureFirewallSubnetJSON : json('null'))
+    subnet: {
+      id: ((i + 1) == 1) ? azureFirewallSubnetId : 'null'
+    }
     publicIPAddress: {
       id: publicIPAddress[i].id
     }
@@ -164,9 +165,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i 
       ]
     }
   }
-  dependsOn: [
-    netInterface[i]
-  ]
 }]
 
 resource netInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i in range(0, 2): {
@@ -190,10 +188,6 @@ resource netInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i 
       id: nsg[i].id
     }
   }
-  dependsOn: [
-    virtualNetwork
-    nsg[i]
-  ]
 }]
 
 resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
@@ -324,10 +318,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
       }
     ]
   }
-  dependsOn: [
-    publicIPAddress[0]
-    publicIPAddress[1]
-  ]
 }
 
 resource routeTable 'Microsoft.Network/routeTables@2021-08-01' = {
