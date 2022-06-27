@@ -1,3 +1,11 @@
+---
+description: This is a sample for Java CI/CD using Jenkins and Azure Web Apps.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
 # Java CI/CD using Jenkins and Azure Web Apps
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cicd-webapp/PublicLastTestDate.svg)
@@ -121,3 +129,6 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 
 
 
+
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, config, MySql, microsoft.insights/components, Microsoft.DBforMySQL/servers, firewallrules, databases, Microsoft.Resources/deployments`
