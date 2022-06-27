@@ -1,11 +1,11 @@
 @description('Region where the SIM group will be deployed (must match the resource group region).')
 param location string
 
-@description('The name for the SIM group.')
-param simGroupName string
-
 @description('The name of the mobile network to which you are adding the SIM group.')
 param existingMobileNetworkName string
+
+@description('The name for the SIM group.')
+param simGroupName string
 
 @description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
 param simResources array
