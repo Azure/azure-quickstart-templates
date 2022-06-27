@@ -55,7 +55,7 @@ var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPA
   properties: {
     subnet: ((i == 0) ? azureFirewallSubnetJSON : json('null'))
     publicIPAddress: {
-      id: resourceId('Microsoft.Network/publicIPAddresses', '${publicIPNamePrefix}${i+1}')
+      id: publicIPAddress[i].id
     }
   }
 }]
@@ -145,6 +145,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = [for
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
   }
+  zones: availabilityZones
 }]
 
 resource jumpBoxPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
