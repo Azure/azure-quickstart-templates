@@ -25,11 +25,12 @@ var azurepublicIpname = publicIPNamePrefix
 var azureFirewallSubnetName = 'AzureFirewallSubnet'
 var azureFirewallSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, azureFirewallSubnetName)
 var azureFirewallPublicIpId = resourceId('Microsoft.Network/publicIPAddresses', publicIPNamePrefix)
-var azureFirewallSubnetJSON = json('{"id": "${azureFirewallSubnetId}"}')
 var azureFirewallIpConfigurations = [for i in range(0, numberOfPublicIPAddresses): {
   name: 'IpConf${i}'
   properties: {
-    subnet: ((i == 0) ? azureFirewallSubnetJSON : json('null'))
+    subnet: {
+      id: ((i == 0) ? azureFirewallSubnetId : null)
+    }
     publicIPAddress: {
       id: '${azureFirewallPublicIpId}${i + 1}'
     }
@@ -142,6 +143,9 @@ resource networkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleColl
 resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2021-08-01' = {
   parent: firewallPolicy
   name: 'DefaultApplicationRuleCollectionGroup'
+  dependsOn: [
+    networkRuleCollectionGroup
+  ]
   properties: {
     priority: 300
     ruleCollections: [
@@ -207,21 +211,12 @@ resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/rule
       }
     ]
   }
-  dependsOn: [
-    networkRuleCollectionGroup
-  ]
 }
 
 resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
   name: firewallName
   location: location
-  zones: ((length(availabilityZones) == 0) ? json('null') : availabilityZones)
-  properties: {
-    ipConfigurations: azureFirewallIpConfigurations
-    firewallPolicy: {
-      id: firewallPolicy.id
-    }
-  }
+  zones: ((length(availabilityZones) == 0) ? null : availabilityZones)
   dependsOn: [
     vnet
     publicIpAddress
@@ -230,4 +225,10 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
     networkRuleCollectionGroup
     applicationRuleCollectionGroup
   ]
+  properties: {
+    ipConfigurations: azureFirewallIpConfigurations
+    firewallPolicy: {
+      id: firewallPolicy.id
+    }
+  }
 }
