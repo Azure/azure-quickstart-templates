@@ -11,6 +11,7 @@ param akvName string
 @description('The URI of the frontend KeyVault Certificate Secret Id')
 param frontEndCertificateSecretId string
 
+@description('This is the IP address the web application is hosted on')
 param backendIpAddress string
 
 @description('The location to deploy the resources to')
