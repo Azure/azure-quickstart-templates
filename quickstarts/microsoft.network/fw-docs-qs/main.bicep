@@ -159,13 +159,13 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i 
     networkProfile: {
       networkInterfaces: [
         {
-          id: netInterface[i+1].id
+          id: netInterface[i].id
         }
       ]
     }
   }
   dependsOn: [
-    netInterface[i+1]
+    netInterface[i]
   ]
 }]
 
@@ -187,12 +187,12 @@ resource netInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i 
     enableAcceleratedNetworking: false
     enableIPForwarding: false
     networkSecurityGroup: {
-      id: nsg[i+1].id
+      id: nsg[i].id
     }
   }
   dependsOn: [
     virtualNetwork
-    nsg[i+1]
+    nsg[i]
   ]
 }]
 
@@ -296,7 +296,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
                 '*'
               ]
               destinationAddresses: [
-                publicIPAddress[1].properties.ipAddress
+                publicIPAddress[0].properties.ipAddress
               ]
               destinationPorts: [
                 '3389'
@@ -313,7 +313,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
                 '*'
               ]
               destinationAddresses: [
-                publicIPAddress[2].properties.ipAddress
+                publicIPAddress[1].properties.ipAddress
               ]
               destinationPorts: [
                 '3389'
@@ -325,8 +325,8 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
     ]
   }
   dependsOn: [
+    publicIPAddress[0]
     publicIPAddress[1]
-    publicIPAddress[2]
   ]
 }
 
