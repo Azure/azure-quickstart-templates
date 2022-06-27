@@ -70,7 +70,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   properties: {}
 }
 
-resource azfwRouteTable 'Microsoft.Network/routeTables@2021-05-01' = {
+resource azfwRouteTable 'Microsoft.Network/routeTables@2021-03-01' = {
   name: azfwRouteTableName
   location: location
   properties: {
@@ -88,7 +88,7 @@ resource azfwRouteTable 'Microsoft.Network/routeTables@2021-05-01' = {
   }
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {}
@@ -135,7 +135,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-03-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
   name: '${publicIPNamePrefix}${i+1}'
   location: location
   sku: {
@@ -148,7 +148,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = [for
   zones: availabilityZones
 }]
 
-resource jumpBoxPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource jumpBoxPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-03-01' = {
   name: jumpBoxPublicIPAddressName
   location: location
   properties: {
