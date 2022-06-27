@@ -1,4 +1,12 @@
-# Azure template for SharePoint Subscription / 2019 / 2016 / 2013
+---
+description: Create a SharePoint Subscription / 2019 / 2016 / 2013 farm with a web application set with Windows and ADFS authentication, and some path based and host-named site collections. It also provisions User Profiles and Apps service applications and installs claims provider LDAPCP.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# SharePoint Subscription / 2019 / 2016 / 2013 all configured
 
 ## Presentation
 
@@ -65,3 +73,6 @@ Additional notes:
 * With the default settings, the deployment takes about 1h to complete.  
 * Once it is completed, the template will return valuable information in the 'Outputs' of the deployment.  
 * For various (very good) reasons, the template sets the local (not domain) administrator name with a string that is unique to your subscription (e.g. 'local-q1w2e3r4t5'). You can find the name of the local admin in the 'Outputs' of the deployment once it is completed.  
+
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Compute/virtualMachines/extensions, Microsoft.DevTestLab/schedules, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/bastionHosts`
