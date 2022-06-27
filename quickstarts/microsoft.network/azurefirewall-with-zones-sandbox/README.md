@@ -1,4 +1,13 @@
-# Create Azure Firewall with Availability Zones sandbox setup
+---
+description: This template creates a virtual network with three subnets (server subnet, jumpbox subnet, and Azure Firewall subnet), a jumpbox VM with public IP, A server VM, UDR route to point to Azure Firewall for the ServerSubnet,an Azure Firewall with one or more Public IP addresses, one sample application rule, and one sample network rule and Azure Firewall in Availability Zones 1, 2, and 3.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Create a sandbox setup of Azure Firewall with Zones
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-with-zones-sandbox/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-with-zones-sandbox/PublicDeployment.svg)
@@ -28,3 +37,6 @@ The template creates following resources:
 - UDR route to point to Azure Firewall for the _ServerSubnet_.
 - An Azure Firewall with one or more Public IPs, one sample application rule, and one sample network rule.
 - Azure Firewall is placed in Availability Zones 1, 2 and 3.
+
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/routeTables, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/azureFirewalls, Allow`
