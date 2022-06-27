@@ -28,4 +28,4 @@ Use the **Deploy to Azure** button above to get started. All you need to do is s
 Checkout Dokku's [official documentation](http://progrium.viewdocs.io/dokku/application-deployment/) to learn how to deploy apps.
 
 
-`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`
+`Tags:Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`
