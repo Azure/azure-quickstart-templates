@@ -47,7 +47,6 @@ var azfwRouteTableName = 'AzfwRouteTable'
 var firewallName = 'firewall1'
 var publicIPNamePrefix = 'publicIP'
 var azureFirewallSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, azureFirewallSubnetName)
-var azureFirewallSubnetJSON = json('{"id": "${azureFirewallSubnetId}"}')
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -63,9 +62,11 @@ var networkSecurityGroupName = '${serversSubnetName}-nsg'
 var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPAddresses): {
   name: 'IpConf${i}'
   properties: {
-    subnet: ((i == 0) ? azureFirewallSubnetJSON : json('null'))
+    subnet: {
+      id: (i == 0) ? azureFirewallSubnetId : null
+    }
     publicIPAddress: {
-      id: resourceId('Microsoft.Network/publicIPAddresses', '${publicIPNamePrefix}${i + 1}')
+      id: publicIP[i].id
     }
   }
 }]
@@ -341,6 +342,10 @@ resource ServerVm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
 resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
   name: firewallName
   location: location
+  dependsOn: [
+    virtualNetwork
+    publicIP
+  ]
   properties: {
     ipConfigurations: azureFirewallIpConfigurations
     applicationRuleCollections: [
@@ -423,8 +428,4 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-    publicIP
-  ]
 }
