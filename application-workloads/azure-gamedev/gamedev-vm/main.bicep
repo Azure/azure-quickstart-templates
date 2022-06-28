@@ -10,10 +10,10 @@ param _artifactsLocationSasToken string = ''
 
 @description('Select Game Engine Version')
 @allowed([
-  'ue_4_27'
-  'ue_5_0ea'
+  'ue_4_27_2'
+  'ue_5_0_1'
 ])
-param gameEngine string = 'ue_4_27'
+param gameEngine string = 'ue_4_27_2'
 
 @description('Select Operating System')
 @allowed([

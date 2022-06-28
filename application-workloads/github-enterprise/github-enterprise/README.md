@@ -1,4 +1,12 @@
-# GitHub Enterprise on Azure
+---
+description: GitHub Enterprise Server is the private version of GitHub.com that will run on a VM in your Azure subscription. It makes collaborative coding possible and enjoyable for enterprise software development teams.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# GitHub Enterprise Server
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/github-enterprise/github-enterprise/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/github-enterprise/github-enterprise/PublicDeployment.svg)
@@ -25,3 +33,6 @@ You can configure GitHub Enterprise Server by visiting the public IP address ass
 ### Learn More
 
 [GitHub Enterprise](https://enterprise.github.com)
+
+
+`Tags:Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/networkSecurityGroups`
