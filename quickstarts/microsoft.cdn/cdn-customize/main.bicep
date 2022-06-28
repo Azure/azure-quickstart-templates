@@ -2,22 +2,6 @@
 param profileName string
 
 @description('Pricing tier of the CDN Profile.')
-@allowed([
-  'Standard_Verizon'
-  'Premium_Verizon'
-  'Custom_Verizon'
-  'Standard_Akamai'
-  'Standard_ChinaCdn'
-  'Standard_Microsoft'
-  'Premium_ChinaCdn'
-  'Standard_AzureFrontDoor'
-  'Premium_AzureFrontDoor'
-  'Standard_955BandWidth_ChinaCdn'
-  'Standard_AvgBandWidth_ChinaCdn'
-  'StandardPlus_ChinaCdn'
-  'StandardPlus_955BandWidth_ChinaCdn'
-  'StandardPlus_AvgBandWidth_ChinaCdn'
-])
 param sku string = 'Standard_Microsoft'
 
 @description('Name of the CDN Endpoint.')
@@ -55,7 +39,7 @@ param originUrl string
 @description('Location for all resources.')
 param location string = 'global'
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   properties: {}
@@ -64,7 +48,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   location: location
   name: endpointName
