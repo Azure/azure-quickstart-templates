@@ -4,6 +4,9 @@ param location string = resourceGroup().location
 @description('Virtual Machine Size.')
 param vmSize string = 'Standard_NV12s_v3'
 
+@description('Use VM to sysprep an image from')
+param useVmToSysprepCustomImage bool = false
+
 @description('Virtual Machine Name.')
 param vmName string = 'gamedevvm'
 
@@ -22,11 +25,11 @@ param osType string = 'win10'
 
 @description('Game Engine')
 @allowed([
-  'ue_4_27'
-  'ue_5_0ea'
+  'ue_4_27_2'
+  'ue_5_0_1'
   'unity_2020_3_19f1'
 ])
-param gameEngine string = 'ue_4_27'
+param gameEngine string = 'ue_4_27_2'
 
 @description('GDK Version')
 param gdkVersion string = 'June_2021_Update_4'
@@ -134,7 +137,7 @@ param publicIpAllocationMethod string = 'Dynamic'
 ])
 param publicIpSku string = 'Basic'
 
-@description('Public IP With or None?')
+@description('Public IP New or Existing or None?')
 @allowed([
   'new'
   'existing'
@@ -156,7 +159,7 @@ param environment string = 'production'
 param outTagsByResource object = {}
 
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.id
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.')
 @secure()
@@ -165,30 +168,40 @@ param _artifactsLocationSasToken string = ''
 @description('Enable or disable Unreal Pixel Streaming port.')
 param unrealPixelStreamingEnabled bool = false
 
-@description('Enable Managed Identity')
+@description('Enable or disable the use of a Managed Identity for the VM.')
 param enableManagedIdentity bool = false
 
-@description('Enable Azure Active Directory Login')
+@description('Enable or disable AAD-based login.')
 param enableAAD bool = false
 
+@description('Specifies the OS patching behavior.')
+@allowed([
+  'AutomaticByOS'
+  'AutomaticByPlatform'
+  'Manual'
+])
+param windowsUpdateOption string = 'AutomaticByOS'
+
+var deployedFromSolutionTemplate = startsWith(_artifactsLocation, 'https://catalogartifact.azureedge.net/publicartifacts/microsoft-agci-gaming.agci-gamedev-vm')
+
 var environmentMapping = {
-  ue_4_27: 'unreal_4_27'
-  ue_5_0ea: 'unreal_5_0ea'
+  ue_4_27_2: 'unreal_4_27_2'
+  ue_5_0_1: 'unreal_5_0_1'
   unity_2020_3_19f1: 'unity_2020_3_19f1'
 }
 
 var environments = {
   development: {
     vmImage: {
-      publisher: 'microsoft-agci-gaming'
-      offer: 'agci-gamedev-image'
-      sku: 'gamedev-${gameEngine}-${osType}'
+      publisher: 'microsoftcorporation1602274591143'
+      offer: 'game-dev-vm'
+      sku: '${osType}_${environmentMapping[gameEngine]}'
       version: 'latest'
     }
     vmPlan: {
-      publisher: 'microsoft-agci-gaming'
-      product: 'agci-gamedev-image'
-      name: 'gamedev-${gameEngine}-${osType}'
+      publisher: 'microsoftcorporation1602274591143'
+      product: 'game-dev-vm'
+      name: '${osType}_${environmentMapping[gameEngine]}'
     }
   }
   production: {
@@ -222,11 +235,38 @@ var tags = {
   'remotesoftware': remoteAccessTechnology
 }
 
-var cmdGDKInstall = '(Get-Content \'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\gdkinstall.cmd\').replace(\'[VERSION]\', \'${gdkVersion}\') | Set-Content \'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\gdkinstall.cmd\''
-var userData = 'team_id=${parsec_teamId}:key=${parsec_teamKey}:name=${parsec_host}:user_email=${parsec_userEmail}:is_guest_access=${parsec_isGuestAccess}:ibLicenseKey=${ibLicenseKey}'
-var Script2Run = 'TeradiciRegCAS.ps1'
-var CSEParams = ' -pcoip_registration_code ${teradiciRegKey}'
-var cmdTeradiciRegistration = './${Script2Run}${CSEParams}'
+var countDataDisks = (!startsWith(gameEngine, 'ue_') ? numDataDisks : numDataDisks+1)
+
+var customData = format('''
+fileShareStorageAccount={0}
+fileShareStorageAccountKey={1}
+fileShareName={2}
+
+p4Port={3}
+p4Username={4}
+p4Password={5}
+p4Workspace={6}
+p4Stream={7}
+p4ClientViews={8}
+
+ibLicenseKey={9}
+
+gdkVersion={10}
+useVmToSysprepCustomImage={11}
+
+remoteAccessTechnology={12}
+
+teradiciRegKey={13}
+
+parsecTeamId={14}
+parsecTeamKey={15}
+parsecHost={16}
+parsecUserEmail={17}
+parsecIsGuestAccess={18}
+
+deployedFromSolutionTemplate={19}
+''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsec_teamId, parsec_teamKey, parsec_host, parsec_userEmail, parsec_isGuestAccess, deployedFromSolutionTemplate)
+
 
 resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
   name: 'pid-7837dd60-4ba8-419a-a26f-237bbe170773-partnercenter'
@@ -564,18 +604,24 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
           storageAccountType: storageType
         }
       }
-      dataDisks: [for i in range(0, numDataDisks): {
+      dataDisks: [for i in range(0, countDataDisks): {
         lun: i
-        createOption: 'Empty'
-        diskSizeGB: dataDiskSize
+        createOption: (startsWith(gameEngine, 'ue_') && i==0 ? 'FromImage' : 'Empty')
+        diskSizeGB: (startsWith(gameEngine, 'ue_') && i==0 ? 255 : dataDiskSize)
       }]
     }
     osProfile: {
       computerName: vmName
       adminUsername: adminName
       adminPassword: adminPass
+      windowsConfiguration: {
+        enableAutomaticUpdates: (bool(windowsUpdateOption != 'Manual') ? true : false)
+        patchSettings: {
+          patchMode: windowsUpdateOption
+        }
+      }
+      customData: base64(customData)
     }
-    userData: base64(userData)
     networkProfile: {
       networkInterfaces: [
         {
@@ -586,25 +632,31 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-module remoteAccess 'remoteAccessExtension.bicep' = {
-  name: 'runRemoteAccess'
-  params: {
-    cmdGDKInstall: cmdGDKInstall
-    cmdTeradiciRegistration: cmdTeradiciRegistration
-    _artifactsLocation: _artifactsLocation
-    _artifactsLocationSasToken: _artifactsLocationSasToken
-    virtualMachineName: virtualMachine.name
-    remoteAccessTechnology: remoteAccessTechnology
-    location: location
-    fileShareStorageAccount: fileShareStorageAccount
-    fileShareStorageAccountKey: fileShareStorageAccountKey
-    fileShareName: fileShareName
-    p4Port: p4Port
-    p4Username: p4Username
-    p4Password: p4Password
-    p4Workspace: p4Workspace
-    p4Stream: p4Stream
-    p4ClientViews: p4ClientViews
+resource virtualMachine_GDVMCustomization 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = if (deployedFromSolutionTemplate) {
+  name      : '${virtualMachine.name}/GDVMCustomization'
+  location  : location
+  properties: {
+    publisher              : 'Microsoft.Compute'
+    type                   : 'CustomScriptExtension'
+    typeHandlerVersion     : '1.10'
+    autoUpgradeMinorVersion: true
+    settings: {
+      fileUris: [
+        uri(_artifactsLocation, 'Controller-Initialization.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-CompleteUESetup.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-ConfigureLoginScripts.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-CreateDataDisk.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-MountFileShare.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-SyncP4Depot.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-SetupIncredibuild.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-RegisterTeradici.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'Task-SetupParsec.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'PreInstall.zip${_artifactsLocationSasToken}')
+      ]
+    }
+    protectedSettings: {
+      commandToExecute: 'powershell -ExecutionPolicy Unrestricted -command "./Controller-Initialization.ps1"'
+    }
   }
 }
 
@@ -612,7 +664,7 @@ resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@
   name: '${virtualMachine.name}/AADLoginForWindows'
   location: location
   dependsOn: [
-    remoteAccess
+    virtualMachine_GDVMCustomization
   ]
   properties: {
     publisher: 'Microsoft.Azure.ActiveDirectory'
@@ -621,3 +673,6 @@ resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@
     autoUpgradeMinorVersion: true
   }
 }
+
+output Host_Name string = publicIp.properties.dnsSettings.fqdn
+output UserName string = adminName

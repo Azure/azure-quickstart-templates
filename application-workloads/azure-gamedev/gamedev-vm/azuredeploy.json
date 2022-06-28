@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "16021448726894426407"
+      "version": "0.7.4.23292",
+      "templateHash": "17412727326325942998"
     }
   },
   "parameters": {
@@ -32,10 +32,10 @@
     },
     "gameEngine": {
       "type": "string",
-      "defaultValue": "ue_4_27",
+      "defaultValue": "ue_4_27_2",
       "allowedValues": [
-        "ue_4_27",
-        "ue_5_0ea"
+        "ue_4_27_2",
+        "ue_5_0_1"
       ],
       "metadata": {
         "description": "Select Game Engine Version"
@@ -141,8 +141,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "8508946119233764992"
+              "version": "0.7.4.23292",
+              "templateHash": "7063591378706267602"
             }
           },
           "parameters": {
@@ -158,6 +158,13 @@
               "defaultValue": "Standard_NV12s_v3",
               "metadata": {
                 "description": "Virtual Machine Size."
+              }
+            },
+            "useVmToSysprepCustomImage": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Use VM to sysprep an image from"
               }
             },
             "vmName": {
@@ -189,10 +196,10 @@
             },
             "gameEngine": {
               "type": "string",
-              "defaultValue": "ue_4_27",
+              "defaultValue": "ue_4_27_2",
               "allowedValues": [
-                "ue_4_27",
-                "ue_5_0ea",
+                "ue_4_27_2",
+                "ue_5_0_1",
                 "unity_2020_3_19f1"
               ],
               "metadata": {
@@ -429,7 +436,7 @@
                 "none"
               ],
               "metadata": {
-                "description": "Public IP With or None?"
+                "description": "Public IP New or Existing or None?"
               }
             },
             "publicIpRGName": {
@@ -459,7 +466,7 @@
             },
             "_artifactsLocation": {
               "type": "string",
-              "defaultValue": "[deployment().properties.templateLink.id]",
+              "defaultValue": "[deployment().properties.templateLink.uri]",
               "metadata": {
                 "description": "The base URI where artifacts required by this template are located including a trailing '/'"
               }
@@ -482,35 +489,48 @@
               "type": "bool",
               "defaultValue": false,
               "metadata": {
-                "description": "Enable Managed Identity"
+                "description": "Enable or disable the use of a Managed Identity for the VM."
               }
             },
             "enableAAD": {
               "type": "bool",
               "defaultValue": false,
               "metadata": {
-                "description": "Enable Azure Active Directory Login"
+                "description": "Enable or disable AAD-based login."
+              }
+            },
+            "windowsUpdateOption": {
+              "type": "string",
+              "defaultValue": "AutomaticByOS",
+              "allowedValues": [
+                "AutomaticByOS",
+                "AutomaticByPlatform",
+                "Manual"
+              ],
+              "metadata": {
+                "description": "Specifies the OS patching behavior."
               }
             }
           },
           "variables": {
+            "deployedFromSolutionTemplate": "[startsWith(parameters('_artifactsLocation'), 'https://catalogartifact.azureedge.net/publicartifacts/microsoft-agci-gaming.agci-gamedev-vm')]",
             "environmentMapping": {
-              "ue_4_27": "unreal_4_27",
-              "ue_5_0ea": "unreal_5_0ea",
+              "ue_4_27_2": "unreal_4_27_2",
+              "ue_5_0_1": "unreal_5_0_1",
               "unity_2020_3_19f1": "unity_2020_3_19f1"
             },
             "environments": {
               "development": {
                 "vmImage": {
-                  "publisher": "microsoft-agci-gaming",
-                  "offer": "agci-gamedev-image",
-                  "sku": "[format('gamedev-{0}-{1}', parameters('gameEngine'), parameters('osType'))]",
+                  "publisher": "microsoftcorporation1602274591143",
+                  "offer": "game-dev-vm",
+                  "sku": "[format('{0}_{1}', parameters('osType'), variables('environmentMapping')[parameters('gameEngine')])]",
                   "version": "latest"
                 },
                 "vmPlan": {
-                  "publisher": "microsoft-agci-gaming",
-                  "product": "agci-gamedev-image",
-                  "name": "[format('gamedev-{0}-{1}', parameters('gameEngine'), parameters('osType'))]"
+                  "publisher": "microsoftcorporation1602274591143",
+                  "product": "game-dev-vm",
+                  "name": "[format('{0}_{1}', parameters('osType'), variables('environmentMapping')[parameters('gameEngine')])]"
                 }
               },
               "production": {
@@ -539,11 +559,8 @@
               "ostype": "[parameters('osType')]",
               "remotesoftware": "[parameters('remoteAccessTechnology')]"
             },
-            "cmdGDKInstall": "[format('(Get-Content ''C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\gdkinstall.cmd'').replace(''[VERSION]'', ''{0}'') | Set-Content ''C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\gdkinstall.cmd''', parameters('gdkVersion'))]",
-            "userData": "[format('team_id={0}:key={1}:name={2}:user_email={3}:is_guest_access={4}:ibLicenseKey={5}', parameters('parsec_teamId'), parameters('parsec_teamKey'), parameters('parsec_host'), parameters('parsec_userEmail'), parameters('parsec_isGuestAccess'), parameters('ibLicenseKey'))]",
-            "Script2Run": "TeradiciRegCAS.ps1",
-            "CSEParams": "[format(' -pcoip_registration_code {0}', parameters('teradiciRegKey'))]",
-            "cmdTeradiciRegistration": "[format('./{0}{1}', variables('Script2Run'), variables('CSEParams'))]"
+            "countDataDisks": "[if(not(startsWith(parameters('gameEngine'), 'ue_')), parameters('numDataDisks'), add(parameters('numDataDisks'), 1))]",
+            "customData": "[format('fileShareStorageAccount={0}\r\nfileShareStorageAccountKey={1}\r\nfileShareName={2}\r\n\r\np4Port={3}\r\np4Username={4}\r\np4Password={5}\r\np4Workspace={6}\r\np4Stream={7}\r\np4ClientViews={8}\r\n\r\nibLicenseKey={9}\r\n\r\ngdkVersion={10}\r\nuseVmToSysprepCustomImage={11}\r\n\r\nremoteAccessTechnology={12}\r\n\r\nteradiciRegKey={13}\r\n\r\nparsecTeamId={14}\r\nparsecTeamKey={15}\r\nparsecHost={16}\r\nparsecUserEmail={17}\r\nparsecIsGuestAccess={18}\r\n\r\ndeployedFromSolutionTemplate={19}\r\n', parameters('fileShareStorageAccount'), parameters('fileShareStorageAccountKey'), parameters('fileShareName'), parameters('p4Port'), parameters('p4Username'), parameters('p4Password'), parameters('p4Workspace'), parameters('p4Stream'), parameters('p4ClientViews'), parameters('ibLicenseKey'), parameters('gdkVersion'), parameters('useVmToSysprepCustomImage'), parameters('remoteAccessTechnology'), parameters('teradiciRegKey'), parameters('parsec_teamId'), parameters('parsec_teamKey'), parameters('parsec_host'), parameters('parsec_userEmail'), parameters('parsec_isGuestAccess'), variables('deployedFromSolutionTemplate'))]"
           },
           "resources": [
             {
@@ -650,11 +667,11 @@
                   "copy": [
                     {
                       "name": "dataDisks",
-                      "count": "[length(range(0, parameters('numDataDisks')))]",
+                      "count": "[length(range(0, variables('countDataDisks')))]",
                       "input": {
-                        "lun": "[range(0, parameters('numDataDisks'))[copyIndex('dataDisks')]]",
-                        "createOption": "Empty",
-                        "diskSizeGB": "[parameters('dataDiskSize')]"
+                        "lun": "[range(0, variables('countDataDisks'))[copyIndex('dataDisks')]]",
+                        "createOption": "[if(and(startsWith(parameters('gameEngine'), 'ue_'), equals(range(0, variables('countDataDisks'))[copyIndex('dataDisks')], 0)), 'FromImage', 'Empty')]",
+                        "diskSizeGB": "[if(and(startsWith(parameters('gameEngine'), 'ue_'), equals(range(0, variables('countDataDisks'))[copyIndex('dataDisks')], 0)), 255, parameters('dataDiskSize'))]"
                       }
                     }
                   ],
@@ -672,9 +689,15 @@
                 "osProfile": {
                   "computerName": "[parameters('vmName')]",
                   "adminUsername": "[parameters('adminName')]",
-                  "adminPassword": "[parameters('adminPass')]"
+                  "adminPassword": "[parameters('adminPass')]",
+                  "windowsConfiguration": {
+                    "enableAutomaticUpdates": "[if(bool(not(equals(parameters('windowsUpdateOption'), 'Manual'))), true(), false())]",
+                    "patchSettings": {
+                      "patchMode": "[parameters('windowsUpdateOption')]"
+                    }
+                  },
+                  "customData": "[base64(variables('customData'))]"
                 },
-                "userData": "[base64(variables('userData'))]",
                 "networkProfile": {
                   "networkInterfaces": [
                     {
@@ -685,6 +708,39 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+              ]
+            },
+            {
+              "condition": "[variables('deployedFromSolutionTemplate')]",
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/GDVMCustomization', parameters('vmName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "fileUris": [
+                    "[uri(parameters('_artifactsLocation'), format('Controller-Initialization.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-CompleteUESetup.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-ConfigureLoginScripts.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-CreateDataDisk.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-MountFileShare.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-SyncP4Depot.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-SetupIncredibuild.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-RegisterTeradici.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('Task-SetupParsec.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), format('PreInstall.zip{0}', parameters('_artifactsLocationSasToken')))]"
+                  ]
+                },
+                "protectedSettings": {
+                  "commandToExecute": "powershell -ExecutionPolicy Unrestricted -command \"./Controller-Initialization.ps1\""
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
               ]
             },
             {
@@ -700,276 +756,21 @@
                 "autoUpgradeMinorVersion": true
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'runRemoteAccess')]",
-                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
-              "name": "runRemoteAccess",
-              "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "cmdGDKInstall": {
-                    "value": "[variables('cmdGDKInstall')]"
-                  },
-                  "cmdTeradiciRegistration": {
-                    "value": "[variables('cmdTeradiciRegistration')]"
-                  },
-                  "_artifactsLocation": {
-                    "value": "[parameters('_artifactsLocation')]"
-                  },
-                  "_artifactsLocationSasToken": {
-                    "value": "[parameters('_artifactsLocationSasToken')]"
-                  },
-                  "virtualMachineName": {
-                    "value": "[parameters('vmName')]"
-                  },
-                  "remoteAccessTechnology": {
-                    "value": "[parameters('remoteAccessTechnology')]"
-                  },
-                  "location": {
-                    "value": "[parameters('location')]"
-                  },
-                  "fileShareStorageAccount": {
-                    "value": "[parameters('fileShareStorageAccount')]"
-                  },
-                  "fileShareStorageAccountKey": {
-                    "value": "[parameters('fileShareStorageAccountKey')]"
-                  },
-                  "fileShareName": {
-                    "value": "[parameters('fileShareName')]"
-                  },
-                  "p4Port": {
-                    "value": "[parameters('p4Port')]"
-                  },
-                  "p4Username": {
-                    "value": "[parameters('p4Username')]"
-                  },
-                  "p4Password": {
-                    "value": "[parameters('p4Password')]"
-                  },
-                  "p4Workspace": {
-                    "value": "[parameters('p4Workspace')]"
-                  },
-                  "p4Stream": {
-                    "value": "[parameters('p4Stream')]"
-                  },
-                  "p4ClientViews": {
-                    "value": "[parameters('p4ClientViews')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "4414641532926436161"
-                    }
-                  },
-                  "parameters": {
-                    "location": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Deployment Location"
-                      }
-                    },
-                    "_artifactsLocation": {
-                      "type": "string",
-                      "defaultValue": "[deployment().properties.templateLink.uri]",
-                      "metadata": {
-                        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-                      }
-                    },
-                    "_artifactsLocationSasToken": {
-                      "type": "secureString",
-                      "defaultValue": "",
-                      "metadata": {
-                        "description": "The sasToken required to access _artifactsLocation."
-                      }
-                    },
-                    "cmdGDKInstall": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Toggle to Install GDK"
-                      }
-                    },
-                    "cmdTeradiciRegistration": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Toggle to Register Teradici"
-                      }
-                    },
-                    "virtualMachineName": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Name of Game Developer Virtual Machine"
-                      }
-                    },
-                    "remoteAccessTechnology": {
-                      "type": "string",
-                      "allowedValues": [
-                        "RDP",
-                        "Teradici",
-                        "Parsec"
-                      ],
-                      "metadata": {
-                        "description": "Remote Access technology"
-                      }
-                    },
-                    "fileShareStorageAccount": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Name of Storage Account to Link"
-                      }
-                    },
-                    "fileShareStorageAccountKey": {
-                      "type": "secureString",
-                      "metadata": {
-                        "description": "Key of Storage Account to Link"
-                      }
-                    },
-                    "fileShareName": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Name of File Share"
-                      }
-                    },
-                    "p4Port": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Port to use for p4"
-                      }
-                    },
-                    "p4Username": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Username for p4"
-                      }
-                    },
-                    "p4Password": {
-                      "type": "secureString",
-                      "metadata": {
-                        "description": "Password for p4"
-                      }
-                    },
-                    "p4Workspace": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "p4 Workspace"
-                      }
-                    },
-                    "p4Stream": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Stream for p4"
-                      }
-                    },
-                    "p4ClientViews": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Client View for p4"
-                      }
-                    }
-                  },
-                  "variables": {
-                    "mountFileShareParams": "[format('-storageAccount ''{0}'' -storageAccountKey ''{1}'' -fileShareName ''{2}''', parameters('fileShareStorageAccount'), parameters('fileShareStorageAccountKey'), parameters('fileShareName'))]",
-                    "p4Params": "[format('-p4Port ''{0}'' -p4Username ''{1}'' -p4Password ''{2}'' -p4Workspace ''{3}'' -p4Stream ''{4}'' -p4ClientViews ''{5}''', parameters('p4Port'), parameters('p4Username'), parameters('p4Password'), parameters('p4Workspace'), parameters('p4Stream'), parameters('p4ClientViews'))]",
-                    "remoteAccessExtension": {
-                      "RDP": {
-                        "publisher": "Microsoft.Compute",
-                        "type": "CustomScriptExtension",
-                        "typeHandlerVersion": "1.10",
-                        "autoUpgradeMinorVersion": true,
-                        "settings": {
-                          "fileUris": [
-                            "[uri(parameters('_artifactsLocation'), format('scripts/CreateDataDisk.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/MountFileShare.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/p4DepotSync.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/ibSetup.ps1{0}', parameters('_artifactsLocationSasToken')))]"
-                          ],
-                          "commandToExecute": "[format('powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"./CreateDataDisk.ps1;./MountFileShare.ps1 {0};./p4DepotSync.ps1 {1};./ibSetup.ps1;{2}\"', variables('mountFileShareParams'), variables('p4Params'), parameters('cmdGDKInstall'))]"
-                        }
-                      },
-                      "Teradici": {
-                        "publisher": "Microsoft.Compute",
-                        "type": "CustomScriptExtension",
-                        "typeHandlerVersion": "1.10",
-                        "autoUpgradeMinorVersion": true,
-                        "settings": {
-                          "fileUris": [
-                            "[uri(parameters('_artifactsLocation'), format('scripts/CreateDataDisk.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/MountFileShare.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/p4DepotSync.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/ibSetup.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/TeradiciRegCAS.ps1{0}', parameters('_artifactsLocationSasToken')))]"
-                          ]
-                        },
-                        "protectedSettings": {
-                          "commandToExecute": "[format('powershell -ExecutionPolicy Unrestricted -command \"./CreateDataDisk.ps1;./MountFileShare.ps1 {0};./p4DepotSync.ps1 {1};./ibSetup.ps1;{2};{3}\"', variables('mountFileShareParams'), variables('p4Params'), parameters('cmdGDKInstall'), parameters('cmdTeradiciRegistration'))]"
-                        }
-                      },
-                      "Parsec": {
-                        "publisher": "Microsoft.Compute",
-                        "type": "CustomScriptExtension",
-                        "typeHandlerVersion": "1.10",
-                        "autoUpgradeMinorVersion": true,
-                        "settings": {
-                          "fileUris": [
-                            "[uri(parameters('_artifactsLocation'), format('scripts/CreateDataDisk.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/MountFileShare.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/p4DepotSync.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/ibSetup.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/PostInstall.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/Automatic-Shutdown.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/Clear-Proxy.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/CreateAutomaticShutdownScheduledTask.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/CreateClearProxyScheduledTask.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/ForceCloseShutDown.reg{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/gpt.ini{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/GPU-Update.ico{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/NetWorkRestore.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/NetworkRestore.reg{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/OneHour.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/Parsec.png{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/psscripts.ini{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/ShowDialog.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/TeamMachineSetup.ps1{0}', parameters('_artifactsLocationSasToken')))]",
-                            "[uri(parameters('_artifactsLocation'), format('scripts/parsec/WarningMessage.ps1{0}', parameters('_artifactsLocationSasToken')))]"
-                          ],
-                          "commandToExecute": "[format('powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"./CreateDataDisk.ps1;./MountFileShare.ps1 {0};./p4DepotSync.ps1 {1};./ibSetup.ps1;{2};./PostInstall.ps1\"', variables('mountFileShareParams'), variables('p4Params'), parameters('cmdGDKInstall'))]"
-                        }
-                      }
-                    }
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Compute/virtualMachines/extensions",
-                      "apiVersion": "2021-11-01",
-                      "name": "[format('{0}/CustomScriptExtension-{1}', parameters('virtualMachineName'), parameters('remoteAccessTechnology'))]",
-                      "location": "[parameters('location')]",
-                      "properties": "[variables('remoteAccessExtension')[parameters('remoteAccessTechnology')]]"
-                    }
-                  ],
-                  "outputs": {
-                    "id": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Compute/virtualMachines/extensions', split(format('{0}/CustomScriptExtension-{1}', parameters('virtualMachineName'), parameters('remoteAccessTechnology')), '/')[0], split(format('{0}/CustomScriptExtension-{1}', parameters('virtualMachineName'), parameters('remoteAccessTechnology')), '/')[1])]"
-                    }
-                  }
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', split(format('{0}/GDVMCustomization', parameters('vmName')), '/')[0], split(format('{0}/GDVMCustomization', parameters('vmName')), '/')[1])]"
               ]
             }
-          ]
+          ],
+          "outputs": {
+            "Host_Name": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName')), '2021-05-01').dnsSettings.fqdn]"
+            },
+            "UserName": {
+              "type": "string",
+              "value": "[parameters('adminName')]"
+            }
+          }
         }
       }
     }
