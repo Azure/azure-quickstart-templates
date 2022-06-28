@@ -5,7 +5,7 @@
 @description('The name for your new Web PubSub instance.')
 @maxLength(63)
 @minLength(3)
-param wpsName string = 'simpleWebPubSub01'
+param wpsName string = uniqueString(utcNow()) /*Create a globally unique instance name by using the current UTC time as baseString.*/
 
 @description('The region in which to create the new instance, defaults to the same location as the resource group.')
 param Location string = resourceGroup().location
