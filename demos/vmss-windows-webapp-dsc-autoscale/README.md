@@ -1,4 +1,13 @@
-# Create/Upgrade a VM scale set running IIS configured for autoscale
+---
+description: Deploys a Windows VM Scale Set running IIS and a very basic .NET MVC web app. The VMSS PowerShell DSC Extension is leveraged to do the IIS install and WebDeploy package deployment.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# VM Scale Set with autoscale running an IIS WebApp
 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/PublicLastTestDate.svg)
@@ -45,3 +54,6 @@ The Autoscale rules are configured as follows
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/virtual-machine-scale-sets/quick-create-template-windows) article.
 
 Tags: `VMSS, VM Scale Set, Windows, DSC Extension`
+
+
+`Tags: Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, DSC, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Insights/autoscalesettings, ChangeCount`
