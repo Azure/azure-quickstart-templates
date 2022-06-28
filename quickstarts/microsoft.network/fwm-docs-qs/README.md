@@ -1,4 +1,13 @@
-# Azure Firewall Manager secured virtual hub quickstart
+---
+description: This template creates a secured virtual hub using Azure Firewall to secure your cloud network traffic destined to the Internet.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Secured virtual hubs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/fwm-docs-qs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/fwm-docs-qs/PublicDeployment.svg)
@@ -26,4 +35,4 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 This template is used by the Azure Firewall Manager documentation [quickstart](https://docs.microsoft.com/en-us/azure/firewall-manager/quick-secure-virtual-hub) article.
 
-`Tags: Azure Firewall Manager`
+`Tags:Azure Firewall Manager, Microsoft.Network/virtualWans, Standard, Microsoft.Network/virtualHubs, Microsoft.Network/virtualHubs/hubVirtualNetworkConnections, Microsoft.Network/firewallPolicies, Microsoft.Network/firewallPolicies/ruleCollectionGroups, Allow, Microsoft.Network/azureFirewalls, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Compute/virtualMachines, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/routeTables, Microsoft.Network/virtualHubs/hubRouteTables`
