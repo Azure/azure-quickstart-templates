@@ -27,9 +27,7 @@ var azureFirewallSubnetId = subnet.id
 var azureFirewallIpConfigurations = [for i in range(0, 2): {
   name: 'IpConf${(i + 1)}'
   properties: {
-    subnet: {
-      id: ((i + 1) == 1) ? azureFirewallSubnetId : 'null'
-    }
+    subnet: ((i == 0) ? json('{"id": "${azureFirewallSubnetId}"}') : json('null'))
     publicIPAddress: {
       id: publicIPAddress[i].id
     }
