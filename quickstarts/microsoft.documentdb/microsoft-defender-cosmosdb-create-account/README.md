@@ -26,7 +26,7 @@ languages:
 
 Using this ARM template, you can deploy an **Azure Cosmos DB Account** with **Microsoft Defender for Azure Cosmos DB enabled**. Microsoft Defender for Azure Cosmos DB is an Azure-native layer of security that detects attempts to exploit databases in your Azure Cosmos DB accounts. Microsoft Defender for Azure Cosmos DB detects potential SQL injections, known bad actors based on Microsoft Threat Intelligence, suspicious access patterns, and potential exploitations of your database through compromised identities or malicious insiders.
 
-See the [official documentation](https://go.microsoft.com/fwlink/?linkid=2097603) for more information.
+See the [official documentation]( https://go.microsoft.com/fwlink/?linkid=2097603) for more information.
 
 `Tags: Azure Cosmos DB, Microsoft Defender for Azure Cosmos DB, Advanced Threat Protection`
 
