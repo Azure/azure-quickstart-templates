@@ -7,7 +7,7 @@ languages:
 - json
 - bicep
 ---
-# Create an Azure Cosmos DB account with Microsoft Defender for Azure Cosmos DB enabled 
+# Create an Azure Cosmos DB account with Microsoft Defender for Azure Cosmos DB enabled
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/microsoft-defender-cosmosdb-create-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/microsoft-defender-cosmosdb-create-account/PublicDeployment.svg)
