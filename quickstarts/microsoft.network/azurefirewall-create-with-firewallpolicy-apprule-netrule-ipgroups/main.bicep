@@ -28,9 +28,7 @@ var azureFirewallPublicIpId = resourceId('Microsoft.Network/publicIPAddresses', 
 var azureFirewallIpConfigurations = [for i in range(0, numberOfPublicIPAddresses): {
   name: 'IpConf${i}'
   properties: {
-    subnet: {
-      id: ((i == 0) ? azureFirewallSubnetId : '')
-    }
+    subnet: ((i == 0) ? json('{"id": "${azureFirewallSubnetId}"}') : json('null'))
     publicIPAddress: {
       id: '${azureFirewallPublicIpId}${i + 1}'
     }
