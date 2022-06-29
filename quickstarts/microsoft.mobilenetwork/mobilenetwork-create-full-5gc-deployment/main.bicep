@@ -14,13 +14,19 @@ param mobileNetworkCode string = '01'
 param siteName string = 'myExampleSite'
 
 @description('The name of the service')
-param serviceName string = 'Allow-all-traffic'
+param serviceName string = 'Allow_all_traffic'
 
 @description('The name of the SIM policy')
 param simPolicyName string = 'Default-policy'
 
 @description('The name of the slice')
 param sliceName string = 'slice-1'
+
+@description('The name for the SIM group.')
+param simGroupName string
+
+@description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
+param simResources array
 
 @description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param controlPlaneAccessInterfaceName string = ''
@@ -107,7 +113,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
       servicePrecedence: 253
       pccRules: [
         {
-          ruleName: 'All-traffic'
+          ruleName: 'All_traffic'
           rulePrecedence: 253
           trafficControl: 'Enabled'
           serviceDataFlowTemplates: [
@@ -181,6 +187,27 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
       ]
     }
   }
+}
+
+resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = {
+  name: simGroupName
+  location: location
+  properties: {
+    mobileNetwork: {
+      id: exampleMobileNetwork.id
+    }
+  }
+
+  resource exampleSimResources 'sims@2022-04-01-preview' = [for item in simResources: {
+    name: item.simName
+    properties: {
+      integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
+      internationalMobileSubscriberIdentity: item.internationalMobileSubscriberIdentity
+      authenticationKey: item.authenticationKey
+      operatorKeyCode: item.operatorKeyCode
+      deviceType: item.deviceType
+    }
+  }]
 }
 
 resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {

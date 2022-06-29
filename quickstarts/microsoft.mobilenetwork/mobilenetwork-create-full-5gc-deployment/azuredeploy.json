@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.6.1.6515",
-      "templateHash": "8876814201197363318"
+      "version": "0.7.4.23292",
+      "templateHash": "10390541200207467519"
     }
   },
   "parameters": {
@@ -45,7 +45,7 @@
     },
     "serviceName": {
       "type": "string",
-      "defaultValue": "Allow-all-traffic",
+      "defaultValue": "Allow_all_traffic",
       "metadata": {
         "description": "The name of the service"
       }
@@ -62,6 +62,18 @@
       "defaultValue": "slice-1",
       "metadata": {
         "description": "The name of the slice"
+      }
+    },
+    "simGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the SIM group."
+      }
+    },
+    "simResources": {
+      "type": "array",
+      "metadata": {
+        "description": "An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format."
       }
     },
     "controlPlaneAccessInterfaceName": {
@@ -207,7 +219,7 @@
         "servicePrecedence": 253,
         "pccRules": [
           {
-            "ruleName": "All-traffic",
+            "ruleName": "All_traffic",
             "rulePrecedence": 253,
             "trafficControl": "Enabled",
             "serviceDataFlowTemplates": [
@@ -298,6 +310,25 @@
       ]
     },
     {
+      "copy": {
+        "name": "exampleSimResources",
+        "count": "[length(parameters('simResources'))]"
+      },
+      "type": "Microsoft.MobileNetwork/simGroups/sims",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('simGroupName'), parameters('simResources')[copyIndex()].simName)]",
+      "properties": {
+        "integratedCircuitCardIdentifier": "[parameters('simResources')[copyIndex()].integratedCircuitCardIdentifier]",
+        "internationalMobileSubscriberIdentity": "[parameters('simResources')[copyIndex()].internationalMobileSubscriberIdentity]",
+        "authenticationKey": "[parameters('simResources')[copyIndex()].authenticationKey]",
+        "operatorKeyCode": "[parameters('simResources')[copyIndex()].operatorKeyCode]",
+        "deviceType": "[parameters('simResources')[copyIndex()].deviceType]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/simGroups', parameters('simGroupName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes/attachedDataNetworks",
       "apiVersion": "2022-04-01-preview",
       "name": "[format('{0}/{1}/{2}', parameters('siteName'), parameters('siteName'), parameters('dataNetworkName'))]",
@@ -347,6 +378,20 @@
           "mnc": "[parameters('mobileNetworkCode')]"
         }
       }
+    },
+    {
+      "type": "Microsoft.MobileNetwork/simGroups",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[parameters('simGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "mobileNetwork": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes",
