@@ -16,9 +16,6 @@ param siteName string = 'myExampleSite'
 @description('The name of the service')
 param serviceName string = 'Allow-all-traffic'
 
-@description('An array containing properties of the SIM(s) you wish to create')
-param simResources array = []
-
 @description('The name of the SIM policy')
 param simPolicyName string = 'Default-policy'
 
@@ -77,7 +74,7 @@ param naptEnabled string
 @description('The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01-preview' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -87,13 +84,13 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01
     }
   }
 
-  resource exampleDataNetwork 'dataNetworks@2022-03-01-preview' = {
+  resource exampleDataNetwork 'dataNetworks@2022-04-01-preview' = {
     name: dataNetworkName
     location: location
     properties: {}
   }
 
-  resource exampleSlice 'slices@2022-03-01-preview' = {
+  resource exampleSlice 'slices@2022-04-01-preview' = {
     name: sliceName
     location: location
     properties: {
@@ -103,17 +100,11 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01
     }
   }
 
-  resource exampleService 'services@2022-03-01-preview' = {
+  resource exampleService 'services@2022-04-01-preview' = {
     name: serviceName
     location: location
     properties: {
       servicePrecedence: 253
-      serviceQosPolicy: {
-        maximumBitRate: {
-          uplink: '2 Gbps'
-          downlink: '2 Gbps'
-        }
-      }
       pccRules: [
         {
           ruleName: 'All-traffic'
@@ -136,7 +127,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01
     }
   }
 
-  resource exampleSimPolicy 'simPolicies@2022-03-01-preview' = {
+  resource exampleSimPolicy 'simPolicies@2022-04-01-preview' = {
     name: simPolicyName
     location: location
     properties: {
@@ -176,7 +167,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01
     }
   }
 
-  resource exampleSite 'sites@2022-03-01-preview' = {
+  resource exampleSite 'sites@2022-04-01-preview' = {
     name: siteName
     location: location
     properties: {
@@ -192,34 +183,20 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01
   }
 }
 
-resource exampleSimResources 'Microsoft.MobileNetwork/sims@2022-03-01-preview' = [for item in simResources: {
-  name: item.simName
-  location: location
-  properties: {
-    integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
-    internationalMobileSubscriberIdentity: item.internationalMobileSubscriberIdentity
-    authenticationKey: item.authenticationKey
-    operatorKeyCode: item.operatorKeyCode
-    deviceType: item.deviceType
-    mobileNetwork: {
-      id: exampleMobileNetwork.id
-    }
-    simPolicy: {
-      id: exampleMobileNetwork::exampleSimPolicy.id
-    }
-  }
-}]
-
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-03-01-preview' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {
   name: siteName
   location: location
   properties: {
     mobileNetwork: {
       id: exampleMobileNetwork.id
     }
+    sku: 'EvaluationPackage'
     coreNetworkTechnology: coreNetworkTechnology
-    customLocation: empty(customLocation) ? null : {
-      id: customLocation
+    platform: {
+      type: 'AKS-HCI'
+      customLocation: empty(customLocation) ? null : {
+        id: customLocation
+      }
     }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
@@ -229,7 +206,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
   }
 
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-03-01-preview' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-04-01-preview' = {
     name: siteName
     location: location
     properties: {
@@ -241,7 +218,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     }
 
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-03-01-preview' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-04-01-preview' = {
       name: dataNetworkName
       location: location
       properties: {
