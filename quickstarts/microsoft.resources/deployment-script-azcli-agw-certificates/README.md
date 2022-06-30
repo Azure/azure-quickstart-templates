@@ -39,3 +39,5 @@ After deploying the template, access the sample application from your browser us
 
 Here is what you can expect when accessing the sample application.
 ![accessing via public ip](browser-screengrab.png)
+
+> Any failures in deployment will likely be due to AAD RBAC propagation time.
