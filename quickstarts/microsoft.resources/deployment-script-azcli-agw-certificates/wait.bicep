@@ -19,6 +19,6 @@ resource deployDelay 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: '${waitSeconds}'
       }
     ]
-    scriptContent: 'write-output Sleeping for $Env:waitSeconds; start-sleep -Seconds $Env:waitSeconds'
+    scriptContent: 'write-output "Sleeping for $Env:waitSeconds"; start-sleep -Seconds $Env:waitSeconds'
   }
 }
