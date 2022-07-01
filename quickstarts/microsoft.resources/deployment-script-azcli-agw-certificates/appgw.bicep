@@ -162,7 +162,7 @@ resource agw 'Microsoft.Network/applicationGateways@2021-08-01' = {
       ]
   }
   dependsOn: [
-    kvAppGwSecretsUserRole
+    rbacPropagationDelay
   ]
 }
 output agwId string = agw.id
@@ -189,4 +189,15 @@ resource kvAppGwSecretsUserRole 'Microsoft.Authorization/roleAssignments@2020-08
     principalType: 'ServicePrincipal'
     principalId: agwId.properties.principalId
   }
+}
+
+module rbacPropagationDelay 'wait.bicep' = {
+  name: 'DeploymentDelay'
+  params: {
+    waitSeconds: 60
+    location: location
+  }
+  dependsOn: [
+    kvAppGwSecretsUserRole
+  ]
 }
