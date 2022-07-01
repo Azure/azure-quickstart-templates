@@ -1,4 +1,12 @@
-# Create a Key Vault
+---
+description: This module creates a KeyVault resource with apiVersion 2019-09-01.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# Create a KeyVault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.KeyVault/vaults/1.0/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.KeyVault/vaults/1.0/PublicDeployment.svg)
@@ -49,3 +57,6 @@ This module creates a Key Vault.
 ```apiVersion: 2019-09-01```
 
 
+
+
+`Tags: Microsoft.KeyVault/vaults`
