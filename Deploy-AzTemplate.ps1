@@ -19,7 +19,8 @@ Param(
     [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
     [string] $ManagementGroupId,
     [switch] $Dev,
-    [switch] $bicep
+    [switch] $bicep,
+    [bool]   $whatIf = $false
 )
 
 try {
@@ -77,6 +78,7 @@ Write-Host "Using parameter file: $TemplateParametersFile"
 
 if (!$ValidateOnly) {
     $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
+    $OptionalParameters.Add('WhatIf', $whatIf)
 }
 
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
