@@ -1,4 +1,13 @@
-# Create an Azure Web PubSub instance using Bicep
+---
+description: Azure Web PubSub Service helps you build real-time messaging web applications using WebSockets and the publish-subscribe pattern. This uses Bicep language to create and configure a Web PubSub resource. You can use this template to conveniently deploy Web PubSub for a tutorial or testing, or as a building block for more complex deployments with Web PubSub.
+page_type: sample
+products:
+- azure
+languages:
+- json
+- bicep
+---
+# Create Azure Web PubSub by using Bicep
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/azure-web-pubsub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/azure-web-pubsub/PublicDeployment.svg)
@@ -29,4 +38,4 @@ If you don't have an [Azure subscription](/azure/guides/developer/azure-develope
   - Connectivity and messaging logs: enabled
   - TLS clientCertEnabled: disabled
 
-`Tags: Web PubSub, Bicep, real-time messaging, publish-subscribe`
+`Tags:Web PubSub, Bicep, real-time messaging, publish-subscribe, Microsoft.SignalRService/webPubSub, None`
