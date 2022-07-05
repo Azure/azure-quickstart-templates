@@ -49,7 +49,7 @@ select * from table1;
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 
 | T-Shirt Size | Database VM Size | CPU Cores | Memory | Data Disks | # of Secondaries | # of Storage Accounts |
-|:--- |:---|:---|:---|:---|:---|:---|:---|:---|
+|:--- |:---|:---|:---|:---|:---|:---|
 | Small | Standard_A1 | 1 |1.75 GB | 2x1023 GB | 1 | 1 |
 | Medium | Standard_A3 | 4 | 7 GB | 8x1023 GB | 1 | 2 |
 | Large | Standard_A4 | 8 | 14 GB | 16x1023 GB | 2 | 2 |
