@@ -76,6 +76,7 @@ description: %description%
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 "@
