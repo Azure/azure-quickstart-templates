@@ -1,4 +1,13 @@
-# Nextflow on Azure
+---
+description: This template deploys a scalable Nextflow cluster with a Jumpbox, n cluster nodes, docker support and shared storage.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Deploy a Nextflow genomics cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nextflow/nextflow-genomics-cluster-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nextflow/nextflow-genomics-cluster-ubuntu/PublicDeployment.svg)
@@ -21,7 +30,7 @@ Its fluent DSL simplifies the implementation and the deployment of complex paral
 
 ## What is the Purpose of this Template
 
-To enable the deployment of a nextflow cluster using Ignite Executor on [Azure Scalable VMSS Machines](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview)
+To enable the deployment of a nextflow cluster using Ignite Executor on [Azure Scalable VMSS Machines](https://docs.microsoft.com/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview)
 
 ## Details
 
@@ -91,7 +100,7 @@ The cluster is created as a 'Deployment' under a resource group. If issues occur
 
 In most cases a good first step is to delete the resource group and redeploy to rule out transient issues.
 
-In addition to this, logs are created during the setup of the nodes and master. These are stored in the storage account created for the cluster. You easily access these by installing [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) and browsing the content under `[ResourceGroupUsed]/nfstoragexxxxxxx/File Shares/sharedstorage/logs`. Here is an example:
+In addition to this, logs are created during the setup of the nodes and master. These are stored in the storage account created for the cluster. You easily access these by installing [Azure Storage Explorer](https://azure.microsoft.com/features/storage-explorer/) and browsing the content under `[ResourceGroupUsed]/nfstoragexxxxxxx/File Shares/sharedstorage/logs`. Here is an example:
 
 [Cluster logs video](https://1drv.ms/v/s!AgO58DGl6B7Rqu9xp6uN8Nufc5mJiA)
 
@@ -116,3 +125,5 @@ Set the image ID as follows in your parameters file.
 You can then deploy your Nextflow cluster as follows:
 
  `az group deployment create -g [your_resource_group_here] --template-file ./azuredeploy.json --parameters @azuredeploy.customimage.parameters.json`
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Compute/virtualMachineScaleSets`

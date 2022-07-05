@@ -1,4 +1,14 @@
-# Create new site
+---
+description: This template creates a new site with associated 5G packet core resources. It can optionally be deployed to a Kubernetes cluster running on an Azure Stack Edge device.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
+# Create a new mobile network site
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-create-new-site/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-create-new-site/PublicDeployment.svg)
@@ -18,10 +28,10 @@ This template deploys a new site for an existing mobile network.
 
 ## Prerequisites
 
-By default this template does not deploy any resources to the Azure Stack Edge Pro device. If you want to deploy to an Azure Stack Edge Pro device, you must follow the pre-requisite instructions in the [Private 5G Core documentation](https://docs.microsoft.com/en-gb/azure/private-5g-core/complete-private-mobile-network-prerequisites) before starting the deployment, so that you can specify the customLocation parameter.
+By default this template does not deploy any resources to the Azure Stack Edge Pro device. If you want to deploy to an Azure Stack Edge Pro device, you must follow the pre-requisite instructions in the [Private 5G Core documentation](https://docs.microsoft.com/azure/private-5g-core/complete-private-mobile-network-prerequisites) before starting the deployment, so that you can specify the customLocation parameter.
 
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates`
+`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates, Microsoft.MobileNetwork/mobileNetworks/sites, Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes/attachedDataNetworks, Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes, Microsoft.MobileNetwork/packetCoreControlPlanes, Microsoft.MobileNetwork/mobileNetworks/dataNetworks, Microsoft.MobileNetwork/mobileNetworks`

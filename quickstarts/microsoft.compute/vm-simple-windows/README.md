@@ -1,4 +1,14 @@
-# Very simple deployment of a Windows VM
+---
+description: This template allows you to deploy a simple Windows VM using a few different options for the Windows version, using the latest patched version. This will deploy an A2 size VM in the resource group location and return the FQDN of the VM.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
+# Deploy a simple Windows VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-windows/PublicDeployment.svg)
@@ -30,3 +40,4 @@ If you're new to template deployment, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create a Windows virtual machine using an ARM template](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-template)
 
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

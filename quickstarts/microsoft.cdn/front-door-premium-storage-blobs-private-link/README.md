@@ -1,4 +1,14 @@
-# Front Door Premium with Azure Storage blob container origin and Private Link
+---
+description: This template creates a Front Door Premium and an Azure Storage blob container, and uses a private endpoint for Front Door to send traffic to the storage account.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
+# Front Door Premium with blob origin and Private Link
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-storage-blobs-private-link/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-storage-blobs-private-link/PublicDeployment.svg)
@@ -52,3 +62,5 @@ After approving the private endpoint, wait a few minutes before you attempt to a
 You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. You should see a page saying _The specified resource does not exist_. This is returned by Azure Storage because no files have been uploaded to the blob container and therefore there is no content to show yet. If you see a different error page, wait a few minutes and try again.
 
 You can also attempt to access the Azure Storage blob hostname directly. The hostname is also emitted as an output from the deployment - the output is named `blobEndpointHostName`. You should see an error saying _This request is not authorized to perform this operation_ error, since your storage account is configured to not accepts requests that come from the internet.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

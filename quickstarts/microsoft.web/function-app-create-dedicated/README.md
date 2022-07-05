@@ -1,4 +1,13 @@
-# Provision a function app running on an App Service Plan
+---
+description: This template provisions a function app on a dedicated hosting plan, meaning it will be run and billed just like any App Service site. There are other templates available for provisioning on a dynamic hosting plan.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Provision a function app on a dedicated hosting plan
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-create-dedicated/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-create-dedicated/PublicDeployment.svg)
@@ -20,3 +29,5 @@ Azure functions is a solution for easily running small pieces of code, or "funct
 - [Microsoft Learn Functions Modules](https://docs.microsoft.com/learn/browse/?products=azure-functions)
 - [Microsoft Function Pricing](https://azure.microsoft.com/pricing/details/functions/)
 - [Microsoft Function Documentation](https://docs.microsoft.com/azure/azure-functions/)
+
+`Tags: Microsoft.Storage/storageAccounts, microsoft.insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites, config`

@@ -1,4 +1,13 @@
-# Deploy Microsoft Purview with Azure Resource Manager (ARM)
+---
+description: This template will deploy a Microsoft Purview account to a new or existing resource group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Deploy Microsoft Purview account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurepurview/azure-purview-deployment/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurepurview/azure-purview-deployment/PublicDeployment.svg)
@@ -56,3 +65,5 @@ After deployment, the first activities are usually:
 * [Create a collection](/azure/purview/quickstart-create-collection)
 * [Register a resource](/azure/purview/azure-purview-connector-overview)
 * [Scan the resource](/azure/purview/concept-scans-and-ingestion)
+
+`Tags: Microsoft.Purview/accounts, SystemAssigned`

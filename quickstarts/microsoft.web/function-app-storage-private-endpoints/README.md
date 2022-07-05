@@ -3,6 +3,7 @@ description: This template allows you to deploy an Azure Function App that commu
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
@@ -22,9 +23,9 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-storage-private-endpoints%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-storage-private-endpoints%2Fazuredeploy.json)
 
-This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings, [via private endpoints](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#private-endpoints). 
+This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings, [via private endpoints](https://docs.microsoft.com/azure/azure-functions/functions-networking-options#private-endpoints).
 
-![Function App with Storage Private Endpoints](/quickstarts/microsoft.web/function-app-storage-private-endpoints/images/function-app-storage-private-endpoints.jpg) 
+![Function App with Storage Private Endpoints](/quickstarts/microsoft.web/function-app-storage-private-endpoints/images/function-app-storage-private-endpoints.jpg)
 
 ### Azure Function App
 
@@ -32,12 +33,11 @@ The Function App uses the AzureWebJobsStorage and WEBSITE_CONTENTAZUREFILECONNEC
 
 ### Elastic Premium Plan
 
-The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan#features). 
+The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan#features).
 
 ### Azure Storage account
 
-The Storage account that the Function uses for operation and for file contents. 
-
+The Storage account that the Function uses for operation and for file contents.
 
 ### Virtual Network
 
@@ -57,12 +57,12 @@ The sample uses two subnets:
   - Azure Blob storage
   - Azure Queue storage
   - Azure Table storage
-  
+
 ### Private DNS Zones
 
 Using a private endpoint to connect to Azure resources means connecting to a private IP address instead of the public endpoint.  Existing Azure services are configured to use existing DNS to connect to the public endpoint.  The DNS configuration will need to be overridden to connect to the private endpoint.
 
-A private DNS zone will be created for each Azure resource configured with a private endpoint.  A DNS A record is created for each private IP address associated with the private endpoint. 
+A private DNS zone will be created for each Azure resource configured with a private endpoint.  A DNS A record is created for each private IP address associated with the private endpoint.
 
 The following DNS zones are created in this sample:
 
@@ -74,6 +74,5 @@ The following DNS zones are created in this sample:
 ### Application Insights
 
 [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
-
 
 `Tags: Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Web/sites/config, Microsoft.Network/virtualNetworks, Microsoft.Network/privateDnsZones, Microsoft.Network/privateEndpoints, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/fileServices/shares, Microsoft.Insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites`

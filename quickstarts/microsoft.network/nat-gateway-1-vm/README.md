@@ -1,3 +1,13 @@
+---
+description: Deploy a NAT gateway and virtual machine
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
 # Virtual Network NAT
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nat-gateway-1-vm/PublicLastTestDate.svg)
@@ -44,4 +54,4 @@ The following resources are deployed as part of the solution.
 
 - **virtualMachines**: Virtual machine for solution.
 
-`Tags: virtual network, vnet, nat, nat gateway, virtual machine`
+`Tags: virtual network, vnet, nat, nat gateway, virtual machine, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/publicIPPrefixes, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks, Microsoft.Network/natGateways, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/networkInterfaces`

@@ -1,4 +1,13 @@
-# Autoscale demo app on Ubuntu 16.04
+---
+description: Deploy a VM Scale Set behind a load balancer/NAT & each VM running a simple Python Bottle app that does work. With Autoscale configured Scale Set will scale out & in as needed
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Deploy VM Scale Set with Python Bottle server & AutoScale
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/python/vmss-bottle-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/python/vmss-bottle-autoscale/PublicDeployment.svg)
@@ -23,3 +32,5 @@ Self-contained Ubuntu autoscale example which includes a Python Bottle server to
 - You can stop doing work by browsing to `dns:9000/stop_work`.
 
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/virtual-machine-scale-sets/quick-create-template-linux) article.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, CustomScript, Microsoft.Insights/autoscaleSettings, ChangeCount`

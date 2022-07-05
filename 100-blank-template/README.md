@@ -1,3 +1,13 @@
+---
+description: A blank template and empty parameters file.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
 # Blank Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/PublicLastTestDate.svg)

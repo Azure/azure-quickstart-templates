@@ -1,4 +1,13 @@
-# Deploy a app service plan and a basic Linux web app
+---
+description: This template allows you to deploy an app service plan and a basic Linux web app
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Deploy a basic Linux web app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-basic-linux/PublicLastTestDate.svg)	
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-basic-linux/PublicDeployment.svg)	
@@ -15,3 +24,4 @@
 
 This template allows you to deploy an app service plan and a basic Linux web app.
 
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites`

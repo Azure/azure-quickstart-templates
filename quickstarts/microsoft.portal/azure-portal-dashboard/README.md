@@ -1,3 +1,12 @@
+---
+description: This template creates an example dashboard in the Azure portal, showing performance of an existing virtual machine in your subscription, as well as some static information and links.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
 # Create an Azure portal dashboard
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.portal/azure-portal-dashboard/PublicLastTestDate.svg)
@@ -15,4 +24,4 @@
 
 This template creates an example dashboard in the Azure portal, showing performance of an existing virtual machine in your subscription, as well as some static information and links. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-portal/quick-create-template) article.
 
-`Tags: Azure portal, dashboard`
+`Tags:Azure portal, dashboard, Microsoft.Portal/dashboards, Extension[azure]/HubsExtension/PartType/MarkdownPart, Extension[azure]/HubsExtension/PartType/VideoPart, Extension/Microsoft_Azure_Monitoring/PartType/MetricsChartPart, Extension/Microsoft_Azure_Compute/PartType/VirtualMachinePart, VirtualMachine`

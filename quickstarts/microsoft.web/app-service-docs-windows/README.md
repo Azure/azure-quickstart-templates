@@ -1,4 +1,13 @@
-# Windows App Service Plan and Basic Web App
+---
+description: This template is to be used with http://docs.microsoft.com/azure/app-service/quickstart-arm-template
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# App Service Quickstart - Windows app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-service-docs-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-service-docs-windows/PublicDeployment.svg)
@@ -14,3 +23,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fapp-service-docs-windows%2Fazuredeploy.json)
 
 This template is to be used with: [Quickstart: Create App Service app using an ARM template](https://docs.microsoft.com/azure/app-service/quickstart-arm-template).
+
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, sourcecontrols`

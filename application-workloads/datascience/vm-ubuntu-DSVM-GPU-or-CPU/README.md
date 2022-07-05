@@ -3,6 +3,7 @@ description: This template deploy a Ubuntu Server with some tools for Data Scien
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
@@ -95,4 +96,4 @@ Now, you should see the graphical interface for your Ubuntu DSVM.
 
 ![Screen](./images/connect-x2go6.png)
 
-`Tags:Azure4Student,virtual machine,Linux,Ubuntu Server,Beginner,Data Science,Microsoft.Network/networkInterfaces,Microsoft.Network/networkSecurityGroups,Microsoft.Network/virtualNetworks,Microsoft.Network/publicIPAddresses,Microsoft.Storage/storageAccounts,Microsoft.Compute/virtualMachines`
+`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Data Science, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Storage/storageAccounts, Microsoft.Compute/virtualMachines`

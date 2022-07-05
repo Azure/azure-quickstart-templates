@@ -3,6 +3,7 @@ description: This is a sample for Java CI/CD using Jenkins and Azure Web Apps.
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 ---
@@ -21,13 +22,11 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-webapp%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-webapp%2Fazuredeploy.json)
 
-
-
 Azure App Service is a fast and simple way to create web apps using Java, Node, PHP or ASP.NET, as well as support for custom language runtimes using Docker. A continuous integration and continuous deployment (CI/CD) pipeline that pushes each of your changes automatically to Azure app services allows you to deliver value faster to your customers.
 
 ## Deployment steps
 
-1. Create service principal with the `Contributor` role with [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli?view=azure-cli-latest) if you don't have one in your subscription.
+1. Create service principal with the `Contributor` role with [Azure CLI](https://docs.microsoft.com/cli/azure/get-started-with-azure-cli?view=azure-cli-latest) if you don't have one in your subscription.
    ```shell
    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}"
    ```
@@ -111,7 +110,7 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 4. Navigate to http://localhost:8080/ on your local machine.
 
 5. Sign in with the user name `admin` and the initial password above.
-   
+
    ![](images/jenkins-login-ssh.png)
 
 6. Proceed management operations as need.
@@ -127,8 +126,4 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 
    ![](images/webapp-show.png)
 
-
-
-
-
-`Tags: Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, config, MySql, microsoft.insights/components, Microsoft.DBforMySQL/servers, firewallrules, databases, Microsoft.Resources/deployments`
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, config, MySql, microsoft.insights/components, Microsoft.DBforMySQL/servers, firewallrules, databases, Microsoft.Resources/deployments, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

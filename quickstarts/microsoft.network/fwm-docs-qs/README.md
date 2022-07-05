@@ -3,6 +3,7 @@ description: This template creates a secured virtual hub using Azure Firewall to
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
@@ -33,6 +34,6 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 ## Notes
 
-This template is used by the Azure Firewall Manager documentation [quickstart](https://docs.microsoft.com/en-us/azure/firewall-manager/quick-secure-virtual-hub) article.
+This template is used by the Azure Firewall Manager documentation [quickstart](https://docs.microsoft.com/azure/firewall-manager/quick-secure-virtual-hub) article.
 
-`Tags:Azure Firewall Manager, Microsoft.Network/virtualWans, Standard, Microsoft.Network/virtualHubs, Microsoft.Network/virtualHubs/hubVirtualNetworkConnections, Microsoft.Network/firewallPolicies, Microsoft.Network/firewallPolicies/ruleCollectionGroups, Allow, Microsoft.Network/azureFirewalls, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Compute/virtualMachines, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/routeTables, Microsoft.Network/virtualHubs/hubRouteTables`
+`Tags: Azure Firewall Manager, Microsoft.Network/virtualWans, Standard, Microsoft.Network/virtualHubs, Microsoft.Network/virtualHubs/hubVirtualNetworkConnections, Microsoft.Network/firewallPolicies, Microsoft.Network/firewallPolicies/ruleCollectionGroups, Allow, Microsoft.Network/azureFirewalls, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Compute/virtualMachines, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/routeTables, Microsoft.Network/virtualHubs/hubRouteTables`

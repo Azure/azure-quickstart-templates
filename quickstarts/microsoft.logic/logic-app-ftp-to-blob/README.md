@@ -1,4 +1,13 @@
-# Copy FTP files to Blob with logic app.
+---
+description: This template allows you to create a Logic app triggers on files in an FTP server and copies them to an Azure Blob container. You can add an additional triggers or actions to customize it to your needs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Copy FTP files to Azure Blob logic app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-ftp-to-blob/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-ftp-to-blob/PublicDeployment.svg)
@@ -21,3 +30,5 @@ Azure Logic Apps is a cloud service that automates the execution of your busines
 - [Microsoft Logic Apps Documentation](https://docs.microsoft.com/azure/logic-apps/)
 - [Microsoft Learn Logic App Modules](https://docs.microsoft.com/learn/browse/?term=logic%20app)
 - [Microsoft Learn Logic App Module - building workflow](https://docs.microsoft.com/learn/paths/build-workflows-with-logic-apps/)
+
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, ApiConnection`
