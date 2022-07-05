@@ -1,4 +1,12 @@
-# Create PostgreSQL 10 master-slave streaming replication on multiple Ubuntu 18.04 VMs and one jumpbox VM with a public IP
+---
+description: This template creates PostgreSQL streaming replication from one master to one or more slaves each configured with multiple striped data disks. The database servers are deployed into a private subnet with an optional externally accessible jumpbox.
+page_type: sample
+products:
+- azure
+languages:
+- json
+---
+# PostgreSQL 10 on Ubuntu VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/postgre/postgresql-on-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/postgre/postgresql-on-ubuntu/PublicDeployment.svg)
@@ -56,3 +64,6 @@ The following table outlines the deployment topology characteristics for each su
 | XLarge | Standard_A4 | 8 | 14 GB | 16x1023 GB | 3 | 4 |
 
 
+
+
+`Tags: Microsoft.Resources/deployments`
