@@ -1,4 +1,14 @@
-# Update existing packet core version
+---
+description: This template allows you to update the version of an existing packet core.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
+# Update a packet core control plane
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-update-packet-core-control-plane/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-update-packet-core-control-plane/PublicDeployment.svg)
@@ -24,4 +34,4 @@ By default this template does not deploy any resources to the Azure Stack Edge P
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates`
+`Tags:Azure Private 5G Core, Resource Manager templates, ARM templates, Microsoft.MobileNetwork/packetCoreControlPlanes, Microsoft.MobileNetwork/mobileNetworks`
