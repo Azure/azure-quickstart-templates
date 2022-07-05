@@ -1,4 +1,14 @@
-# Azure Web Application Firewall v2 on Application Gateway Quickstart
+---
+description: This template creates an Azure Web Application Firewall v2 on Azure Application  Gateway with two Windows Server 2016 servers in the backend pool
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
+# Create an Azure WAF v2 on Azure Application Gateway
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-docs-wafv2/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-docs-wafv2/PublicDeployment.svg)
@@ -26,4 +36,4 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 This template is used by the Web Application Firewall documentation [quickstart](https://docs.microsoft.com/azure/web-application-firewall/ag/quick-create-template) article.
 
-`Tags: Web Application Firewall`
+`Tags: Web Application Firewall, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/applicationGateways, Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies, Microsoft.Network/networkInterfaces`

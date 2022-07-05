@@ -1,4 +1,13 @@
-# Deploy an Azure SQL Server and Azure SQL Databases with Threat Detection enabled and configurable email addresses
+---
+description: This template allows you to deploy an Azure SQL Server and a user-defined number of Azure SQL Databases with Threat Detection enabled, with an email address to receive alerts for each database.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Azure SQL Server + multiple SQL DBs with Threat Detection
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-threat-detection-db-policy-multiple-databases/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-threat-detection-db-policy-multiple-databases/PublicDeployment.svg)
@@ -17,4 +26,6 @@ This template allows you to deploy an Azure SQL server and a user-defined number
 
 Threat Detection is part of the SQL Advanced Threat Protection (ATP) offering and provides a layer of security that responds to potential threats over SQL servers and databases.
 
-For more information on Threat Detection, see the [official documentation]( https://docs.microsoft.com/en-us/azure/sql-database/sql-database-threat-detection).
+For more information on Threat Detection, see the [official documentation]( https://docs.microsoft.com/azure/sql-database/sql-database-threat-detection).
+
+`Tags: Microsoft.Sql/servers, Microsoft.Sql/servers/databases, securityAlertPolicies`

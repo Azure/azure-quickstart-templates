@@ -3,6 +3,7 @@ description: This template allows you to create a Virtual Network with two subne
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
@@ -26,4 +27,4 @@ languages:
 
 This template allows you to create a Virtual Network with two subnets.
 
-`Tags:,Microsoft.Network/virtualNetworks`
+`Tags: Microsoft.Network/virtualNetworks`

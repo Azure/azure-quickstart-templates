@@ -3,11 +3,11 @@ description: This template allows you to deploy an Azure SQL server with Auditin
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
 ---
-
 # Azure SQL Server with Auditing written to Log Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/PublicLastTestDate.svg)
@@ -39,4 +39,4 @@ Enable Auditing of Microsoft support operations (isMSDevOpsAuditEnabled) to trac
 
 For more information on Auditing of Microsoft support operations, see the [official documentation]( https://docs.microsoft.com/azure/azure-sql/database/auditing-overview#auditing-of-microsoft-support-operations).
 
-
+`Tags: Microsoft.OperationalInsights/workspaces, Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Insights/diagnosticSettings, Microsoft.Sql/servers/auditingSettings, Microsoft.Sql/servers/devOpsAuditingSettings`

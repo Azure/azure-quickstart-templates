@@ -1,4 +1,13 @@
-# Create an Event Grid custom topic and send events to event hub
+---
+description: Creates an Azure Event Grid custom topic and event hub to handle the events.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Create Event Grid custom topic and event hub handler.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-event-hubs-handler/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-event-hubs-handler/PublicDeployment.svg)
@@ -15,4 +24,4 @@
 
 This template creates an Event Grid custom topic and an event hub. It creates an event subscription that sends events from the custom topic to the event hub.
 
-`Tags: eventgrid`
+`Tags: eventgrid, Microsoft.EventGrid/topics, Microsoft.EventHub/namespaces, EventHubs, Microsoft.EventGrid/eventSubscriptions`

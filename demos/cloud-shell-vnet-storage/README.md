@@ -3,6 +3,7 @@ description: This template deploys Azure Cloud Shell storage into an Azure virtu
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 ---
@@ -37,6 +38,5 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 After deploying this template and the 101-cloud-shell-vnet template, navigate to Cloud Shell in the Azure Portal or on shell.azure.com.
 If Cloud Shell has been used in the past, the existing clouddrive must be unmounted. To do this run `clouddrive unmount` from an active Cloud Shell session.
 Reconnect to Cloud Shell, you will be prompted with the first run experience. Select your preferred shell experience, then navigate to the advanced settings and select the show isolated VNET settings box. Fill in the fields with the desired resources create with this template.
-
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices, Microsoft.Storage/storageAccounts/fileServices, Microsoft.Storage/storageAccounts/fileServices/shares, Microsoft.Network/virtualNetworks`

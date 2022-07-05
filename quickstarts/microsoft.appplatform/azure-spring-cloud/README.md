@@ -3,6 +3,7 @@ description: This template deploys a simple Azure Spring Apps microservice appli
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 ---
@@ -22,4 +23,4 @@ languages:
 
 This template deploys a simple Azure Spring Apps microservice application to run on Azure. You'll see that there are two deployments in the template: The first deployment provisions resources, but traffic is not yet routed to the apps; the second deployment sets the apps to _active_.
 
-`Tags: Azure Spring Apps, Spring Boot, microservice, application`
+`Tags: Azure Spring Apps, Spring Boot, microservice, application, Microsoft.AppPlatform/Spring, apps, deployments, Jar, Microsoft.Resources/deployments, Microsoft.AppPlatform/Spring/apps`

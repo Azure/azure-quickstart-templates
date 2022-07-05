@@ -1,4 +1,13 @@
-# Deploy Shibboleth Identity Provider cluster on Windows
+---
+description: This template deploys Shibboleth Identity Provider on Windows in a clustered configuration. After the deployment is successful, you can go to https://your-domain:8443/idp/profile/status (note port number) to check success.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Deploy Shibboleth Identity Provider cluster on Windows.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/PublicDeployment.svg)
@@ -9,7 +18,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fshibboleth%2Fshibboleth-cluster-windows%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fshibboleth%2Fshibboleth-cluster-windows%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fshibboleth%2Fshibboleth-cluster-windows%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fshibboleth%2Fshibboleth-cluster-windows%2Fazuredeploy.json)
 
@@ -18,7 +27,7 @@ This template deploys Shibboleth Identity Provider on Windows in a clustered con
 # Notes
 
 ## Front End VM's:
-This template can instantiate up to 5 front end VM's. This number can be increased easily by copying and pasting the related parts of the template. 
+This template can instantiate up to 5 front end VM's. This number can be increased easily by copying and pasting the related parts of the template.
 
 ## Port Details:
 The template opens HTTP port 8443 for SSL front end access on all the front end VM's. This port is load-balanced using the load balancer.
@@ -34,7 +43,7 @@ Here are the steps you can follow to create a testing setup including Shibboleth
 
 Create a deployment of Shibboleth IDP using this template and RDP into the VM deployed.
 
-## Update ldap.properties inside /opt/conf directory as per the LDAP configuration. 
+## Update ldap.properties inside /opt/conf directory as per the LDAP configuration.
     Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
 	- set idp.authn.LDAP.authenticator = bindSearchAuthenticator
 	- set idp.authn.LDAP.ldapURL = ldap://ldap.forumsys.com:389
@@ -46,7 +55,7 @@ Create a deployment of Shibboleth IDP using this template and RDP into the VM de
 	- set idp.authn.LDAP.dnFormat = uid=%s,dc=example,dc=com
 	- Comment out idp.authn.LDAP.sslConfig & Comment out idp.authn.LDAP.trustCertificates as SSL is not used here
 
-## Create metadata xml file for service provider. 
+## Create metadata xml file for service provider.
     Note: http://testshib.org is used as Service provider and Shibboleth is used as IDP.
 	- Download metadata file from - https://www.testshib.org/metadata/testshib-providers.xml inside /opt/conf directory
 	- Configure the metadata provider inside /opt/conf/metadata-providers.xml file as follows
@@ -69,7 +78,7 @@ Create a deployment of Shibboleth IDP using this template and RDP into the VM de
 ## Configure attribute-resolver
 	- Configure the mapping of LDAP attributes with Shibboleth attributes
  	- These instructions would vary as per LDAP installation. Following are specific to forumsys ldap
-	- Set sourceAttributeId attribute of Attribute with id=eduPersonPrincipalName to uid 
+	- Set sourceAttributeId attribute of Attribute with id=eduPersonPrincipalName to uid
 	<resolver:AttributeDefinition id="eduPersonPrincipalName" xsi:type="ad:Prescoped" sourceAttributeID="uid">
         <resolver:Dependency ref="myLDAP" />
         <resolver:AttributeEncoder xsi:type="enc:SAML1ScopedString" name="urn:mace:dir:attribute-def:eduPersonPrincipalName" encodeType="false" />
@@ -78,7 +87,7 @@ Create a deployment of Shibboleth IDP using this template and RDP into the VM de
 	- In the bottom of same xml we need to configure data connector settings for LDAP. Again these settings vary as per LDAP setup.
 		<resolver:DataConnector id="myLDAP" xsi:type="dc:LDAPDirectory"
 				ldapURL="%{idp.attribute.resolver.LDAP.ldapURL}"
-				baseDN="%{idp.attribute.resolver.LDAP.baseDN}" 
+				baseDN="%{idp.attribute.resolver.LDAP.baseDN}"
 				principal="%{idp.attribute.resolver.LDAP.bindDN}"
 				principalCredential="%{idp.attribute.resolver.LDAP.bindDNCredential}">
 			<dc:FilterTemplate>
@@ -96,19 +105,19 @@ Create a deployment of Shibboleth IDP using this template and RDP into the VM de
         <PolicyRequirementRule xsi:type="ANY" />
 	
 ## Comment out following in idp.properties to use Shibboleth.StorageService instead of Shibboleth.JPAStorageService
-	- idp.consent.StorageService 
+	- idp.consent.StorageService
 	- idp.consent.userStorageKey
 	- idp.consent.userStorageKeyAttribute
 
 ## Add following environment variable inside startup.bat of Apache Tomcat.
     - set IDP_HOME=c:/opt/shibboleth-idp
 
-## Restart the servlet container 
+## Restart the servlet container
     - cd C:\apache-tomcat-7.0.67\bin\
     - Start-Process .\startup.bat
-    
+
 ## Test your installation
     - Follow the steps on http://testshib.org to test the shibboleth installation as IDP
     - Log files for Shibboleth reside inside /opt/logs directory. The log files can be helpful for debugging any issues that show up during the login process.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachines, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension`

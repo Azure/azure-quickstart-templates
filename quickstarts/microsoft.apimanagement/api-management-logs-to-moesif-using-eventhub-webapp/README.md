@@ -3,6 +3,7 @@ description: The template will log API calls from Azure API Management to Moesif
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 ---
@@ -18,13 +19,13 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)
 
 Log and monitor API traffic from Azure API Management using [Moesif API Analytics](https://www.moesif.com/?language=azure-api-management) in a few minutes without any code changes or restarts. The integration also provides visibility into rejected requests that never reach your underlying service.
 
 ## How it works
 
-This solution is deployed using an [Azure Resource Manager Template](https://azure.microsoft.com/en-us/resources/templates/201-api-management-logs-to-moesif-using-eventhub-webapp/). An XML Policy configures an APIM logger to send API logs to an Azure EventHub. An Azure WebJob reads from the EventHub and sends to Moesif for data processing.
+This solution is deployed using an [Azure Resource Manager Template](https://azure.microsoft.com/resources/templates/201-api-management-logs-to-moesif-using-eventhub-webapp/). An XML Policy configures an APIM logger to send API logs to an Azure EventHub. An Azure WebJob reads from the EventHub and sends to Moesif for data processing.
 [More info on this integration](https://www.moesif.com/implementation/log-http-calls-from-azure-api-management?platform=azure-management).
 
 ![Architecture Diagram Logging API Calls from Azure API Management](https://docs.moesif.com/images/docs/integration/azure-api-management-logging-architecture-diagram.png)
@@ -47,7 +48,7 @@ Within the Azure Template Deployment panel, set the following properties:
 
 * Set _Moesif Application Id_ to the one displayed after logging into your Moesif account. You can create a free one on [Moesif's website](https://www.moesif.com/?language=azure-api-management)
 
-* Set _Existing Api Mgmt Name_ to the name of your Azure APIM instance. If blank, you will need to manually create the [APIM logger](https://docs.microsoft.com/en-us/azure/api-management/api-management-log-to-eventhub-sample#policy-declaration).
+* Set _Existing Api Mgmt Name_ to the name of your Azure APIM instance. If blank, you will need to manually create the [APIM logger](https://docs.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample#policy-declaration).
 
 Once done, click the _Review+create_ button at the bottom and finish the template creation wizard.
 
@@ -55,16 +56,16 @@ Once done, click the _Review+create_ button at the bottom and finish the templat
 
 ### 3. Add XML Policy
 
-Within the Azure portal, navigate to your existing Azure API Management instance. 
-Select either a single API you want to add Moesif logging to, or select _All APIs_ to add Moesif globally. 
+Within the Azure portal, navigate to your existing Azure API Management instance.
+Select either a single API you want to add Moesif logging to, or select _All APIs_ to add Moesif globally.
 
-> It's recommended to add the XML policy globally for all APIs to reduce code replication. Then, use Moesif [dynamic sampling](https://www.moesif.com/docs/platform/dynamic-sampling/) to control what data is collected based on user behavior or regex rules. 
+> It's recommended to add the XML policy globally for all APIs to reduce code replication. Then, use Moesif [dynamic sampling](https://www.moesif.com/docs/platform/dynamic-sampling/) to control what data is collected based on user behavior or regex rules.
 
-Under the _Inbound Processing_ section, click the _Add Policy_ button. 
+Under the _Inbound Processing_ section, click the _Add Policy_ button.
 Select _Other Policies_ which will open the XML editor.
-Paste in the XML code you see below. 
+Paste in the XML code you see below.
 
-More info on editing APIM policies is available on the [Azure docs](https://docs.microsoft.com/en-us/azure/api-management/set-edit-policies)
+More info on editing APIM policies is available on the [Azure docs](https://docs.microsoft.com/azure/api-management/set-edit-policies)
 
 ```xml
 <policies>
@@ -164,10 +165,9 @@ return new JObject(
 
 That's it. Once the XML is added to your APIs, the logs should start showing up in Moesif.
 
-
 ## Configuration Options
 
-The below fields in the XML policy can be modified by you to meet your requirements. XML Policies support a number of [context variables](https://docs.microsoft.com/en-us/azure/api-management/api-management-policy-expressions#ContextVariables) which you can also leverage.
+The below fields in the XML policy can be modified by you to meet your requirements. XML Policies support a number of [context variables](https://docs.microsoft.com/azure/api-management/api-management-policy-expressions#ContextVariables) which you can also leverage.
 
 ### User Id
 _String_, The field `user_id` identifies who the user is making the API and enables Moesif to associate API calls to user profiles. The default XML policy extracts the user id from the `context.User.Id` or the Subject of the JWT Token. If you are a B2B company, this can be used simultaneously with company id to track API Usage both at the individual user-level and also account-level. See [identifying customers in Moesif](https://www.moesif.com/docs/getting-started/identify-customers/) for more info.
@@ -179,34 +179,34 @@ _String_, The field `contextRequestUser` allows you to store additional user met
 _String_, The field `company_id` identifies which company is making the API and enables Moesif to associate API calls to company profiles. The default XML policy does not set this field. See [identifying customers in Moesif](https://www.moesif.com/docs/getting-started/identify-customers/) for more info.
 
 ### Event Metadata
-_String_, A JSON string that allows you to add custom metadata that will be associated with the API call. For example, you may want to store the `context.Api.Name` or `context.Api.Version` with the API calls by reading from the [context variables](https://docs.microsoft.com/en-us/azure/api-management/api-management-policy-expressions#ContextVariables). The `metadata` field must be a JSON encoded string. 
+_String_, A JSON string that allows you to add custom metadata that will be associated with the API call. For example, you may want to store the `context.Api.Name` or `context.Api.Version` with the API calls by reading from the [context variables](https://docs.microsoft.com/azure/api-management/api-management-policy-expressions#ContextVariables). The `metadata` field must be a JSON encoded string.
 
 ## Manual deployment
 
-The individual components can be deployed directly if needed. 
+The individual components can be deployed directly if needed.
 
 ### WebJob
 
 The WebJob is deployed as part of the overall deployment.
 To re-deploy the WebJob:
 1. Download the [run.bat](https://raw.githubusercontent.com/Moesif/ApimEventProcessor/v1/azure-app-service-webjobs/run.bat) script to your computer.
-2. Within the Azure Portal, go to your WebApp and select the WebJobs panel. 
+2. Within the Azure Portal, go to your WebApp and select the WebJobs panel.
  -- If there is an existing WebJob, stop it and remove it.
-3. Click the _+Add_ button to create a new job. Give it a name, set type to _continuous_ and upload the `run.bat` you previously downloaded. 
+3. Click the _+Add_ button to create a new job. Give it a name, set type to _continuous_ and upload the `run.bat` you previously downloaded.
 
 Once created, the script will clone the [ApimEventProcessor repo 'v1' branch](https://github.com/Moesif/Apimeventprocessor/tree/v1), run `dotnet build`, and starts the worker.
 
 ### APIM Logger
 
-If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json) or view [Microsoft docs](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-log-event-hubs)
+If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json) or view [Microsoft docs](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs)
 
-More info on configuring Moesif is available on [Microsoft's documentation](https://docs.microsoft.com/en-us/azure/api-management/api-management-log-to-eventhub-sample).
+More info on configuring Moesif is available on [Microsoft's documentation](https://docs.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample).
 
 ## Steps performed by the Azure Resource Template
 This template performs the following tasks
 
 - Create Azure Eventhub and policies for Send and Listen.
-- If the name of an existing Azure API Management instance is provided, the template creates a new [log-to-eventhub](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-log-event-hubs) with the name `moesif-log-to-event-hub`.
+- If the name of an existing Azure API Management instance is provided, the template creates a new [log-to-eventhub](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs) with the name `moesif-log-to-event-hub`.
 - Create an Azure Storage Account to periodically checkpoint the EventHub read location.
 - Create an Azure WebApp and configures the environment variables required by [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1).
 - Deploys [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1) as a Webjob on the WebApp.
@@ -217,28 +217,28 @@ This template performs the following tasks
 - Ensure the `log-to-eventhub` logger is created
 - Ensure the `policy` is set on Api Management Apis
 - Ensure App Service configuration contains correct environment variables. View your App Service/Settings/Configuration/Application settings
-- Review the logs of App Service Webjob named `azure-api-mgmt-logs-2-moesif` and ensure it is running. View your App Service/Settings/WebJobs 
+- Review the logs of App Service Webjob named `azure-api-mgmt-logs-2-moesif` and ensure it is running. View your App Service/Settings/WebJobs
 
 ## Updating the integration
 
 If you need to update [Moesif/ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1) and don't want to redeploy the entire template, you can follow these steps:
 
-Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1), so it's in your GitHub account. 
+Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1), so it's in your GitHub account.
 
 1. Log into your Azure Portal and navigate to the resource group holding your Moesif resources. 
 
-2. Select the WebApp and then click the Deployment Center panel on the left side. 
-   
+2. Select the WebApp and then click the Deployment Center panel on the left side.
+
 3. This will open the deployment panel as shown below, you'll want to click on GitHub.
 
 ![Redeploy Webjob GitHub](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-github.png)
-   
+
 4. Click on _App Service build service_ (via Kudu) deployment
 
 ![Redeploy Webjob Kudu](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-kudu.png)
 
-5.  Select the repo you forked earlier and finish the walkthrough. 
+5.  Select the repo you forked earlier and finish the walkthrough.
 
 Deployment may take a few minutes. Double check your XML policy if there are any changes.
 
-`Tags:Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App, Microsoft.Resources/deployments`
+`Tags: Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App, Microsoft.Resources/deployments, Microsoft.ApiManagement/service/apis/policies, Microsoft.ApiManagement/service/loggers, Microsoft.EventHub/namespaces, Microsoft.EventHub/namespaces/eventhubs, Microsoft.EventHub/namespaces/eventhubs/authorizationRules, Microsoft.EventHub/namespaces/authorizationRules, Microsoft.Storage/storageAccounts, Microsoft.Web/sites/extensions, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.Web/sites/config, Microsoft.Web/sites/hostNameBindings`
