@@ -1,4 +1,13 @@
-# Create Application Gateway with Header Rewrite Rules
+---
+description: This template creates an application gateway with Rewrite functionalities in a virtual network and sets up load balancing, rewrite rules
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Create an Application Gateway
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-rewrite/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-rewrite/PublicDeployment.svg)
@@ -111,4 +120,4 @@ For more details, please visit https://aka.ms/appgwheadercrud
 ### Notes:
 Supported apiVersion to use http rewrite feature is "2018-10-01" and above.
 
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/applicationGateways, Microsoft.Network/applicationGateways/rewriteRuleSets, Microsoft.Network/applicationGateways/probes`

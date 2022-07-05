@@ -1,4 +1,13 @@
-# OMS Kemp Application Delivery Solution
+---
+description: Kemp Application Delivery solution for OMS
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# OMS Kemp Application Delivery
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-kemp-applicationdelivery-solution/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-kemp-applicationdelivery-solution/PublicDeployment.svg)
@@ -29,17 +38,16 @@ To do that log into [Azure Portal](https://portal.azure.com) and ensure you are 
 
 Locate your existing OMS Log Analytics Workspace and note the name of the workspace, the location of the workspace, and the Resource Group
 
-![alt text](images/omsworkspace.png "omsws") 
+![alt text](images/omsworkspace.png "omsws")
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-kemp-applicationdelivery-solution%2Fazuredeploy.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-kemp-applicationdelivery-solution%2Fazuredeploy.json)
 
-This will send you to the Azure Portal with some default values for the template parameters. 
+This will send you to the Azure Portal with some default values for the template parameters.
 Ensure that the parameters reflects your setup so that you are deploying this into the *existing* Resource Group containing the Log Analytics Workspace
 
 ## How to remove the solution
 
 In the unfortunate case you want to remove the solution you can do it from the the Azure [portal](https://portal.azure.com) in the Log Analytics workspace blade, under solutions, currently the predefined searches and alerts are not automatically removed. If you also want to get rid of them they can be manually deleted from "Saved searches" in the Log Analytics workspace blade.
 
-`Tags: kemp, oms, msoms, solution, example, walkthrough, #msoms`
-
+`Tags: kemp, oms, msoms, solution, example, walkthrough, #msoms, Microsoft.OperationalInsights/workspaces, Microsoft.OperationalInsights/workspaces/views, Blade, OverviewTile, Microsoft.OperationsManagement/solutions, Microsoft.OperationalInsights/workspaces/savedSearches, Microsoft.OperationalInsights/workspaces/savedSearches/schedules, Microsoft.OperationalInsights/workspaces/savedSearches/schedules/actions, Alert`
 

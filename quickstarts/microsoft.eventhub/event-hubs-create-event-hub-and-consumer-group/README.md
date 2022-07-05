@@ -1,4 +1,13 @@
-# Create Event Hub  - namespace, eventhub and consumer group
+---
+description: This template enables you to deploy an Event Hubs Standard namespace, an Event Hub, and a consumer group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Create an EventHubs namespace, Event Hub, & consumer group
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventhub/event-hubs-create-event-hub-and-consumer-group/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventhub/event-hubs-create-event-hub-and-consumer-group/PublicDeployment.svg)
@@ -13,9 +22,9 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.eventhub%2Fevent-hubs-create-event-hub-and-consumer-group%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.eventhub%2Fevent-hubs-create-event-hub-and-consumer-group%2Fazuredeploy.json)
 
-Azure Event Hubs is a Big Data streaming platform and event ingestion service, capable of receiving and processing millions of events per second. Event Hubs can process and store events, data, or telemetry produced by distributed software and devices. Data sent to an event hub can be transformed and stored using any real-time analytics provider or batching/storage adapters. 
+Azure Event Hubs is a Big Data streaming platform and event ingestion service, capable of receiving and processing millions of events per second. Event Hubs can process and store events, data, or telemetry produced by distributed software and devices. Data sent to an event hub can be transformed and stored using any real-time analytics provider or batching/storage adapters.
 
-- [For detailed overview of Event Hubs, see [Event Hubs](https://docs.microsoft.com/azure/event-hubs/event-hubs-about) overview and [Event Hubs features](https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-features).
+- [For detailed overview of Event Hubs, see [Event Hubs](https://docs.microsoft.com/azure/event-hubs/event-hubs-about) overview and [Event Hubs features](https://docs.microsoft.com/azure/event-hubs/event-hubs-features).
 
 For information about using this template, see [Create a EventHubs namespace with EventHub and ConsumerGroup using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-event-hub/).
 
@@ -35,4 +44,4 @@ Apache Storm (receive only)
 
 - [Microsoft Learn Modules for Event Hub](https://docs.microsoft.com/learn/browse/?term=event%20hub)
 
-
+`Tags: Microsoft.EventHub/namespaces, eventhubs, consumergroups`

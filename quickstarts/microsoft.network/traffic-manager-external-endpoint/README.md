@@ -3,6 +3,7 @@ description: This template shows how to create an Azure Traffic Manager profile 
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
@@ -31,3 +32,5 @@ The accompanying PowerShell script shows how to create a resource group from the
 
 - [Traffic Manager routing methods](https://docs.microsoft.com/azure/traffic-manager/traffic-manager-routing-methods): Traffic Manager routing methods for details of the different routing methods available
 - [Traffic Manager REST](https://docs.microsoft.com/rest/api/trafficmanager/): Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
+
+`Tags: Microsoft.Network/trafficmanagerprofiles, Microsoft.Network/TrafficManagerProfiles/ExternalEndpoints`

@@ -1,3 +1,12 @@
+---
+description: A template for creating a new Cognitive Services Computer Vision API
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
 # Cognitive Services Computer Vision API
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-Computer-vision-API/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-Computer-vision-API/PublicDeployment.svg)
@@ -12,8 +21,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-Computer-vision-API%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-Computer-vision-API%2Fazuredeploy.json)
 
-
-This template deploys a Cognitive Services Computer Vision API.  This allows you to process visual data. Capabilities include image analytics, tagging, recognition celebrities, text extraction, and smart thumbnail generation. 
+This template deploys a Cognitive Services Computer Vision API.  This allows you to process visual data. Capabilities include image analytics, tagging, recognition celebrities, text extraction, and smart thumbnail generation.
 
 In the outputs section it will show the Keys and the Endpoint.
 
@@ -26,9 +34,11 @@ In the outputs section it will show the Keys and the Endpoint.
 |      |                             |                                                              | $45,000/month<br/>Up to 10B chars per month<br/>Overage: $4.50 per million chars |
 
 * If you are new to Azure Cognitive Services, or want to learn more about these services:
-  * [Azure Cognitive Services](https://azure.microsoft.com/en-us/services/cognitive-services/).
-  * [Azure Cognitive Services Computer Vision](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision)
-  * [Whats is the Microsoft Cognitive Computer Vision](https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/home)
-  * [Template reference](https://azure.microsoft.com/en-us/resources/templates/?referenceType=Microsoft.Cognitiveservices)
-  * [Quick Start templates](https://azure.microsoft.com/en-us/resources/templates/?resourceType=Microsoft.Cognitiveservices)
-  * [Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?products=azure&term=cognitive)
+  * [Azure Cognitive Services](https://azure.microsoft.com/services/cognitive-services/).
+  * [Azure Cognitive Services Computer Vision](https://azure.microsoft.com/services/cognitive-services/computer-vision)
+  * [Whats is the Microsoft Cognitive Computer Vision](https://docs.microsoft.com/azure/cognitive-services/computer-vision/home)
+  * [Template reference](https://azure.microsoft.com/resources/templates/?referenceType=Microsoft.Cognitiveservices)
+  * [Quick Start templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Cognitiveservices)
+  * [Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?products=azure&term=cognitive)
+
+`Tags: Microsoft.CognitiveServices/accounts`

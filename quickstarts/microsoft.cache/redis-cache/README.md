@@ -3,6 +3,7 @@ description: This template creates an Azure Redis Cache with diagnostics data ke
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
@@ -26,3 +27,4 @@ languages:
 
 For information about using this template, see [Create an Azure Cache for Redis using an ARM template](https://azure.microsoft.com/documentation/articles/cache-redis-cache-arm-provision/).
 
+`Tags: Microsoft.Cache/redis, Microsoft.Insights/diagnosticSettings, Microsoft.Storage/storageAccounts`

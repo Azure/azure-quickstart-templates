@@ -1,4 +1,14 @@
-# Create a Notification Hub on Azure
+---
+description: Creates an Azure Notification Hub, Template originally authored by John Downs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
+# Create Azure Notification Hub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.notificationhubs/notification-hub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.notificationhubs/notification-hub/PublicDeployment.svg)
@@ -38,4 +48,4 @@ We bundle platform-specific samples with the individual SDKs and the standalone 
   - Samples Repository (Other platforms)
   - PowerShell.
 
-`Tags: notificationhubs`
+`Tags: notificationhubs, Microsoft.NotificationHubs/namespaces, Microsoft.NotificationHubs/namespaces/notificationHubs`

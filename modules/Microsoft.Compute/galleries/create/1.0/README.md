@@ -1,3 +1,12 @@
+---
+description: This module creates an Azure Compute Gallery resource with apiVersion 2019-12-01.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
 # Create an Azure Compute Gallery
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Compute/galleries/create/1.0/PublicLastTestDate.svg)
@@ -29,3 +38,5 @@ This module creates an Azure Compute Gallery.
 | location | string | The resource location of the gallery. |
 
 ```apiVersion: 2019-12-01```
+
+`Tags: Microsoft.Compute/galleries`

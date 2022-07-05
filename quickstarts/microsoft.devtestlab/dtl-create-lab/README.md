@@ -1,4 +1,13 @@
-# Create a new DevTestLab instance
+---
+description: This template creates a new DevTest Lab / DTL instance. More Azure Resource Manager Quickstart Templates for Azure DevTestlab available at https://github.com/Azure/azure-devtestlab/tree/master/ARMTemplates
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Create a new lab in Azure DevTest Labs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devtestlab/dtl-create-lab/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devtestlab/dtl-create-lab/PublicDeployment.svg)
@@ -15,6 +24,6 @@
 
 This template creates a new DevTestLab instance.
 
-More Azure Resource Manger Quickstart Templates for Azure DevTestLab can be found at: https://github.com/Azure/azure-devtestlab 
+More Azure Resource Manger Quickstart Templates for Azure DevTestLab can be found at: https://github.com/Azure/azure-devtestlab
 
-
+`Tags: Microsoft.DevTestLab/labs`

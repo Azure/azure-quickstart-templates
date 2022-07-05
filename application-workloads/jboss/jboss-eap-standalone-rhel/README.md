@@ -1,3 +1,12 @@
+---
+description: This template allows you to create a RHEL 8.4 VM running JBoss EAP 7.4 and also deploys a web application called JBoss-EAP on Azure, you can log into the admin console using the JBoss EAP username and password configured at the time of the deployment.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
 # JBoss EAP on RHEL (stand-alone VM)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jboss/jboss-eap-standalone-rhel/PublicLastTestDate.svg)
@@ -78,17 +87,17 @@ In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat sub
     2.2 Add your Azure Subscription IDs.
 
     2.3 Enable new products for Cloud Access on Microsoft Azure.
-    
+
     2.4 Activate Red Hat Gold Images for your Azure Subscription. Refer to [Getting access to Gold Images](https://access.redhat.com/documentation/en/red_hat_subscription_management/1/html/red_hat_cloud_access_reference_guide/understanding-gold-images_cloud-access#getting-access-to-gold-images_cloud-access) for more details.
 
     2.5 Wait for Red Hat Gold Images to be available in your Azure subscription. These are typically available within 3 hours.
-    
+
 3. Accept the Marketplace Terms and Conditions in Azure for the RHEL BYOS Images. You can complete this by running Azure CLI commands, as instructed below. Refer to [RHEL BYOS Gold Images in Azure documentation](https://docs.microsoft.com/azure/virtual-machines/workloads/redhat/byos) for more details.
 
     3.1 Launch an Azure CLI session and make sure your CLI version is updated to version 2.8 or newer before running these commands. Check the CLI version by running the following command and if your [CLI version](https://docs.microsoft.com/cli/azure/install-azure-cli-windows?view=azure-cli-latest&tabs=azure-cli) requires updating.
 
     `az version`
-    
+
     3.2 Once your CLI session is ready, authenticate with your Azure account. Refer to [Signing in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-azure-cli?view=azure-cli-latest) for assistance.
 
     3.3 Verify the RHEL BYOS image is available in your subscription by running the following CLI command. If your RHEL BYOS is not listed, please refer to #2 and ensure that your Azure subscription is activated for RHEL BYOS images.
@@ -114,7 +123,7 @@ JBoss EAP is available on Azure through BYOS model only; you need to supply your
    - **Admin Username** and password or SSH key data which is an SSH RSA public key for the VM
 
    - **JBoss EAP Username** and password
-    
+
    - **RHSM Username** and password
 
    - **RHSM Pool ID for JBoss EAP and/or RHEL OS**
@@ -130,7 +139,7 @@ Build your environment with JBoss EAP 7.4 on a VM running RHEL 8.4 on Azure by c
    - **Location** - Choose the appropriate location for deployment.
 
    - **Admin Username** - User account name for logging into the RHEL VM.
-  
+
    - **Authentication Type** - Type of authentication to use on the VM (password or SSH key).
 
    - **Admin Password or SSH key** - User account password or SSH key data which is an SSH RSA public key for logging into the RHEL VM.
@@ -140,7 +149,7 @@ Build your environment with JBoss EAP 7.4 on a VM running RHEL 8.4 on Azure by c
    - **JBoss EAP Password** - User account password for JBoss EAP Admin Console.
 
    - **RHEL OS Subscription Type** - Select the type of RHEL OS license from the dropdown options for deploying the VM. You will have either the option of PAYG (by default) or BYOS.
-    
+
    - **RHSM Username** - Username for the Red Hat Subscription Manager account.
 
    - **RHSM Password** - User account password for your RHSM account.
@@ -152,7 +161,7 @@ Build your environment with JBoss EAP 7.4 on a VM running RHEL 8.4 on Azure by c
    - **VM Size** - Select the appropriate size of the VM from the dropdown options.
 
    - Leave the rest of the parameter values (Artifacts and Location) as is, accept the Terms and Conditions, and click on Purchase.
-    
+
 ## Deployment Time
 
 The deployment takes approximately 10 minutes to complete.
@@ -184,7 +193,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/app.png"/>
      </a>
-     
+
    - Access the JBoss EAP Admin Console - paste the Admin Console URL copied from the output page in a browser inside the Jump VM, enter the JBoss EAP username and password to log in.
 
      ![alt text](images/admin.png)
@@ -220,7 +229,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/app.png"/>
      </a>
-     
+
    - Access the JBoss EAP Admin Console - paste the Admin Console URL that you copied from the output page in a browser inside the Jump VM to access the JBoss EAP Admin Console and enter the JBoss EAP username and password to log in.
 
      ![alt text](images/admin.png)
@@ -267,7 +276,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 ## Troubleshooting
 
-This section includes common errors faced during deployments and details on how you can troubleshoot these errors. 
+This section includes common errors faced during deployments and details on how you can troubleshoot these errors.
 
 #### Azure Platform
 
@@ -316,10 +325,10 @@ Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VM
 
 If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Note that if you want to keep any resources in the resource group, you can delete other resources manually which does not have dependencies on the resources that you do not want to delete. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
 
-`Tags: JBoss, Red Hat, EAP 7.4, RHEL 8.4, Azure, Azure VM, JavaEE`
-
 ## Support
 
 For any support related questions, issues or customization requirements with the GitHub template please contact [Spektra Systems](mailto:info@spektrasystems.com).
 
 If you are experiencing production deployment issues please contact [Red Hat Support](https://www.redhat.com/en/services/support).
+
+`Tags: JBoss, Red Hat, EAP 7.4, RHEL 8.4, Azure, Azure VM, JavaEE, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

@@ -1,4 +1,13 @@
-# Deployment of WordPress+MySQL Containers with Docker Compose
+---
+description: This template allows you to deploy an Ubuntu VM with Docker installed (using the Docker Extension) and WordPress/MySQL containers created and configured to serve a blog server.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Deploy a WordPress blog with Docker
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wordpress/docker-wordpress-mysql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wordpress/docker-wordpress-mysql/PublicDeployment.svg)
@@ -20,3 +29,5 @@ capabilities of the [Azure Docker Extension][ext].
 
 [ext]: https://github.com/Azure/azure-docker-extension
 [compose]: https://docs.docker.com/compose
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DockerExtension`

@@ -2,7 +2,7 @@
 
 This document describes the best practices for reviewing and troubleshooting Azure Resource Manager (ARM) Templates, including Azure Applications for the Azure Marketplaces. This document is intended to help you design effective templates or troubleshoot existing templates for getting applications certified for the Azure Marketplace and Azure QuickStart templates.  
 
-This repository contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at <https://azure.microsoft.com/en-us/documentation/templates/>.
+This repository contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at <https://azure.microsoft.com/documentation/templates/>.
 
 To contribute a sample to this repo, you must read and follow these best practices as well as the guidelines listed in the [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide).  
 
@@ -58,7 +58,7 @@ Other resource types are supported but will require support from the on-boarding
 * Variables must not be used for apiVersions.  The apiVersion affects the shape of the resource and often cannot be updated without updating all the resources that use a particular version.
 * Use a copy loop for creating repeating patterns of JSON in variables.
 * Remove all unused variables from all templates.
-* Avoid concatenating variable names for conditional scenarios – use template language expressions. For more information, see [https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-functions](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-functions)
+* Avoid concatenating variable names for conditional scenarios – use template language expressions. For more information, see [https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-functions](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-functions)
 
 ## Parameters
 
@@ -250,7 +250,7 @@ The following example shows how to use the reference function for the `storageUr
 
 * All `apiVersion` references for each specific resource type must use the same apiVersion.
 
-  To verify the API versions that are supported by a particular `Provider.Namespace/resourceType`, see the [Supported API versions](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-supported-services#supported-api-versions) topic.  
+  To verify the API versions that are supported by a particular `Provider.Namespace/resourceType`, see the [Supported API versions](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-supported-services#supported-api-versions) topic.  
 
 ### VM Extensions
 

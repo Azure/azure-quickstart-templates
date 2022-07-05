@@ -1,4 +1,13 @@
-# Create Azure Firewall with IP Groups
+---
+description: This template creates an Azure Firewall with Application and Network Rules referring to IP Groups. Also, includes a Linux Jumpbox vm setup
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Create an Azure Firewall with IpGroups
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-ipgroups-and-linux-jumpbox/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-ipgroups-and-linux-jumpbox/PublicDeployment.svg)
@@ -16,3 +25,5 @@ This template deploys an Azure Firewall using IP Groups in network and applicati
 IP Groups is a top-level resource that allows you to group and manage IP addresses in Azure Firewall rules. You can give your IP Group a name and create one by entering IP addresses or uploading a file. It eases your management experience and reduce time spent managing IP addresses by using them in a single firewall or across multiple firewalls.
 
 An IP Group can support individual or multiple IP addresses, ranges, or subnets. [Learn more](https://docs.microsoft.com/azure/firewall/ip-groups).
+
+`Tags: Microsoft.Network/ipGroups, Microsoft.Storage/storageAccounts, Microsoft.Network/routeTables, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/azureFirewalls, Allow`

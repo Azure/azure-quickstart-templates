@@ -3,6 +3,7 @@ description: This deployment template specifies an Azure Machine Learning worksp
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 ---
@@ -99,7 +100,6 @@ This command is an example of creating workspace with user assigned identity.
 New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountOption "existing" -storageAccountResourceGroupName "existing-storage-rg" -storageAccountName "existing-storage-name" -keyVaultOption "existing" -keyVaultResourceGroupName "existing-kv-rg" -keyVaultName "existing-kv-name" -applicationInsightsOption "existing" -applicationInsightsResourceGroupName "existing-ai-rg" -applicationInsightsName "existing-ai-name" -identityType "userAssigned" -primaryUserAssignedIdentity "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/uai"
 ```
 
-
 ## Learn more
 
 If you are new to Azure Machine Learning, see:
@@ -113,6 +113,5 @@ If you are new to template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Create an Azure Machine Learning service workspace by using a template](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
-
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.ContainerRegistry/registries, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, [parameters('identityType')], Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`

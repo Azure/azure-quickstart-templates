@@ -1,3 +1,13 @@
+---
+description: This template allows you to deploy Application Insight and create alert in it
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
 # Deploy Application Insight and create alert in it
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/insights-alertrules-application-insights/PublicLastTestDate.svg)
@@ -17,3 +27,4 @@
 
 This template allows you to deploy Application Insight and create alert in it.
 
+`Tags: Microsoft.OperationalInsights/workspaces, Microsoft.Insights/components, Microsoft.Insights/metricAlerts, microsoft.insights/actionGroups`

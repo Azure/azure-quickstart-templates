@@ -3,12 +3,12 @@ description: Deploys a Windows VM Scale Set running IIS and a very basic .NET MV
 page_type: sample
 products:
 - azure
+- azure-resource-manager
 languages:
 - json
 - bicep
 ---
 # VM Scale Set with autoscale running an IIS WebApp
-
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/PublicDeployment.svg)
@@ -54,6 +54,5 @@ The Autoscale rules are configured as follows
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/virtual-machine-scale-sets/quick-create-template-windows) article.
 
 Tags: `VMSS, VM Scale Set, Windows, DSC Extension`
-
 
 `Tags: Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, DSC, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Insights/autoscalesettings, ChangeCount`

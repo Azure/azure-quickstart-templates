@@ -20,7 +20,7 @@ Write-Output "Testing file: $readmePath"
 Write-Output '*****************************************************************************************'
 Write-Output '*****************************************************************************************'
 Write-Output '*****************************************************************************************'
-Write-Output $readme
+
 
 $readme = Get-Content $readmePath -Raw
 Write-Output $readme
@@ -97,24 +97,20 @@ languages:
     $readme = "$YAML$readme"
 
     # add tags
-    $mainTemplatePath = "$sampleFolder\$mainTemplateFilename"
-    $prereqTemplatePath = "$sampleFolder\prereqs\$prereqTemplateFilename"
+    $allResources = @()
 
-    $mainTemplateResources = @{}
-    $prereqTemplateResources = @{}
-
-    if (Test-Path $mainTemplatePath) {
-        $mainTemplateObject = Get-Content -Path $mainTemplatePath -Raw | ConvertFrom-Json -Depth 100
-        $mainTemplateResources = Find-JsonContent -InputObject $mainTemplateObject -Key type -Value "*" -Like # this will get every type property, even those in a properties body
+    $allJsonFiles = Get-ChildItem "$sampleFolder\*.json" -Recurse | ForEach-Object -Process { $_.FullName }
+    foreach ($file in $allJsonFiles) {
+        if ($(split-path $file -leaf) -ne "metadata.json" -and
+            !($(split-path $file -leaf).EndsWith("parameters.json"))) {
+            $templateObject = Get-Content -Path $file -Raw | ConvertFrom-Json -Depth 100 -AsHashtable
+            if ($templateObject.'$schema' -like "*deploymentTemplate.json#") {
+                $templateResources = @{}
+                $templateResources = Find-JsonContent -InputObject $templateObject.resources -Key type -Value "*" -Like # this will get every type property, even those in a properties body, we can filter below
+                $allResources = $allResources + $templateResources
+            }
+        }
     }
-
-    if (Test-Path $prereqTemplatePath) {
-        $prereqTemplateObject = Get-Content -Path $prereqTemplatePath -Raw | ConvertFrom-Json -Depth 100
-        $prereqTemplateResources = Find-JsonContent -InputObject $prereqTemplateObject.resources -Key type -Value "*" -Like # this will get every type property, even those in a properties body, we can filter below
-    }
-
-    # union the two
-    $allResources = $mainTemplateResources + $prereqTemplateResources
 
     # Find Current Tags
     $currentTags = ""
@@ -138,14 +134,14 @@ languages:
         }
     }
     
-    $newTags = '`Tags:' + $($tagsArray -join ", ") + '`' -replace "Tags:,", "Tags:" # empty tags seem to add an empty element at the beginning
+    $newTags = '`Tags: ' + $($tagsArray -join ", ") + '`' -replace "Tags:,", "Tags:" # empty tags seem to add an empty element at the beginning
 
     Write-Host "New Tags string:`n$newTags"
 
     # replace the current Tags in the file if any
     if ($currentTags -eq "") {
         # Add to the end of the file
-        $readme = $readme += "`n`n$newTags" # if tags were not in the file then make sure we have line breaks
+        $readme = $readme += "$newTags" # if tags were not in the file then make sure we have line breaks
     }
     else {
         #replace

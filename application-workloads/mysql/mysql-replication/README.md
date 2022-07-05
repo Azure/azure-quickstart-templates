@@ -1,4 +1,13 @@
-# MySQL Replication Template
+---
+description: This template deploys a 2 node master/slave MySQL replication cluster on CentOS 6.5 or 6.6
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Deploys a 2 node master/slave MySQL replication cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicDeployment.svg)
@@ -134,7 +143,7 @@ mysql> show slave status\G;
 >mkdir  /home/admin/backups/
 
 # Install npm and azure-cli
-# For latest instructions for installing azure cli see https://azure.microsoft.com/en-in/documentation/articles/xplat-cli-install/. (sample commands below)
+# For latest instructions for installing azure cli see https://azure.microsoft.com/documentation/articles/xplat-cli-install/. (sample commands below)
 > sudo yum update -y
 > sudo yum upgrade -y
 > sudo yum install epel-release -y
@@ -177,3 +186,5 @@ mysql> show slave status\G;
 > azure storage blob upload $image_to_upload $container_name $blob_name
 
 ```
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/loadBalancers`

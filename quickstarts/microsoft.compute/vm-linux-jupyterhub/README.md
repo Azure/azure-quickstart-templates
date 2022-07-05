@@ -1,4 +1,13 @@
-# JupyterHub Classroom Server Linux Ubuntu 18.04-LTS
+---
+description: This template deploy a Jupyter Server for a classroom of up to 100 users. You can provide the username, password, virtual machine name and select between CPU or GPU computing.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Classroom Linux JupyterHub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-jupyterhub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-jupyterhub/PublicDeployment.svg)
@@ -9,14 +18,12 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-jupyterhub/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-jupyterhub/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-linux-jupyterhub%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-linux-jupyterhub%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-linux-jupyterhub%2Fazuredeploy.json)
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-linux-jupyterhub%2Fazuredeploy.json)
 
-
-
-This template deploys a **Jupyter Server** using a Ubuntu Linux VM. This will deploy a CPU or GPU based VM in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.  
+This template deploys a **Jupyter Server** using a Ubuntu Linux VM. This will deploy a CPU or GPU based VM in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.
 
 If you are new to Azure virtual machines, see:
 
@@ -24,7 +31,7 @@ If you are new to Azure virtual machines, see:
 - [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
-- [Microsoft learn](https://docs.microsoft.com/en-us/learn/modules/interactive-deep-learning/)
+- [Microsoft learn](https://docs.microsoft.com/learn/modules/interactive-deep-learning/)
 
 If you are new to template deployment, see:
 
@@ -73,7 +80,7 @@ i.e. if you want a CPU based VM to be used by 80 users, you will need a VM with 
 
 For more details on [Azure Compute Sizes](https://docs.microsoft.com/azure/virtual-machines/linux/sizes-compute)
 
-### Storage Support 
+### Storage Support
 
 It is recommended that you store all data on the external storage provided to the Virtual Machine, you can setup a external disk of the following size.
 
@@ -185,6 +192,5 @@ After that, let's press the [Run] button. If we visit our **public IP** where ou
 
 - [VM available regions](https://azure.microsoft.com/global-infrastructure/services/?products=virtual-machines)
 
-`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Intermediate, Jupyter`
-
+`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Intermediate, Jupyter, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIpAddresses, Microsoft.Network/networkInterfaces, Microsoft.Storage/storageAccounts, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
 

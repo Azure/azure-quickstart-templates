@@ -1,3 +1,12 @@
+---
+description: A template for creating a new Cognitive Services Translation API
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
 # Cognitive Services Translation API
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-translate/PublicLastTestDate.svg)
@@ -9,13 +18,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-translate/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-translate/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)
 
-
-
-This template deploys an Cognitive Services Translation API. see  https://azure.microsoft.com/services/cognitive-services/translator-text-api/ 
+This template deploys an Cognitive Services Translation API. see  https://azure.microsoft.com/services/cognitive-services/translator-text-api/
 
 | SKU  | Feature                                                      | Price                                                        |
 | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -27,11 +34,11 @@ This template deploys an Cognitive Services Translation API. see  https://azure.
 
 If you are new to Azure Cognitive Services, see:
 
-- [Azure Cognitive Services](https://azure.microsoft.com/en-us/services/cognitive-services/).
+- [Azure Cognitive Services](https://azure.microsoft.com/services/cognitive-services/).
 - [Azure Cognitive Services Text Translator](https://azure.microsoft.com/services/cognitive-services/translator-text-api/)
 - [Whats is the Microsoft Cognitive Test Translator](https://docs.microsoft.com/azure/cognitive-services/Translator/translator-info-overview)
 - [Template reference](https://azure.microsoft.com/resources/templates/?referenceType=Microsoft.Cognitiveservices)
 - [Quick Start templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Cognitiveservices)
 - [Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?products=azure&term=cognitive)
 
-
+`Tags: Microsoft.CognitiveServices/accounts`

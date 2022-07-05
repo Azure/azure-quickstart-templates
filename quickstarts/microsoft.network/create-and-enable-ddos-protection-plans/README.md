@@ -1,3 +1,13 @@
+---
+description: This template creates a DDoS protection plan and a virtual network. It also enables the DDoS protection plan for the virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
 # Create and enable a DDoS protection plan
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/create-and-enable-ddos-protection-plans/PublicLastTestDate.svg)
@@ -17,3 +27,4 @@
 
 This template creates a DDoS protection plan and a virtual network. It also enables the DDoS protection plan for the virtual network. For more information, see the the [quickstart](https://docs.microsoft.com/azure/ddos-protection/manage-ddos-protection-template) article.
 
+`Tags: Microsoft.Network/ddosProtectionPlans, Microsoft.Network/virtualNetworks`

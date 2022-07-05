@@ -1,4 +1,13 @@
-# Create Application Gateway with enhanced probe functionality.
+---
+description: This template deploys an Application Gateway with enhanced probe functionality.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+---
+# Create an Application Gateway
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-probe/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-probe/PublicDeployment.svg)
@@ -15,4 +24,4 @@
 
 This template deploys an Application Gateway with enhanced probe functionality.
 
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/applicationGateways`

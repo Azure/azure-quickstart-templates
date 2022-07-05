@@ -1,4 +1,14 @@
-# Azure Functions Premium plan with Virtual Network Integration
+---
+description: This template allows you to deploy an Azure Function Premium plan with regional virtual network integration enabled to a newly created virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+languages:
+- json
+- bicep
+---
+# Deploy an Azure Function Premium plan with vnet integration
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-vnet-integration/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-vnet-integration/PublicDeployment.svg)
@@ -56,3 +66,5 @@ The Azure Storage account used by the Azure Function.
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/networkConfig`
