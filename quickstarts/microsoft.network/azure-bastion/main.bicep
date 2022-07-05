@@ -12,7 +12,7 @@ param vnetIpPrefix string = '10.1.0.0/16'
 param vnetNewOrExisting string = 'new'
 
 @description('Bastion subnet IP prefix MUST be within vnet IP prefix address space')
-param bastionSubnetIpPrefix string = '10.1.1.0/27'
+param bastionSubnetIpPrefix string = '10.1.1.0/26'
 
 @description('Name of Azure Bastion resource')
 param bastionHostName string
