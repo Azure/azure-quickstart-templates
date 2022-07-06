@@ -22,7 +22,7 @@ function deploy {
         [string] $ManagementGroupId,
         [switch] $Dev,
         [switch] $bicep,
-        [bool]   $whatIf = $false    
+        [switch] $whatIf
     )
 
     try {
@@ -86,7 +86,9 @@ function deploy {
 
     if (!$ValidateOnly) {
         $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
-        $OptionalParameters.Add('WhatIf', $whatIf)
+        if ($whatIf) {
+            $OptionalParameters.Add('WhatIf', $whatIf)
+        }
     }
 
     $TemplateFile           = "$ArtifactStagingDirectory\$TemplateFile"

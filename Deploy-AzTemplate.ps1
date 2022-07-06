@@ -20,7 +20,7 @@ Param(
     [string] $ManagementGroupId,
     [switch] $Dev,
     [switch] $bicep,
-    [bool]   $whatIf = $false
+    [switch] $whatIf
 )
 
 try {
@@ -78,7 +78,9 @@ Write-Host "Using parameter file: $TemplateParametersFile"
 
 if (!$ValidateOnly) {
     $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
-    $OptionalParameters.Add('WhatIf', $whatIf)
+    if ($whatIf) {
+        $OptionalParameters.Add('WhatIf', $whatIf)
+    }
 }
 
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
