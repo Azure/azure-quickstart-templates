@@ -4,10 +4,11 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: cohesive-vns3-free-multiclient-overlay-linux
 languages:
 - json
 ---
-# VNS3 network appliance for cloud connectivity and security
+# Multi-client VNS3 network appliance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cohesive/cohesive-vns3-free-multiclient-overlay-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cohesive/cohesive-vns3-free-multiclient-overlay-linux/PublicDeployment.svg)

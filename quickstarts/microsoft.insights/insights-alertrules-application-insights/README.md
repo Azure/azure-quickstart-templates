@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: insights-alertrules-application-insights
 languages:
 - json
 - bicep

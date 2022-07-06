@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: front-door-standard-premium-custom-domain-azure-dns
 languages:
 - json
 - bicep

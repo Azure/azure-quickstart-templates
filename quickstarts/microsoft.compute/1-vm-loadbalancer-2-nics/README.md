@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: 1-vm-loadbalancer-2-nics
 languages:
 - json
 ---

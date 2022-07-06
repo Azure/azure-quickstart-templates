@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: file-share-private-endpoint
 languages:
 - json
 ---

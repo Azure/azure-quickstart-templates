@@ -1,9 +1,10 @@
 ---
-description: This template provisions a Web App, a SQL Database, Azure Cosmos DB, Azure Search and Application Insights.
+description: This template provisions a Web App, a SQL Database, Azure Cosmos DB, Azure Search and Application Insights. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: web-app-sql-docdb-search
 languages:
 - json
 ---

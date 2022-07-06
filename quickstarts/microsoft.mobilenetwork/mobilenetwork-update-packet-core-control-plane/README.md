@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mobilenetwork-update-packet-core-control-plane
 languages:
 - json
 - bicep

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sqlmi-new-vnet-w-point-to-site-vpn
 languages:
 - json
 ---

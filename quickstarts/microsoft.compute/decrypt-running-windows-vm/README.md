@@ -1,9 +1,10 @@
 ---
-description: This template disables encryption on a running windows vm
+description: This template disables encryption on a running windows vm 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: decrypt-running-windows-vm
 languages:
 - json
 ---

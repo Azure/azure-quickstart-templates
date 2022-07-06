@@ -1,9 +1,10 @@
 ---
-description: This template allows you to create a Linux-based HBase cluster with enhanced writes in Azure HDInsight.
+description: This template allows you to create a Linux-based HBase cluster with enhanced writes in Azure HDInsight. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: hdinsight-hbase-enhancedwrite
 languages:
 - json
 ---

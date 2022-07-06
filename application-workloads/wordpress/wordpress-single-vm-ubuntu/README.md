@@ -1,9 +1,10 @@
 ---
-description: This template deploys a complete LAMP stack, then installs and initializes WordPress. Once the deployment is finished, you need to go to http://fqdn.of.your.vm/wordpress/ to finish the configuration, create an account, and get started with WordPress.
+description: This template deploys a complete LAMP stack, then installs and initializes WordPress. Once the deployment is finished, you need to go to http&#58;//fqdn.of.your.vm/wordpress/ to finish the configuration, create an account, and get started with WordPress.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: wordpress-single-vm-ubuntu
 languages:
 - json
 ---

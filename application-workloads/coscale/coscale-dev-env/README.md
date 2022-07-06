@@ -1,13 +1,14 @@
 ---
-description: CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https://www.coscale.com/ for more information. This template install the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
+description: CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https&#58;//www.coscale.com/ for more information. This template install the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: coscale-dev-env
 languages:
 - json
 ---
-# Deploy the CoScale platform on a single VM
+# Deploy the CoScale platform on a single VM.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/coscale/coscale-dev-env/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/coscale/coscale-dev-env/PublicDeployment.svg)
@@ -45,4 +46,4 @@ This directory also contains a deploy-agent.sh script to deploy the CoScale agen
 - There is no backup of the data that is collected using this setup.
 - Since the created objects have fixed names they can be deployed only once per resource group.
 
-`Tags:Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: 5-vm-ubuntu-1-nodetypes-secure
 languages:
 - json
 ---

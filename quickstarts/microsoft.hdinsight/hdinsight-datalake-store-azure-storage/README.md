@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: hdinsight-datalake-store-azure-storage
 languages:
 - json
 ---

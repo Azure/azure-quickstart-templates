@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: identitygovernance-entitlementmanagement-extensibility-sample-logicapp
 languages:
 - json
 ---

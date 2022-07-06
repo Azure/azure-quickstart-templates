@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: decrypt-running-linux-vm-without-aad
 languages:
 - json
 ---

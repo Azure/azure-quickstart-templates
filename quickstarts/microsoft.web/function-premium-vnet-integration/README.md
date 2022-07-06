@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: function-premium-vnet-integration
 languages:
 - json
 - bicep

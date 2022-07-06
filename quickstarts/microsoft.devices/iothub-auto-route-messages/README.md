@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: iothub-auto-route-messages
 languages:
 - json
 - bicep

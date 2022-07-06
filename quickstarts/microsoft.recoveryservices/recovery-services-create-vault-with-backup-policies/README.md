@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: recovery-services-create-vault-with-backup-policies
 languages:
 - json
 - bicep

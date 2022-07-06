@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sap-2-tier-user-disk-md
 languages:
 - json
 ---

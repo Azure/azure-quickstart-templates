@@ -1,9 +1,10 @@
 ---
-description: This template shows how to create a DNS server that forwards queries to Azure's internal DNS servers.  This is useful for setting up DNS resultion between virtual networks (as described in https://azure.microsoft.com/documentation/articles/virtual-networks-name-resolution-for-vms-and-role-instances/).
+description: This template shows how to create a DNS server that forwards queries to Azure's internal DNS servers.  This is useful for setting up DNS resultion between virtual networks (as described in https&#58;//azure.microsoft.com/documentation/articles/virtual-networks-name-resolution-for-vms-and-role-instances/).
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: dns-forwarder
 languages:
 - json
 ---

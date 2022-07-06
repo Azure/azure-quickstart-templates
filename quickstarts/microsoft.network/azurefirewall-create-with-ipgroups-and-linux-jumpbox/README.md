@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: azurefirewall-create-with-ipgroups-and-linux-jumpbox
 languages:
 - json
 ---

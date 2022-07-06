@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vnet-2subnets-service-endpoints-storage-integration
 languages:
 - json
 ---

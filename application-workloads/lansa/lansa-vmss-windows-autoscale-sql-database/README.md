@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: lansa-vmss-windows-autoscale-sql-database
 languages:
 - json
 ---

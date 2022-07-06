@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sql-logical-server-aad-only-auth
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: list-storage-keys-windows-vm
 languages:
 - json
 ---

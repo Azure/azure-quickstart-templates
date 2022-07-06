@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: rds-deployment-ha-gateway
 languages:
 - json
 ---

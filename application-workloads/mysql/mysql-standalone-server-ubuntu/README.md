@@ -1,9 +1,10 @@
 ---
-description: This template uses the Azure Linux CustomScript extension to deploy a MySQL server. It creates an Ubuntu VM, does a silent install of MySQL server, version:5.6
+description: This template uses the Azure Linux CustomScript extension to deploy a MySQL server. It creates an Ubuntu VM, does a silent install of MySQL server, version&#58;5.6
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mysql-standalone-server-ubuntu
 languages:
 - json
 ---

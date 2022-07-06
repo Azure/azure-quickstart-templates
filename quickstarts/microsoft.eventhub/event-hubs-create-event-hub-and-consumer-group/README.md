@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: event-hubs-create-event-hub-and-consumer-group
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: servicebus-create-topic-subscription-rule
 languages:
 - json
 ---

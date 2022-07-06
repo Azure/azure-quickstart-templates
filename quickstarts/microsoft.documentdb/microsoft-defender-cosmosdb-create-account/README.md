@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: microsoft-defender-cosmosdb-create-account
 languages:
 - json
 - bicep

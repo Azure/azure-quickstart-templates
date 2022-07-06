@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: analysis-services-create
 languages:
 - json
 - bicep

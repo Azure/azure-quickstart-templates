@@ -1,9 +1,10 @@
 ---
-description: Push a certificate onto a Windows VM. Create the Key Vault using the template at http://azure.microsoft.com/en-us/documentation/templates/101-create-key-vault
+description: Push a certificate onto a Windows VM. Create the Key Vault using the template at http&#58;//azure.microsoft.com/en-us/documentation/templates/101-create-key-vault
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-push-certificate-windows
 languages:
 - json
 ---

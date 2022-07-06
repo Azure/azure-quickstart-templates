@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: dependency-between-scripts-using-extensions
 languages:
 - json
 ---

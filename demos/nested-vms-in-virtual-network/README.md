@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: nested-vms-in-virtual-network
 languages:
 - json
 - bicep

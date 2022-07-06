@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: web-app-asev2-create
 languages:
 - json
 - bicep

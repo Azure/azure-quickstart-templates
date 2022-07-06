@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: anf-sap-hana-crr-storage
 languages:
 - json
 ---

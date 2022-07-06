@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: python-proxy-on-ubuntu
 languages:
 - json
 ---

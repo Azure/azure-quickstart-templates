@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: e-shop-website-with-ilb-ase
 languages:
 - json
 ---

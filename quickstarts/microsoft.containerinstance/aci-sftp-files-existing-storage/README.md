@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: aci-sftp-files-existing-storage
 languages:
 - json
 ---

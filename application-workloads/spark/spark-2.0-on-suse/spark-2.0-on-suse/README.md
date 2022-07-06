@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: spark-2.0-on-suse
 languages:
 - json
 ---

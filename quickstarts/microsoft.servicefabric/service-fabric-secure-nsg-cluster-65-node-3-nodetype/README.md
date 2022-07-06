@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: service-fabric-secure-nsg-cluster-65-node-3-nodetype
 languages:
 - json
 ---

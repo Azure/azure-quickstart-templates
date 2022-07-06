@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vms-with-selfhost-integration-runtime
 languages:
 - json
 ---

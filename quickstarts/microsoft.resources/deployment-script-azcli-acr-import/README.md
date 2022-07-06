@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: deployment-script-azcli-acr-import
 languages:
 - json
 - bicep

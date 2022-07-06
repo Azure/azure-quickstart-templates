@@ -1,9 +1,10 @@
 ---
-description: This template deploys Shibboleth Identity Provider on Windows. It creates a single Windows VM, installs JDK and Apache Tomcat, deploys Shibboleth Identity Provider, and then configures everything for SSL access to the Shibboleth IDP.  After the deployment is successful, you can go to https://your-server:8443/idp/profile/status to check success.
+description: This template deploys Shibboleth Identity Provider on Windows. It creates a single Windows VM, installs JDK and Apache Tomcat, deploys Shibboleth Identity Provider, and then configures everything for SSL access to the Shibboleth IDP.  After the deployment is successful, you can go to https&#58;//your-server&#58;8443/idp/profile/status to check success.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: shibboleth-singlevm-windows
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: windows-vm-o365
 languages:
 - json
 - bicep

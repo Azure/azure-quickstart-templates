@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: function-app-create-dedicated
 languages:
 - json
 ---

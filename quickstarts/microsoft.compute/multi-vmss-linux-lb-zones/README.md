@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: multi-vmss-linux-lb-zones
 languages:
 - json
 ---

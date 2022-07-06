@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sql-data-warehouse-transparent-encryption-create
 languages:
 - json
 - bicep

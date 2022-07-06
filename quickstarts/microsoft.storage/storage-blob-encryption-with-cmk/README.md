@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: storage-blob-encryption-with-cmk
 languages:
 - json
 - bicep

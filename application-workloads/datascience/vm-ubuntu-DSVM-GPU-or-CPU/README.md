@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-ubuntu-DSVM-GPU-or-CPU
 languages:
 - json
 - bicep

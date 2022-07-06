@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mobilenetwork-create-full-5gc-deployment
 languages:
 - json
 - bicep

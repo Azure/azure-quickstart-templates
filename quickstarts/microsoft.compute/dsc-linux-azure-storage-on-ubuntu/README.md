@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: dsc-linux-azure-storage-on-ubuntu
 languages:
 - json
 ---

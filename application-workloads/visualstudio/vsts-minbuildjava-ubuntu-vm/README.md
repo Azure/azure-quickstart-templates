@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vsts-minbuildjava-ubuntu-vm
 languages:
 - json
 ---

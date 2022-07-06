@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: backup-jobs-report
 languages:
 - json
 ---

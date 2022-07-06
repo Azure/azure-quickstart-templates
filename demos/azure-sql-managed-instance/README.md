@@ -1,9 +1,10 @@
 ---
-description: Deploy UDR and NSG to support Azure SQL Managed Instance and deploy the Managed Instance
+description: Deploy UDR and NSG to support Azure SQL Managed Instance and deploy the Managed Instance 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: azure-sql-managed-instance
 languages:
 - json
 ---

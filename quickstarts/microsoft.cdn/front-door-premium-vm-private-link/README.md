@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: front-door-premium-vm-private-link
 languages:
 - json
 - bicep

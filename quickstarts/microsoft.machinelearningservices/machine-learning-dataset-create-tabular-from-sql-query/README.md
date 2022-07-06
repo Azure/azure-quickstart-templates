@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: machine-learning-dataset-create-tabular-from-sql-query
 languages:
 - json
 ---

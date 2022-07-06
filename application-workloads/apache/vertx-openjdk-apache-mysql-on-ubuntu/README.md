@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vertx-openjdk-apache-mysql-on-ubuntu
 languages:
 - json
 ---

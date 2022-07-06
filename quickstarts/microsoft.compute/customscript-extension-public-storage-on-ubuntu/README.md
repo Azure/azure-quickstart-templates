@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: customscript-extension-public-storage-on-ubuntu
 languages:
 - json
 ---

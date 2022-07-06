@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: encrypt-create-new-vm-gallery-image
 languages:
 - json
 ---

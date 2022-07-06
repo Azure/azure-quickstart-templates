@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: service-fabric-secure-cluster-5-node-1-nodetype
 languages:
 - json
 - bicep

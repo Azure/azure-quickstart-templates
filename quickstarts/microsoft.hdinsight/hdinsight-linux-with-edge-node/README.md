@@ -1,9 +1,10 @@
 ---
-description: This template allows you to create an HDInsight cluster running Linux with an empty edge node. For more information, see https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-apps-use-edge-node
+description: This template allows you to create an HDInsight cluster running Linux with an empty edge node. For more information, see https&#58;//docs.microsoft.com/en-us/azure/hdinsight/hdinsight-apps-use-edge-node
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: hdinsight-linux-with-edge-node
 languages:
 - json
 ---
