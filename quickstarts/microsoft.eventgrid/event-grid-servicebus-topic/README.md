@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Create Azure Event Grid Custom Topic and Subscription
+# Create Azure Event Grid Custom Topic Subscription
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-servicebus-topic/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-servicebus-topic/PublicDeployment.svg)

@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Create a Site-to-Site VPN Connection
+# Create a Site-to-Site VPN Connection with VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/site-to-site-vpn/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/site-to-site-vpn/PublicDeployment.svg)

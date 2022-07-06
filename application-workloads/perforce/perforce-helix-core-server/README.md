@@ -1,5 +1,5 @@
 ---
-description: This template deploys a new instance of Perforce Helix Core Server on a CentOS, RHEL or Ubuntu server in Azure along with all required infrastructure elements.  The installation is done with SDP (Server Deployment Package). Perforce Helix Core is an industry leading version control system widely used in game development and many other industries. For more information please visit our webpage: https://www.perforce.com/products/helix-core.
+description: This template deploys a new instance of Perforce Helix Core Server on a CentOS, RHEL or Ubuntu server in Azure along with all required infrastructure elements.  The installation is done with SDP (Server Deployment Package). Perforce Helix Core is an industry leading version control system widely used in game development and many other industries.
 page_type: sample
 products:
 - azure

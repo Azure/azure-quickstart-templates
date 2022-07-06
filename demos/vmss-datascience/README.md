@@ -27,13 +27,14 @@ This template creates a VM scale set based on the Azure Marketplace [Windows 201
 The template creates a scale set, a load balancer and a public IP address. Inbound NAT pools are defined to route incoming connections to the VMs in the set.
 
 Inbound NAT rules are configured as follows:
-```
+
+```bash
 SSH/RDP to the ip/dns address port 50000 to connect to VM#0
 SSH/RDP to the ip/dns address port 50001 to connect to VM#1
 etc..
 ```
 
-![Windows 2016 screenshot](../demos/vmss-datascience/img/datasciencewin2016.PNG)
+![Windows 2016 screenshot](./img/datasciencewin2016.PNG)
 
 ## Additional information
 

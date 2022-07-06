@@ -8,7 +8,7 @@ languages:
 - json
 - bicep
 ---
-# Create a Budget
+# Create a Simple Budget
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-simple/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-simple/PublicDeployment.svg)

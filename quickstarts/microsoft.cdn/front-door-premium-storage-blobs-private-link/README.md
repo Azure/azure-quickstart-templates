@@ -33,16 +33,14 @@ This sample template creates an Azure Storage blob container and a Front Door pr
 The following resources are deployed as part of the solution:
 
 ### Azure Storage
+
 - Storage account, which is configured not to accept any traffic from the internet.
 - Blob container.
 
 ### Front Door Premium
+
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the Azure Storage blob container.
   - This sample must be deployed using the premium Front Door SKU, since this is required for Private Link integration.
-
-The following diagram illustrates the components of this sample.
-
-![Architecture diagram showing traffic inspected by the Azure Storage firewall.](images/diagram.png)
 
 ## Deployment steps
 
@@ -53,6 +51,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 ### Connect
 
 Once you have deployed the Azure Resource Manager template, you need to approve the private endpoint connection. This step is necessary because the private endpoint created by Front Door is deployed into a Microsoft-owned Azure subscription, and cross-subscription private endpoint connections require explicit approval. To approve the private endpoint:
+
 1. Open the Azure portal and navigate to the storage account.
 2. Click the **Networking** tab, and then click the **Private endpoint connections** tab.
 3. Select the private endpoint that is awaiting approval, and click the **Approve** button. This can take a couple of minutes to complete.

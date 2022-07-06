@@ -8,7 +8,7 @@ languages:
 - json
 - bicep
 ---
-# Azure Machine Learning end-to-end secure setup
+# Azure Machine Learning end-to-end secure setup (legacy)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-end-to-end-secure-v1-legacy-mode/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-end-to-end-secure-v1-legacy-mode/PublicDeployment.svg)

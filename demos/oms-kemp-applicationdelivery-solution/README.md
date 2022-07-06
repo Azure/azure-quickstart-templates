@@ -24,7 +24,7 @@ The solution displays data collected from the Kemp devices through an extension 
 
 This solution will display status, assets and performance data from your [Kemp](www.kemptechnologies.com) Application Delivery (was loadmaster) in your OMS Log Analytics workspace.
 
-![SolutionOverview](images/overview.png?raw=true)
+![SolutionOverview](images/overview.png)
 
 ## Installation
 
@@ -39,8 +39,6 @@ To do that log into [Azure Portal](https://portal.azure.com) and ensure you are 
 Locate your existing OMS Log Analytics Workspace and note the name of the workspace, the location of the workspace, and the Resource Group
 
 ![alt text](images/omsworkspace.png "omsws")
-
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-kemp-applicationdelivery-solution%2Fazuredeploy.json)
 
 This will send you to the Azure Portal with some default values for the template parameters.
 Ensure that the parameters reflects your setup so that you are deploying this into the *existing* Resource Group containing the Log Analytics Workspace

@@ -48,7 +48,7 @@ This template will deploy:
 -	2 Public IP’s, one for the tapping vm and one for the Moloch tool
 -	Two UbuntuServer 16.04.0-LTS VMs
 
-![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/cloudlens/cloudlens-moloch-ubuntu/images/architecture.png?raw=true)
+![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/cloudlens/cloudlens-moloch-ubuntu/images/architecture.png)
 
 ## Licenses and Costs
 

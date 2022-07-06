@@ -1,5 +1,5 @@
 ---
-description: This template allows you to deploy a VM with 3 IP configurations. This template will deploy a Linux/Windows VM called *myVM1* with 3 IP configurations: *IPConfig-1*, *IPConfig-2* and *IPConfig-3*, respectively.
+description: This template allows you to deploy a VM with 3 IP configurations. This template will deploy a Linux/Windows VM called *myVM1* with 3 IP configurations&#58; *IPConfig-1*, *IPConfig-2* and *IPConfig-3*, respectively.
 page_type: sample
 products:
 - azure

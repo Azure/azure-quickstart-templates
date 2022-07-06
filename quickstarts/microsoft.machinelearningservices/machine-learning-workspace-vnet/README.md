@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Create an Azure Machine Learning service workspace.
+# Create an Azure Machine Learning service workspace (vnet)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet/PublicDeployment.svg)

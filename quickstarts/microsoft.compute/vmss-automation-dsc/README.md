@@ -1,5 +1,5 @@
 ---
-description: Deploy a VM Scale Set where virtual machines are deployed as registered nodes in the Azure Automation Desired State Configuration service, and node configuration is guaranteed consistency after deployment. NOTE: Required prerequisites Registration Key and Registration URL are available only after successful creation of an Azure Automation Account for Azure Automation DSC.
+description: Deploy a VM Scale Set where virtual machines are deployed as registered nodes in the Azure Automation Desired State Configuration service, and node configuration is guaranteed consistency after deployment. NOTE&#58; Required prerequisites Registration Key and Registration URL are available only after successful creation of an Azure Automation Account for Azure Automation DSC.
 page_type: sample
 products:
 - azure

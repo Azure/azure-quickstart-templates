@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Create an Application Gateway with Public IP
+# Create an Application Gateway with Public IP (Offload)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-public-ip-ssl-offload/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-public-ip-ssl-offload/PublicDeployment.svg)

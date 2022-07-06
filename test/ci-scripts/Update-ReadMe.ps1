@@ -28,7 +28,7 @@ Write-Output $readme
 # Now automatically add the header needed for doc samples
 # get metadata
 $metadata = Get-Content -Path "$SampleFolder\metadata.json" -Raw | ConvertFrom-Json 
-$H1 = "# $($metadata.itemDisplayName)"
+$H1 = "# $($metadata.itemDisplayName)" # this cannot be duplicated in the repo, doc samples index this for some strange reason
 $metadataDescription = $metadata.description # note this will be truncated to 150 chars but the summary is usually the same as the itemDisplayName
 
 # find H1
@@ -70,13 +70,14 @@ else {
     #>
 
     $YAML = 
-    @"
+@"
 ---
 description: %description%
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: %urlFragment%
 languages:
 - json
 "@
@@ -90,7 +91,17 @@ languages:
     $YAML = $YAML + "`n---`n"
 
     # update the description
+    # replace disallowed chars
+    $metadataDescription = $metadataDescription.Replace(":", "&#58;")
+
+    # set an urlFragment to the path to minimize dupes - we use the last segment of the path, which may not be unique, but it's a friendlier url
     $YAML = $YAML.Replace('%description%', $metadataDescription)
+    if($SampleName.StartsWith('modules')){
+        $fragment = $SampleName.Replace('\', '-') # for modules we use version numbers, e.g. 0.9 so will have dupes
+    }else{
+        $fragment = $SampleName.Split('\')[-1]
+    }
+    $YAML = $YAML.Replace('%urlFragment%', $fragment)
 
     # prepend the YAML
     # TODO - comment out for now until the issues are addressed

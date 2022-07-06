@@ -79,7 +79,7 @@ High availability and failover are no different from other GTID based MySQL repl
 ```
 
 You can also do this in the Azure portal. Find the current master's MySQL NSG, either delete it or set the ports to some invalid value:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/1removeOldMasterNSG.PNG?raw=true "Remove or update NSG of the old master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/1removeOldMasterNSG.PNG "Remove or update NSG of the old master")
 
 - Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
 
@@ -104,9 +104,9 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 ```
 
 Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updateSlaveNSG.PNG?raw=true "Update the NSG for the new master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updateSlaveNSG.PNG "Update the NSG for the new master")
 Then update the NSG for the old master back to valid values:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterToSlave.PNG?raw=true "Update the NSG for the old master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterToSlave.PNG "Update the NSG for the old master")
 
 - Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
 

@@ -1,5 +1,5 @@
 ---
-description: Deploying Virtual Machines based on specialized disk images requires to import VHD files into a Storage Account. In the case there are multiple VHD files compressed in a single ZIP and you got the URL to fetch the ZIP archive, this ARM template will ease the job: Download, Extract and Import into an existing Storage Account Blob Container.
+description: Deploying Virtual Machines based on specialized disk images requires to import VHD files into a Storage Account. In the case there are multiple VHD files compressed in a single ZIP and you got the URL to fetch the ZIP archive, this ARM template will ease the job&#58; Download, Extract and Import into an existing Storage Account Blob Container.
 page_type: sample
 products:
 - azure

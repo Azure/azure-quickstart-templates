@@ -8,7 +8,7 @@ languages:
 - json
 - bicep
 ---
-# Create a Budget
+# Create a Budget with Filter
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-onefilter/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-onefilter/PublicDeployment.svg)
