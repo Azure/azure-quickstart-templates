@@ -14,6 +14,11 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-0
   name: existingMobileNetworkName
 }
 
+resource exampleSimPolicyResources 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' existing = [for item in simResources: {
+  parent: existingMobileNetwork
+  name: item.existingSimPolicyName
+}]
+
 resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = {
   name: simGroupName
   location: location
@@ -23,7 +28,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
     }
   }
 
-  resource exampleSimResources 'sims@2022-04-01-preview' = [for item in simResources: {
+  resource exampleSimResources 'sims@2022-04-01-preview' = [for (item, index) in simResources: {
     name: item.simName
     properties: {
       integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
@@ -31,6 +36,9 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
       authenticationKey: item.authenticationKey
       operatorKeyCode: item.operatorKeyCode
       deviceType: item.deviceType
+      simPolicy: {
+        id: exampleSimPolicyResources[index].id
+      }
     }
   }]
 }
