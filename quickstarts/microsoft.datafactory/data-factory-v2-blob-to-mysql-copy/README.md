@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Create a V2 data factory
+# Create a V2 data factory (MySQL)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-mysql-copy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-mysql-copy/PublicDeployment.svg)
@@ -19,7 +19,7 @@ languages:
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-mysql-copy/CredScanResult.svg)
 This template creates a data factory of version 2 with a pipeline that copies data from a folder in an Azure Blob Storage to a table in an Azure Database for MySQL.
 
-## Prerequisites ##
+## Prerequisites
 
 * Azure subscription. If you don't have an Azure subscription, create a [free Azure account](https://azure.microsoft.com/free/) before you begin.
 * Azure storage account. You use Blob storage as a source data store. If you don't have a storage account, see [Create an Azure storage account](https://docs.microsoft.com/azure/storage/common/storage-quickstart-create-account) for steps to create one.

@@ -33,6 +33,9 @@ if ($ENV:BUILD_REASON -eq "PullRequest") {
     if ($dateUpdated -lt $oldDate) {
         Write-Error "dateUpdated in metadata.json needs to be updated -- $dateUpdated is older than $oldDate"
     }
+    if($($metadata | ConvertFrom-Json).itemDisplayName.EndsWith(".")){
+        Write-Error "itemDisplayName in metadata.json must not end with a period (.)"
+    }
 }
 
 # check to see which clouds are supported, if not specified, test all clouds

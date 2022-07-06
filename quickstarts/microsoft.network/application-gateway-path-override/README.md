@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Create an Application Gateway
+# Create an Application Gateway with Path Override
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-path-override/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-path-override/PublicDeployment.svg)

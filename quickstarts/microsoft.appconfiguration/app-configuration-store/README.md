@@ -8,7 +8,7 @@ languages:
 - json
 - bicep
 ---
-# App Configuration store
+# Create an App Configuration Store
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store/PublicDeployment.svg)

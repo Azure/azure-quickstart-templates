@@ -1,5 +1,5 @@
 ---
-description: This template deploys a new instance of Tableau Server on an Azure virtual machine along with all required infrastructure elements.  Tableau is an industry-leading business intelligence platform.  Tableau Server allows users to discover and share data-driven insights throughout their organization in a secure, governable environment.  For more information please visit our webpage: https://www.tableau.com/.  For more details please view the Readme on the associated Github page.
+description: This template deploys a new instance of Tableau Server on an Azure virtual machine along with all required infrastructure elements.  Tableau is an industry-leading business intelligence platform.  Tableau Server allows users to discover and share data-driven insights throughout their organization in a secure, governable environment.
 page_type: sample
 products:
 - azure

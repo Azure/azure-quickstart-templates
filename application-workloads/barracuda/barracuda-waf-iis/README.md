@@ -56,7 +56,7 @@ This template will deploy:
 - Two Windows Server 2012 R2 VMs
 - Automated deployment of IIS in Windows VM’s
 
-![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/barracuda/barracuda-waf-iis/images/barracuda-architecture.png?raw=true)
+![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/barracuda/barracuda-waf-iis/images/barracuda-architecture.png)
 
 ## Licenses and Costs
 

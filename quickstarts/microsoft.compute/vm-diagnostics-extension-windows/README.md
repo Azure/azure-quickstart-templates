@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Deploy a Premium Windows VM
+# Deploy a Premium Windows VM with diagnostics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-diagnostics-extension-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-diagnostics-extension-windows/PublicDeployment.svg)
