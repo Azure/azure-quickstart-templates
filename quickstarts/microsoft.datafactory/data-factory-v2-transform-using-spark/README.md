@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Create a V2 data factory
+# Create a V2 data factory (Spark)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-transform-using-spark/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-transform-using-spark/PublicDeployment.svg)

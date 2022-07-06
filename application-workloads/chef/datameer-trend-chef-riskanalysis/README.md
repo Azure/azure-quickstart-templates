@@ -1,5 +1,5 @@
 ---
-description: Enterprises that offer end-user payment transactions have to account for the below considerations: Risk evaluation on business transactions, Infrastructure risk management, Infrastructure configuration management. This Azure Partner QuickStart push to pilot solution  launches a business intelligence Hadoop stack demonstrating online transactions risk analysis, provides an automated provisioning, configuration and integration of Datameer and Azure HDInsight, TrendMicro DeepSecurity & Chef Server products ready for staging / preproduction environments.
+description: Enterprises that offer end-user payment transactions have to account for the below considerations&#58; Risk evaluation on business transactions, Infrastructure risk management, Infrastructure configuration management. This Azure Partner QuickStart push to pilot solution  launches a business intelligence Hadoop stack demonstrating online transactions risk analysis, provides an automated provisioning, configuration and integration of Datameer and Azure HDInsight, TrendMicro DeepSecurity & Chef Server products ready for staging / preproduction environments.
 page_type: sample
 products:
 - azure
@@ -18,12 +18,9 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/datameer-trend-chef-riskanalysis/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/datameer-trend-chef-riskanalysis/CredScanResult.svg)
 
-<h3>Composite template version 1.0</h3>
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json)
-
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
 
 <!-- TOC -->
 

@@ -1,5 +1,5 @@
 ---
-description: This template creates three new Azure VMs on an existing VNET: Two VMs are configured as SQL Server 2014 AlwaysOn Availability Group replica nodes and one VM is configured as a File Share Witness for automated cluster failover. In addition to these VMs, the following additional Azure resources are also configured: Internal load balancer, Storage accounts.  To configure clustering, SQL Server and AlwaysOn within each VM, PowerShell DSC is leveraged.  For Active Directory support, existing Active Directory domain controllers should already be deployed on the existing VNET.
+description: This template creates three new Azure VMs on an existing VNET&#58; Two VMs are configured as SQL Server 2014 AlwaysOn Availability Group replica nodes and one VM is configured as a File Share Witness for automated cluster failover. In addition to these VMs, the following additional Azure resources are also configured&#58; Internal load balancer, Storage accounts.  To configure clustering, SQL Server and AlwaysOn within each VM, PowerShell DSC is leveraged.  For Active Directory support, existing Active Directory domain controllers should already be deployed on the existing VNET.
 page_type: sample
 products:
 - azure
@@ -64,9 +64,11 @@ Simple execute the script and pass in the folder name of the sample you want to 
 ```PowerShell
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
 ```
+
 ```bash
 azure-group-deploy.sh -a [foldername] -l eastus -u
 ```
+
 If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
 You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
 one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
@@ -74,9 +76,11 @@ one will be created by the script or reused if it already exists (think of this 
 ```PowerShell
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts
 ```
+
 ```bash
 azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
 ```
+
 Tags: ``cluster, ha, sql, alwayson``
 
 `Tags: Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Compute/availabilitySets, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

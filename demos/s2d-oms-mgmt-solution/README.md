@@ -318,10 +318,6 @@ C:\temp\s2dmon.ps1 -Setup -OMSWorkspaceCreds (Get-Credential)
 C:\temp\s2dmon.ps1 -Start
 ```
 
-- Delete S2D solution from Azure portal
-
-![](images/delete-s2d.png)
-
 - Deploy S2D ARM template again.
 
 >**Note**: As some fields are changed it may take some time until the new data is fully visible in the dashboards.

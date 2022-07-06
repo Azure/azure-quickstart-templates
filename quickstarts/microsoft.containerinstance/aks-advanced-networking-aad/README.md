@@ -7,7 +7,7 @@ products:
 languages:
 - json
 ---
-# Deploy a managed Kubernetes Cluster (AKS).
+# Deploy a managed Kubernetes Cluster with AAD (AKS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/PublicDeployment.svg)

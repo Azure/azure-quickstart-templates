@@ -1,5 +1,5 @@
 ---
-description: This template uses the Azure Linux CustomScript extension to deploy an openvpn access server. It creates an Ubuntu VM, does a silent install of openvpn access server, then make the basic server network settings: define the VPN Server Hostname to be the VM's public ip's DNS name
+description: This template uses the Azure Linux CustomScript extension to deploy an openvpn access server. It creates an Ubuntu VM, does a silent install of openvpn access server, then make the basic server network settings&#58; define the VPN Server Hostname to be the VM's public ip's DNS name
 page_type: sample
 products:
 - azure
