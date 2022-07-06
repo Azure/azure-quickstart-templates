@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: storage-advanced-threat-protection-create
 languages:
 - json
 - bicep

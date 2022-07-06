@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: recovery-services-vm-workload-backup
 languages:
 - json
 - bicep

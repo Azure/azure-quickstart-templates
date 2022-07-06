@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sap-3-tier-user-image-md
 languages:
 - json
 ---

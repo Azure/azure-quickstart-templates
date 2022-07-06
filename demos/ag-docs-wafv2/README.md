@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: ag-docs-wafv2
 languages:
 - json
 - bicep

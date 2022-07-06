@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: application-gateway-2vms-iis-ssl
 languages:
 - json
 ---

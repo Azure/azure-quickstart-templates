@@ -1,9 +1,10 @@
 ---
-description: This template creates new Azure VMs based on which configuration you choose. It configures a new AD domain controler, a new hierarchy/standalone bench with SQL Server, a remote site system server with Management Point and Distribution Point and clients.
+description: This template creates new Azure VMs based on which configuration you choose. It configures a new AD domain controler, a new hierarchy/standalone bench with SQL Server, a remote site system server with Management Point and Distribution Point and clients. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sccm-currentbranch
 languages:
 - json
 ---

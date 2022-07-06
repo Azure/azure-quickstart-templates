@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: umbraco-cms-webapp-redis-cache
 languages:
 - json
 ---

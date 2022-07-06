@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: 2fe-lb80-rdp-1be-nsg-rdp
 languages:
 - json
 ---

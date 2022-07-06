@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: asev2-appservice-sql-vpngw
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-os-disk-and-data-disk-existing-vnet
 languages:
 - json
 ---

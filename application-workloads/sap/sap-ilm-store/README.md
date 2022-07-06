@@ -1,9 +1,10 @@
 ---
-description: The Microsoft Azure Storage Account can now be used as a ILM Store to persist the Archive files and attachments from an SAP ILM system. An ILM Store is a component which fulfills the requirements of SAP ILM compliant storage systems. One can store archive files in a storage media using WebDAV interface standards while making use of SAP ILM Retention Management rules. For more information about SAP ILM Store, refer to the <a href='https://www.sap.com'> SAP Help Portal </a>.
+description: The Microsoft Azure Storage Account can now be used as a ILM Store to persist the Archive files and attachments from an SAP ILM system. An ILM Store is a component which fulfills the requirements of SAP ILM compliant storage systems. One can store archive files in a storage media using WebDAV interface standards while making use of SAP ILM Retention Management rules. For more information about SAP ILM Store, refer to the <a href='https&#58;//www.sap.com'> SAP Help Portal </a>.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sap-ilm-store
 languages:
 - json
 ---

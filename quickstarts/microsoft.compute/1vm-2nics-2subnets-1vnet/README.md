@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: 1vm-2nics-2subnets-1vnet
 languages:
 - json
 - bicep

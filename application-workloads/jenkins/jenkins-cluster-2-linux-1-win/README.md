@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: jenkins-cluster-2-linux-1-win
 languages:
 - json
 ---

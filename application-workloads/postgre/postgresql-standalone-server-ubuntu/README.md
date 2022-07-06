@@ -1,9 +1,10 @@
 ---
-description: This template uses the Azure Linux CustomScript extension to deploy a postgresql server. It creates an Ubuntu VM, does a silent install of MySQL server, version:9.3.5
+description: This template uses the Azure Linux CustomScript extension to deploy a postgresql server. It creates an Ubuntu VM, does a silent install of MySQL server, version&#58;9.3.5
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: postgresql-standalone-server-ubuntu
 languages:
 - json
 ---

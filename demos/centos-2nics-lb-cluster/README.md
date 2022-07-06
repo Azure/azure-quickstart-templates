@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: centos-2nics-lb-cluster
 languages:
 - json
 ---

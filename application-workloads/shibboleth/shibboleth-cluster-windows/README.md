@@ -1,9 +1,10 @@
 ---
-description: This template deploys Shibboleth Identity Provider on Windows in a clustered configuration. After the deployment is successful, you can go to https://your-domain:8443/idp/profile/status (note port number) to check success.
+description: This template deploys Shibboleth Identity Provider on Windows in a clustered configuration. After the deployment is successful, you can go to https&#58;//your-domain&#58;8443/idp/profile/status (note port number) to check success.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: shibboleth-cluster-windows
 languages:
 - json
 ---

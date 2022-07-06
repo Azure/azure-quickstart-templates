@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mg-policy-different-targets
 languages:
 - json
 - bicep

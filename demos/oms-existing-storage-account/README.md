@@ -1,9 +1,10 @@
 ---
-description: This template adds a storage account into OMS Log Analytics and select multiple tables for ingestion.
+description: This template adds a storage account into OMS Log Analytics and select multiple tables for ingestion. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: oms-existing-storage-account
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: orchard-cms-video-portal
 languages:
 - json
 ---

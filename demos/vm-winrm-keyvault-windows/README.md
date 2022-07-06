@@ -1,9 +1,10 @@
 ---
-description: This template installs a certificate from Azure Key Vault on a Virtual Machine and opens up WinRM HTTP and HTTPS listeners. Prerequisite&#58; A certificate uploaded to Azure Key Vault.
+description: This template installs a certificate from Azure Key Vault on a Virtual Machine and opens up WinRM HTTP and HTTPS listeners. Prerequisite&#58; A certificate uploaded to Azure Key Vault. Create the Key Vault using the template at http&#58;//azure.microsoft.com/en-us/documentation/templates/101-create-key-vault
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-winrm-keyvault-windows
 languages:
 - json
 ---

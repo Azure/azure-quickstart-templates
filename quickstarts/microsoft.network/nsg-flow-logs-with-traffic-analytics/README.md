@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: nsg-flow-logs-with-traffic-analytics
 languages:
 - json
 - bicep

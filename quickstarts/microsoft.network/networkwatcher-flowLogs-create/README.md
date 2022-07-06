@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: networkwatcher-flowLogs-create
 languages:
 - json
 - bicep

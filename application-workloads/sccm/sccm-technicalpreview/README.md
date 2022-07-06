@@ -1,9 +1,10 @@
 ---
-description: This template creates new Azure VMs. It configures a new AD domain controler , a new standalone primary site with SQL Server, a remote site system server with Management Point and Distribution Point and client(options).
+description: This template creates new Azure VMs. It configures a new AD domain controler , a new standalone primary site with SQL Server, a remote site system server with Management Point and Distribution Point and client(options). 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sccm-technicalpreview
 languages:
 - json
 ---

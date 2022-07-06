@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: securitycenter-create-automation-for-all-alerts
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: symantec-extension-windows-vm
 languages:
 - json
 ---

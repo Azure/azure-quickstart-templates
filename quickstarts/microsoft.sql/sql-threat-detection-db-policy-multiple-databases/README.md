@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sql-threat-detection-db-policy-multiple-databases
 languages:
 - json
 ---

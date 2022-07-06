@@ -1,9 +1,10 @@
 ---
-description: This template deploys a website cluster and enables Zabbix monitoring, and allows user to define the number of web servers.
+description: This template deploys a website cluster and enables Zabbix monitoring, and allows user to define the number of web servers. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: website-cluster-centos
 languages:
 - json
 ---

@@ -1,14 +1,15 @@
 ---
-description: This template will create N number of VM's with managed disks, public IPs and network interfaces. It will create the VMs in a single Availability Set. They will be provisioned in a Virtual Network which will also be created as part of the deployment
+description: This template will create N number of VM's with managed disks, public IPs and network interfaces. It will create the VMs in a single Availability Set. They will be provisioned in a Virtual Network which will also be created as part of the deployment 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-copy-managed-disks
 languages:
 - json
 - bicep
 ---
-# Multi VM Template with Managed Disk
+# Multi VM Template with Managed Disk 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-copy-managed-disks/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-copy-managed-disks/PublicDeployment.svg)

@@ -1,9 +1,10 @@
 ---
-description: Creates an Azure storage account and multiple blob containers.
+description: Creates an Azure storage account and multiple blob containers. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: storage-multi-blob-container
 languages:
 - json
 - bicep

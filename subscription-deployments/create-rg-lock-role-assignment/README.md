@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: create-rg-lock-role-assignment
 languages:
 - json
 - bicep

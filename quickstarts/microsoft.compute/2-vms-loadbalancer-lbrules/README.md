@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: 2-vms-loadbalancer-lbrules
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: event-grid-subscription-and-storage
 languages:
 - json
 - bicep

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: data-factory-v2-blob-to-mysql-copy
 languages:
 - json
 ---

@@ -1,9 +1,10 @@
 ---
-description: This template is to be used with http://docs.microsoft.com/azure/app-service/quickstart-arm-template
+description: This template is to be used with http&#58;//docs.microsoft.com/azure/app-service/quickstart-arm-template
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: app-service-docs-windows
 languages:
 - json
 ---

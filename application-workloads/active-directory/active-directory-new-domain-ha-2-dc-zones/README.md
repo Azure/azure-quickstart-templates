@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: active-directory-new-domain-ha-2-dc-zones
 languages:
 - json
 ---

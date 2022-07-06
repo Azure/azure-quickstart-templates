@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: octopusdeploy3-single-vm-windows
 languages:
 - json
 ---

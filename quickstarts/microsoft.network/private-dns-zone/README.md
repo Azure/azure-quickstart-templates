@@ -1,9 +1,10 @@
 ---
-description: This template shows how to create a private DNS zone and optionally enable VM registration
+description: This template shows how to create a private DNS zone and optionally enable VM registration 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: private-dns-zone
 languages:
 - json
 - bicep

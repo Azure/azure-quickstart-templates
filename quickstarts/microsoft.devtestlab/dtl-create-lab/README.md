@@ -1,9 +1,10 @@
 ---
-description: This template creates a new DevTest Lab / DTL instance. More Azure Resource Manager Quickstart Templates for Azure DevTestlab available at https://github.com/Azure/azure-devtestlab/tree/master/ARMTemplates
+description: This template creates a new DevTest Lab / DTL instance. More Azure Resource Manager Quickstart Templates for Azure DevTestlab available at https&#58;//github.com/Azure/azure-devtestlab/tree/master/ARMTemplates
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: dtl-create-lab
 languages:
 - json
 ---

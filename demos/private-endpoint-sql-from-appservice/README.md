@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: private-endpoint-sql-from-appservice
 languages:
 - json
 ---

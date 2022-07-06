@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: application-gateway-v2-autoscale-create
 languages:
 - json
 - bicep

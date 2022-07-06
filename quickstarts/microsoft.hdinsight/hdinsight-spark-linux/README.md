@@ -1,9 +1,10 @@
 ---
-description: This template allows you to create a Spark cluster in Azure HDInsight.
+description: This template allows you to create a Spark cluster in Azure HDInsight. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: hdinsight-spark-linux
 languages:
 - json
 - bicep

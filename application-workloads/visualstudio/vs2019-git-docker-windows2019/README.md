@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vs2019-git-docker-windows2019
 languages:
 - json
 ---

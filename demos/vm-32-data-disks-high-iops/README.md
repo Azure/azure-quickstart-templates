@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-32-data-disks-high-iops
 languages:
 - json
 ---

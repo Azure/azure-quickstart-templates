@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sql-server-2014-alwayson-existing-vnet-and-ad
 languages:
 - json
 ---

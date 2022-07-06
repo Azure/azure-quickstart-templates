@@ -1,9 +1,10 @@
 ---
-description: This template deploys default views, alerts and saved searches to your Log Analytics workspace. Please check [here](https://github.com/Azure/azure-quickstart-templates/tree/master/oms-cloudfoundry-solution) for detailed introductions and further instructions.
+description: This template deploys default views, alerts and saved searches to your Log Analytics workspace.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: oms-cloudfoundry-solution
 languages:
 - json
 ---
