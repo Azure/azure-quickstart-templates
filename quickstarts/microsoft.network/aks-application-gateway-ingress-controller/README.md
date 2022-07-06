@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: aks-application-gateway-ingress-controller
 languages:
 - json
 ---

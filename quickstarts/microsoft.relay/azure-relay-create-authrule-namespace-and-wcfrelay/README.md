@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: azure-relay-create-authrule-namespace-and-wcfrelay
 languages:
 - json
 ---

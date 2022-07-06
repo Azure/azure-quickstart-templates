@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: visual-studio-team-services-project-create
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sap-3-tier-marketplace-image-converged-md
 languages:
 - json
 ---

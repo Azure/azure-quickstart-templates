@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mongodb-nodejs-high-availability
 languages:
 - json
 ---

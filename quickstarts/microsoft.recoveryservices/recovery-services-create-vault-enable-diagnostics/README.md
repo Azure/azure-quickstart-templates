@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: recovery-services-create-vault-enable-diagnostics
 languages:
 - json
 - bicep

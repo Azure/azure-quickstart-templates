@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: data-factory-v2-onprem-sql-to-blob-copy
 languages:
 - json
 ---

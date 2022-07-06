@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: storage-account-service-encryption-create
 languages:
 - json
 - bicep

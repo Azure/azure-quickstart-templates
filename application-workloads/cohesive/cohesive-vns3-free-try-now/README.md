@@ -4,10 +4,11 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: cohesive-vns3-free-try-now
 languages:
 - json
 ---
-# VNS3 network appliance for cloud connectivity and security
+# VNS3 network appliance for cloud connectivity and security.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cohesive/cohesive-vns3-free-try-now/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cohesive/cohesive-vns3-free-try-now/PublicDeployment.svg)

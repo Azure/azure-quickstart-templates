@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: log-analytics-with-datasources-solutions
 languages:
 - json
 - bicep

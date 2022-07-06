@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: front-door-standard-premium-container-instances-application-gateway-public
 languages:
 - json
 - bicep

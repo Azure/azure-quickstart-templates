@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: data-factory-salesforce-to-blob-copy
 languages:
 - json
 ---

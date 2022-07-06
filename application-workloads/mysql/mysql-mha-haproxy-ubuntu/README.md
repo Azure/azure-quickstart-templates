@@ -1,9 +1,10 @@
 ---
-description: This template deploys a MySQL MHA + Haproxy solution&#58; the objective of MHA is automating master failover and slave promotion within short (usually 10-30 seconds) downtime, without suffering from replication consistency problems, without spending money for lots of new servers, without performance penalty, without complexity (easy-to-install), and without changing existing deployments; Haproxy is the interface which apps access mysql
+description: This template deploys a MySQL MHA + Haproxy solution&#58;  the objective of MHA is automating master failover and slave promotion within short (usually 10-30 seconds) downtime, without suffering from replication consistency problems, without spending money for lots of new servers, without performance penalty, without complexity (easy-to-install), and without changing existing deployments; Haproxy is the interface which apps access mysql
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mysql-mha-haproxy-ubuntu
 languages:
 - json
 ---

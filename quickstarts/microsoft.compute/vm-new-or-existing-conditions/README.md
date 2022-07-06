@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-new-or-existing-conditions
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sentinel-scheduled-analytics-rule
 languages:
 - json
 ---

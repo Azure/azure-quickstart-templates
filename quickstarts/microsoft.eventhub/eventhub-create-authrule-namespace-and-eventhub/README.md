@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: eventhub-create-authrule-namespace-and-eventhub
 languages:
 - json
 ---

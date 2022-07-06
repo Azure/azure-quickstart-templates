@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: cdn-with-custom-origin
 languages:
 - json
 - bicep

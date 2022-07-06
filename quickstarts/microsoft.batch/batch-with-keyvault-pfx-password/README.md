@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: batch-with-keyvault-pfx-password
 languages:
 - json
 ---

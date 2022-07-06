@@ -1,9 +1,10 @@
 ---
-description: This template allows you to create an Interative Hive (LLAP) cluster in HDInsight and the dependent Azure Storage account. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see https://azure.microsoft.com/resources/templates/101-hdinsight-linux-ssh-publickey/
+description: This template allows you to create an Interative Hive (LLAP) cluster in HDInsight and the dependent Azure Storage account. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see https&#58;//azure.microsoft.com/resources/templates/101-hdinsight-linux-ssh-publickey/
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: hdinsight-interactive-hive
 languages:
 - json
 - bicep

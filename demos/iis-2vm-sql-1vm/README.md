@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: iis-2vm-sql-1vm
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: 100-marketplace-sample
 languages:
 - json
 ---

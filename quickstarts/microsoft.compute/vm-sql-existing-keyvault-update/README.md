@@ -1,9 +1,10 @@
 ---
-description: This template setup or update on an existing SQL Server Virtual Machine on Azure with the credentials secured by Azure Key Vault
+description: This template setup or update on an existing SQL Server Virtual Machine on Azure with the credentials secured by Azure Key Vault 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-sql-existing-keyvault-update
 languages:
 - json
 ---

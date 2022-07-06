@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: machine-learning-dataset-create-workspace-multiple-dataset-datastore
 languages:
 - json
 ---

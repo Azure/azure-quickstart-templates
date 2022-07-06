@@ -1,9 +1,10 @@
 ---
-description: The SAS® 9.4 and Viya QuickStart Template for Azure deploy these products on the cloud: SAS® Enterprise BI Server 9.4, SAS® Enterprise Miner 15.1, and SAS® Visual Analytics 8.5 on Linux, and SAS® Visual Data Mining and Machine Learning 8.5 on Linux for Viya. This QuickStart is a reference architecture for users who wants to deploy the combination of SAS® 9.4 and Viya on Azure using cloud-friendly technologies. By deploying the SAS® platform on Azure, you get an integrated environment of SAS® 9.4 and Viya environments so you can take advantage of both worlds. SAS® Viya is a cloud-enabled, in-memory analytics engine. It uses elastic, scalable, and fault-tolerant processing to address complex analytical challenges. SAS® Viya provides faster processing for analytics by using a standardized code base that supports programming in SAS®, Python, R, Java, and Lua. It also supports cloud, on-premises, or hybrid environments and deploys seamlessly to any infrastructure or application ecosystem.
+description: The SAS® 9.4 and Viya QuickStart Template for Azure deploy these products on the cloud&#58; SAS® Enterprise BI Server 9.4, SAS® Enterprise Miner 15.1, and SAS® Visual Analytics 8.5 on Linux, and SAS® Visual Data Mining and Machine Learning 8.5 on Linux for Viya. This QuickStart is a reference architecture for users who wants to deploy the combination of SAS® 9.4 and Viya on Azure using cloud-friendly technologies. By deploying the SAS® platform on Azure, you get an integrated environment of SAS® 9.4 and Viya environments so you can take advantage of both worlds. SAS® Viya is a cloud-enabled, in-memory analytics engine. It uses elastic, scalable, and fault-tolerant processing to address complex analytical challenges. SAS® Viya provides faster processing for analytics by using a standardized code base that supports programming in SAS®, Python, R, Java, and Lua. It also supports cloud, on-premises, or hybrid environments and deploys seamlessly to any infrastructure or application ecosystem.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: sas9.4-viya
 languages:
 - json
 ---

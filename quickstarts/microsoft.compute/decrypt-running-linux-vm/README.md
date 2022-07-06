@@ -1,9 +1,10 @@
 ---
-description: This template disables encryption on a running Linux vm
+description: This template disables encryption on a running Linux vm 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: decrypt-running-linux-vm
 languages:
 - json
 ---

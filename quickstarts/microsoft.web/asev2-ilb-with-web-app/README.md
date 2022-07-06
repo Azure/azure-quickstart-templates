@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: asev2-ilb-with-web-app
 languages:
 - json
 - bicep

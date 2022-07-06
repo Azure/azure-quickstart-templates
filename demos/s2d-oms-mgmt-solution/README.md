@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: s2d-oms-mgmt-solution
 languages:
 - json
 ---

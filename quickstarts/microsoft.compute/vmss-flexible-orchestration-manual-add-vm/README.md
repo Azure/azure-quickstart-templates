@@ -1,9 +1,10 @@
 ---
-description: This template will create N number of VM's with managed disks, public IPs and network interfaces. It will create the VMs in a Virtual Machine Scale Set in Flexible Orchestration mode. They will be provisioned in a Virtual Network which will also be created as part of the deployment
+description: This template will create N number of VM's with managed disks, public IPs and network interfaces. It will create the VMs in a Virtual Machine Scale Set in Flexible Orchestration mode. They will be provisioned in a Virtual Network which will also be created as part of the deployment 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vmss-flexible-orchestration-manual-add-vm
 languages:
 - json
 ---

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: apache2-on-ubuntu-vm
 languages:
 - json
 ---

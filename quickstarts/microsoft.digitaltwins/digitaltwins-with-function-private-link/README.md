@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: digitaltwins-with-function-private-link
 languages:
 - json
 - bicep

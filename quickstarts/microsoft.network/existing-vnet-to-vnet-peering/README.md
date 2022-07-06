@@ -1,9 +1,10 @@
 ---
-description: This template allows you to connect two VNETs from the same or different resource groups in the same region using VNet Peering
+description: This template allows you to connect two VNETs from the same or different resource groups in the same region using VNet Peering 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: existing-vnet-to-vnet-peering
 languages:
 - json
 - bicep

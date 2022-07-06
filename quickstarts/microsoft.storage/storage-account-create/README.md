@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: storage-account-create
 languages:
 - json
 - bicep

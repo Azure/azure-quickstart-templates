@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: extend-vnet-to-multi-vnet
 languages:
 - json
 ---

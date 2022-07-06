@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mobilenetwork-create-new-site
 languages:
 - json
 - bicep

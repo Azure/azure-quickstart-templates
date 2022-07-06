@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: ibm-cloud-pak-for-data
 languages:
 - json
 ---

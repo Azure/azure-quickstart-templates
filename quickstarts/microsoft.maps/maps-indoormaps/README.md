@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: maps-indoormaps
 languages:
 - json
 - bicep

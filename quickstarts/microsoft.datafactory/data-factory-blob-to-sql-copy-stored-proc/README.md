@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: data-factory-blob-to-sql-copy-stored-proc
 languages:
 - json
 ---

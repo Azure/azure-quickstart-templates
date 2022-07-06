@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: rbac-builtinrole-resourcegroup
 languages:
 - json
 - bicep

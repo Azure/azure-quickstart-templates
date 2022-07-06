@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: nat-gateway-1-vm
 languages:
 - json
 - bicep

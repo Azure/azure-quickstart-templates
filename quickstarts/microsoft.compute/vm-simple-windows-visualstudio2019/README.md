@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: vm-simple-windows-visualstudio2019
 languages:
 - json
 ---

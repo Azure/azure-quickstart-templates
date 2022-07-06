@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: webapp-linux-sonarqube-postgresql-private-vnet
 languages:
 - json
 - bicep

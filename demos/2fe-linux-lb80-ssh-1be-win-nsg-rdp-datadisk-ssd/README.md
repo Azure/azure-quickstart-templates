@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: 2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd
 languages:
 - json
 ---

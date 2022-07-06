@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: machine-learning-end-to-end-secure
 languages:
 - json
 - bicep

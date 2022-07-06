@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: lab-using-lab-plan
 languages:
 - json
 - bicep

@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: availability-set-create-3FDs-20UDs
 languages:
 - json
 ---

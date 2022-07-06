@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: front-door-custom-domain-customer-certificate
 languages:
 - json
 - bicep

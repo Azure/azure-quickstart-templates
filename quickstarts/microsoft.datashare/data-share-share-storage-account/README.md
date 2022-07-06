@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: data-share-share-storage-account
 languages:
 - json
 - bicep

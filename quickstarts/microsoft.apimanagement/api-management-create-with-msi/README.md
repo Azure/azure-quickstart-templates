@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: api-management-create-with-msi
 languages:
 - json
 - bicep

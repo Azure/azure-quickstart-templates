@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: monitor-action-groups
 languages:
 - json
 - bicep

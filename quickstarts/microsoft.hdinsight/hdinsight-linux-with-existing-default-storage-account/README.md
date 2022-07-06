@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: hdinsight-linux-with-existing-default-storage-account
 languages:
 - json
 ---
