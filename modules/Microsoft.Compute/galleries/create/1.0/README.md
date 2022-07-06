@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: modules\Microsoft.Compute\galleries\create\1.0
 languages:
 - json
 ---
