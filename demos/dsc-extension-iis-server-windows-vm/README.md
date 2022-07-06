@@ -1,5 +1,5 @@
 ---
-description: This template creates a Windows VM and sets up an IIS server using the DSC extension. NOTE: The DSC configuration module needs a SAS token to be passed in if you're using Azure Storage. For DSC module link from Github (default in this template), this is not needed.
+description: This template creates a Windows VM and sets up an IIS server using the DSC extension. Note, the DSC configuration module needs a SAS token to be passed in if you are using Azure Storage. For DSC module link from Github (default in this template), this is not needed.
 page_type: sample
 products:
 - azure
