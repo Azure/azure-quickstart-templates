@@ -1,3 +1,13 @@
+---
+description: This template enables you to deploy an Azure Relay namespace with standard SKU and a HybridConnection.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-relay-create-hybridconnection
+languages:
+- json
+---
 # Create an Azure Relay namespace and HybridConnection
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.relay/azure-relay-create-hybridconnection/PublicLastTestDate.svg)
@@ -15,4 +25,4 @@
 
 This template creates an Azure Relay namespace and HybridConnection.
 
-
+`Tags: Microsoft.Relay/Namespaces, HybridConnections`

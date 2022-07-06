@@ -1,4 +1,14 @@
-# Jupyter Server Linux Ubuntu 18.04-LTS
+---
+description: This template deploy a Jupyter Server. You can provide the username, password, virtual machine name and select between CPU or GPU computing.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-linux-Jupyterhub
+languages:
+- json
+---
+# Deploy a Ubuntu Linux Jupyter Server VM 18.04-LTS.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jupyter/vm-linux-Jupyterhub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jupyter/vm-linux-Jupyterhub/PublicDeployment.svg)
@@ -9,13 +19,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jupyter/vm-linux-Jupyterhub/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jupyter/vm-linux-Jupyterhub/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-Jupyterhub%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-Jupyterhub%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-Jupyterhub%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-Jupyterhub%2Fazuredeploy.json)
 
-
-
-This template deploys a **Jupyter Server** using a Ubuntu Linux VM. This will deploy a CPU or GPU based VM in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.  
+This template deploys a **Jupyter Server** using a Ubuntu Linux VM. This will deploy a CPU or GPU based VM in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.
 
 If you are new to Azure virtual machines, see:
 
@@ -53,7 +61,7 @@ When the installation is complete, it should give you a JupyterHub login page:
 
 If your still having issues connecting you can run the following command to reinstall the latest version of JupyterHub replace <admin-user-name> with your admin username
 
-```
+```bash
 sudo apt install python3 python3-dev git curl
 
 curl https://raw.githubusercontent.com/jupyterhub/the-littlest-jupyterhub/master/bootstrap/bootstrap.py | sudo -E python3 - --admin <admin-user-name>
@@ -86,6 +94,4 @@ After that, let's press the [Run] button. If we visit our **public IP** where ou
 
 ![Screen](./images/httpsConfig3.png)
 
-`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Jupyter`
-
-
+`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Jupyter, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIpAddresses, Microsoft.Network/networkInterfaces, Microsoft.Storage/storageAccounts, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

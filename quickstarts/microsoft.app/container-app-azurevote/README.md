@@ -1,4 +1,15 @@
-# Deploy a Container App within a Container App Environment
+---
+description: Create a two Container App Environment with a basic Container App. It also deploys a Log Analytics Workspace to store logs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: container-app-azurevote
+languages:
+- json
+- bicep
+---
+# Creates a two Container App with a Container App Environment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-azurevote/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-azurevote/PublicDeployment.svg)
@@ -34,4 +45,4 @@ If you're new to template deployment, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: ContainerApp, Container App, Container, Web, ARM Template`
+`Tags: ContainerApp, Container App, Container, Web, ARM Template, Microsoft.OperationalInsights/workspaces, Microsoft.App/managedEnvironments, Microsoft.App/containerApps`

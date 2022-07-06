@@ -1,4 +1,14 @@
-# Create Azure Netapp Files resource with SMB volume
+---
+description: This template allows you to create a new Azure NetApp Files resource with a single Capacity pool and single volume configured with SMB protocol.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: anf-smb-volume
+languages:
+- json
+---
+# Create new ANF resource with SMB volume
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.netapp/anf-smb-volume/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.netapp/anf-smb-volume/PublicDeployment.svg)
@@ -38,3 +48,5 @@ The following resources are deployed as part of the solution:
 ## Deployment steps
 
 You can click the "Deploy to Azure" button at the beginning of this document.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/virtualNetworks/subnets, Microsoft.NetApp/netAppAccounts, Microsoft.NetApp/netAppAccounts/capacityPools, Microsoft.NetApp/netAppAccounts/capacityPools/volumes`

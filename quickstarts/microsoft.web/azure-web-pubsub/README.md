@@ -3,6 +3,8 @@ description: Azure Web PubSub Service helps you build real-time messaging web ap
 page_type: sample
 products:
 - azure
+- azure-resource-manager
+urlFragment: azure-web-pubsub
 languages:
 - json
 - bicep
@@ -38,4 +40,4 @@ If you don't have an [Azure subscription](/azure/guides/developer/azure-develope
   - Connectivity and messaging logs: enabled
   - TLS clientCertEnabled: disabled
 
-`Tags:Web PubSub, Bicep, real-time messaging, publish-subscribe, Microsoft.SignalRService/webPubSub, None`
+`Tags: Web PubSub, Bicep, real-time messaging, publish-subscribe, Microsoft.SignalRService/webPubSub, None`

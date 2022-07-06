@@ -1,4 +1,14 @@
-# Docker Swarm Cluster (pre-docker 1.12)
+---
+description: This template creates a high-availability Docker Swarm cluster
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: docker-swarm-cluster
+languages:
+- json
+---
+# Docker Swarm Cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/swarm/docker-swarm-cluster/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/swarm/docker-swarm-cluster/PublicDeployment.svg)
@@ -150,8 +160,8 @@ This also can be executed in the shorthand form:
     $ docker ps
     ...
 
-[av-set]: https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-manage-availability/
-[az-lb]: https://azure.microsoft.com/en-us/documentation/articles/load-balancer-overview/
-[az-vnet]: http://azure.microsoft.com/en-us/documentation/services/virtual-network/
+[av-set]: https://azure.microsoft.com/documentation/articles/virtual-machines-manage-availability/
+[az-lb]: https://azure.microsoft.com/documentation/articles/load-balancer-overview/
+[az-vnet]: http://azure.microsoft.com/documentation/services/virtual-network/
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers, Microsoft.Network/loadBalancers/inboundNatRules, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DockerExtension`

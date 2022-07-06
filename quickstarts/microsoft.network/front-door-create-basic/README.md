@@ -1,3 +1,14 @@
+---
+description: This template creates a basic Front Door configuration with a single backend.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-create-basic
+languages:
+- json
+- bicep
+---
 # Create a basic Front Door
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-create-basic/PublicLastTestDate.svg)
@@ -13,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Ffront-door-create-basic%2Fazuredeploy.json)
 
 This template creates a basic **Front Door** configuration with a single backend, single default path match `/*` and no custom domain. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/frontdoor/quickstart-create-front-door-template) article.
+
+`Tags: Microsoft.Network/frontDoors`

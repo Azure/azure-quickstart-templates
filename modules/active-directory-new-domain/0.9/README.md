@@ -3,6 +3,8 @@ description: This template creates a new Azure VM, it configures the VM to be an
 page_type: sample
 products:
 - azure
+- azure-resource-manager
+urlFragment: 0.9
 languages:
 - json
 ---
@@ -58,5 +60,4 @@ This is an experimental module at the moment...
 
 ```apiVersion: n/a```
 
-
-`Tags:Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Resources/deployments, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC`
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Resources/deployments, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Network/virtualNetworks`

@@ -1,4 +1,15 @@
-# Multi-NIC Virtual Machine Creation using Two Subnets
+---
+description: Creates a new VM with two NICs which connect to two different subnets within the same VNet.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: 1vm-2nics-2subnets-1vnet
+languages:
+- json
+- bicep
+---
+# 101-1vm-2nics-2subnets-1vnet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/1vm-2nics-2subnets-1vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/1vm-2nics-2subnets-1vnet/PublicDeployment.svg)
@@ -23,3 +34,5 @@ This template creates a new VM with two NICs which connect to two different subn
 2. Customize parameters in **azuredeploy.parameters** as you see appropriate, at the very least the **adminPassword**.
 
 Feel free to post questions and enjoy!
+
+`Tags: Microsoft.Compute/virtualMachines, Microsoft.Storage/storageAccounts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIPAddresses`

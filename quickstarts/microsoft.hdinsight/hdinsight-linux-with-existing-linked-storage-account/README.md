@@ -1,4 +1,14 @@
-# Deploy an HDInsight cluster using existing default storage account
+---
+description: This template allows you to create an Hadoop cluster in HDInsight and the dependent default storage account. The template also links an existing storage account. The linked storage account usually contains the business data.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-linux-with-existing-linked-storage-account
+languages:
+- json
+---
+# Deploy HDInsight cluster with existing linked storage
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-linux-with-existing-linked-storage-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-linux-with-existing-linked-storage-account/PublicDeployment.svg)
 
@@ -24,3 +34,4 @@ You don't want to use the default storage account container for storing business
 After you have completed your Hadoop jobs, you can safely delete the cluster and the default storage account. The business data is retained in the linked storage account.  Before you delete the default storage account, make sure to retrieve the logs.
 
 If you want to create an HDInsight cluster with secure transfer enabled Azure storage accounts, make sure to use HDInsight version 3.6 or newer.  Only version 3.6 or newer supports secure transfer enabled Azure Storage accounts.
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`

@@ -1,4 +1,14 @@
-# Deploy a Node app service
+---
+description: This template allows you to create an App Service for deploying a Node app.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-linux-node
+languages:
+- json
+---
+# Node App Service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-node/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-node/PublicDeployment.svg)
@@ -27,6 +37,5 @@ If you are new to template deployment, see:
 
 If you have already a Linux App Service Plan, you will have to deploy the new web app into the same resource group that the other web app is. That's because Student accounts has a limit of only 1 free tier Linux app service plan.
 
-`Tags: Azure4Student, appServices , node, linux, Beginner`
-
+`Tags: Azure4Student, appServices, node, linux, Beginner, Microsoft.Web/sites, Microsoft.Web/serverfarms`
 

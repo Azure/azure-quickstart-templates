@@ -1,4 +1,15 @@
-# Create an Azure Storage Account and Blob Container accessible using SFTP protocol on Azure
+---
+description: Creates an Azure Storage account and a blob container that can be accessed using SFTP protocol. Access can be password or public-key based.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-sftp
+languages:
+- json
+- bicep
+---
+# Create Storage Account with SFTP enabled
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-sftp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-sftp/PublicDeployment.svg)
 
@@ -19,7 +30,7 @@ This feature is currently in Public Preview. To enable the feature on your subsc
 
 - Azure CLI
 ```azurecli
-# Check if the SFTP feature is registered first 
+# Check if the SFTP feature is registered first
 az feature show --namespace Microsoft.Storage --name AllowSFTP
 
 # Register the SFTP feature on your subscription
@@ -46,8 +57,8 @@ If you are new to Azure Storage account, see:
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates, SFTP
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers, Microsoft.Storage/storageAccounts/localUsers`

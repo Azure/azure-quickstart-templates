@@ -1,4 +1,14 @@
-# Azure Firewall with multiple public IP addresses quickstart
+---
+description: This template creates an Azure Firewall with two public IP addresses and two Windows Server 2019 servers to test.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: fw-docs-qs
+languages:
+- json
+---
+# Create an Azure Firewall with multiple IP public addresses
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/fw-docs-qs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/fw-docs-qs/PublicDeployment.svg)
@@ -23,4 +33,4 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 This template is used by the Azure Firewall documentation [quickstart](https://docs.microsoft.com/azure/firewall/quick-create-multiple-ip-template) article.
 
-`Tags: Azure Firewall`
+`Tags: Azure Firewall, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPPrefixes, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Compute/virtualMachines, Microsoft.Network/networkInterfaces, Microsoft.Network/azureFirewalls, Allow, Dnat, Microsoft.Network/routeTables`

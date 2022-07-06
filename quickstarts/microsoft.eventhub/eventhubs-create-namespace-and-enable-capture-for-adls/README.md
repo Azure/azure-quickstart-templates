@@ -1,4 +1,14 @@
-# 201-eventhubs-create-namespace-and-enable-capture-for-adls
+---
+description: This template enables you to deploy a EventHubs namespace with an event hub and enabling Capture on it
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: eventhubs-create-namespace-and-enable-capture-for-adls
+languages:
+- json
+---
+# Create EventHubs with Capture enabled (ADLS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventhub/eventhubs-create-namespace-and-enable-capture-for-adls/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventhub/eventhubs-create-namespace-and-enable-capture-for-adls/PublicDeployment.svg)
@@ -17,5 +27,4 @@ For information about using this template, see [Create an Event Hubs namespace w
 Azure Event Hubs Capture enables you to automatically deliver the streaming data in your Event Hubs to a Blob storage of your choice with the added flexibility to specify a time or size interval of your choosing.
 Setting up Capture is quick, there are no administrative costs to run it, and it scales automatically with your Event Hubs Throughput Units. Event Hubs Capture is the easiest way to load streaming data into Azure and allows you to focus on data processing rather than data capture. You will need to specify you existing storage resource id and your container to enable archiving to it.
 
-
-
+`Tags: Microsoft.EventHub/Namespaces, eventhubs`

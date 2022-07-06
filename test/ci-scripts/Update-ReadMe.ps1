@@ -20,7 +20,7 @@ Write-Output "Testing file: $readmePath"
 Write-Output '*****************************************************************************************'
 Write-Output '*****************************************************************************************'
 Write-Output '*****************************************************************************************'
-Write-Output $readme
+
 
 $readme = Get-Content $readmePath -Raw
 Write-Output $readme
@@ -28,7 +28,7 @@ Write-Output $readme
 # Now automatically add the header needed for doc samples
 # get metadata
 $metadata = Get-Content -Path "$SampleFolder\metadata.json" -Raw | ConvertFrom-Json 
-$H1 = "# $($metadata.itemDisplayName)"
+$H1 = "# $($metadata.itemDisplayName)" # this cannot be duplicated in the repo, doc samples index this for some strange reason
 $metadataDescription = $metadata.description # note this will be truncated to 150 chars but the summary is usually the same as the itemDisplayName
 
 # find H1
@@ -70,13 +70,14 @@ else {
     #>
 
     $YAML = 
-    @"
+@"
 ---
 description: %description%
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: %urlFragment%
 languages:
 - json
 "@
@@ -90,31 +91,37 @@ languages:
     $YAML = $YAML + "`n---`n"
 
     # update the description
+    # replace disallowed chars
+    $metadataDescription = $metadataDescription.Replace(":", "&#58;")
+
+    # set an urlFragment to the path to minimize dupes - we use the last segment of the path, which may not be unique, but it's a friendlier url
     $YAML = $YAML.Replace('%description%', $metadataDescription)
+    if($SampleName.StartsWith('modules')){
+        $fragment = $SampleName.Replace('\', '-') # for modules we use version numbers, e.g. 0.9 so will have dupes
+    }else{
+        $fragment = $SampleName.Split('\')[-1]
+    }
+    $YAML = $YAML.Replace('%urlFragment%', $fragment)
 
     # prepend the YAML
     # TODO - comment out for now until the issues are addressed
     $readme = "$YAML$readme"
 
     # add tags
-    $mainTemplatePath = "$sampleFolder\$mainTemplateFilename"
-    $prereqTemplatePath = "$sampleFolder\prereqs\$prereqTemplateFilename"
+    $allResources = @()
 
-    $mainTemplateResources = @{}
-    $prereqTemplateResources = @{}
-
-    if (Test-Path $mainTemplatePath) {
-        $mainTemplateObject = Get-Content -Path $mainTemplatePath -Raw | ConvertFrom-Json -Depth 100
-        $mainTemplateResources = Find-JsonContent -InputObject $mainTemplateObject -Key type -Value "*" -Like # this will get every type property, even those in a properties body
+    $allJsonFiles = Get-ChildItem "$sampleFolder\*.json" -Recurse | ForEach-Object -Process { $_.FullName }
+    foreach ($file in $allJsonFiles) {
+        if ($(split-path $file -leaf) -ne "metadata.json" -and
+            !($(split-path $file -leaf).EndsWith("parameters.json"))) {
+            $templateObject = Get-Content -Path $file -Raw | ConvertFrom-Json -Depth 100 -AsHashtable
+            if ($templateObject.'$schema' -like "*deploymentTemplate.json#") {
+                $templateResources = @{}
+                $templateResources = Find-JsonContent -InputObject $templateObject.resources -Key type -Value "*" -Like # this will get every type property, even those in a properties body, we can filter below
+                $allResources = $allResources + $templateResources
+            }
+        }
     }
-
-    if (Test-Path $prereqTemplatePath) {
-        $prereqTemplateObject = Get-Content -Path $prereqTemplatePath -Raw | ConvertFrom-Json -Depth 100
-        $prereqTemplateResources = Find-JsonContent -InputObject $prereqTemplateObject.resources -Key type -Value "*" -Like # this will get every type property, even those in a properties body, we can filter below
-    }
-
-    # union the two
-    $allResources = $mainTemplateResources + $prereqTemplateResources
 
     # Find Current Tags
     $currentTags = ""
@@ -138,14 +145,14 @@ languages:
         }
     }
     
-    $newTags = '`Tags:' + $($tagsArray -join ", ") + '`' -replace "Tags:,", "Tags:" # empty tags seem to add an empty element at the beginning
+    $newTags = '`Tags: ' + $($tagsArray -join ", ") + '`' -replace "Tags:,", "Tags:" # empty tags seem to add an empty element at the beginning
 
     Write-Host "New Tags string:`n$newTags"
 
     # replace the current Tags in the file if any
     if ($currentTags -eq "") {
         # Add to the end of the file
-        $readme = $readme += "`n`n$newTags" # if tags were not in the file then make sure we have line breaks
+        $readme = $readme += "$newTags" # if tags were not in the file then make sure we have line breaks
     }
     else {
         #replace

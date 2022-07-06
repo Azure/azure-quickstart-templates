@@ -1,4 +1,15 @@
-# Create an Azure Cosmos DB account for Core (SQL) API
+---
+description: This template creates an Azure Cosmos account for Core (SQL) API with a database and container with throughput with multiple other options.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-sql
+languages:
+- json
+- bicep
+---
+# Create an Azure Cosmos account for Core (SQL) API
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql/PublicDeployment.svg)
@@ -25,3 +36,5 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Database Name:** Enter the database name for the account.
 - **Container Name:** Enter the name for the container for the account.
 - **Dedicated Throughput:** Enter the RU/s for the container (default is 400).
+
+`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.DocumentDB/databaseAccounts/sqlDatabases, Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers`

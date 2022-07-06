@@ -1,4 +1,15 @@
-# Simple deployment of UrlSigning action via rules engine for a CDN end point
+---
+description: This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine UrlSigning action for default and override parameters.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-ruleseengine-urlsigning
+languages:
+- json
+- bicep
+---
+# Create a CDN Endpoint with UrlSigning action
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-ruleseengine-urlsigning/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-ruleseengine-urlsigning/PublicDeployment.svg)
@@ -13,7 +24,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Fcdn-with-ruleseengine-urlsigning%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Fcdn-with-ruleseengine-urlsigning%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Fcdn-with-ruleseengine-urlsigning%2Fazuredeploy.json)
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine UrlSigning action for default and override parameters.
 
@@ -23,3 +34,5 @@ Before using the template, make sure to do the following:
 2. Define two secrets and set up secret values manually (at least 32 size)
 3. References the two secrets in urlSigningKeys of the template (change subscriptionId, resourceGroupName, vaultName, secretName, secretVersion)
 4. Make sure the keyvault is given "Get Permissions for Secret" access to "Microsoft.Azure.CDN" Principal.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/endpoints`

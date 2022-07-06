@@ -1,4 +1,15 @@
-# Assign an RBAC role to a resource group
+---
+description: This template assigns Owner, Reader or Contributor access to an existing resource group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: rbac-builtinrole-resourcegroup
+languages:
+- json
+- bicep
+---
+# Assign an RBAC role to a Resource Group
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/rbac-builtinrole-resourcegroup/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/rbac-builtinrole-resourcegroup/PublicDeployment.svg)
@@ -65,4 +76,4 @@ If you're new to the template development, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Create resource groups and resources at the subscription level](https://docs.microsoft.com/azure/azure-resource-manager/deploy-to-subscription#create-roles)
 
-`Tags: RBAC for Azure resources, role-based access control, Resource Manager, Resource Manager templates, ARM templates`
+`Tags: RBAC for Azure resources, role-based access control, Resource Manager, Resource Manager templates, ARM templates, Microsoft.Authorization/roleAssignments`

@@ -1,3 +1,13 @@
+---
+description: Resource Manager templates and parameters demonstrating how to deploy App Service environment with Azure Firewall integration
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: app-service-environment-azfirewall
+languages:
+- json
+---
 # ILB App Service Environment with Azure Firewall
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/app-service-environment-azfirewall/PublicLastTestDate.svg)
@@ -16,3 +26,5 @@ This template deploys an **ILB ASE** into Azure with an integrated Azure Firewal
 ## Azure Government deployment option
 
 This template contains a parameter for deploying to Azure Government or Azure commercial.  Deploying to Azure Government will deploy the VNet with ASE management addresses correct for Azure Government.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Web/hostingEnvironments, Microsoft.web/serverfarms, Microsoft.Web/sites, microsoft.insights/components, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/azureFirewalls, Allow`

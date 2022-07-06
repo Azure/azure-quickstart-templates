@@ -1,4 +1,14 @@
-# Create a Logic App to send information on your Azure Backup billing entities via email
+---
+description: This template deploys a Logic App that sends periodic reports on key backup billing parameters (protected instances and backup cloud storage consumed) at a billing-entity level, to a specified set of email addresses.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-usage-report
+languages:
+- json
+---
+# Logic App to email reports on your Azure Backup billing
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-usage-report/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-usage-report/PublicDeployment.svg)
@@ -19,10 +29,12 @@ You can use this template to view trends on protected instance count and backup 
 
 Following are the information that is exported by this Logic App:
 
-* Inline 
-  * Trend of Protected Instance count over time 
+* Inline
+  * Trend of Protected Instance count over time
   * Trend of Backup Cloud Storage (GB) consumed over time
 * Attachment
-  * List of all billing entities with details on protected instance count, backup cloud storage consumed, storage replication type etc. 
+  * List of all billing entities with details on protected instance count, backup cloud storage consumed, storage replication type etc.
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
+
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, Foreach, AppendToStringVariable, If, ApiConnection, InitializeVariable, array, string, Scope, Table, SetVariable, Microsoft.OperationalInsights/workspaces`
