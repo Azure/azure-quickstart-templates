@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: 0.9
+urlFragment: modules-machine-learning-workspace-0.9
 languages:
 - json
 ---

@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: 0.9
+urlFragment: modules-Microsoft.KeyVault-vaults-keys-0.9
 languages:
 - json
 ---
