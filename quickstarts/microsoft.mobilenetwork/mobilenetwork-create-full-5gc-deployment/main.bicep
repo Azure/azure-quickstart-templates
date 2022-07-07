@@ -90,89 +90,6 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
     }
   }
 
-  resource exampleDataNetwork 'dataNetworks@2022-04-01-preview' = {
-    name: dataNetworkName
-    location: location
-    properties: {}
-  }
-
-  resource exampleSlice 'slices@2022-04-01-preview' = {
-    name: sliceName
-    location: location
-    properties: {
-      snssai: {
-        sst: 1
-      }
-    }
-  }
-
-  resource exampleService 'services@2022-04-01-preview' = {
-    name: serviceName
-    location: location
-    properties: {
-      servicePrecedence: 253
-      pccRules: [
-        {
-          ruleName: 'All_traffic'
-          rulePrecedence: 253
-          trafficControl: 'Enabled'
-          serviceDataFlowTemplates: [
-            {
-              templateName: 'Any-traffic'
-              protocol: [
-                'ip'
-              ]
-              direction: 'Bidirectional'
-              remoteIpList: [
-                'any'
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  }
-
-  resource exampleSimPolicy 'simPolicies@2022-04-01-preview' = {
-    name: simPolicyName
-    location: location
-    properties: {
-      ueAmbr: {
-        uplink: '2 Gbps'
-        downlink: '2 Gbps'
-      }
-      defaultSlice: {
-        id: exampleSlice.id
-      }
-      sliceConfigurations: [
-        {
-          slice: {
-            id: exampleSlice.id
-          }
-          defaultDataNetwork: {
-            id: exampleDataNetwork.id
-          }
-          dataNetworkConfigurations: [
-            {
-              dataNetwork: {
-                id: exampleDataNetwork.id
-              }
-              sessionAmbr: {
-                uplink: '2 Gbps'
-                downlink: '2 Gbps'
-              }
-              allowedServices: [
-                {
-                  id: exampleService.id
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  }
-
   resource exampleSite 'sites@2022-04-01-preview' = {
     name: siteName
     location: location
@@ -186,6 +103,93 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
         }
       ]
     }
+  }
+}
+
+resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2022-04-01-preview' = {
+  parent: exampleMobileNetwork
+  name: dataNetworkName
+  location: location
+  properties: {}
+}
+
+resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-04-01-preview' = {
+  parent: exampleMobileNetwork
+  name: sliceName
+  location: location
+  properties: {
+    snssai: {
+      sst: 1
+    }
+  }
+}
+
+resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-04-01-preview' = {
+  parent: exampleMobileNetwork
+  name: serviceName
+  location: location
+  properties: {
+    servicePrecedence: 253
+    pccRules: [
+      {
+        ruleName: 'All_traffic'
+        rulePrecedence: 253
+        trafficControl: 'Enabled'
+        serviceDataFlowTemplates: [
+          {
+            templateName: 'Any-traffic'
+            protocol: [
+              'ip'
+            ]
+            direction: 'Bidirectional'
+            remoteIpList: [
+              'any'
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' = {
+  parent: exampleMobileNetwork
+  name: simPolicyName
+  location: location
+  properties: {
+    ueAmbr: {
+      uplink: '2 Gbps'
+      downlink: '2 Gbps'
+    }
+    defaultSlice: {
+      id: exampleSlice.id
+    }
+    sliceConfigurations: [
+      {
+        slice: {
+          id: exampleSlice.id
+        }
+        defaultDataNetwork: {
+          id: exampleDataNetwork.id
+        }
+        dataNetworkConfigurations: [
+          {
+            dataNetwork: {
+              id: exampleDataNetwork.id
+            }
+            sessionAmbr: {
+              uplink: '2 Gbps'
+              downlink: '2 Gbps'
+            }
+            allowedServices: [
+              {
+                id: exampleService.id
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 }
 
@@ -206,6 +210,9 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
       authenticationKey: item.authenticationKey
       operatorKeyCode: item.operatorKeyCode
       deviceType: item.deviceType
+      simPolicy: {
+        id: exampleSimPolicy.id
+      }
     }
   }]
 }

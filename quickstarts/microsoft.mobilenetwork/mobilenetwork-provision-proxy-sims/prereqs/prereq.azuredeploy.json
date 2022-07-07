@@ -48,6 +48,20 @@
       "metadata": {
         "description": "The name of the data network."
       }
+    },
+    "serviceName": {
+      "type": "string",
+      "defaultValue": "Allow_all_traffic",
+      "metadata": {
+        "description": "The name of the service"
+      }
+    },
+    "simPolicyName": {
+      "type": "string",
+      "defaultValue": "Default-policy",
+      "metadata": {
+        "description": "The name of the SIM policy"
+      }
     }
   },
   "resources": [
@@ -86,12 +100,94 @@
           "mnc": "[parameters('mobileNetworkCode')]"
         }
       }
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/services",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('serviceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "servicePrecedence": 253,
+        "pccRules": [
+          {
+            "ruleName": "All_traffic",
+            "rulePrecedence": 253,
+            "trafficControl": "Enabled",
+            "serviceDataFlowTemplates": [
+              {
+                "templateName": "Any-traffic",
+                "protocol": [
+                  "ip"
+                ],
+                "direction": "Bidirectional",
+                "remoteIpList": [
+                  "any"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/simPolicies",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('simPolicyName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ueAmbr": {
+          "uplink": "2 Gbps",
+          "downlink": "2 Gbps"
+        },
+        "defaultSlice": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
+        },
+        "sliceConfigurations": [
+          {
+            "slice": {
+              "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
+            },
+            "defaultDataNetwork": {
+              "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/dataNetworks', parameters('mobileNetworkName'), parameters('dataNetworkName'))]"
+            },
+            "dataNetworkConfigurations": [
+              {
+                "dataNetwork": {
+                  "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/dataNetworks', parameters('mobileNetworkName'), parameters('dataNetworkName'))]"
+                },
+                "sessionAmbr": {
+                  "uplink": "2 Gbps",
+                  "downlink": "2 Gbps"
+                },
+                "allowedServices": [
+                  {
+                    "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/services', parameters('mobileNetworkName'), parameters('serviceName'))]"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/dataNetworks', parameters('mobileNetworkName'), parameters('dataNetworkName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/services', parameters('mobileNetworkName'), parameters('serviceName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
+      ]
     }
   ],
   "outputs": {
     "existingMobileNetworkName": {
       "type": "string",
       "value": "[parameters('mobileNetworkName')]"
+    },
+    "existingSimPolicyName": {
+      "type": "string",
+      "value": "[parameters('simPolicyName')]"
     }
   }
 }

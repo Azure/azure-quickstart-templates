@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.7.4.23292",
-      "templateHash": "10390541200207467519"
+      "version": "0.8.2.30886",
+      "templateHash": "1206758085608647660"
     }
   },
   "parameters": {
@@ -187,6 +187,101 @@
   },
   "resources": [
     {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/sites",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('siteName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "networkFunctions": [
+          {
+            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]"
+          },
+          {
+            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]",
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]",
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "exampleSimResources",
+        "count": "[length(parameters('simResources'))]"
+      },
+      "type": "Microsoft.MobileNetwork/simGroups/sims",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('simGroupName'), parameters('simResources')[copyIndex()].simName)]",
+      "properties": {
+        "integratedCircuitCardIdentifier": "[parameters('simResources')[copyIndex()].integratedCircuitCardIdentifier]",
+        "internationalMobileSubscriberIdentity": "[parameters('simResources')[copyIndex()].internationalMobileSubscriberIdentity]",
+        "authenticationKey": "[parameters('simResources')[copyIndex()].authenticationKey]",
+        "operatorKeyCode": "[parameters('simResources')[copyIndex()].operatorKeyCode]",
+        "deviceType": "[parameters('simResources')[copyIndex()].deviceType]",
+        "simPolicy": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/simPolicies', parameters('mobileNetworkName'), parameters('simPolicyName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/simGroups', parameters('simGroupName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/simPolicies', parameters('mobileNetworkName'), parameters('simPolicyName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes/attachedDataNetworks",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('siteName'), parameters('siteName'), parameters('dataNetworkName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "userPlaneDataInterface": {
+          "ipv4Address": "[parameters('userPlaneDataInterfaceIpAddress')]",
+          "ipv4Subnet": "[parameters('userPlaneDataInterfaceSubnet')]",
+          "ipv4Gateway": "[parameters('userPlaneDataInterfaceGateway')]",
+          "name": "[parameters('userPlaneDataInterfaceName')]"
+        },
+        "userEquipmentAddressPoolPrefix": "[if(empty(parameters('userEquipmentAddressPoolPrefix')), null(), createArray(parameters('userEquipmentAddressPoolPrefix')))]",
+        "userEquipmentStaticAddressPoolPrefix": "[if(empty(parameters('userEquipmentStaticAddressPoolPrefix')), null(), createArray(parameters('userEquipmentStaticAddressPoolPrefix')))]",
+        "naptConfiguration": {
+          "enabled": "[parameters('naptEnabled')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('siteName'), parameters('siteName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "userPlaneAccessInterface": {
+          "ipv4Address": "[parameters('userPlaneAccessInterfaceIpAddress')]",
+          "ipv4Subnet": "[parameters('accessSubnet')]",
+          "ipv4Gateway": "[parameters('accessGateway')]",
+          "name": "[parameters('userPlaneAccessInterfaceName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks",
+      "apiVersion": "2022-04-01-preview",
+      "name": "[parameters('mobileNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicLandMobileNetworkIdentifier": {
+          "mcc": "[parameters('mobileCountryCode')]",
+          "mnc": "[parameters('mobileNetworkCode')]"
+        }
+      }
+    },
+    {
       "type": "Microsoft.MobileNetwork/mobileNetworks/dataNetworks",
       "apiVersion": "2022-04-01-preview",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('dataNetworkName'))]",
@@ -287,97 +382,6 @@
         "[resourceId('Microsoft.MobileNetwork/mobileNetworks/services', parameters('mobileNetworkName'), parameters('serviceName'))]",
         "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
       ]
-    },
-    {
-      "type": "Microsoft.MobileNetwork/mobileNetworks/sites",
-      "apiVersion": "2022-04-01-preview",
-      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('siteName'))]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "networkFunctions": [
-          {
-            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]"
-          },
-          {
-            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
-          }
-        ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]",
-        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]",
-        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
-      ]
-    },
-    {
-      "copy": {
-        "name": "exampleSimResources",
-        "count": "[length(parameters('simResources'))]"
-      },
-      "type": "Microsoft.MobileNetwork/simGroups/sims",
-      "apiVersion": "2022-04-01-preview",
-      "name": "[format('{0}/{1}', parameters('simGroupName'), parameters('simResources')[copyIndex()].simName)]",
-      "properties": {
-        "integratedCircuitCardIdentifier": "[parameters('simResources')[copyIndex()].integratedCircuitCardIdentifier]",
-        "internationalMobileSubscriberIdentity": "[parameters('simResources')[copyIndex()].internationalMobileSubscriberIdentity]",
-        "authenticationKey": "[parameters('simResources')[copyIndex()].authenticationKey]",
-        "operatorKeyCode": "[parameters('simResources')[copyIndex()].operatorKeyCode]",
-        "deviceType": "[parameters('simResources')[copyIndex()].deviceType]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.MobileNetwork/simGroups', parameters('simGroupName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes/attachedDataNetworks",
-      "apiVersion": "2022-04-01-preview",
-      "name": "[format('{0}/{1}/{2}', parameters('siteName'), parameters('siteName'), parameters('dataNetworkName'))]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "userPlaneDataInterface": {
-          "ipv4Address": "[parameters('userPlaneDataInterfaceIpAddress')]",
-          "ipv4Subnet": "[parameters('userPlaneDataInterfaceSubnet')]",
-          "ipv4Gateway": "[parameters('userPlaneDataInterfaceGateway')]",
-          "name": "[parameters('userPlaneDataInterfaceName')]"
-        },
-        "userEquipmentAddressPoolPrefix": "[if(empty(parameters('userEquipmentAddressPoolPrefix')), null(), createArray(parameters('userEquipmentAddressPoolPrefix')))]",
-        "userEquipmentStaticAddressPoolPrefix": "[if(empty(parameters('userEquipmentStaticAddressPoolPrefix')), null(), createArray(parameters('userEquipmentStaticAddressPoolPrefix')))]",
-        "naptConfiguration": {
-          "enabled": "[parameters('naptEnabled')]"
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes",
-      "apiVersion": "2022-04-01-preview",
-      "name": "[format('{0}/{1}', parameters('siteName'), parameters('siteName'))]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "userPlaneAccessInterface": {
-          "ipv4Address": "[parameters('userPlaneAccessInterfaceIpAddress')]",
-          "ipv4Subnet": "[parameters('accessSubnet')]",
-          "ipv4Gateway": "[parameters('accessGateway')]",
-          "name": "[parameters('userPlaneAccessInterfaceName')]"
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.MobileNetwork/mobileNetworks",
-      "apiVersion": "2022-04-01-preview",
-      "name": "[parameters('mobileNetworkName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicLandMobileNetworkIdentifier": {
-          "mcc": "[parameters('mobileCountryCode')]",
-          "mnc": "[parameters('mobileNetworkCode')]"
-        }
-      }
     },
     {
       "type": "Microsoft.MobileNetwork/simGroups",
