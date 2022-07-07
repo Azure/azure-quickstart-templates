@@ -60,7 +60,6 @@ resource waf 'Microsoft.Network/frontdoorwebapplicationfirewallpolicies@2020-11-
                 'OPTIONS'
                 'HEAD'
               ]
-              transforms: []
             }
           ]
           action: 'Block'

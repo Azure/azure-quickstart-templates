@@ -18,7 +18,6 @@ resource drs_global_overwriteResponseHeaders_rule 'Microsoft.Cdn/profiles/rulese
   name: 'OverwriteResponseHeaders'
   properties: {
     order: 1
-    conditions: []
     actions: [
       {
         name: 'ModifyResponseHeader'

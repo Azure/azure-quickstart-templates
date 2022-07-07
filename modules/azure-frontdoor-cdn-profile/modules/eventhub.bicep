@@ -54,16 +54,12 @@ resource eventhub_namespace_nw_rulesets 'Microsoft.EventHub/namespaces/networkRu
   properties: {
     publicNetworkAccess: 'Enabled'
     defaultAction: 'Allow'
-    virtualNetworkRules: []
-    ipRules: []
   }
 }
 
 resource consumer_group 'Microsoft.EventHub/namespaces/eventhubs/consumergroups@2022-01-01-preview' = {
   parent: eventhub_instance
   name: '$Default'
-  properties: {
-  }
 }
 
 output eventHubName string = eventhub_instance.name
