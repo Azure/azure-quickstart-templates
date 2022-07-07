@@ -111,6 +111,9 @@ function deploy {
         '*/deploymentTemplate.json*' {
             $deploymentScope = "ResourceGroup"
             $OptionalParameters.Add('Mode', $Mode)
+            if(!$ValidateOnly -and !$WhatIf) {
+                $OptionalParameters.Add('Force', $true)
+            }
         }
     }
 
@@ -268,7 +271,7 @@ function deploy {
                     -ResourceGroupName $ResourceGroupName `
                     @TemplateArgs `
                     @OptionalParameters `
-                    -Force -Verbose `
+                    -Verbose `
                     -ErrorVariable ErrorMessages
             }
             "Subscription" {
