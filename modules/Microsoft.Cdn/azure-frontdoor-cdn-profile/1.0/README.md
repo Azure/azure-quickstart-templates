@@ -1,4 +1,14 @@
-# Create a AFD CDN with WAF, Custom Domain and Diagnostic Settings
+---
+description: This template creates a new Azure FrontDoor cdn profile. Create WAF with custom and managed rules, cdn routes, origin and groups with their association with WAF and routes, configures custom domains, create event hub and diagnostic settings for sending CDN access logs using event hub.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-Microsoft.Cdn-azure-frontdoor-cdn-profile-1.0
+languages:
+- bicep
+---
+# Create an AFD CDN with WAF, Custom Domain and Diagnostic Settings
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/PublicDeployment.svg)
@@ -17,19 +27,33 @@
 
 A sample module to create Azure FrontDoor CDN profile. 
 
-This module
+1. Create Azure FrontDoor Standard/Premium CDN Profile
+2. Create routes and associate them with domain, origin and ruleset(s).
+3. Create ruleSets. For example, with ModifyResponseHeader, RouteConfigurationOverride (Cache Override)
+4. Create waf with Custom rules in Block Mode. (In this example, blocking all method except GET, OPTIONS and HEAD)
+5. Create waf with managed rules in Log Mode.
+6. Attach waf as security policy to endpoint
+7. Dynamically create custom domain and their association
+8. Attach AFD provided managed certificate for TLS. 
+9. Dynamically create Origin and Origin Group using array and their attachment with Routes, WAF policy etc.
+10. Create event namespace and hub
+11. Create Diagnostic Settings using eventHub for sending Azure FrontDoor CDN logs to event Hub.
 
-1. create Azure FrontDoor Standard/Premium CDN Profile
-2. create routes and associate them with domain, origin and ruleset(s).
-3. create ruleSets. For example, with ModifyResponseHeader, RouteConfigurationOverride (Cache Override)
-4. create waf with Custom rules in Block Mode. (In this example, blocking all method except GET, OPTIONS and HEAD)
-5. create waf with managed rules in Log Mode.
-6. attach waf as security policy to endpoint
-7. dynamically create custom domain and their association
-8. attach AFD provided managed certificate for TLS. 
-9. dynamically create Origin and Origin Group using array and their attachment with Routes, WAF policy etc.
-10. create event namespace and hub
-10. create Diagnostic Settings using eventHub for sending Azure FrontDoor CDN logs to event Hub.
+## Parameters
+
+| Name | Type | Required | Description |
+| :------------- | :----------: | :----------: | :------------- |
+| skuName | string | Yes | Name of Azure CDN SKU. One of `Premium_AzureFrontDoor` or `Standard_AzureFrontDoor` |
+| envName | string | Yes | Environment Name for CDN Profile. |
+| enableAfdEndpoint | bool | Yes | Enable or Disable a CDN Endpoint/Profile. |
+| enableWAFPolicy | bool | Yes | Enable or Disable a WAF Security Policy |
+| wafPolicyMode | string | Yes | Policy Mode for WAF. One of `Detection` or `Prevention` |
+| customDomains | array | Yes | Array of Custom Domains  |
+| origins | array | Yes | Array of Origin containing origin hostname, origin group name, path pattern to attach to origin and  enableState.  |
+| cdnProfileTags | object | Yes | Tags for CDN Profile  |
+| eventHubName | string | Yes | Event Hub to create for receiving CDN Logs. |
+| eventHubNamespace | string | Yes | Event Hub Namespace name. |
+| eventHubLocation | string | Yes | One of Valid Azure Region. |
 
 
 ## Directory Structure
@@ -39,11 +63,12 @@ This module
 ├── README.md
 ├── azuredeploy.parameters.json
 ├── images
-│   └── deployment.png
+│   └── deployment.png
 ├── main.bicep
 ├── metadata.json
 └── modules
-    ├── diagnosticSettings.bicep
+    ├── diagnosticsettings.bicep
+    ├── eventhub.bicep
     ├── profile.bicep
     ├── routes.bicep
     ├── rulesets.bicep
@@ -51,11 +76,12 @@ This module
 ```
 
 1. Directory `modules` contains base bicep files:
-   1. `diagnosticSettings.bicep`: create diagnostic settings to send Azure cdn access logs to event hub. This can further be consumed to Azure Data Explorer.
-   2. `profile.bicep`: invoke modules to create cdn profile, rulesets and diagnostic settings.
-   2. `routes.bicep`: create cdn routes for profile.
-   3. `rulesets.bicep`: create rule sets that are required by CDN Profile.
-   4. `waf.bicep`: create WAF with Managed and Custom rules that needs to be attached to CDN Profile as Security Policy.
+   1. `diagnosticSettings.bicep`: create diagnostic settings to send Azure cdn access logs to event hub.
+   2. `eventhub.bicep`: create eventhub namespace and eventhub instance.
+   3. `profile.bicep`: invoke modules to create cdn profile, rule sets and diagnostic settings.
+   4. `routes.bicep`: create cdn routes for profile.
+   5. `rulesets.bicep`: create rule sets that are required by CDN Profile.
+   6. `waf.bicep`: create WAF with Managed and Custom rules that needs to be attached to CDN Profile as Security Policy.
 3. `main.bicep` provides an abstracted view to a user for creating CDN profile and waf attachment.
 
 ## Deployment
