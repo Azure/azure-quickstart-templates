@@ -41,7 +41,6 @@ param wafPolicyName string
 @sys.description('Id of the WAF policy to attach')
 param wafPolicyId string
 
-
 @sys.description('Create CDN Profile')
 resource cdn 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: cdnProfileName
@@ -64,7 +63,6 @@ resource afd_endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
     enabledState: enableAfdEndpoint ? 'Enabled' : 'Disabled'
   }
 }
-
 
 @sys.description('Create Custom Domains to be used for CDN profile')
 resource custom_domains 'Microsoft.Cdn/profiles/customdomains@2021-06-01' = [for (customdomain, index) in customDomains: {
@@ -121,7 +119,6 @@ var customDomainIds = [for (domain, index) in customDomains: {id: custom_domains
 var afdEndpointIds = [{id: afd_endpoint.id}]
 var endPointIdsForWaf = union(customDomainIds, afdEndpointIds)
 
-
 @sys.description('Attach WAF for Security policy')
 resource cdn_waf_security_policy 'Microsoft.Cdn/profiles/securitypolicies@2021-06-01' = {
   parent: cdn
@@ -152,7 +149,6 @@ module rulesets 'rulesets.bicep' = {
   }
 }
 
-
 @sys.description('Create Diagnostic Settings for Logs')
 module diagnostic_settings 'diagnosticSettings.bicep' = {
   name: '${cdnProfileName}-monitoring-module'
@@ -164,7 +160,6 @@ module diagnostic_settings 'diagnosticSettings.bicep' = {
     eventHubNamespaceSubscriptionId: eventHubNamespaceSubscriptionId
   }
 }
-
 
 output cdnName string = cdn.name
 output afdEndpointName string = afd_endpoint.name

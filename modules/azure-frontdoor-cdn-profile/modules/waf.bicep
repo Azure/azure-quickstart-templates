@@ -24,7 +24,6 @@ param wafBlockResponseBody string = 'Access Denied by Firewall.'
 @sys.description('Response Code to return on Block. Default to 403')
 param wafBlockResponseCode int = 403
 
-
 @sys.description('Describes if request body should be checked. Since we only allow GET in this module due to Custom Rule, default to false')
 param enableRequestBodyCheck bool = false
 

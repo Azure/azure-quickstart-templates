@@ -6,15 +6,12 @@ resource cdn 'Microsoft.Cdn/profiles@2021-06-01' existing = {
   scope: resourceGroup()
 }
 
-// Rule Sets
-
 @sys.description('Default ruleset')
 resource global_rulesets 'Microsoft.Cdn/profiles/rulesets@2021-06-01' = {
   parent: cdn
   name: 'Global'
 }
 
-// Rules
 @sys.description('Modify other request-response headers and add to global rulesets')
 resource drs_global_overwriteResponseHeaders_rule 'Microsoft.Cdn/profiles/rulesets/rules@2021-06-01' = {
   parent: global_rulesets

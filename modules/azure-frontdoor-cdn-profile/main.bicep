@@ -34,7 +34,6 @@ param wafPolicyMode string
 @sys.description('Describes if the policy needs to enabled or disabled.')
 param enableWAFPolicy bool
 
-
 @sys.description('Crearte Azure WAF for CDN')
 module waf 'modules/waf.bicep' = {
   name: 'afdcdn-${envName}-waf-module'

@@ -13,7 +13,6 @@ param eventHubNamespaceSubscriptionId string
 @sys.description('Event Hub Namespace Resource Group')
 param eventHubNamespaceResourceGroup string
 
-
 resource event_hub_ns 'Microsoft.EventHub/namespaces@2021-11-01' existing = {
   name: eventHubNamespace
   scope: resourceGroup(eventHubNamespaceSubscriptionId, eventHubNamespaceResourceGroup)

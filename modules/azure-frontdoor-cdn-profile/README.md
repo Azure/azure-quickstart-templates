@@ -1,4 +1,16 @@
-# Azure FrontDoor CDN Profile
+# Create a AFD CDN with WAF, Custom Domain and Diagnostic Settings
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/modules/azure-frontdoor-cdn-profile/BicepVersion.svg)
+
 
 A sample module to create Azure FrontDoor CDN profile. 
 

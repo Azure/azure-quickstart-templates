@@ -58,7 +58,6 @@ var contentTypeCompressionList = [
   'text/x-java-source'
 ]
 
-
 resource cdn 'Microsoft.Cdn/profiles@2021-06-01' existing = {
   name: cdnProfileName
   scope: resourceGroup()
