@@ -171,4 +171,4 @@ module diagnostic_settings 'diagnosticsettings.bicep' = {
 
 output cdnName string = cdn.name
 output afdEndpointName string = afd_endpoint.name
-output defaultRuleSets array = rulesets.outputs.defaultRuleSets
+output defaultRuleSets string = rulesets.outputs.defaultRuleSetId

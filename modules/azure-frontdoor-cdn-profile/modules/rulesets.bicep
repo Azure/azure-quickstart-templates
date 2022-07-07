@@ -45,8 +45,4 @@ resource drs_global_overwriteResponseHeaders_rule 'Microsoft.Cdn/profiles/rulese
   }
 } 
 
-output defaultRuleSets array = [
-  {
-    id: global_rulesets.id
-  }
-]
+output defaultRuleSetId string = global_rulesets.id

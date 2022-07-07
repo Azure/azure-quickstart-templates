@@ -67,7 +67,11 @@ module routes 'modules/routes.bicep' = {
     cdnProfileName: profile.outputs.cdnName
     afdEndpointName: profile.outputs.afdEndpointName
     customDomains: customDomains
-    routeRuleSets: profile.outputs.defaultRuleSets
+    routeRuleSets: [
+      {
+        id: profile.outputs.defaultRuleSets
+      } 
+    ]
     origins: origins
   }
   dependsOn:[
