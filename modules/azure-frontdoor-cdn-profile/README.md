@@ -47,8 +47,8 @@ This module
 ### Setting environment variable
 
 ```bash
-export CDN_SUBS_ID="9aab410b-0fc2-4ca4-9342-d81a962f1921"
-export CDN_RESOURCE_GROUP_NAME="wus-edge-afd-cdn-foss-rg"
+export CDN_SUBS_ID="9xaxx10b-0xx2-xxxx-9xx2-d81a9xxxx921"
+export CDN_RESOURCE_GROUP_NAME="afd-cdn-foss-rg"
 export BICEP_FILE_NAME="main.bicep"
 
 ```
