@@ -14,9 +14,9 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-0
   name: existingMobileNetworkName
 }
 
-resource exampleSimPolicyResources 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' existing = [for item in simResources: {
+resource existingSimPolicyResources 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' existing = [for item in simResources: {
   parent: existingMobileNetwork
-  name: item.existingSimPolicyName
+  name: item.simPolicyName
 }]
 
 resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = {
@@ -37,7 +37,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
       operatorKeyCode: item.operatorKeyCode
       deviceType: item.deviceType
       simPolicy: {
-        id: exampleSimPolicyResources[index].id
+        id: existingSimPolicyResources[index].id
       }
     }
   }]
