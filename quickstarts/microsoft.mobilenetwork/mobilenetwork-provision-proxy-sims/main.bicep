@@ -4,6 +4,9 @@ param location string
 @description('The name of the mobile network to which you are adding the SIM group.')
 param existingMobileNetworkName string
 
+@description('The name of the SIM policy to be assigned to the SIM(s).')
+param existingSimPolicyName string
+
 @description('The name for the SIM group.')
 param simGroupName string
 
@@ -14,10 +17,10 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-0
   name: existingMobileNetworkName
 }
 
-resource existingSimPolicyResources 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' existing = [for item in simResources: {
+resource existingSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' existing = {
   parent: existingMobileNetwork
-  name: item.simPolicyName
-}]
+  name: existingSimPolicyName
+}
 
 resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = {
   name: simGroupName
@@ -28,7 +31,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
     }
   }
 
-  resource exampleSimResources 'sims@2022-04-01-preview' = [for (item, index) in simResources: {
+  resource exampleSimResources 'sims@2022-04-01-preview' = [for item in simResources: {
     name: item.simName
     properties: {
       integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
@@ -37,7 +40,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
       operatorKeyCode: item.operatorKeyCode
       deviceType: item.deviceType
       simPolicy: {
-        id: existingSimPolicyResources[index].id
+        id: existingSimPolicy.id
       }
     }
   }]
