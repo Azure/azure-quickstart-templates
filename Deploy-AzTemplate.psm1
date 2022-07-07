@@ -21,7 +21,8 @@ function deploy {
         [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
         [string] $ManagementGroupId,
         [switch] $Dev,
-        [switch] $bicep
+        [switch] $bicep,
+        [switch] $whatIf
     )
 
     try {
@@ -85,6 +86,9 @@ function deploy {
 
     if (!$ValidateOnly) {
         $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
+        if ($whatIf) {
+            $OptionalParameters.Add('WhatIf', $whatIf)
+        }
     }
 
     $TemplateFile           = "$ArtifactStagingDirectory\$TemplateFile"
