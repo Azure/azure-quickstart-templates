@@ -24,14 +24,21 @@
     },
     "cpu-gpu": {
       "type": "string",
-      "defaultValue": "CPU-4GB",
+      "defaultValue": "CPU-112GB",
       "allowedValues": [
-        "CPU-4GB",
-        "CPU-7GB",
         "CPU-8GB",
         "CPU-14GB",
         "CPU-16GB",
-        "GPU-56GB"
+        "CPU-28GB",
+        "CPU-32GB",
+        "CPU-64GB",
+        "CPU-112GB",
+        "CPU-128GB",
+        "CPU-256Gb",
+        "CPU-432Gb",
+        "GPU-56GB",
+        "GPU-112GB",
+        "GPU-224GB"
       ],
       "metadata": {
         "description": "Choose between CPU or GPU processing"
@@ -63,7 +70,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "[deployment().properties.templatelink.uri]"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -114,12 +121,19 @@
     "storageAccountType": "Standard_LRS",
     "storageAccountKind": "Storage",
     "vmSize": {
-      "CPU-4GB": "Standard_B2s",
-      "CPU-7GB": "Standard_D2s_v3",
-      "CPU-8GB": "Standard_D2s_v3",
+      "CPU-8GB": "Standard_F4s_v2",
       "CPU-14GB": "Standard_D4s_v3",
       "CPU-16GB": "Standard_D4s_v3",
-      "GPU-56GB": "Standard_NC6_Promo"
+      "CPU-28GB": "Standard_D8s_v3",
+      "CPU-32GB": "Standard_F4s_v2",
+      "CPU-64GB": "Standard_D16s_v3",
+      "CPU-112GB": "Standard_D16s_v3",
+      "CPU-128GB": "Standard_E16s_v3",
+      "CPU-256Gb": "Standard_E32_v3",
+      "CPU-432Gb": "Standard E64_v3",
+      "GPU-56GB": "Standard_NC6_Promo",
+      "GPU-112GB": "Standard_NV12",
+      "GPU-224GB": "Standard_NV24"
     },
     "vmName": "[concat(parameters('vmName'),'-', parameters('cpu-gpu'))]",
     "linuxConfiguration": {
@@ -137,7 +151,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-01-01",
       "name": "[parameters('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -199,7 +213,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-01-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -220,7 +234,7 @@
     },
     {
       "type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-01-01",
       "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -233,7 +247,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-01-01",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -263,7 +277,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-09-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -273,7 +287,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2022-03-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -322,14 +336,14 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat(reference(variables('storageAccountName')).primaryEndpoints.blob)]"
+            "storageUri": "[reference(variables('storageAccountName')).primaryEndpoints.blob]"
           }
         }
       },
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "apiVersion": "2019-07-01",
+          "apiVersion": "2022-03-01",
           "name": "[concat(variables('vmName'),'/installscript')]",
           "location": "[parameters('location')]",
           "dependsOn": [
@@ -346,7 +360,8 @@
             "protectedSettings": {
               "commandToExecute": "[concat('bash install.sh ', parameters('adminUsername'))]",
               "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat('scripts/install.sh', parameters('_artifactsLocationSasToken')))]"
+                "[uri(parameters('_artifactsLocation'), concat('scripts/install.sh', parameters('_artifactsLocationSasToken')))]",
+                "[uri(parameters('_artifactsLocation'), concat('scripts/bootstrap.py', parameters('_artifactsLocationSasToken')))]"
               ]
             }
           }
@@ -361,4 +376,3 @@
     }
   }
 }
-

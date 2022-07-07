@@ -1,12 +1,8 @@
 """
 Bootstrap an installation of TLJH.
-
 Sets up just enough TLJH environments to invoke tljh.installer.
-
 This script is run as:
-
     curl <script-url> | sudo python3 -
-
 Constraints:
   - Entire script should be compatible with Python 3.6 (We run on Ubuntu 18.04+)
   - Script should parse in Python 3.4 (since we exit with useful error message on Ubuntu 14.04+)
@@ -23,9 +19,7 @@ logger = logging.getLogger(__name__)
 def get_os_release_variable(key):
     """
     Return value for key from /etc/os-release
-
     /etc/os-release is a bash file, so should use bash to parse it.
-
     Returns empty string if key is not found.
     """
     return subprocess.check_output([
@@ -37,10 +31,8 @@ def get_os_release_variable(key):
 def run_subprocess(cmd, *args, **kwargs):
     """
     Run given cmd with smart output behavior.
-
     If command succeeds, print output to debug logging.
     If it fails, print output to info logging.
-
     In TLJH, this sends successful output to the installer log,
     and failed output directly to the user's screen
     """
