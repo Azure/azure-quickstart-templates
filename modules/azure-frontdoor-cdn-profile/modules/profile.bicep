@@ -29,11 +29,8 @@ param eventHubName string
 @sys.description('Event Hub Namespace Name')
 param eventHubNamespace string
 
-@sys.description('Event Hub Namespace Subscription Id for CDN Logs')
-param eventHubNamespaceSubscriptionId string 
-
-@sys.description('Event Hub Namespace Resource Group for CDN Logs')
-param eventHubNamespaceResourceGroup string
+@sys.description('Event Hub Namespace location')
+param eventHubLocation string
 
 @sys.description('Name of the WAF policy to create.')
 param wafPolicyName string
@@ -141,6 +138,16 @@ resource cdn_waf_security_policy 'Microsoft.Cdn/profiles/securitypolicies@2021-0
   }
 }
 
+@sys.description('Create EventHub.')
+module eventhub 'eventhub.bicep' = {
+  name: '${cdnProfileName}-eventhub-module'
+  params: {
+    eventHubNameSpaceName: eventHubNamespace
+    eventHubName: eventHubName
+    eventHubLocation: eventHubLocation
+  }
+}
+
 @sys.description('Default Rule Sets.')
 module rulesets 'rulesets.bicep' = {
   name: '${cdnProfileName}-rulesets-module'
@@ -150,15 +157,16 @@ module rulesets 'rulesets.bicep' = {
 }
 
 @sys.description('Create Diagnostic Settings for Logs')
-module diagnostic_settings 'diagnosticSettings.bicep' = {
+module diagnostic_settings 'diagnosticsettings.bicep' = {
   name: '${cdnProfileName}-monitoring-module'
   params: {
     cdnProfileName: cdn.name
-    eventHubName: eventHubName
-    eventHubNamespace: eventHubNamespace
-    eventHubNamespaceResourceGroup: eventHubNamespaceResourceGroup
-    eventHubNamespaceSubscriptionId: eventHubNamespaceSubscriptionId
+    eventHubName: eventhub.outputs.eventHubName
+    eventHubAuthId: eventhub.outputs.eventHubAuthId
   }
+  dependsOn:[
+    eventhub
+  ]
 }
 
 output cdnName string = cdn.name

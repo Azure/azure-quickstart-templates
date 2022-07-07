@@ -29,7 +29,8 @@ This module
 7. dynamically create custom domain and their association
 8. attach AFD provided managed certificate for TLS. 
 9. dynamically create Origin and Origin Group using array and their attachment with Routes, WAF policy etc.
-10. create Diagnostic Settings using `existing` eventHub for sending Azure FrontDoor CDN logs to event Hub.
+10. create event namespace and hub
+10. create Diagnostic Settings using eventHub for sending Azure FrontDoor CDN logs to event Hub.
 
 
 ## Directory Structure

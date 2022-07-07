@@ -22,11 +22,8 @@ param eventHubName string
 @sys.description('Event Hub Namespace Name')
 param eventHubNamespace string
 
-@sys.description('Event Hub Namespace Resource Group')
-param eventHubNamespaceResourceGroup string
-
-@sys.description('Event Hub Namespace Subscription Id.')
-param eventHubNamespaceSubscriptionId string
+@sys.description('Event Hub Namespace location')
+param eventHubLocation string
 
 @sys.description('Describes if it is in detection mode or prevention mode at policy level.')
 param wafPolicyMode string
@@ -60,8 +57,7 @@ module profile 'modules/profile.bicep' = {
     wafPolicyId: waf.outputs.cdnWafId
     eventHubName: eventHubName
     eventHubNamespace: eventHubNamespace
-    eventHubNamespaceResourceGroup: eventHubNamespaceResourceGroup
-    eventHubNamespaceSubscriptionId: eventHubNamespaceSubscriptionId
+    eventHubLocation: eventHubLocation
   }
 }
 
