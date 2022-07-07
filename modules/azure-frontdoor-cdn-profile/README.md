@@ -16,19 +16,22 @@ This module
 10. create Diagnostic Settings using `existing` eventHub for sending Azure FrontDoor CDN logs to event Hub.
 
 
-## Module Directory Structure
+## Directory Structure
 
 ```bash
 .
 ├── README.md
-├── modules
-│   ├── dignosticSettings.bicep
-│   ├── profile.bicep
-│   ├── routes.bicep
-│   ├── rulesets.bicep
-│   └── waf.bicep
+├── azuredeploy.parameters.json
+├── images
+│   └── deployment.png
+├── main.bicep
 ├── metadata.json
-└── main.bicep
+└── modules
+    ├── diagnosticSettings.bicep
+    ├── profile.bicep
+    ├── routes.bicep
+    ├── rulesets.bicep
+    └── waf.bicep
 ```
 
 1. Directory `modules` contains base bicep files:
