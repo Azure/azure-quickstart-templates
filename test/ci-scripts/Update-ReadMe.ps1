@@ -104,7 +104,6 @@ languages:
     $YAML = $YAML.Replace('%urlFragment%', $fragment)
 
     # prepend the YAML
-    # TODO - comment out for now until the issues are addressed
     $readme = "$YAML$readme"
 
     # add tags

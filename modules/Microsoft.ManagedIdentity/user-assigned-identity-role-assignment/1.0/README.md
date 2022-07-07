@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: 1.0
+urlFragment: modules-Microsoft.ManagedIdentity-user-assigned-identity-role-assignment-1.0
 languages:
 - json
 - bicep
