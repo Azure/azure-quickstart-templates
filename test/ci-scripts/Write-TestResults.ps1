@@ -107,7 +107,7 @@ Write-Host "Comparison table for previous results: $TableName"
 Write-Host "Comparison table current results: $comparisonResults"
 
 if ($isPullRequest) {
-    # Check for a duplicate itemDisplayName in metadata - this causes problems for doc samples ingestion
+    # Check for a duplicate itemDisplayName in metadata
     # we need to check both tables - merged and PRs in case a dupe is in a PR
     $t1 = (Get-AzStorageTable -Name $TableName -Context $ctx).CloudTable
     $t2 = (Get-AzStorageTable -Name $TableNamePRs -Context $ctx).CloudTable
