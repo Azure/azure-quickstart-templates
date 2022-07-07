@@ -1,4 +1,4 @@
-# Jupyter Server Linux Ubuntu 18.04-LTS
+# JupyterHub Server Linux Ubuntu 18.04-LTS Classroom Deployment
 
 The purpose of this ARM Template is to deploy a **Jupyter Server using an Ubuntu Virtual Machine** inserting a few parameters.
 
@@ -16,7 +16,19 @@ Don't worry about changing anything on the file, either on the portal or using A
 
 - *resourceGroup:* The Resource Group that will have your deployment. We go in detail in the next section.
 
-- *CPU-GPU:* Choose between CPU or GPU based virtual machine.
+- *Location:* this is the Azure region where you want all your resources to be (e.g. WestEurope, you can check all the available regions here)
+
+- *Virtual Machine Name:* the name for your virtual machine
+
+- *Virtual Machine Size:* this will be determined by the workload. You can check the list of available VM sizes here
+
+- *Admin UserName:* this will be the root user and is needed for the management of your TLJH
+
+- *Admin password:* choose a secure password for your root user
+
+- *OS Disk Type:* you have the options Standard HDD (LRS), Standard SSD and Premium SSD (for more details see the docs)
+
+- *Data Disk Size:* the size of your Data disk size (for more details visit the docs)
 
 Let's rock with the Deployment.  
 
@@ -97,11 +109,9 @@ And voilà, you have your new VM deployed.
 
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-Jupyterhub%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-</a><a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-Jupyterhub%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-jupyterhub%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-jupyterhub%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjupyter%2Fvm-linux-jupyterhub%2Fazuredeploy.json)
 
 #### Important disclaimer: Azure charges you for the resources you are using, and you don't want to finish all your credits immediately, right? So, for not running out of credit, don't forget to stop the VM at the portal or even delete the Resource Group you create to avoid any unnecessary charges
 
@@ -180,11 +190,15 @@ With a user admin, open a **Terminal** in the Jupyter Notebook.
 
 Let's install gdal from conda-forge with the next command:
 
-**sudo -E conda install -c conda-forge gdal**
+```bash
+sudo -E conda install -c conda-forge gdal
+```
 
 Now, let's install there with pip:
 
-**sudo -E pip install there**
+```bash
+sudo -E pip install there
+```
 
 Now, these two packages are available to all users in JupyterHub.
 
