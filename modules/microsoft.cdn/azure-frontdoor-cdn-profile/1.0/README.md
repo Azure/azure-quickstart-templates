@@ -1,19 +1,19 @@
 # Create an AFD CDN with WAF, Custom Domain and Diagnostic Settings
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/CredScanResult.svg)
 
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/BicepVersion.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.Cdn%2Fazure-frontdoor-cdn-profile%2F1.0%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2Fmicrosoft.cdn%2Fazure-frontdoor-cdn-profile%2F1.0%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.Cdn%2Fazure-frontdoor-cdn-profile%2F1.0%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2Fmicrosoft.cdn%2Fazure-frontdoor-cdn-profile%2F1.0%2Fazuredeploy.json)   
 
 A sample module to create Azure FrontDoor CDN profile. 
 
