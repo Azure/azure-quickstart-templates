@@ -1,13 +1,3 @@
----
-description: This template creates a new Azure FrontDoor cdn profile. Create WAF with custom and managed rules, cdn routes, origin and groups with their association with WAF and routes, configures custom domains, create event hub and diagnostic settings for sending CDN access logs using event hub.
-page_type: sample
-products:
-- azure
-- azure-resource-manager
-urlFragment: modules-Microsoft.Cdn-azure-frontdoor-cdn-profile-1.0
-languages:
-- bicep
----
 # Create an AFD CDN with WAF, Custom Domain and Diagnostic Settings
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Cdn/azure-frontdoor-cdn-profile/1.0/PublicLastTestDate.svg)
