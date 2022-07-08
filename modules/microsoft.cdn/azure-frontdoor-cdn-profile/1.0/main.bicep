@@ -29,7 +29,7 @@ param cdnProfileTags object = {
 param enableAfdEndpoint bool = true
 
 @description('Event Hub Name')
-param eventHubName string
+param eventHubName string = 'eventhub-${uniqueString(resourceGroup().id)}'
 
 @description('Event Hub Namespace Name')
 param eventHubNamespace string = '${eventHubName}-ns'
