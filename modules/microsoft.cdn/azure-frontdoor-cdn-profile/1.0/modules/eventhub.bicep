@@ -1,14 +1,14 @@
-@sys.description('Event Hub Namespace Name')
-param eventHubNameSpaceName string
+@description('Event Hub Namespace Name')
+param eventHubNameSpace string
 
-@sys.description('Event Hub Name')
+@description('Event Hub Name')
 param eventHubName string
 
-@sys.description('Event Hub Namespace location')
+@description('Event Hub Namespace location')
 param eventHubLocation string
 
 resource eventhub_namespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: eventHubNameSpaceName
+  name: eventHubNameSpace
   location: eventHubLocation
   sku: {
     name: 'Standard'

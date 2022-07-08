@@ -2,43 +2,49 @@
   'Premium_AzureFrontDoor'
   'Standard_AzureFrontDoor'
 ])
-@sys.description('Name of Azure CDN SKU')
+@description('Name of Azure CDN SKU')
 param skuName string
 
-@sys.description('Name of CDN Profile')
+@description('Name of CDN Profile')
 param cdnProfileName string 
 
-@sys.description('AFD Endpoint Name')
+@description('AFD Endpoint Name')
 param afdEndpointName string
 
-@sys.description('AFD Endpoint State')
+@description('AFD Endpoint State')
 param enableAfdEndpoint bool
 
-@sys.description('Tags to identify resource owner')
+@description('Tags to identify resource owner')
 param cdnProfileTags object
 
-@sys.description('Custom Domain List')
+@description('Custom Domain List')
 param customDomains array
 
-@sys.description('Origin List')
+@description('Origin List')
 param origins array 
 
-@sys.description('Event Hub Name')
+@description('Event Hub Name')
 param eventHubName string
 
-@sys.description('Event Hub Namespace Name')
+@description('Event Hub Namespace Name')
 param eventHubNamespace string
 
-@sys.description('Event Hub Namespace location')
+@description('Event Hub Namespace location')
 param eventHubLocation string
 
-@sys.description('Name of the WAF policy to create.')
+@description('Name of the WAF policy to create.')
 param wafPolicyName string
 
-@sys.description('Id of the WAF policy to attach')
+@description('Id of the WAF policy to attach')
 param wafPolicyId string
 
-@sys.description('Create CDN Profile')
+// Create an Array of all Endpoint which includes customDomain Id and afdEndpoint Id
+// This array is needed to be attached to Microsoft.Cdn/profiles/securitypolicies
+var customDomainIds = [for (domain, index) in customDomains: {id: custom_domains[index].id}]
+var afdEndpointIds = [{id: afd_endpoint.id}]
+var endPointIdsForWaf = union(customDomainIds, afdEndpointIds)
+
+@description('Create CDN Profile')
 resource cdn 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: cdnProfileName
   location: 'Global'
@@ -51,7 +57,7 @@ resource cdn 'Microsoft.Cdn/profiles@2021-06-01' = {
   }
 }
 
-@sys.description('Create AFD Endpoint')
+@description('Create AFD Endpoint')
 resource afd_endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   parent: cdn
   name: afdEndpointName
@@ -61,7 +67,7 @@ resource afd_endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   }
 }
 
-@sys.description('Create Custom Domains to be used for CDN profile')
+@description('Create Custom Domains to be used for CDN profile')
 resource custom_domains 'Microsoft.Cdn/profiles/customdomains@2021-06-01' = [for (customdomain, index) in customDomains: {
   parent: cdn
   name: replace(customdomain.hostname, '.', '-')
@@ -74,7 +80,7 @@ resource custom_domains 'Microsoft.Cdn/profiles/customdomains@2021-06-01' = [for
   }
 }]
 
-@sys.description('List of Origin Groups')
+@description('List of Origin Groups')
 resource origin_groups 'Microsoft.Cdn/profiles/originGroups@2021-06-01' = [for (group, index) in origins: {
   parent: cdn
   name: group.originGroupName
@@ -94,7 +100,7 @@ resource origin_groups 'Microsoft.Cdn/profiles/originGroups@2021-06-01' = [for (
   }
 }]
 
-@sys.description('List of origin and mapping to Origin Groups')
+@description('List of origin and mapping to Origin Groups')
 resource cdn_origins 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = [for (origin, index) in origins: {
   parent: origin_groups[index]
   name: replace(origin.hostname, '.', '-')
@@ -110,13 +116,7 @@ resource cdn_origins 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = 
   }
 }]
 
-// Create an Array of all Endpoint which includes customDomain Id and afdEndpoint Id
-// This array is needed to be attached to Microsoft.Cdn/profiles/securitypolicies
-var customDomainIds = [for (domain, index) in customDomains: {id: custom_domains[index].id}]
-var afdEndpointIds = [{id: afd_endpoint.id}]
-var endPointIdsForWaf = union(customDomainIds, afdEndpointIds)
-
-@sys.description('Attach WAF for Security policy')
+@description('Attach WAF for Security policy')
 resource cdn_waf_security_policy 'Microsoft.Cdn/profiles/securitypolicies@2021-06-01' = {
   parent: cdn
   name: wafPolicyName
@@ -138,17 +138,17 @@ resource cdn_waf_security_policy 'Microsoft.Cdn/profiles/securitypolicies@2021-0
   }
 }
 
-@sys.description('Create EventHub.')
+@description('Create EventHub.')
 module eventhub 'eventhub.bicep' = {
   name: '${cdnProfileName}-eventhub-module'
   params: {
-    eventHubNameSpaceName: eventHubNamespace
+    eventHubNameSpace: eventHubNamespace
     eventHubName: eventHubName
     eventHubLocation: eventHubLocation
   }
 }
 
-@sys.description('Default Rule Sets.')
+@description('Default Rule Sets.')
 module rulesets 'rulesets.bicep' = {
   name: '${cdnProfileName}-rulesets-module'
   params: {
@@ -156,7 +156,7 @@ module rulesets 'rulesets.bicep' = {
   }
 }
 
-@sys.description('Create Diagnostic Settings for Logs')
+@description('Create Diagnostic Settings for Logs')
 module diagnostic_settings 'diagnosticsettings.bicep' = {
   name: '${cdnProfileName}-monitoring-module'
   params: {
@@ -164,11 +164,9 @@ module diagnostic_settings 'diagnosticsettings.bicep' = {
     eventHubName: eventhub.outputs.eventHubName
     eventHubAuthId: eventhub.outputs.eventHubAuthId
   }
-  dependsOn:[
-    eventhub
-  ]
 }
 
 output cdnName string = cdn.name
 output afdEndpointName string = afd_endpoint.name
+output afdEndpointHostName string = afd_endpoint.properties.hostName
 output defaultRuleSets string = rulesets.outputs.defaultRuleSetId

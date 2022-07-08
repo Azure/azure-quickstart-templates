@@ -1,31 +1,31 @@
-@sys.description('Name of Azure CDN SKU')
+@description('Name of Azure CDN SKU')
 param skuName string
 
-@sys.description('Name of the WAF policy to create.')
+@description('Name of the WAF policy to create.')
 param wafPolicyName string 
 
 @allowed([
   'Detection'
   'Prevention'
 ])
-@sys.description('Describes if it is in detection mode or prevention mode at policy level.')
+@description('Describes if it is in detection mode or prevention mode at policy level.')
 param wafPolicyMode string
 
-@sys.description('Describes if the policy needs to enabled or disabled.')
+@description('Describes if the policy needs to enabled or disabled.')
 param enableWAFPolicy bool
 
-@sys.description('Response body to return on Block')
-param wafBlockResponseBody string = 'Access Denied by Firewall.'
+@description('Response body to return on Block')
+param wafBlockResponseBody string
 
 @allowed([
   401
   403
 ])
-@sys.description('Response Code to return on Block. Default to 403')
-param wafBlockResponseCode int = 403
+@description('Response Code to return on Block. Default to 403')
+param wafBlockResponseCode int
 
-@sys.description('Describes if request body should be checked. Since we only allow GET in this module due to Custom Rule, default to false')
-param enableRequestBodyCheck bool = false
+@description('Describes if request body should be checked.')
+param enableRequestBodyCheck bool
 
 resource waf 'Microsoft.Network/frontdoorwebapplicationfirewallpolicies@2020-11-01' = {
   name: wafPolicyName

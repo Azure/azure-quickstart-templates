@@ -1,16 +1,11 @@
-@sys.description('Name of CDN Profile. For chaining, use output from parent module')
+@description('Name of CDN Profile. For chaining, use output from parent module')
 param cdnProfileName string
 
-@sys.description('Event Hub Name')
+@description('Event Hub Name')
 param eventHubName string
 
-@sys.description('Event Hub AuthId')
+@description('Event Hub AuthId')
 param eventHubAuthId string
-
-resource cdn 'Microsoft.Cdn/profiles@2021-06-01' existing = {
-  name: cdnProfileName
-  scope: resourceGroup()
-}
 
 var diagnosticSettings = [
   {
@@ -33,6 +28,10 @@ var diagnosticSettings = [
     ]
   }
 ]
+
+resource cdn 'Microsoft.Cdn/profiles@2021-06-01' existing = {
+  name: cdnProfileName
+}
 
 resource diagnostic_setting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [for (dg, index) in diagnosticSettings: {
   scope: cdn

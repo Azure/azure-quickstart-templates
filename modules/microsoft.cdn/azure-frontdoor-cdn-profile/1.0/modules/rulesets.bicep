@@ -1,18 +1,17 @@
-@sys.description('Name of CDN Profile. For chaining, use output from parent module')
+@description('Name of CDN Profile. For chaining, use output from parent module')
 param cdnProfileName string
 
 resource cdn 'Microsoft.Cdn/profiles@2021-06-01' existing = {
   name: cdnProfileName
-  scope: resourceGroup()
 }
 
-@sys.description('Default ruleset')
+@description('Default ruleset')
 resource global_rulesets 'Microsoft.Cdn/profiles/rulesets@2021-06-01' = {
   parent: cdn
   name: 'Global'
 }
 
-@sys.description('Modify other request-response headers and add to global rulesets')
+@description('Modify other request-response headers and add to global rulesets')
 resource drs_global_overwriteResponseHeaders_rule 'Microsoft.Cdn/profiles/rulesets/rules@2021-06-01' = {
   parent: global_rulesets
   name: 'OverwriteResponseHeaders'

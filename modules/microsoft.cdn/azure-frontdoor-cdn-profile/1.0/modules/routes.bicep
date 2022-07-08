@@ -1,19 +1,19 @@
-@sys.description('Origin details')
+@description('Origin details')
 param origins array
 
-@sys.description('Custom Domain Array')
+@description('Custom Domain Array')
 param customDomains array
 
-@sys.description('Name of CDN Profile. For chaining, use output from parent module')
+@description('Name of CDN Profile. For chaining, use output from parent module')
 param cdnProfileName string
 
-@sys.description('Name of AFD endpoint')
+@description('Name of AFD endpoint')
 param afdEndpointName string
 
-@sys.description('Rulesets List')
+@description('Rulesets List')
 param routeRuleSets array
 
-@sys.description('Default Content to compress')
+@description('Default Content to compress')
 var contentTypeCompressionList = [
   'application/eot'
   'application/font'
@@ -60,7 +60,6 @@ var contentTypeCompressionList = [
 
 resource cdn 'Microsoft.Cdn/profiles@2021-06-01' existing = {
   name: cdnProfileName
-  scope: resourceGroup()
 }
 
 resource afd_endpoint 'Microsoft.Cdn/profiles/afdendpoints@2021-06-01' existing = {

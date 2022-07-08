@@ -1,44 +1,79 @@
-@sys.description('Name of Azure CDN SKU')
-param skuName string
+@allowed([
+  'Premium_AzureFrontDoor'
+  'Standard_AzureFrontDoor'
+])
+@description('Name of Azure CDN SKU')
+param skuName string = 'Premium_AzureFrontDoor'
 
-@sys.description('Environment Name')
+@description('Environment Name')
 param envName string
 
-@sys.description('Origin details')
+@description('Name of CDN Profile')
+param cdnProfileName string = 'afd-cdn-${envName}-profile'
+
+@description('AFD Endpoint Name')
+param afdEndpointName string = 'afd-cdn-${envName}'
+
+@description('Origin details')
 param origins array
 
-@sys.description('Custom Domain Array')
+@description('Custom Domain Array')
 param customDomains array
 
-@sys.description('Tags to identify resource owner')
-param cdnProfileTags object
+@description('Tags to identify resource owner')
+param cdnProfileTags object = {
+  envName: envName
+}
 
-@sys.description('AFD Endpoint State')
-param enableAfdEndpoint bool
+@description('AFD Endpoint State')
+param enableAfdEndpoint bool = true
 
-@sys.description('Event Hub Name')
+@description('Event Hub Name')
 param eventHubName string
 
-@sys.description('Event Hub Namespace Name')
-param eventHubNamespace string
+@description('Event Hub Namespace Name')
+param eventHubNamespace string = '${eventHubName}-ns'
 
-@sys.description('Event Hub Namespace location')
-param eventHubLocation string
+@description('Event Hub Namespace location')
+param eventHubLocation string = resourceGroup().location
 
-@sys.description('Describes if it is in detection mode or prevention mode at policy level.')
-param wafPolicyMode string
+@description('Name of the WAF policy to create.')
+param wafPolicyName string = 'FrontDoorCdn${envName}WAF'
 
-@sys.description('Describes if the policy needs to enabled or disabled.')
-param enableWAFPolicy bool
+@allowed([
+  'Detection'
+  'Prevention'
+])
+@description('Describes if it is in detection mode or prevention mode at policy level.')
+param wafPolicyMode string = 'Prevention'
 
-@sys.description('Crearte Azure WAF for CDN')
+@description('Describes if the policy needs to enabled or disabled.')
+param enableWAFPolicy bool = true
+
+@description('Response body to return on Block')
+param wafBlockResponseBody string = 'Access Denied by Firewall.'
+
+@allowed([
+  401
+  403
+])
+@description('Response Code to return on Block. Default to 403')
+param wafBlockResponseCode int = 403
+
+@description('Describes if request body should be checked. Since we only allow GET in this module due to Custom Rule, default to false')
+param enableRequestBodyCheck bool = false
+
+@description('Crearte Azure WAF for CDN')
 module waf 'modules/waf.bicep' = {
   name: 'afdcdn-${envName}-waf-module'
   params:  {
     skuName: skuName
     enableWAFPolicy: enableWAFPolicy
     wafPolicyMode: wafPolicyMode
-    wafPolicyName: 'FrontDoorCdn${envName}WAF'
+    wafPolicyName: wafPolicyName
+    wafBlockResponseBody: wafBlockResponseBody
+    wafBlockResponseCode: wafBlockResponseCode
+    enableRequestBodyCheck: enableRequestBodyCheck
   }
 }
 
@@ -47,8 +82,8 @@ module profile 'modules/profile.bicep' = {
   scope: resourceGroup()
   params:  {
     skuName: skuName
-    cdnProfileName: 'afd-cdn-${envName}-profile'
-    afdEndpointName: 'afd-cdn-${envName}' 
+    cdnProfileName: cdnProfileName
+    afdEndpointName: afdEndpointName
     enableAfdEndpoint: enableAfdEndpoint
     customDomains: customDomains
     origins: origins
@@ -74,7 +109,6 @@ module routes 'modules/routes.bicep' = {
     ]
     origins: origins
   }
-  dependsOn:[
-    profile
-  ]
 }
+
+output afdEndpointHostName string = profile.outputs.afdEndpointHostName
