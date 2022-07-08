@@ -103,6 +103,9 @@ switch -Wildcard ($TemplateSchema) {
     '*/deploymentTemplate.json*' {
         $deploymentScope = "ResourceGroup"
         $OptionalParameters.Add('Mode', $Mode)
+        if(!$ValidateOnly -and !$WhatIf) {
+            $OptionalParameters.Add('Force', $true)
+        }
     }
 }
 
@@ -261,7 +264,7 @@ else {
                 -ResourceGroupName $ResourceGroupName `
                 @TemplateArgs `
                 @OptionalParameters `
-                -Force -Verbose `
+                -Verbose `
                 -ErrorVariable ErrorMessages
         }
         "Subscription" {
