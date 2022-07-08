@@ -1,4 +1,15 @@
-# Create an AFD CDN with WAF, Custom Domain and Diagnostic Settings
+---
+description: This template creates a new Azure FrontDoor cdn profile. Create WAF with custom and managed rules, cdn routes, origin and groups with their association with WAF and routes, configures custom domains, create event hub and diagnostic settings for sending CDN access logs using event hub.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-microsoft.cdn-azure-frontdoor-cdn-profile-1.0
+languages:
+- json
+- bicep
+---
+# FrontDoor CDN with WAF, Domains and Logs to EventHub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.cdn/azure-frontdoor-cdn-profile/1.0/PublicDeployment.svg)
@@ -129,4 +140,4 @@ where,
    4. `routes.bicep`: Create cdn routes for profile.
    5. `rulesets.bicep`: Create rule sets that are required by CDN Profile.
    6. `waf.bicep`: Create WAF with Managed and Custom rules that needs to be attached to CDN Profile as Security Policy.
-3. `main.bicep` provides an abstracted view to a user for creating CDN profile and waf attachment.
+3. `main.bicep` provides an abstracted view to a user for creating CDN profile and waf attachment.`Tags: `
