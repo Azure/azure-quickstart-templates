@@ -24,10 +24,10 @@ languages:
 
 Built by: [jmspring](https://github.com/jmspring)
 
-This template allows you to deploy an Ubuntu Server 15.04 VM with Docker (using the [Docker Extension][ext])
+This template allows you to deploy an Ubuntu Server 15.04 VM with Docker (using the [Docker Extension](https://github.com/Azure/azure-docker-extension))
 and starts a Neo4J instance listening on ports 7474 (non-ssl) and 7473 (ssl).  The data disk
 for the Neo4J instance is an external disk mounted on the VM.  The container is created
-using the [Docker Compose][compose] capabilities of the [Azure Docker Extension][ext].
+using the [Docker Compose](https://docs.docker.com/compose) capabilities of the [Azure Docker Extension](https://github.com/Azure/azure-docker-extension).
 
 Below are the parameters that the template expects:
 
@@ -40,8 +40,5 @@ Below are the parameters that the template expects:
 | adminUsername  | Username for the Virtual Machine  |
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
-
-[ext]: https://github.com/Azure/azure-docker-extension
-[compose]: https://docs.docker.com/compose
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, DockerExtension`
