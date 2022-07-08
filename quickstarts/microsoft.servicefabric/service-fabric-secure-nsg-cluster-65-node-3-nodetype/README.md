@@ -33,14 +33,10 @@ In this template, 'SF' is the primary node type and the systems services will be
 
 This template assumes that you already have certificates uploaded to your keyvault, else I strongly suggest you follow the links below on how to. The document linked to below also has instructions on how to use Azure Active Directory for securing client operations on the cluster.
 
-![Picture of the cluster resources][NSG]
+![Picture of the cluster resources](./NSG1.PNG)
 
 ## Deploying the ARM template to Azure using resource manager PS
 
-Refer to [Deploying ARM templates using ARM PS ](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-arm/) for detailed guidance on how to. There is detailed guidance on how to set up your certificates and Azure Active Directory for clients as well. For a successful setup of a secure cluster, make sure to read that document thoroughly.
-
-<!--Image references-->
-[DownloadTemplate]: ./DownloadTemplate.png
-[NSG]: ./NSG1.PNG
+Refer to [Deploying ARM templates using ARM PS](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-arm/) for detailed guidance on how to. There is detailed guidance on how to set up your certificates and Azure Active Directory for clients as well. For a successful setup of a secure cluster, make sure to read that document thoroughly.
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachineScaleSets, ServiceFabricNode, Microsoft.ServiceFabric/clusters`
