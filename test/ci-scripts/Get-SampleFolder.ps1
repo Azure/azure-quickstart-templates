@@ -51,6 +51,7 @@ $ChangedFile = Invoke-Restmethod "$PRUri"
 
 # Now check to make sure there is exactly one sample in this PR per repo guidelines
 $FolderArray = @()
+
 $ChangedFile | ForEach-Object {
     Write-Output $_.blob_url
     if ($_.status -ne "removed") {
@@ -92,10 +93,9 @@ Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 # if this is a bicep sample, is the json file in the list of changed files?  if so, flag it
 if(Test-Path -Path "$FolderString\main.bicep"){
     $ChangedFile | ForEach-Object {
-        $f = $_.filename
         # Write-Output "File in PR: $f"
-        if (($f.filename).EndsWith("azuredeploy.json") -and ($f.status -ne "removed")) {
-            Write-Warning "$f is included in the PR for a bicep sample"
+        if ($_.filename.EndsWith("azuredeploy.json") -and ($_.status -ne "removed")) {
+            Write-Warning "$($_.filename) is included in the PR for a bicep sample"
             Write-Host "##vso[task.setvariable variable=json.with.bicep]$true"
         }
     }
