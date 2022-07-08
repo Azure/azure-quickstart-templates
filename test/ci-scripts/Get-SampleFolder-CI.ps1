@@ -63,7 +63,7 @@ if (Test-Path -Path "$FolderString\main.bicep") {
     foreach($f in $r.files) {
         #$f = $_.filename
         # Write-Output "File in PR: $f"
-        if ($($f.filename).EndsWith("azuredeploy.json")) {
+        if (($f.filename).EndsWith("azuredeploy.json") -and ($f.status -ne "removed")) {
             Write-Warning "$($f.filename) is included in the PR for a bicep sample"
             Write-Host "##vso[task.setvariable variable=json.with.bicep]$true"
         }
