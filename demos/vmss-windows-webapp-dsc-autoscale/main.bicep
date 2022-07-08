@@ -159,6 +159,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
     capacity: instanceCount
   }
   properties: {
+    orchestrationMode: 'Flexible'
     overprovision: true
     upgradePolicy: {
       mode: 'Automatic'
