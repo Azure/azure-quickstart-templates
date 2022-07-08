@@ -79,7 +79,6 @@ module waf 'modules/waf.bicep' = {
 
 module profile 'modules/profile.bicep' = {
   name: 'afdcdn-${envName}-profile-module'
-  scope: resourceGroup()
   params:  {
     skuName: skuName
     cdnProfileName: cdnProfileName
