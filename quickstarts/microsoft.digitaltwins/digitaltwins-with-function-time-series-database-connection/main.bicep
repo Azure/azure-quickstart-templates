@@ -75,7 +75,7 @@ param principalType string
   'eastus2'
 ])
 @description('Location of to be created resources')
-param location string = 'westus2'
+param location string
 
 // Creates Digital Twins resource
 module digitalTwins 'modules/digitaltwins.bicep' = {
