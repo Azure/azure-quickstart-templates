@@ -61,6 +61,17 @@ resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
+// Assigns Digital Twins admin assignment to database
+resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/databases/principalAssignments@2022-02-01' = {
+  name: '${adxClusterName}/${databaseName}/${guid(digitalTwins.id, resourceGroup().id, 'Admin')}'
+  properties: {
+    principalId: digitalTwins.identity.principalId
+    role: 'Admin'
+    tenantId: digitalTwins.identity.tenantId
+    principalType: 'App'
+  }
+}
+
 // Assigns Digital Twins resource contributor assignment to database
 resource digitalTwinsToDatabaseRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid(digitalTwins.id, resourceGroup().id, azureRbacContributor)

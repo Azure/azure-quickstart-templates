@@ -36,17 +36,6 @@ resource database 'Microsoft.Kusto/clusters/databases@2022-02-01' existing = {
   name: '${adxClusterName}/${databaseName}'
 }
 
-// Assigns Digital Twins admin assignment to database
-resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/databases/principalAssignments@2022-02-01' = {
-  name: '${adxClusterName}/${databaseName}/${guid(digitalTwins.id, resourceGroup().id, 'Admin')}'
-  properties: {
-    principalId: digitalTwins.identity.principalId
-    role: 'Admin'
-    tenantId: digitalTwins.identity.tenantId
-    principalType: 'App'
-  }
-}
-
 // Creates a time series database connection between the Digital Twin resource and Azure Data Explorer cluster table
 resource tsdbConnection 'Microsoft.DigitalTwins/digitalTwinsInstances/timeSeriesDatabaseConnections@2022-05-31' = {
   name: '${digitalTwinsName}/${databaseTableName}'
@@ -59,7 +48,4 @@ resource tsdbConnection 'Microsoft.DigitalTwins/digitalTwinsInstances/timeSeries
     adxResourceId: adxCluster.id
     eventHubNamespaceResourceId: eventHubsNamespace.id
   }
-  dependsOn: [
-    digitalTwinsToDatabasePrincipalAssignment
-  ]
 }
