@@ -59,6 +59,8 @@ var azurePlatformDnsIPAddress = '168.63.129.16' // Azure Platform DNS https://do
 
 var dscConfigurationName = 'DscConfiguration'
 
+var dscConfiguration = loadTextContent('dsc/configuration.ps1')
+
 var dscResourceModules = [
   {
     name: 'ActiveDirectoryDsc'
@@ -164,7 +166,7 @@ resource configuration 'Microsoft.Automation/automationAccounts/configurations@2
   properties: {
     source: {
       type: 'embeddedContent'
-      value: loadTextContent('dsc/configuration.ps1')
+      value: dscConfiguration
     }
   }
 }
