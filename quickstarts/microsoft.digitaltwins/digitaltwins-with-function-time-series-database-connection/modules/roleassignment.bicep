@@ -45,7 +45,7 @@ resource givenIdToDigitalTwinsRoleAssignment 'Microsoft.Authorization/roleAssign
   scope: digitalTwins
   properties: {
     principalId: principalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureRbacAzureEventHubsDataOwner)
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureRbacAzureDigitalTwinsDataOwner)
     principalType: principalType
   }
 }
