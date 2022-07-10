@@ -1,15 +1,21 @@
 @description('Existing Digital Twin resource name')
 param digitalTwinsName string
+
 @description('Existing Event Hubs namespace resource name')
 param eventHubsNamespaceName string
+
 @description('Existing event hub name')
 param eventHubName string
+
 @description('Existing Azure Data Explorer cluster resource name')
 param adxClusterName string
+
 @description('Existing database name')
 param databaseName string
+
 @description('The id that will be given data owner permission for the Digital Twins resource')
 param principalId string
+
 @description('The type of the given principal id')
 param principalType string
 

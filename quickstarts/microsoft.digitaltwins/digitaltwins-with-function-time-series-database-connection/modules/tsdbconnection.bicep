@@ -1,11 +1,15 @@
 @description('Existing Digital Twin resource name')
 param digitalTwinsName string
+
 @description('Existing Event Hubs namespace resource name')
 param eventHubsNamespaceName string
+
 @description('Existing event hub name')
 param eventHubName string
+
 @description('Existing Azure Data Explorer cluster resource name')
 param adxClusterName string
+
 @description('Existing database name')
 param databaseName string
 

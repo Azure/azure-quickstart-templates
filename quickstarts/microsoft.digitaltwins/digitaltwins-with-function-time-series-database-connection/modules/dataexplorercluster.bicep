@@ -1,17 +1,21 @@
 @description('Name given to Azure Data Explorer cluster resource')
 param adxClusterName string
+
 @description('Name given to database')
 param databaseName string
 
 @description('Azure Data Explorer cluster SKU option')
 param clusterPlan string
+
 @description('Azure Data Explorer cluster capacity')
 param clusterCapacity int
+
 @description('Azure Data Explorer cluster tier')
 param clusterTier string
 
 @description('The time to keep database data in cache')
 param hotCachePeriod string
+
 @description('The time data is kept in database')
 param softDeletePeriod string
 

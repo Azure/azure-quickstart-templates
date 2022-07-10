@@ -1,55 +1,81 @@
-// New Resources Name
 @description('Name given to Digital Twins resource')
-param digitalTwinsName string
-@description('Name given to Event Hubs namespace resource')
-param eventHubsNamespaceName string
-@description('Name given to event hub resource')
-param eventHubName string
-@description('Name given to Azure Data Explorer cluster resource')
-param adxClusterName string
-@description('Name given to database')
-param databaseName string
-@description('Name given to table in database')
-param databaseTableName string
+param digitalTwinsName string = 'digitalTwins-${uniqueString(resourceGroup().id)}'
 
-// Resources Configuration
+@description('Name given to Event Hubs namespace resource')
+param eventHubsNamespaceName string = 'eventHubsNamespace-${uniqueString(resourceGroup().id)}'
+
+@description('Name given to event hub resource')
+param eventHubName string = 'eventHub-${uniqueString(resourceGroup().id)}'
+
+@description('Name given to Azure Data Explorer cluster resource')
+param adxClusterName string = 'adx${uniqueString(resourceGroup().id)}'
+
+@description('Name given to database')
+param databaseName string = 'database-${uniqueString(resourceGroup().id)}'
+
+@description('Name given to table in database')
+param databaseTableName string = 'databaseTable-${uniqueString(resourceGroup().id)}'
+
 @allowed([
   'Basic'
   'Premium'
   'Standard'
 ])
 @description('Event Hubs namespace SKU option')
-param eventHubsNamespacePlan string
+param eventHubsNamespacePlan string = 'Basic'
+
 @allowed([
   'Basic'
   'Standard'
 ])
 @description('Event Hubs namespace SKU billing tier')
-param eventHubsNamespaceTier string
+param eventHubsNamespaceTier string = 'Basic'
+
 @description('Event Hubs throughput units')
-param eventHubsNamespaceCapacity int
+param eventHubsNamespaceCapacity int = 1
+
 @description('Azure Data Explorer cluster SKU option')
-param clusterPlan string
+param clusterPlan string = 'Dev(No SLA)_Standard_D11_v2'
+
 @description('Azure Data Explorer cluster capacity')
-param clusterCapacity int
+param clusterCapacity int = 1
+
 @description('Azure Data Explorer cluster tier')
-param clusterTier string
+param clusterTier string = 'Basic'
+
 @description('Number of days to retain data in event hub')
-param retentionInDays int
+param retentionInDays int = 1
+
 @description('Number of partitions to create in event hub')
-param partitionCount int
+param partitionCount int = 2
+
 @description('The time to keep database data in cache')
-param hotCachePeriod string
+param hotCachePeriod string = 'P30D'
+
 @description('The time data is kept in database')
-param softDeletePeriod string
+param softDeletePeriod string = 'P1Y'
+
 @description('The id that will be given data owner permission for the Digital Twins resource')
 param principalId string
+
 @description('The type of the given principal id')
 param principalType string
 
-
+@allowed([
+  'westcentralus'
+  'westus2'
+  'westus3'
+  'northeurope'
+  'australiaeast'
+  'westeurope'
+  'eastus'
+  'southcentralus'
+  'southeastasia'
+  'uksouth'
+  'eastus2'
+])
 @description('Location of to be created resources')
-param location string
+param location string = 'westus2'
 
 // Creates Digital Twins resource
 module digitalTwins 'modules/digitaltwins.bicep' = {

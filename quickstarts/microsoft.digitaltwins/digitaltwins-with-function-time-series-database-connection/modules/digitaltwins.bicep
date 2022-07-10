@@ -1,6 +1,19 @@
 @description('Name of new Digital Twin resource name')
 param digitalTwinsName string
 
+@allowed([
+  'westcentralus'
+  'westus2'
+  'westus3'
+  'northeurope'
+  'australiaeast'
+  'westeurope'
+  'eastus'
+  'southcentralus'
+  'southeastasia'
+  'uksouth'
+  'eastus2'
+])
 @description('Location of to be created resource')
 param location string
 

@@ -1,5 +1,6 @@
 @description('Name of Event Hubs namespace')
 param eventHubsNamespaceName string
+
 @description('Name given to event hub')
 param eventHubName string
 
@@ -10,17 +11,20 @@ param eventHubName string
 ])
 @description('Event Hubs namespace SKU option')
 param eventHubsNamespacePlan string
+
 @allowed([
   'Basic'
   'Standard'
 ])
 @description('Event Hubs namespace SKU billing tier')
 param eventHubsNamespaceTier string
+
 @description('Event Hubs throughput units')
 param eventHubsNamespaceCapacity int
 
 @description('Number of days to retain data in event hub')
 param retentionInDays int
+
 @description('Number of partitions to create in event hub')
 param partitionCount int
 
