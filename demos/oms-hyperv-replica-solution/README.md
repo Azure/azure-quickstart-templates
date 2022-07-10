@@ -1,4 +1,14 @@
-# Hyper-V Replica Solution for OMS
+---
+description: A template for creating an OMS solution to monitor Hyper-V replica.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: oms-hyperv-replica-solution
+languages:
+- json
+---
+# OMS Solution - Hyper-V Replica
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-hyperv-replica-solution/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-hyperv-replica-solution/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-hyperv-replica-solution/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-hyperv-replica-solution/CredScanResult.svg)
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-hyperv-replica-solution%2Fazuredeploy.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-hyperv-replica-solution%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-hyperv-replica-solution%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-hyperv-replica-solution%2Fazuredeploy.json)
 
@@ -42,8 +52,8 @@ A community OMS Solution that helps you manage Hyper-V replica. It gives you vis
 	```powershell
 	Install-Module -Name OMSDataInjection
 	```
-2) Install the Hyper-V replica OMS solution. 
-	 
+2) Install the Hyper-V replica OMS solution.
+	
 	This can be installed by any supported method.
 
 3) Create an automation schedule specifying how often you want the information in the Hyper-V replica OMS Solution updating.
@@ -74,3 +84,4 @@ A community OMS Solution that helps you manage Hyper-V replica. It gives you vis
 ## Contributors
 - Ben Taylor - ben@bentaylor.work
 
+`Tags: int, Script, OMSWorkSpace, Microsoft.OperationalInsights/workspaces, views, Blade, OverviewTile, Microsoft.Automation/automationAccounts, runbooks, microsoft.automation/automationAccounts/variables, [variables('automation').Asset.omsHypervReplicaRunNumber.type], microsoft.automation/automationAccounts/credentials, microsoft.automation/automationAccounts/modules, microsoft.automation/automationAccounts/connections, Microsoft.OperationsManagement/solutions`

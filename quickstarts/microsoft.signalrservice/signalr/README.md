@@ -1,4 +1,15 @@
-# Deploy an Azure SignalR Service
+---
+description: This template creates an Azure SignalR Service using a template.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: signalr
+languages:
+- json
+- bicep
+---
+# Deploy an Azure SignalR service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.signalrservice/signalr/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.signalrservice/signalr/PublicDeployment.svg)
@@ -44,3 +55,5 @@ SignalR also enables completely new types of web applications that require high 
 SignalR provides a simple API for creating server-to-client remote procedure calls (RPC) that call JavaScript functions in client browsers (and other client platforms) from server-side .NET code. SignalR also includes an API for connection management such as connect and disconnect events, and grouping connections. For more information, see the [Introduction to SignalR](https://docs.microsoft.com/aspnet/signalr/overview/getting-started/introduction-to-signalr).
 
 To learn how to build Azure SignalR Service applications, see [Microsoft Learn SignalR modules](https://docs.microsoft.com/learn/modules/automatic-update-of-a-webapp-using-azure-functions-and-signalr/).
+
+`Tags: Microsoft.SignalRService/signalR, SystemAssigned`

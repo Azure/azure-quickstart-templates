@@ -3,10 +3,12 @@ description: This template creates a new Azure VM, it configures the VM to be an
 page_type: sample
 products:
 - azure
+- azure-resource-manager
+urlFragment: modules-active-directory-new-domain-0.9
 languages:
 - json
 ---
-# Create an Azure VM with a new AD Forest
+# Create an Azure VM with a new Active Directory Forest
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicDeployment.svg)
@@ -58,5 +60,4 @@ This is an experimental module at the moment...
 
 ```apiVersion: n/a```
 
-
-`Tags:Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Resources/deployments, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC`
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Resources/deployments, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Network/virtualNetworks`

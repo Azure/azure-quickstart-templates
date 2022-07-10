@@ -1,4 +1,15 @@
-# Build a Web App on Linux with Azure database for MySQL
+---
+description: This template provides a way to deploy Web Apps on Linux with Azure database for MySQL.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-linux-managed-mysql
+languages:
+- json
+- bicep
+---
+# Web App on Linux with Azure database for MySQL
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-managed-mysql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-managed-mysql/PublicDeployment.svg)
@@ -26,4 +37,4 @@ If you're new to template deployment, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Use an ARM template to deploy a Linux web app to Azure](https://docs.microsoft.com/azure/devops/pipelines/apps/cd/azure/deploy-arm-template)
 
-`Tags: Azure4Student, WebApp, Linux, mySQL, Beginner`
+`Tags: Azure4Student, WebApp, Linux, mySQL, Beginner, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.DBforMySQL/servers, Microsoft.DBforMySQL/servers/firewallRules, Microsoft.DBforMySQL/servers/databases`

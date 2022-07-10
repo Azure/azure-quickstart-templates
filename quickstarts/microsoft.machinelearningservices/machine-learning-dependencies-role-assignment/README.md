@@ -1,4 +1,14 @@
-# Advanced template to create an Azure Machine Learning workspace
+---
+description: A template that creates role assignments of user assigned identity on resources that Azure Machine Learning workspace depends on
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-dependencies-role-assignment
+languages:
+- json
+---
+# User assigned identity role assignment template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dependencies-role-assignment/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dependencies-role-assignment/PublicDeployment.svg)
@@ -16,7 +26,6 @@ This template is a template that creates role assignments of user assigned ident
 
 - Create role assignments on existing resources like storage account, databrick workspace, key vault or container registry that Azure machine learning workspace depends on.
 
-
 ## Learn more
 
 If you are new to Azure Machine Learning, see:
@@ -32,3 +41,5 @@ If you are new to template development, see:
 - [Create an Azure Machine Learning service workspace by using a template](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 
 Tags: Azure Machine Learning, Machine Learning, Secrets, Resource Manager, Resource Manager templates, ARM templates
+
+`Tags: Microsoft.Resources/deployments, Microsoft.KeyVault/vaults/accessPolicies, Microsoft.Authorization/roleAssignments, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.ContainerRegistry/registries`

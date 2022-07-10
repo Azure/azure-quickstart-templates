@@ -1,4 +1,15 @@
-# Simple deployment of a CDN profile and a CDN endpoint
+---
+description: This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-custom-origin
+languages:
+- json
+- bicep
+---
+# Create a CDN Profile and a CDN Endpoint with custom origin
 
 This template creates a **CDN Profile** and a **CDN Endpoint** with a user specified origin and all of our most commonly used settings on CDN.
 
@@ -33,4 +44,4 @@ Description
 
 - **profiles**: Profile for CDN service and endpoint/origin.
 
-`Tags: cdn`
+`Tags: cdn, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/endpoints`

@@ -1,4 +1,14 @@
-# AKS with Advanced Networking
+---
+description: This ARM template demonstrates the deployment of an AKS instance with advanced networking features into an existing virtual network and Azure AD Integeration. Additionally, the chosen Service Principal is assigned the Network Contributor role against the subnet that contains the AKS cluster.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aks-advanced-networking-aad
+languages:
+- json
+---
+# Deploy a managed Kubernetes Cluster with AAD (AKS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/PublicDeployment.svg)
@@ -9,15 +19,13 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faks-advanced-networking-aad%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faks-advanced-networking-aad%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faks-advanced-networking-aad%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faks-advanced-networking-aad%2Fazuredeploy.json)
 
-
-
 > **Important:** The user running this template needs to be an **Owner** on the subscription or Resource Group where your Virtual Network is located.
 
-`Tags: AKS, Kubernetes, Advanced Networking, Azure Active Directory`
+`Tags: AKS, Kubernetes, Advanced Networking, Azure Active Directory, Microsoft.ContainerService/managedClusters, Microsoft.Resources/deployments, Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments, Microsoft.Network/virtualNetworks, subnets`
 
 ## Solution overview and deployed resources
 
@@ -35,8 +43,8 @@ It will also setup Azure Active Directory as the default Authentication mechanis
 Prior to deploying AKS using this ARM template, the following resources need to exist:
 - Azure Vnet, including a subnet of sufficient size
 - Service Principal
-- Azure AD Server Application - [instructions here](https://docs.microsoft.com/en-us/azure/aks/aad-integration#create-server-application)
-- Azure AD Client Application - [instructions here](https://docs.microsoft.com/en-us/azure/aks/aad-integration#create-client-application)
+- Azure AD Server Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-server-application)
+- Azure AD Client Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-client-application)
 
 The following Azure CLI command can be used to create a Service Principal:
 
@@ -52,7 +60,6 @@ Please note that using the 'create-for-rbac' function would assign the SPN the '
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the Azure documentation:
-- [Deploy resources with Resource Manager templates and Azure PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy)
-- [Deploy resources with Resource Manager templates and Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli)
-
+- [Deploy resources with Resource Manager templates and Azure PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy)
+- [Deploy resources with Resource Manager templates and Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli)
 

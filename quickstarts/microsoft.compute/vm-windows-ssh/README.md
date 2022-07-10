@@ -1,3 +1,14 @@
+---
+description: Deploy a single Windows VM with Open SSH enabled so that you can connect through SSH using key-based authentication.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-windows-ssh
+languages:
+- json
+- bicep
+---
 # Windows Server VM with SSH
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-windows-ssh/PublicLastTestDate.svg)
@@ -15,3 +26,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-ssh%2Fazuredeploy.json)
 
 This template allows you to quickly deploy a Windows Server VM with OpenSSH preinstalled and preconfigured. You need to provide your public SSH as only keybased authentication is allowed. The template also adds and initializes a data disk of configurable size and installs vim as shell editor.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/disks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension`

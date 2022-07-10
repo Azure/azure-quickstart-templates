@@ -1,4 +1,15 @@
-# Simple deployment of rewrite and redirect via rules engine for a CDN end point
+---
+description: This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine device based path rewrite and request scheme based redirect.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-ruleseengine-rewriteandredirect
+languages:
+- json
+- bicep
+---
+# Create a CDN Endpoint with rewrite and redirect rules
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-ruleseengine-rewriteandredirect/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-ruleseengine-rewriteandredirect/PublicDeployment.svg)
@@ -15,4 +26,4 @@
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine device based path rewrite and request scheme based redirect.
 
-
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/endpoints`

@@ -1,4 +1,15 @@
-# Create lab plan in Azure Lab Services
+---
+description: Create Azure Lab Services lab.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: lab
+languages:
+- json
+- bicep
+---
+# Create Azure Lab Services lab.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.labservices/lab/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.labservices/lab/PublicDeployment.svg)
@@ -26,4 +37,4 @@ The following resources are deployed as part of the solution
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: LabServices, lab`
+`Tags: LabServices, lab, Microsoft.LabServices/labs`

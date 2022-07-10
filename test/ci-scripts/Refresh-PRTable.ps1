@@ -16,7 +16,7 @@ See if the PRs in GH have been closed, if so remove the row from the PR table
 #>
 
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey "$StorageAccountKey" -Environment AzureCloud
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 $rows = Get-AzTableRow -table $cloudTable
 
 foreach($r in $rows){

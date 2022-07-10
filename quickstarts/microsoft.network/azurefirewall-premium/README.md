@@ -1,4 +1,14 @@
-# Create Testing Environment for Firewall Premium (IDPS, TLS Inspection, Web Categories)
+---
+description: This template creates an Azure Firewall Premium and Firewall Policy with premium features such as Intrusion Inspection Detection (IDPS), TLS inspection and Web Category filtering
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-premium
+languages:
+- json
+---
+# Testing environment for Azure Firewall Premium
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-premium/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-premium/PublicDeployment.svg)
@@ -24,8 +34,10 @@ This template deploys a complete testing environment for Azure Firewall Premium 
 - A Bastion Host (BastionHost) is also deployed and can be used to connect to the Windows testing machine (WorkerVM)
 - Firewall Policy is pre-configured with TLS inspection and IDPS enabled. You can test it via the following URLs
   - Go to https://www.azure.com and inspect the certificate in the browser.
-  - Go to https://azure.microsoft.com/en-us/community/events which is denied using a URL deny rule.
+  - Go to https://azure.microsoft.com/community/events which is denied using a URL deny rule.
 
 Azure Firewall is a managed cloud-based network security service that protects your Azure Virtual Network resources. It is a fully stateful firewall as a service with built-in high availability and unrestricted cloud scalability. You can centrally create, enforce, and log application and network connectivity policies across subscriptions and virtual network. Azure Firewall uses a static public IP address for your virtual network resources allowing outside firewalls to identify traffic originating from your virtual network.
 
-Learn more at https://docs.microsoft.com/en-us/azure/firewall.
+Learn more at https://docs.microsoft.com/azure/firewall.
+
+`Tags: Microsoft.Resources/deploymentScripts, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.KeyVault/vaults, Microsoft.KeyVault/vaults/secrets, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/publicIpAddresses, Microsoft.Network/bastionHosts, Microsoft.Network/firewallPolicies, UserAssigned, Microsoft.Network/firewallPolicies/ruleCollectionGroups, Allow, Deny, Microsoft.Network/azureFirewalls`

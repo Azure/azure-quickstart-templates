@@ -1,4 +1,15 @@
-# Azure SQL Managed Instance (SQL MI) creation inside new virtual network
+---
+description: Deploy Azure Sql Database Managed Instance (SQL MI) inside new Virtual Network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sqlmi-new-vnet
+languages:
+- json
+- bicep
+---
+# Create SQL MI inside the new virtual network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet/PublicDeployment.svg)
@@ -17,7 +28,7 @@
 
 This template allows you to create an [Azure SQL Managed Instance](https://docs.microsoft.com/azure/azure-sql/managed-instance/sql-managed-instance-paas-overview) inside a new virtual network. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-sql/managed-instance/create-template-quickstart) article.
 
-`Tags: Azure, SqlDb, Managed Instance`
+`Tags: Azure, SqlDb, Managed Instance, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Sql/managedInstances, SystemAssigned`
 
 ## Solution overview and deployed resources
 

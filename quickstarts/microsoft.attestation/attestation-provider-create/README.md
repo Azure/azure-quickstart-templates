@@ -1,4 +1,15 @@
-# Create Attestation provider
+---
+description: This template creates a Attestation provider that can be used to attest the quotes from various enclaves and provide a token for third party application
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: attestation-provider-create
+languages:
+- json
+- bicep
+---
+# Create a Attestation provider
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.attestation/attestation-provider-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.attestation/attestation-provider-create/PublicDeployment.svg)
@@ -21,3 +32,5 @@ This template creates an Attestation provider.
 Microsoft Azure Attestation (MAA) is a new solution for attesting Trusted Execution Environments (TEEs) such as Software Guard Extensions (SGX) enclaves and Virtualization-based Security (VBS) enclaves. Enclave attestation is a process for verifying that an enclave is secure and trustworthy.
 
 This template demonstrates a simple use case for creating an Attestation provider. For more information see [Quickstart: Create an Azure Attestation provider with an ARM template](https://docs.microsoft.com/azure/attestation/quickstart-template).
+
+`Tags: Microsoft.Attestation/attestationProviders`

@@ -1,4 +1,15 @@
-# Create a SQL Server and a Dedicated SQL pool (formerly SQL DW) with Transparent Data Encryption
+---
+description: Creates a SQL Server and a Dedicated SQL pool (formerly SQL DW) with Transparent Data Encryption.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-data-warehouse-transparent-encryption-create
+languages:
+- json
+- bicep
+---
+# Dedicated SQL pool with Transparent Encryption.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-data-warehouse-transparent-encryption-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-data-warehouse-transparent-encryption-create/PublicDeployment.svg)
@@ -17,4 +28,4 @@
 
 This template creates a SQL Server and a Dedicated SQL pool (formerly SQL DW) with Transparent Data Encryption. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/synapse-analytics/sql-data-warehouse/quickstart-arm-template) article.
 
-`Tags: sql data warehouse transparent data encryption`
+`Tags: sql data warehouse transparent data encryption, Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Sql/servers/databases/transparentDataEncryption`

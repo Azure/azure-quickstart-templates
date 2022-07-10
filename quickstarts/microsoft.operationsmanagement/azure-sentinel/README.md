@@ -1,4 +1,15 @@
-# Azure Sentinel
+---
+description: Enable Microsoft Sentinel, a scalable, cloud-native, security information event management (SIEM) and security orchestration automated response (SOAR) solution.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-sentinel
+languages:
+- json
+- bicep
+---
+# Enable Microsoft Sentinel
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.operationsmanagement/azure-sentinel/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.operationsmanagement/azure-sentinel/PublicDeployment.svg)
@@ -17,5 +28,5 @@
 
 Enable Azure Sentinel, a scalable, cloud-native, security information event management (SIEM) and security orchestration automated response (SOAR) solution.
 
-`Tags: Microsoft Azure Sentinel, security information event management, SIEM, security orchestration automated response, SOAR`
+`Tags: Microsoft Azure Sentinel, security information event management, SIEM, security orchestration automated response, SOAR, Microsoft.OperationalInsights/workspaces, Microsoft.OperationsManagement/solutions`
 

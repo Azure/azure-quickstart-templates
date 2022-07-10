@@ -1,3 +1,14 @@
+---
+description: This template creates a Standard Stream Analytics Job without input and output
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: streamanalytics-create
+languages:
+- json
+- bicep
+---
 # Create a Standard Stream Analytics Job
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.streamanalytics/streamanalytics-create/PublicLastTestDate.svg)
@@ -31,3 +42,5 @@ For more information, see the following articles:
 - [Microsoft Learn Stream Analytics Modules](https://docs.microsoft.com/learn/browse/?term=Stream%20Analytics)
 - [Quickstart: Create a Stream Analytics job by using the Azure portal](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-create-a-job)
 - [Quickstart: Create an Azure Stream Analytics job by using an ARM template](https://docs.microsoft.com/azure/stream-analytics/quick-create-azure-resource-manager)
+
+`Tags: Microsoft.StreamAnalytics/streamingjobs`

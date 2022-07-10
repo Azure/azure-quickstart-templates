@@ -1,4 +1,15 @@
-# Azure Private Endpoint
+---
+description: This template shows how to create a private endpoint pointing to Azure SQL Server
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: private-endpoint-sql
+languages:
+- json
+- bicep
+---
+# Private Endpoint example
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/private-endpoint-sql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/private-endpoint-sql/PublicDeployment.svg)
@@ -21,3 +32,5 @@ This is a starter template that shows how to create a private endpoint to Azure 
 [Azure Private Link FAQ](https://docs.microsoft.com/azure/private-link/private-link-faq)
 
 [Private Endpoints template format](https://docs.microsoft.com/azure/templates/microsoft.network/privateendpoints)
+
+`Tags: Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

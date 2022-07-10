@@ -3,6 +3,8 @@ description: This template creates an Azure Cosmos DB account for the Core (SQL)
 page_type: sample
 products:
 - azure
+- azure-resource-manager
+urlFragment: cosmosdb-sql-minimal
 languages:
 - json
 - bicep
@@ -26,5 +28,4 @@ languages:
 
 This template will create an Azure Cosmos account for Core (SQL) API provisioned for a single region. The template uses the minimum required resource properties to create an account. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/cosmos-db/quick-create-template) article.
 
-
-`Tags:Microsoft.DocumentDB/databaseAccounts`
+`Tags: Microsoft.DocumentDB/databaseAccounts`

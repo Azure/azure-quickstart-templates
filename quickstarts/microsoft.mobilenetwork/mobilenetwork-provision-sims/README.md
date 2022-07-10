@@ -1,4 +1,15 @@
-# Provision SIMs
+---
+description: This template provisions sims to be used with an existing mobile network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mobilenetwork-provision-sims
+languages:
+- json
+- bicep
+---
+# Provision sims
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-provision-sims/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-provision-sims/PublicDeployment.svg)
@@ -20,4 +31,4 @@ This template provisions SIMs to be used with an existing private mobile network
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates`
+`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates, Microsoft.MobileNetwork/sims, Microsoft.MobileNetwork/mobileNetworks`
