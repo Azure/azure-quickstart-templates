@@ -16,6 +16,8 @@ param databaseName string
 @description('Name given to table in database')
 param databaseTableName string
 
+var eventHubEndpoint = 'sb://${eventHubsNamespaceName}.servicebus.windows.net'
+
 // Gets Digital Twins resource
 resource digitalTwins 'Microsoft.DigitalTwins/digitalTwinsInstances@2022-05-31' existing = {
   name: digitalTwinsName
@@ -43,7 +45,7 @@ resource tsdbConnection 'Microsoft.DigitalTwins/digitalTwinsInstances/timeSeries
     connectionType: 'AzureDataExplorer'
     adxEndpointUri: adxCluster.properties.uri
     adxDatabaseName: databaseName
-    eventHubEndpointUri: eventHubsNamespace.properties.serviceBusEndpoint
+    eventHubEndpointUri: eventHubEndpoint
     eventHubEntityPath: eventHubName
     adxResourceId: adxCluster.id
     eventHubNamespaceResourceId: eventHubsNamespace.id
