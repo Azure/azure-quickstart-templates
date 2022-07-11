@@ -7,7 +7,7 @@ param appName string
 ])
 param appImage string = 'mcr.microsoft.com/oss/nginx/nginx:1.9.15-alpine'
 
-resource aci 'Microsoft.ContainerInstance/containerGroups@2021-10-01' = {
+resource aci 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
   name: appName
   location: location
   properties: {
