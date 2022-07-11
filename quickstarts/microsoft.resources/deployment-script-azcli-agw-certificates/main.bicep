@@ -13,6 +13,8 @@ param Location string = resourceGroup().location
 @description('The name of the DNS Private Zone to create')
 param DnsPrivateZoneName string = 'Contoso.local'
 
+var FrontendCertificateFqdn = '${FrontendCertificateName}.${DnsPrivateZoneName}'
+
 resource dns 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: DnsPrivateZoneName
   location: 'global'
@@ -42,8 +44,6 @@ resource dns 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   }
 }
 
-var FrontendCertificateFqdn = '${FrontendCertificateName}.${DnsPrivateZoneName}'
-
 resource akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   name: AkvName
   location: Location
@@ -58,7 +58,6 @@ resource akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
     accessPolicies: []
   }
 }
-output akvName string = akv.name
 
 module akvCertFrontend 'br/public:deployment-scripts/create-kv-certificate:1.1.1' = {
   name: 'CreateFeKvCert'
@@ -90,3 +89,4 @@ module app 'aciApp.bicep' = {
 
 output FrontendPrivateDnsFqdn string = FrontendCertificateFqdn
 output ApplicationGatewayPublicIp string = agw.outputs.agwPip
+output KeyVaultName string = akv.name

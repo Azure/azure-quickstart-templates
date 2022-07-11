@@ -7,7 +7,7 @@ param appName string
 ])
 param appImage string = 'mcr.microsoft.com/oss/nginx/nginx:1.9.15-alpine'
 
-resource aci 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
+resource aci 'Microsoft.ContainerInstance/containerGroups@2021-10-01' = {
   name: appName
   location: location
   properties: {
@@ -18,8 +18,8 @@ resource aci 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
           image: appImage
           resources: {
             requests: {
-              cpu: json('1')
-              memoryInGB: json('1.5')
+              cpu: 1
+              memoryInGB: 2
             }
           }
           
@@ -42,9 +42,9 @@ resource aci 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
           protocol: 'TCP'
         }
       ]
-      //dnsNameLabel: appName
     }
     osType: 'Linux'
   }
 }
+
 output IpAddress string  = aci.properties.ipAddress.ip

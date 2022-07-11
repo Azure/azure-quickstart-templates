@@ -23,6 +23,8 @@ var frontendAgwCertificateName = 'frontend'
 var appgwResourceId = resourceId('Microsoft.Network/applicationGateways', '${agwName}')
 var frontendAgwCertificateId = '${appgwResourceId}/sslCertificates/${frontendAgwCertificateName}'
 
+var keyVaultSecretsUserRole = resourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+
 resource akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = {
   name: akvName
 }
@@ -61,6 +63,9 @@ resource agw 'Microsoft.Network/applicationGateways@2021-08-01' = {
       '${agwId.id}': {}
     }
   }
+  dependsOn: [
+    rbacPropagationDelay
+  ]
   properties: {
       sslCertificates: [
         {
@@ -85,14 +90,14 @@ resource agw 'Microsoft.Network/applicationGateways@2021-08-01' = {
           }
         }
       ]
-      frontendIPConfigurations: array({
+      frontendIPConfigurations: [{
         properties: {
           publicIPAddress: {
             id: appgwpip.id
           }
         }
         name: 'appGatewayFrontendIP'
-      })
+      }]
       frontendPorts: [
         {
           name: 'appGatewayFrontendPort'
@@ -161,12 +166,7 @@ resource agw 'Microsoft.Network/applicationGateways@2021-08-01' = {
         }
       ]
   }
-  dependsOn: [
-    rbacPropagationDelay
-  ]
 }
-output agwId string = agw.id
-output agwName string = agw.name
 
 resource appgwpip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   name: 'pip-${agwName}'
@@ -180,10 +180,9 @@ resource appgwpip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
 }
 output agwPip string = appgwpip.properties.ipAddress
 
-var keyVaultSecretsUserRole = resourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
 resource kvAppGwSecretsUserRole 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
   scope: akv
-  name: guid(resourceId('Microsoft.Network/applicationGateways',agwName), agwId.id, akv.id, keyVaultSecretsUserRole)
+  name: guid(agwId.id, akv.id, keyVaultSecretsUserRole)
   properties: {
     roleDefinitionId: keyVaultSecretsUserRole
     principalType: 'ServicePrincipal'
@@ -193,11 +192,14 @@ resource kvAppGwSecretsUserRole 'Microsoft.Authorization/roleAssignments@2020-08
 
 module rbacPropagationDelay 'wait.bicep' = {
   name: 'DeploymentDelay'
+  dependsOn: [
+    kvAppGwSecretsUserRole
+  ]
   params: {
     waitSeconds: 60
     location: location
   }
-  dependsOn: [
-    kvAppGwSecretsUserRole
-  ]
 }
+
+output agwId string = agw.id
+output agwName string = agw.name
