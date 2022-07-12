@@ -10,6 +10,13 @@ param existingDataNetworkName string
 @description('The name for the site')
 param siteName string = 'myExampleSite'
 
+@description('The platform type where packet core is deployed.')
+@allowed([
+  'AKS-HCI'
+  'BaseVM'
+])
+param platformType string = 'AKS-HCI'
+
 @description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface, whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge Pro device.')
 param controlPlaneAccessInterfaceName string = ''
 
@@ -92,7 +99,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     sku: 'EvaluationPackage'
     coreNetworkTechnology: coreNetworkTechnology
     platform: {
-      type: 'AKS-HCI'
+      type: platformType
       customLocation: empty(customLocation) ? null : {
         id: customLocation
       }
