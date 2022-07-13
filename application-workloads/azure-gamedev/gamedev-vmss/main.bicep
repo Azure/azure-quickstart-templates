@@ -1,41 +1,15 @@
 @description('Deployment Location')
 param location string = resourceGroup().location
 
-@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.uri
-
-@description('The sasToken required to access _artifactsLocation.')
-@secure()
-param _artifactsLocationSasToken string = ''
-
-@description('Select Game Engine Version')
-@allowed([
-  'ue_4_27_2'
-  'ue_5_0_1'
-])
-param gameEngine string = 'ue_4_27_2'
-
-@description('Select Operating System')
-@allowed([
-  'win10'
-  'ws2019'
-])
-param osType string = 'win10'
-
-@description('Select Virtual Machine Skew')
-@allowed([
-  'Standard_NC4as_T4_v3'
-  'Standard_NC8as_T4_v3'
-  'Standard_NC16as_T4_v3'
-  'Standard_NC64as_T4_v3'
-  'Standard_NV6'
-  'Standard_NV12'
-  'Standard_NV24'
-  'Standard_NV12s_v3'
-  'Standard_NV24s_v3'
-  'Standard_NV48s_v3'
-])
-param vmSize string = 'Standard_NV12s_v3'
+param vmssName           string
+param vmssImgName        string
+param vmssImgPublisher   string = "microsoftcorporation1602274591143"
+param vmssImgProduct     string = "game-dev-vm"
+param vmssImgSku         string = "win10_no_engine_1_0"
+param vmssImgVersion     string = "latest"
+param vmssSku            string
+param vmssOsDiskType     string
+param vmssInstanceCount  int	= 1
 
 @description('Administrator Login for access')
 param administratorLogin string
@@ -44,25 +18,51 @@ param administratorLogin string
 @secure()
 param passwordAdministratorLogin string
 
-@description('Remote Access technology')
-@allowed([
-  'RDP'
-  'Teradici'
-  'Parsec'
-])
-param remoteAccessTechnology string = 'RDP'
-
-module gamedevvm './nestedtemplates/gamedev-vm.bicep'  = {
-  name: 'gamingDevVM'
-  params: {
-    location: location
-    vmSize: vmSize
-    adminName: administratorLogin
-    adminPass: passwordAdministratorLogin
-    osType: osType
-    gameEngine: gameEngine
-    remoteAccessTechnology: remoteAccessTechnology
-    _artifactsLocation: _artifactsLocation
-    _artifactsLocationSasToken: _artifactsLocationSasToken
+resource vmssName_resource 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
+  name: vmssName
+  sku: {
+    name: vmssSku
+    tier: 'Standard'
+    capacity: vmssInstanceCount
+  }
+  plan: (vmssCustomBaseImgEnabled ? json('null') : {
+    name: vmssImgName
+    publisher: vmssImgPublisher
+    product: vmssImgProduct
+  })
+  location: location
+  properties: {
+    singlePlacementGroup: false
+    upgradePolicy: {
+      mode: 'Manual'
+    }
+    virtualMachineProfile: {
+      storageProfile: {
+        osDisk: {
+          createOption: 'FromImage'
+          caching: 'ReadWrite'
+          managedDisk: {
+            storageAccountType: vmssOsDiskType
+          }
+        }
+        imageReference: {
+          publisher: vmssImgPublisher
+          offer: vmssImgProduct
+          sku: vmssImgSku
+          version: vmssImgVersion
+	    }
+      }
+      osProfile: {
+        computerName: vmName
+        adminUsername: administratorLogin
+        adminPassword: passwordAdministratorLogin
+      }
+      priority: 'Low'
+      evictionPolicy: 'Delete'
+    }
+    overprovision: false
   }
 }
+
+output id   string = vmssName_resource.id
+output name string = vmssName_resource.name
