@@ -1,5 +1,5 @@
 ---
-description: A template for creating a new Cognitive Services Translation API
+description: This template deploys a Cognitive Services Translate API. Microsoft Translator API is a neural machine translation service that developers can easily integrate into their applications websites, tools, or any solution requiring multi-language support such as website localization, e-commerce, customer support, messaging applications, internal communication, and more.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: cognitive-services-translate
 languages:
 - json
 ---
-# Cognitive Services Translation API
+# Deploy a Cognitive Services Translate API
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-translate/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-translate/PublicDeployment.svg)
