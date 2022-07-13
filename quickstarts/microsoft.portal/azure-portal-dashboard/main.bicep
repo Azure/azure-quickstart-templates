@@ -11,7 +11,7 @@ param dashboardName string = guid(virtualMachineName, virtualMachineResourceGrou
 param dashboardDisplayName string = 'Simple VM Dashboard'
 param location string = resourceGroup().location
 
-resource dashboardName_resource 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
+resource dashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
   name: dashboardName
   location: location
   tags: {
