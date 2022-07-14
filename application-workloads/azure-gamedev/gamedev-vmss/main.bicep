@@ -35,7 +35,7 @@ var linuxConfiguration = {
   }
 }
 
-resource vmssName_resource 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
+resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
   name: vmssName
   sku: {
     name: vmssSku
@@ -82,5 +82,5 @@ resource vmssName_resource 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01
   }
 }
 
-output id   string = vmssName_resource.id
-output name string = vmssName_resource.name
+output id   string = vmss.id
+output name string = vmss.name
