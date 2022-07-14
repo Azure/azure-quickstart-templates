@@ -14,7 +14,7 @@ param mobileNetworkCode string = '01'
 param siteName string = 'myExampleSite'
 
 @description('The name of the service')
-param serviceName string = 'Allow_all_traffic'
+param serviceName string = 'Allow-all-traffic'
 
 @description('The name of the SIM policy')
 param simPolicyName string = 'Default-policy'
@@ -23,10 +23,10 @@ param simPolicyName string = 'Default-policy'
 param sliceName string = 'slice-1'
 
 @description('The name for the SIM group.')
-param simGroupName string
+param simGroupName string = ''
 
 @description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
-param simResources array
+param simResources array = []
 
 @description('The platform type where packet core is deployed.')
 @allowed([
@@ -139,7 +139,7 @@ resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-04
     servicePrecedence: 253
     pccRules: [
       {
-        ruleName: 'All_traffic'
+        ruleName: 'All-traffic'
         rulePrecedence: 253
         trafficControl: 'Enabled'
         serviceDataFlowTemplates: [
@@ -200,8 +200,8 @@ resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@20
   }
 }
 
-resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = {
-  name: simGroupName
+resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = if (!empty(simGroupName)) {
+  name: empty(simGroupName) ? 'placeHolderForValidation' : simGroupName
   location: location
   properties: {
     mobileNetwork: {
