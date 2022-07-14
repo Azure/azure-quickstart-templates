@@ -44,15 +44,9 @@ param vmssInstanceCount int = 1
 @description('Administrator Login for access')
 param administratorLogin string
 
-@description('Administrator Authetication Type')
-param authType string = 'password'
-
 @description('Administrator Password for access')
 @secure()
 param passwordAdministratorLogin string
-
-@description('Administrator SSH Key')
-param administratorKey string = ''
 
 resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
   name: vmssName
