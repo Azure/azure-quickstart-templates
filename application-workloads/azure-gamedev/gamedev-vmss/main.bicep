@@ -1,15 +1,42 @@
 @description('Deployment Location')
 param location string = resourceGroup().location
 
-param vmssName           string
-param vmssImgName        string
-param vmssImgPublisher   string = 'microsoftcorporation1602274591143'
-param vmssImgProduct     string = 'game-dev-vm'
-param vmssImgSku         string = 'win10_no_engine_1_0'
-param vmssImgVersion     string = 'latest'
-param vmssSku            string
-param vmssOsDiskType     string
-param vmssInstanceCount  int	= 1
+@description('Name of VMSS Cluster')
+param vmssName string
+
+@allowed([
+  'microsoftcorporation1602274591143'
+  'azure-gaming'
+])
+@description('GameDev Image Publisher')
+param vmssImgPublisher string = 'microsoftcorporation1602274591143'
+
+@allowed([
+  'game-dev-vm'
+])
+@description('GameDev Image Product Id')
+param vmssImgProduct string = 'game-dev-vm'
+
+@allowed([
+  'win10_no_engine_1_0'
+  'ws2019_no_engine_1_0'
+  'win10_unreal_4_27_2'
+  'ws2019_unreal_4_27_2'
+  'win10_unreal_5_0_1'
+  'ws2019_unreal_5_0_1'
+])
+@description('GameDev Image Sku')
+param vmssImgSku string = 'win10_no_engine_1_0'
+
+@description('GameDev Image Product Id')
+param vmssImgVersion string = 'latest'
+
+@description('GameDev Disk Type')
+param vmssOsDiskType string = 'Premium_LRS'
+
+@description('VMSS Instance Count')
+@maxValue(100)
+param vmssInstanceCount int = 1
 
 @description('Administrator Login for access')
 param administratorLogin string
@@ -43,7 +70,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
     capacity: vmssInstanceCount
   }
   plan: {
-    name: vmssImgName
+    name: vmssImgSku
     publisher: vmssImgPublisher
     product: vmssImgProduct
   }
@@ -73,7 +100,9 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
         computerNamePrefix: vmssName
         adminUsername: administratorLogin
         adminPassword: passwordAdministratorLogin
-        linuxConfiguration: ((authType == 'password') ? null : linuxConfiguration)
+	windowsConfiguration: {
+          provisionVMAgent: true
+        }
       }
       priority: 'Low'
       evictionPolicy: 'Delete'
