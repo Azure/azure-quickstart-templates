@@ -39,6 +39,7 @@ param vmssOsDiskType string = 'Premium_LRS'
 
 @description('VMSS Instance Count')
 @maxValue(100)
+@minValue(1)
 param vmssInstanceCount int = 1
 
 @description('Administrator Login for access')
