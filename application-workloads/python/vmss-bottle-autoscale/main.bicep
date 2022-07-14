@@ -27,11 +27,11 @@ param authenticationType string = 'sshPublicKey'
 param adminPasswordOrKey string
 
 @description('The base URI where artifacts required by this template are located')
-param artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated')
 @secure()
-param artifactsLocationSasToken string = ''
+param _artifactsLocationSasToken string = ''
 
 var addressPrefix = '10.0.0.0/16'
 var subnetPrefix = '10.0.0.0/24'
@@ -217,8 +217,8 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
               autoUpgradeMinorVersion: true
               settings: {
                 fileUris: [
-                  uri(artifactsLocation, 'installserver.sh${artifactsLocationSasToken}')
-                  uri(artifactsLocation, 'workserver.py${artifactsLocationSasToken}')
+                  uri(_artifactsLocation, 'installserver.sh${_artifactsLocationSasToken}')
+                  uri(_artifactsLocation, 'workserver.py${_artifactsLocationSasToken}')
                 ]
                 commandToExecute: 'bash installserver.sh'
               }
