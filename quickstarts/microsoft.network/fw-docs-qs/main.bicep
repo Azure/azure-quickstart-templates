@@ -11,18 +11,18 @@ param location string = resourceGroup().location
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_B2ms'
 
-var virtualMachine_name = 'myVM'
-var virtualNetwork_name = 'myVNet'
-var netInterface_name = 'net-int'
-var ipconfig_name = 'ipconfig'
-var ipPrefix_name = 'public_ip_prefix'
-var ipprefix_size = 31
-var publicIPAddress_name = 'public_ip'
-var nsg_name = 'vm-nsg'
-var firewall_name = 'FW-01'
-var vnet_prefix = '10.0.0.0/16'
-var fw_subnet_prefix = '10.0.0.0/24'
-var backend_subnet_prefix = '10.0.1.0/24'
+var virtualMachineName = 'myVM'
+var virtualNetworkName = 'myVNet'
+var networkInterfaceName = 'net-int'
+var ipConfigName = 'ipconfig'
+var ipPrefixName = 'public_ip_prefix'
+var ipPrefixSize = 31
+var publicIpAddressName = 'public_ip'
+var nsgName = 'vm-nsg'
+var firewallName = 'FW-01'
+var vnetPrefix = '10.0.0.0/16'
+var fwSubnetPrefix = '10.0.0.0/24'
+var backendSubnetPrefix = '10.0.1.0/24'
 var azureFirewallSubnetId = subnet.id
 var azureFirewallIpConfigurations = [for i in range(0, 2): {
   name: 'IpConf${(i + 1)}'
@@ -34,8 +34,8 @@ var azureFirewallIpConfigurations = [for i in range(0, 2): {
   }
 }]
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-08-01' = [for i in range(0, 2): {
-  name: '${nsg_name}${i + 1}'
+resource nsg 'Microsoft.Network/networkSecurityGroups@2022-01-01' = [for i in range(0, 2): {
+  name: '${nsgName}${i + 1}'
   location: location
   properties: {
     securityRules: [
@@ -56,11 +56,11 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-08-01' = [for i in ra
   }
 }]
 
-resource ipprefix 'Microsoft.Network/publicIPPrefixes@2021-08-01' = {
-  name: ipPrefix_name
+resource ipprefix 'Microsoft.Network/publicIPPrefixes@2022-01-01' = {
+  name: ipPrefixName
   location: location
   properties: {
-    prefixLength: ipprefix_size
+    prefixLength: ipPrefixSize
     publicIPAddressVersion: 'IPv4'
   }
   sku: {
@@ -68,8 +68,8 @@ resource ipprefix 'Microsoft.Network/publicIPPrefixes@2021-08-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = [for i in range(0, 2): {
-  name: '${publicIPAddress_name}${i + 1}'
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = [for i in range(0, 2): {
+  name: '${publicIpAddressName}${i + 1}'
   location: location
   sku: {
     name: 'Standard'
@@ -84,20 +84,20 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = [for
   }
 }]
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
-  name: virtualNetwork_name
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+  name: virtualNetworkName
   location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
-        vnet_prefix
+        vnetPrefix
       ]
     }
     subnets: [
       {
         name: 'myBackendSubnet'
         properties: {
-          addressPrefix: backend_subnet_prefix
+          addressPrefix: backendSubnetPrefix
           routeTable: {
             id: routeTable.id
           }
@@ -111,18 +111,18 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
   parent: virtualNetwork
   name: 'AzureFirewallSubnet'
   properties: {
-    addressPrefix: fw_subnet_prefix
+    addressPrefix: fwSubnetPrefix
     privateEndpointNetworkPolicies: 'Enabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
   }
 }
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(0, 2): {
-  name: '${virtualMachine_name}${i+1}'
+  name: '${virtualMachineName}${i+1}'
   location: location
   properties: {
     hardwareProfile: {
@@ -146,7 +146,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i 
       }
     }
     osProfile: {
-      computerName: '${virtualMachine_name}${i+1}'
+      computerName: '${virtualMachineName}${i+1}'
       adminUsername: adminUsername
       adminPassword: adminPassword
       windowsConfiguration: {
@@ -165,16 +165,16 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i 
   }
 }]
 
-resource netInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i in range(0, 2): {
-  name: '${netInterface_name}${i + 1}'
+resource netInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [for i in range(0, 2): {
+  name: '${networkInterfaceName}${i + 1}'
   location: location
   properties: {
     ipConfigurations: [
       {
-        name: '${ipconfig_name}${i + 1}'
+        name: '${ipConfigName}${i + 1}'
         properties: {
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork_name, 'myBackendSubnet')
+            id: virtualNetwork.properties.subnets[0].id
           }
           primary: true
         }
@@ -188,8 +188,8 @@ resource netInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i 
   }
 }]
 
-resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
-  name: firewall_name
+resource firewall 'Microsoft.Network/azureFirewalls@2022-01-01' = {
+  name: firewallName
   location: location
   properties: {
     sku: {
@@ -318,7 +318,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
   }
 }
 
-resource routeTable 'Microsoft.Network/routeTables@2021-08-01' = {
+resource routeTable 'Microsoft.Network/routeTables@2022-01-01' = {
   name: 'rt-01'
   location: location
   properties: {
