@@ -35,7 +35,7 @@ var bastionPublicIPAddressName = '${projectName}-bastionPublicIP'
 var vmStorageAccountType = 'Premium_LRS'
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [for i in range(0, 3): {
-  name: '${projectName}-vm${(i + 1)}-networkInterface'
+  name: '${projectName}-vm${i + 1}-networkInterface'
   location: location
   properties: {
     ipConfigurations: [
@@ -68,7 +68,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [fo
 }]
 
 resource installWebServer 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = [for i in range(0, 3): {
-  name: '${projectName}-vm${(i + 1)}/InstallWebServer'
+  name: '${projectName}-vm${i + 1}/InstallWebServer'
   location: location
   properties: {
     publisher: 'Microsoft.Compute'
@@ -84,11 +84,11 @@ resource installWebServer 'Microsoft.Compute/virtualMachines/extensions@2022-03-
   ]
 }]
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(1, 3): {
-  name: '${projectName}-vm${i}'
+resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(0, 3): {
+  name: '${projectName}-vm${i + 1}'
   location: location
   zones: [
-    string(i)
+    string(i + 1)
   ]
   properties: {
     hardwareProfile: {
@@ -111,12 +111,12 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(1, 
     networkProfile: {
       networkInterfaces: [
         {
-          id: networkInterface[i].id
+          id: networkInterface[i + 1].id
         }
       ]
     }
     osProfile: {
-      computerName: '${projectName}-vm${i}'
+      computerName: '${projectName}-vm${i + 1}'
       adminUsername: adminUsername
       adminPassword: adminPassword
       windowsConfiguration: {
