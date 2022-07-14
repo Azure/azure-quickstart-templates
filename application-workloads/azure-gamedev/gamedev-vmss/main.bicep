@@ -51,17 +51,6 @@ param passwordAdministratorLogin string
 @description('Administrator SSH Key')
 param administratorKey string = ''
 
-var linuxConfiguration = {
-  ssh: {
-    publicKeys: [
-      {
-        path: '/home/${administratorLogin}/.ssh/authorized_keys'
-        keyData: administratorKey
-      }
-    ]
-  }
-}
-
 resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
   name: vmssName
   sku: {
@@ -94,7 +83,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
           offer: vmssImgProduct
           sku: vmssImgSku
           version: vmssImgVersion
-	    }
+	}
       }
       osProfile: {
         computerNamePrefix: vmssName
