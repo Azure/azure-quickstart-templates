@@ -211,7 +211,7 @@ resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/rule
   }
 }
 
-resource firewall 'Microsoft.Network/azureFirewalls@2022-01-01' = {
+resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
   name: firewallName
   location: location
   zones: ((length(availabilityZones) == 0) ? null : availabilityZones)
