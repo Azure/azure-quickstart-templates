@@ -111,7 +111,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(1, 
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${projectName}-vm${i}-networkInterface')
+          id: networkInterface[i].id
         }
       ]
     }
@@ -156,7 +156,7 @@ resource bastionHost 'Microsoft.Network/bastionHosts@2022-01-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: bastionPublicIPAddressName
+            id: bastionPublicIPAddress.id
           }
           subnet: {
             id: bastionSubnet.id
