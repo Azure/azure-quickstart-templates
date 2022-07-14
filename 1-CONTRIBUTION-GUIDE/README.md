@@ -113,7 +113,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 
 Samples can be deployed to resourceGroup, subscription, managementGroup and tenant scope.  The scope of deployment should match the scope of the workload.  For example, while it's possible to deploy resources to a resourceGroup from a subscription scope template, this requires elevated permissions that users may not have.  For example, resourceGroups should not be created as part of a resourceGroup workload by requiring deployment to the subscription scope.  If the workload targets a resourceGroup, the sample's targetScope should target a resourceGroup.
 
-The target scope itself should not be created by the sample unless the creation of the scope is the sample, for example creating managementGroup hierarchies.  
+The target scope itself should not be created by the sample unless the creation of the scope is the sample, for example creating managementGroup hierarchies.
 
 ## Bicep support
 

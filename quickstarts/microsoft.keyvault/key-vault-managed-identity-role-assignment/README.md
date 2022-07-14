@@ -3,6 +3,8 @@ description: This template creates a key vault, managed identity, and role assig
 page_type: sample
 products:
 - azure
+- azure-resource-manager
+urlFragment: key-vault-managed-identity-role-assignment
 languages:
 - json
 - bicep
@@ -34,5 +36,4 @@ When a managed identity is deleted, any role assignments for that managed identi
 
 To ensure that each deployment has a unique role assignment ID, you can use the `guid()` function with a seed value that is based in part on the managed identity's principal ID. However, because Azure Resource Manager requires each resource's name to be available at the beginning of the deployment, you can't use this approach in the same Bicep file that defines the managed identity. This sample uses a Bicep module to work around this issue.
 
-
-`Tags:Microsoft.KeyVault/vaults, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Resources/deployments, Microsoft.Authorization/roleAssignments`
+`Tags: Microsoft.KeyVault/vaults, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Resources/deployments, Microsoft.Authorization/roleAssignments`

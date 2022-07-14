@@ -1,4 +1,15 @@
-# Azure Application Gateway v2 Quickstart
+---
+description: This template creates an Azure Application Gateway with two Windows Server 2016 servers in the backend pool
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: ag-docs-qs
+languages:
+- json
+- bicep
+---
+# Create an Azure Application Gateway v2
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-docs-qs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-docs-qs/PublicDeployment.svg)
@@ -27,4 +38,4 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 This template is used by the Azure Application Gateway documentation [quickstart article](https://docs.microsoft.com/azure/application-gateway/quick-create-template).
 
-`Tags: Application Gateway`
+`Tags: Application Gateway, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/applicationGateways, Microsoft.Network/networkInterfaces`

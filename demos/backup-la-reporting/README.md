@@ -1,4 +1,14 @@
-# LA Monitoring and Reporting solution for Azure Backup
+---
+description: Log Analytics based Monitoring and Reporting solution for Azure Backup
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-la-reporting
+languages:
+- json
+---
+# Azure backup solution using Log Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-la-reporting/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-la-reporting/PublicDeployment.svg)
@@ -12,8 +22,6 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbackup-la-reporting%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbackup-la-reporting%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbackup-la-reporting%2Fazuredeploy.json)
-
-
 
 This template deploys **LA Monitoring and Reporting solution for Azure backup** on a Log Analytics workspace. This allows you to monitor key backup parameters such as backup and restore jobs, backup alerts and Cloud storage usage across Recovery services vaults.
 
@@ -33,8 +41,6 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbackup-la-reporting%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbackup-la-reporting%2Fazuredeploy.json)
 
-
-
 ## Solution overview and deployed resources
 
 Upon deploying the template, you would view overview tiles for Alerts, Backups, Restores, Cloud Storage and Backup Items.
@@ -53,6 +59,5 @@ You can click on each tile to get more details about the queries used to create 
 
 More information about configuring alerts can be found [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-tutorial-response)
 
-`Tags: Azure Backup, OMS Log Analytics, Monitoring`
-
+`Tags: Azure Backup, OMS Log Analytics, Monitoring, Microsoft.Resources/deployments, Microsoft.OperationalInsights/workspaces/views, Blade, OverviewTile, Microsoft.OperationalInsights/workspaces`
 

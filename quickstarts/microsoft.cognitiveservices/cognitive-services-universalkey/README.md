@@ -1,4 +1,15 @@
-# Deploy a Cognitive Services Universal Key
+---
+description: This template allows you to create an Cognitive Service Universal.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cognitive-services-universalkey
+languages:
+- json
+- bicep
+---
+# Cognitive Service Universal Key
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-universalkey/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-universalkey/PublicDeployment.svg)
@@ -28,4 +39,4 @@ If you are new to template deployment, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Cognitive Services quickstart article](https://docs.microsoft.com/azure/cognitive-services/resource-manager-template)
 
-`Tags: Azure4Student, appServices , coginitiveServices, beginner`
+`Tags: Azure4Student, appServices, coginitiveServices, beginner, Microsoft.CognitiveServices/accounts`

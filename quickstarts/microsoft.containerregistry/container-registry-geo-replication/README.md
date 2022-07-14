@@ -1,4 +1,15 @@
-# Azure Container Registry with Geo-replication
+---
+description: A template for creating a new Azure Container Registry with geo-replication
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: container-registry-geo-replication
+languages:
+- json
+- bicep
+---
+# Azure Container Registry with Geo-replication Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerregistry/container-registry-geo-replication/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerregistry/container-registry-geo-replication/PublicDeployment.svg)
@@ -19,7 +30,7 @@ This template deploys an Azure Container Registry with [geo-replication enabled]
 
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-geo-replication-template) article.
 
-`Tags: Azure Container Registry, Docker`
+`Tags: Azure Container Registry, Docker, Microsoft.ContainerRegistry/registries, Microsoft.ContainerRegistry/registries/replications`
 
 ## Solution overview and deployed resources
 

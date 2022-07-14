@@ -1,4 +1,15 @@
-# Azure App Configuration
+---
+description: This template creates a new Azure App Configuration store with two key-values.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: app-configuration-store-kv
+languages:
+- json
+- bicep
+---
+# Create an App Configuration Store with Outputs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store-kv/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store-kv/PublicDeployment.svg)
@@ -28,4 +39,4 @@ If you're new to template deployment, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create an Azure App Configuration store by using an ARM template](https://docs.microsoft.com/azure/azure-app-configuration/quickstart-resource-manager)
 
-`Tags: Azure4Student, AppConfiguration, Beginner`
+`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.AppConfiguration/configurationStores, Microsoft.AppConfiguration/configurationStores/keyValues`

@@ -1,4 +1,14 @@
-# Autoscale Setting for Virtual Machine ScaleSet
+---
+description: This template allows you to deploy an autoscale policy for Virtual Machine ScaleSet resource.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: monitor-autoscale-vmss-simplemetricbased
+languages:
+- json
+---
+# Deploy an Autoscale Setting for Virtual Machine ScaleSet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/monitor-autoscale-vmss-simplemetricbased/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/monitor-autoscale-vmss-simplemetricbased/PublicDeployment.svg)
@@ -17,4 +27,4 @@ If the metric is above the upper threshold, the example autoscale setting will s
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmonitor-autoscale-vmss-simplemetricbased%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmonitor-autoscale-vmss-simplemetricbased%2Fazuredeploy.json)
 
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, Microsoft.Insights/autoscalesettings, PercentChangeCount`

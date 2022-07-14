@@ -1,4 +1,14 @@
-# Create a Resource Group
+---
+description: This template is a subscription level template that will create a resourceGroup.  Currently, this template can be deployed via the Azure Portal.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: create-rg
+languages:
+- json
+---
+# Create a resourceGroup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-deployments/create-rg/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-deployments/create-rg/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsubscription-deployments%2Fcreate-rg%2Fazuredeploy.json)
 
 This template is a subscription level template that creates a resource group.
+
+`Tags: Microsoft.Resources/resourceGroups`

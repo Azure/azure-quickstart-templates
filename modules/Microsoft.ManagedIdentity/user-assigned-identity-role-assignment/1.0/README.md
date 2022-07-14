@@ -1,4 +1,15 @@
-# Create a user-assigned managed identity and role assignments
+---
+description: This module allows you to create a user-assigned managed identity and a role assignment scoped to the resource group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-Microsoft.ManagedIdentity-user-assigned-identity-role-assignment-1.0
+languages:
+- json
+- bicep
+---
+# Create a user-assigned managed identity and role assignment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.ManagedIdentity/user-assigned-identity-role-assignment/1.0/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.ManagedIdentity/user-assigned-identity-role-assignment/1.0/PublicDeployment.svg)
@@ -13,7 +24,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.ManagedIdentity%2Fuser-assigned-identity-role-assignment%2F1.0%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.ManagedIdentity%2Fuser-assigned-identity-role-assignment%2F1.0%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.ManagedIdentity%2Fuser-assigned-identity-role-assignment%2F1.0%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.ManagedIdentity%2Fuser-assigned-identity-role-assignment%2F1.0%2Fazuredeploy.json)
 
 This module creates a user-assigned managed identity. It also optionally assigns the managed identity to one or more roles at the resource group scope.
 
@@ -35,3 +46,5 @@ This module creates a user-assigned managed identity. It also optionally assigns
 | managedIdentityPrincipalId | string | The ID of the Azure AD service principal associated with the managed identity. |
 
 ```apiVersion: 2018-11-30```
+
+`Tags: Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments`

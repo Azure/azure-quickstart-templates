@@ -1,4 +1,14 @@
-# Create a Key in an Existing Key Vault
+---
+description: This module allows you to create a key in an existing KeyVault.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-Microsoft.KeyVault-vaults-keys-0.9
+languages:
+- json
+---
+# Create a Key in Azure KeyVault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.KeyVault/vaults/keys/0.9/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.KeyVault/vaults/keys/0.9/PublicDeployment.svg)
@@ -17,7 +27,7 @@ This module creates a Key in a Key Vault.  The Key Vault must already exist and 
 
 ## Parameters
 
-For more details about the key parameters see the [API reference documentation](https://docs.microsoft.com/en-us/rest/api/keyvault/CreateKey/CreateKey).
+For more details about the key parameters see the [API reference documentation](https://docs.microsoft.com/rest/api/keyvault/CreateKey/CreateKey).
 
 | Name | Type | Required | Description |
 | :------------- | :----------: | :----------: | :------------- |
@@ -38,3 +48,5 @@ For more details about the key parameters see the [API reference documentation](
 | key | object | The properties of the created key. |
 
 ```apiVersion: 2021-10-01```
+
+`Tags: Microsoft.KeyVault/vaults/keys, Microsoft.Resources/deployments`

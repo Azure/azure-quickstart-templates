@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+urlFragment: mobilenetwork-update-packet-core-control-plane
 languages:
 - json
 - bicep
@@ -28,10 +29,10 @@ This template allows you to update the version of an existing packet core.
 
 ## Prerequisites
 
-By default this template does not deploy any resources to the Azure Stack Edge Pro device. If you want to deploy to an Azure Stack Edge Pro device, you must follow the pre-requisite instructions in the [Private 5G Core documentation](https://docs.microsoft.com/en-gb/azure/private-5g-core/complete-private-mobile-network-prerequisites) before starting the deployment, so that you can specify the customLocation parameter.
+By default this template does not deploy any resources to the Azure Stack Edge Pro device. If you want to deploy to an Azure Stack Edge Pro device, you must follow the pre-requisite instructions in the [Private 5G Core documentation](https://docs.microsoft.com/azure/private-5g-core/complete-private-mobile-network-prerequisites) before starting the deployment, so that you can specify the customLocation parameter.
 
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags:Azure Private 5G Core, Resource Manager templates, ARM templates, Microsoft.MobileNetwork/packetCoreControlPlanes, Microsoft.MobileNetwork/mobileNetworks`
+`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates, Microsoft.MobileNetwork/packetCoreControlPlanes, Microsoft.MobileNetwork/mobileNetworks`

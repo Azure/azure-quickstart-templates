@@ -1,4 +1,15 @@
-# Create Budget to track cost or usage
+---
+description: This template shows how to create a budget under a subscription.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: create-budget-simple
+languages:
+- json
+- bicep
+---
+# Create a Simple Budget
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-simple/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-simple/PublicDeployment.svg)
@@ -30,3 +41,4 @@ Before running the script, edit *azuredeploy.parameters.json* and replace the sa
 - **First Threshold**: It's the first threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It's always percent and has to be between 0.01 and 1000.
 - **Second Threshold**: It's the second threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It's always percent and has to be between 0.01 and 1000.
 - **Contact Emails**: The list of email addresses to send the budget notification to when the threshold is exceeded. It accepts array of strings.
+`Tags: Microsoft.Consumption/budgets`

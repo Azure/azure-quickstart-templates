@@ -1,3 +1,13 @@
+---
+description: This template allows you to quickly deploy Azure Traffic Manager demo to test traffic distribution between different regions.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: traffic-manager-demo-setup
+languages:
+- json
+---
 # Azure Traffic Manager Demo Setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/traffic-manager-demo-setup/PublicLastTestDate.svg)
@@ -33,3 +43,5 @@ In order to try your test setup in action you can re-send your requests, bring d
 When your HTTP request hits backend server, you should be able to see a page like the one below:
 
 ![Server Response](images/serverhit.png "Backend server response")
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/trafficManagerProfiles, Microsoft.Network/trafficManagerProfiles/azureEndpoints, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

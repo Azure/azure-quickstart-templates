@@ -3,6 +3,8 @@ description: This template creates a virtual network with three subnets (server 
 page_type: sample
 products:
 - azure
+- azure-resource-manager
+urlFragment: azurefirewall-with-zones-sandbox
 languages:
 - json
 - bicep
@@ -37,6 +39,5 @@ The template creates following resources:
 - UDR route to point to Azure Firewall for the _ServerSubnet_.
 - An Azure Firewall with one or more Public IPs, one sample application rule, and one sample network rule.
 - Azure Firewall is placed in Availability Zones 1, 2 and 3.
-
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/routeTables, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/azureFirewalls, Allow`

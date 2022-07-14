@@ -1,4 +1,15 @@
-# Azure Private Link service
+---
+description: This template shows how to create a private link service
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: privatelink-service
+languages:
+- json
+- bicep
+---
+# Private Link service example
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/privatelink-service/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/privatelink-service/PublicDeployment.svg)
@@ -21,3 +32,5 @@ This is a starter template that shows how to create a private link service. To l
 [Azure Private Link FAQ](https://docs.microsoft.com/azure/private-link/private-link-faq)
 
 [Private Link service template format](https://docs.microsoft.com/azure/templates/microsoft.network/privatelinkservices)
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/privateLinkServices, Microsoft.Network/publicIPAddresses, Microsoft.Network/privateEndpoints`

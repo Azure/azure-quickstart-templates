@@ -1,4 +1,14 @@
-# Datalake on Azure
+---
+description: This template provides an example of how to perform analytics on the historic as well as  real time streaming data  stored in Azure Blob Storage. The data from the event hub is taken by the Azure Stream Analytics Job to perform transformation and the output is stored in Azure Blob Storage and is visualized in PowerBI. The analytics is applied on the historic data stored in Blob storage by Azure Data Analytics and the movement of extracted, transformed and published data and the orchestration is done by Data Factory. The published data is further visualized in PowerBI
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: yash-datalake
+languages:
+- json
+---
+# Performs ETL job using Azure services
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datalakestore/yash-datalake/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datalakestore/yash-datalake/PublicDeployment.svg)
@@ -63,3 +73,5 @@ After you deploy the template, to run Quickstart, do the following steps:
   1.Add Application and user in IAM of ADL store and in data explorer access.
   2.Add application and user in IAM of Azure Data Factory.
 - After completing the above procedure return to the tab and follow the quickstart guide
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Web/serverfarms, Microsoft.Web/sites, siteextensions, extensions, Microsoft.Web/sites/config, Microsoft.EventHub/namespaces, EventHubs, ConsumerGroups, Microsoft.Storage/storageAccounts/providers/eventSubscriptions, Microsoft.DataFactory/factories, linkedservices, HttpServer, AzureStorage, SecureString, HDInsightOnDemand, LinkedServiceReference, datasets, DelimitedText, HttpServerLocation, Expression, AzureBlob, pipelines, ForEach, Copy, DelimitedTextSource, HttpReadSettings, DelimitedTextReadSettings, BlobSink, DatasetReference, HDInsightSpark, Microsoft.DataLakeStore/accounts, Microsoft.DataLakeAnalytics/accounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Storage/storageAccounts, Microsoft.StreamAnalytics/StreamingJobs, stream, JSON, Microsoft.ServiceBus/EventHub, Reference, Microsoft.Storage/Blob`

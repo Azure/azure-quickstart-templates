@@ -85,7 +85,7 @@ if (($BicepVersion -ne "") -and !($BicepVersion -match "^[0-9]+\.[-0-9a-z.]+$"))
     Write-Error "Unexpected bicep version format: $BicepVersion.  This may be caused by a previous error in the pipeline"
 }
 
-$cloudTable = (Get-AzStorageTable –Name $t –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $t -Context $ctx).CloudTable
 
 #Get the type of Sample from metadata.json, needed for the partition key lookup
 $PathToMetadata = "$SampleFolder\metadata.json"
@@ -101,13 +101,40 @@ $PartitionKey = $Metadata.Type # if the type changes we'll have an orphaned row,
 $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowKey
 
 #Get the row to compare for regressions (always from the main table)
-$comparisonCloudTable = (Get-AzStorageTable –Name $TableName –Context $ctx).CloudTable
+$comparisonCloudTable = (Get-AzStorageTable -Name $TableName -Context $ctx).CloudTable
 $comparisonResults = Get-AzTableRow -table $comparisonCloudTable -PartitionKey $PartitionKey -RowKey $RowKey
 Write-Host "Comparison table for previous results: $TableName"
 Write-Host "Comparison table current results: $comparisonResults"
 
 if ($isPullRequest) {
-    # For pull requests, we want to check for regressions against the main table, not the PR table
+    # Check for a duplicate itemDisplayName in metadata
+    # we need to check both tables - merged and PRs in case a dupe is in a PR
+    $t1 = (Get-AzStorageTable -Name $TableName -Context $ctx).CloudTable
+    $t2 = (Get-AzStorageTable -Name $TableNamePRs -Context $ctx).CloudTable
+    $itemDisplayName = $Metadata.itemDisplayName
+    $r1 = Get-AzTableRow -Table $t1 -ColumnName itemDisplayName -Value $itemDisplayName -Operator Equal
+    $r2 = Get-AzTableRow -Table $t2 -ColumnName itemDisplayName -Value $itemDisplayName -Operator Equal
+    if ($r1.Count -gt 0) {
+        # make sure rowkey and partition key don't match - or there's more than one row returned flag it
+        $sameRow = ($r1.PartitionKey -eq $PartitionKey -and $r1.RowKey -eq $RowKey)
+        if ($r1.count -ge 2 -or !$sameRow) {
+            Write-Host "Duplicate sample name found in $TableName for: $itemDisplayName"
+            Write-Host "##vso[task.setvariable variable=duplicate.metadata]$true"
+            foreach ($_ in $r1) {
+                Write-Host "RowKey: $($_.RowKey)"
+            }
+        }
+    }
+    if ($r2.Count -gt 0) {
+        $sameRow = ($r2.PartitionKey -eq $PartitionKey -and $r2.RowKey -eq $RowKey)
+        if ($r2.count -ge 2 -or !$sameRow) {
+            Write-Host "Duplicate sample name found in $TableNamePRs for: $itemDisplayName"
+            Write-Host "##vso[task.setvariable variable=duplicate.metadata]$true"
+            foreach ($_ in $r2) {
+                Write-Host "RowKey: $($_.RowKey)"
+            }
+        }
+    }
 }
 
 # if the build was cancelled and this was a scheduled build, we need to set the metadata status back to "Live"

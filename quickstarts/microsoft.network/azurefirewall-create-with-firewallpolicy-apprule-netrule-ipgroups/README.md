@@ -1,4 +1,15 @@
-# Create Firewall with firewall Policy (including multiple application, network rules with referencing IP Groups)
+---
+description: This template deploys an Azure Firewall with Firewall Policy (including multiple application and network rules) referencing IP Groups in application and network rules.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-create-with-firewallpolicy-apprule-netrule-ipgroups
+languages:
+- json
+- bicep
+---
+# Create a Firewall and FirewallPolicy with Rules and Ipgroups
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-firewallpolicy-apprule-netrule-ipgroups/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-firewallpolicy-apprule-netrule-ipgroups/PublicDeployment.svg)
@@ -15,7 +26,6 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazurefirewall-create-with-firewallpolicy-apprule-netrule-ipgroups%2Fazuredeploy.json)
 
-
 This template deploys an Azure Firewall with Firewall Policy (including multiple application and network rules) referencing of IP Groups in application and network rules.
 
 IP Groups is a top-level resource that allows you to group and manage IP addresses in Firewall Policy rules. You can give your IP Group a name and create one by entering IP addresses or uploading a file. It eases your management experience and reduce time spent managing IP addresses by using them in a single firewall policy or across multiple firewall policies.
@@ -23,3 +33,5 @@ IP Groups is a top-level resource that allows you to group and manage IP address
 An IP Group can support individual or multiple IP addresses, ranges, or subnets.
 
 Learn more at https://docs.microsoft.com/azure/firewall/ip-groups.
+
+`Tags: Microsoft.Network/ipGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/firewallPolicies, Microsoft.Network/firewallPolicies/ruleCollectionGroups, Allow, Microsoft.Network/azureFirewalls`

@@ -1,3 +1,14 @@
+---
+description: This template enables you to deploy a Service Bus Standard namespace and a queue.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: servicebus-create-queue
+languages:
+- json
+- bicep
+---
 # Create a Service Bus namespace and queue
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicebus/servicebus-create-queue/PublicLastTestDate.svg)
@@ -17,3 +28,4 @@
 
 For information about using this template, see [Quickstart: Create a Service Bus namespace and a queue using an ARM template](https://docs.microsoft.com/azure/service-bus-messaging/service-bus-resource-manager-namespace-queue).
 
+`Tags: Microsoft.ServiceBus/namespaces, Microsoft.ServiceBus/namespaces/queues`

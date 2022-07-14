@@ -1,3 +1,13 @@
+---
+description: This template deploys a 2-10 node CentOS cluster with 2 networks.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: centos-2nics-lb-cluster
+languages:
+- json
+---
 # Deploys a N-node CentOS Cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/centos-2nics-lb-cluster/PublicLastTestDate.svg)
@@ -9,13 +19,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/centos-2nics-lb-cluster/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/centos-2nics-lb-cluster/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fcentos-2nics-lb-cluster%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fcentos-2nics-lb-cluster%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fcentos-2nics-lb-cluster%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fcentos-2nics-lb-cluster%2Fazuredeploy.json)
 
-  
-
-This template deploys a 2-10-node CentOS 6.5 cluster using the [Azure Resource Manager (ARM)](https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/) "copy" feature. Each node has 2 network cards:
+This template deploys a 2-10-node CentOS 6.5 cluster using the [Azure Resource Manager (ARM)](https://azure.microsoft.com/documentation/articles/resource-group-overview/) "copy" feature. Each node has 2 network cards:
 
 * The first one is on a "public" subnet.
 * The second one is on a "private" subnet.
@@ -37,4 +45,4 @@ The template invokes a custom bash script that configures the second network car
 
 The limit on the number of nodes is artificial. Alas, ARM does not support arithmetic operators yet, so one has to list all the possible NAT ports for the load-balancer configuration. I listed 10. Feel free to add more and you'll be able to increase the number of nodes. Also, if not all nodes require external connections, you can have as many nodes as the current subnet limit.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

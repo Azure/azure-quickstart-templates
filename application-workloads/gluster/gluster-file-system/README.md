@@ -1,3 +1,13 @@
+---
+description: This template deploys a 2, 4, 6, or 8 node Gluster File System with 2 replicas on Ubuntu
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: gluster-file-system
+languages:
+- json
+---
 # Deploys a N node Gluster File System
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/gluster/gluster-file-system/PublicLastTestDate.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fgluster%2Fgluster-file-system%2Fazuredeploy.json)
 
 This template lets you create a N node Gluster File System on Ubuntu. Using the copy loop feature of ARM templates, you can provision 2, 4, 6 or 8 nodes in a cluster with a replication factor of 2. Each node has a public IP and has 2 disks stripped into raid0.
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

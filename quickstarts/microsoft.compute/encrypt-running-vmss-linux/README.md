@@ -1,4 +1,14 @@
-# This template enables encryption on a running VM Scale Set of Linux VMs
+---
+description: Enables data volume encryption on a running Linux VMSS
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: encrypt-running-vmss-linux
+languages:
+- json
+---
+# Enable data volume encryption on a running Linux VMSS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-vmss-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-vmss-linux/PublicDeployment.svg)
@@ -15,6 +25,6 @@
 
 This template enables encryption on a running VM Scale Set of Linux VMs
 
-For more information about Azure Disk Encryption, see https://docs.microsoft.com/en-us/azure/security/azure-security-disk-encryption-linux
+For more information about Azure Disk Encryption, see https://docs.microsoft.com/azure/security/azure-security-disk-encryption-linux
 
-
+`Tags: Microsoft.Compute/virtualMachineScaleSets, [variables('extensionName')]`

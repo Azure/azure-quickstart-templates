@@ -1,4 +1,14 @@
-﻿# SQL Server Always On Availability Groups on AKS
+---
+description: This creates a new AKS Cluster and then deploy SQL Server always on availability groups into it using a CNAB Package deployed using Duffle and ACI
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aks-sql-server-always-on
+languages:
+- json
+---
+# SQL Server Always On AG on AKS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Faks-sql-server-always-on%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Faks-sql-server-always-on%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Faks-sql-server-always-on%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Faks-sql-server-always-on%2Fazuredeploy.json)
 
@@ -31,7 +41,7 @@ In order to check progress\status of the install use the command provided in the
 
 ![portal-template-deployment-outputs](./images/portal-template-deployment-outputs.png)
 
-Full details of SQL Server AG on AKS can be be found [here](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-kubernetes-deploy?view=sqlallproducts-allversions)
+Full details of SQL Server AG on AKS can be be found [here](https://docs.microsoft.com/sql/linux/sql-server-linux-kubernetes-deploy?view=sqlallproducts-allversions)
 
 ## Parameters and Credentials
 
@@ -53,7 +63,4 @@ cnab_state_storage_account_resource_group| The resource group for CNAB state sto
 containerGroupName | The name of the container group to create the container instance to run duffle in , by default a new Container Group will be created for each invocation (these can be safely deleted after deployment)
 containerName| The name of a container in the con◊tainer group to run the container image to run duffle, by default a new Container Name will be generated for each invocation
 
-
-
-
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.ContainerInstance/containerGroups`
