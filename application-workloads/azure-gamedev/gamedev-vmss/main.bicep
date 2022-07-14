@@ -4,6 +4,9 @@ param location string = resourceGroup().location
 @description('Name of VMSS Cluster')
 param vmssName string
 
+@description('GameDev Sku')
+param vmssSku string = ''
+
 @allowed([
   'microsoftcorporation1602274591143'
   'azure-gaming'
