@@ -1,4 +1,15 @@
-# Deploy Azure Route Server in an Azure Virtual Network
+---
+description: This template deploys a Route Server into a subnet named RouteServerSubnet.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: route-server
+languages:
+- json
+- bicep
+---
+# Create a Route Server in a New Subnet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/route-server/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/route-server/PublicDeployment.svg)
@@ -21,3 +32,5 @@ This template deploys resources in the same Resource Group and Azure region as t
 ## Notes
 
 * Route Server is not currently available in the US Government regions.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualHubs, Microsoft.Network/virtualHubs/ipConfigurations, Microsoft.Network/virtualHubs/bgpConnections`

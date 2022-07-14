@@ -1,4 +1,15 @@
-# Deploy a Linux-based HDInsight cluster (with Azure Storage) with an SSH password.
+---
+description: This template allows you to create a Linux-based Hadoop cluster in HDInsight and the dependent Azure Storage account. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see https&#58;//azure.microsoft.com/resources/templates/101-hdinsight-linux-ssh-publickey/
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-linux-ssh-password
+languages:
+- json
+- bicep
+---
+# Deploy HDInsight cluster with Storage and SSH password
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-linux-ssh-password/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-linux-ssh-password/PublicDeployment.svg)
@@ -18,3 +29,5 @@
 This template allows you to create a Linux-based HDInsight cluster and the dependent Azure Storage account. The SSH authentication method for the cluster is username and password. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/hdinsight/hadoop/apache-hadoop-linux-tutorial-get-started) article.
 
 For a template using SSH public key authentication, see [Deploy HDInsight on Linux](https://azure.microsoft.com/resources/templates/101-hdinsight-linux-ssh-publickey/).
+
+`Tags: Standard_LRS, Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`

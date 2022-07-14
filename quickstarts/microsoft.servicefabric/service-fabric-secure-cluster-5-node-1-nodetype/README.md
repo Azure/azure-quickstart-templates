@@ -1,4 +1,15 @@
-# Very simple deployment of a 5 Node secure Service Fabric Cluster with Azure Diagnostics enabled
+---
+description: This template allows you to deploy a secure 5 node Service Fabric Cluster running Windows Server 2019 Datacenter on a Standard_D2_v2 Size VMSS.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: service-fabric-secure-cluster-5-node-1-nodetype
+languages:
+- json
+- bicep
+---
+# Deploy a 5 Node Secure Cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicefabric/service-fabric-secure-cluster-5-node-1-nodetype/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicefabric/service-fabric-secure-cluster-5-node-1-nodetype/PublicDeployment.svg)
@@ -27,13 +38,12 @@ If you want to create a custom ARM template for your cluster, then you have two 
 
    1. Go through the process of creating the cluster as described in [Creating Service Fabric Cluster via portal](https://docs.microsoft.com/azure/service-fabric/service-fabric-cluster-creation-via-portal) , but don't click on **create**, instead go to Summary and download the template and parameters.
 
-   ![DownloadTemplate][DownloadTemplate]
+   ![DownloadTemplate](./DownloadTemplate.png)
 
    1. Unzip the downloaded `.zip` on your local machine, make any changes to template or the parameter file as you need.
-
-<!--Image references-->
-[DownloadTemplate]: ./DownloadTemplate.png
 
 ## Learn more
 
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/service-fabric/quickstart-cluster-template) article.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, ServiceFabricNode, IaaSDiagnostics, Microsoft.ServiceFabric/clusters`

@@ -1,4 +1,15 @@
-# Create an Azure portal dashboard
+---
+description: Azure Database Migration Service is a fully managed service designed to enable seamless migrations from multiple database sources to Azure data platforms with minimal downtime (online migrations).
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-database-migration-simple-deploy
+languages:
+- json
+- bicep
+---
+# Deploy Azure Database Migration Service (DMS)
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datamigration/azure-database-migration-simple-deploy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datamigration/azure-database-migration-simple-deploy/PublicDeployment.svg)
 
@@ -16,4 +27,4 @@
 
 Deploy Azure Database Migration Service (DMS), a fully managed service designed to enable seamless migrations from multiple database sources to Azure data platforms with minimal downtime (online migrations). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/dms/create-dms-resource-manager-template) article.
 
-`Tags: Azure Database Migration Service, migration`
+`Tags: Azure Database Migration Service, migration, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.DataMigration/services`

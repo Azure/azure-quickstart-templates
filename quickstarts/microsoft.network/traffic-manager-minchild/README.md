@@ -1,4 +1,14 @@
-# Azure Traffic Manager multi-value routing with nested profiles and min-child feature
+---
+description: This template shows how to create an Azure Traffic Manager profile using nested endpoints with min-child and multi-value routing.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: traffic-manager-minchild
+languages:
+- json
+---
+# Azure Traffic Manager multi-value routing
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-minchild/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-minchild/PublicDeployment.svg)
@@ -18,3 +28,5 @@ This template shows how to create an Azure Traffic Manager profile using nested 
 
 - [Traffic Manager routing methods](https://docs.microsoft.com/azure/traffic-manager/traffic-manager-routing-methods): Traffic Manager routing methods for details of the different routing methods available
 - [Traffic Manager REST](https://docs.microsoft.com/rest/api/trafficmanager/): Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
+
+`Tags: Microsoft.Network/trafficManagerProfiles, Microsoft.Network/trafficManagerProfiles/nestedEndpoints, Microsoft.Network/TrafficManagerProfiles/ExternalEndpoints`

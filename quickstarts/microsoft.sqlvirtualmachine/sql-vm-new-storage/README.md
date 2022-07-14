@@ -3,6 +3,8 @@ description: Create a SQL Server Virtual Machine with performance optimized stor
 page_type: sample
 products:
 - azure
+- azure-resource-manager
+urlFragment: sql-vm-new-storage
 languages:
 - json
 - bicep
@@ -42,4 +44,4 @@ The following resources are created:
 - Managed Disks for SQL Data and Log.
 - A SQL Virtual Machine resource attached to the VM.
 
-`Tags:Azure, SQL, VirtualMachine, Performance, StorageConfiguration, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.SqlVirtualMachine/sqlVirtualMachines, Microsoft.Network/virtualNetworks`
+`Tags: Azure, SQL, VirtualMachine, Performance, StorageConfiguration, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.SqlVirtualMachine/sqlVirtualMachines, Microsoft.Network/virtualNetworks`

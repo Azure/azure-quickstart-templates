@@ -1,4 +1,15 @@
-# Front Door Standard/Premium with custom domain and customer-managed TLS certificate
+---
+description: This template creates a Front Door Standard/Premium including a custom domain and customer-managed certificate.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-custom-domain-customer-certificate
+languages:
+- json
+- bicep
+---
+# Front Door Standard/Premium with domain and certificate
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-custom-domain-customer-certificate/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-custom-domain-customer-certificate/PublicDeployment.svg)
@@ -47,3 +58,5 @@ You can then access the Front Door endpoint by using your custom domain name. If
 ## Notes
 
 - You must grant Front Door access to your key vault before it can access your certificate. [Follow the guidance here](https://docs.microsoft.com/azure/frontdoor/standard-premium/how-to-configure-https-custom-domain#using-your-own-certificate) to register the Azure Front Door application with your Azure Active Directory tenant, and grant Azure Front Door access to your key vault.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/secrets, Microsoft.Cdn/profiles/customDomains, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

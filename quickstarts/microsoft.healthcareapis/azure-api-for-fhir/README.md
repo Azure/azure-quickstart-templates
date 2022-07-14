@@ -1,4 +1,15 @@
-# Deploy an instance of Azure API for FHIR®
+---
+description: This template creates an instance of Azure API for FHIR®. The Azure API for FHIR® is a managed, standards-based, and compliant healthcare data platform. It enables organizations to bring their clinical health data into the cloud based on the interoperable data standard FHIR®.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-api-for-fhir
+languages:
+- json
+- bicep
+---
+# Deploy Azure API for FHIR
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/azure-api-for-fhir/PublicLastTestDate.svg)
 
@@ -28,3 +39,5 @@ As a part of this solution, an Azure API for FHIR® resource is created.
 You can click the **Deploy to Azure** button at the beginning of this document to deploy an instance of the Azure API for FHIR®. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/healthcare-apis/fhir-paas-arm-template-quickstart?tabs=azure-portal) article.
 
 During deployment, you can specify the service name, environment name and location. All other parameters for deployment are automatically configured for you.
+
+`Tags: Microsoft.HealthcareApis/services`

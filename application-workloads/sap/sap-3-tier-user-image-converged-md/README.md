@@ -1,3 +1,13 @@
+---
+description: This template allows you to deploy a VM using a operating system that is supported by SAP.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sap-3-tier-user-image-converged-md
+languages:
+- json
+---
 # SAP NetWeaver 3-tier converged (managed image)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-3-tier-user-image-converged-md/PublicLastTestDate.svg)
@@ -33,7 +43,6 @@ ERS Internal Load Balancer probe port: **62102**
 * DB Internal Load Balancer ports: **1433**
 * DB Internal Load Balancer probe port: **62504**
 
-
 | Size | HA | Non-HA |
 | :------------- | :----------: | :------------- |
 | Demo | 2xDS12_v2 DB/ASCS/SCS (CL) Server (1xP10) + 2xDS2_v2 DI | 1xDS12_v2 DB/ASCS/SCS (CL) Server (1xP10) + 1xDS2_v2 DI |
@@ -41,3 +50,5 @@ ERS Internal Load Balancer probe port: **62102**
 | Medium | 2xDS14_v2 DB/ASCS/SCS (CL) Server (6xP20 1xP20) + 4xDS13_v2 DI | 1xDS14_v2 DB/ASCS/SCS (CL) Server (6xP20 1xP20) + 4xDS13_v2 DI |
 | Large | 2xGS4 DB/ASCS/SCS (CL) Server (5xP30 1xP20) + 6xDS14_v2 DI | 1xGS4 DB/ASCS/SCS (CL) Server (5xP30 1xP20) + 6xDS14_v2 DI |
 | X-Large | 2xGS5 DB/ASCS/SCS (CL) Server (6xP30 1xP30) + 10xDS14_v2 DI | 1xGS5 DB/ASCS/SCS (CL) Server (6xP30 1xP30) + 10xDS14_v2 DI |
+
+`Tags:Microsoft.Resources/deployments, Microsoft.Compute/availabilitySets, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, [variables('cseExtName')]`

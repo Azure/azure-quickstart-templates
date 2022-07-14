@@ -1,4 +1,14 @@
-# Deployment of a simple CDN WAF policy and linked endpoint with example rate limit rules.
+---
+description: This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also links a CDN WAF Policy to the Endpoint which applies example rate limit rules for blocking and redirecting rate-limited requests.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-waf-rate-limit-rules
+languages:
+- json
+---
+# Apply a WAF Policy with rate limit rules to a CDN Endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-waf-rate-limit-rules/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-waf-rate-limit-rules/PublicDeployment.svg)
@@ -14,3 +24,4 @@
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also links a CDN WAF Policy to the Endpoint which applies example rate limit rules for blocking and redirecting rate-limited requests.
 
+`Tags: Microsoft.Cdn/CdnWebApplicationFirewallPolicies, Microsoft.Cdn/profiles, endpoints`

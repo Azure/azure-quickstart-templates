@@ -1,4 +1,14 @@
-# Create a SQL Server AlwaysOn Availability Group in an existing Azure VNET and Active Directory domain across Availability Zones using an Internal Load Balancer
+---
+description: This template creates Azure VMs on an existing VNET, and provisions a SQL Server 2016 or 2017 AlwaysOn Availability Group cluster across AZ's
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-alwayson-md-ilb-zones
+languages:
+- json
+---
+# SQL Server AlwaysOn Cluster with Managed Disks in AZ
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/sql-alwayson-md-ilb-zones/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/sql-alwayson-md-ilb-zones/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fsql-alwayson-md-ilb-zones%2Fazuredeploy.json)
 
 This template will create a SQL Server AlwaysOn Availability Group using the PowerShell DSC Extension in an existing Azure Virtual Network and Active Directory environment. Both SQL Server 2016 and SQL Server 2017 are supported by this template. The SQL Server VMs will be provisioned across multiple Azure Availability Zones and requests will be directed to the Listener using the Internal Load Balancer (ILB) Standard.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Storage/storageAccounts, Microsoft.Network/loadBalancers, Microsoft.Network/publicIPAddresses, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Compute/virtualMachines`

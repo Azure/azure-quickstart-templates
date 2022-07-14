@@ -1,4 +1,15 @@
-# Azure Container Instances
+---
+description: Deploy a single Linux container accessible via a public IP using Azure Container Instances.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aci-linuxcontainer-public-ip
+languages:
+- json
+- bicep
+---
+# Azure Container Instances - Linux container with public IP
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-linuxcontainer-public-ip/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-linuxcontainer-public-ip/PublicDeployment.svg)
@@ -16,3 +27,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-linuxcontainer-public-ip%2Fazuredeploy.json)
 
 This template demonstrates a use case for [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/container-instances/container-instances-quickstart-template) article.
+
+`Tags: Microsoft.ContainerInstance/containerGroups, Public`
