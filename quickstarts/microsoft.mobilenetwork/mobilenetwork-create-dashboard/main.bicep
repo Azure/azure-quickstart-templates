@@ -441,7 +441,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                     }
                     yAxis: [
                       {
-                        name: 'Pdu Sessions'
+                        name: 'PduSessions'
                         type: 'real'
                       }
                     ]
@@ -576,14 +576,14 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
               type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
               settings: {
                 content: {
-                  Query: 'let rate_function=(tbl:(Val: real, Time: datetime))\n{\ntbl\n    | sort by Time asc\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\n    | extend cum_correction = row_cumsum(correction)\n    | extend Val = Val + cum_correction\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\n    | extend dt = (Time-PrevTime)/1s\n    | extend dv = Val-PrevVal\n    | extend rate = dv/dt\n}\n    ;\nlet BytesTotal = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesTotal=rate, Time;\nlet BytesUpstream = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | where Tags has \'"interface":"n3"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesUpstream=rate, Time;\nlet BytesDownstream = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | where Tags has \'"interface":"n6"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesDownstream=rate, Time;\nBytesTotal\n| join kind=leftouter (BytesUpstream) on Time\n| join kind=leftouter (BytesDownstream) on Time\n| project Time, BytesTotal, BytesUpstream, BytesDownstream\n| render areachart kind=unstacked \n'
+                  Query: 'let rate_function=(tbl:(Val: real, Time: datetime))\n{\ntbl\n    | sort by Time asc\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\n    | extend cum_correction = row_cumsum(correction)\n    | extend Val = Val + cum_correction\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\n    | extend dt = (Time-PrevTime)/1s\n    | extend dv = Val-PrevVal\n    | extend rate = (dv * 8)/(dt * 1000000) // convert to Megabits per second\n}\n    ;\nlet BytesUpstream = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"tx"\'\n    | where Tags has \'"interface":"n6"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesUpstream=rate, Time;\nlet BytesDownstream = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"tx"\'\n    | where Tags has \'"interface":"n3"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesDownstream=rate, Time;\nBytesUpstream\n| join kind=leftouter (BytesDownstream) on Time\n| project Time, BytesUpstream, BytesDownstream\n| render areachart kind=stacked title="Userplane Throughput (Mb/s)"'
                   ControlType: 'FrameControlChart'
-                  SpecificChart: 'UnstackedArea'
-                  PartTitle: 'Userplane Throughput'
+                  SpecificChart: 'StackedArea'
+                  PartTitle: 'Userplane Throughput (Mb/s)'
                 }
               }
               partHeader: {
-                title: 'Userplane Throughput'
+                title: 'Userplane Throughput (Mb/s)'
                 subtitle: 'Private Edge Overview'
               }
             }
