@@ -1,4 +1,14 @@
-# MySQL Replication Template
+---
+description: This template deploys a 2 node master/slave MySQL replication cluster on CentOS 6.5 or 6.6
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mysql-replication
+languages:
+- json
+---
+# Deploys a 2 node master/slave MySQL replication cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicDeployment.svg)
@@ -70,7 +80,7 @@ High availability and failover are no different from other GTID based MySQL repl
 ```
 
 You can also do this in the Azure portal. Find the current master's MySQL NSG, either delete it or set the ports to some invalid value:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/1removeOldMasterNSG.PNG?raw=true "Remove or update NSG of the old master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/1removeOldMasterNSG.PNG "Remove or update NSG of the old master")
 
 - Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
 
@@ -95,9 +105,9 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 ```
 
 Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updateSlaveNSG.PNG?raw=true "Update the NSG for the new master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updateSlaveNSG.PNG "Update the NSG for the new master")
 Then update the NSG for the old master back to valid values:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterToSlave.PNG?raw=true "Update the NSG for the old master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterToSlave.PNG "Update the NSG for the old master")
 
 - Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
 
@@ -134,7 +144,7 @@ mysql> show slave status\G;
 >mkdir  /home/admin/backups/
 
 # Install npm and azure-cli
-# For latest instructions for installing azure cli see https://azure.microsoft.com/en-in/documentation/articles/xplat-cli-install/. (sample commands below)
+# For latest instructions for installing azure cli see https://azure.microsoft.com/documentation/articles/xplat-cli-install/. (sample commands below)
 > sudo yum update -y
 > sudo yum upgrade -y
 > sudo yum install epel-release -y
@@ -177,3 +187,5 @@ mysql> show slave status\G;
 > azure storage blob upload $image_to_upload $container_name $blob_name
 
 ```
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/loadBalancers`

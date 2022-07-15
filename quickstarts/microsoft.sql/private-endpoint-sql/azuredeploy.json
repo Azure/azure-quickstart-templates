@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "14846974543330599630"
+    }
+  },
   "parameters": {
     "sqlAdministratorLogin": {
       "type": "string",
@@ -9,7 +16,7 @@
       }
     },
     "sqlAdministratorLoginPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "The administrator password of the SQL logical server."
       }
@@ -46,23 +53,22 @@
     "vnetAddressPrefix": "10.0.0.0/16",
     "subnet1Prefix": "10.0.0.0/24",
     "subnet1Name": "mySubnet",
-    "sqlServerName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
-    "databaseName": "[concat(variables('sqlServerName'),'/sample-db')]",
+    "sqlServerName": "[format('sqlserver{0}', uniqueString(resourceGroup().id))]",
+    "databaseName": "[format('{0}/sample-db', variables('sqlServerName'))]",
     "privateEndpointName": "myPrivateEndpoint",
-    "privateDnsZoneName": "[concat('privatelink', environment().suffixes.sqlServerHostname)]",
-    "pvtendpointdnsgroupname": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]",
-    "vmName": "[take(concat('myVm', uniqueString(resourceGroup().id)),15)]",
-    "publicIpAddressName": "[concat(variables('vmName'), 'PublicIP' )]",
-    "networkInterfaceName": "[concat(variables('vmName'),'NetInt')]",
+    "privateDnsZoneName": "[format('privatelink{0}', environment().suffixes.sqlServerHostname)]",
+    "pvtEndpointDnsGroupName": "[format('{0}/mydnsgroupname', variables('privateEndpointName'))]",
+    "vmName": "[take(format('myVm{0}', uniqueString(resourceGroup().id)), 15)]",
+    "publicIpAddressName": "[format('{0}PublicIP', variables('vmName'))]",
+    "networkInterfaceName": "[format('{0}NetInt', variables('vmName'))]",
     "osDiskType": "StandardSSD_LRS"
   },
   "resources": [
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2020-02-02-preview",
+      "apiVersion": "2021-11-01-preview",
       "name": "[variables('sqlServerName')]",
       "location": "[parameters('location')]",
-      "kind": "v12.0",
       "tags": {
         "displayName": "[variables('sqlServerName')]"
       },
@@ -71,13 +77,11 @@
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
         "version": "12.0",
         "publicNetworkAccess": "Disabled"
-      },
-      "resources": [
-      ]
+      }
     },
     {
       "type": "Microsoft.Sql/servers/databases",
-      "apiVersion": "2020-02-02-preview",
+      "apiVersion": "2021-11-01-preview",
       "name": "[variables('databaseName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -85,24 +89,21 @@
         "tier": "Basic",
         "capacity": 5
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
-      ],
       "tags": {
         "displayName": "[variables('databaseName')]"
       },
       "properties": {
         "collation": "SQL_Latin1_General_CP1_CI_AS",
-        "edition": "Basic",
         "maxSizeBytes": 104857600,
-        "requestedServiceObjectiveName": "Basic",
         "sampleName": "AdventureWorksLT"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+      ]
     },
-
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -111,32 +112,25 @@
             "[variables('vnetAddressPrefix')]"
           ]
         }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', variables('vnetName'), variables('subnet1Name'))]",
+      "properties": {
+        "addressPrefix": "[variables('subnet1Prefix')]",
+        "privateEndpointNetworkPolicies": "Disabled"
       },
-      "resources": [
-        {
-          "type": "subnets",
-          "apiVersion": "2020-06-01",
-          "name": "[variables('subnet1Name')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[variables('vnetName')]"
-          ],
-          "properties": {
-            "addressPrefix": "[variables('subnet1Prefix')]",
-            "privateEndpointNetworkPolicies": "Disabled"
-          }
-        }
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ]
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('privateEndpointName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('vnetName')]",
-        "[variables('sqlServerName')]"
-      ],
       "properties": {
         "subnet": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]"
@@ -145,50 +139,50 @@
           {
             "name": "[variables('privateEndpointName')]",
             "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers',variables('sqlServerName'))]",
+              "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
               "groupIds": [
                 "sqlServer"
               ]
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
-      "apiVersion": "2020-01-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('privateDnsZoneName')]",
       "location": "global",
+      "properties": {},
       "dependsOn": [
-        "[variables('vnetName')]"
-      ],
-      "properties": ""
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2020-01-01",
-      "name": "[concat(variables('privateDnsZoneName'), '/', variables('privateDnsZoneName'), '-link')]",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateDnsZoneName'), format('{0}-link', variables('privateDnsZoneName')))]",
       "location": "global",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
-      ],
       "properties": {
         "registrationEnabled": false,
         "virtualNetwork": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('pvtendpointdnsgroupname')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
-        "[variables('privateEndpointName')]"
-      ],
+      "apiVersion": "2021-05-01",
+      "name": "[variables('pvtEndpointDnsGroupName')]",
       "properties": {
         "privateDnsZoneConfigs": [
           {
@@ -198,32 +192,29 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('publicIpAddressName')]"
       },
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[tolower(variables('vmName'))]"
-        }
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
-      ],
       "tags": {
         "displayName": "[variables('networkInterfaceName')]"
       },
@@ -242,16 +233,18 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-11-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
-      ],
       "tags": {
         "displayName": "[variables('vmName')]"
       },
@@ -272,7 +265,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'OsDisk')]",
+            "name": "[format('{0}OsDisk', variables('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -288,8 +281,10 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+      ]
     }
   ]
 }
-

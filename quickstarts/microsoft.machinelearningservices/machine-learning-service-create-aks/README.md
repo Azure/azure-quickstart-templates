@@ -1,4 +1,14 @@
-# Create an Azure Machine Learning Service
+---
+description: This template creates an Azure Machine Learning service.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-service-create-aks
+languages:
+- json
+---
+# Create an Azure Machine Learning Service (AKS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-service-create-aks/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-service-create-aks/PublicDeployment.svg)
@@ -21,3 +31,5 @@ If you are new to Azure Machine Learning, see:
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
+
+`Tags: Microsoft.MachineLearningServices/workspaces/services, Microsoft.MachineLearningServices/workspaces/computes, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.Resources/deployments, Microsoft.Resources/deploymentScripts, userAssigned`

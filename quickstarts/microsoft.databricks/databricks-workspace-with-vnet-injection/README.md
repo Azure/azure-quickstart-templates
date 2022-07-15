@@ -1,4 +1,14 @@
-# Deploy an Azure Databricks Workspace with a Custom Virtual Network
+---
+description: This template allows you to create an Azure Databricks workspace with a custom virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: databricks-workspace-with-vnet-injection
+languages:
+- json
+---
+# Azure Databricks Workspace with VNet Injection
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-vnet-injection/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-vnet-injection/PublicDeployment.svg)
@@ -14,6 +24,6 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-workspace-with-vnet-injection%2Fazuredeploy.json)
 
 This template allows you to create a Azure Databricks workspace with a custom virtual network.
-For more information, see the <a href="https://docs.microsoft.com/en-us/azure/azure-databricks/">Azure Databricks Documentation.
+For more information, see the <a href="https://docs.microsoft.com/azure/azure-databricks/">Azure Databricks Documentation.
 
-
+`Tags: Microsoft.Databricks/workspaces, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups`

@@ -1,4 +1,14 @@
-# Create a Key Vault
+---
+description: This module creates a KeyVault resource with apiVersion 2019-09-01.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-Microsoft.KeyVault-vaults-1.0
+languages:
+- json
+---
+# Create a KeyVault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.KeyVault/vaults/1.0/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.KeyVault/vaults/1.0/PublicDeployment.svg)
@@ -12,8 +22,6 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules/Microsoft.KeyVault/vaults/1.0%2Fazuredeploy.json)
 [![Deploy To Azure Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules/Microsoft.KeyVault/vaults/1.0%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules/Microsoft.KeyVault/vaults/1.0%2Fazuredeploy.json)
-
-
 
 This module creates a Key Vault.
 
@@ -34,7 +42,7 @@ This module creates a Key Vault.
 | networkRuleBypassOptions |  string | No | Tells what traffic can bypass network rules. This can be 'AzureServices' or 'None'. If not specified the default is 'AzureServices'. |
 | NetworkRuleAction | string | No | The default action when no rule from ipRules and from virtualNetworkRules match. This is only used after the bypass property has been evaluated. allowedValues [ 'Allow', 'Deny' ] |
 | ipRules |  array | No | An array of IPv4 addresses or rangea in CIDR notation, e.g. '124.56.78.91' (simple IP address) or '124.56.78.0/24' (all addresses that start with 124.56.78). |
-| accessPolicies |  array | No | An complex object array that contains the complete definition of the access policy.  See the [accessPolicy](https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/2019-09-01/vaults#accesspolicyentry-object) documentation for details. |
+| accessPolicies |  array | No | An complex object array that contains the complete definition of the access policy.  See the [accessPolicy](https://docs.microsoft.com/azure/templates/microsoft.keyvault/2019-09-01/vaults#accesspolicyentry-object) documentation for details. |
 | virtualNetworkRules |  array | No | An array for resourceIds for the virtualNetworks allowed to access the vault. |
 | skuName | string | No | Standard | Specifies whether the key vault is a standard vault or a premium vault.  allowedValues [ Standard, Premium ] |
 | tags | object | No | Tags to be assigned to the KeyVault. |
@@ -48,4 +56,4 @@ This module creates a Key Vault.
 
 ```apiVersion: 2019-09-01```
 
-
+`Tags: Microsoft.KeyVault/vaults`

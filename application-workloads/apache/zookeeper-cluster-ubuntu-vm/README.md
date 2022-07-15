@@ -1,4 +1,14 @@
-# Create a Zookeeper cluster on Ubuntu VMs
+---
+description: This template creates a 'n' node Zookeper cluster on Ubuntu VMs. Use the scaleNumber parameter to specify the number of nodes in this cluster
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: zookeeper-cluster-ubuntu-vm
+languages:
+- json
+---
+# Zookeeper cluster on Ubuntu VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/apache/zookeeper-cluster-ubuntu-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/apache/zookeeper-cluster-ubuntu-vm/PublicDeployment.svg)
@@ -17,4 +27,4 @@ Create a Zookeeper cluster
 
 This template creates a 'n' node Zookeeper cluster on Ubuntu VMs. Use the scaleNumber parameter to specify the number of nodes in the cluster.
 
-
+`Tags: Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

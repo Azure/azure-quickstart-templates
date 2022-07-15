@@ -1,4 +1,14 @@
-# Deploy a VM Scale Set of Linux VMs with a custom script extension in master / slave architecture
+---
+description: This template allows you to deploy a Linux VMSS with a Custom Script Extension in master slave architecture
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vmss-master-slave-customscript
+languages:
+- json
+---
+# Deploy a Linux VMSS wth master/slave architecture
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-master-slave-customscript/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-master-slave-customscript/PublicDeployment.svg)
@@ -17,11 +27,11 @@
 ## Description
 This template allows you to deploy a VM Scale Set of Linux VMs and create a new virtual network at the same time. These VMs have a custom script extension for customization and are behind a load balancer with NAT rules for SSH connections. This allows to specify the master node number and data node number, adapt to any master / slave architecture
 
-## Using new features 
+## Using new features
 
-To enable Accelerated Networking feature ( SR-IOV ) which is a free feature, using the following example : 
+To enable Accelerated Networking feature ( SR-IOV ) which is a free feature, using the following example :
 
-In network profile of VMSS , set "enableAcceleratedNetworking" to true, to have more information, please go to https://docs.microsoft.com/en-us/azure/virtual-network/create-vm-accelerated-networking-cli
+In network profile of VMSS , set "enableAcceleratedNetworking" to true, to have more information, please go to https://docs.microsoft.com/azure/virtual-network/create-vm-accelerated-networking-cli
 
 If availability zone is available in your region,  adding the following in your template to improve the availability of your VMSS :
 ```
@@ -34,6 +44,8 @@ If availability zone is available in your region,  adding the following in your 
 
 ```
 
-Note that your Load Balancer should be STANDARD tier as well as your public IP ( if you're using it ), check here to know more about it : https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-availability-zones
+Note that your Load Balancer should be STANDARD tier as well as your public IP ( if you're using it ), check here to know more about it : https://docs.microsoft.com/azure/load-balancer/load-balancer-standard-availability-zones
 
-More information at https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-use-availability-zones
+More information at https://docs.microsoft.com/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-use-availability-zones
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, Microsoft.Compute/virtualMachines/extensions, CustomScriptForLinux`

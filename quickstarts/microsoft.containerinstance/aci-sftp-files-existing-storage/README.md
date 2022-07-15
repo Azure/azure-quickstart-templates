@@ -1,4 +1,14 @@
-# Create an on-demand SFTP Server with persistent storage using an existing storage account
+---
+description: This template demonstrates an on-demand SFTP server using an Azure Container Instance (ACI).
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aci-sftp-files-existing-storage
+languages:
+- json
+---
+# On-demand SFTP Server using an existing storage account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-sftp-files-existing-storage/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-sftp-files-existing-storage/PublicDeployment.svg)
@@ -15,7 +25,7 @@
 
 This template demonstrates an on-demand SFTP server using an Azure Container Instance (ACI). This version requires an existing Storage Account and File Share to exist in the same region as the ACI to be created. This File Share is then mounted into the main ACI to provide persistent storage after the container is terminated.
 
-`Tags: Azure Container Instance, az-cli, sftp`
+`Tags: Azure Container Instance, az-cli, sftp, Microsoft.Resources/deployments, Microsoft.ContainerInstance/containerGroups, Public, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.Storage/storageAccounts, Microsoft.Resources/deploymentScripts, userAssigned`
 
 ## Deployment steps
 
@@ -27,7 +37,6 @@ Once deployed, connect to the public IP of the SFTP ACI and upload files; these 
 
 ## Notes
 
-Azure Container Instance is available in selected [locations](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
+Azure Container Instance is available in selected [locations](https://docs.microsoft.com/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
 The container image used by this template is hosted on [Docker Hub](https://hub.docker.com/r/atmoz/sftp). It is not affiliated with Microsoft in any way, and usage is at your own risk.
-
 

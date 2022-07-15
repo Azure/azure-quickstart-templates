@@ -1,4 +1,14 @@
-# S2D Management Solution for OMS
+---
+description: Enables monitoring of S2D clusters with OMS.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: s2d-oms-mgmt-solution
+languages:
+- json
+---
+# S2D Management Solution
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/s2d-oms-mgmt-solution/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/s2d-oms-mgmt-solution/PublicDeployment.svg)
@@ -18,10 +28,10 @@ Check [Updates](#updates) section if you have applied previous version.
 
 Do not forget to check [Known issues](#known-issues) section.
 
->**Note**: This version of the solution works only with upgraded Log Analytics workspace to the new query language. More info [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-log-search-upgrade).
+>**Note**: This version of the solution works only with upgraded Log Analytics workspace to the new query language. More info [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-log-search-upgrade).
 
 The purpose of this management solution is to provide monitoring for Storage Spaces Direct clusters.
-The solution relies on [Failover Cluster Health Service API](https://technet.microsoft.com/en-us/windows-server-docs/failover-clustering/health-service-overview?f=255&MSPPError=-2147217396) for data.
+The solution relies on [Failover Cluster Health Service API](https://technet.microsoft.com/windows-server-docs/failover-clustering/health-service-overview?f=255&MSPPError=-2147217396) for data.
 Metrics and Faults are gathered from S2D clusters and send to OMS. The solution consists of 2 parts:
 
 - S2DMon service that sends data to OMS Log Analytics Workspace. More info below.
@@ -46,7 +56,7 @@ When deployed the solution is viewable in both OMS portal and Azure.
 The S2DMon service is basically a PowerShell script that runs as a service. The code for getting
 data from S2D Cluster and sending it to OMS runs every 60 seconds. The engine for running that code
 is forked version from [PSService.ps1](https://github.com/JFLarvoire/SysToolsLib/blob/master/PowerShell/PSService.ps1)
-created by Jean-François Larvoire. Full article of the PSService.ps1 can be found [here](https://msdn.microsoft.com/en-us/magazine/mt703436.aspx?f=255&MSPPError=-2147217396).
+created by Jean-François Larvoire. Full article of the PSService.ps1 can be found [here](https://msdn.microsoft.com/magazine/mt703436.aspx?f=255&MSPPError=-2147217396).
 The service sends the following information every 60 seconds:
 
 - Metrics
@@ -99,7 +109,7 @@ The service sends the following information every 60 seconds:
   - Volume
   - File Share
 
-Data is taken from Failover Cluster Health Service. Documentation can be fond [here](https://technet.microsoft.com/en-us/windows-server-docs/failover-clustering/health-service-overview?f=255&MSPPError=-2147217396) and [here](https://msdn.microsoft.com/windowshealthservice/healthservice?f=255&MSPPError=-2147217396)
+Data is taken from Failover Cluster Health Service. Documentation can be fond [here](https://technet.microsoft.com/windows-server-docs/failover-clustering/health-service-overview?f=255&MSPPError=-2147217396) and [here](https://msdn.microsoft.com/windowshealthservice/healthservice?f=255&MSPPError=-2147217396)
 
 >**Note**: The code for sending data will run only on the node which is the owner of Cluster Name
 resource. When the owner is changed the code will start running on the new owner. This approach
@@ -287,7 +297,7 @@ the S2D is opened because the Fault related custom fields will not be created.
 ### Update 3
 
 - You will need to update both the service and the views.
-- Updated the view for the solution to use the new query language of Log Analytics. You can use this new version only with upgraded Log Analytics workspace. More info [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-log-search-upgrade).
+- Updated the view for the solution to use the new query language of Log Analytics. You can use this new version only with upgraded Log Analytics workspace. More info [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-log-search-upgrade).
 - Fixed bug in s2dmon.ps1 where incorrect value was pushed for field RecommendedActions_s.
 - Implemented some more logic in s2dmon.ps1 for error handling.
 - All metric values are now placed in MetricValue_d field instead of creating separate field for every different metric.
@@ -308,10 +318,6 @@ C:\temp\s2dmon.ps1 -Remove
 C:\temp\s2dmon.ps1 -Setup -OMSWorkspaceCreds (Get-Credential)
 C:\temp\s2dmon.ps1 -Start
 ```
-
-- Delete S2D solution from Azure portal
-
-![](images/delete-s2d.png)
 
 - Deploy S2D ARM template again.
 
@@ -360,4 +366,4 @@ C:\temp\s2dmon.ps1 -Setup -OMSWorkspaceCreds (Get-Credential)
 C:\temp\s2dmon.ps1 -Start
 ```
 
-
+`Tags: Microsoft.OperationalInsights/workspaces, views, Blade, OverviewTile, Microsoft.OperationsManagement/solutions`

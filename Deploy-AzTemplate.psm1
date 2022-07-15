@@ -21,7 +21,8 @@ function deploy {
         [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
         [string] $ManagementGroupId,
         [switch] $Dev,
-        [switch] $bicep
+        [switch] $bicep,
+        [switch] $whatIf
     )
 
     try {
@@ -66,10 +67,13 @@ function deploy {
         bicep build "$ArtifactStagingDirectory\$TemplateFile"
         # now point the deployment to the json file that was just build
         $TemplateFile = $TemplateFile.Replace('.bicep', '.json')
+        $fromBicep = " (from bicep build)"
+    }else{
+        $fromBicep = ""
     }
-
-    Write-Host "Using template file:  $TemplateFile"
-
+    
+    Write-Host "Using template file $($fromBicep):  $TemplateFile"
+    
     #try a few different default options for param files when the -dev switch is use
     if ($Dev) {
         $TemplateParametersFile = $TemplateParametersFile.Replace('azuredeploy.parameters.json', 'azuredeploy.parameters.dev.json')
@@ -82,6 +86,9 @@ function deploy {
 
     if (!$ValidateOnly) {
         $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
+        if ($whatIf) {
+            $OptionalParameters.Add('WhatIf', $whatIf)
+        }
     }
 
     $TemplateFile           = "$ArtifactStagingDirectory\$TemplateFile"
@@ -104,6 +111,9 @@ function deploy {
         '*/deploymentTemplate.json*' {
             $deploymentScope = "ResourceGroup"
             $OptionalParameters.Add('Mode', $Mode)
+            if(!$ValidateOnly -and !$WhatIf) {
+                $OptionalParameters.Add('Force', $true)
+            }
         }
     }
 
@@ -261,7 +271,7 @@ function deploy {
                     -ResourceGroupName $ResourceGroupName `
                     @TemplateArgs `
                     @OptionalParameters `
-                    -Force -Verbose `
+                    -Verbose `
                     -ErrorVariable ErrorMessages
             }
             "Subscription" {

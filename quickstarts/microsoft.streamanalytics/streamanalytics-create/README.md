@@ -1,3 +1,14 @@
+---
+description: This template creates a Standard Stream Analytics Job without input and output
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: streamanalytics-create
+languages:
+- json
+- bicep
+---
 # Create a Standard Stream Analytics Job
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.streamanalytics/streamanalytics-create/PublicLastTestDate.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.streamanalytics/streamanalytics-create/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.streamanalytics/streamanalytics-create/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.streamanalytics/streamanalytics-create/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.streamanalytics%2Fstreamanalytics-create%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.streamanalytics%2Fstreamanalytics-create%2Fazuredeploy.json)
@@ -29,3 +42,5 @@ For more information, see the following articles:
 - [Microsoft Learn Stream Analytics Modules](https://docs.microsoft.com/learn/browse/?term=Stream%20Analytics)
 - [Quickstart: Create a Stream Analytics job by using the Azure portal](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-create-a-job)
 - [Quickstart: Create an Azure Stream Analytics job by using an ARM template](https://docs.microsoft.com/azure/stream-analytics/quick-create-azure-resource-manager)
+
+`Tags: Microsoft.StreamAnalytics/streamingjobs`

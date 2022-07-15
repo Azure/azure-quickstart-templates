@@ -1,4 +1,15 @@
-# Create an NSG flow logs resource in Network Watcher
+---
+description: This template create an NSG Flow Logs resource
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: networkwatcher-flowLogs-create
+languages:
+- json
+- bicep
+---
+# Enable NSG Flow Logs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/networkwatcher-flowLogs-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/networkwatcher-flowLogs-create/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/networkwatcher-flowLogs-create/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/networkwatcher-flowLogs-create/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/networkwatcher-flowLogs-create/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fnetworkwatcher-flowLogs-create%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fnetworkwatcher-flowLogs-create%2Fazuredeploy.json)
@@ -32,4 +45,4 @@ Useful links:
 
 Network Watcher must be enabled for your subscription. Network Watcher is enabled by default, so unless you have disabled it, this should not be an issue.
 
-`Tags: Network Watcher, NSG flow logs`
+`Tags: Network Watcher, NSG flow logs, Microsoft.Storage/storageAccounts, Microsoft.Resources/deployments, Microsoft.Network/networkWatchers/flowLogs, JSON, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks`

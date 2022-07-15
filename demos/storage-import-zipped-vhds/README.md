@@ -1,4 +1,14 @@
-# Import VHD files from ZIP Archive URL
+---
+description: Deploying Virtual Machines based on specialized disk images requires to import VHD files into a Storage Account. In the case there are multiple VHD files compressed in a single ZIP and you got the URL to fetch the ZIP archive, this ARM template will ease the job&#58; Download, Extract and Import into an existing Storage Account Blob Container.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-import-zipped-vhds
+languages:
+- json
+---
+# Import VHD Blobs from a ZIP Archive URL
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-import-zipped-vhds/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-import-zipped-vhds/PublicDeployment.svg)
@@ -36,4 +46,4 @@ The ARM Template of the [Riverbed Community Cookbooks simple demo for NetIM](htt
 
 ## Notes
 
-`Tags: storage, import, vhd, specialized image`
+`Tags: storage, import, vhd, specialized image, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.Resources/deploymentScripts, UserAssigned, Microsoft.Storage/storageAccounts, blobServices/containers, Microsoft.KeyVault/vaults, Microsoft.KeyVault/vaults/secrets`

@@ -1,4 +1,14 @@
-# Create a Private AKS cluster with a Public DNS Zone
+---
+description: This sample shows how to a deploy a private AKS cluster with a Public DNS Zone.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: private-aks-cluster-with-public-dns-zone
+languages:
+- json
+---
+# Create a Private AKS Cluster with a Public DNS Zone
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/private-aks-cluster-with-public-dns-zone/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/private-aks-cluster-with-public-dns-zone/PublicDeployment.svg)
 
@@ -12,7 +22,7 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fprivate-aks-cluster-with-public-dns-zone%2Fazuredeploy.json)
 
-This project can be used to deploy a [private AKS cluster with a Public DNS address](https://docs.microsoft.com/en-us/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address) with [Dynamic allocation of IPs and enhanced subnet support](https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview), [Azure Active Directory Pod Identity](https://docs.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity), and more. 
+This project can be used to deploy a [private AKS cluster with a Public DNS address](https://docs.microsoft.com/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address) with [Dynamic allocation of IPs and enhanced subnet support](https://docs.microsoft.com/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview), [Azure Active Directory Pod Identity](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity), and more.
 
 ## Architecture ##
 
@@ -26,9 +36,9 @@ The ARM template deploys:
   - System node pool hosting only critical system pods and services. The worker nodes have node taint which prevents application pods from beings scheduled on this node pool.
   - User node pool hosting user workloads and artifacts.
 - A new virtual network with four subnets:
-  - AksSubnet: this subnet is used for the AKS cluster worker nodes. The VMSS of both the system and user node pools will be created in this subnet. You can change the ARM template to use a separate subnet for the two node pools. 
+  - AksSubnet: this subnet is used for the AKS cluster worker nodes. The VMSS of both the system and user node pools will be created in this subnet. You can change the ARM template to use a separate subnet for the two node pools.
   - PodSubnet: this subnet is used to allot private IP addresses to pods of both the system and user node pools. You can change the ARM template to use two separate subnets, respectively, for the pods of the system and user node pools.
-  - A subnet for Azure Bastion 
+  - A subnet for Azure Bastion
   - A subnet for the Jumpbox virtual machine used to connect to the private AKS cluster and for the private endpoints.
 -  A user-defined managed identity used by the AKS cluster to create additional resources like load balancers and managed disks in Azure.
 - A private endpoint to API server hosted by an AKS-managed Azure subscription. The cluster can communicate with the API server exposed via a Private Link Service using a private endpoint.
@@ -38,7 +48,7 @@ The ARM template deploys:
 - A private endpoint to the Blob Storage Account
 - A private endpoint to to Azure Container Registry (ACR)
 - A private endpoint to Key Vault
-- When the ACR sku is equal to Premium, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure container registry using Azure Private Link](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-private-link).
+- When the ACR sku is equal to Premium, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure container registry using Azure Private Link](https://docs.microsoft.com/azure/container-registry/container-registry-private-link).
 - A Private DNS Zone for the name resolution of the private endpoint to the Blob Storage Account
 - A Private DNS Zone for the name resolution of the private endpoint to Azure Container Registry (ACR)
 - A Private DNS Zone for the name resolution of the private endpoint to Key Vault
@@ -53,21 +63,21 @@ The ARM template deploys:
 
 ## Private AKS Cluster
 
-As a best practice, you should always consider using a [private AKS cluster](https://docs.microsoft.com/en-us/azure/aks/private-clusters) in your production environment, or at least secure access to the API server, by using [authorized IP address ranges](https://docs.microsoft.com/en-us/azure/aks/api-server-authorized-ip-ranges) in Azure Kubernetes Service. When using a private AKS cluster, the API Server is only accessible from your virtual network, any peered virtual network, or on-premises network connected via S2S VPN or ExpressRoute to the virtual network hosting your AKS cluster. Any request to the API Server goes over the virtual network and does not traverse the internet. The API server endpoint has no public IP address. To manage the API server, you'll need to use a virtual machine that has access to the AKS cluster's virtual network. There are several options for establishing network connectivity to the private cluster.
+As a best practice, you should always consider using a [private AKS cluster](https://docs.microsoft.com/azure/aks/private-clusters) in your production environment, or at least secure access to the API server, by using [authorized IP address ranges](https://docs.microsoft.com/azure/aks/api-server-authorized-ip-ranges) in Azure Kubernetes Service. When using a private AKS cluster, the API Server is only accessible from your virtual network, any peered virtual network, or on-premises network connected via S2S VPN or ExpressRoute to the virtual network hosting your AKS cluster. Any request to the API Server goes over the virtual network and does not traverse the internet. The API server endpoint has no public IP address. To manage the API server, you'll need to use a virtual machine that has access to the AKS cluster's virtual network. There are several options for establishing network connectivity to the private cluster.
 
 - Create a virtual machine in the same virtual network as the private AKS cluster.
-- Use a virtual machine in a separate virtual network and set up virtual network peering. 
+- Use a virtual machine in a separate virtual network and set up virtual network peering.
 - Use an Express Route or VPN connection to connect to the virtual network hosting the AKS cluster from your on-premises network.
 - Use the AKS Run Command feature (see below)
 
-Creating a virtual machine in the same virtual network as the AKS cluster is the easiest option. Express Route and VPNs add costs and require additional networking complexity. Virtual network peering requires you to plan your network CIDR ranges to ensure there are no overlapping ranges. For more information, see [Create a private Azure Kubernetes Service cluster](https://docs.microsoft.com/en-us/azure/aks/private-clusters). For more information on Azure Private Links, see [What is Azure Private Link?](https://docs.microsoft.com/en-us/azure/private-link/private-link-overview).
+Creating a virtual machine in the same virtual network as the AKS cluster is the easiest option. Express Route and VPNs add costs and require additional networking complexity. Virtual network peering requires you to plan your network CIDR ranges to ensure there are no overlapping ranges. For more information, see [Create a private Azure Kubernetes Service cluster](https://docs.microsoft.com/azure/aks/private-clusters). For more information on Azure Private Links, see [What is Azure Private Link?](https://docs.microsoft.com/azure/private-link/private-link-overview).
 
 ## AKS Run Command
-Today when you need to access a private AKS cluster, for example to use the [kubectl](https://kubernetes.io/docs/tasks/tools/) command-line tool, you have to use a virtual machine located in the same virtual network of the AKS cluster or a peered network. Likewise, if you use Azure DevOps or GitHub Actions to deploy workloads to your private AKS cluster, you need to use an Azure DevOps [Linux](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-linux?view=azure-devops) or [Windows](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-windows?view=azure-devops) self-hosted agent or a [GitHub Actions self-hosted runner](https://docs.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) located in the same virtual network of the AKS cluster or a peered network. This usually requires your virtual machine to be connected via VPN or Express Route to the cluster virtual network or a jumpbox virtual machine to be created in the cluster virtual network. AKS run command allows you to remotely invoke commands in an AKS cluster through the AKS API. This feature provides an API that allows you to, for example, execute just-in-time commands from a remote laptop for a private cluster. This can greatly assist with quick just-in-time access to a private cluster when the client machine is not on the cluster private network while still retaining and enforcing the same RBAC controls and private API server.
+Today when you need to access a private AKS cluster, for example to use the [kubectl](https://kubernetes.io/docs/tasks/tools/) command-line tool, you have to use a virtual machine located in the same virtual network of the AKS cluster or a peered network. Likewise, if you use Azure DevOps or GitHub Actions to deploy workloads to your private AKS cluster, you need to use an Azure DevOps [Linux](https://docs.microsoft.com/azure/devops/pipelines/agents/v2-linux?view=azure-devops) or [Windows](https://docs.microsoft.com/azure/devops/pipelines/agents/v2-windows?view=azure-devops) self-hosted agent or a [GitHub Actions self-hosted runner](https://docs.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) located in the same virtual network of the AKS cluster or a peered network. This usually requires your virtual machine to be connected via VPN or Express Route to the cluster virtual network or a jumpbox virtual machine to be created in the cluster virtual network. AKS run command allows you to remotely invoke commands in an AKS cluster through the AKS API. This feature provides an API that allows you to, for example, execute just-in-time commands from a remote laptop for a private cluster. This can greatly assist with quick just-in-time access to a private cluster when the client machine is not on the cluster private network while still retaining and enforcing the same RBAC controls and private API server.
 
 ## Use AKS Run Command
 
-Here are some samples that show how to use the [az aks command](https://docs.microsoft.com/en-us/cli/azure/aks/command?view=azure-cli-latest) to run commands to a private AKS cluster.
+Here are some samples that show how to use the [az aks command](https://docs.microsoft.com/cli/azure/aks/command?view=azure-cli-latest) to run commands to a private AKS cluster.
 
 Simple command
 ```bash
@@ -92,7 +102,7 @@ az aks command invoke -g <resourceGroup> -n <clusterName> \
 ```
 
 ## Dynamic Public IP Allocation
-A drawback with the traditional CNI is the exhaustion of pod IP addresses as the AKS cluster grows, resulting in the need to rebuild the entire cluster in a bigger subnet. The new [Dynamic IP Allocation](https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview) capability in Azure CNI solves this problem by allotting pod IP addresses from a subnet separate from the subnet hosting the AKS cluster nodes. This feature offers the following benefits:
+A drawback with the traditional CNI is the exhaustion of pod IP addresses as the AKS cluster grows, resulting in the need to rebuild the entire cluster in a bigger subnet. The new [Dynamic IP Allocation](https://docs.microsoft.com/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview) capability in Azure CNI solves this problem by allotting pod IP addresses from a subnet separate from the subnet hosting the AKS cluster nodes. This feature offers the following benefits:
 
 - `Better IP utilization`: private IP addresses are dynamically allocated to cluster Pods from the Pod subnet. This leads to better utilization of private IP addresses in the cluster compared to the traditional CNI solution, which statically allocate to each worker node the same number of private IP addresses from the subnet.
 - `Scalable and flexible`: when using separate subnets for nodes and pods, the two subnets can be scaled independently. A single pod subnet can be shared across multiple node pools of a cluster or across multiple AKS clusters deployed in the same virtual network. You can also configure a separate pod subnet for a node pool. Likewise, you can deploy node pools in the same subnet or in separate node pools. You can  define the subnet for worker nodes and pods of a node pool at provisioning time.
@@ -103,12 +113,12 @@ A drawback with the traditional CNI is the exhaustion of pod IP addresses as the
 
 You can use the `deploy.sh` Bash script to deploy the topology. Make sure to change the name of the AKS cluster in the `deploy.sh` Bash script and substitute the placeholders in the `azuredeploy.parameters.json` file with meaningful values. Also, make sure to enable the following public preview features before deploying the ARM template:
 
-- [PodSecurityPolicyPreview](https://docs.microsoft.com/en-us/azure/aks/use-pod-security-policies) 
-- [RunCommandPreview](https://docs.microsoft.com/en-us/azure/aks/private-clusters#options-for-connecting-to-the-private-cluster)
-- [EnablePodIdentityPreview](https://docs.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity) 
-- [EnablePrivateClusterPublicFQDN](https://docs.microsoft.com/en-us/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address) 
-- [PodSubnetPreview"](https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview)
-- [AutoUpgradePreview](https://docs.microsoft.com/en-us/azure/aks/upgrade-cluster#set-auto-upgrade-channel)
+- [PodSecurityPolicyPreview](https://docs.microsoft.com/azure/aks/use-pod-security-policies)
+- [RunCommandPreview](https://docs.microsoft.com/azure/aks/private-clusters#options-for-connecting-to-the-private-cluster)
+- [EnablePodIdentityPreview](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity)
+- [EnablePrivateClusterPublicFQDN](https://docs.microsoft.com/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address)
+- [PodSubnetPreview"](https://docs.microsoft.com/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview)
+- [AutoUpgradePreview](https://docs.microsoft.com/azure/aks/upgrade-cluster#set-auto-upgrade-channel)
 
 You can run the following script to register the above preview features and wait for the registration process to complete:
 
@@ -185,3 +195,5 @@ sudo az aks install-cli
 echo "Getting access credentials configure kubectl to connect to the ["$aksName"] AKS cluster..."
 az aks get-credentials --name $name --resource-group $resourceGroup
 ```
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, providers/diagnosticSettings, Microsoft.Network/bastionHosts, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, OmsAgentForLinux, DependencyAgentLinux, Microsoft.Network/virtualNetworks, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.ContainerRegistry/registries, Microsoft.ContainerService/managedClusters, UserAssigned, [parameters('systemNodePoolType')], [parameters('userNodePoolType')], Microsoft.OperationalInsights/workspaces, Microsoft.OperationsManagement/solutions, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints, privateDnsZoneGroups, microsoft.insights/activityLogAlerts, Microsoft.KeyVault/vaults`
