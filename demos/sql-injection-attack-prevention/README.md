@@ -1,4 +1,14 @@
-# SQL injection attack on a Web Application Scenario
+---
+description: This will deploy 2 application gateways, a web app, a SQL server and database, OMS and other network resources. One app gateway is in detection mode and other is in prevention mode. Perform the SQL injection attack by following the guidleines and execute the scenario for mitigation and prevention of a SQL injection attack.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-injection-attack-prevention
+languages:
+- json
+---
+# SQL Injection attack on a web app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/sql-injection-attack-prevention/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/sql-injection-attack-prevention/PublicDeployment.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fsql-injection-attack-prevention%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fsql-injection-attack-prevention%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fsql-injection-attack-prevention%2Fazuredeploy.json)  
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fsql-injection-attack-prevention%2Fazuredeploy.json)
 
 ## Table of Contents
 
@@ -77,7 +87,7 @@ Attack on web app with
 4. On Overview Page --> Copy Frontend public IP address (DNS label) as
     ![ip](images/sql-inj-appgateway-det-ip.png)
 
-5. Open Internet Explorer with above details as shown below  
+5. Open Internet Explorer with above details as shown below
     ![landing](images/sql-inj-webapp-contoso-landingpage.png)
 
 6. Click on Patient link it will display list of details
@@ -87,7 +97,7 @@ Attack on web app with
 
     ![attack](images/sql-inj-webapp-contoso-patients-attack-page.png)
 
-## Detect  
+## Detect
 
 ### Detection using OMS
 
@@ -134,13 +144,13 @@ Once Auditing & Threat Detection is database is enabled for SQL database, Azure 
 
 * Execute the step 4,5, 6 and 7 to perform SQL Injection attack with Application Gateway having WAF Enabled and Firewall in Prevention
 
-![forbidden](images/403-forbidden-access-denied.png)  
+![forbidden](images/403-forbidden-access-denied.png)
 
 * To detect the prevention of attack, execute following query in Azure Log Analytics
 
     ```AzureDiagnostics | where Message  contains "injection" and action_s contains "blocked"```
 
-    ![blocked](images/sql-inj-log-analytics-blocked.png)  
+    ![blocked](images/sql-inj-log-analytics-blocked.png)
 
     You will notice events related to detection and prevention items. First time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS, so if you don't get any search results, please try again after sometime.
 
@@ -163,11 +173,11 @@ Verification steps -
 
 ## References
 
-[https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-introduction](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-introduction)
+[https://docs.microsoft.com/azure/application-gateway/application-gateway-introduction](https://docs.microsoft.com/azure/application-gateway/application-gateway-introduction)
 
-[https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-web-application-firewall-overview](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-web-application-firewall-overview)
+[https://docs.microsoft.com/azure/application-gateway/application-gateway-web-application-firewall-overview](https://docs.microsoft.com/azure/application-gateway/application-gateway-web-application-firewall-overview)
 
-[https://docs.microsoft.com/en-us/azure/sql-database](https://docs.microsoft.com/en-us/azure/sql-database/)
+[https://docs.microsoft.com/azure/sql-database](https://docs.microsoft.com/azure/sql-database/)
 
 ## Disclaimer & Acknowledgements
 
@@ -180,3 +190,5 @@ AVYAN MAKE NO WARRANTIES, EXPRESS, IMPLIED, OR STATUTORY, AS TO THE INFORMATION 
 * Certain recommendations in this solution may result in increased data, network, or compute resource usage in Azure. The solution may increase a customer’s Azure license or subscription costs.
 * The solution in this document is intended as reference samples and must not be used as-is for production purposes. Recommending that the customer’s consult with their internal SOC / Operations teams for using specific or all parts of the solutions.
 * All customer names, transaction records, and any related data on this page are fictitious, created for the purpose of this architecture, and provided for illustration only. No real association or connection is intended, and none should be inferred.
+
+`Tags:Microsoft.Resources/deployments, Microsoft.OperationalInsights/workspaces, Microsoft.OperationsManagement/solutions, Microsoft.OperationalInsights/workspaces/datasources, Microsoft.Network/applicationGateways, providers/diagnosticSettings, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Sql/servers/auditingSettings, Microsoft.Sql/servers/databases, extensions, Microsoft.Sql/servers/securityAlertPolicies, Microsoft.Sql/servers, firewallRules, Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites/config, [parameters('connectionType')], Microsoft.Web/sites/extensions, Microsoft.Web/sites, SystemAssigned`

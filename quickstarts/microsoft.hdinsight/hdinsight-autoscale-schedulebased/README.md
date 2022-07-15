@@ -1,4 +1,14 @@
-# Deploy Spark Cluster with schedule-based Autoscale Enabled  
+---
+description: This template allows you to create an HDInsight Spark cluster with schedule-based Autoscale enabled.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-autoscale-schedulebased
+languages:
+- json
+---
+# HDInsight with schedule-based Autoscale Enabled
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-autoscale-schedulebased/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-autoscale-schedulebased/PublicDeployment.svg)
@@ -14,5 +24,7 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.hdinsight%2Fhdinsight-autoscale-schedulebased%2Fazuredeploy.json)
 
 This template allows you to create an HDInsight cluster with schedule-based Autoscale enabled.
-  
+
   `Tags: HDInsight, autoscale`
+
+`Tags: Standard_LRS, Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`

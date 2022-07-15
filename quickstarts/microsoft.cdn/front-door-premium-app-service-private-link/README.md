@@ -1,4 +1,15 @@
-# Front Door Standard/Premium with App Service origin and private endpoint
+---
+description: This template creates a Front Door Premium and an App Service, and uses a private endpoint for Front Door to send traffic to the application.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-premium-app-service-private-link
+languages:
+- json
+- bicep
+---
+# Front Door Premium with App Service origin and Private Link
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-app-service-private-link/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-app-service-private-link/PublicDeployment.svg)
@@ -53,3 +64,5 @@ After approving the private endpoint, wait a few minutes before you attempt to a
 You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. You should see an App Service welcome page. If you see an error page, wait a few minutes and try again.
 
 You can also attempt to access the App Service hostname directly. The hostname is also emitted as an output from the deployment - the output is named `appServiceHostName`. You should see a _Forbidden_ error, since your App Service instance no longer accepts requests that come from the internet.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

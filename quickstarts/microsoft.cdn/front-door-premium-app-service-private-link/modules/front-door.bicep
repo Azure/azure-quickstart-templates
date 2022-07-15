@@ -47,7 +47,7 @@ var originGroupName = 'MyOriginGroup'
 var originName = 'MyOrigin'
 var routeName = 'MyRoute'
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: 'global'
   sku: {
@@ -123,4 +123,4 @@ resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
 }
 
 output frontDoorEndpointHostName string = endpoint.properties.hostName
-output frontDoorId string = profile.properties.frontdoorId
+output frontDoorId string = profile.properties.frontDoorId

@@ -1,4 +1,15 @@
-# Create an Azure Key Vault
+---
+description: This template creates an Azure Key Vault and a secret.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: key-vault-create
+languages:
+- json
+- bicep
+---
+# Create an Azure Key Vault and a secret
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.keyvault/key-vault-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.keyvault/key-vault-create/PublicDeployment.svg)
@@ -30,4 +41,4 @@ If you're new to the template development, see:
 - [Use Azure Key Vault to pass secure parameter value during deployment](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-keyvault-parameter)
 - [Tutorial: Integrate Azure Key Vault in Resource Manager Template deployment](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-tutorial-use-key-vault)
 
-`Tags: Azure Key Vault, Key Vault, Secrets, Resource Manager, Resource Manager templates, ARM templates`
+`Tags: Azure Key Vault, Key Vault, Secrets, Resource Manager, Resource Manager templates, ARM templates, Microsoft.KeyVault/vaults, Microsoft.KeyVault/vaults/secrets`

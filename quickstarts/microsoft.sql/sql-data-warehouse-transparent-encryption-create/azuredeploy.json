@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.6.18.56646",
+      "templateHash": "8855658719083429210"
+    }
+  },
   "parameters": {
     "sqlServerName": {
       "type": "string",
-      "defaultValue": "[concat('sql', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('sql{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The SQL Logical Server name."
       }
@@ -16,7 +23,7 @@
       }
     },
     "sqlAdministratorPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "The administrator password of the SQL Server."
       }
@@ -40,11 +47,11 @@
     },
     "capacity": {
       "type": "int",
+      "maxValue": 54000,
+      "minValue": 900,
       "metadata": {
         "description": "DW Performance Level expressed in DTU (i.e. 900 DTU = DW100c)"
-      },
-      "minValue": 900,
-      "maxValue": 54000
+      }
     },
     "databaseCollation": {
       "type": "string",
@@ -61,14 +68,12 @@
       }
     }
   },
-  "variables": {},
   "resources": [
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2021-05-01-preview",
+      "apiVersion": "2021-11-01-preview",
       "name": "[parameters('sqlServerName')]",
       "location": "[parameters('location')]",
-      "kind": "v12.0",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
@@ -79,37 +84,35 @@
     },
     {
       "type": "Microsoft.Sql/servers/databases",
-      "apiVersion": "2021-05-01-preview",
-      "name": "[concat(parameters('sqlServerName'), concat('/', parameters('databasesName')))]",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), parameters('databasesName'))]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
-      ],
       "sku": {
         "name": "DataWarehouse",
         "tier": "DataWarehouse",
         "capacity": "[parameters('capacity')]"
       },
-      "kind": "v12.0,user,datawarehouse,gen2",
       "properties": {
         "collation": "[parameters('databaseCollation')]",
         "catalogCollation": "[parameters('databaseCollation')]",
         "readScale": "Disabled",
         "requestedBackupStorageRedundancy": "Geo",
         "isLedgerOn": false
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
     },
     {
       "type": "Microsoft.Sql/servers/databases/transparentDataEncryption",
-      "apiVersion": "2021-05-01-preview",
-      "name": "[concat(parameters('sqlServerName'), concat(concat('/', parameters('databasesName')), '/Current'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databasesName'))]",
-        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
-      ],
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('sqlServerName'), parameters('databasesName'), 'current')]",
       "properties": {
         "state": "[parameters('transparentDataEncryption')]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databasesName'))]"
+      ]
     }
   ]
 }

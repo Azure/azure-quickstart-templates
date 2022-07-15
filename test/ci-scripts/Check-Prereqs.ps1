@@ -15,12 +15,16 @@ param(
 $deployPrereqs = Test-Path "$sampleFolder\prereqs\"
 Write-Host "##vso[task.setvariable variable=deploy.prereqs]$deployPrereqs"
 
-# CONSIDER: Check for a bicep prereq.
-# $bicepPrereqTemplateFullPath = "$sampleFolder\prereqs\$prereqTemplateFilenameBicep"
+# Check for a bicep prereq.
+$bicepPrereqTemplateFullPath = "$sampleFolder\prereqs\$prereqTemplateFilenameBicep"
 $jsonPrereqTemplateFullPath = "$sampleFolder\prereqs\$prereqTemplateFilenameJson"
 
-# Currently we always deploy the JSON version
-$prereqTemplateFullPath = $jsonPrereqTemplateFullPath
+# if there is a bicep file use it
+if(Test-Path -Path $bicepPrereqTemplateFullPath){
+    $prereqTemplateFullPath = $bicepPrereqTemplateFullPath
+}else{
+    $prereqTemplateFullPath = $jsonPrereqTemplateFullPath
+}
 
 Write-Output "Using prereq template: $prereqTemplateFullPath"
 if ($deployPrereqs) {

@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Premium and an API Management instance, and uses an NSG and global API Management policy to validate that traffic has come through the Front Door origin.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-api-management-external
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with API Management origin
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-api-management-external/PublicLastTestDate.svg)
@@ -64,3 +75,5 @@ You can also attempt to access the API Management instance directly. The host na
 ## Notes
 
 - The API Management developer portal will not be able to used correctly unless you add a custom domain name. This needs to be added to both the API Management instance and to the Front Door endpoint.
+
+`Tags: Microsoft.ApiManagement/service/namedValues, Microsoft.ApiManagement/service/policies, Microsoft.Resources/deployments, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.ApiManagement/service, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

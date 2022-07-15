@@ -1,4 +1,15 @@
-# Front Door Standard/Premium with VM origin and Private Link service
+---
+description: This template creates a Front Door Premium and a virtual machine configured as a web server. Front Door uses a private endpoint with Private Link service to send traffic to the VM.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-premium-vm-private-link
+languages:
+- json
+- bicep
+---
+# Front Door Premium with VM and Private Link service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/PublicDeployment.svg)
@@ -13,7 +24,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-premium-vm-private-link%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-premium-vm-private-link%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-premium-vm-private-link%2Fazuredeploy.json)
 
 This template deploys a Front Door Standard/Premium with a virtual machine web server origin. Front Door uses a private endpoint, configured with Private Link service, to access the web application.
 
@@ -63,3 +74,5 @@ You cannot access the VM directly because it is not exposed to the internet.
 
 - In this sample, HTTPS connections terminate at Front Door, and connections from Front Door through to the virtual machine are made using HTTP.
 - In this sample, the `Host` header of requests from Front Door will be the hostname of the Front Door endpoint. With a default website on IIS this works successfully since the `Host` header is effectively ignored. In more complex scenarios you may need to send specific `Host` header values based on what the web server expects or understands.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/privateLinkServices, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

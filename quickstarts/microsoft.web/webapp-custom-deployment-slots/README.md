@@ -1,4 +1,14 @@
-# Deploy a Web App with custom deployment slots
+---
+description: This template provides an easy way to deploy a web app with custom deployment slots on Azure Web Apps.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-custom-deployment-slots
+languages:
+- json
+---
+# Web App with custom Deployment slots
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-custom-deployment-slots/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-custom-deployment-slots/PublicDeployment.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-custom-deployment-slots%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-custom-deployment-slots%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-custom-deployment-slots%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-custom-deployment-slots%2Fazuredeploy.json)
 
 This template provides an easy way to deploy web app with custom deployment slots/environments on Azure Web Apps.<br>
 
@@ -39,4 +49,4 @@ Add N - 1 items, as depicted in the below example, with N = 5. There's always a 
 Please note that different app service plans has different caps on the number of slots that can be created.<br>
 For example, at the time of this writing, a *Standard* plan puts a cap of **5** and a *Premium* plan **20**. The *Free*, *Shared* or *Basic* plans are not allowed to have any slots.
 
-
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/slots, Microsoft.Web/sites/config`

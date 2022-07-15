@@ -1,3 +1,13 @@
+---
+description: An App Service Environment is a Premium service plan option of Azure App Service that provides a fully isolated and dedicated environment for securely running Azure App Service apps at high scale, including Web Apps, Mobile Apps, and API Apps.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: e-shop-website-with-ilb-ase
+languages:
+- json
+---
 # eShop Website with ILB ASE
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/e-shop-website-with-ilb-ase/PublicLastTestDate.svg)
@@ -10,7 +20,7 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/e-shop-website-with-ilb-ase/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)
 
 **Table of Contents**
 
@@ -95,13 +105,11 @@ And you should have the permissions to configure them. We will add several A rec
 
 ### Create a new App Service Environment
 
-It takes about 70 minutes to create a new App Service Environment in Azure. 
+It takes about 70 minutes to create a new App Service Environment in Azure.
 
 1. Click the **Deploy to Azure** Button:
 
    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fe-shop-website-with-ilb-ase%2Fprereqs%2Fprereq.azuredeploy.json" target="_blank">
-     
-   
 
 2. Fill in the values on the custom deployment page:
 
@@ -113,9 +121,9 @@ It takes about 70 minutes to create a new App Service Environment in Azure.
 
    **Settings**:
 
-   - **Name**: the name of the App Service Environment. 
+   - **Name**: the name of the App Service Environment.
 
-     > **Note:** 
+     > **Note:**
      >
      > * This value is also used to name other Azure resources created by the ARM template. To avoid naming conflicts, please choose a unique name, for example **tyler-eshop-180308**.
      > * This value is also used as the subdomain name. Please only use lowercase characters, numbers, and dash(-).
@@ -124,7 +132,7 @@ It takes about 70 minutes to create a new App Service Environment in Azure.
 
      > **Note:** This parameter was added because of this [issue](https://github.com/Azure/azure-quickstart-templates/issues/2828).
 
-   - **DNS Suffix**:  input the internal domain name, for example `contoso-internal.com` 
+   - **DNS Suffix**:  input the internal domain name, for example `contoso-internal.com`
 
    **Terms and conditions**:
 
@@ -136,7 +144,7 @@ It takes about 70 minutes to create a new App Service Environment in Azure.
 
    > **Note**: During the deployment, you may work on next section.
 
-### Create App Registration in Azure Active Directory (AAD) 
+### Create App Registration in Azure Active Directory (AAD)
 
 #### Get Tenant Id
 
@@ -171,12 +179,6 @@ After the App Service Environment is deployed, follow the steps below to deploy 
 2. Click the **Deploy to Azure** Button:
 
    [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)
-     
-   
-
-   
-     
-   
 
 3. Fill in the values on the deployment page:
 
@@ -191,7 +193,7 @@ After the App Service Environment is deployed, follow the steps below to deploy 
 
    * **Existing ASE Location**: the location of the App Service Environment.
 
-   * **Existing ASE DNS Suffix**: the DNS Suffix (the internal domain name) of the App Service Environment. 
+   * **Existing ASE DNS Suffix**: the DNS Suffix (the internal domain name) of the App Service Environment.
 
    * **DNS Suffix**: the external domain name. For example `contoso.com`
 
@@ -282,4 +284,4 @@ Open the **Admin App URL** you got from the outputs section in a browser. Then s
 
 **Copyright (c) 2018 Microsoft. All rights reserved.**
 
-
+`Tags: Microsoft.Network/virtualNetworks/subnets, microsoft.insights/components, Microsoft.Storage/storageAccounts, Microsoft.Cache/Redis, Microsoft.Web/serverfarms, Microsoft.Web/sites, sourcecontrols, SQLAzure, Custom, Microsoft.Sql/servers, databases, virtualNetworkRules, Microsoft.Network/applicationGateways, Microsoft.Network/publicIPAddresses, microsoft.cdn/profiles, endpoints, Microsoft.Web/hostingEnvironments, Microsoft.Network/virtualNetworks, Microsoft.Network/routeTables, Microsoft.Network/networkSecurityGroups`

@@ -1,4 +1,14 @@
-# Create IoT Hub and Device to Cloud Consumer Group
+---
+description: This template enables you to create an IoT hub and an IoT Hub Device Provisioning Service, and link the two services together.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: iothub-device-provisioning
+languages:
+- json
+---
+# Create an IoT Hub Device Provisioning Service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-device-provisioning/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-device-provisioning/PublicDeployment.svg)
@@ -25,6 +35,8 @@ If you are new to Azure Iot Hub, see:
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
+
+`Tags: Microsoft.Devices/IotHubs, Microsoft.Devices/provisioningServices`

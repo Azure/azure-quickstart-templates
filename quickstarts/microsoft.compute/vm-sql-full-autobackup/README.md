@@ -1,4 +1,14 @@
-# Create an Azure virtual machine running SQL Server 2014 SP2 Enterprise edition with Automated Backup feature enabled.
+---
+description: This template will create a SQL Server 2014 SP2 Enterprise edition with Auto Backup feature enabled
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-sql-full-autobackup
+languages:
+- json
+---
+# SQL Server 2014 SP2 Enterprise with Auto Backup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-sql-full-autobackup/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-sql-full-autobackup/PublicDeployment.svg)
@@ -17,7 +27,7 @@
 
 This template provisions a virtual machine with **SQL Server 2014 SP2 running on Windows Server 2012 R2**. It also enables the Automated Backup feature.
 
-`Tags: SQL Server, Auto Backup, SQL Server 2014 Enterprise`
+`Tags: SQL Server, Auto Backup, SQL Server 2014 Enterprise, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, SqlIaaSAgent, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, DSC`
 
 This template will also create the following resources:
 
@@ -29,7 +39,7 @@ This template will also create the following resources:
 
 ## Automated Backup
 
-The Automated Backup feature can be used to configure an automated backup schedule for SQL databases on an Azure virtual machine running SQL Server. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-automated-backup/).
+The Automated Backup feature can be used to configure an automated backup schedule for SQL databases on an Azure virtual machine running SQL Server. More information on this feature can be found [here](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sql-automated-backup/).
 
 This template can be used to enable or change the configuration of Automated Backup.
 
@@ -45,6 +55,5 @@ If you wish to disable Automated Backup, you must edit *azuredeploy.json* and ch
 
 ## SQL Server IaaS Agent extension
 
-Automated Backup is supported in your virtual machine through the SQL Server IaaS Agent extension. This extension must be installed on the VM to be able to use this feature. When you enable Automated Backup on your virtual machine, the extension will be automatically installed. This extension will also report back the latest status of this feature to you. More information on this extension can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-server-agent-extension/).
-
+Automated Backup is supported in your virtual machine through the SQL Server IaaS Agent extension. This extension must be installed on the VM to be able to use this feature. When you enable Automated Backup on your virtual machine, the extension will be automatically installed. This extension will also report back the latest status of this feature to you. More information on this extension can be found [here](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sql-server-agent-extension/).
 

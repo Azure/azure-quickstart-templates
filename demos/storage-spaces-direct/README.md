@@ -1,4 +1,14 @@
-# Create a Storage Spaces Direct (S2D) Scale-Out File Server (SOFS) Cluster with Windows Server 2016 on an existing VNET
+---
+description: This template creates Azure VMs on an existing VNET, and it provisions them as a Windows Server 2016 Storage Spaces Direct (S2D) Scale-Out File Server (SOFS) cluster.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-spaces-direct
+languages:
+- json
+---
+# Windows Server 2016 Storage Spaces Direct (S2D) SOFS cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-spaces-direct/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-spaces-direct/PublicDeployment.svg)
@@ -17,7 +27,7 @@ This template creates the following resources by default:
 +	A Windows Server 2016 cluster for storage nodes, provisioned for Storage Spaces Direct (S2D) and the Scale-Out File Server (SOFS) role
 +	One Availability Set for the cluster nodes
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template to deploy the prerequisite infrastructure. 
+To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template to deploy the prerequisite infrastructure.
 
 Click the button below to deploy from the portal:
 
@@ -44,7 +54,7 @@ You can deploy these samples directly through the Azure Portal or by using the s
 
 To deploy the sammple using the Azure Portal, click the **Deploy to Azure** button found above.
 
-To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/downloads/)) you can use the scripts.
 
 Simple execute the script and pass in the folder name of the sample you want to deploy.  For example:
 
@@ -59,7 +69,7 @@ You can optionally specify a storage account to use, if so the storage account m
 one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '301-storage-spaces-direct' -UploadArtifacts 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '301-storage-spaces-direct' -UploadArtifacts
 ```
 ```bash
 azure-group-deploy.sh -a '301-storage-spaces-direct' -l eastus -u
@@ -67,3 +77,4 @@ azure-group-deploy.sh -a '301-storage-spaces-direct' -l eastus -u
 
 Tags: ``cluster, ha, storage spaces, storage spaces direct, S2D, windows server 2016, ws2016``
 
+`Tags: Microsoft.Resources/deployments, Microsoft.Compute/availabilitySets, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Compute/virtualMachines`

@@ -1,3 +1,13 @@
+---
+description: This template provisions a function app on a Consumption plan, which is a dynamic hosting plan. The app runs on demand and you're billed per execution, with no standing resource committment. There are other templates available for provisioning on a dedicated hosting plan.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: function-app-create-dynamic-slot
+languages:
+- json
+---
 # Provision Consumption plan function with a Deployment Slot
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-create-dynamic-slot/PublicLastTestDate.svg)
@@ -21,3 +31,5 @@ For more information about Azure Functions, see the following articles:
 
 - [Azure Functions Overview](https://docs.microsoft.com/azure/azure-functions/functions-overview/)
 - [Quickstart: Create and deploy Azure Functions resources from an ARM template](https://docs.microsoft.com/azure/azure-functions/functions-create-first-function-resource-manager)
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/slots, microsoft.insights/components`

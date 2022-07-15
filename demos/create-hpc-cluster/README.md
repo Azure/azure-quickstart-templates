@@ -1,4 +1,14 @@
-# Create HPC cluster with Windows compute nodes
+---
+description: This template creates an HPC cluster with the latest version of HPC Pack 2012 R2. The head node with local HPC databases acts as domain controller as well.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: create-hpc-cluster
+languages:
+- json
+---
+# Create an HPC cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/create-hpc-cluster/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/create-hpc-cluster/PublicDeployment.svg)
@@ -12,4 +22,4 @@
 
 This template allows you to create an HPC cluster with Windows compute nodes. You can choose HPC Pack 2012 R2 Compute Node image or HPC Pack 2012 R2 Compute Node with Excel image to deploy compute nodes.
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC, HpcVmDrivers, Microsoft.Network/networkInterfaces, LinuxNodeAgent, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, CustomScriptExtension, Microsoft.Network/publicIPAddresses`

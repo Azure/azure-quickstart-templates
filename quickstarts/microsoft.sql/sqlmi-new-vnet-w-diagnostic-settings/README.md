@@ -1,4 +1,14 @@
-# Azure SQL Managed Instance (SQL MI) with diagnostic logs enabled deployed inside new virtual network
+---
+description: This template allows you to deploy SQL MI and additional resources used for storing logs and metrics (diagnostic workspace, storage account, event hub).
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sqlmi-new-vnet-w-diagnostic-settings
+languages:
+- json
+---
+# Create SQL MI with configured sending of logs and metrics.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet-w-diagnostic-settings/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet-w-diagnostic-settings/PublicDeployment.svg)
@@ -15,7 +25,7 @@
 
 This template allows you to create an [Azure SQL Managed Instance](https://docs.microsoft.com/azure/azure-sql/managed-instance/sql-managed-instance-paas-overview) inside a new virtual network, and also creates diagnostic workspace, storage account, and event hub for storing diagnostic logs. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-sql/managed-instance/create-template-quickstart) article.
 
-`Tags: Azure, SqlDb, Managed Instance, Event Hub, Diagnostic`
+`Tags: Azure, SqlDb, Managed Instance, Event Hub, Diagnostic, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Sql/managedInstances, SystemAssigned, Microsoft.EventHub/namespaces, eventhubs, Microsoft.Storage/storageAccounts, Microsoft.OperationalInsights/workspaces, Microsoft.Insights/diagnosticSettings`
 
 ## Solution overview and deployed resources
 

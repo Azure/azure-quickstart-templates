@@ -1,4 +1,15 @@
-# Azure SQL Database
+---
+description: This template allows you to create SQL Database and Server.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-database
+languages:
+- json
+- bicep
+---
+# Create a SQL Server and Database
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-database/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-database/PublicDeployment.svg)
@@ -15,4 +26,4 @@
 
 This template allows you to create an [Azure SQL Database](https://docs.microsoft.com/azure/azure-sql/database/sql-database-paas-overview). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-sql/database/single-database-create-arm-template-quickstart) article.
 
-`Tags: Azure, SQL database`
+`Tags: Azure, SQL database, Microsoft.Sql/servers, Microsoft.Sql/servers/databases`

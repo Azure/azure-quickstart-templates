@@ -1,4 +1,14 @@
-# MySQL Server 5.6 on Ubuntu VM
+---
+description: This template uses the Azure Linux CustomScript extension to deploy a MySQL server. It creates an Ubuntu VM, does a silent install of MySQL server, version&#58;5.6
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mysql-standalone-server-ubuntu
+languages:
+- json
+---
+# Deploy a MySQL Server
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-standalone-server-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-standalone-server-ubuntu/PublicDeployment.svg)
@@ -18,3 +28,5 @@ This template uses the Azure Linux CustomScript extension to deploy a MySQL serv
 The root password is defined by yourself during the deployment.
 
 The MySQL server database can be accessed only from localhost by default, you should update the privileges settings based on your own requirement.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

@@ -1,4 +1,14 @@
-# Dynamically Generate Web Tests
+---
+description: Create any number of App Insights web (ping) tests.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: dynamic-web-tests
+languages:
+- json
+---
+# Dynamic Web Test Creation
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/dynamic-web-tests/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/dynamic-web-tests/PublicDeployment.svg)
@@ -13,7 +23,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fdynamic-web-tests%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fdynamic-web-tests%2Fazuredeploy.json)
 
-This template will help you quickly spin up any number of [Application Insights](https://azure.microsoft.com/en-us/services/application-insights/) web tests and setup email alerts. The [parameters file](./azuredeploy.parameters.json) takes any number of test descriptor objects. These objects look like the following:
+This template will help you quickly spin up any number of [Application Insights](https://azure.microsoft.com/services/application-insights/) web tests and setup email alerts. The [parameters file](./azuredeploy.parameters.json) takes any number of test descriptor objects. These objects look like the following:
 
 ```json
 {
@@ -54,4 +64,4 @@ The `guid` field is an arbitrary guid for the test. The `locations` field is a c
 
 You can create any number of these test descriptors and pass them in as the parameter for `tests` as shown in the [parameters file](./azuredeploy.parameters.json).
 
-
+`Tags: Microsoft.Insights/webtests, microsoft.insights/actionGroups, Microsoft.Insights/metricAlerts, microsoft.insights/components`

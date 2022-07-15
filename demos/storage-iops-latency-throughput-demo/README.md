@@ -1,3 +1,13 @@
+---
+description: This template creates a single VM running Windows Server 2016 with multiple data disks attached.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-iops-latency-throughput-demo
+languages:
+- json
+---
 # 1 VM in vNet - Multiple data disks
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-iops-latency-throughput-demo/PublicLastTestDate.svg)
@@ -9,10 +19,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-iops-latency-throughput-demo/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-iops-latency-throughput-demo/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fstorage-iops-latency-throughput-demo%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fstorage-iops-latency-throughput-demo%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)(https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fstorage-iops-latency-throughput-demo%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fstorage-iops-latency-throughput-demo%2Fazuredeploy.json)
-    
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fstorage-iops-latency-throughput-demo%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fstorage-iops-latency-throughput-demo%2Fazuredeploy.json)
 
@@ -28,9 +37,9 @@ This template also deploys a Storage Account, Virtual Network and Public IP Addr
 
 The VM is an S-class size which supports Azure Premium Storage disks.
 
-The template also used the PowerShell Desired State Configuration (DSC) VM extension to: 
+The template also used the PowerShell Desired State Configuration (DSC) VM extension to:
 * Prepare and format the data disks
 * Install ioMeter using Chocolatey
 * Download and extract 20 pre-defined ioMeter tests to C:\iometerTests
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Network/publicIPAddresses`

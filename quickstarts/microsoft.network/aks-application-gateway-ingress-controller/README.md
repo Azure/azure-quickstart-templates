@@ -1,4 +1,14 @@
-﻿# Create an Azure Kubernetes Service cluster with the Application Gateway Ingress Controller #
+---
+description: This sample shows how to deploy an AKS cluster with Application Gateway, Application Gateway Ingress Controller, Azure Container Registry, Log Analytics and Key Vault
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aks-application-gateway-ingress-controller
+languages:
+- json
+---
+# AKS cluster with the Application Gateway Ingress Controller
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/PublicDeployment.svg)
@@ -12,14 +22,14 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Faks-application-gateway-ingress-controller%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Faks-application-gateway-ingress-controller%2Fazuredeploy.json)
 
-This ARM template can be used to deploy a public or private [Azure Kubernetes Cluster (AKS) cluster](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) with an [Azure Application Gateway](https://docs.microsoft.com/en-us/azure/application-gateway/overview) and  [Application Gateway Ingress Controller](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-overview) add-on. The template allows to deploy a rich set of AKS features such as:
+This ARM template can be used to deploy a public or private [Azure Kubernetes Cluster (AKS) cluster](https://docs.microsoft.com/azure/aks/intro-kubernetes) with an [Azure Application Gateway](https://docs.microsoft.com/azure/application-gateway/overview) and  [Application Gateway Ingress Controller](https://docs.microsoft.com/azure/application-gateway/ingress-controller-overview) add-on. The template allows to deploy a rich set of AKS features such as:
 
-- [AKS-managed AAD integration](https://docs.microsoft.com/en-us/azure/aks/managed-aad)
-- [Azure RBAC for Kubernetes Authorization](https://docs.microsoft.com/en-us/azure/aks/manage-azure-rbac)
-- [Managed identity in place of a service principal](https://docs.microsoft.com/en-us/azure/aks/use-managed-identity)
-- [Azure Active Directory pod-managed identities](https://docs.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity)
-- [Azure Network Policies](https://docs.microsoft.com/en-us/azure/aks/use-network-policies)
-- [Azure Monitor for containers add-on](https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-enable-new-cluster)
+- [AKS-managed AAD integration](https://docs.microsoft.com/azure/aks/managed-aad)
+- [Azure RBAC for Kubernetes Authorization](https://docs.microsoft.com/azure/aks/manage-azure-rbac)
+- [Managed identity in place of a service principal](https://docs.microsoft.com/azure/aks/use-managed-identity)
+- [Azure Active Directory pod-managed identities](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity)
+- [Azure Network Policies](https://docs.microsoft.com/azure/aks/use-network-policies)
+- [Azure Monitor for containers add-on](https://docs.microsoft.com/azure/azure-monitor/containers/container-insights-enable-new-cluster)
 - [Application Gateway Ingress Controller add-on](https://azure.github.io/application-gateway-kubernetes-ingress/)
 
 For a sample on how to use the Application Gateway Ingress Controller in a multi-tenant AKS cluster, see this [sample](https://github.com/paolosalvatori/aks-multi-tenant-agic).
@@ -51,14 +61,14 @@ The ARM template deploys the following resources:
 - A private endpoint to to Azure Container Registry (ACR)
 - A private endpoint to Key Vault
 - When you opt for a private AKS cluster, a private endpoint to the control plane / API server hosted by an AKS-managed Azure subscription. In this case, the cluster can communicate with the API server exposed via a Private Link Service using a private endpoint.
-- When you choose Premium as SKU for ACR, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure container registry using Azure Private Link](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-private-link).
+- When you choose Premium as SKU for ACR, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure container registry using Azure Private Link](https://docs.microsoft.com/azure/container-registry/container-registry-private-link).
 - A Private DNS Zone for the name resolution of the private endpoint to the Blob Storage Account
 - A Private DNS Zone for the name resolution of the private endpoint to Azure Container Registry (ACR)
 - A Private DNS Zone for the name resolution of the private endpoint to Key Vault
 - When you deploy the cluster as private, a Private DNS Zone for the name resolution of the private endpoint to the Kubernetes Server API
 - A Virtual Network Link between the virtual network hosting the AKS cluster and the above Private DNS Zones
 - A jumpbox virtual machine to manage the AKS cluster in case you decide to deploy a private AKS cluster.
-- A Log Analytics workspace to collect the diagnostics logs and metrics from: 
+- A Log Analytics workspace to collect the diagnostics logs and metrics from:
   - AKS cluster
   - Jumpbox virtual machine
   - Application Gateway
@@ -67,7 +77,7 @@ The ARM template deploys the following resources:
 
 ## Application Gateway Ingress Controller: Deployment Options ##
 
-In this architecture, the [Application Gateway Ingress Controller](https://azure.github.io/application-gateway-kubernetes-ingress/) was installed using the [AGIC add-on for AKS](https://docs.microsoft.com/en-us/azure/application-gateway/tutorial-ingress-controller-add-on-new). You can also [install the Application Gateway Ingress Controller via a Helm chart](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-install-existing#multi-cluster--shared-application-gateway). The primary benefit of deploying AGIC as an AKS add-on is that it's much simpler than deploying through Helm. For a new setup, you can deploy a new Application Gateway and a new AKS cluster with AGIC enabled as an add-on in one line in Azure CLI. The add-on is also a fully managed service, which provides added benefits such as automatic updates and increased support. Both ways of deploying AGIC (Helm and AKS add-on) are fully supported by Microsoft. Additionally, the add-on allows for better integration with AKS as a first class add-on.
+In this architecture, the [Application Gateway Ingress Controller](https://azure.github.io/application-gateway-kubernetes-ingress/) was installed using the [AGIC add-on for AKS](https://docs.microsoft.com/azure/application-gateway/tutorial-ingress-controller-add-on-new). You can also [install the Application Gateway Ingress Controller via a Helm chart](https://docs.microsoft.com/azure/application-gateway/ingress-controller-install-existing#multi-cluster--shared-application-gateway). The primary benefit of deploying AGIC as an AKS add-on is that it's much simpler than deploying through Helm. For a new setup, you can deploy a new Application Gateway and a new AKS cluster with AGIC enabled as an add-on in one line in Azure CLI. The add-on is also a fully managed service, which provides added benefits such as automatic updates and increased support. Both ways of deploying AGIC (Helm and AKS add-on) are fully supported by Microsoft. Additionally, the add-on allows for better integration with AKS as a first class add-on.
 
 The AGIC add-on is still deployed as a pod in the customer's AKS cluster, however, there are a few differences between the Helm deployment version and the add-on version of AGIC. Below is a list of differences between the two versions:
 
@@ -85,7 +95,7 @@ The AGIC add-on is still deployed as a pod in the customer's AKS cluster, howeve
 
 ![setup](images/setup.png)
 
-As documented at [Enable multiple Namespace support in an AKS cluster with Application Gateway Ingress Controller](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-multiple-namespace-support), a single instance of the Azure Application Gateway Kubernetes Ingress Controller (AGIC) can ingest events from and observe multiple namespaces. Should the AKS administrator decide to use App Gateway as an ingress, all namespaces will use the same instance of Application Gateway. A single installation of Ingress Controller will monitor accessible namespaces and will configure the Application Gateway it is associated with.
+As documented at [Enable multiple Namespace support in an AKS cluster with Application Gateway Ingress Controller](https://docs.microsoft.com/azure/application-gateway/ingress-controller-multiple-namespace-support), a single instance of the Azure Application Gateway Kubernetes Ingress Controller (AGIC) can ingest events from and observe multiple namespaces. Should the AKS administrator decide to use App Gateway as an ingress, all namespaces will use the same instance of Application Gateway. A single installation of Ingress Controller will monitor accessible namespaces and will configure the Application Gateway it is associated with.
 
 To enable multiple namespace support:
 
@@ -101,11 +111,11 @@ Once deployed with the ability to observe multiple namespaces, AGIC will:
 - list ingress resources from all accessible namespaces
 - filter to ingress resources annotated with kubernetes.io/ingress.class: azure/application-gateway
 - compose combined [Application Gateway config](https://github.com/Azure/azure-sdk-for-go/blob/37f3f4162dfce955ef5225ead57216cf8c1b2c70/services/network/mgmt/2016-06-01/network/models.go#L1710-L1744)
-- apply the config to the associated Application Gateway via [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/overview)
+- apply the config to the associated Application Gateway via [ARM](https://docs.microsoft.com/azure/azure-resource-manager/management/overview)
 
 ## Limits ##
 
-[Azure subscription and service limits, quotas, and constraints](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits#networking-limits) documentation reports that the max number of:
+[Azure subscription and service limits, quotas, and constraints](https://docs.microsoft.com/azure/azure-resource-manager/management/azure-subscription-service-limits#networking-limits) documentation reports that the max number of:
 
 - Active Listeners
 - Backend Pools
@@ -132,28 +142,28 @@ The following picture shows the resources deployed by the ARM template in the MC
 
 Azure Application Gateway is a web traffic load balancer that enables customers to manage the inbound traffic to multiple downstream web applications and REST APIs. Traditional load balancers operate at the transport layer (OSI layer 4 - TCP and UDP) and route traffic based on source IP address and port, to a destination IP address and port. The Application Gateway instead is an application layer (OSI layer 7) load balancer. Azure Application Gateway provides a rich set of features:
 
-- [Secure Sockets Layer (SSL/TLS) termination](https://docs.microsoft.com/en-us/azure/application-gateway/features#secure-sockets-layer-ssltls-termination)
-- [Autoscaling](https://docs.microsoft.com/en-us/azure/application-gateway/features#autoscaling)
-- [Zone redundancy](https://docs.microsoft.com/en-us/azure/application-gateway/features#zone-redundancy)
-- [Static VIP](https://docs.microsoft.com/en-us/azure/application-gateway/features#static-vip)
-- [Web Application Firewall](https://docs.microsoft.com/en-us/azure/application-gateway/features#web-application-firewall)
-- [Ingress Controller for AKS](https://docs.microsoft.com/en-us/azure/application-gateway/features#ingress-controller-for-aks)
-- [URL-based routing](https://docs.microsoft.com/en-us/azure/application-gateway/features#url-based-routing)
-- [Multiple-site hosting](https://docs.microsoft.com/en-us/azure/application-gateway/features#multiple-site-hosting)
-- [Redirection](https://docs.microsoft.com/en-us/azure/application-gateway/features#redirection)
-- [Session affinity](https://docs.microsoft.com/en-us/azure/application-gateway/features#session-affinity)
-- [WebSocket and HTTP/2 traffic](https://docs.microsoft.com/en-us/azure/application-gateway/features#websocket-and-http2-traffic)
-- [Connection draining](https://docs.microsoft.com/en-us/azure/application-gateway/features#connection-draining)
-- [Custom error pages](https://docs.microsoft.com/en-us/azure/application-gateway/features#custom-error-pages)
-- [Rewrite HTTP headers](https://docs.microsoft.com/en-us/azure/application-gateway/features#rewrite-http-headers-and-url)
-- [Sizing](https://docs.microsoft.com/en-us/azure/application-gateway/features#sizing)
+- [Secure Sockets Layer (SSL/TLS) termination](https://docs.microsoft.com/azure/application-gateway/features#secure-sockets-layer-ssltls-termination)
+- [Autoscaling](https://docs.microsoft.com/azure/application-gateway/features#autoscaling)
+- [Zone redundancy](https://docs.microsoft.com/azure/application-gateway/features#zone-redundancy)
+- [Static VIP](https://docs.microsoft.com/azure/application-gateway/features#static-vip)
+- [Web Application Firewall](https://docs.microsoft.com/azure/application-gateway/features#web-application-firewall)
+- [Ingress Controller for AKS](https://docs.microsoft.com/azure/application-gateway/features#ingress-controller-for-aks)
+- [URL-based routing](https://docs.microsoft.com/azure/application-gateway/features#url-based-routing)
+- [Multiple-site hosting](https://docs.microsoft.com/azure/application-gateway/features#multiple-site-hosting)
+- [Redirection](https://docs.microsoft.com/azure/application-gateway/features#redirection)
+- [Session affinity](https://docs.microsoft.com/azure/application-gateway/features#session-affinity)
+- [WebSocket and HTTP/2 traffic](https://docs.microsoft.com/azure/application-gateway/features#websocket-and-http2-traffic)
+- [Connection draining](https://docs.microsoft.com/azure/application-gateway/features#connection-draining)
+- [Custom error pages](https://docs.microsoft.com/azure/application-gateway/features#custom-error-pages)
+- [Rewrite HTTP headers](https://docs.microsoft.com/azure/application-gateway/features#rewrite-http-headers-and-url)
+- [Sizing](https://docs.microsoft.com/azure/application-gateway/features#sizing)
 
-For more information, see [How an Application Gateway works](https://docs.microsoft.com/en-us/azure/application-gateway/how-application-gateway-works).
+For more information, see [How an Application Gateway works](https://docs.microsoft.com/azure/application-gateway/how-application-gateway-works).
 
 ## Web Access Firewall Policy for Application Gateway ##
 
-[Web Application Firewall (WAF)](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/ag-overview) is a service that provides centralized protection of web applications from common exploits and vulnerabilities. WAF is based on rules from the [OWASP (Open Web Application Security Project) core rule sets](https://owasp.org/www-project-modsecurity-core-rule-set/). WAF also provide the ability to create custom rules that are evaluated for each request that passes through the WAF. These rules hold a higher priority than the rest of the rules in the managed rule sets. The custom rules contain a rule name, rule priority, and an array of matching conditions. If these conditions are met, an action is taken (to allow or block). Web applications can be the target of malicious attacks that exploit common, known vulnerabilities that include SQL injection attacks, DDOS attacks, and cross site scripting attacks. Preventing such attacks in application code can be challenging and may require rigorous maintenance, patching and monitoring at many layers of the application topology. A centralized web application firewall helps make security management much simpler and gives better assurance to application administrators against threats or intrusions. A WAF solution can also react to a security threat faster by patching a known vulnerability at a central location versus securing each of individual web applications. Existing application gateways can be converted to a Web Application Firewall enabled application gateway very easily.
-Azure Application Gateway allows the association of a separate WAF policy to each individual listener. For example, if there are three sites behind the same Application Gateway or WAF, you can configure three separate WAF policies (one for each listener) to customize the exclusions, custom rules, and managed rulesets for one site without effecting the other two. If you want a single policy to apply to all sites, you can just associate the policy with the Application Gateway, rather than the individual listeners, to make it apply globally. Application Gateway also supports per-URI WAF Policies. This feature requires the use of a Path-based routing rule instead of a basic routing rule and requires the definition of a URL Path Map where a specific WAF policy can be associated to a given URL. For more information, see [Configure per-site WAF policies using Azure PowerShell](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/per-site-policies). The order of precedence for WAF policies is as follows:
+[Web Application Firewall (WAF)](https://docs.microsoft.com/azure/web-application-firewall/ag/ag-overview) is a service that provides centralized protection of web applications from common exploits and vulnerabilities. WAF is based on rules from the [OWASP (Open Web Application Security Project) core rule sets](https://owasp.org/www-project-modsecurity-core-rule-set/). WAF also provide the ability to create custom rules that are evaluated for each request that passes through the WAF. These rules hold a higher priority than the rest of the rules in the managed rule sets. The custom rules contain a rule name, rule priority, and an array of matching conditions. If these conditions are met, an action is taken (to allow or block). Web applications can be the target of malicious attacks that exploit common, known vulnerabilities that include SQL injection attacks, DDOS attacks, and cross site scripting attacks. Preventing such attacks in application code can be challenging and may require rigorous maintenance, patching and monitoring at many layers of the application topology. A centralized web application firewall helps make security management much simpler and gives better assurance to application administrators against threats or intrusions. A WAF solution can also react to a security threat faster by patching a known vulnerability at a central location versus securing each of individual web applications. Existing application gateways can be converted to a Web Application Firewall enabled application gateway very easily.
+Azure Application Gateway allows the association of a separate WAF policy to each individual listener. For example, if there are three sites behind the same Application Gateway or WAF, you can configure three separate WAF policies (one for each listener) to customize the exclusions, custom rules, and managed rulesets for one site without effecting the other two. If you want a single policy to apply to all sites, you can just associate the policy with the Application Gateway, rather than the individual listeners, to make it apply globally. Application Gateway also supports per-URI WAF Policies. This feature requires the use of a Path-based routing rule instead of a basic routing rule and requires the definition of a URL Path Map where a specific WAF policy can be associated to a given URL. For more information, see [Configure per-site WAF policies using Azure PowerShell](https://docs.microsoft.com/azure/web-application-firewall/ag/per-site-policies). The order of precedence for WAF policies is as follows:
 
 - If a per-URI WAF policy exists for the current path, this will take effect / apply and no other WAF policy will apply
 - If no per-URI WAF policy exists for the current path, but a WAF policy exists for the current listener, this policy will apply, and no other WAF policy will take effect
@@ -219,42 +229,44 @@ You can configure Application Gateway to store diagnostic logs and metrics to Lo
 Azure Kubernetes Service:
 
 - [Create a private Azure Kubernetes Service cluster](https://github.com/paolosalvatori/private-aks-cluster)
-- [Best practices for multi-tenancy and cluster isolation](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-cluster-isolation)
-- [Best practices for basic scheduler features in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-scheduler)
-- [Best practices for advanced scheduler features](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-advanced-scheduler)
-- [Best practices for authentication and authorization](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-advanced-scheduler)
-- [Best practices for cluster security and upgrades in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-cluster-security)
-- [Best practices for container image management and security in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-container-image-management)
-- [Best practices for network connectivity and security in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-network)
-- [Best practices for storage and backups in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-storage)
-- [Best practices for business continuity and disaster recovery in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-multi-region)
-- [Azure Kubernetes Services (AKS) day-2 operations guide](https://docs.microsoft.com/en-us/azure/architecture/operator-guides/aks/day-2-operations-guide)
+- [Best practices for multi-tenancy and cluster isolation](https://docs.microsoft.com/azure/aks/operator-best-practices-cluster-isolation)
+- [Best practices for basic scheduler features in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/azure/aks/operator-best-practices-scheduler)
+- [Best practices for advanced scheduler features](https://docs.microsoft.com/azure/aks/operator-best-practices-advanced-scheduler)
+- [Best practices for authentication and authorization](https://docs.microsoft.com/azure/aks/operator-best-practices-advanced-scheduler)
+- [Best practices for cluster security and upgrades in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/azure/aks/operator-best-practices-cluster-security)
+- [Best practices for container image management and security in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/azure/aks/operator-best-practices-container-image-management)
+- [Best practices for network connectivity and security in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/azure/aks/operator-best-practices-network)
+- [Best practices for storage and backups in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/azure/aks/operator-best-practices-storage)
+- [Best practices for business continuity and disaster recovery in Azure Kubernetes Service (AKS)](https://docs.microsoft.com/azure/aks/operator-best-practices-multi-region)
+- [Azure Kubernetes Services (AKS) day-2 operations guide](https://docs.microsoft.com/azure/architecture/operator-guides/aks/day-2-operations-guide)
 
 Azure Application Gateway:
 
-- [Overview of WebSocket support in Application Gateway](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-websocket#websocket-enabled-backend)
-- [Configure end to end TLS by using Application Gateway with PowerShell](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-end-to-end-ssl-powershell)
-- [How an Application Gateway works](https://docs.microsoft.com/en-us/azure/application-gateway/how-application-gateway-works)
+- [Overview of WebSocket support in Application Gateway](https://docs.microsoft.com/azure/application-gateway/application-gateway-websocket#websocket-enabled-backend)
+- [Configure end to end TLS by using Application Gateway with PowerShell](https://docs.microsoft.com/azure/application-gateway/application-gateway-end-to-end-ssl-powershell)
+- [How an Application Gateway works](https://docs.microsoft.com/azure/application-gateway/how-application-gateway-works)
 
 Azure Application Gateway Ingress Controller
 
-- [What is Application Gateway Ingress Controller?](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-overview)
+- [What is Application Gateway Ingress Controller?](https://docs.microsoft.com/azure/application-gateway/ingress-controller-overview)
 - [Documentation for Application Gateway Ingress Controller](https://azure.github.io/application-gateway-kubernetes-ingress/)
-- [Annotations for Application Gateway Ingress Controller](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-annotations)
+- [Annotations for Application Gateway Ingress Controller](https://docs.microsoft.com/azure/application-gateway/ingress-controller-annotations)
 - [Certificate issuance with LetsEncrypt.org](https://azure.github.io/application-gateway-kubernetes-ingress/how-tos/lets-encrypt/)
-- [Tutorial: Enable the Ingress Controller add-on (preview) for a new AKS cluster with a new Application Gateway instance](https://docs.microsoft.com/en-us/azure/application-gateway/tutorial-ingress-controller-add-on-new)
-- [Tutorial: Enable Application Gateway Ingress Controller add-on for an existing AKS cluster with an existing Application Gateway through Azure CLI (Preview)](https://docs.microsoft.com/en-us/azure/application-gateway/tutorial-ingress-controller-add-on-existing)
-- [Difference between Helm deployment and AKS Add-On](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-overview#difference-between-helm-deployment-and-aks-add-on)
+- [Tutorial: Enable the Ingress Controller add-on (preview) for a new AKS cluster with a new Application Gateway instance](https://docs.microsoft.com/azure/application-gateway/tutorial-ingress-controller-add-on-new)
+- [Tutorial: Enable Application Gateway Ingress Controller add-on for an existing AKS cluster with an existing Application Gateway through Azure CLI (Preview)](https://docs.microsoft.com/azure/application-gateway/tutorial-ingress-controller-add-on-existing)
+- [Difference between Helm deployment and AKS Add-On](https://docs.microsoft.com/azure/application-gateway/ingress-controller-overview#difference-between-helm-deployment-and-aks-add-on)
 
 Azure Application Gateway WAF
 
-- [What is Azure Web Application Firewall on Azure Application Gateway?](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/ag-overview)
-- [Web Application Firewall CRS rule groups and rules](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/application-gateway-crs-rulegroups-rules?tabs=owasp31)
-- [Custom rules for Web Application Firewall v2 on Azure Application Gateway](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/custom-waf-rules-overview)
-- [Quickstart: Create an Azure WAF v2 on Application Gateway using an ARM template](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/quick-create-template)
-- [Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies Resource Type](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/applicationgatewaywebapplicationfirewallpolicies)
-- [Create and use Web Application Firewall v2 custom rules on Application Gateway](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/create-custom-waf-rules)
-- [az network application-gateway waf-policy Azure CLI commands](https://docs.microsoft.com/en-us/cli/azure/network/application-gateway/waf-policy?view=azure-cli-latest)
-- [Enable Web Application Firewall using the Azure CLI](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/tutorial-restrict-web-traffic-cli)
-- [Configure per-site WAF policies using Azure PowerShell](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/per-site-policies)
-- [Create Web Application Firewall policies for Application Gateway](https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/create-waf-policy-ag#migrate-to-waf-policy)
+- [What is Azure Web Application Firewall on Azure Application Gateway?](https://docs.microsoft.com/azure/web-application-firewall/ag/ag-overview)
+- [Web Application Firewall CRS rule groups and rules](https://docs.microsoft.com/azure/web-application-firewall/ag/application-gateway-crs-rulegroups-rules?tabs=owasp31)
+- [Custom rules for Web Application Firewall v2 on Azure Application Gateway](https://docs.microsoft.com/azure/web-application-firewall/ag/custom-waf-rules-overview)
+- [Quickstart: Create an Azure WAF v2 on Application Gateway using an ARM template](https://docs.microsoft.com/azure/web-application-firewall/ag/quick-create-template)
+- [Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies Resource Type](https://docs.microsoft.com/azure/templates/microsoft.network/applicationgatewaywebapplicationfirewallpolicies)
+- [Create and use Web Application Firewall v2 custom rules on Application Gateway](https://docs.microsoft.com/azure/web-application-firewall/ag/create-custom-waf-rules)
+- [az network application-gateway waf-policy Azure CLI commands](https://docs.microsoft.com/cli/azure/network/application-gateway/waf-policy?view=azure-cli-latest)
+- [Enable Web Application Firewall using the Azure CLI](https://docs.microsoft.com/azure/web-application-firewall/ag/tutorial-restrict-web-traffic-cli)
+- [Configure per-site WAF policies using Azure PowerShell](https://docs.microsoft.com/azure/web-application-firewall/ag/per-site-policies)
+- [Create Web Application Firewall policies for Application Gateway](https://docs.microsoft.com/azure/web-application-firewall/ag/create-waf-policy-ag#migrate-to-waf-policy)
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, providers/diagnosticSettings, Microsoft.Network/bastionHosts, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, OmsAgentForLinux, DependencyAgentLinux, Microsoft.Network/virtualNetworks, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.KeyVault/vaults, providers/roleAssignments, Microsoft.ContainerRegistry/registries, Notary, Microsoft.ContainerService/managedClusters, UserAssigned, [parameters('systemNodePoolType')], [parameters('userNodePoolType')], Microsoft.OperationalInsights/workspaces, Microsoft.OperationsManagement/solutions, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints, privateDnsZoneGroups, microsoft.insights/activityLogAlerts, Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies, Microsoft.Network/applicationGateways`

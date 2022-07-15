@@ -11,7 +11,7 @@
 ])
 param storageAccountType string = 'Standard_LRS'
 
-@description('Location for all resources.')
+@description('Location for the storage account.')
 param location string = resourceGroup().location
 
 @description('The name of the Storage Account')

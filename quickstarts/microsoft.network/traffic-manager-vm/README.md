@@ -1,4 +1,15 @@
-# Azure Traffic Manager with virtual machines
+---
+description: This template shows how to create an Azure Traffic Manager profile load-balancing across multiple virtual machines.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: traffic-manager-vm
+languages:
+- json
+- bicep
+---
+# Azure Traffic Manager VM example
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-vm/PublicDeployment.svg)
@@ -20,5 +31,4 @@ See also:
 [Traffic Manager routing methods for details of the different routing methods available.](https://azure.microsoft.com/documentation/articles/traffic-manager-routing-methods/)
 [Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.](https://docs.microsoft.com/rest/api/trafficmanager/)
 
-
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/trafficmanagerprofiles, Microsoft.Network/trafficManagerProfiles/azureEndpoints`

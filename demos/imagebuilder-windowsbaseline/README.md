@@ -1,4 +1,15 @@
-# Azure Image Builder with Azure Windows Baseline
+---
+description: Creates an Azure Image Builder environment and builds a Windows Server image with the latest Windows Updates and Azure Windows Baseline applied.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: imagebuilder-windowsbaseline
+languages:
+- json
+- bicep
+---
+# Azure Image Builder with Azure Windows Baseline.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/imagebuilder-windowsbaseline/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/imagebuilder-windowsbaseline/PublicDeployment.svg)
@@ -45,3 +56,5 @@ The following resources are created by this template:
 - 1 role definition and 1 role assignment to limit access of the new identity
 - 1 Azure Image Gallery with 1 image and 1 template
 - 1 deployment script to trigger the build of the custom image in Azure Image Builder
+
+`Tags: Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleDefinitions, customRole, Microsoft.Authorization/roleAssignments, Microsoft.Compute/galleries, Microsoft.Compute/galleries/images, Microsoft.VirtualMachineImages/imageTemplates, UserAssigned, PlatformImage, WindowsUpdate, PowerShell, SharedImage, Microsoft.Resources/deploymentScripts`

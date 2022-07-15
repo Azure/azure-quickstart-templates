@@ -1,4 +1,14 @@
-# Enable encryption on a running Linux VM
+---
+description: This template enables encryption on a running linux vm using AAD client secret.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: encrypt-running-linux-vm
+languages:
+- json
+---
+# Enable encryption on a running Linux VM.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-linux-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-linux-vm/PublicDeployment.svg)
@@ -25,6 +35,8 @@ Use the below PS cmdlet for getting the "keyVaultSecretUrl" and "keyVaultResourc
 
 References:
 
-- [White paper](https://azure.microsoft.com/en-us/documentation/articles/azure-security-disk-encryption/)
+- [White paper](https://azure.microsoft.com/documentation/articles/azure-security-disk-encryption/)
 - [Explore Azure Disk Encryption with Azure Powershell](https://blogs.msdn.microsoft.com/azuresecurity/2015/11/16/explore-azure-disk-encryption-with-azure-powershell/)
 - [Explore Azure Disk Encryption with Azure PowerShell – Part 2](http://blogs.msdn.com/b/azuresecurity/archive/2015/11/21/explore-azure-disk-encryption-with-azure-powershell-part-2.aspx)
+
+`Tags: Microsoft.Compute/virtualMachines/extensions, [variables('extensionName')]`

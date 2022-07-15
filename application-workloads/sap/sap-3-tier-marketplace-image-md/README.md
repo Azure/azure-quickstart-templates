@@ -1,4 +1,14 @@
-# SAP NetWeaver 3-tier compatible template using a Marketplace image - MD
+---
+description: This template allows you to deploy a VM using a operating system that is supported by SAP and Managed Disks.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sap-3-tier-marketplace-image-md
+languages:
+- json
+---
+# SAP NetWeaver 3-tier (managed disk)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-3-tier-marketplace-image-md/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-3-tier-marketplace-image-md/PublicDeployment.svg)
@@ -57,3 +67,5 @@ SQL DB Internal Load Balancer probe port: **62500**
 |Large < 180.000 SAPS|SQL|2xStandard_E32_v3 DB Server (5xP30 1xP20) + 2xStandard_E2_v3 ASCS/SCS (1xP10) + 2xStandard_E16_v3 DI (1xP10)|1xStandard_E32_v3 DB Server (5xP30 1xP20) + 1xStandard_E2_v3 ASCS/SCS (1xP10) + 1xStandard_E16_v3 DI (1xP10)|
 |X-Large < 250.000 SAPS|HANA|2xStandard_M128s DB Server (2xP40 4xP30 2xP20 1xP6) + 2xStandard_E2_v3 ASCS/SCS (1xP10) + 2xStandard_E16_v3 DI (1xP10)|1xStandard_M128s DB Server (2xP40 4xP30 2xP20 1xP6) + 1xStandard_E2_v3 ASCS/SCS (1xP10) + 1xStandard_E16_v3 DI (1xP10)|
 |X-Large < 250.000 SAPS|SQL|2xStandard_E64_v3 DB Server (8xP30) + 2xStandard_E2_v3 ASCS/SCS (1xP10) + 2xStandard_E16_v3 DI (1xP10)|1xStandard_E64_v3 DB Server (8xP30) + 1xStandard_E2_v3 ASCS/SCS (1xP10) + 1xStandard_E16_v3 DI (1xP10)|
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, [variables('csExtension')[variables('internalOSType')].Name]`

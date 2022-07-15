@@ -1,4 +1,14 @@
-# Exposing UDP port on ACI
+---
+description: This templates creates an ACI resource and exposes a container through UDP
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aci-udp
+languages:
+- json
+---
+# UDP Container in ACI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-udp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-udp/PublicDeployment.svg)
@@ -15,6 +25,5 @@
 
 This templates deploys a public  linux container into Azure Container Instances, assigns a public IP and exposes a UDP port to the container.
 
-`Tags: ACI, UDP`
-
+`Tags: ACI, UDP, Microsoft.ContainerInstance/containerGroups, Public`
 

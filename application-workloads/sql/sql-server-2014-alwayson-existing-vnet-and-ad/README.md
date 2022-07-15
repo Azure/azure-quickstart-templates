@@ -1,4 +1,14 @@
-# Create a SQL Server 2014 Always On Availability Group in an existing Azure VNET and an existing Active Directory instance
+---
+description: This template creates three new Azure VMs on an existing VNET&#58; Two VMs are configured as SQL Server 2014 AlwaysOn Availability Group replica nodes and one VM is configured as a File Share Witness for automated cluster failover. In addition to these VMs, the following additional Azure resources are also configured&#58; Internal load balancer, Storage accounts.  To configure clustering, SQL Server and AlwaysOn within each VM, PowerShell DSC is leveraged.  For Active Directory support, existing Active Directory domain controllers should already be deployed on the existing VNET.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-server-2014-alwayson-existing-vnet-and-ad
+languages:
+- json
+---
+# Deploys SQL Server 2014 AlwaysOn AG on existing VNET & AD
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/PublicDeployment.svg)
@@ -48,24 +58,30 @@ You can deploy these samples directly through the Azure Portal or by using the s
 
 To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/downloads/)) you can use the scripts.
 
 Simple execute the script and pass in the folder name of the sample you want to deploy.  For example:
 
 ```PowerShell
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
 ```
+
 ```bash
 azure-group-deploy.sh -a [foldername] -l eastus -u
 ```
+
 If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
 You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
 one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts
 ```
+
 ```bash
 azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
 ```
+
 Tags: ``cluster, ha, sql, alwayson``
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Compute/availabilitySets, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

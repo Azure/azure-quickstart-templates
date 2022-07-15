@@ -1,4 +1,14 @@
-# Deploy Sonarqube on a Linux web app with PostgreSQL
+---
+description: This template provides a easy way to deploy a Sonarqube docker image (alpine tag) on a Linux Web App with Azure database for PostgreSQL(Preview)
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-linux-sonarqube-postgresql
+languages:
+- json
+---
+# Sonarqube Docker Web App on Linux with PostgreSQL
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-postgresql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-postgresql/PublicDeployment.svg)
@@ -16,3 +26,5 @@
 This template provides a easy way to deploy a Sonarqube docker image (alpine tag) on a Linux Web App with Azure database for PostgreSQL(Preview).
 
 **Notice** once deployed Sonar can take a while to start due the creation of the initial empty database, it can even fail if you try to access it directly, allow to start it before accessing it or even adjust the tier for the webapp or PostgreSQL accordingly.
+
+`Tags: Microsoft.Web/sites, config, Microsoft.Web/serverfarms, Microsoft.DBforPostgreSQL/servers, firewallrules, databases`

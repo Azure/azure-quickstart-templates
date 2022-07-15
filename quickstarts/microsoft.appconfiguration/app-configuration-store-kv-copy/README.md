@@ -1,4 +1,14 @@
-# Azure App Configuration
+---
+description: This template creates a new Azure App Configuration store with three key-values controlled by a copy function.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: app-configuration-store-kv-copy
+languages:
+- json
+---
+# App Configuration Key-Values
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store-kv-copy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store-kv-copy/PublicDeployment.svg)
@@ -68,4 +78,4 @@ If you're new to template deployment, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create an Azure App Configuration store by using an ARM template](https://docs.microsoft.com/azure/azure-app-configuration/quickstart-resource-manager)
 
-`Tags: Azure4Student, AppConfiguration, Beginner`
+`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.AppConfiguration/configurationStores, Microsoft.AppConfiguration/configurationStores/keyValues`

@@ -1,4 +1,14 @@
-# OpenCanvas Installation on Azure
+---
+description: This template deploys OpenCanvas on Ubuntu 16.04
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: opencanvas-lms
+languages:
+- json
+---
+# OpenCanvas-LMS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/opencanvas/opencanvas-lms/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/opencanvas/opencanvas-lms/PublicDeployment.svg)
@@ -13,7 +23,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fopencanvas%2Fopencanvas-lms%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fopencanvas%2Fopencanvas-lms%2Fazuredeploy.json)
 
-## OpenCanvas template 
+## OpenCanvas template
 
 This template deploys OpenCanvas on Ubuntu 16.04
 * Deploys on a Ubuntu VM 16.04
@@ -39,6 +49,6 @@ You can click the "deploy to Azure" button at the beginning of this document.
 + **smtp_pass**: Provide SMTP password for mail configuration
 
 ### How to access the OpenCanvas Site
-* You can access the site using the domain/host name you provide as the paramater while deploying the template. 
+* You can access the site using the domain/host name you provide as the paramater while deploying the template.
 
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

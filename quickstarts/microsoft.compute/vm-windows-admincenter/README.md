@@ -1,4 +1,15 @@
-# Deployment of a Windows VM with Windows Admin Center extension
+---
+description: This template allows you to deploy a Windows VM with Windows Admin Center extension to manage the VM directly from Azure Portal.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-windows-admincenter
+languages:
+- json
+- bicep
+---
+# Deploy a Windows VM with Windows Admin Center extension
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-windows-admincenter/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-windows-admincenter/PublicDeployment.svg)
@@ -32,3 +43,5 @@ If you're new to template deployment, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create a Windows virtual machine using an ARM template](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-template)
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, AdminCenter`

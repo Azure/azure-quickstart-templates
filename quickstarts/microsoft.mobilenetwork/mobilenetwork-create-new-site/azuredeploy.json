@@ -1,0 +1,219 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "4061013648252389979"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Region where the mobile network will be deployed (must match the resource group region)"
+      }
+    },
+    "existingMobileNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the mobile network to which you are adding a site"
+      }
+    },
+    "existingDataNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing data network to which the mobile network connects"
+      }
+    },
+    "siteName": {
+      "type": "string",
+      "defaultValue": "myExampleSite",
+      "metadata": {
+        "description": "The name for the site"
+      }
+    },
+    "controlPlaneAccessInterfaceName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The name of the control plane interface on the access network. In 5G networks this is called the N2 interface, whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge Pro device."
+      }
+    },
+    "controlPlaneAccessIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface, whereas in 4G networks this is called the S1-MME interface."
+      }
+    },
+    "userPlaneAccessInterfaceName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface, whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge Pro device."
+      }
+    },
+    "userPlaneAccessInterfaceIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface, whereas in 4G networks this is called the S1-U interface."
+      }
+    },
+    "accessSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The network address of the access subnet in CIDR notation"
+      }
+    },
+    "accessGateway": {
+      "type": "string",
+      "metadata": {
+        "description": "The access subnet default gateway"
+      }
+    },
+    "userPlaneDataInterfaceName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface, whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge Pro device."
+      }
+    },
+    "userPlaneDataInterfaceIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface, whereas in 4G networks this is called the SGi interface."
+      }
+    },
+    "userPlaneDataInterfaceSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The network address of the data subnet in CIDR notation"
+      }
+    },
+    "userPlaneDataInterfaceGateway": {
+      "type": "string",
+      "metadata": {
+        "description": "The data subnet default gateway"
+      }
+    },
+    "userEquipmentAddressPoolPrefix": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The network address of the subnet from which dynamic IP addresses must be allocated to UEs, given in CIDR notation. Optional if userEquipmentStaticAddressPoolPrefix is specified. If both are specified, they must be the same size and not overlap."
+      }
+    },
+    "userEquipmentStaticAddressPoolPrefix": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The network address of the subnet from which static IP addresses must be allocated to UEs, given in CIDR notation. Optional if userEquipmentAddressPoolPrefix is specified. If both are specified, they must be the same size and not overlap."
+      }
+    },
+    "coreNetworkTechnology": {
+      "type": "string",
+      "defaultValue": "5GC",
+      "metadata": {
+        "description": "The mode in which the packet core instance will run"
+      }
+    },
+    "naptEnabled": {
+      "type": "string",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "Whether or not Network Address and Port Translation (NAPT) should be enabled for this data network"
+      }
+    },
+    "customLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The resource ID of the custom location that targets the Azure Kubernetes Service on Azure Stack HCI (AKS-HCI) cluster on the Azure Stack Edge Pro device in the site. If this parameter is not specified, the packet core instance will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/sites",
+      "apiVersion": "2022-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('existingMobileNetworkName'), parameters('siteName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "networkFunctions": [
+          {
+            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]"
+          },
+          {
+            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]",
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes/attachedDataNetworks",
+      "apiVersion": "2022-03-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('siteName'), parameters('siteName'), parameters('existingDataNetworkName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "userPlaneDataInterface": {
+          "ipv4Address": "[parameters('userPlaneDataInterfaceIpAddress')]",
+          "ipv4Subnet": "[parameters('userPlaneDataInterfaceSubnet')]",
+          "ipv4Gateway": "[parameters('userPlaneDataInterfaceGateway')]",
+          "name": "[parameters('userPlaneDataInterfaceName')]"
+        },
+        "userEquipmentAddressPoolPrefix": "[if(empty(parameters('userEquipmentAddressPoolPrefix')), null(), createArray(parameters('userEquipmentAddressPoolPrefix')))]",
+        "userEquipmentStaticAddressPoolPrefix": "[if(empty(parameters('userEquipmentStaticAddressPoolPrefix')), null(), createArray(parameters('userEquipmentStaticAddressPoolPrefix')))]",
+        "naptConfiguration": {
+          "enabled": "[parameters('naptEnabled')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes",
+      "apiVersion": "2022-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('siteName'), parameters('siteName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "userPlaneAccessInterface": {
+          "ipv4Address": "[parameters('userPlaneAccessInterfaceIpAddress')]",
+          "ipv4Subnet": "[parameters('accessSubnet')]",
+          "ipv4Gateway": "[parameters('accessGateway')]",
+          "name": "[parameters('userPlaneAccessInterfaceName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes",
+      "apiVersion": "2022-03-01-preview",
+      "name": "[parameters('siteName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "mobileNetwork": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('existingMobileNetworkName'))]"
+        },
+        "coreNetworkTechnology": "[parameters('coreNetworkTechnology')]",
+        "customLocation": "[if(empty(parameters('customLocation')), null(), createObject('id', parameters('customLocation')))]",
+        "controlPlaneAccessInterface": {
+          "ipv4Address": "[parameters('controlPlaneAccessIpAddress')]",
+          "ipv4Subnet": "[parameters('accessSubnet')]",
+          "ipv4Gateway": "[parameters('accessGateway')]",
+          "name": "[parameters('controlPlaneAccessInterfaceName')]"
+        }
+      }
+    }
+  ]
+}

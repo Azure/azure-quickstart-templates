@@ -1,4 +1,14 @@
-# Deploy an ASP.NET App Service
+---
+description: This template allows you to create an App Service for deploying a ASP.NET app.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-windows-aspnet
+languages:
+- json
+---
+# ASP.NET app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-windows-aspnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-windows-aspnet/PublicDeployment.svg)
@@ -25,6 +35,5 @@ If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Azure4Student, appServices , aspnet, windows, Beginner`
-
+`Tags: Azure4Student, appServices, aspnet, windows, Beginner, Microsoft.Web/sites, Microsoft.Web/serverfarms, microsoft.insights/components`
 

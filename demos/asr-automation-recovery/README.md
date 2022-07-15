@@ -1,4 +1,14 @@
-# Azure Site Recovery Automation Runbooks
+---
+description: Deploys Automation Runbooks for ASR Recovery Plans
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: asr-automation-recovery
+languages:
+- json
+---
+# ASR Runbooks
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/asr-automation-recovery/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/asr-automation-recovery/PublicDeployment.svg)
@@ -27,9 +37,9 @@ This Resource Manager Template will deploy the following:
 
 ### Pre-reqs
 
-All the runbooks requires an **Azure RunAs Account** in the automation account. This can be created manually in the portal post deployment. 
+All the runbooks requires an **Azure RunAs Account** in the automation account. This can be created manually in the portal post deployment.
 
-### Automation Runbooks for Azure Site Recovery 
+### Automation Runbooks for Azure Site Recovery
 
 ##### ASR-SQL-FailoverAG
 
@@ -41,11 +51,11 @@ This runbook fails over SQL Always On Availability Group inside an Azure virtual
 2. Add this script as a **pre-action** of the first group of the recovery plan
 3. Create a complex variable for the automation account using PowerShell.
 
-Example: 
- 
+Example:
+
         $InputObject = @{"TestSQLVMName" = "#TestSQLVMName" ; "TestSQLVMRG" = "#TestSQLVMRG" ; "ProdSQLVMName" = "#ProdSQLVMName" ; "ProdSQLVMRG" = "#ProdSQLVMRG"; "Paths" = @{"1"="#sqlserver:\sql\sqlazureVM\default\availabilitygroups\ag1";"2"="#sqlserver:\sql\sqlazureVM\default\availabilitygroups\ag2"}}
         $RPDetails = New-Object -TypeName PSObject -Property $InputObject  | ConvertTo-Json
-        New-AzureRmAutomationVariable -Name "#RecoveryPlanName" -ResourceGroupName "#AutomationAccountResourceGroup" -AutomationAccountName "#AutomationAccountName" -Value $RPDetails -Encrypted $false  
+        New-AzureRmAutomationVariable -Name "#RecoveryPlanName" -ResourceGroupName "#AutomationAccountResourceGroup" -AutomationAccountName "#AutomationAccountName" -Value $RPDetails -Encrypted $false
 
         Replace all strings starting with a '#' with appropriate value
 
@@ -55,7 +65,7 @@ This runbook updates the DNS of virtual machines being failed over
 
 **How to use this runbook**
 
-1. Do a test failover of DNS virtual machine in the test network 
+1. Do a test failover of DNS virtual machine in the test network
 2. Change the value of $Location in the runbook, with the region where the Azure VMs will be running
 3. Change the value of TestDNSVMName with the name of the DNS Azure virtual machine created in test network
 4. Change the value of TestDNSVMRG with the name of the resource group of the DNS Azure virtual machine created in test network
@@ -64,11 +74,11 @@ This runbook updates the DNS of virtual machines being failed over
 7. Add the runbook as a **post action** in a recovery plan group which has the virtual machines for which DNS has to be updated
 8. Create a complex variable for the automation account using PowerShell
 
-Example: 
+Example:
 
 		$InputObject = @{"#VMIdAsAvailableINASRVMProperties"=@{"Zone"="#ZoneFortheVirtualMachine";"VMName"="#HostNameofTheVirtualMachine"};"#VMIdAsAvailableINASRVMProperties2"=@{"Zone"="#ZoneFortheVirtualMachine2";"VMName"="#HostNameofTheVirtualMachine2"}}
         $RPDetails = New-Object -TypeName PSObject -Property $InputObject  | ConvertTo-Json
-        New-AzureRmAutomationVariable -Name "#RecoveryPlanName" -ResourceGroupName "#AutomationAccountResourceGroup" -AutomationAccountName "#AutomationAccountName" -Value $RPDetails -Encrypted $false  
+        New-AzureRmAutomationVariable -Name "#RecoveryPlanName" -ResourceGroupName "#AutomationAccountResourceGroup" -AutomationAccountName "#AutomationAccountName" -Value $RPDetails -Encrypted $false
 
         Replace all strings starting with a '#' with appropriate value
 
@@ -80,7 +90,7 @@ This runbook will create a public IP address for the failed over VM - only in te
 
 1. Give the name of the automation account in the variable $AutomationAccountName
 2. Give the Resource Group name of the automation account in $AutomationAccountRg
-3. Add this script as a post action in boot up group for the VMs where you need a public IP. 
+3. Add this script as a post action in boot up group for the VMs where you need a public IP.
 4. If you want to use an NSG to the failed over VMs, then you must perform the following additional steps:
 	1. Create the NSG in a Resource Group
 	2. Create two new variables in the automation account (string variable), with the name of NSG and the NSG resource group, using this pattern:
@@ -101,7 +111,7 @@ This runbook will attach an existing load balancer to the vNics of the virtual m
 
 	        New-AzureRmAutomationVariable -ResourceGroupName <RGName containing the automation account> -AutomationAccountName <automationAccount Name> -Name <recoveryPlan Name>-lb -Value <name of the load balancer> -Encrypted $false
 
-            New-AzureRmAutomationVariable -ResourceGroupName <RGName containing the automation account> -AutomationAccountName <automationAccount Name> -Name <recoveryPlan Name>-lbrg -Value <name of the load balancer resource group> -Encrypted $false     
+            New-AzureRmAutomationVariable -ResourceGroupName <RGName containing the automation account> -AutomationAccountName <automationAccount Name> -Name <recoveryPlan Name>-lbrg -Value <name of the load balancer resource group> -Encrypted $false
 
 ##### ASR-AddMultipleLoadBalancers
 
@@ -119,8 +129,7 @@ Example:
         $RPDetails = New-Object -TypeName PSObject -Property $InputObject  | ConvertTo-Json
         New-AzureRmAutomationVariable -Name "#RecoveryPlanName" -ResourceGroupName "#AutomationAccountResourceGroup" -AutomationAccountName "#AutomationAccountName" -Value $RPDetails -Encrypted $false
 
-		Replace all strings starting with a '#' with appropriate value  
-      
+		Replace all strings starting with a '#' with appropriate value
 
 ##### ASR-AddPublicIp
 
@@ -143,10 +152,6 @@ This runbook uses an external powershellscript located at https://raw.githubuser
 
 Click *Deploy to Azure* below to start the deployment
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fasr-automation-recovery%2F%2Fazuredeploy.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fasr-automation-recovery%2F%2Fazuredeploy.json)
 
-
-
-
-
-
+`Tags: PowerShell, PowerShellWorkflow, Microsoft.Automation/automationAccounts, variables, Microsoft.Automation/automationAccounts/runbooks, Microsoft.Automation/automationAccounts/modules`

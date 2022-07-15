@@ -1,4 +1,15 @@
-# Create an Azure Cosmos DB account and Web App and deploy web app from GitHub
+---
+description: This template creates an Azure Cosmos account, injects the Cosmos DB endpoint and keys into Azure Web App settings, then deploys an ASP MVC web app from GitHub.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-webapp
+languages:
+- json
+- bicep
+---
+# Create a zero touch Azure Cosmos account and Azure Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-webapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-webapp/PublicDeployment.svg)
@@ -35,3 +46,5 @@ Below are the parameters which can be user configured in the parameters file inc
 [![Deploy To Azure Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-webapp%2Fazuredeploy.json)
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-webapp%2Fazuredeploy.json)
+
+`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/sourcecontrols`

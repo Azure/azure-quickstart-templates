@@ -1,4 +1,14 @@
-# Create an Azure Cosmos DB account for Core (SQL) API with Multiple Containers
+---
+description: The template creates a Cosmos container with a SQL API and allows adding mulitple containers.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-sql-multiple-containers
+languages:
+- json
+---
+# Create Azure Cosmos with SQL API and multiple containers
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-multiple-containers/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-multiple-containers/PublicDeployment.svg)
@@ -20,3 +30,5 @@ Below are the parameters which can be user configured in the parameters file:
 - **accountName**: Enter the database name for the account.
 - **databaseName**: Enter the database name for the account.
 - **containers**: List of containers specifying the name and the partitionKey for each of them
+
+`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.DocumentDB/databaseAccounts/apis/databases, Microsoft.DocumentDb/databaseAccounts/apis/databases/containers`

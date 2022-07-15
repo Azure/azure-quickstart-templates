@@ -1,4 +1,14 @@
-# Enable encryption on a running Windows VM. 
+---
+description: This template enables encryption on a running windows vm.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: encrypt-running-windows-vm
+languages:
+- json
+---
+# Enable encryption on a running Windows VM.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-windows-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-windows-vm/PublicDeployment.svg)
@@ -22,10 +32,12 @@ Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $rgname
 
 Incase : If deployment fails with the the error code: Access Denied or conflict : extension not supported or VM has reported a failure when processing extension 'AzureDiskEncryption'. Error message: "Failed to configure bitlocker as expected; use the below PD cmdlet for removing the unsuccessful disk encryption extension and re-do the template deployment for success.
 Remove-AzureRmVMExtension -ResourceGroupName $rgname -Name "extensionname" -VMName $vmname
-Reference:  https://social.msdn.microsoft.com/Forums/SECURITY/en-US/f77af0b4-d06e-468a-816d-c894f08af125/error-user-encryption-settings-in-the-vm-model-are-not-supported-please-upgrade-azure-disk?forum=AzureDiskEncryption
+Reference:  https://social.msdn.microsoft.com/Forums/SECURITY/f77af0b4-d06e-468a-816d-c894f08af125/error-user-encryption-settings-in-the-vm-model-are-not-supported-please-upgrade-azure-disk?forum=AzureDiskEncryption
 https://blogs.msdn.microsoft.com/azuresecurity/2016/02/10/azure-disk-encryption-error-related-to-azure-powershell-1-1-0/
 
 References:
-White paper - https://azure.microsoft.com/en-us/documentation/articles/azure-security-disk-encryption/
+White paper - https://azure.microsoft.com/documentation/articles/azure-security-disk-encryption/
 http://blogs.msdn.com/b/azuresecurity/archive/2015/11/16/explore-azure-disk-encryption-with-azure-powershell.aspx
 http://blogs.msdn.com/b/azuresecurity/archive/2015/11/21/explore-azure-disk-encryption-with-azure-powershell-part-2.aspx
+
+`Tags: Microsoft.KeyVault/vaults, Microsoft.Compute/virtualMachines/extensions, AzureDiskEncryption, Microsoft.Network/VirtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, SystemAssigned`

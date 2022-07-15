@@ -1,4 +1,15 @@
-# Create a CDN Profile, a CDN Endpoint and a Server Farm and a Web App
+---
+description: This template creates a CDN Profile and a CDN Endpoint with a Web App as the origin
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-web-app
+languages:
+- json
+- bicep
+---
+# Create a CDN Profile, a CDN Endpoint and a Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-web-app/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-web-app/PublicDeployment.svg)
@@ -16,3 +27,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Fcdn-with-web-app%2Fazuredeploy.json)
 
 This template creates a CDN Profile and a CDN Endpoint with a Web App as the origin.
+
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/endpoints`

@@ -1,4 +1,15 @@
-# Create a free-tier Azure Cosmos DB account for Core (SQL) API
+---
+description: This template creates a free-tier Azure Cosmos account for Core (SQL) API with a database with shared throughput of 400 RU/s.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-free
+languages:
+- json
+- bicep
+---
+# Create a free-tier Azure Cosmos DB account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-free/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-free/PublicDeployment.svg)
@@ -21,3 +32,5 @@ Below are the parameters which can be user configured in the parameters file or 
 
 - **Location:** Enter location for primary region.
 - **Database Name:** Enter the database name for the account.
+
+`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.DocumentDB/databaseAccounts/sqlDatabases`

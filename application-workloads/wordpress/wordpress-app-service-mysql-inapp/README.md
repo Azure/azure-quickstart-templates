@@ -1,4 +1,14 @@
-# Deploys a WordPress web app on Azure App Service with MySQL in App 
+---
+description: This template deploys a WordPress Web App on a Windows App Service with MySQL in app
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: wordpress-app-service-mysql-inapp
+languages:
+- json
+---
+# WordPress on App Service with MySQL In App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wordpress/wordpress-app-service-mysql-inapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wordpress/wordpress-app-service-mysql-inapp/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fwordpress%2Fwordpress-app-service-mysql-inapp%2Fazuredeploy.json)
 
 This template deploys a WordPress site in [App service](https://docs.microsoft.com/azure/app-service/) (Windows) with [MySQL in App](https://blogs.msdn.microsoft.com/appserviceteam/2017/03/06/announcing-general-availability-for-mysql-in-app/).
+
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, sourcecontrols, config`

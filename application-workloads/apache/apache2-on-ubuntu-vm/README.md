@@ -1,3 +1,13 @@
+---
+description: This template uses the Azure Linux CustomScript extension to deploy an Apache web server. The deployment template creates an Ubuntu VM, installs Apache2 and creates a simple HTML file. Go to ../demo.html to see the deployed page.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: apache2-on-ubuntu-vm
+languages:
+- json
+---
 # Apache Webserver on Ubuntu VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/apache/apache2-on-ubuntu-vm/PublicLastTestDate.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fapache%2Fapache2-on-ubuntu-vm%2Fazuredeploy.json)
 
 This template uses the Azure Linux CustomScript extension to deploy an Apache web server. The template creates an Ubuntu VM, installs Apache2 and creates a simple HTML file. Go to ../demo.html to see the deployed page.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

@@ -1,4 +1,15 @@
-# Create ExpressRoute Circuit
+---
+description: This template creates an ExpressRoute Circuit for a specified Service Provider and SKU
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: expressroute-circuit-create
+languages:
+- json
+- bicep
+---
+# Create an ExpressRoute Circuit
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/expressroute-circuit-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/expressroute-circuit-create/PublicDeployment.svg)
@@ -22,3 +33,5 @@ Refer to https://azure.microsoft.com/documentation/articles/expressroute-introdu
 Refer to https://azure.microsoft.com/pricing/details/expressroute/ for more details on pricing/SKU of ExpressRoute.
 
 Refer to https://azure.microsoft.com/documentation/articles/expressroute-locations/ for ExpressRoute partners and peering locations list.
+
+`Tags: Microsoft.Network/expressRouteCircuits`

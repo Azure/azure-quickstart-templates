@@ -1,4 +1,14 @@
-# Microsoft Operations Management Suite
+---
+description: Deploys all OMS Services to a Resource Group
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: oms-all-deploy
+languages:
+- json
+---
+# Microsoft OMS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-all-deploy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-all-deploy/PublicDeployment.svg)
@@ -10,7 +20,7 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-all-deploy/CredScanResult.svg)
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-all-deploy%2Fazuredeploy.json)
-[![Deploy to Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-all-deploy%2Fazuredeploy.json)  
+[![Deploy to Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-all-deploy%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-all-deploy%2Fazuredeploy.json)
 
 Your time is precious, why spend it on trying to integrate multiple tools. Lose the product palooza and unify on a single solution, providing management at your fingertips. Get up and running in seconds and have real insights in just hours, giving you faster time to value.
@@ -83,6 +93,4 @@ Explore the Security solution
 
 *This template will be updated to add more capabilities*
 
-       
-
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Automation/automationAccounts, variables, string, credentials, Modules, runbooks, Microsoft.RecoveryServices/vaults, replicationFabrics, replicationPolicies, Microsoft.Storage/storageAccounts, Microsoft.OperationalInsights/workspaces, datasources, Microsoft.OperationalInsights/workspaces/savedSearches, Microsoft.OperationsManagement/solutions`

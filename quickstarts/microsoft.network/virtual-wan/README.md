@@ -1,4 +1,15 @@
-# Virtual Wan resources
+---
+description: This template allows you to create virtual WAN resources including Virtual WAN, Virtual Hub, VPN Gateway, VPN Site and a VPN Connecton.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: virtual-wan
+languages:
+- json
+- bicep
+---
+# Creates Virtual WAN resources
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan/PublicDeployment.svg)
@@ -21,4 +32,4 @@ This template creates a Virtual WAN, a Virtual Hub, a VPN Gateway in the Virtual
 [Virtual Wan Site-to-Site VPN Tutorial](https://docs.microsoft.com/azure/virtual-wan/virtual-wan-site-to-site-portal)
 [Virtual Wan FAQ](https://docs.microsoft.com/azure/virtual-wan/virtual-wan-faq)
 
-`Tags: network, virtual network, virtual wan, vpn, vwan, connections`
+`Tags:network, virtual network, virtual wan, vpn, vwan, connections, Microsoft.Network/virtualWans, [parameters('vWanSku')], Microsoft.Network/virtualHubs, Microsoft.Network/vpnSites, Microsoft.Network/vpnGateways`

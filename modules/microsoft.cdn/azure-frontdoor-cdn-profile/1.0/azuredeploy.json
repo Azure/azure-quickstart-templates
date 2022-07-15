@@ -1,0 +1,2074 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.8.9.13224",
+      "templateHash": "4422076732828731798"
+    }
+  },
+  "parameters": {
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Premium_AzureFrontDoor",
+      "metadata": {
+        "description": "Name of Azure CDN SKU"
+      },
+      "allowedValues": [
+        "Premium_AzureFrontDoor",
+        "Standard_AzureFrontDoor"
+      ]
+    },
+    "envName": {
+      "type": "string",
+      "metadata": {
+        "description": "Environment Name"
+      }
+    },
+    "cdnProfileName": {
+      "type": "string",
+      "defaultValue": "[format('afd-cdn-{0}-profile', parameters('envName'))]",
+      "metadata": {
+        "description": "Name of CDN Profile"
+      }
+    },
+    "afdEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-cdn-{0}', parameters('envName'))]",
+      "metadata": {
+        "description": "AFD Endpoint Name"
+      }
+    },
+    "origins": {
+      "type": "array",
+      "metadata": {
+        "description": "Origin details"
+      }
+    },
+    "customDomains": {
+      "type": "array",
+      "metadata": {
+        "description": "Custom Domain Array"
+      }
+    },
+    "cdnProfileTags": {
+      "type": "object",
+      "defaultValue": {
+        "envName": "[parameters('envName')]"
+      },
+      "metadata": {
+        "description": "Tags to identify resource owner"
+      }
+    },
+    "enableAfdEndpoint": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "AFD Endpoint State"
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "defaultValue": "[format('eventhub-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Event Hub Name"
+      }
+    },
+    "eventHubNamespace": {
+      "type": "string",
+      "defaultValue": "[format('{0}-ns', parameters('eventHubName'))]",
+      "metadata": {
+        "description": "Event Hub Namespace Name"
+      }
+    },
+    "eventHubLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Event Hub Namespace location"
+      }
+    },
+    "wafPolicyName": {
+      "type": "string",
+      "defaultValue": "[format('FrontDoorCdn{0}WAF', parameters('envName'))]",
+      "metadata": {
+        "description": "Name of the WAF policy to create."
+      }
+    },
+    "wafPolicyMode": {
+      "type": "string",
+      "defaultValue": "Prevention",
+      "metadata": {
+        "description": "Describes if it is in detection mode or prevention mode at policy level."
+      },
+      "allowedValues": [
+        "Detection",
+        "Prevention"
+      ]
+    },
+    "enableWAFPolicy": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Describes if the policy needs to enabled or disabled."
+      }
+    },
+    "wafBlockResponseBody": {
+      "type": "string",
+      "defaultValue": "Access Denied by Firewall.",
+      "metadata": {
+        "description": "Response body to return on Block"
+      }
+    },
+    "wafBlockResponseCode": {
+      "type": "int",
+      "defaultValue": 403,
+      "metadata": {
+        "description": "Response Code to return on Block. Default to 403"
+      },
+      "allowedValues": [
+        401,
+        403
+      ]
+    },
+    "enableRequestBodyCheck": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Describes if request body should be checked. Since we only allow GET in this module due to Custom Rule, default to false"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[format('afdcdn-{0}-waf-module', parameters('envName'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "skuName": {
+            "value": "[parameters('skuName')]"
+          },
+          "enableWAFPolicy": {
+            "value": "[parameters('enableWAFPolicy')]"
+          },
+          "wafPolicyMode": {
+            "value": "[parameters('wafPolicyMode')]"
+          },
+          "wafPolicyName": {
+            "value": "[parameters('wafPolicyName')]"
+          },
+          "wafBlockResponseBody": {
+            "value": "[parameters('wafBlockResponseBody')]"
+          },
+          "wafBlockResponseCode": {
+            "value": "[parameters('wafBlockResponseCode')]"
+          },
+          "enableRequestBodyCheck": {
+            "value": "[parameters('enableRequestBodyCheck')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.8.9.13224",
+              "templateHash": "7507352505022112938"
+            }
+          },
+          "parameters": {
+            "skuName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of Azure CDN SKU"
+              }
+            },
+            "wafPolicyName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the WAF policy to create."
+              }
+            },
+            "wafPolicyMode": {
+              "type": "string",
+              "metadata": {
+                "description": "Describes if it is in detection mode or prevention mode at policy level."
+              },
+              "allowedValues": [
+                "Detection",
+                "Prevention"
+              ]
+            },
+            "enableWAFPolicy": {
+              "type": "bool",
+              "metadata": {
+                "description": "Describes if the policy needs to enabled or disabled."
+              }
+            },
+            "wafBlockResponseBody": {
+              "type": "string",
+              "metadata": {
+                "description": "Response body to return on Block"
+              }
+            },
+            "wafBlockResponseCode": {
+              "type": "int",
+              "metadata": {
+                "description": "Response Code to return on Block. Default to 403"
+              },
+              "allowedValues": [
+                401,
+                403
+              ]
+            },
+            "enableRequestBodyCheck": {
+              "type": "bool",
+              "metadata": {
+                "description": "Describes if request body should be checked."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+              "apiVersion": "2020-11-01",
+              "name": "[parameters('wafPolicyName')]",
+              "location": "Global",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "policySettings": {
+                  "enabledState": "[if(parameters('enableWAFPolicy'), 'Enabled', 'Disabled')]",
+                  "mode": "[parameters('wafPolicyMode')]",
+                  "customBlockResponseStatusCode": "[parameters('wafBlockResponseCode')]",
+                  "customBlockResponseBody": "[base64(parameters('wafBlockResponseBody'))]",
+                  "requestBodyCheck": "[if(parameters('enableRequestBodyCheck'), 'Enabled', 'Disabled')]"
+                },
+                "customRules": {
+                  "rules": [
+                    {
+                      "name": "BlockMethod",
+                      "enabledState": "Enabled",
+                      "priority": 10,
+                      "ruleType": "MatchRule",
+                      "rateLimitDurationInMinutes": 1,
+                      "rateLimitThreshold": 100,
+                      "matchConditions": [
+                        {
+                          "matchVariable": "RequestMethod",
+                          "operator": "Equal",
+                          "negateCondition": true,
+                          "matchValue": [
+                            "GET",
+                            "OPTIONS",
+                            "HEAD"
+                          ]
+                        }
+                      ],
+                      "action": "Block"
+                    }
+                  ]
+                },
+                "managedRules": {
+                  "managedRuleSets": [
+                    {
+                      "ruleSetType": "Microsoft_DefaultRuleSet",
+                      "ruleSetVersion": "2.0",
+                      "ruleSetAction": "Log",
+                      "ruleGroupOverrides": [
+                        {
+                          "ruleGroupName": "NODEJS",
+                          "rules": [
+                            {
+                              "ruleId": "934100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "General",
+                          "rules": [
+                            {
+                              "ruleId": "200003",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "200002",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "PROTOCOL-ENFORCEMENT",
+                          "rules": [
+                            {
+                              "ruleId": "920480",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920470",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920450",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920440",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920430",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920420",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920350",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920341",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920340",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920330",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920320",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920311",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920310",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920300",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920290",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920280",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920271",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920270",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920260",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920240",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920230",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920220",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920210",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920201",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920200",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920190",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920180",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920171",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920170",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920160",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920121",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920120",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "920100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "METHOD-ENFORCEMENT",
+                          "rules": [
+                            {
+                              "ruleId": "911100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "JAVA",
+                          "rules": [
+                            {
+                              "ruleId": "944250",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "944240",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "944210",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "944200",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "944130",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "944120",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "944110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "944100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "FIX",
+                          "rules": [
+                            {
+                              "ruleId": "943120",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "943110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "943100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "SQLI",
+                          "rules": [
+                            {
+                              "ruleId": "942510",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942500",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942480",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942470",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942450",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942440",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942430",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942410",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942400",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942390",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942380",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942370",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942361",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942360",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942350",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942340",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942330",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942320",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942310",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942300",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942290",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942280",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942270",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942260",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942250",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942240",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942230",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942220",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942210",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942200",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942190",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942180",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942170",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942160",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942150",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942140",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942120",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942110",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "942100",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "XSS",
+                          "rules": [
+                            {
+                              "ruleId": "941380",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941370",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941360",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941350",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941340",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941330",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941320",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941310",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941300",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941290",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941280",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941270",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941260",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941250",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941240",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941230",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941220",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941210",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941200",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941190",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941180",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941170",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941160",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941150",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941140",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941130",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941120",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941101",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "941100",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "PHP",
+                          "rules": [
+                            {
+                              "ruleId": "933210",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933200",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933180",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933170",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933160",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933151",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933150",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933140",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933130",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933120",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "933100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "RCE",
+                          "rules": [
+                            {
+                              "ruleId": "932180",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932171",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932170",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932160",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932150",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932140",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932130",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932120",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932115",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932105",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "932100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "RFI",
+                          "rules": [
+                            {
+                              "ruleId": "931130",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "931120",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "931110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "931100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "LFI",
+                          "rules": [
+                            {
+                              "ruleId": "930130",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "930120",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "930110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "930100",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "PROTOCOL-ATTACK",
+                          "rules": [
+                            {
+                              "ruleId": "921151",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "921160",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "921150",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "921140",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "921130",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "921120",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "921110",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "MS-ThreatIntel-CVEs",
+                          "rules": [
+                            {
+                              "ruleId": "99001016",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99001015",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99001014",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99001001",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "MS-ThreatIntel-SQLI",
+                          "rules": [
+                            {
+                              "ruleId": "99031002",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99031001",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "MS-ThreatIntel-AppSec",
+                          "rules": [
+                            {
+                              "ruleId": "99030002",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99030001",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        },
+                        {
+                          "ruleGroupName": "MS-ThreatIntel-WebShells",
+                          "rules": [
+                            {
+                              "ruleId": "99005006",
+                              "enabledState": "Disabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99005004",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99005003",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            },
+                            {
+                              "ruleId": "99005002",
+                              "enabledState": "Enabled",
+                              "action": "Log"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "cdnWafId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', parameters('wafPolicyName'))]"
+            },
+            "cdnWafName": {
+              "type": "string",
+              "value": "[parameters('wafPolicyName')]"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "description": "Crearte Azure WAF for CDN"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[format('afdcdn-{0}-profile-module', parameters('envName'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "skuName": {
+            "value": "[parameters('skuName')]"
+          },
+          "cdnProfileName": {
+            "value": "[parameters('cdnProfileName')]"
+          },
+          "afdEndpointName": {
+            "value": "[parameters('afdEndpointName')]"
+          },
+          "enableAfdEndpoint": {
+            "value": "[parameters('enableAfdEndpoint')]"
+          },
+          "customDomains": {
+            "value": "[parameters('customDomains')]"
+          },
+          "origins": {
+            "value": "[parameters('origins')]"
+          },
+          "cdnProfileTags": {
+            "value": "[parameters('cdnProfileTags')]"
+          },
+          "wafPolicyName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-waf-module', parameters('envName')))).outputs.cdnWafName.value]"
+          },
+          "wafPolicyId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-waf-module', parameters('envName')))).outputs.cdnWafId.value]"
+          },
+          "eventHubName": {
+            "value": "[parameters('eventHubName')]"
+          },
+          "eventHubNamespace": {
+            "value": "[parameters('eventHubNamespace')]"
+          },
+          "eventHubLocation": {
+            "value": "[parameters('eventHubLocation')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.8.9.13224",
+              "templateHash": "17568282964636626295"
+            }
+          },
+          "parameters": {
+            "skuName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of Azure CDN SKU"
+              },
+              "allowedValues": [
+                "Premium_AzureFrontDoor",
+                "Standard_AzureFrontDoor"
+              ]
+            },
+            "cdnProfileName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of CDN Profile"
+              }
+            },
+            "afdEndpointName": {
+              "type": "string",
+              "metadata": {
+                "description": "AFD Endpoint Name"
+              }
+            },
+            "enableAfdEndpoint": {
+              "type": "bool",
+              "metadata": {
+                "description": "AFD Endpoint State"
+              }
+            },
+            "cdnProfileTags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to identify resource owner"
+              }
+            },
+            "customDomains": {
+              "type": "array",
+              "metadata": {
+                "description": "Custom Domain List"
+              }
+            },
+            "origins": {
+              "type": "array",
+              "metadata": {
+                "description": "Origin List"
+              }
+            },
+            "eventHubName": {
+              "type": "string",
+              "metadata": {
+                "description": "Event Hub Name"
+              }
+            },
+            "eventHubNamespace": {
+              "type": "string",
+              "metadata": {
+                "description": "Event Hub Namespace Name"
+              }
+            },
+            "eventHubLocation": {
+              "type": "string",
+              "metadata": {
+                "description": "Event Hub Namespace location"
+              }
+            },
+            "wafPolicyName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the WAF policy to create."
+              }
+            },
+            "wafPolicyId": {
+              "type": "string",
+              "metadata": {
+                "description": "Id of the WAF policy to attach"
+              }
+            }
+          },
+          "variables": {
+            "copy": [
+              {
+                "name": "customDomainIds",
+                "count": "[length(parameters('customDomains'))]",
+                "input": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', parameters('cdnProfileName'), replace(parameters('customDomains')[copyIndex('customDomainIds')].hostname, '.', '-'))]"
+                }
+              }
+            ],
+            "afdEndpointIds": [
+              {
+                "id": "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('cdnProfileName'), parameters('afdEndpointName'))]"
+              }
+            ],
+            "endPointIdsForWaf": "[union(variables('customDomainIds'), variables('afdEndpointIds'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2021-06-01",
+              "name": "[parameters('cdnProfileName')]",
+              "location": "Global",
+              "tags": "[parameters('cdnProfileTags')]",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "originResponseTimeoutSeconds": 60
+              },
+              "metadata": {
+                "description": "Create CDN Profile"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', parameters('cdnProfileName'), parameters('afdEndpointName'))]",
+              "location": "Global",
+              "properties": {
+                "enabledState": "[if(parameters('enableAfdEndpoint'), 'Enabled', 'Disabled')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]"
+              ],
+              "metadata": {
+                "description": "Create AFD Endpoint"
+              }
+            },
+            {
+              "copy": {
+                "name": "custom_domains",
+                "count": "[length(parameters('customDomains'))]"
+              },
+              "type": "Microsoft.Cdn/profiles/customDomains",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', parameters('cdnProfileName'), replace(parameters('customDomains')[copyIndex()].hostname, '.', '-'))]",
+              "properties": {
+                "hostName": "[parameters('customDomains')[copyIndex()].hostname]",
+                "tlsSettings": {
+                  "certificateType": "ManagedCertificate",
+                  "minimumTlsVersion": "TLS12"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]"
+              ],
+              "metadata": {
+                "description": "Create Custom Domains to be used for CDN profile"
+              }
+            },
+            {
+              "copy": {
+                "name": "origin_groups",
+                "count": "[length(parameters('origins'))]"
+              },
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', parameters('cdnProfileName'), parameters('origins')[copyIndex()].originGroupName)]",
+              "properties": {
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3,
+                  "additionalLatencyInMilliseconds": 50
+                },
+                "healthProbeSettings": {
+                  "probePath": "/",
+                  "probeRequestType": "GET",
+                  "probeProtocol": "Https",
+                  "probeIntervalInSeconds": 100
+                },
+                "sessionAffinityState": "Disabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]"
+              ],
+              "metadata": {
+                "description": "List of Origin Groups"
+              }
+            },
+            {
+              "copy": {
+                "name": "cdn_origins",
+                "count": "[length(parameters('origins'))]"
+              },
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}/{2}', parameters('cdnProfileName'), parameters('origins')[copyIndex()].originGroupName, replace(parameters('origins')[copyIndex()].hostname, '.', '-'))]",
+              "properties": {
+                "hostName": "[parameters('origins')[copyIndex()].hostname]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('origins')[copyIndex()].hostname]",
+                "priority": 1,
+                "weight": 1000,
+                "enabledState": "[if(parameters('origins')[copyIndex()].enabledState, 'Enabled', 'Disabled')]",
+                "enforceCertificateNameCheck": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('cdnProfileName'), parameters('origins')[copyIndex()].originGroupName)]"
+              ],
+              "metadata": {
+                "description": "List of origin and mapping to Origin Groups"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/securityPolicies",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', parameters('cdnProfileName'), parameters('wafPolicyName'))]",
+              "properties": {
+                "parameters": {
+                  "wafPolicy": {
+                    "id": "[parameters('wafPolicyId')]"
+                  },
+                  "associations": [
+                    {
+                      "domains": "[variables('endPointIdsForWaf')]",
+                      "patternsToMatch": [
+                        "/*"
+                      ]
+                    }
+                  ],
+                  "type": "WebApplicationFirewall"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('cdnProfileName'), parameters('afdEndpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]",
+                "custom_domains"
+              ],
+              "metadata": {
+                "description": "Attach WAF for Security policy"
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('{0}-eventhub-module', parameters('cdnProfileName'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "eventHubNameSpace": {
+                    "value": "[parameters('eventHubNamespace')]"
+                  },
+                  "eventHubName": {
+                    "value": "[parameters('eventHubName')]"
+                  },
+                  "eventHubLocation": {
+                    "value": "[parameters('eventHubLocation')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.8.9.13224",
+                      "templateHash": "9888243756539612031"
+                    }
+                  },
+                  "parameters": {
+                    "eventHubNameSpace": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Event Hub Namespace Name"
+                      }
+                    },
+                    "eventHubName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Event Hub Name"
+                      }
+                    },
+                    "eventHubLocation": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Event Hub Namespace location"
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.EventHub/namespaces",
+                      "apiVersion": "2022-01-01-preview",
+                      "name": "[parameters('eventHubNameSpace')]",
+                      "location": "[parameters('eventHubLocation')]",
+                      "sku": {
+                        "name": "Standard",
+                        "tier": "Standard",
+                        "capacity": 20
+                      },
+                      "properties": {
+                        "minimumTlsVersion": "1.0",
+                        "publicNetworkAccess": "Enabled",
+                        "disableLocalAuth": false,
+                        "zoneRedundant": false,
+                        "isAutoInflateEnabled": true,
+                        "maximumThroughputUnits": 20,
+                        "kafkaEnabled": true
+                      }
+                    },
+                    {
+                      "type": "Microsoft.EventHub/namespaces/authorizationRules",
+                      "apiVersion": "2022-01-01-preview",
+                      "name": "[format('{0}/{1}', parameters('eventHubNameSpace'), 'RootManageSharedAccessKey')]",
+                      "properties": {
+                        "rights": [
+                          "Listen",
+                          "Manage",
+                          "Send"
+                        ]
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNameSpace'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.EventHub/namespaces/eventhubs",
+                      "apiVersion": "2022-01-01-preview",
+                      "name": "[format('{0}/{1}', parameters('eventHubNameSpace'), parameters('eventHubName'))]",
+                      "properties": {
+                        "messageRetentionInDays": 1,
+                        "partitionCount": 20,
+                        "status": "Active"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNameSpace'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.EventHub/namespaces/networkRuleSets",
+                      "apiVersion": "2022-01-01-preview",
+                      "name": "[format('{0}/{1}', parameters('eventHubNameSpace'), 'default')]",
+                      "properties": {
+                        "publicNetworkAccess": "Enabled",
+                        "defaultAction": "Allow"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNameSpace'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+                      "apiVersion": "2022-01-01-preview",
+                      "name": "[format('{0}/{1}/{2}', parameters('eventHubNameSpace'), parameters('eventHubName'), '$Default')]",
+                      "dependsOn": [
+                        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNameSpace'), parameters('eventHubName'))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "eventHubName": {
+                      "type": "string",
+                      "value": "[parameters('eventHubName')]"
+                    },
+                    "eventHubAuthId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNameSpace'), 'RootManageSharedAccessKey')]"
+                    }
+                  }
+                }
+              },
+              "metadata": {
+                "description": "Create EventHub."
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('{0}-rulesets-module', parameters('cdnProfileName'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "cdnProfileName": {
+                    "value": "[parameters('cdnProfileName')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.8.9.13224",
+                      "templateHash": "8484784248673619152"
+                    }
+                  },
+                  "parameters": {
+                    "cdnProfileName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of CDN Profile. For chaining, use output from parent module"
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Cdn/profiles/ruleSets",
+                      "apiVersion": "2021-06-01",
+                      "name": "[format('{0}/{1}', parameters('cdnProfileName'), 'Global')]",
+                      "metadata": {
+                        "description": "Default ruleset"
+                      }
+                    },
+                    {
+                      "type": "Microsoft.Cdn/profiles/ruleSets/rules",
+                      "apiVersion": "2021-06-01",
+                      "name": "[format('{0}/{1}/{2}', parameters('cdnProfileName'), 'Global', 'OverwriteResponseHeaders')]",
+                      "properties": {
+                        "order": 1,
+                        "actions": [
+                          {
+                            "name": "ModifyResponseHeader",
+                            "parameters": {
+                              "typeName": "DeliveryRuleHeaderActionParameters",
+                              "headerAction": "Overwrite",
+                              "headerName": "X-CDN",
+                              "value": "AZUR"
+                            }
+                          },
+                          {
+                            "name": "RouteConfigurationOverride",
+                            "parameters": {
+                              "typeName": "DeliveryRuleRouteConfigurationOverrideActionParameters",
+                              "cacheConfiguration": {
+                                "isCompressionEnabled": "Enabled",
+                                "queryStringCachingBehavior": "UseQueryString",
+                                "cacheBehavior": "OverrideIfOriginMissing",
+                                "cacheDuration": "365.00:00:00"
+                              }
+                            }
+                          }
+                        ],
+                        "matchProcessingBehavior": "Continue"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Cdn/profiles/ruleSets', parameters('cdnProfileName'), 'Global')]"
+                      ],
+                      "metadata": {
+                        "description": "Modify other request-response headers and add to global rulesets"
+                      }
+                    }
+                  ],
+                  "outputs": {
+                    "defaultRuleSetId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.Cdn/profiles/ruleSets', parameters('cdnProfileName'), 'Global')]"
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]"
+              ],
+              "metadata": {
+                "description": "Default Rule Sets."
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('{0}-monitoring-module', parameters('cdnProfileName'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "cdnProfileName": {
+                    "value": "[parameters('cdnProfileName')]"
+                  },
+                  "eventHubName": {
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-eventhub-module', parameters('cdnProfileName')))).outputs.eventHubName.value]"
+                  },
+                  "eventHubAuthId": {
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-eventhub-module', parameters('cdnProfileName')))).outputs.eventHubAuthId.value]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.8.9.13224",
+                      "templateHash": "12464103753917278842"
+                    }
+                  },
+                  "parameters": {
+                    "cdnProfileName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of CDN Profile. For chaining, use output from parent module"
+                      }
+                    },
+                    "eventHubName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Event Hub Name"
+                      }
+                    },
+                    "eventHubAuthId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Event Hub AuthId"
+                      }
+                    }
+                  },
+                  "variables": {
+                    "diagnosticSettings": [
+                      {
+                        "name": "azure-afd-cdn-logs-diagnostic-settings",
+                        "eventHub": "[parameters('eventHubName')]",
+                        "eventHubAuthorizationRuleId": "[parameters('eventHubAuthId')]",
+                        "logSettings": [
+                          {
+                            "name": "FrontDoorAccessLog",
+                            "enabled": true
+                          },
+                          {
+                            "name": "FrontDoorWebApplicationFirewallLog",
+                            "enabled": false
+                          },
+                          {
+                            "name": "FrontDoorHealthProbeLog",
+                            "enabled": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "resources": [
+                    {
+                      "copy": {
+                        "name": "diagnostic_setting",
+                        "count": "[length(variables('diagnosticSettings'))]"
+                      },
+                      "type": "Microsoft.Insights/diagnosticSettings",
+                      "apiVersion": "2021-05-01-preview",
+                      "scope": "[format('Microsoft.Cdn/profiles/{0}', parameters('cdnProfileName'))]",
+                      "name": "[variables('diagnosticSettings')[copyIndex()].name]",
+                      "properties": {
+                        "copy": [
+                          {
+                            "name": "logs",
+                            "count": "[length(variables('diagnosticSettings')[copyIndex()].logSettings)]",
+                            "input": {
+                              "category": "[variables('diagnosticSettings')[copyIndex()].logSettings[copyIndex('logs')].name]",
+                              "enabled": "[variables('diagnosticSettings')[copyIndex()].logSettings[copyIndex('logs')].enabled]",
+                              "retentionPolicy": {
+                                "enabled": false,
+                                "days": 0
+                              }
+                            }
+                          }
+                        ],
+                        "eventHubName": "[variables('diagnosticSettings')[copyIndex()].eventHub]",
+                        "eventHubAuthorizationRuleId": "[variables('diagnosticSettings')[copyIndex()].eventHubAuthorizationRuleId]",
+                        "metrics": [
+                          {
+                            "category": "AllMetrics",
+                            "enabled": false,
+                            "retentionPolicy": {
+                              "enabled": false,
+                              "days": 0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]",
+                "[resourceId('Microsoft.Resources/deployments', format('{0}-eventhub-module', parameters('cdnProfileName')))]"
+              ],
+              "metadata": {
+                "description": "Create Diagnostic Settings for Logs"
+              }
+            }
+          ],
+          "outputs": {
+            "cdnName": {
+              "type": "string",
+              "value": "[parameters('cdnProfileName')]"
+            },
+            "afdEndpointName": {
+              "type": "string",
+              "value": "[parameters('afdEndpointName')]"
+            },
+            "afdEndpointHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('cdnProfileName'), parameters('afdEndpointName'))).hostName]"
+            },
+            "defaultRuleSets": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-rulesets-module', parameters('cdnProfileName')))).outputs.defaultRuleSetId.value]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-waf-module', parameters('envName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[format('afdcdn-{0}-routes-module', parameters('envName'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "cdnProfileName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-profile-module', parameters('envName')))).outputs.cdnName.value]"
+          },
+          "afdEndpointName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-profile-module', parameters('envName')))).outputs.afdEndpointName.value]"
+          },
+          "customDomains": {
+            "value": "[parameters('customDomains')]"
+          },
+          "routeRuleSets": {
+            "value": [
+              {
+                "id": "[reference(resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-profile-module', parameters('envName')))).outputs.defaultRuleSets.value]"
+              }
+            ]
+          },
+          "origins": {
+            "value": "[parameters('origins')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.8.9.13224",
+              "templateHash": "6064292135171130630"
+            }
+          },
+          "parameters": {
+            "origins": {
+              "type": "array",
+              "metadata": {
+                "description": "Origin details"
+              }
+            },
+            "customDomains": {
+              "type": "array",
+              "metadata": {
+                "description": "Custom Domain Array"
+              }
+            },
+            "cdnProfileName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of CDN Profile. For chaining, use output from parent module"
+              }
+            },
+            "afdEndpointName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of AFD endpoint"
+              }
+            },
+            "routeRuleSets": {
+              "type": "array",
+              "metadata": {
+                "description": "Rulesets List"
+              }
+            }
+          },
+          "variables": {
+            "contentTypeCompressionList": [
+              "application/eot",
+              "application/font",
+              "application/font-sfnt",
+              "application/javascript",
+              "application/json",
+              "application/opentype",
+              "application/otf",
+              "application/pkcs7-mime",
+              "application/truetype",
+              "application/ttf",
+              "application/vnd.ms-fontobject",
+              "application/xhtml+xml",
+              "application/xml",
+              "application/xml+rss",
+              "application/x-font-opentype",
+              "application/x-font-truetype",
+              "application/x-font-ttf",
+              "application/x-httpd-cgi",
+              "application/x-javascript",
+              "application/x-mpegurl",
+              "application/x-opentype",
+              "application/x-otf",
+              "application/x-perl",
+              "application/x-ttf",
+              "font/eot",
+              "font/ttf",
+              "font/otf",
+              "font/opentype",
+              "image/svg+xml",
+              "text/css",
+              "text/csv",
+              "text/html",
+              "text/javascript",
+              "text/js",
+              "text/plain",
+              "text/richtext",
+              "text/tab-separated-values",
+              "text/xml",
+              "text/x-script",
+              "text/x-component",
+              "text/x-java-source"
+            ]
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "origin_routes",
+                "count": "[length(parameters('origins'))]"
+              },
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}/{2}', parameters('cdnProfileName'), parameters('afdEndpointName'), format('{0}-route', parameters('origins')[copyIndex()].originGroupName))]",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "customDomains",
+                    "count": "[length(parameters('customDomains'))]",
+                    "input": {
+                      "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', parameters('cdnProfileName'), replace(parameters('customDomains')[copyIndex('customDomains')].hostname, '.', '-'))]"
+                    }
+                  }
+                ],
+                "cacheConfiguration": {
+                  "compressionSettings": {
+                    "isCompressionEnabled": true,
+                    "contentTypesToCompress": "[variables('contentTypeCompressionList')]"
+                  },
+                  "queryStringCachingBehavior": "UseQueryString"
+                },
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('cdnProfileName'), parameters('origins')[copyIndex()].originGroupName)]"
+                },
+                "ruleSets": "[parameters('routeRuleSets')]",
+                "supportedProtocols": [
+                  "Https"
+                ],
+                "patternsToMatch": "[parameters('origins')[copyIndex()].patternsToMatch]",
+                "forwardingProtocol": "HttpsOnly",
+                "linkToDefaultDomain": "Enabled",
+                "httpsRedirect": "Enabled",
+                "enabledState": "Enabled"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-profile-module', parameters('envName')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "afdEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('afdcdn-{0}-profile-module', parameters('envName')))).outputs.afdEndpointHostName.value]"
+    }
+  }
+}

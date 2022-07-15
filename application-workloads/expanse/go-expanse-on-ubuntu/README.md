@@ -1,4 +1,14 @@
-# Gexp Private Node
+---
+description: This template deploys a Go Expanse client on Ubuntu virtual machines
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: go-expanse-on-ubuntu
+languages:
+- json
+---
+# Go Expanse on Ubuntu
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result]( https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/PublicDeployment.svg)
@@ -9,21 +19,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/CredScanResult.svg)
 
-
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicDeployment.svg" />&nbsp;
-
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
-
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/CredScanResult.svg" />&nbsp;
-
 This Microsoft Azure template deploys a single Expanse client with a private chain for development and testing.
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fexpanse%2Fgo-expanse-on-ubuntu%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fexpanse%2Fgo-expanse-on-ubuntu%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fexpanse%2Fgo-expanse-on-ubuntu%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fexpanse%2Fgo-expanse-on-ubuntu%2Fazuredeploy.json)
 
 Once your deployment is complete you will have a expanse environment with:
 
@@ -33,7 +33,8 @@ Once your deployment is complete you will have a expanse environment with:
 
 ![Expanse-Azure](images/exp.png)
 
-# Template Parameters
+## Template Parameters
+
 When you launch the installation of the cluster, you need to specify the following parameters:
 * `dnsLabelPrefix`: this is the public DNS name for the VM that you will use interact with your gexp console. You just need to specify an unique name.
 * `adminUsername`: self-explanatory. This is the account you will use for connecting to the node
@@ -53,7 +54,8 @@ When you launch the installation of the cluster, you need to specify the followi
  1. SSH to the public ip of your node as the user you specified for `adminUsername`
  2. Enter your `adminPassword`
 
-# Deploying your first contract
+## Deploying your first contract
 
 Welcome to Expanse! You are one step closer becoming a decentralized application developer.
 
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

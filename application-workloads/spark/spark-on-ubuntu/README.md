@@ -1,4 +1,14 @@
-# Install a Spark cluster on Ubuntu Virtual Machines using Custom Script Linux Extension
+---
+description: This template creates a Spark cluster on Ubuntu virtual machine image, enables persistence (by default) and applies all well-known optimizations and best practices
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: spark-on-ubuntu
+languages:
+- json
+---
+# Provisions a Spark Cluster on Ubuntu Virtual Machines
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/spark-on-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/spark-on-ubuntu/PublicDeployment.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-on-ubuntu%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-on-ubuntu%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-on-ubuntu%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-on-ubuntu%2Fazuredeploy.json)
 
 Apache Spark is a fast and general engine for large-scale data processing.
 Spark has an advanced DAG execution engine that supports cyclic data flow and in-memory computing.
@@ -98,4 +108,4 @@ To check deployment errors go to the new azure portal and look under Resource Gr
 - The deployment script is not yet handling data disks and using local storage. There will be a separate checkin for disks as per T shirt sizing.
 - Spark cluster is current enabled for one master and multi slaves.
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Network/virtualNetworks`

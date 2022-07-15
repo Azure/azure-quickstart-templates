@@ -1,4 +1,14 @@
-# Deployment of a VM Scale Set of Linux VMs behind an load balancer with NAT rules
+---
+description: This template allows you to deploy a VM Scale Set of Linux VMs using the latest patched version of Ubuntu Linux 15.10 or 14.04.4-LTS. These VMs are behind an internal load balancer with NAT rules for ssh connections.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vmss-internal-loadbalancer
+languages:
+- json
+---
+# Deploy a VM Scale Set with Linux VMs behind ILB
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-internal-loadbalancer/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-internal-loadbalancer/PublicDeployment.svg)
@@ -23,5 +33,4 @@ PARAMETER RESTRICTIONS
 vmssName must be 3-61 characters in length. It should also be globally unique across all of Azure. If it isn't globally unique, it is possible that this template will still deploy properly, but we don't recommend relying on this pseudo-probabilistic behavior.
 instanceCount must be 100 or less.
 
-
-
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIPAddresses, Microsoft.Compute/virtualMachines, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets`
