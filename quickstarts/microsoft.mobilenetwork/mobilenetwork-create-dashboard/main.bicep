@@ -127,7 +127,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Sum'
                   }
                   isOptional: true
@@ -171,7 +170,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Sum'
                   }
                 }
@@ -272,7 +270,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Max'
                   }
                   isOptional: true
@@ -307,7 +304,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Max'
                   }
                 }
@@ -408,7 +404,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Sum'
                   }
                   isOptional: true
@@ -445,7 +440,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Sum'
                   }
                 }
@@ -554,7 +548,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Sum'
                   }
                   isOptional: true
@@ -706,7 +699,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Sum'
                   }
                   isOptional: true
@@ -771,7 +763,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                         type: 'real'
                       }
                     ]
-                    splitBy: []
                     aggregation: 'Sum'
                   }
                 }
