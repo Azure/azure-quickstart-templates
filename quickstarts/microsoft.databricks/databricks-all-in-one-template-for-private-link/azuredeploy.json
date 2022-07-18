@@ -1,0 +1,351 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nsgName": {
+      "defaultValue": "databricks-nsg",
+      "type": "string",
+      "metadata": {
+        "description": "The name of the network security group to create."
+      }
+    },
+    "vnetName": {
+      "defaultValue": "databricks-vnet",
+      "type": "string",
+      "metadata": {
+        "description": "The name of the virtual network to create."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Databricks workspace to create."
+      }
+    },
+    "privateSubnetName": {
+      "defaultValue": "private-subnet",
+      "type": "string",
+      "metadata": {
+        "description": "The name of the private subnet to create."
+      }
+    },
+    "publicSubnetName": {
+      "defaultValue": "public-subnet",
+      "type": "string",
+      "metadata": {
+        "description": "The name of the public subnet to create."
+      }
+    },
+    "privateEndpointSubnetName": {
+      "defaultValue": "privatelink-subnet",
+      "type": "string",
+      "metadata": {
+        "description": "The name of the subnet for private endpoints."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "vnetCidr": {
+      "defaultValue": "10.179.0.0/16",
+      "type": "string",
+      "metadata": {
+        "description": "Cidr range for the vnet."
+      }
+    },
+    "privateSubnetCidr": {
+      "defaultValue": "10.179.0.0/18",
+      "type": "string",
+      "metadata": {
+        "description": "Cidr range for the private subnet."
+      }
+    },
+    "publicSubnetCidr": {
+      "defaultValue": "10.179.64.0/18",
+      "type": "string",
+      "metadata": {
+        "description": "Cidr range for the public subnet."
+      }
+    },
+    "privatelinkSubnetCidr": {
+      "defaultValue": "10.179.128.0/24",
+      "type": "string",
+      "metadata": {
+        "description": "Cidr range for the private link subnet."
+      }
+    },
+    "publicNetworkAccess": {
+      "defaultValue": "Enabled",
+      "type": "string",
+      "metadata": {
+        "description": "Indicates whether public network access is allowed to the workspace with private endpoint - possible values are Enabled or Disabled"
+      }
+    }
+  },
+  "variables": {
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+    "nsgPlName": "[concat(parameters('nsgName'), '-pe')]",
+    "nsgPlId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgPlName'))]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+    "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
+    "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+    "privateEndpointName": "[concat(parameters('workspaceName'), '-', 'pvtEndpoint')]",
+    "privateDnsZoneName": "privatelink.azuredatabricks.net",
+    "pvtEndpointDnsGroupName": "[concat(variables('privateEndpointName'),'/pvtDnsZoneGroup')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[parameters('location')]",
+      "name": "[parameters('nsgName')]"
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('nsgPlName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowRDP",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyInternetOutbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAAD",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureActiveDirectory",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowCDN",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureFrontDoor.Frontend",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "name": "[parameters('vnetName')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetCidr')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('publicSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('publicSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-public",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "[parameters('privateSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('privateSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-private",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "privatelink-subnet",
+            "properties": {
+              "addressPrefix": "[parameters('privatelinkSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgPlId')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Disabled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2018-04-01",
+      "type": "Microsoft.Databricks/workspaces",
+      "location": "[parameters('location')]",
+      "name": "[parameters('workspaceName')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+      ],
+      "sku": {
+        "name": "premium"
+      },
+      "comments": "The managed resource group specified will be locked after deployment.",
+      "properties": {
+        "ManagedResourceGroupId": "[variables('managedResourceGroupId')]",
+        "parameters": {
+          "customVirtualNetworkId": {
+            "value": "[variables('vnetId')]"
+          },
+          "customPublicSubnetName": {
+            "value": "[parameters('publicSubnetName')]"
+          },
+          "customPrivateSubnetName": {
+            "value": "[parameters('privateSubnetName')]"
+          },
+          "enableNoPublicIp": {
+            "value": true
+          }
+        },
+        "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+        "requiredNsgRules": "NoAzureDatabricksRules"
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-04-01",
+      "name": "[variables('privateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
+      ],
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('PrivateEndpointSubnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[variables('privateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Databricks/workspaces',parameters('workspaceName'))]",
+              "groupIds": [
+                "databricks_ui_api"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateDnsZoneName')]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('privateDnsZoneName'), '/', variables('privateDnsZoneName'), '-link')]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+      ],
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('pvtEndpointDnsGroupName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[variables('privateEndpointName')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
