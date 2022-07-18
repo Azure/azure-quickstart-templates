@@ -17,35 +17,41 @@ param siteName string = 'myExampleSite'
 ])
 param platformType string = 'AKS-HCI'
 
-@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface, whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge Pro device.')
+@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param controlPlaneAccessInterfaceName string = ''
 
-@description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface, whereas in 4G networks this is called the S1-MME interface.')
-param controlPlaneAccessIpAddress string
+@description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
+param controlPlaneAccessIpAddress string = ''
 
-@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface, whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge Pro device.')
+@description('The network address of the control plane access subnet in CIDR notation.')
+param controlPlaneAccessSubnet string = ''
+
+@description('The control plane access subnet default gateway')
+param controlPlaneAccessGateway string = ''
+
+@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param userPlaneAccessInterfaceName string = ''
 
-@description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface, whereas in 4G networks this is called the S1-U interface.')
-param userPlaneAccessInterfaceIpAddress string
+@description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI.')
+param userPlaneAccessInterfaceIpAddress string = ''
 
-@description('The network address of the access subnet in CIDR notation')
-param accessSubnet string
+@description('The network address of the data plane access subnet in CIDR notation')
+param userPlaneAccessSubnet string = ''
 
-@description('The access subnet default gateway')
-param accessGateway string
+@description('The data plane access subnet default gateway')
+param userPlaneAccessGateway string = ''
 
-@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface, whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge Pro device.')
+@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param userPlaneDataInterfaceName string = ''
 
-@description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface, whereas in 4G networks this is called the SGi interface.')
-param userPlaneDataInterfaceIpAddress string
+@description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI.')
+param userPlaneDataInterfaceIpAddress string = ''
 
 @description('The network address of the data subnet in CIDR notation')
-param userPlaneDataInterfaceSubnet string
+param userPlaneDataInterfaceSubnet string = ''
 
 @description('The data subnet default gateway')
-param userPlaneDataInterfaceGateway string
+param userPlaneDataInterfaceGateway string = ''
 
 @description('The network address of the subnet from which dynamic IP addresses must be allocated to UEs, given in CIDR notation. Optional if userEquipmentStaticAddressPoolPrefix is specified. If both are specified, they must be the same size and not overlap.')
 param userEquipmentAddressPoolPrefix string = ''
@@ -106,8 +112,8 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: accessSubnet
-      ipv4Gateway: accessGateway
+      ipv4Subnet: controlPlaneAccessSubnet
+      ipv4Gateway: controlPlaneAccessGateway
       name: controlPlaneAccessInterfaceName
     }
   }
@@ -118,8 +124,8 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     properties: {
       userPlaneAccessInterface: {
         ipv4Address: userPlaneAccessInterfaceIpAddress
-        ipv4Subnet: accessSubnet
-        ipv4Gateway: accessGateway
+        ipv4Subnet: userPlaneAccessSubnet
+        ipv4Gateway: userPlaneAccessGateway
         name: userPlaneAccessInterfaceName
       }
     }
