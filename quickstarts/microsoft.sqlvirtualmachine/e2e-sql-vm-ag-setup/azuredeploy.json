@@ -1,1084 +1,1084 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "location": {
-            "type": "string",
-            "metadata": {
-                "description": "All resources will be deployed here. This location should be the same as the virtual network location."
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "All resources will be deployed here. This location should be the same as the virtual network location."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain controller and new resources should be on same virtual network."
+      }
+    },
+    "existingVirtualNetworkResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the resource group which contains Domain controller and virtual network. This can be different from the above resource group where the template resources like VMs are deployed."
+      }
+    },
+    "availabilitySetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Creates a new availability set if it is not present. Check docs here: https://docs.microsoft.com/en-us/azure/virtual-machines/availability-set-overview"
+      }
+    },
+    "VMNamesForPrimaryAndSecondaryReplicas": {
+      "type": "Array",
+      "metadata": {
+        "description": "Maximum number of replicas including primary = 9 , Example syntax: [\"vm1\",\"vm2\",\"vm3\"]. If these VMs already exist, they should have been created by this template, else failover cluster can't be created."
+      }
+    },
+    "subnetNames": {
+      "type": "Array",
+      "metadata": {
+        "description": "Subnet names have to be distinct from one another and subnet list length must be equal to number of Replicas. Syntax example: [\"Subnet-1\",\"Subnet-2\",\"Subnet-3\"]. Docs: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet"
+      }
+    },
+    "listOfFailoverClusterIps": {
+      "type": "Array",
+      "metadata": {
+        "description": "Provide list of IPs for failover cluster. Example syntax: [\"10.0.1.29\",\"10.0.2.29\",\"10.0.3.29\"]. Ensure these IPs are available from the respective Subnets. These IPs aren't required when using Windows server 2019 or later."
+      }
+    },
+    "listOfListenerIps": {
+      "type": "Array",
+      "metadata": {
+        "description": "Provide list of IPs for listener. Example syntax: [\"10.0.1.30\",\"10.0.2.30\",\"10.0.3.30\"].  Ensure these IPs are available from the respective Subnets."
+      }
+    },
+    "SizeForVirtualMachines": {
+      "type": "string",
+      "metadata": {
+        "description": "Please select size from the list mentioned here: https://docs.microsoft.com/en-us/azure/templates/microsoft.compute/virtualmachines?tabs=bicep#hardwareprofile. Note that the same size will be applied to all the replicas."
+      }
+    },
+    "LocalAdminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "This account will be used as a local admin for virtual machines. Eg: localadmin"
+      }
+    },
+    "LocalAdminPassword": {
+      "type": "securestring"
+    },
+    "SQLServerImageType": {
+      "type": "string",
+      "allowedValues": [
+        "SQL2012SP4-WS2012R2",
+        "SQL2012SP4-WS2012R2-BYOL",
+        "SQL2014SP2-WS2012R2",
+        "SQL2014SP2-WS2012R2-BYOL",
+        "SQL2014SP3-WS2012R2",
+        "SQL2014SP3-WS2012R2-BYOL",
+        "SQL2016SP1-WS2016",
+        "SQL2016SP1-WS2016-BYOL",
+        "SQL2016SP2-WS2012R2",
+        "SQL2016SP2-WS2016",
+        "SQL2016SP2-WS2016-BYOL",
+        "SQL2016SP2-WS2019",
+        "SQL2016SP2-WS2019-BYOL",
+        "SQL2016SP3-WS2019",
+        "SQL2017-WS2016",
+        "SQL2017-WS2016-BYOL",
+        "SQL2017-WS2019",
+        "SQL2017-WS2019-BYOL",
+        "SQL2019-WS2019",
+        "SQL2019-WS2019-BYOL",
+        "SQL2019-WS2022"
+      ],
+      "metadata": {
+        "description": "To use BYOL images, you need to have an Enterprise Agreement or Software Assurance (SA) for License mobility. https://docs.microsoft.com/en-us/azure/azure-sql/virtual-machines/windows/pricing-guidance?view=azuresql#byol"
+      }
+    },
+    "SQLServerSku": {
+      "type": "string",
+      "allowedValues": [
+        "Enterprise",
+        "Developer"
+      ],
+      "metadata": {
+        "description": "SQL Server Gallery Image SKU"
+      }
+    },
+    "SQLServerLicenseType": {
+      "type": "string",
+      "allowedValues": [
+        "PAYG",
+        "AHUB"
+      ],
+      "metadata": {
+        "description": "PAYG : Pay As You Go, AHUB : Azure Hybrid Use Benefits. You should use \"AHUB\" if BYOL SQL image was used. If you have SQL Server licenses with Software Assurance(SA) or a SQL Server subscription, use Azure HybridBenefit to save."
+      }
+    },
+    "SQLServiceAccountUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "This account is used for managing SQL servers on VMs. Eg: sqlserviceaccount"
+      }
+    },
+    "SQLServiceAccountPassword": {
+      "type": "securestring"
+    },
+    "DomainUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "This account is used to create FCI name in Active directory and join VMs to Domain. Eg: DomainAdmin"
+      }
+    },
+    "DomainUserPassword": {
+      "type": "securestring"
+    },
+    "domainFQDN": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide existing Domain FQDN"
+      }
+    },
+    "failoverClusterName": {
+      "type": "string",
+      "maxLength": 15,
+      "metadata": {
+        "description": "Specify the Windows Failover Cluster Name. Maximum length is 15"
+      }
+    },
+    "createNewStorageAccount": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Creates new storage account for cloud witness."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Enter existing storage account if you have chosen false in the above option. Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only."
+      }
+    },
+    "AvailabilityGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Ensure there is no AG with same name registered with domain controller."
+      }
+    },
+    "listenerName": {
+      "type": "string",
+      "maxLength": 15,
+      "metadata": {
+        "description": "Maximum length of AG Listener is 15. Ensure a listener with same name doesn't exist with domain controller."
+      }
+    }
+  },
+  "variables": {
+    "shortDomain": "[toUpper(split(parameters('domainFQDN'), '.')[0])]",
+    "validParameters": "[and( equals( length(parameters('VMNamesForPrimaryAndSecondaryReplicas')), length(parameters('subnetNames'))) , equals(length(parameters('VMNamesForPrimaryAndSecondaryReplicas')), length(parameters('listOfFailoverClusterIps')) ), equals(length(parameters('VMNamesForPrimaryAndSecondaryReplicas')), length(parameters('listOfListenerIps')) )  )]",
+    "sqlImageArray": "[split(parameters('SQLServerImageType'),'-')]",
+    "failoverSQLServerImageType": "[concat(substring(variables('sqlImageArray')[0],0,7),'-',variables('sqlImageArray')[1])]"
+  },
+  "resources": [
+    {
+      "condition": "[variables('validParameters')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('availabilitySetName')]",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformUpdateDomainCount": "1",
+        "platformFaultDomainCount": "1"
+      }
+    },
+    {
+      "condition": "[variables('validParameters')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "[concat('create-sqlvm', '-', uniqueString(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name)), '-', copyIndex())]",
+      "dependsOn": [
+        "[parameters('availabilitySetName')]"
+      ],
+      "copy": {
+        "name": "Create-SQLVM",
+        "count": "[length(parameters('VMNamesForPrimaryAndSecondaryReplicas'))]",
+        "mode": "parallel"
+      },
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "availabilitySetName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "networkInterfaceName": {
+              "type": "string"
+            },
+            "enableAcceleratedNetworking": {
+              "type": "bool"
+            },
+            "networkSecurityGroupName": {
+              "type": "string"
+            },
+            "networkSecurityGroupRules": {
+              "type": "array"
+            },
+            "subnetName": {
+              "type": "string"
+            },
+            "virtualNetworkId": {
+              "type": "string"
+            },
+            "publicIpAddressName": {
+              "type": "string"
+            },
+            "publicIpAddressType": {
+              "type": "string"
+            },
+            "publicIpAddressSku": {
+              "type": "string"
+            },
+            "virtualMachineName": {
+              "type": "string"
+            },
+            "virtualMachineComputerName": {
+              "type": "string"
+            },
+            "osDiskType": {
+              "type": "string"
+            },
+            "virtualMachineSize": {
+              "type": "string"
+            },
+            "LocalAdminUserName": {
+              "type": "string"
+            },
+            "LocalAdminPassword": {
+              "type": "securestring"
+            },
+            "patchMode": {
+              "type": "string"
+            },
+            "enableHotpatching": {
+              "type": "bool"
+            },
+            "sqlVirtualMachineLocation": {
+              "type": "string"
+            },
+            "sqlVirtualMachineName": {
+              "type": "string"
+            },
+            "sqlServerImageType": {
+              "type": "string"
+            },
+            "sqlServerLicenseType": {
+              "type": "string"
+            },
+            "sqlServerSku": {
+              "type": "string"
+            },
+            "sqlServerImagePublisher": {
+              "type": "string"
+            },
+            "existingVirtualNetworkResourceGroupName": {
+              "type": "string"
             }
-        },
-        "existingVirtualNetworkName": {
-            "type": "string",
-            "metadata": {
-                "description": "Domain controller and new resources should be on same virtual network."
+          },
+          "variables": {
+            "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+            "vnetId": "[parameters('virtualNetworkId')]",
+            "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+          },
+          "resources": [
+            {
+              "name": "[parameters('networkInterfaceName')]",
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2021-03-01",
+              "location": "[parameters('location')]",
+              "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]"
+              ],
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "subnet": {
+                        "id": "[variables('subnetRef')]"
+                      },
+                      "privateIPAllocationMethod": "Dynamic",
+                      "publicIpAddress": "[json('null')]"
+                    }
+                  }
+                ],
+                "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
+                "networkSecurityGroup": {
+                  "id": "[variables('nsgId')]"
+                }
+              }
+            },
+            {
+              "name": "[parameters('networkSecurityGroupName')]",
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2019-02-01",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": "[parameters('networkSecurityGroupRules')]"
+              }
+            },
+            {
+              "name": "[parameters('publicIpAddressName')]",
+              "type": "Microsoft.Network/publicIpAddresses",
+              "apiVersion": "2019-02-01",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+              },
+              "sku": {
+                "name": "[parameters('publicIpAddressSku')]"
+              }
+            },
+            {
+              "name": "[parameters('virtualMachineName')]",
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-07-01",
+              "location": "[parameters('location')]",
+              "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+              ],
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                  "osDisk": {
+                    "createOption": "fromImage",
+                    "managedDisk": {
+                      "storageAccountType": "[parameters('osDiskType')]"
+                    }
+                  },
+                  "imageReference": {
+                    "publisher": "[parameters('sqlServerImagePublisher')]",
+                    "offer": "[parameters('sqlServerImageType')]",
+                    "sku": "[parameters('sqlServerSku')]",
+                    "version": "latest"
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+                    }
+                  ]
+                },
+                "availabilitySet": {
+                  "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+                },
+                "osProfile": {
+                  "computerName": "[parameters('virtualMachineComputerName')]",
+                  "adminUsername": "[parameters('LocalAdminUserName')]",
+                  "adminPassword": "[parameters('LocalAdminPassword')]",
+                  "windowsConfiguration": {
+                    "enableAutomaticUpdates": true,
+                    "provisionVmAgent": true,
+                    "patchSettings": {
+                      "enableHotpatching": "[parameters('enableHotpatching')]",
+                      "patchMode": "[parameters('patchMode')]"
+                    }
+                  }
+                },
+                "diagnosticsProfile": {
+                  "bootDiagnostics": {
+                    "enabled": true
+                  }
+                }
+              }
             }
-        },
-        "existingVirtualNetworkResourceGroupName": {
-            "type": "string",
-            "metadata": {
-                "description": "This resource group is used for deployment purpose. Resources like vms will not be created in this resource group."
+          ],
+          "outputs": {
+            "adminUsername": {
+              "type": "string",
+              "value": "[parameters('LocalAdminUserName')]"
             }
+          }
         },
-        "availabilitySetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Creates a new availability set if it's not present. Check docs here: https://docs.microsoft.com/en-us/azure/virtual-machines/availability-set-overview"
+        "parameters": {
+          "availabilitySetName": {
+            "value": "[parameters('availabilitySetName')]"
+          },
+          "sqlServerSku": {
+            "value": "[if(equals(parameters('SQLServerSku'), 'Developer'), 'sqldev', parameters('SQLServerSku'))]"
+          },
+          "sqlServerImagePublisher": {
+            "value": "MicrosoftSQLServer"
+          },
+          "sqlServerImageType": {
+            "value": "[parameters('SQLServerImageType')]"
+          },
+          "sqlServerLicenseType": {
+            "value": "[parameters('SQLServerLicenseType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "networkInterfaceName": {
+            "value": "[concat(parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()],'-ni')]"
+          },
+          "enableAcceleratedNetworking": {
+            "value": true
+          },
+          "networkSecurityGroupName": {
+            "value": "[concat(parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()],'-nsg')]"
+          },
+          "networkSecurityGroupRules": {
+            "value": []
+          },
+          "subnetName": {
+            "value": "[parameters('subnetNames')[copyIndex()]]"
+          },
+          "virtualNetworkId": {
+            "value": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('existingVirtualNetworkResourceGroupName'), '/providers/Microsoft.Network/virtualNetworks/', parameters('existingVirtualNetworkName') )]"
+          },
+          "publicIpAddressName": {
+            "value": "[concat(parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()],'-ip')]"
+          },
+          "publicIpAddressType": {
+            "value": "Static"
+          },
+          "publicIpAddressSku": {
+            "value": "Standard"
+          },
+          "virtualMachineName": {
+            "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()]]"
+          },
+          "virtualMachineComputerName": {
+            "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()]]"
+          },
+          "osDiskType": {
+            "value": "Premium_LRS"
+          },
+          "virtualMachineSize": {
+            "value": "[parameters('SizeForVirtualMachines')]"
+          },
+          "LocalAdminUserName": {
+            "value": "[parameters('LocalAdminUserName')]"
+          },
+          "LocalAdminPassword": {
+            "value": "[parameters('LocalAdminPassword')]"
+          },
+          "patchMode": {
+            "value": "AutomaticByOS"
+          },
+          "enableHotpatching": {
+            "value": false
+          },
+          "sqlVirtualMachineLocation": {
+            "value": "[parameters('location')]"
+          },
+          "sqlVirtualMachineName": {
+            "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()]]"
+          },
+          "existingVirtualNetworkResourceGroupName": {
+            "value": "[parameters('existingVirtualNetworkResourceGroupName')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[variables('validParameters')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "Join-the-domain",
+      "dependsOn": [
+        "Create-SQLVM"
+      ],
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "vmArray": {
+              "type": "Array",
+              "metadata": {
+                "description": "Array of virtual machines to be domain joined, if using multiple VMs. E.g. ['VM01', 'VM02', 'VM03']."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location name of the virtual machine"
+              }
+            },
+            "domainJoinUserName": {
+              "type": "string",
+              "metadata": {
+                "description": "Domain NetBiosName plus User name of a domain user with sufficient rights to perfom domain join operation. E.g. domain\\username"
+              }
+            },
+            "domainJoinUserPassword": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Domain user password"
+              }
+            },
+            "domainFQDN": {
+              "type": "string",
+              "metadata": {
+                "description": "Domain FQDN where the virtual machine will be joined"
+              }
+            },
+            "ouPath": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: \"OU=testOU; DC=domain; DC=Domain; DC=com\""
+              }
             }
-        },
-        "VMNamesForPrimaryAndSecondaryReplicas": {
-            "type": "Array",
-            "metadata": {
-                "description": "Maximum number of replicas including primary = 9 , Example syntax: [\"vm1\",\"vm2\",\"vm3\"]. If these VMs already exist, they should have been created by this template, else failover cluster can't be created."
+          },
+          "variables": {
+            "domainJoinOptions": 3
+          },
+          "resources": [
+            {
+              "comments": "Join domain - JsonADDomainExtension",
+              "apiVersion": "2015-06-15",
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "name": "[concat(trim(parameters('vmArray')[copyIndex()]),'/joindomain')]",
+              "location": "[parameters('location')]",
+              "copy": {
+                "name": "vmDomainJoinCopy",
+                "count": "[length(parameters('vmArray'))]"
+              },
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "JsonADDomainExtension",
+                "typeHandlerVersion": "1.3",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "Name": "[parameters('domainFQDN')]",
+                  "User": "[parameters('domainJoinUserName')]",
+                  "Restart": "true",
+                  "Options": "[variables('domainJoinOptions')]",
+                  "OUPath": "[parameters('ouPath')]"
+                },
+                "protectedSettings": {
+                  "Password": "[parameters('domainJoinUserPassword')]"
+                }
+              }
             }
+          ]
         },
-        "subnetNames": {
-            "type": "Array",
-            "metadata": {
-                "description": "Subnet names have to be distinct to one another and must be equal to number of Replicas. Syntax example: [\"Subnet-1\",\"Subnet-2\",\"Subnet-3\"]. Docs: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet"
-            }
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmArray": {
+            "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')]"
+          },
+          "domainJoinUserName": {
+            "value": "[concat(variables('shortDomain'),'\\',parameters('DomainUserName'))]"
+          },
+          "domainJoinUserPassword": {
+            "value": "[parameters('DomainUserPassword')]"
+          },
+          "domainFQDN": {
+            "value": "[parameters('domainFQDN')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[variables('validParameters')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "Failover-Cluster",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'Join-the-domain')]"
+      ],
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
         },
-        "listOfFailoverClusterIps": {
-            "type": "Array",
-            "metadata": {
-                "description": "Provide array of IPs for failover cluster. Example syntax: [\"10.0.1.29\",\"10.0.2.29\",\"10.0.3.29\"]. Ensure these IPs are available from the respective Subnets. These IPs don't have to be provided when using Windows server 2019 or later."
-            }
-        },
-        "listOfListenerIps": {
-            "type": "Array",
-            "metadata": {
-                "description": "Ensure these IPs are available. Example syntax: [\"10.0.1.30\",\"10.0.2.30\",\"10.0.3.30\"].  Ensure these IPs are available from the respective Subnets."
-            }
-        },
-        "SizeForVirtualMachines": {
-            "type": "string",
-            "metadata": {
-                "description": "Please select size from the list mentioned here: https://docs.microsoft.com/en-us/azure/templates/microsoft.compute/virtualmachines?tabs=bicep#hardwareprofile. Note that the same size will be applied to all the replicas."
-            }
-        },
-        "LocalAdminUserName": {
-            "type": "string",
-            "metadata": {
-                "description": "This account will be used as a local admin for virtual machines. Eg: localadmin"
-            }
-        },
-        "LocalAdminPassword": {
-            "type": "securestring"
-        },
-        "SQLServerImageType": {
-            "type": "string",
-            "allowedValues": [
-                "SQL2012SP4-WS2012R2",
-                "SQL2012SP4-WS2012R2-BYOL",
-                "SQL2014SP2-WS2012R2",
-                "SQL2014SP2-WS2012R2-BYOL",
-                "SQL2014SP3-WS2012R2",
-                "SQL2014SP3-WS2012R2-BYOL",
-                "SQL2016SP1-WS2016",
-                "SQL2016SP1-WS2016-BYOL",
-                "SQL2016SP2-WS2012R2",
-                "SQL2016SP2-WS2016",
-                "SQL2016SP2-WS2016-BYOL",
-                "SQL2016SP2-WS2019",
-                "SQL2016SP2-WS2019-BYOL",
-                "SQL2016SP3-WS2019",
-                "SQL2017-WS2016",
-                "SQL2017-WS2016-BYOL",
-                "SQL2017-WS2019",
-                "SQL2017-WS2019-BYOL",
-                "SQL2019-WS2019",
-                "SQL2019-WS2019-BYOL",
-                "SQL2019-WS2022"
-            ],
-            "metadata": {
-                "description": "To use BYOL images, you need to have an Enterprise Agreement or Software Assurance (SA) for License mobility. https://docs.microsoft.com/en-us/azure/azure-sql/virtual-machines/windows/pricing-guidance?view=azuresql#byol"
-            }
-        },
-        "SQLServerSku": {
-            "type": "string",
-            "allowedValues": [
-                "Enterprise",
-                "Developer"
-            ],
-            "metadata": {
-                "description": "SQL Server Gallery Image SKU"
-            }
-        },
-        "SQLServerLicenseType": {
-            "type": "string",
-            "allowedValues": [
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "failoverClusterName": {
+              "type": "string",
+              "maxLength": 15,
+              "metadata": {
+                "description": "Specify the Windows Failover Cluster Name"
+              }
+            },
+            "failoverClusterIpArray": {
+              "type": "Array"
+            },
+            "existingVmArray": {
+              "type": "Array",
+              "metadata": {
+                "description": "Specify array of names of SQL Server VM's to participate in the Availability Group (e.g. ['SQLVM1', 'SQLVM2'] ). OS underneath should be at least WS 2016."
+              }
+            },
+            "sqlServerLicenseType": {
+              "allowedValues": [
                 "PAYG",
                 "AHUB"
-            ],
-            "metadata": {
-                "description": "PAYG : Pay As You Go, AHUB : Azure Hybrid Use Benefits. You should use \"AHUB\" if BYOL SQL image was used. If you have SQL Server licenses with Software Assurance(SA) or a SQL Server subscription, use Azure HybridBenefit to save."
-            }
-        },
-        "SQLServiceAccountUserName": {
-            "type": "string",
-            "metadata": {
-                "description": "This account is used for managing SQL servers on VMs. Eg: sqlserviceaccount"
-            }
-        },
-        "SQLServiceAccountPassword": {
-            "type": "securestring"
-        },
-        "DomainUserName": {
-            "type": "string",
-            "metadata": {
-                "description": "This account is used to create FCI name in Active directory and join VMs to Domain. Eg: DomainAdmin"
-            }
-        },
-        "DomainUserPassword": {
-            "type": "securestring"
-        },
-        "domainFQDN": {
-            "type": "string",
-            "metadata": {
-                "description": "Provide existing Domain FQDN"
-            }
-        },
-        "failoverClusterName": {
-            "type": "string",
-            "maxLength": 15,
-            "metadata": {
-                "description": "Specify the Windows Failover Cluster Name. Maximum length is 15"
-            }
-        },
-        "createNewStorageAccount": {
-            "type": "string",
-            "allowedValues": [
-                "Yes",
-                "No"
-            ],
-            "metadata": {
-                "description": "Creates new storage account for cloud witness."
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 24,
-            "metadata": {
-                "description": "Enter existing storage account if you have chosen false in the above option. Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only."
-            }
-        },
-        "AvailabilityGroup": {
-            "type": "string",
-            "metadata": {
-                "description": "Ensure there is no AG with same name registered with domain controller."
-            }
-        },
-        "listenerName": {
-            "type": "string",
-            "maxLength": 15,
-            "metadata": {
-                "description": "Maximum length of AG Listener is 15. Ensure a listener with same name doesn't exist with domain controller."
-            }
-        }
-    },
-    "variables": {
-        "shortDomain": "[toUpper(split(parameters('domainFQDN'), '.')[0])]",
-        "validParameters": "[and( equals( length(parameters('VMNamesForPrimaryAndSecondaryReplicas')), length(parameters('subnetNames'))) , equals(length(parameters('VMNamesForPrimaryAndSecondaryReplicas')), length(parameters('listOfFailoverClusterIps')) ), equals(length(parameters('VMNamesForPrimaryAndSecondaryReplicas')), length(parameters('listOfListenerIps')) )  )]",
-        "sqlImageArray": "[split(parameters('SQLServerImageType'),'-')]",
-        "failoverSQLServerImageType": "[concat(substring(variables('sqlImageArray')[0],0,7),'-',variables('sqlImageArray')[1])]"
-    },
-    "resources": [
-        {
-            "condition": "[variables('validParameters')]",
-            "type": "Microsoft.Compute/availabilitySets",
-            "apiVersion": "2020-12-01",
-            "name": "[parameters('availabilitySetName')]",
-            "location": "[parameters('location')]",
-            "tags": {},
-            "sku": {
-                "name": "Aligned"
+              ],
+              "type": "string",
+              "metadata": {
+                "description": "Specify the SQL Server License type for all VM's."
+              }
             },
-            "properties": {
-                "platformUpdateDomainCount": "1",
-                "platformFaultDomainCount": "1"
-            }
-        },
-        {
-            "condition": "[variables('validParameters')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "[concat('create-sqlvm', '-', uniqueString(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name)), '-', copyIndex())]",
-            "dependsOn": [
-                "[parameters('availabilitySetName')]"
-            ],
-            "copy": {
-                "name": "Create-SQLVM",
-                "count": "[length(parameters('VMNamesForPrimaryAndSecondaryReplicas'))]",
-                "mode": "parallel"
+            "existingVmResourceGroup": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify resourcegroup name for existing Vms."
+              },
+              "defaultValue": "[resourceGroup().name]"
             },
-            "properties": {
+            "sqlServerImageType": {
+              "allowedValues": [
+                "SQL2012-WS2012R2",
+                "SQL2014-WS2012R2",
+                "SQL2016-WS2012R2",
+                "SQL2016-WS2016",
+                "SQL2016-WS2019",
+                "SQL2017-WS2016",
+                "SQL2017-WS2019",
+                "SQL2019-WS2019",
+                "SQL2019-WS2022"
+              ],
+              "type": "string",
+              "metadata": {
+                "description": "Select the version of SQL Server Image type"
+              }
+            },
+            "existingFullyQualifiedDomainName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify the Fully Qualified Domain Name under which the Failover Cluster will be created. The VM's should already be joined to it. (e.g. contoso.com)"
+              }
+            },
+            "existingOuPath": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify an optional Organizational Unit (OU) on AD Domain where the CNO (Computer Object for Cluster Name) will be created (e.g. OU=testou,OU=testou2,DC=contoso,DC=com). Default is empty."
+              },
+              "defaultValue": ""
+            },
+            "existingSqlServiceAccount": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify the domain account under which SQL Server service will run for AG setup in UPN format (e.g. sqlservice@contoso.com)"
+              }
+            },
+            "sqlServicePassword": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Specify the password for Sql Server service account"
+              }
+            },
+            "cloudWitnessName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify the name of the storage account to be used for creating Cloud Witness for Windows server failover cluster"
+              },
+              "defaultValue": "[concat('clwitness', uniqueString(resourceGroup().id))]"
+            },
+            "_artifactsLocation": {
+              "type": "string",
+              "metadata": {
+                "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
+              },
+              "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.sqlvirtualmachine/sql-vm-ag-setup/"
+            },
+            "_artifactsLocationSasToken": {
+              "type": "securestring",
+              "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+              },
+              "defaultValue": ""
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "ClusterBootstrapAccount": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify the account for WS failover cluster creation in UPN format (e.g. example@contoso.com). This account can either be a Domain Admin or at least have permissions to create Computer Objects in default or specified OU."
+              }
+            },
+            "ClusterBootstrapAccountPassword": {
+              "type": "securestring"
+            },
+            "createNewStorageAccount": {
+              "type": "bool"
+            }
+          },
+          "variables": {
+            "GroupResourceId": "[resourceId('Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups', parameters('failoverClusterName'))]"
+          },
+          "resources": [
+            {
+              "condition": "[parameters('createNewStorageAccount')]",
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2018-07-01",
+              "name": "[parameters('cloudWitnessName')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "location": "[parameters('location')]",
+              "properties": {
+                "accessTier": "Hot",
+                "supportsHttpsTrafficOnly": true
+              }
+            },
+            {
+              "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups",
+              "apiVersion": "2022-02-01",
+              "name": "[parameters('failoverClusterName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "SqlImageOffer": "[parameters('sqlServerImageType')]",
+                "SqlImageSku": "Enterprise",
+                "WsfcDomainProfile": {
+                  "DomainFqdn": "[parameters('existingFullyQualifiedDomainName')]",
+                  "OuPath": "[parameters('existingOuPath')]",
+                  "ClusterBootstrapAccount": "[parameters('ClusterBootstrapAccount')]",
+                  "ClusterOperatorAccount": "[parameters('ClusterBootstrapAccount')]",
+                  "SqlServiceAccount": "[parameters('existingSqlServiceAccount')]",
+                  "StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').primaryEndpoints['blob']]",
+                  "StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').keys[0].value]",
+                  "clusterSubnetType": "multisubnet"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2019-03-01",
+              "name": "joincluster",
+              "dependsOn": [
+                "[parameters('failoverClusterName')]",
+                "[parameters('cloudWitnessName')]"
+              ],
+              "properties": {
                 "expressionEvaluationOptions": {
-                    "scope": "inner"
+                  "scope": "inner"
                 },
                 "mode": "Incremental",
                 "template": {
-                    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "availabilitySetName": {
-                            "type": "string"
-                        },
-                        "location": {
-                            "type": "string"
-                        },
-                        "networkInterfaceName": {
-                            "type": "string"
-                        },
-                        "enableAcceleratedNetworking": {
-                            "type": "bool"
-                        },
-                        "networkSecurityGroupName": {
-                            "type": "string"
-                        },
-                        "networkSecurityGroupRules": {
-                            "type": "array"
-                        },
-                        "subnetName": {
-                            "type": "string"
-                        },
-                        "virtualNetworkId": {
-                            "type": "string"
-                        },
-                        "publicIpAddressName": {
-                            "type": "string"
-                        },
-                        "publicIpAddressType": {
-                            "type": "string"
-                        },
-                        "publicIpAddressSku": {
-                            "type": "string"
-                        },
-                        "virtualMachineName": {
-                            "type": "string"
-                        },
-                        "virtualMachineComputerName": {
-                            "type": "string"
-                        },
-                        "osDiskType": {
-                            "type": "string"
-                        },
-                        "virtualMachineSize": {
-                            "type": "string"
-                        },
-                        "LocalAdminUserName": {
-                            "type": "string"
-                        },
-                        "LocalAdminPassword": {
-                            "type": "securestring"
-                        },
-                        "patchMode": {
-                            "type": "string"
-                        },
-                        "enableHotpatching": {
-                            "type": "bool"
-                        },
-                        "sqlVirtualMachineLocation": {
-                            "type": "string"
-                        },
-                        "sqlVirtualMachineName": {
-                            "type": "string"
-                        },
-                        "sqlServerImageType": {
-                            "type": "string"
-                        },
-                        "sqlServerLicenseType": {
-                            "type": "string"
-                        },
-                        "sqlServerSku": {
-                            "type": "string"
-                        },
-                        "sqlServerImagePublisher": {
-                            "type": "string"
-                        },
-                        "existingVirtualNetworkResourceGroupName": {
-                            "type": "string"
-                        }
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "parameters": {
+                    "location": {
+                      "type": "string"
                     },
-                    "variables": {
-                        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
-                        "vnetId": "[parameters('virtualNetworkId')]",
-                        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
-                    },
-                    "resources": [
-                        {
-                            "name": "[parameters('networkInterfaceName')]",
-                            "type": "Microsoft.Network/networkInterfaces",
-                            "apiVersion": "2021-03-01",
-                            "location": "[parameters('location')]",
-                            "dependsOn": [
-                                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
-                                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]"
-                            ],
-                            "properties": {
-                                "ipConfigurations": [
-                                    {
-                                        "name": "ipconfig1",
-                                        "properties": {
-                                            "subnet": {
-                                                "id": "[variables('subnetRef')]"
-                                            },
-                                            "privateIPAllocationMethod": "Dynamic",
-                                            "publicIpAddress": "[json('null')]"
-                                        }
-                                    }
-                                ],
-                                "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
-                                "networkSecurityGroup": {
-                                    "id": "[variables('nsgId')]"
-                                }
-                            }
-                        },
-                        {
-                            "name": "[parameters('networkSecurityGroupName')]",
-                            "type": "Microsoft.Network/networkSecurityGroups",
-                            "apiVersion": "2019-02-01",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "securityRules": "[parameters('networkSecurityGroupRules')]"
-                            }
-                        },
-                        {
-                            "name": "[parameters('publicIpAddressName')]",
-                            "type": "Microsoft.Network/publicIpAddresses",
-                            "apiVersion": "2019-02-01",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
-                            },
-                            "sku": {
-                                "name": "[parameters('publicIpAddressSku')]"
-                            }
-                        },
-                        {
-                            "name": "[parameters('virtualMachineName')]",
-                            "type": "Microsoft.Compute/virtualMachines",
-                            "apiVersion": "2021-07-01",
-                            "location": "[parameters('location')]",
-                            "dependsOn": [
-                                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
-                            ],
-                            "properties": {
-                                "hardwareProfile": {
-                                    "vmSize": "[parameters('virtualMachineSize')]"
-                                },
-                                "storageProfile": {
-                                    "osDisk": {
-                                        "createOption": "fromImage",
-                                        "managedDisk": {
-                                            "storageAccountType": "[parameters('osDiskType')]"
-                                        }
-                                    },
-                                    "imageReference": {
-                                        "publisher": "[parameters('sqlServerImagePublisher')]",
-                                        "offer": "[parameters('sqlServerImageType')]",
-                                        "sku": "[parameters('sqlServerSku')]",
-                                        "version": "latest"
-                                    }
-                                },
-                                "networkProfile": {
-                                    "networkInterfaces": [
-                                        {
-                                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
-                                        }
-                                    ]
-                                },
-                                "availabilitySet": {
-                                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-                                },
-                                "osProfile": {
-                                    "computerName": "[parameters('virtualMachineComputerName')]",
-                                    "adminUsername": "[parameters('LocalAdminUserName')]",
-                                    "adminPassword": "[parameters('LocalAdminPassword')]",
-                                    "windowsConfiguration": {
-                                        "enableAutomaticUpdates": true,
-                                        "provisionVmAgent": true,
-                                        "patchSettings": {
-                                            "enableHotpatching": "[parameters('enableHotpatching')]",
-                                            "patchMode": "[parameters('patchMode')]"
-                                        }
-                                    }
-                                },
-                                "diagnosticsProfile": {
-                                    "bootDiagnostics": {
-                                        "enabled": true
-                                    }
-                                }
-                            }
-                        }
-                    ],
-                    "outputs": {
-                        "adminUsername": {
-                            "type": "string",
-                            "value": "[parameters('LocalAdminUserName')]"
-                        }
-                    }
-                },
-                "parameters": {
-                    "availabilitySetName": {
-                        "value": "[parameters('availabilitySetName')]"
-                    },
-                    "sqlServerSku": {
-                        "value": "[if(equals(parameters('SQLServerSku'), 'Developer'), 'sqldev', parameters('SQLServerSku'))]"
-                    },
-                    "sqlServerImagePublisher": {
-                        "value": "MicrosoftSQLServer"
-                    },
-                    "sqlServerImageType": {
-                        "value": "[parameters('SQLServerImageType')]"
+                    "existingVirtualMachineNames": {
+                      "type": "array"
                     },
                     "sqlServerLicenseType": {
-                        "value": "[parameters('SQLServerLicenseType')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "networkInterfaceName": {
-                        "value": "[concat(parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()],'-ni')]"
-                    },
-                    "enableAcceleratedNetworking": {
-                        "value": true
-                    },
-                    "networkSecurityGroupName": {
-                        "value": "[concat(parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()],'-nsg')]"
-                    },
-                    "networkSecurityGroupRules": {
-                        "value": []
-                    },
-                    "subnetName": {
-                        "value": "[parameters('subnetNames')[copyIndex()]]"
-                    },
-                    "virtualNetworkId": {
-                        "value": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('existingVirtualNetworkResourceGroupName'), '/providers/Microsoft.Network/virtualNetworks/', parameters('existingVirtualNetworkName') )]"
-                    },
-                    "publicIpAddressName": {
-                        "value": "[concat(parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()],'-ip')]"
-                    },
-                    "publicIpAddressType": {
-                        "value": "Static"
-                    },
-                    "publicIpAddressSku": {
-                        "value": "Standard"
-                    },
-                    "virtualMachineName": {
-                        "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()]]"
-                    },
-                    "virtualMachineComputerName": {
-                        "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()]]"
-                    },
-                    "osDiskType": {
-                        "value": "Premium_LRS"
-                    },
-                    "virtualMachineSize": {
-                        "value": "[parameters('SizeForVirtualMachines')]"
-                    },
-                    "LocalAdminUserName": {
-                        "value": "[parameters('LocalAdminUserName')]"
-                    },
-                    "LocalAdminPassword": {
-                        "value": "[parameters('LocalAdminPassword')]"
-                    },
-                    "patchMode": {
-                        "value": "AutomaticByOS"
-                    },
-                    "enableHotpatching": {
-                        "value": false
-                    },
-                    "sqlVirtualMachineLocation": {
-                        "value": "[parameters('location')]"
-                    },
-                    "sqlVirtualMachineName": {
-                        "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')[copyIndex()]]"
-                    },
-                    "existingVirtualNetworkResourceGroupName": {
-                        "value": "[parameters('existingVirtualNetworkResourceGroupName')]"
-                    }
-                }
-            }
-        },
-        {
-            "condition": "[variables('validParameters')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "Join-the-domain",
-            "dependsOn": [
-                "Create-SQLVM"
-            ],
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "vmArray": {
-                            "type": "Array",
-                            "metadata": {
-                                "description": "Array of virtual machines to be domain joined, if using multiple VMs. E.g. ['VM01', 'VM02', 'VM03']."
-                            }
-                        },
-                        "location": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Location name of the virtual machine"
-                            }
-                        },
-                        "domainJoinUserName": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Domain NetBiosName plus User name of a domain user with sufficient rights to perfom domain join operation. E.g. domain\\username"
-                            }
-                        },
-                        "domainJoinUserPassword": {
-                            "type": "securestring",
-                            "metadata": {
-                                "description": "Domain user password"
-                            }
-                        },
-                        "domainFQDN": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Domain FQDN where the virtual machine will be joined"
-                            }
-                        },
-                        "ouPath": {
-                            "type": "string",
-                            "defaultValue": "",
-                            "metadata": {
-                                "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: \"OU=testOU; DC=domain; DC=Domain; DC=com\""
-                            }
-                        }
-                    },
-                    "variables": {
-                        "domainJoinOptions": 3
-                    },
-                    "resources": [
-                        {
-                            "comments": "Join domain - JsonADDomainExtension",
-                            "apiVersion": "2015-06-15",
-                            "type": "Microsoft.Compute/virtualMachines/extensions",
-                            "name": "[concat(trim(parameters('vmArray')[copyIndex()]),'/joindomain')]",
-                            "location": "[parameters('location')]",
-                            "copy": {
-                                "name": "vmDomainJoinCopy",
-                                "count": "[length(parameters('vmArray'))]"
-                            },
-                            "properties": {
-                                "publisher": "Microsoft.Compute",
-                                "type": "JsonADDomainExtension",
-                                "typeHandlerVersion": "1.3",
-                                "autoUpgradeMinorVersion": true,
-                                "settings": {
-                                    "Name": "[parameters('domainFQDN')]",
-                                    "User": "[parameters('domainJoinUserName')]",
-                                    "Restart": "true",
-                                    "Options": "[variables('domainJoinOptions')]",
-                                    "OUPath": "[parameters('ouPath')]"
-                                },
-                                "protectedSettings": {
-                                    "Password": "[parameters('domainJoinUserPassword')]"
-                                }
-                            }
-                        }
-                    ]
-                },
-                "parameters": {
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "vmArray": {
-                        "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')]"
-                    },
-                    "domainJoinUserName": {
-                        "value": "[concat(variables('shortDomain'),'\\',parameters('DomainUserName'))]"
-                    },
-                    "domainJoinUserPassword": {
-                        "value": "[parameters('DomainUserPassword')]"
-                    },
-                    "domainFQDN": {
-                        "value": "[parameters('domainFQDN')]"
-                    }
-                }
-            }
-        },
-        {
-            "condition": "[variables('validParameters')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "Failover-Cluster",
-            "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments/', 'Join-the-domain')]"
-            ],
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "failoverClusterName": {
-                            "type": "string",
-                            "maxLength": 15,
-                            "metadata": {
-                                "description": "Specify the Windows Failover Cluster Name"
-                            }
-                        },
-                        "failoverClusterIpArray": {
-                            "type": "Array"
-                        },
-                        "existingVmArray": {
-                            "type": "Array",
-                            "metadata": {
-                                "description": "Specify array of names of SQL Server VM's to participate in the Availability Group (e.g. ['SQLVM1', 'SQLVM2'] ). OS underneath should be at least WS 2016."
-                            }
-                        },
-                        "sqlServerLicenseType": {
-                            "allowedValues": [
-                                "PAYG",
-                                "AHUB"
-                            ],
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the SQL Server License type for all VM's."
-                            }
-                        },
-                        "existingVmResourceGroup": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify resourcegroup name for existing Vms."
-                            },
-                            "defaultValue": "[resourceGroup().name]"
-                        },
-                        "sqlServerImageType": {
-                            "allowedValues": [
-                                "SQL2012-WS2012R2",
-                                "SQL2014-WS2012R2",
-                                "SQL2016-WS2012R2",
-                                "SQL2016-WS2016",
-                                "SQL2016-WS2019",
-                                "SQL2017-WS2016",
-                                "SQL2017-WS2019",
-                                "SQL2019-WS2019",
-                                "SQL2019-WS2022"
-                            ],
-                            "type": "string",
-                            "metadata": {
-                                "description": "Select the version of SQL Server Image type"
-                            }
-                        },
-                        "existingFullyQualifiedDomainName": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the Fully Qualified Domain Name under which the Failover Cluster will be created. The VM's should already be joined to it. (e.g. contoso.com)"
-                            }
-                        },
-                        "existingOuPath": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify an optional Organizational Unit (OU) on AD Domain where the CNO (Computer Object for Cluster Name) will be created (e.g. OU=testou,OU=testou2,DC=contoso,DC=com). Default is empty."
-                            },
-                            "defaultValue": ""
-                        },
-                        "existingSqlServiceAccount": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the domain account under which SQL Server service will run for AG setup in UPN format (e.g. sqlservice@contoso.com)"
-                            }
-                        },
-                        "sqlServicePassword": {
-                            "type": "securestring",
-                            "metadata": {
-                                "description": "Specify the password for Sql Server service account"
-                            }
-                        },
-                        "cloudWitnessName": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the name of the storage account to be used for creating Cloud Witness for Windows server failover cluster"
-                            },
-                            "defaultValue": "[concat('clwitness', uniqueString(resourceGroup().id))]"
-                        },
-                        "_artifactsLocation": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
-                            },
-                            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.sqlvirtualmachine/sql-vm-ag-setup/"
-                        },
-                        "_artifactsLocationSasToken": {
-                            "type": "securestring",
-                            "metadata": {
-                                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-                            },
-                            "defaultValue": ""
-                        },
-                        "location": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Location for all resources."
-                            }
-                        },
-                        "ClusterBootstrapAccount": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the account for WS failover cluster creation in UPN format (e.g. example@contoso.com). This account can either be a Domain Admin or at least have permissions to create Computer Objects in default or specified OU."
-                            }
-                        },
-                        "ClusterBootstrapAccountPassword": {
-                            "type": "securestring"
-                        },
-                        "createNewStorageAccount": {
-                            "type": "bool"
-                        }
-                    },
-                    "variables": {
-                        "GroupResourceId": "[resourceId('Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups', parameters('failoverClusterName'))]"
-                    },
-                    "resources": [
-                        {
-                            "condition": "[parameters('createNewStorageAccount')]",
-                            "type": "Microsoft.Storage/storageAccounts",
-                            "apiVersion": "2018-07-01",
-                            "name": "[parameters('cloudWitnessName')]",
-                            "sku": {
-                                "name": "Standard_LRS"
-                            },
-                            "kind": "StorageV2",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "accessTier": "Hot",
-                                "supportsHttpsTrafficOnly": true
-                            }
-                        },
-                        {
-                            "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups",
-                            "apiVersion": "2022-02-01",
-                            "name": "[parameters('failoverClusterName')]",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "SqlImageOffer": "[parameters('sqlServerImageType')]",
-                                "SqlImageSku": "Enterprise",
-                                "WsfcDomainProfile": {
-                                    "DomainFqdn": "[parameters('existingFullyQualifiedDomainName')]",
-                                    "OuPath": "[parameters('existingOuPath')]",
-                                    "ClusterBootstrapAccount": "[parameters('ClusterBootstrapAccount')]",
-                                    "ClusterOperatorAccount": "[parameters('ClusterBootstrapAccount')]",
-                                    "SqlServiceAccount": "[parameters('existingSqlServiceAccount')]",
-                                    "StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').primaryEndpoints['blob']]",
-                                    "StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').keys[0].value]",
-                                    "clusterSubnetType": "multisubnet"
-                                }
-                            }
-                        },
-                        {
-                            "type": "Microsoft.Resources/deployments",
-                            "apiVersion": "2019-03-01",
-                            "name": "joincluster",
-                            "dependsOn": [
-                                "[parameters('failoverClusterName')]",
-                                "[parameters('cloudWitnessName')]"
-                            ],
-                            "properties": {
-                                "expressionEvaluationOptions": {
-                                    "scope": "inner"
-                                },
-                                "mode": "Incremental",
-                                "template": {
-                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                                    "contentVersion": "1.0.0.0",
-                                    "parameters": {
-                                        "location": {
-                                            "type": "string"
-                                        },
-                                        "existingVirtualMachineNames": {
-                                            "type": "array"
-                                        },
-                                        "sqlServerLicenseType": {
-                                            "type": "string"
-                                        },
-                                        "existingVmResourceGroup": {
-                                            "type": "string"
-                                        },
-                                        "groupResourceId": {
-                                            "type": "string"
-                                        },
-                                        "sqlServicePassword": {
-                                            "type": "securestring"
-                                        },
-                                        "failoverClusterIpArray": {
-                                            "type": "Array"
-                                        },
-                                        "ClusterBootstrapAccountPassword": {
-                                            "type": "securestring"
-                                        }
-                                    },
-                                    "variables": {},
-                                    "resources": [
-                                        {
-                                            "name": "[trim(parameters('existingVirtualMachineNames')[copyIndex()])]",
-                                            "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
-                                            "apiVersion": "2022-02-01",
-                                            "location": "[parameters('location')]",
-                                            "copy": {
-                                                "name": "vmToClusterLoop",
-                                                "count": "[length(parameters('existingVirtualMachineNames'))]"
-                                            },
-                                            "properties": {
-                                                "virtualMachineResourceId": "[resourceId(parameters('existingVmResourceGroup'),'Microsoft.Compute/virtualMachines', trim(parameters('existingVirtualMachineNames')[copyIndex()]))]",
-                                                "sqlServerLicenseType": "[parameters('sqlServerLicenseType')]",
-                                                "SqlVirtualMachineGroupResourceId": "[parameters('groupResourceId')]",
-                                                "WSFCDomainCredentials": {
-                                                    "ClusterBootstrapAccountPassword": "[parameters('ClusterBootstrapAccountPassword')]",
-                                                    "ClusterOperatorAccountPassword": "[parameters('ClusterBootstrapAccountPassword')]",
-                                                    "SqlServiceAccountPassword": "[parameters('sqlServicePassword')]"
-                                                },
-                                                "wsfcStaticIp": "[parameters('failoverClusterIpArray')[copyIndex()]]"
-                                            }
-                                        }
-                                    ]
-                                },
-                                "parameters": {
-                                    "existingVirtualMachineNames": {
-                                        "value": "[parameters('existingVmArray')]"
-                                    },
-                                    "location": {
-                                        "value": "[parameters('location')]"
-                                    },
-                                    "sqlServerLicenseType": {
-                                        "value": "[parameters('sqlServerLicenseType')]"
-                                    },
-                                    "existingVmResourceGroup": {
-                                        "value": "[parameters('existingVmResourceGroup')]"
-                                    },
-                                    "groupResourceId": {
-                                        "value": "[variables('groupResourceId')]"
-                                    },
-                                    "sqlServicePassword": {
-                                        "value": "[parameters('sqlServicePassword')]"
-                                    },
-                                    "failoverClusterIpArray": {
-                                        "value": "[parameters('failoverClusterIpArray')]"
-                                    },
-                                    "ClusterBootstrapAccountPassword": {
-                                        "value": "[parameters('ClusterBootstrapAccountPassword')]"
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                },
-                "parameters": {
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "failoverClusterName": {
-                        "value": "[parameters('failoverClusterName')]"
-                    },
-                    "failoverClusterIpArray": {
-                        "value": "[parameters('listOfFailoverClusterIps')]"
-                    },
-                    "existingVmArray": {
-                        "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')]"
-                    },
-                    "sqlServerLicenseType": {
-                        "value": "[parameters('SQLServerLicenseType')]"
-                    },
-                    "sqlServerImageType": {
-                        "value": "[variables('failoverSQLServerImageType')]"
-                    },
-                    "existingFullyQualifiedDomainName": {
-                        "value": "[parameters('domainFQDN')]"
-                    },
-                    "existingSqlServiceAccount": {
-                        "value": "[concat(parameters('SQLServiceAccountUserName'),'@',parameters('domainFQDN'))]"
-                    },
-                    "sqlServicePassword": {
-                        "value": "[parameters('SQLServiceAccountPassword')]"
-                    },
-                    "ClusterBootstrapAccount": {
-                        "value": "[concat(parameters('DomainUserName'),'@',parameters('domainFQDN'))]"
-                    },
-                    "ClusterBootstrapAccountPassword": {
-                        "value": "[parameters('DomainUserPassword')]"
-                    },
-                    "cloudWitnessName": {
-                        "value": "[parameters('storageAccountName')]"
-                    },
-                    "createNewStorageAccount": {
-                        "value": "[if(equals(parameters('createNewStorageAccount'), 'Yes'), true(), false())]"
+                      "type": "string"
                     },
                     "existingVmResourceGroup": {
-                        "value": "[resourceGroup().name]"
-                    }
-                }
-            }
-        },
-        {
-            "condition": "[variables('validParameters')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "AG-Listener",
-            "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments/', 'Failover-Cluster' )]"
-            ],
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "existingFailoverClusterName": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the name of the failover cluster"
-                            }
-                        },
-                        "existingVmArray": {
-                            "type": "Array",
-                            "metadata": {
-                                "description": "Specify the array of Virtual machines participating in SQL Availability Group e.g. ['VM1', 'VM2']. Maximum number is 9."
-                            }
-                        },
-                        "Listener": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify a name for the listener for SQL Availability Group"
-                            },
-                            "defaultValue": "aglistener"
-                        },
-                        "ListenerPort": {
-                            "type": "Int",
-                            "metadata": {
-                                "description": "Specify the port for listener"
-                            },
-                            "defaultValue": 1433
-                        },
-                        "ListenerIpArray": {
-                            "type": "Array",
-                            "metadata": {
-                                "description": "Specify the available private IP address for the listener from all the subnets."
-                            }
-                        },
-                        "existingVirtualNetworkResourceGroupName": {
-                            "defaultValue": "[resourcegroup().name]",
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the resourcegroup for virtual network"
-                            }
-                        },
-                        "existingVnet": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Specify the virtual network for Listener IP Address"
-                            }
-                        },
-                        "existingSubnetArray": {
-                            "type": "Array",
-                            "metadata": {
-                                "description": "Provide the subnet array"
-                            }
-                        },
-                        "Location": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "Location for all resources."
-                            }
-                        },
-                        "sqlAvailabilityGroup": {
-                            "type": "string",
-                            "defaultValue": "sqlAG"
-                        }
+                      "type": "string"
                     },
-                    "variables": {},
-                    "resources": [
-                        {
-                            "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups/availabilityGroupListeners",
-                            "name": "[concat(parameters('existingFailoverClusterName'), '/', parameters('Listener'))]",
-                            "apiVersion": "2022-02-01",
-                            "location": "[parameters('Location')]",
-                            "properties": {
-                                "AvailabilityGroupName": "[parameters('sqlAvailabilityGroup')]",
-                                "AvailabilityGroupConfiguration": {
-                                    "copy": [
-                                        {
-                                            "name": "Replicas",
-                                            "count": "[length(parameters('existingVmArray'))]",
-                                            "input": {
-                                                "sqlVirtualMachineInstanceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.SqlVirtualMachine/sqlVirtualMachines/', parameters('existingVmArray')[copyIndex('Replicas')] )]",
-                                                "role": "[if(equals(copyIndex('Replicas'),0), 'Primary', 'Secondary')]",
-                                                "failover": "[if(less(copyIndex('Replicas'),3), 'Automatic', 'Manual')]",
-                                                "commit": "[if(less(copyIndex('Replicas'),3), 'Synchronous_Commit', 'Asynchronous_Commit')]",
-                                                "readableSecondary": "All"
-                                            }
-                                        }
-                                    ]
-                                },
-                                "copy": [
-                                    {
-                                        "name": "multiSubnetIpConfigurations",
-                                        "count": "[length(parameters('existingVmArray'))]",
-                                        "input": {
-                                            "privateIpAddress": {
-                                                "ipAddress": "[parameters('ListenerIpArray')[copyIndex('multiSubnetIpConfigurations')]]",
-                                                "subnetResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('existingVirtualNetworkResourceGroupName'), '/providers/Microsoft.Network/virtualNetworks/', parameters('existingVnet'), '/subnets/', parameters('existingSubnetArray')[copyIndex('multiSubnetIpConfigurations')] )]"
-                                            },
-                                            "sqlVirtualMachineInstance": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.SqlVirtualMachine/sqlVirtualMachines/', parameters('existingVmArray')[copyIndex('multiSubnetIpConfigurations')] )]"
-                                        }
-                                    }
-                                ],
-                                "Port": "[parameters('ListenerPort')]"
-                            }
-                        }
-                    ]
+                    "groupResourceId": {
+                      "type": "string"
+                    },
+                    "sqlServicePassword": {
+                      "type": "securestring"
+                    },
+                    "failoverClusterIpArray": {
+                      "type": "Array"
+                    },
+                    "ClusterBootstrapAccountPassword": {
+                      "type": "securestring"
+                    }
+                  },
+                  "variables": {},
+                  "resources": [
+                    {
+                      "name": "[trim(parameters('existingVirtualMachineNames')[copyIndex()])]",
+                      "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
+                      "apiVersion": "2022-02-01",
+                      "location": "[parameters('location')]",
+                      "copy": {
+                        "name": "vmToClusterLoop",
+                        "count": "[length(parameters('existingVirtualMachineNames'))]"
+                      },
+                      "properties": {
+                        "virtualMachineResourceId": "[resourceId(parameters('existingVmResourceGroup'),'Microsoft.Compute/virtualMachines', trim(parameters('existingVirtualMachineNames')[copyIndex()]))]",
+                        "sqlServerLicenseType": "[parameters('sqlServerLicenseType')]",
+                        "SqlVirtualMachineGroupResourceId": "[parameters('groupResourceId')]",
+                        "WSFCDomainCredentials": {
+                          "ClusterBootstrapAccountPassword": "[parameters('ClusterBootstrapAccountPassword')]",
+                          "ClusterOperatorAccountPassword": "[parameters('ClusterBootstrapAccountPassword')]",
+                          "SqlServiceAccountPassword": "[parameters('sqlServicePassword')]"
+                        },
+                        "wsfcStaticIp": "[parameters('failoverClusterIpArray')[copyIndex()]]"
+                      }
+                    }
+                  ]
                 },
                 "parameters": {
-                    "existingFailoverClusterName": {
-                        "value": "[parameters('failoverClusterName')]"
-                    },
-                    "existingVmArray": {
-                        "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')]"
-                    },
-                    "existingVnet": {
-                        "value": "[parameters('existingVirtualNetworkName')]"
-                    },
-                    "existingSubnetArray": {
-                        "value": "[parameters('subnetNames')]"
-                    },
-                    "ListenerIpArray": {
-                        "value": "[parameters('listOfListenerIps')]"
-                    },
-                    "Listener": {
-                        "value": "[parameters('listenerName')]"
-                    },
-                    "sqlAvailabilityGroup": {
-                        "value": "[parameters('AvailabilityGroup')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "existingVirtualNetworkResourceGroupName": {
-                        "value": "[parameters('existingVirtualNetworkResourceGroupName')]"
-                    }
+                  "existingVirtualMachineNames": {
+                    "value": "[parameters('existingVmArray')]"
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "sqlServerLicenseType": {
+                    "value": "[parameters('sqlServerLicenseType')]"
+                  },
+                  "existingVmResourceGroup": {
+                    "value": "[parameters('existingVmResourceGroup')]"
+                  },
+                  "groupResourceId": {
+                    "value": "[variables('groupResourceId')]"
+                  },
+                  "sqlServicePassword": {
+                    "value": "[parameters('sqlServicePassword')]"
+                  },
+                  "failoverClusterIpArray": {
+                    "value": "[parameters('failoverClusterIpArray')]"
+                  },
+                  "ClusterBootstrapAccountPassword": {
+                    "value": "[parameters('ClusterBootstrapAccountPassword')]"
+                  }
                 }
+              }
             }
+          ]
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "failoverClusterName": {
+            "value": "[parameters('failoverClusterName')]"
+          },
+          "failoverClusterIpArray": {
+            "value": "[parameters('listOfFailoverClusterIps')]"
+          },
+          "existingVmArray": {
+            "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')]"
+          },
+          "sqlServerLicenseType": {
+            "value": "[parameters('SQLServerLicenseType')]"
+          },
+          "sqlServerImageType": {
+            "value": "[variables('failoverSQLServerImageType')]"
+          },
+          "existingFullyQualifiedDomainName": {
+            "value": "[parameters('domainFQDN')]"
+          },
+          "existingSqlServiceAccount": {
+            "value": "[concat(parameters('SQLServiceAccountUserName'),'@',parameters('domainFQDN'))]"
+          },
+          "sqlServicePassword": {
+            "value": "[parameters('SQLServiceAccountPassword')]"
+          },
+          "ClusterBootstrapAccount": {
+            "value": "[concat(parameters('DomainUserName'),'@',parameters('domainFQDN'))]"
+          },
+          "ClusterBootstrapAccountPassword": {
+            "value": "[parameters('DomainUserPassword')]"
+          },
+          "cloudWitnessName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "createNewStorageAccount": {
+            "value": "[if(equals(parameters('createNewStorageAccount'), 'Yes'), true(), false())]"
+          },
+          "existingVmResourceGroup": {
+            "value": "[resourceGroup().name]"
+          }
         }
-    ],
-    "outputs": {
-        "errors": {
-            "type": "string",
-            "value": "[if(variables('validParameters'), '', 'Array size of subnetNames, listOfFailoverClusterIps, listOfListenerIps, VMNamesForPrimaryAndSecondaryReplicas should be equal')]"
+      }
+    },
+    {
+      "condition": "[variables('validParameters')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "AG-Listener",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'Failover-Cluster' )]"
+      ],
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "existingFailoverClusterName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify the name of the failover cluster"
+              }
+            },
+            "existingVmArray": {
+              "type": "Array",
+              "metadata": {
+                "description": "Specify the array of Virtual machines participating in SQL Availability Group e.g. ['VM1', 'VM2']. Maximum number is 9."
+              }
+            },
+            "Listener": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify a name for the listener for SQL Availability Group"
+              },
+              "defaultValue": "aglistener"
+            },
+            "ListenerPort": {
+              "type": "Int",
+              "metadata": {
+                "description": "Specify the port for listener"
+              },
+              "defaultValue": 1433
+            },
+            "ListenerIpArray": {
+              "type": "Array",
+              "metadata": {
+                "description": "Specify the available private IP address for the listener from all the subnets."
+              }
+            },
+            "existingVirtualNetworkResourceGroupName": {
+              "defaultValue": "[resourcegroup().name]",
+              "type": "string",
+              "metadata": {
+                "description": "Specify the resourcegroup for virtual network"
+              }
+            },
+            "existingVnet": {
+              "type": "string",
+              "metadata": {
+                "description": "Specify the virtual network for Listener IP Address"
+              }
+            },
+            "existingSubnetArray": {
+              "type": "Array",
+              "metadata": {
+                "description": "Provide the subnet array"
+              }
+            },
+            "Location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "sqlAvailabilityGroup": {
+              "type": "string",
+              "defaultValue": "sqlAG"
+            }
+          },
+          "variables": {},
+          "resources": [
+            {
+              "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups/availabilityGroupListeners",
+              "name": "[concat(parameters('existingFailoverClusterName'), '/', parameters('Listener'))]",
+              "apiVersion": "2022-02-01",
+              "location": "[parameters('Location')]",
+              "properties": {
+                "AvailabilityGroupName": "[parameters('sqlAvailabilityGroup')]",
+                "AvailabilityGroupConfiguration": {
+                  "copy": [
+                    {
+                      "name": "Replicas",
+                      "count": "[length(parameters('existingVmArray'))]",
+                      "input": {
+                        "sqlVirtualMachineInstanceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.SqlVirtualMachine/sqlVirtualMachines/', parameters('existingVmArray')[copyIndex('Replicas')] )]",
+                        "role": "[if(equals(copyIndex('Replicas'),0), 'Primary', 'Secondary')]",
+                        "failover": "[if(less(copyIndex('Replicas'),3), 'Automatic', 'Manual')]",
+                        "commit": "[if(less(copyIndex('Replicas'),3), 'Synchronous_Commit', 'Asynchronous_Commit')]",
+                        "readableSecondary": "All"
+                      }
+                    }
+                  ]
+                },
+                "copy": [
+                  {
+                    "name": "multiSubnetIpConfigurations",
+                    "count": "[length(parameters('existingVmArray'))]",
+                    "input": {
+                      "privateIpAddress": {
+                        "ipAddress": "[parameters('ListenerIpArray')[copyIndex('multiSubnetIpConfigurations')]]",
+                        "subnetResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('existingVirtualNetworkResourceGroupName'), '/providers/Microsoft.Network/virtualNetworks/', parameters('existingVnet'), '/subnets/', parameters('existingSubnetArray')[copyIndex('multiSubnetIpConfigurations')] )]"
+                      },
+                      "sqlVirtualMachineInstance": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.SqlVirtualMachine/sqlVirtualMachines/', parameters('existingVmArray')[copyIndex('multiSubnetIpConfigurations')] )]"
+                    }
+                  }
+                ],
+                "Port": "[parameters('ListenerPort')]"
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "existingFailoverClusterName": {
+            "value": "[parameters('failoverClusterName')]"
+          },
+          "existingVmArray": {
+            "value": "[parameters('VMNamesForPrimaryAndSecondaryReplicas')]"
+          },
+          "existingVnet": {
+            "value": "[parameters('existingVirtualNetworkName')]"
+          },
+          "existingSubnetArray": {
+            "value": "[parameters('subnetNames')]"
+          },
+          "ListenerIpArray": {
+            "value": "[parameters('listOfListenerIps')]"
+          },
+          "Listener": {
+            "value": "[parameters('listenerName')]"
+          },
+          "sqlAvailabilityGroup": {
+            "value": "[parameters('AvailabilityGroup')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "existingVirtualNetworkResourceGroupName": {
+            "value": "[parameters('existingVirtualNetworkResourceGroupName')]"
+          }
         }
+      }
     }
+  ],
+  "outputs": {
+    "errors": {
+      "type": "string",
+      "value": "[if(variables('validParameters'), '', 'Array size of subnetNames, listOfFailoverClusterIps, listOfListenerIps, VMNamesForPrimaryAndSecondaryReplicas should be equal')]"
+    }
+  }
 }
