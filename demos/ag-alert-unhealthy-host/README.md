@@ -8,7 +8,7 @@ urlFragment: ag-alert-unhealthy-host
 languages:
 - json
 ---
-# Alert for Unhealthy Host Count metric.
+# Alert for Unhealthy Host Count metric
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-unhealthy-host/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-unhealthy-host/PublicDeployment.svg)
