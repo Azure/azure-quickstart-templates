@@ -190,7 +190,7 @@ resource kvAppGwSecretsUserRole 'Microsoft.Authorization/roleAssignments@2020-08
   }
 }
 
-module rbacPropagationDelay 'wait.bicep' = {
+module rbacPropagationDelay 'br/public:deployment-scripts/wait:1.0.1' = {
   name: 'DeploymentDelay'
   dependsOn: [
     kvAppGwSecretsUserRole
