@@ -71,6 +71,7 @@ resource budget 'Microsoft.Consumption/budgets@2021-10-01' = {
         contactEmails: contactEmails
         contactRoles: contactRoles
         contactGroups: contactGroups
+        thresholdType: 'Forecasted'
       }
     }
     filter: {
