@@ -16,7 +16,7 @@ param sliceName string = 'slice-1'
 @description('The name of the data network')
 param dataNetworkName string = 'internet'
 
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01-preview' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -26,13 +26,13 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01
     }
   }
 
-  resource exampleDataNetwork 'dataNetworks@2022-03-01-preview' = {
+  resource exampleDataNetwork 'dataNetworks@2022-04-01-preview' = {
     name: dataNetworkName
     location: location
     properties: {}
   }
 
-  resource exampleSlice 'slices@2022-03-01-preview' = {
+  resource exampleSlice 'slices@2022-04-01-preview' = {
     name: sliceName
     location: location
     properties: {
