@@ -28,7 +28,7 @@ let RegisteredDevices = InsightsMetrics
 let ProvisionedDevices = InsightsMetrics
     | where Namespace == "prometheus"
     | where Name == "subscribers_count"
-    | where Tags has \'"type":"provisioned"\'
+    | where Tags has '"type":"provisioned"'
     | summarize by ProvisionedDevices=Val, Time=TimeGenerated;
 let ConnectedDevices = InsightsMetrics
     | where Namespace == "prometheus"
@@ -39,7 +39,8 @@ Time
     | join kind=leftouter (ProvisionedDevices) on Time
     | join kind=leftouter (ConnectedDevices) on Time
     | project Time, RegisteredDevices, ProvisionedDevices, ConnectedDevices
-    | render areachart kind=unstacked'''
+    | render areachart kind=unstacked 
+'''
 
 var gnodequery = '''InsightsMetrics
     | where Namespace == "prometheus"
@@ -47,40 +48,41 @@ var gnodequery = '''InsightsMetrics
     | extend Time=TimeGenerated
     | extend GnBs=Val
     | project GnBs, Time
-    | render timechart'''
+    | render timechart
+'''
 
 var pdusessionsquery = '''InsightsMetrics
     | where Namespace == "prometheus" 
     | where Name == "subgraph_counts"
     | summarize PduSessions=max(Val) by Time=TimeGenerated
-    | render areachart kind=unstacked'''
+    | render areachart kind=unstacked
+'''
 
-var userthroughputquery = '''let rate_function=(tbl:(Val: real, Time: datetime))
-{
-tbl
+var userthroughputquery = '''let rate_function=(tbl: (Val: real, Time: datetime)) {
+    tbl
     | sort by Time asc
     | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value
     | extend cum_correction = row_cumsum(correction)
     | extend Val = Val + cum_correction
     | extend PrevTime = prev(Time), PrevVal = prev(Val)
-    | extend dt = (Time-PrevTime)/1s
-    | extend dv = Val-PrevVal
-    | extend rate = (dv * 8)/(dt * 1000000) // convert to Megabits per second
+    | extend dt = (Time - PrevTime) / 1s
+    | extend dv = Val - PrevVal
+    | extend rate = (dv * 8) / (dt * 1000000) // convert to Megabits per second
 }
-    ;
+;
 let BytesUpstream = InsightsMetrics
     | where Namespace == "prometheus"
     | where Name == "cppe_bytes_total"
-    | where Tags has \'"direction":"tx"\'
-    | where Tags has \'"interface":"n6"\'
+    | where Tags has '"direction":"tx"'
+    | where Tags has '"interface":"n6"'
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | project BytesUpstream=rate, Time;
 let BytesDownstream = InsightsMetrics
     | where Namespace == "prometheus"
     | where Name == "cppe_bytes_total"
-    | where Tags has \'"direction":"tx"\'
-    | where Tags has \'"interface":"n3"\'
+    | where Tags has '"direction":"tx"'
+    | where Tags has '"interface":"n3"'
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | project BytesDownstream=rate, Time;
@@ -191,8 +193,8 @@ TimeSeries
     | join kind=leftouter (request_failure) on Time
     | join kind=leftouter (handover_failure) on Time
     | project Time, Registration, AuthenticationFailure, AuthenticationRejection, SessionEstablishment=SetupResponse-SetupRequest, SessionModification=ModifyResponse-ModifyRequest, SessionRelease=ReleaseCommand-ReleaseResponse, Service, PathSwitch, Handover
-    | render areachart kind=unstacked'''
-
+    | render areachart kind=unstacked
+'''
 
 resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
   name: dashboardName
@@ -274,7 +276,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'PartTitle'
-                  value: 'AL6Devices'
+                  value: 'Devices'
                   isOptional: true
                 }
                 {
@@ -685,8 +687,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                   isOptional: true
                 }
                 {
-
-
                   name: 'Query'
                   value: userthroughputquery
                   isOptional: true
@@ -703,7 +703,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'PartTitle'
-                  value: 'Userplane Throughput'
+                  value: 'Userplane Throughput (Mb/s)'
                   isOptional: true
                 }
                 {
@@ -719,10 +719,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                       type: 'datetime'
                     }
                     yAxis: [
-                      {
-                        name: 'BytesTotal'
-                        type: 'real'
-                      }
                       {
                         name: 'BytesUpstream'
                         type: 'real'
@@ -756,12 +752,30 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 content: {
                   Query: userthroughputquery
                   ControlType: 'FrameControlChart'
-                  SpecificChart: 'UnstackedArea'
-                  PartTitle: 'Userplane Throughput'
+                  SpecificChart: 'StackedArea'
+                  PartTitle: 'Userplane Throughput (Mb/s)'
+                  Dimensions: {
+                    xAxis: {
+                      name: 'Time'
+                      type: 'datetime'
+                    }
+                    yAxis: [
+                      {
+                        name: 'BytesUpstream'
+                        type: 'real'
+                      }
+                      {
+                        name: 'BytesDownstream'
+                        type: 'real'
+                      }
+                    ]
+                    splitBy: []
+                    aggregation: 'Sum'
+                  }
                 }
               }
               partHeader: {
-                title: 'Userplane Throughput'
+                title: 'Userplane Throughput (Mb/s)'
                 subtitle: 'Private Edge Overview'
               }
             }
