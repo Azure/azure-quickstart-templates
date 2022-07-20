@@ -75,18 +75,18 @@ param sessionAggregateMaximumBitRateUplink string = '2 Gbps'
 @description('The session aggregated maximum bit rate (Session-AMBR) for downloads across all non-GBR QoS flows of an individual PDU session involving a particular UE')
 param sessionAggregateMaximumBitRateDownlink string = '2 Gbps'
 
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01-preview' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
   name: existingMobileNetworkName
 
-  resource existingDataNetwork 'dataNetworks@2022-03-01-preview' existing = {
+  resource existingDataNetwork 'dataNetworks@2022-04-01-preview' existing = {
     name: existingDataNetworkName
   }
 
-  resource existingSlice 'slices@2022-03-01-preview' existing = {
+  resource existingSlice 'slices@2022-04-01-preview' existing = {
     name: existingSliceName
   }
 
-  resource exampleService 'services@2022-03-01-preview' = {
+  resource exampleService 'services@2022-04-01-preview' = {
     name: serviceName
     location: location
     properties: {
@@ -115,7 +115,7 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-0
     }
   }
 
-  resource exampleSimPolicy 'simPolicies@2022-03-01-preview' = {
+  resource exampleSimPolicy 'simPolicies@2022-04-01-preview' = {
     name: simPolicyName
     location: location
     properties: {
