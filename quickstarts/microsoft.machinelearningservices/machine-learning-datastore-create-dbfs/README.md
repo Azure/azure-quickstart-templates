@@ -1,4 +1,14 @@
-# Create a DBFS Datastore in Azure Machine Learning Workspace
+---
+description: This template creates a Databricks File System datastore in Azure Machine Learning workspace.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-datastore-create-dbfs
+languages:
+- json
+---
+# Create a Databricks File System Datastore
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-datastore-create-dbfs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-datastore-create-dbfs/PublicDeployment.svg)
@@ -20,3 +30,5 @@ If you are new to Azure Machine Learning, see:
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
+
+`Tags: Microsoft.MachineLearningServices/workspaces/datastores, Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, systemAssigned`

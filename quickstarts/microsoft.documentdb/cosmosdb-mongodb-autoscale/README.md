@@ -1,4 +1,15 @@
-# Create an Azure Cosmos account for MongoDB API with autoscale shared database throughput with two collections
+---
+description: This template creates an Azure Cosmos DB account for MongoDB API (3.2, 3.6, 4.0 or 4.2) in two regions using shared autoscale database throughput with two collections.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-mongodb-autoscale
+languages:
+- json
+- bicep
+---
+# Create an Azure Cosmos account for MongoDB API autoscale
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-mongodb-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-mongodb-autoscale/PublicDeployment.svg)
@@ -27,3 +38,5 @@ Below are the parameters which can be user configured in the parameters file or 
 - **Collection 1 Name:** Enter the name for the first collection.
 - **Collection 2 Name:** Enter the name for the second collection.
 - **Autoscale Max Throughput:** Enter the shared maximum autoscale RU/s for the database (default and minimum is 1000).
+
+`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.DocumentDB/databaseAccounts/mongodbDatabases, Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections`

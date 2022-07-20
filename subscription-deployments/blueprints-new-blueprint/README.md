@@ -1,4 +1,14 @@
-# Azure Blueprints - Create a new blueprint definition
+---
+description: This template creates an Azure Blueprint blueprint definition. The blueprint definition includes a policy assignment artifact and can be modified and then deployed to management groups or subscriptions for consistent environments.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: blueprints-new-blueprint
+languages:
+- json
+---
+# Blueprints - Create a new blueprint definition
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-deployments/blueprints-new-blueprint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-deployments/blueprints-new-blueprint/PublicDeployment.svg)
@@ -81,4 +91,4 @@ If you are new to template deployment, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Blueprints, blueprint definition, artifacts, policy assignment, blueprint-level parameters`
+`Tags: Blueprints, blueprint definition, artifacts, policy assignment, blueprint-level parameters, Microsoft.Blueprint/blueprints, Microsoft.Blueprint/blueprints/artifacts`

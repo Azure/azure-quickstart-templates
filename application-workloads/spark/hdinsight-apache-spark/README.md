@@ -1,4 +1,14 @@
-# Create HDInsight Linux cluster and run custom script action to install Apache Spark 1.4.1
+---
+description: Creates an HDInsight linux cluster running Apache Spark 1.4.1.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-apache-spark
+languages:
+- json
+---
+# Creates an HDInsight cluster running Apache Spark 1.4.1.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/hdinsight-apache-spark/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/hdinsight-apache-spark/PublicDeployment.svg)
@@ -10,7 +20,7 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/hdinsight-apache-spark/CredScanResult.svg)
 Creates HDInsight Linux cluster and run custom script action to install Apache Spark 1.4.1<br>
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fhdinsight-apache-spark%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fhdinsight-apache-spark%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fhdinsight-apache-spark%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fhdinsight-apache-spark%2Fazuredeploy.json)
 
@@ -36,8 +46,6 @@ Type :help for more information.<br>
 <br>...Output Snipped...<br><br>
 scala>
 
-To deploy alternative versions of Apache Spark as published by the HDInsight team, please review follow this link: <a href="https://azure.microsoft.com/en-us/documentation/articles/hdinsight-hadoop-customize-cluster-linux/" target="_blank"><b>Click Me</b>
+To deploy alternative versions of Apache Spark as published by the HDInsight team, please review follow this link: <a href="https://azure.microsoft.com/documentation/articles/hdinsight-hadoop-customize-cluster-linux/" target="_blank"><b>Click Me</b>
 
-
-
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`

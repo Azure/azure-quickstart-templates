@@ -1,4 +1,14 @@
-# Deploy a Node js service connected to a highly available MongoDB installation on Ubuntu virtual machine
+---
+description: This template creates a front-end Nodejs service and a multi-server MongoDB deployment on Ubuntu virtual machines, and configures the MongoDB installation for high availability
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mongodb-nodejs-high-availability
+languages:
+- json
+---
+# Nodejs front-end and MongoDB cluster on Ubuntu VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-nodejs-high-availability/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-nodejs-high-availability/PublicDeployment.svg)
@@ -68,4 +78,4 @@ In the above deployment sequence, steps #1 and #2 will have to complete first be
 - MongoDB version 3.0.0 and above is recommended in order to take advantage of high-scale replica sets offered by this template
 - The current version of the MongoDB template is shipped with Ubuntu support only (adding support for CentOS is just a matter of creating an additional installation .sh script)
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/availabilitySets, Microsoft.Network/virtualNetworks`

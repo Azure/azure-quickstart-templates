@@ -1,4 +1,14 @@
-# Disable encryption on a running Windows VM which was encrypted without using AAD app credentials
+---
+description: This template disables encryption on a running windows VM which was encrypted without using AAD application
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: decrypt-running-windows-vm-without-aad
+languages:
+- json
+---
+# Disable encryption on Windows VM encrypted without AAD
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/decrypt-running-windows-vm-without-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/decrypt-running-windows-vm-without-aad/PublicDeployment.svg)
@@ -16,4 +26,6 @@ This template disables encryption on a running windows VM which was encrypted wi
 Tags: AzureDiskEncryption
 
 References:
-White paper - https://azure.microsoft.com/en-us/documentation/articles/azure-security-disk-encryption/
+White paper - https://azure.microsoft.com/documentation/articles/azure-security-disk-encryption/
+
+`Tags:Microsoft.Compute/virtualMachines/extensions, AzureDiskEncryption, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, [variables('extensionName')]`

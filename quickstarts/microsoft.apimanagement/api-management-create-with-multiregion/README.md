@@ -1,4 +1,15 @@
-# Azure API Management Service
+---
+description: This template demonstrates how to create an API Management instance with additional locations. The primary location is the same as location of the resource group. For additional locations, the template shows NorthCentralUs and East US2. The primary location should be different from additional locations.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: api-management-create-with-multiregion
+languages:
+- json
+- bicep
+---
+# Create a multiregion Premium tier API Management instance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-create-with-multiregion/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-create-with-multiregion/PublicDeployment.svg)
@@ -27,8 +38,8 @@ If you're new to Azure API Management, see:
 
 - [Azure API Management service](https://azure.microsoft.com/services/api-management/)
 - [Azure API Management documentation](https://docs.microsoft.com/azure/api-management/)
-- [Azure API Management deployment in multiple regios](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-deploy-multi-region)
+- [Azure API Management deployment in multiple regios](https://docs.microsoft.com/azure/api-management/api-management-howto-deploy-multi-region)
 - [Azure API Management Configure protocols and ciphers](https://docs.microsoft.com/azure/api-management/api-management-howto-manage-protocols-ciphers)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Apimanagement)
 
-`Tags: API, API Management, Azure API Management`
+`Tags: API, API Management, Azure API Management, Microsoft.ApiManagement/service`

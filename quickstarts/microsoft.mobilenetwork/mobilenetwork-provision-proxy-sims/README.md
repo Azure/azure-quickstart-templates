@@ -1,3 +1,14 @@
+---
+description: This template provisions proxy SIM(s) to be used with an existing mobile network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mobilenetwork-provision-proxy-sims
+languages:
+- json
+- bicep
+---
 # Provision proxy SIM(s)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-provision-proxy-sims/PublicLastTestDate.svg)
@@ -20,4 +31,4 @@ This template adds the SIM group and SIM(s) to an existing mobile network and pr
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates`
+`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates, Microsoft.MobileNetwork/sims, Microsoft.MobileNetwork/mobileNetworks`

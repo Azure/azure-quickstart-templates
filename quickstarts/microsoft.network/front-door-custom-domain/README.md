@@ -1,4 +1,15 @@
-# Onboard a custom domain and managed TLS certificate with Front Door
+---
+description: This template onboards and secures a custom domain with Front Door
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-custom-domain
+languages:
+- json
+- bicep
+---
+# Add custom domain and managed certificate with Front Door
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-custom-domain/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-custom-domain/PublicDeployment.svg)
@@ -25,3 +36,5 @@ Parameters for this template are:
 For the deployment of this template to succeed the specified custom domain will require a CNAME to the Front Door's default frontend host (for example, `contoso.azurefd.net`).
 
 For example, for a Front Door instance named `contoso`, the default frontend host name would be `contoso.azurefd.net`. To add the custom domain `www.contoso.com`, create a DNS CNAME entry for `www.contoso.com` to `contoso.azurefd.net`. For more details, see [Tutorial: Add a custom domain to your Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain).
+
+`Tags: Microsoft.Network/frontDoors, Microsoft.Network/frontdoors/frontendEndpoints/customHttpsConfiguration`

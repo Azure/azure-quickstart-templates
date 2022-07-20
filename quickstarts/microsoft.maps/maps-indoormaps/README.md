@@ -1,4 +1,15 @@
-# Create an Azure Maps account
+---
+description: This template deploys and Azure Maps account with the Indoor Maps Creator Feature to allow building Indoor Maps.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: maps-indoormaps
+languages:
+- json
+- bicep
+---
+# Deploy Azure Maps with Azure Maps Creator (Indoor Maps)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.maps/maps-indoormaps/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.maps/maps-indoormaps/PublicDeployment.svg)
@@ -18,7 +29,7 @@ This template creates an Azure Maps service with the Azure Maps Creator feature 
 
 If you're new to Azure Maps, see:
 
-- [Indoor map concepts](https://docs.microsoft.com/en-us/azure/azure-maps/creator-indoor-maps)
+- [Indoor map concepts](https://docs.microsoft.com/azure/azure-maps/creator-indoor-maps)
 - [Azure Maps service](https://azure.microsoft.com/services/azure-maps/)
 - [Azure Maps documentation](https://docs.microsoft.com/azure/azure-maps/)
 
@@ -26,4 +37,4 @@ If you're new to Azure Resource Manager template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Maps, Indoor Maps, Creator, Azure Maps`
+`Tags: Maps, Indoor Maps, Creator, Azure Maps, Microsoft.Maps/accounts, Microsoft.Maps/accounts/creators`

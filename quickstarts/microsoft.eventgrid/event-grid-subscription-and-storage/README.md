@@ -1,4 +1,15 @@
-# Create Azure Blob Storage account with Event Grid subscription
+---
+description: Creates Azure Blob Storage account and then creates an Event Grid subscription to that Blob.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: event-grid-subscription-and-storage
+languages:
+- json
+- bicep
+---
+# Create Blob Storage and Event Grid subscription to the Blob
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-subscription-and-storage/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-subscription-and-storage/PublicDeployment.svg)
@@ -19,4 +30,4 @@ This template creates an Azure Storage Account and then creates an Event Grid su
 
 You need a WebHook endpoint for receiving the events. If you have one, pass that URI as the `endpoint` parameter. If you do not have an existing endpoint, the template in the **prereqs** folder deploys a web app that displays the event messages. Deploy this template to your subscription. Pass that URI in the format `https://<your-site>/api/updates/` For more information, see [Create a message endpoint](https://docs.microsoft.com/azure/event-grid/custom-event-quickstart#create-a-message-endpoint).
 
-`Tags: eventgrid`
+`Tags: eventgrid, Microsoft.Storage/storageAccounts, Microsoft.EventGrid/systemTopics, Microsoft.EventGrid/systemTopics/eventSubscriptions, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.Web/sites/sourcecontrols`

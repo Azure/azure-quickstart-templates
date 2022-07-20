@@ -1,4 +1,15 @@
-# Provision SIMs
+---
+description: This template creates a Private 5G Core dashboard to be used with an existing private mobile network deployment that is connected to Log Analytics.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mobilenetwork-create-dashboard
+languages:
+- json
+- bicep
+---
+# Deploy Private 5G Core dashboard
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-create-dashboard/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-create-dashboard/PublicDeployment.svg)
@@ -24,4 +35,4 @@ If you do not already have a Private 5G Core deployment then please consider usi
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: Azure Private 5G Core, Monitoring, Azure Dashboard, Resource Manager templates, ARM templates`
+`Tags: Azure Private 5G Core, Monitoring, Azure Dashboard, Resource Manager templates, ARM templates, Microsoft.Portal/dashboards, Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart, datetime, real, MsPortalFx.Composition.Configuration.ValueTypes.TimeRange`

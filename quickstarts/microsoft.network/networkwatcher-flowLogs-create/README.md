@@ -1,4 +1,15 @@
-# Create an NSG flow logs resource in Network Watcher
+---
+description: This template create an NSG Flow Logs resource
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: networkwatcher-flowLogs-create
+languages:
+- json
+- bicep
+---
+# Enable NSG Flow Logs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/networkwatcher-flowLogs-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/networkwatcher-flowLogs-create/PublicDeployment.svg)
@@ -34,4 +45,4 @@ Useful links:
 
 Network Watcher must be enabled for your subscription. Network Watcher is enabled by default, so unless you have disabled it, this should not be an issue.
 
-`Tags: Network Watcher, NSG flow logs`
+`Tags: Network Watcher, NSG flow logs, Microsoft.Storage/storageAccounts, Microsoft.Resources/deployments, Microsoft.Network/networkWatchers/flowLogs, JSON, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks`

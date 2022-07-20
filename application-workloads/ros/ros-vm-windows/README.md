@@ -1,3 +1,13 @@
+---
+description: This template creates a Windows VM and installs the ROS into it using the CustomScript extension.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: ros-vm-windows
+languages:
+- json
+---
 # ROS on Azure with Windows VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ros/ros-vm-windows/PublicLastTestDate.svg)
@@ -46,4 +56,4 @@ The script pops up a credential window, provide the credentials of azure vm.
     Enter-PSSession -ComputerName $hostIP -Credential $cred -SessionOption $soptions -UseSSL
 ```
 
-
+`Tags: Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIpAddresses, Microsoft.Compute/virtualMachines, Microsoft.Storage/storageAccounts, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, NvidiaGpuDriverWindows`

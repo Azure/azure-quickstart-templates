@@ -1,4 +1,14 @@
-# Deploy a windows VM with Puppet agent
+---
+description: Deploy a windows VM with Puppet Agent
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: puppet-agent-windows
+languages:
+- json
+---
+# Puppet agent on Windows VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/puppet/puppet-agent-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/puppet/puppet-agent-windows/PublicDeployment.svg)
@@ -15,3 +25,5 @@
 This template provisions a Windows VM on Azure with the Puppet Agent installed using a VM Extension.
 
 The pre-requiste for deploying this template is to having a running Puppet server. You can host your own Puppet server in Azure or on-prem or create a Puppet Server in Azure using the Azure Marketplace image and following the guidelines for [Getting Started Guide for Deploying Puppet Enterprise in Azure](<a href="https://puppet.com/resources/whitepaper/getting-started-deploying-puppet-enterprise-microsoft-azure/" target="_blank">).
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, PuppetEnterpriseAgent`

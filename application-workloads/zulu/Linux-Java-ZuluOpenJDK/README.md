@@ -1,4 +1,14 @@
-# VM-Linux - Azul Zulu OpenJDK installation
+---
+description: This template allows you to create a Linux VM with the Azul Zulu OpenJDK JVM.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: Linux-Java-ZuluOpenJDK
+languages:
+- json
+---
+# Deploy a Linux VM with the Azul Zulu OpenJDK JVM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Linux-Java-ZuluOpenJDK/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Linux-Java-ZuluOpenJDK/PublicDeployment.svg)
@@ -44,8 +54,8 @@ The Zulu install script using yum is available [here.](scripts/yum-zulu-install.
 
 - [Azul Zulu for Azure - Enterprise Edition FAQ](https://assets.azul.com/files/Zulu-for-Azure-FAQ.pdf)
 - [Azul Zulu for Azure - Enterprise Edition](https://www.azul.com/downloads/azure-only/zulu/)
-- [Java on Azure](https://azure.microsoft.com/en-us/develop/java/)
-- [Azure for Java Developers](https://docs.microsoft.com/en-us/java/azure/?view=azure-java-stable)
+- [Java on Azure](https://azure.microsoft.com/develop/java/)
+- [Azure for Java Developers](https://docs.microsoft.com/java/azure/?view=azure-java-stable)
 - [Azul](https://www.azul.com/)
 - [Azul Zulu Enterprise](https://www.azul.com/products/zulu-enterprise/)
 - [Azul Zulu Embedded](https://www.azul.com/products/zulu-embedded/)
@@ -63,4 +73,4 @@ The Zulu install script using yum is available [here.](scripts/yum-zulu-install.
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Linux, Ubuntu, Debian, CentOS, Java, Zulu, OpenJDK`  
+`Tags: Linux, Ubuntu, Debian, CentOS, Java, Zulu, OpenJDK, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

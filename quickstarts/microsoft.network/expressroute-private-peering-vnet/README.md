@@ -1,4 +1,15 @@
-# ExpressRoute private peering and ExpressRoute gateway
+---
+description: This template configure ExpressRoute Microsoft peering, deploy an Azure VNet with Expressroute gateway and link the VNet to the ExpressRoute circuit
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: expressroute-private-peering-vnet
+languages:
+- json
+- bicep
+---
+# ExpressRoute circuit with private peering and Azure VNet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/expressroute-private-peering-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/expressroute-private-peering-vnet/PublicDeployment.svg)
@@ -33,3 +44,5 @@ You can create a connection, to link the ExpressRoute circuit to the ExpressRout
 ```
 tags: ExpressRoute, private peering, VNet, ARM template
 ```
+
+`Tags: Microsoft.Network/expressRouteCircuits, Microsoft.Network/expressRouteCircuits/peerings, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways`

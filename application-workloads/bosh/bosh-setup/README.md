@@ -1,4 +1,14 @@
-# Setup Bosh Deployment VM
+---
+description: This template helps you setup a development environment where you can deploy BOSH and Cloud Foundry.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: bosh-setup
+languages:
+- json
+---
+# BOSH Setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/bosh/bosh-setup/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/bosh/bosh-setup/PublicDeployment.svg)
@@ -18,3 +28,5 @@ You can follow the guide [**HERE**](https://github.com/cloudfoundry-incubator/bo
 If you have any question about this template or the deployment of Cloud Foundry on Azure, please feel free to give your feedback [**HERE**](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/issues).
 
 We look forward to hearing your feedback and suggestions!
+
+`Tags: CustomScript, CustomScriptForLinux, Microsoft.Network/networkSecurityGroups, Microsoft.Resources/deployments, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, Microsoft.Network/loadBalancers, Microsoft.Storage/storageAccounts`

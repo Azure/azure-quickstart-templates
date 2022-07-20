@@ -21,7 +21,8 @@ function deploy {
         [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
         [string] $ManagementGroupId,
         [switch] $Dev,
-        [switch] $bicep
+        [switch] $bicep,
+        [switch] $whatIf
     )
 
     try {
@@ -85,6 +86,9 @@ function deploy {
 
     if (!$ValidateOnly) {
         $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
+        if ($whatIf) {
+            $OptionalParameters.Add('WhatIf', $whatIf)
+        }
     }
 
     $TemplateFile           = "$ArtifactStagingDirectory\$TemplateFile"
@@ -107,6 +111,9 @@ function deploy {
         '*/deploymentTemplate.json*' {
             $deploymentScope = "ResourceGroup"
             $OptionalParameters.Add('Mode', $Mode)
+            if(!$ValidateOnly -and !$WhatIf) {
+                $OptionalParameters.Add('Force', $true)
+            }
         }
     }
 
@@ -264,7 +271,7 @@ function deploy {
                     -ResourceGroupName $ResourceGroupName `
                     @TemplateArgs `
                     @OptionalParameters `
-                    -Force -Verbose `
+                    -Verbose `
                     -ErrorVariable ErrorMessages
             }
             "Subscription" {

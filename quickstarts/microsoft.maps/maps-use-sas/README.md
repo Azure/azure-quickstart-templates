@@ -1,4 +1,14 @@
-# Create an Azure Maps account
+---
+description: This template deploys and Azure Maps account and lists a Sas token based on the provided User Assigned identity to be stored in an Azure Key Vault secret.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: maps-use-sas
+languages:
+- json
+---
+# Create Azure Maps SAS token stored in an Azure Key Vault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.maps/maps-use-sas/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.maps/maps-use-sas/PublicDeployment.svg)
@@ -25,3 +35,5 @@ If you're new to Azure Maps, see:
 If you're new to Azure Resource Manager template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+`Tags: Microsoft.Maps/accounts, UserAssigned, Microsoft.Maps/accounts/providers/roleAssignments, Microsoft.KeyVault/vaults/secrets, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.KeyVault/vaults`

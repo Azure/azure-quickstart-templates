@@ -1,4 +1,15 @@
-# Create an Azure Api Management service, a virtual network and a private endpoint
+---
+description: This template will create an API Management service, a virtual network and a private endpoint exposing the API Management service to the virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: api-management-private-endpoint
+languages:
+- json
+- bicep
+---
+# Create an API Management service with a private endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-private-endpoint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-private-endpoint/PublicDeployment.svg)
@@ -13,8 +24,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-private-endpoint%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-private-endpoint%2Fazuredeploy.json)   
-
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-private-endpoint%2Fazuredeploy.json)
 
 This template will create a virtual network, an API Management service and a private endpoint exposing the Api Management service to the virtual network.
 
@@ -28,4 +38,4 @@ Below are the parameters which can be user configured in the parameters file inc
 - **PublisherEmail:** Email of the publisher to notify api management service setup
 - **Private Endpoint Name:** Enter a name for the private endpoint.
 
-`Tags: Azure API Management, API Management, Private Endpoint`
+`Tags: Azure API Management, API Management, Private Endpoint, Microsoft.Network/virtualNetworks, Microsoft.ApiManagement/service, SystemAssigned, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`

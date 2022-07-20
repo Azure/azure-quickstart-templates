@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Standard/Premium and an Application Gateway instance, and uses an NSG and WAF policy to validate that traffic has come through the Front Door origin.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-application-gateway-public
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with Application Gateway origin
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-application-gateway-public/PublicLastTestDate.svg)
@@ -60,3 +71,5 @@ You can also attempt to access the Application Gateway hostname directly. The ho
   - When Application Gateway sends requests to the backend, it also does so using HTTP.
   - **You should configure your environment to use HTTPS for all connections before using this sample in a production environment.**
 - This sample uses a WAF policy for Application Gateway. WAF policies for Application Gateway require that a managed rule set is applied, so the OWASP version 3.1 rule set is applied.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes, Microsoft.Resources/deployments, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/applicationGateways, Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies`

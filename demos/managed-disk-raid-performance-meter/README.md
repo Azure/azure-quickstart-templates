@@ -1,3 +1,13 @@
+---
+description: This template allows you to run a managed disk RAID performance test for different workload types using fio utility.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: managed-disk-raid-performance-meter
+languages:
+- json
+---
 # Azure managed disk RAID performance meter
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/managed-disk-raid-performance-meter/PublicLastTestDate.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/managed-disk-raid-performance-meter/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/managed-disk-raid-performance-meter/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmanaged-disk-raid-performance-meter%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmanaged-disk-raid-performance-meter%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmanaged-disk-raid-performance-meter%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmanaged-disk-raid-performance-meter%2Fazuredeploy.json)
 
@@ -18,8 +28,8 @@ This template allows you to run a managed disk RAID performance test using fio u
 Upon template deployment you will have the managed disk performance automatically measured. You can see the measurements like this:
 
 ```powershell
-OutputsString           : 
-                          Name             Type                       Value     
+OutputsString           :
+                          Name             Type                       Value
                           ===============  =========================  ==========
                           testresult       String                     READ: io=2051.2MB, aggrb=78853KB/s, minb=19713KB/s, maxb=20024KB/s, mint=26222msec, maxt=26636msec; WRITE: io=2044.9MB, aggrb=78613KB/s, minb=19653KB/s, maxb=19963KB/s, mint=26222msec, maxt=26636msec;
 ```
@@ -41,5 +51,4 @@ sudo echo -e '[io]\nrw=randrw\nsize=128m\ndirectory=/datadisk' | sudo fio -
 
 In case you don't need to re-measure, it is safe to delete the created resource group.
 
-
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, extensions, CustomScriptForLinux`

@@ -1,3 +1,13 @@
+---
+description: Deploy a VM with Groestlcoin Core installed.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: blockchain
+languages:
+- json
+---
 # Blockchain Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/blockchain/blockchain/PublicLastTestDate.svg)
@@ -18,3 +28,5 @@ This Microsoft Azure Resource Manager template deploys a single VM and allows yo
 Options for blockchain software include:
 
 - [groestlcoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/groestlcoin.md)
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
