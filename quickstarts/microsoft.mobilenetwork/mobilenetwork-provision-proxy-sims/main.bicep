@@ -13,15 +13,18 @@ param simGroupName string
 @description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
 param simResources array
 
+#disable-next-line BCP081
 resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
   name: existingMobileNetworkName
 }
 
+#disable-next-line BCP081
 resource existingSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' existing = {
   parent: existingMobileNetwork
   name: existingSimPolicyName
 }
 
+#disable-next-line BCP081
 resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = {
   name: simGroupName
   location: location
@@ -31,6 +34,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
     }
   }
 
+  #disable-next-line BCP081
   resource exampleSimResources 'sims@2022-04-01-preview' = [for item in simResources: {
     name: item.simName
     properties: {
