@@ -66,13 +66,16 @@ param naptEnabled string
 @description('The resource ID of the custom location that targets the Azure Kubernetes Service on Azure Stack HCI (AKS-HCI) cluster on the Azure Stack Edge Pro device in the site. If this parameter is not specified, the packet core instance will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
+#disable-next-line BCP081
 resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
   name: existingMobileNetworkName
 
+  #disable-next-line BCP081
   resource existingDataNetwork 'dataNetworks@2022-04-01-preview' existing = {
     name: existingDataNetworkName
   }
 
+  #disable-next-line BCP081
   resource exampleSite 'sites@2022-04-01-preview' = {
     name: siteName
     location: location
@@ -89,6 +92,7 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-0
   }
 }
 
+#disable-next-line BCP081
 resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {
   name: siteName
   location: location
@@ -112,6 +116,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
   }
 
+  #disable-next-line BCP081
   resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-04-01-preview' = {
     name: siteName
     location: location
@@ -124,6 +129,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     }
 
+    #disable-next-line BCP081
     resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-04-01-preview' = {
       name: existingDataNetworkName
       location: location
