@@ -8,7 +8,7 @@ urlFragment: cognitive-services-Computer-vision-API
 languages:
 - json
 ---
-# Cognitive Services Computer Vision API
+# Deploy a Cognitive Services Computer Vision API
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-Computer-vision-API/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-Computer-vision-API/PublicDeployment.svg)
 
