@@ -87,6 +87,7 @@ param naptEnabled string
 @description('The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
+#disable-next-line BCP081
 resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' = {
   name: mobileNetworkName
   location: location
@@ -97,6 +98,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
     }
   }
 
+  #disable-next-line BCP081
   resource exampleSite 'sites@2022-04-01-preview' = {
     name: siteName
     location: location
@@ -113,6 +115,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
   }
 }
 
+#disable-next-line BCP081
 resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2022-04-01-preview' = {
   parent: exampleMobileNetwork
   name: dataNetworkName
@@ -120,6 +123,7 @@ resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks
   properties: {}
 }
 
+#disable-next-line BCP081
 resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-04-01-preview' = {
   parent: exampleMobileNetwork
   name: sliceName
@@ -131,6 +135,7 @@ resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-04-01-
   }
 }
 
+#disable-next-line BCP081
 resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-04-01-preview' = {
   parent: exampleMobileNetwork
   name: serviceName
@@ -159,6 +164,7 @@ resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-04
   }
 }
 
+#disable-next-line BCP081
 resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' = {
   parent: exampleMobileNetwork
   name: simPolicyName
@@ -200,6 +206,7 @@ resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@20
   }
 }
 
+#disable-next-line BCP081
 resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = if (!empty(simGroupName)) {
   name: empty(simGroupName) ? 'placeHolderForValidation' : simGroupName
   location: location
@@ -209,6 +216,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
     }
   }
 
+  #disable-next-line BCP081
   resource exampleSimResources 'sims@2022-04-01-preview' = [for item in simResources: {
     name: item.simName
     properties: {
@@ -224,6 +232,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
   }]
 }
 
+#disable-next-line BCP081
 resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {
   name: siteName
   location: location
@@ -247,6 +256,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
   }
 
+  #disable-next-line BCP081
   resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-04-01-preview' = {
     name: siteName
     location: location
@@ -259,6 +269,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     }
 
+    #disable-next-line BCP081
     resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-04-01-preview' = {
       name: dataNetworkName
       location: location
