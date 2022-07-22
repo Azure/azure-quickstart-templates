@@ -16,6 +16,7 @@ param sliceName string = 'slice-1'
 @description('The name of the data network')
 param dataNetworkName string = 'internet'
 
+#disable-next-line BCP081
 resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' = {
   name: mobileNetworkName
   location: location
@@ -26,12 +27,14 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
     }
   }
 
+  #disable-next-line BCP081
   resource exampleDataNetwork 'dataNetworks@2022-04-01-preview' = {
     name: dataNetworkName
     location: location
     properties: {}
   }
 
+  #disable-next-line BCP081
   resource exampleSlice 'slices@2022-04-01-preview' = {
     name: sliceName
     location: location
