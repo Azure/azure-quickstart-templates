@@ -29,7 +29,7 @@ param vmssImgProduct string = 'game-dev-vm'
   'ws2019_unreal_5_0_1'
 ])
 @description('GameDev Image Sku')
-param vmssImgSku string = 'win10_no_engine_1_0'
+param vmssImgSku string = 'win10_unreal_4_27_2'
 
 @description('GameDev Image Product Id')
 param vmssImgVersion string = 'latest'
