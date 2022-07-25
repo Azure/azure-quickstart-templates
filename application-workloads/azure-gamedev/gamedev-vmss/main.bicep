@@ -5,7 +5,7 @@ param location string = resourceGroup().location
 param vmssName string
 
 @description('GameDev Sku')
-param vmssSku string = 'Standard_NC6s'
+param vmssSku string = 'Standard_D4ds_v4'
 
 @allowed([
   'microsoftcorporation1602274591143'
