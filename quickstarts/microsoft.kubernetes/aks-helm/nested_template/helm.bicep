@@ -12,6 +12,17 @@ param clusterName string = ''
 
 param utcValue string = utcNow()
 
+@description('Public Helm Repo Name')
+param helmRepo string = 'azure-marketplace'
+
+@description('Public Helm Repo URL')
+param helmRepoURL string = 'https://marketplace.azurecr.io/helm/v1/repo'
+
+@description('Public Helm App')
+param helmApp string = 'azure-marketplace/wordpress'
+
+@description('Public Helm App Name')
+param helmAppName string = 'my-wordpress'
 
 var installScriptUri = uri(_artifactsLocation, 'scripts/helm.sh${_artifactsLocationSasToken}')
 
@@ -59,6 +70,24 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'CLUSTER_NAME'
         secureValue: clusterName
+      }
+      {
+        name: 'CLUSTER_NAME'
+        secureValue: helmRepo
+      }
+      {
+        name: 'CLUSTER_NAME'
+        secureValue: helmRepoURL
+      }
+      }
+      {
+        name: 'CLUSTER_NAME'
+        secureValue: helmRApp
+      }
+      }
+      {
+        name: 'CLUSTER_NAME'
+        secureValue: helmAppName
       }
     ]
     primaryScriptUri: installScriptUri
