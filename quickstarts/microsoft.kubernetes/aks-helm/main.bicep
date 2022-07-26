@@ -45,17 +45,34 @@ param helmApp string = 'azure-marketplace/wordpress'
 @description('Public Helm App Name')
 param helmAppName string = 'my-wordpress'
 
-module aks '../aks/main.bicep' = {
+resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
-  params: {
-    clusterName       : clusterName
-    location          : location
-    dnsPrefix         : dnsPrefix
-    osDiskSizeGB      : osDiskSizeGB
-    agentCount        : agentCount
-    agentVMSize       : agentVMSize
-    linuxAdminUsername: linuxAdminUsername
-    sshRSAPublicKey   : sshRSAPublicKey
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    dnsPrefix: dnsPrefix
+    agentPoolProfiles: [
+      {
+        name: 'agentpool'
+        osDiskSizeGB: osDiskSizeGB
+        count: agentCount
+        vmSize: agentVMSize
+        osType: 'Linux'
+        mode: 'System'
+      }
+    ]
+    linuxProfile: {
+      adminUsername: linuxAdminUsername
+      ssh: {
+        publicKeys: [
+          {
+            keyData: sshRSAPublicKey
+          }
+        ]
+      }
+    }
   }
 }
 
