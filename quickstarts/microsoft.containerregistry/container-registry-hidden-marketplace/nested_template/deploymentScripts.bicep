@@ -7,9 +7,31 @@ param installScriptUri string
 @description('Random Value for Caching')
 param utcValue string = utcNow()
 
+var identityName = 'scratch${uniqueString(resourceGroup().id)}'
+var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var roleAssignmentName = guid(identityName, roleDefinitionId)
+
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: identityName
+  location: location
+}
+
+resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  scope: resourceGroup()
+  name: roleAssignmentName
+  properties: {
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
+    principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'customScript'
   location: location
+  dependsOn: [
+    identityRoleAssignDeployment
+  ]
   kind: 'AzureCLI'
   identity: {
     type: 'UserAssigned'
