@@ -33,27 +33,43 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param _artifactsLocationSasToken string = ''
 
+@description('Public Helm Repo Name')
+param helmRepo string = 'azure-marketplace'
+
+@description('Public Helm Repo URL')
+param helmRepoURL string = 'https://marketplace.azurecr.io/helm/v1/repo'
+
+@description('Public Helm App')
+param helmRepoApp string = 'azure-marketplace/wordpress'
+
+@description('Public Helm App Name')
+param helmRepoAppName string = 'my-wordpress'
+
 module aks '../aks/main.bicep' = {
   name: clusterName
   params: {
-    clusterName: clusterName
-    location: location
-    dnsPrefix: dnsPrefix
-    osDiskSizeGB: osDiskSizeGB
-    agentCount: agentCount
-    agentVMSize: agentVMSize
+    clusterName       : clusterName
+    location          : location
+    dnsPrefix         : dnsPrefix
+    osDiskSizeGB      : osDiskSizeGB
+    agentCount        : agentCount
+    agentVMSize       : agentVMSize
     linuxAdminUsername: linuxAdminUsername
-    sshRSAPublicKey: sshRSAPublicKey
+    sshRSAPublicKey   : sshRSAPublicKey
   }
 }
 
 module helm 'nested_template/helm.bicep' = {
   name: 'HelmScripts'
   params: {
-    location: location
-    _artifactsLocation: _artifactsLocation
+    location                  : location
+    _artifactsLocation        : _artifactsLocation
     _artifactsLocationSasToken: _artifactsLocationSasToken
-    clusterName: clusterName
+    clusterName               : clusterName
+    helmRepo                  : helmRepo
+    helmRepoURL               : helmRepoURL
+    helmRepoApp               : helmRepoApp
+    helmRepoAppName           : helmRepoAppName
   }
 }
 
