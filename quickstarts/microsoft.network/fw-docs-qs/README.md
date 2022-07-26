@@ -7,6 +7,7 @@ products:
 urlFragment: fw-docs-qs
 languages:
 - json
+- bicep
 ---
 # Create an Azure Firewall with multiple IP public addresses
 
