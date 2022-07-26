@@ -234,7 +234,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
         }	
       }
       priority: 'Regular'
-      evictionPolicy: 'Delete'
     }
     overprovision: false
   }
