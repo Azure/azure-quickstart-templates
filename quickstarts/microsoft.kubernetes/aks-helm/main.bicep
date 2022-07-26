@@ -48,7 +48,7 @@ module aks '../aks/main.bicep' = {
 }
 
 module helm 'nested_template/helm.bicep' = {
-  name: 'Helm Scripts'
+  name: 'HelmScripts'
   params: {
     location: location
     _artifactsLocation: _artifactsLocation
