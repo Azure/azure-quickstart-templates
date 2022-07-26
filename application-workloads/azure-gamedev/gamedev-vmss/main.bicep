@@ -139,17 +139,30 @@ parsecIsGuestAccess={18}
 deployedFromSolutionTemplate={19}
 ''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsec_teamId, parsec_teamKey, parsec_host, parsec_userEmail, parsec_isGuestAccess, false)
 
+
+module vnet './resources/virtualNetworks.bicep'  = {
+  name:                       vnetName
+  params: {
+    location:                 location
+    vnetName:                 vnetName
+    subnetName:               subnetName
+    networkSecurityGroupName: networkSecurityGroupName
+    vnetAddressPrefix:        vnetAddressPrefix
+    subnetAddressPrefix:      subnetAddressPrefix
+  }
+}
+
 resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
   name: vmssName
   sku: {
-    name: vmssSku
-    tier: 'Standard'
+    name:     vmssSku
+    tier:     Standard
     capacity: vmssInstanceCount
   }
   plan: {
-    name: vmssImgSku
+    name:      vmssImgSku
     publisher: vmssImgPublisher
-    product: vmssImgProduct
+    product:   vmssImgProduct
   }
   location: location
   properties: {
@@ -168,19 +181,42 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
         }
         imageReference: {
           publisher: vmssImgPublisher
-          offer: vmssImgProduct
-          sku: vmssImgSku
-          version: vmssImgVersion
+          offer:     vmssImgProduct
+          sku:       vmssImgSku
+          version:   vmssImgVersion
 	}
+      }
+      networkProfile: {
+        networkInterfaceConfigurations: [
+          {
+            name: '${vmssName}Nic'
+            properties: {
+              primary: true
+              ipConfigurations: [
+                {
+                  name: '${vmssName}IpConfig'
+                  properties: {
+                    subnet: {
+                      id: subnetID
+                    }
+                  }
+                }
+              ]
+              networkSecurityGroup: {
+                id: nsgID
+              }
+            }
+          }
+        ]
       }
       osProfile: {
         computerNamePrefix: vmssName
-        adminUsername: administratorLogin
-        adminPassword: passwordAdministratorLogin
+        adminUsername:      administratorLogin
+        adminPassword:      passwordAdministratorLogin
+	customData:         customData
 	windowsConfiguration: {
           provisionVMAgent: true
-        }
-	customData: customData
+        }	
       }
       priority: 'Regular'
       evictionPolicy: 'Delete'
