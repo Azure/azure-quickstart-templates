@@ -1,4 +1,15 @@
-# Adding KeyVault Self-Signed Certificates to Application Gateway
+---
+description: This template shows how to generate Key Vault self-signed certificates, then reference from Application Gateway.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: deployment-script-azcli-agw-certificates
+languages:
+- json
+- bicep
+---
+# Create Application Gateway with Certificates
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-agw-certificates/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-agw-certificates/PublicDeployment.svg)
