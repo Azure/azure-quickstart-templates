@@ -11,15 +11,36 @@ param utcValue string = utcNow()
 
 var installScriptUri = uri(_artifactsLocation, 'scripts/helm.sh${_artifactsLocationSasToken}')
 
+var identityName = 'scratch${uniqueString(resourceGroup().id)}'
+var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var roleAssignmentName = guid(identityName, roleDefinitionId)
+
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: identityName
+  location: location
+}
+
+resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  scope: resourceGroup()
+  name: roleAssignmentName
+  properties: {
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
+    principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 resource helm 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'helm'
   location: location
+  dependsOn: [
+    identityRoleAssignDeployment
+  ]
   kind: 'AzureCLI'
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'dsId')}': {
-      }
+      '${managedIdentity.id}': {}
     }
   }
   properties: {
