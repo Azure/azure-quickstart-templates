@@ -53,7 +53,7 @@ A sample module to create Azure FrontDoor CDN profile.
 | enableAfdEndpoint | bool | No | Control flag for enabling or disabling CDN profile ( default = `true` ) |
 | cdnProfileName | string | No | Name of the AFD CDN Profile ( default = `afd-cdn-${envName}-profile` ) |
 | cdnProfileTags | object | No | Tags to be attached with resources ( default = `{envName: ${envName}}` ) |
-| eventHubName | string | Yes | EventHub instance name |
+| eventHubName | string | No | EventHub instance name ( default = `eventhub-${uniqueString(resourceGroup().id)}` ) |
 | eventHubNamespace | string | No | EventHub namespace name ( default = `'${eventHubName}-ns'` ) |
 | eventHubLocation | string | No | Region to deploy EventHub ( default = `resourceGroup().location` ) |
 | wafPolicyMode | string | No | Policy Mode for WAF. One of `Detection` or `Prevention` ( default = `Prevention` ) |
@@ -140,4 +140,6 @@ where,
    4. `routes.bicep`: Create cdn routes for profile.
    5. `rulesets.bicep`: Create rule sets that are required by CDN Profile.
    6. `waf.bicep`: Create WAF with Managed and Custom rules that needs to be attached to CDN Profile as Security Policy.
-3. `main.bicep` provides an abstracted view to a user for creating CDN profile and waf attachment.`Tags: `
+2. `main.bicep` provides an abstracted view to a user for creating CDN profile and waf attachment.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/afdendpoints/routes, Microsoft.Cdn/profiles/customdomains, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/rulesets, Microsoft.Cdn/profiles/rulesets/rules, Microsoft.Cdn/profiles/securitypolicies, Microsoft.EventHub/namespaces, Microsoft.EventHub/namespaces/AuthorizationRules, Microsoft.EventHub/namespaces/eventhubs, Microsoft.EventHub/namespaces/eventhubs/consumergroups, Microsoft.EventHub/namespaces/networkRuleSets, Microsoft.Insights/diagnosticSettings, Microsoft.Network/frontdoorwebapplicationfirewallpolicies, Premium_AzureFrontDoor, cdn`
