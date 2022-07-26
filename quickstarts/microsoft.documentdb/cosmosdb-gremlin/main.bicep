@@ -102,7 +102,7 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases@2022-0
   }
 }
 
-resource accountName_databaseName_graphName 'Microsoft.DocumentDb/databaseAccounts/gremlinDatabases/graphs@2022-05-15' = {
+resource graph 'Microsoft.DocumentDb/databaseAccounts/gremlinDatabases/graphs@2022-05-15' = {
   name: '${database.name}/${graphName}'
   properties: {
     resource: {
