@@ -29,6 +29,9 @@ module vnet 'br/public:network/virtual-network:1.0' = {
   }
 }
 
+@description('Network Security Group Resource ID')
+output nsgID string = networkSecurityGroup.id
+
 @description('The resource group the virtual network was deployed into')
 output resourceGroupName string = resourceGroup().name
 
