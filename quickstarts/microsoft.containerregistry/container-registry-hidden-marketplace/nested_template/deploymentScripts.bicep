@@ -7,6 +7,13 @@ param installScriptUri string
 @description('Random Value for Caching')
 param utcValue string = utcNow()
 
+param environmentVariables object = [
+  {
+    name: 'RESOURCEGROUP'
+    secureValue: resourceGroup().name
+  }
+]
+
 var identityName = 'scratch${uniqueString(resourceGroup().id)}'
 var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var roleAssignmentName = guid(identityName, roleDefinitionId)
@@ -44,12 +51,7 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     forceUpdateTag: utcValue
     azCliVersion: '2.10.1'
     timeout: 'PT30M'
-    environmentVariables: [
-      {
-        name: 'RESOURCEGROUP'
-        secureValue: resourceGroup().name
-      }
-    ]
+    environmentVariables: environmentVariables
     primaryScriptUri: installScriptUri
     cleanupPreference: 'OnExpiration'
     retentionInterval: 'P1D'
