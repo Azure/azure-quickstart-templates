@@ -53,6 +53,7 @@ module helm 'nested_template/helm.bicep' = {
     location: location
     _artifactsLocation: _artifactsLocation
     _artifactsLocationSasToken: _artifactsLocationSasToken
+    clusterName: clusterName
   }
 }
 

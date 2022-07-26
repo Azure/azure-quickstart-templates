@@ -7,7 +7,11 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @description('The sasToken required to access artifacts')
 @secure()
 param _artifactsLocationSasToken string = ''
+
+param clusterName string = ''
+
 param utcValue string = utcNow()
+
 
 var installScriptUri = uri(_artifactsLocation, 'scripts/helm.sh${_artifactsLocationSasToken}')
 
@@ -52,6 +56,9 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'RESOURCEGROUP'
         secureValue: resourceGroup().name
       }
+      {
+        name: 'CLUSTER_NAME'
+        secureValue: clusterName
     ]
     primaryScriptUri: installScriptUri
     cleanupPreference: 'OnExpiration'
