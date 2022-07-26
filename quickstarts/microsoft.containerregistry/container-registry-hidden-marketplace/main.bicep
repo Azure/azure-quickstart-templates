@@ -41,5 +41,3 @@ module loadContainer 'nested_template/deploymentScripts.bicep' = {
     installScriptUri: uri(_artifactsLocation, 'scripts/container_deploy.sh${_artifactsLocationSasToken}')
   }
 }
-
-output acrLoginServer string = acr.outputs.loginServer
