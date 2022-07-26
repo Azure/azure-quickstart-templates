@@ -42,4 +42,4 @@ module loadContainer 'nested_template/deploymentScripts.bicep' = {
   }
 }
 
-output acrLoginServer string = acr.properties.loginServer
+output acrLoginServer string = acr.outputs.loginServer
