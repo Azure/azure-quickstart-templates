@@ -72,21 +72,21 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         secureValue: clusterName
       }
       {
-        name: 'CLUSTER_NAME'
+        name: 'HELM_REPO'
         secureValue: helmRepo
       }
       {
-        name: 'CLUSTER_NAME'
+        name: 'HELM_REPO_URL'
         secureValue: helmRepoURL
       }
       }
       {
-        name: 'CLUSTER_NAME'
-        secureValue: helmRApp
+        name: 'HELM_APP'
+        secureValue: helmApp
       }
       }
       {
-        name: 'CLUSTER_NAME'
+        name: 'HELM_APP_NAME'
         secureValue: helmAppName
       }
     ]
