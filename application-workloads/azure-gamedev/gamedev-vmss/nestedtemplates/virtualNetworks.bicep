@@ -19,7 +19,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 }
 
 //By Default the nsg will allow the vnet access and deny all other access
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
   name: networkSecurityGroupName
   location: location
 }
