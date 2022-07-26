@@ -116,6 +116,21 @@ param parsec_userEmail string = ''
 @description('Parsec Is Guest Access')
 param parsec_isGuestAccess bool = false
 
+@description('Virtual Network Resource Name')
+param vnetName string = 'vnet-${vmssName}'
+
+@description('Virtual Network Subnet Name')
+param subnetName string = 'subnet${vmssName}'
+
+@description('Virtual Network Security Group Name')
+param networkSecurityGroupName string = 'nsg-${vmssName}'
+
+@description('Virtual Network Address Prefix')
+param vnetAddressPrefix string string = '172.17.72.0/24' //Change as needed
+
+@description('Virtual Network Subnet Address Prefix')
+param subnetAddressPrefix string = '172.17.72.0/25' // 172.17.72.[0-128] is part of this subnet
+
 var customData = format('''
 fileShareStorageAccount={0}
 fileShareStorageAccountKey={1}
@@ -154,6 +169,7 @@ module vnet './resources/virtualNetworks.bicep'  = {
 
 resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
   name: vmssName
+  location: location
   sku: {
     name:     vmssSku
     tier:     Standard
@@ -163,8 +179,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
     name:      vmssImgSku
     publisher: vmssImgPublisher
     product:   vmssImgProduct
-  }
-  location: location
+  }  
   properties: {
     singlePlacementGroup: false
     upgradePolicy: {
