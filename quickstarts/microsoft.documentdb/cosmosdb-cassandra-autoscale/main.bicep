@@ -43,7 +43,7 @@ param keyspaceName string
 @description('The name for the Cassandra table')
 param tableName string
 
-@minValue(4000)
+@minValue(1000)
 @maxValue(1000000)
 @description('Maximum autoscale throughput for the Cassandra table')
 param autoscaleMaxThroughput int = 1000
