@@ -25,7 +25,7 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 param _artifactsLocationSasToken string = ''
 
 module acr '../container-registry/main.bicep' = {
-  name: 'Container Deployment'
+  name: 'ACR'
   params: {
     location: location
     acrName: acrName
