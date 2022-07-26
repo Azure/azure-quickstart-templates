@@ -7,19 +7,20 @@ param vmssName string
 @description('GameDev Sku')
 param vmssSku string = 'Standard_D4ds_v4'
 
+@description('GameDev Image Publisher')
 @allowed([
   'microsoftcorporation1602274591143'
   'azure-gaming'
 ])
-@description('GameDev Image Publisher')
 param vmssImgPublisher string = 'microsoftcorporation1602274591143'
 
+@description('GameDev Image Product Id')
 @allowed([
   'game-dev-vm'
 ])
-@description('GameDev Image Product Id')
 param vmssImgProduct string = 'game-dev-vm'
 
+@description('GameDev Image Sku')
 @allowed([
   'win10_no_engine_1_0'
   'ws2019_no_engine_1_0'
@@ -28,7 +29,6 @@ param vmssImgProduct string = 'game-dev-vm'
   'win10_unreal_5_0_1'
   'ws2019_unreal_5_0_1'
 ])
-@description('GameDev Image Sku')
 param vmssImgSku string = 'win10_unreal_4_27_2'
 
 @description('GameDev Image Product Id')
