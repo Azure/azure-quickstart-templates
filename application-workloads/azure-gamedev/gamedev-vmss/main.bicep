@@ -101,20 +101,20 @@ param remoteAccessTechnology string = 'RDP'
 param teradiciRegKey string = ''
 
 @description('Parsec Team ID')
-param parsec_teamId string = ''
+param parsecTeamId string = ''
 
 @description('Parsec Team Key')
 @secure()
-param parsec_teamKey string = ''
+param parsecTeamKey string = ''
 
 @description('Parsec Hostname')
-param parsec_host string = ''
+param parsecHost string = ''
 
 @description('Parsec User Email')
-param parsec_userEmail string = ''
+param parsecUserEmail string = ''
 
 @description('Parsec Is Guest Access')
-param parsec_isGuestAccess bool = false
+param parsecIsGuestAccess bool = false
 
 @description('Virtual Network Resource Name')
 param vnetName string = 'vnet-${vmssName}'
@@ -152,7 +152,7 @@ parsecHost={16}
 parsecUserEmail={17}
 parsecIsGuestAccess={18}
 deployedFromSolutionTemplate={19}
-''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsec_teamId, parsec_teamKey, parsec_host, parsec_userEmail, parsec_isGuestAccess, false)
+''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsecTeamId, parsecTeamKey, parsecHost, parsecUserEmail, parsecIsGuestAccess, false)
 
 
 module vnet './nestedtemplates/virtualNetworks.bicep'  = {
@@ -212,7 +212,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
                   name: '${vmssName}IpConfig'
                   properties: {
                     subnet: {
-                      id: vnet.outputs.subnet_id
+                      id: vnet.outputs.subnetId
                     }
                   }
                 }
