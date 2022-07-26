@@ -40,10 +40,10 @@ param helmRepo string = 'azure-marketplace'
 param helmRepoURL string = 'https://marketplace.azurecr.io/helm/v1/repo'
 
 @description('Public Helm App')
-param helmRepoApp string = 'azure-marketplace/wordpress'
+param helmApp string = 'azure-marketplace/wordpress'
 
 @description('Public Helm App Name')
-param helmRepoAppName string = 'my-wordpress'
+param helmAppName string = 'my-wordpress'
 
 module aks '../aks/main.bicep' = {
   name: clusterName
@@ -68,8 +68,8 @@ module helm 'nested_template/helm.bicep' = {
     clusterName               : clusterName
     helmRepo                  : helmRepo
     helmRepoURL               : helmRepoURL
-    helmRepoApp               : helmRepoApp
-    helmRepoAppName           : helmRepoAppName
+    helmApp                   : helmRepoApp
+    helmAppName               : helmRepoAppName
   }
 }
 
