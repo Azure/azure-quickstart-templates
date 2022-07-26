@@ -26,8 +26,8 @@ param helmAppName string = 'my-wordpress'
 
 var installScriptUri = uri(_artifactsLocation, 'scripts/helm.sh${_artifactsLocationSasToken}')
 
-var identityName = 'scratch${uniqueString(resourceGroup().id)}'
-var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var identityName       = 'scratch${uniqueString(resourceGroup().id)}'
+var roleDefinitionId   = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var roleAssignmentName = guid(roleDefinitionId, managedIdentity.id, resourceGroup().id)
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -39,9 +39,9 @@ resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2
   scope: resourceGroup()
   name: roleAssignmentName
   properties: {
-    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
-    principalId: managedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
+    roleDefinitionId: roleDefinitionId 
+    principalId     : managedIdentity.properties.principalId
+    principalType   : 'ServicePrincipal'
   }
 }
 
