@@ -11,7 +11,7 @@ param utcValue string = utcNow()
 
 var installScriptUri = uri(_artifactsLocation, 'scripts/helm.sh${_artifactsLocationSasToken}')
 
-resource helm 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
+resource helm 'Microsoft.Resources/deploymentScripts@2019-10-01' = {
   name: 'helm'
   location: location
   kind: 'AzureCLI'
