@@ -68,8 +68,8 @@ module helm 'nested_template/helm.bicep' = {
     clusterName               : clusterName
     helmRepo                  : helmRepo
     helmRepoURL               : helmRepoURL
-    helmApp                   : helmRepoApp
-    helmAppName               : helmRepoAppName
+    helmApp                   : helmApp
+    helmAppName               : helmAppName
   }
 }
 
