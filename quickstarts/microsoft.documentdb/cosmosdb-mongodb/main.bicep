@@ -159,14 +159,11 @@ resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/col
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
-      }
     }
   }
 }
 
-resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
   parent: database
   name: collection2Name
   properties: {
