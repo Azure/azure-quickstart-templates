@@ -155,7 +155,7 @@ deployedFromSolutionTemplate={19}
 ''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsec_teamId, parsec_teamKey, parsec_host, parsec_userEmail, parsec_isGuestAccess, false)
 
 
-module vnet './resources/virtualNetworks.bicep'  = {
+module vnet './nestedtemplates/virtualNetworks.bicep'  = {
   name:                       vnetName
   params: {
     location:                 location
@@ -172,7 +172,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
   location: location
   sku: {
     name:     vmssSku
-    tier:     Standard
+    tier:     'Standard'
     capacity: vmssInstanceCount
   }
   plan: {
@@ -212,13 +212,13 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
                   name: '${vmssName}IpConfig'
                   properties: {
                     subnet: {
-                      id: subnetID
+                      id: vnet.outputs.subnet_id
                     }
                   }
                 }
               ]
               networkSecurityGroup: {
-                id: nsgID
+                id: vnet.outputs.nsgID
               }
             }
           }
