@@ -126,7 +126,7 @@ param subnetName string = 'subnet${vmssName}'
 param networkSecurityGroupName string = 'nsg-${vmssName}'
 
 @description('Virtual Network Address Prefix')
-param vnetAddressPrefix string string = '172.17.72.0/24' //Change as needed
+param vnetAddressPrefix string = '172.17.72.0/24' //Change as needed
 
 @description('Virtual Network Subnet Address Prefix')
 param subnetAddressPrefix string = '172.17.72.0/25' // 172.17.72.[0-128] is part of this subnet
