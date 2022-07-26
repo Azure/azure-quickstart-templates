@@ -7,8 +7,8 @@ param installScriptUri string
 @description('Random Value for Caching')
 param utcValue string = utcNow()
 
-resource helm 'Microsoft.Resources/deploymentScripts@2019-10-01' = {
-  name: 'helm'
+resource customScript 'Microsoft.Resources/deploymentScripts@2019-10-01' = {
+  name: 'customScript'
   location: location
   kind: 'AzureCLI'
   identity: {
