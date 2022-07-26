@@ -34,7 +34,7 @@ var vNetBastionSubnetAddressPrefix = '10.0.1.0/24'
 var bastionPublicIPAddressName = '${projectName}-bastionPublicIP'
 var vmStorageAccountType = 'Premium_LRS'
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [for i in range(0, 3): {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [for i in range(0, 2): {
   name: '${projectName}-vm${i + 1}-networkInterface'
   location: location
   properties: {
@@ -67,7 +67,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [fo
   ]
 }]
 
-resource installWebServer 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = [for i in range(0, 3): {
+resource installWebServer 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = [for i in range(0, 2): {
   name: '${projectName}-vm${i + 1}/InstallWebServer'
   location: location
   properties: {
@@ -84,7 +84,7 @@ resource installWebServer 'Microsoft.Compute/virtualMachines/extensions@2022-03-
   ]
 }]
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(0, 3): {
+resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(0, 2): {
   name: '${projectName}-vm${i + 1}'
   location: location
   zones: [
