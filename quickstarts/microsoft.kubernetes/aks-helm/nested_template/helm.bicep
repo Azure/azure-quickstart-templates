@@ -79,11 +79,9 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'HELM_REPO_URL'
         secureValue: helmRepoURL
       }
-      }
       {
         name: 'HELM_APP'
         secureValue: helmApp
-      }
       }
       {
         name: 'HELM_APP_NAME'
