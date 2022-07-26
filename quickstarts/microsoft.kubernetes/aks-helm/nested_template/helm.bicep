@@ -59,6 +59,7 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'CLUSTER_NAME'
         secureValue: clusterName
+      }
     ]
     primaryScriptUri: installScriptUri
     cleanupPreference: 'OnExpiration'
