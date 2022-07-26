@@ -30,8 +30,8 @@ resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2
   }
 }
 
-resource helm 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'helm'
+resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'customScript'
   location: location
   dependsOn: [
     identityRoleAssignDeployment
