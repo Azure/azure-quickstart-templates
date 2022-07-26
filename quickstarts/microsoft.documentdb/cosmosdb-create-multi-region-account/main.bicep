@@ -46,7 +46,7 @@ param systemManagedFailover bool = true
 var apiType = {
   Sql: {
     kind: 'GlobalDocumentDB'
-    capabilities: []
+    capabilities: ['']
   }
   MongoDB: {
     kind: 'MongoDB'
