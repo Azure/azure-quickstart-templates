@@ -18,6 +18,184 @@ resource existingClusterResource 'Microsoft.Kubernetes/connectedClusters@2021-10
   scope: resourceGroup(connectedClusterResourceGroup)
 }
 
+var devicesquery = '''let Time = InsightsMetrics
+    | where Namespace == "prometheus"
+    | summarize by Time=TimeGenerated;
+let RegisteredDevices = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amf_registered_subscribers"
+    | summarize by RegisteredDevices=Val, Time=TimeGenerated;
+let ProvisionedDevices = InsightsMetrics
+    | where Namespace == "prometheus"
+    | where Name == "subscribers_count"
+    | where Tags has '"type":"provisioned"'
+    | summarize by ProvisionedDevices=Val, Time=TimeGenerated;
+let ConnectedDevices = InsightsMetrics
+    | where Namespace == "prometheus"
+    | where Name == "amf_registered_subscribers_connected"
+    | summarize by ConnectedDevices=Val, Time=TimeGenerated;
+Time
+    | join kind=leftouter (RegisteredDevices) on Time
+    | join kind=leftouter (ProvisionedDevices) on Time
+    | join kind=leftouter (ConnectedDevices) on Time
+    | project Time, RegisteredDevices, ProvisionedDevices, ConnectedDevices
+    | render areachart kind=unstacked 
+'''
+
+var gnodequery = '''InsightsMetrics
+    | where Namespace == "prometheus"
+    | where Name == "amf_connected_gnb"
+    | extend Time=TimeGenerated
+    | extend GnBs=Val
+    | project GnBs, Time
+    | render timechart
+'''
+
+var pdusessionsquery = '''InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "subgraph_counts"
+    | summarize PduSessions=max(Val) by Time=TimeGenerated
+    | render areachart kind=unstacked
+'''
+
+var userthroughputquery = '''let rate_function=(tbl: (Val: real, Time: datetime)) {
+    tbl
+    | sort by Time asc
+    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value
+    | extend cum_correction = row_cumsum(correction)
+    | extend Val = Val + cum_correction
+    | extend PrevTime = prev(Time), PrevVal = prev(Val)
+    | extend dt = (Time - PrevTime) / 1s
+    | extend dv = Val - PrevVal
+    | extend rate = (dv * 8) / (dt * 1000000) // convert to Megabits per second
+}
+;
+let BytesUpstream = InsightsMetrics
+    | where Namespace == "prometheus"
+    | where Name == "cppe_bytes_total"
+    | where Tags has '"direction":"tx"'
+    | where Tags has '"interface":"n6"'
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | project BytesUpstream=rate, Time;
+let BytesDownstream = InsightsMetrics
+    | where Namespace == "prometheus"
+    | where Name == "cppe_bytes_total"
+    | where Tags has '"direction":"tx"'
+    | where Tags has '"interface":"n3"'
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | project BytesDownstream=rate, Time;
+BytesUpstream
+| join kind=leftouter (BytesDownstream) on Time
+| project Time, BytesUpstream, BytesDownstream
+| render areachart kind=stacked title="Userplane Throughput (Mb/s)"
+'''
+
+var errorsquery = '''let rate_function=(tbl:(Val: real, Time: datetime))
+{
+tbl
+    | sort by Time asc
+    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value
+    | extend cum_correction = row_cumsum(correction)
+    | extend Val = Val + cum_correction
+    | extend PrevTime = prev(Time), PrevVal = prev(Val)
+    | extend dt = (Time-PrevTime)/1s
+    | extend dv = Val-PrevVal
+    | extend rate = dv/dt
+};
+let TimeSeries = InsightsMetrics
+    | where Namespace == "prometheus"
+    | summarize by Time=TimeGenerated;
+let session_setup_response = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_pdu_session_resource_setup_response"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend SetupResponse=rate;
+let session_setup_request = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_pdu_session_resource_setup_request"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend SetupRequest=rate;
+let session_modify_response = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_pdu_session_resource_modify_response"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend ModifyResponse=rate;
+let session_modify_request = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_pdu_session_resource_modify_request"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend ModifyRequest=rate;
+let session_release_command = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_pdu_session_resource_release_command"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend ReleaseCommand=rate;
+let session_release_response = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_pdu_session_resource_release_response"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend ReleaseResponse=rate;
+let registration = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfcc_mm_initial_registration_failure"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend Registration=rate;
+let authentication_failure = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfcc_n1_auth_failure"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend AuthenticationFailure=rate;
+let authentication_rejection = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfcc_n1_auth_reject"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend AuthenticationRejection=rate;
+let service_rejection = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfcc_n1_service_reject"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend Service=rate;
+let request_failure = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_pathswitch_request_failure"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend PathSwitch=rate;
+let handover_failure = InsightsMetrics
+    | where Namespace == "prometheus" 
+    | where Name == "amfn2_n2_handover_failure"
+    | summarize Val=sum(Val) by Time=TimeGenerated
+    | invoke rate_function()
+    | extend Handover=rate;
+TimeSeries
+    | join kind=leftouter (registration) on Time
+    | join kind=leftouter (session_setup_request) on Time
+    | join kind=leftouter (session_setup_response) on Time
+    | join kind=leftouter (session_modify_request) on Time
+    | join kind=leftouter (session_modify_response) on Time
+    | join kind=leftouter (session_release_command) on Time
+    | join kind=leftouter (session_release_response) on Time
+    | join kind=leftouter (authentication_failure) on Time
+    | join kind=leftouter (authentication_rejection) on Time
+    | join kind=leftouter (service_rejection) on Time
+    | join kind=leftouter (request_failure) on Time
+    | join kind=leftouter (handover_failure) on Time
+    | project Time, Registration, AuthenticationFailure, AuthenticationRejection, SessionEstablishment=SetupResponse-SetupRequest, SessionModification=ModifyResponse-ModifyRequest, SessionRelease=ReleaseCommand-ReleaseResponse, Service, PathSwitch, Handover
+    | render areachart kind=unstacked
+'''
+
 resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
   name: dashboardName
   location: location
@@ -83,7 +261,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'Query'
-                  value: 'let RegisteredDevices = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amf_registered_subscribers"\n    | extend RegisteredDevices=Val, Time=TimeGenerated;\nlet ProvisionedDevices = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "subscribers_count"\n    | where Tags has \'"type":"provisioned"\'\n    | extend ProvisionedDevices=Val, Time=TimeGenerated;\nlet ConnectedDevices = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "amf_registered_subscribers_connected"\n    | extend ConnectedDevices=Val, Time=TimeGenerated;\nRegisteredDevices\n| join (ProvisionedDevices) on Time\n| join (ConnectedDevices) on Time\n| project ConnectedDevices, RegisteredDevices, ProvisionedDevices, Time\n\n'
+                  value: devicesquery
                   isOptional: true
                 }
                 {
@@ -149,7 +327,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
               type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
               settings: {
                 content: {
-                  Query: 'let Time = InsightsMetrics\n    | where Namespace == "prometheus"\n    | summarize by Time=TimeGenerated;\nlet RegisteredDevices = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amf_registered_subscribers"\n    | summarize by RegisteredDevices=Val, Time=TimeGenerated;\nlet ProvisionedDevices = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "subscribers_count"\n    | where Tags has \'"type":"provisioned"\'\n    | summarize by ProvisionedDevices=Val, Time=TimeGenerated;\nlet ConnectedDevices = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "amf_registered_subscribers_connected"\n    | summarize by ConnectedDevices=Val, Time=TimeGenerated;\nTime\n    | join kind=leftouter (RegisteredDevices) on Time\n    | join kind=leftouter (ProvisionedDevices) on Time\n    | join kind=leftouter (ConnectedDevices) on Time\n    | project Time, RegisteredDevices, ProvisionedDevices, ConnectedDevices\n    | render areachart kind=unstacked\n\n'
+                  Query: devicesquery
                   ControlType: 'FrameControlChart'
                   SpecificChart: 'UnstackedArea'
                   Dimensions: {
@@ -236,7 +414,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'Query'
-                  value: 'InsightsMetrics\n| where Namespace == "prometheus"\n| where Name == "amf_connected_gnb"\n| extend Time=TimeGenerated\n| extend GnBs=Val\n| project GnBs, Time\n| render timechart \n\n'
+                  value: gnodequery
                   isOptional: true
                 }
                 {
@@ -294,7 +472,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
               type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
               settings: {
                 content: {
-                  Query: 'InsightsMetrics\n| where Namespace == "prometheus"\n| where Name == "amf_connected_gnb"\n| extend Time=TimeGenerated\n| extend GnBs=Val\n| project GnBs, Time\n| render timechart \n\n'
+                  Query: gnodequery
                   PartTitle: 'gNodeBs'
                   Dimensions: {
                     xAxis: {
@@ -372,7 +550,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'Query'
-                  value: 'InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "subgraph_counts"\n    | summarize PduSessions=max(Val) by Time=TimeGenerated\n    | render areachart kind=unstacked\n\n'
+                  value: pdusessionsquery
                   isOptional: true
                 }
                 {
@@ -430,7 +608,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
               type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
               settings: {
                 content: {
-                  Query: 'InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "subgraph_counts"\n    | summarize PduSessions=max(Val) by Time=TimeGenerated\n    | render areachart kind=unstacked\n\n'
+                  Query: pdusessionsquery
                   ControlType: 'FrameControlChart'
                   SpecificChart: 'UnstackedArea'
                   PartTitle: 'PDU Sessions'
@@ -441,7 +619,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                     }
                     yAxis: [
                       {
-                        name: 'Pdu Sessions'
+                        name: 'PduSessions'
                         type: 'real'
                       }
                     ]
@@ -510,7 +688,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'Query'
-                  value: 'let rate_function=(tbl:(Val: real, Time: datetime))\n{\ntbl\n    | sort by Time asc\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\n    | extend cum_correction = row_cumsum(correction)\n    | extend Val = Val + cum_correction\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\n    | extend dt = (Time-PrevTime)/1s\n    | extend dv = Val-PrevVal\n    | extend rate = dv/dt\n}\n    ;\nlet BytesTotal = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesTotal=rate, Time;\nlet BytesUpstream = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | where Tags has \'"interface":"n3"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesUpstream=rate, Time;\nlet BytesDownstream = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | where Tags has \'"interface":"n6"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesDownstream=rate, Time;\nBytesTotal\n| join kind=leftouter (BytesUpstream) on Time\n| join kind=leftouter (BytesDownstream) on Time\n| project Time, BytesTotal, BytesUpstream, BytesDownstream\n| render areachart kind=unstacked \n'
+                  value: userthroughputquery
                   isOptional: true
                 }
                 {
@@ -525,7 +703,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'PartTitle'
-                  value: 'Userplane Throughput'
+                  value: 'Userplane Throughput (Mb/s)'
                   isOptional: true
                 }
                 {
@@ -541,10 +719,6 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                       type: 'datetime'
                     }
                     yAxis: [
-                      {
-                        name: 'BytesTotal'
-                        type: 'real'
-                      }
                       {
                         name: 'BytesUpstream'
                         type: 'real'
@@ -576,14 +750,32 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
               type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
               settings: {
                 content: {
-                  Query: 'let rate_function=(tbl:(Val: real, Time: datetime))\n{\ntbl\n    | sort by Time asc\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\n    | extend cum_correction = row_cumsum(correction)\n    | extend Val = Val + cum_correction\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\n    | extend dt = (Time-PrevTime)/1s\n    | extend dv = Val-PrevVal\n    | extend rate = dv/dt\n}\n    ;\nlet BytesTotal = InsightsMetrics\n    | where Namespace == "prometheus"\n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesTotal=rate, Time;\nlet BytesUpstream = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | where Tags has \'"interface":"n3"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesUpstream=rate, Time;\nlet BytesDownstream = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "cppe_bytes_total"\n    | where Tags has \'"direction":"rx"\'\n    | where Tags has \'"interface":"n6"\'\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | project BytesDownstream=rate, Time;\nBytesTotal\n| join kind=leftouter (BytesUpstream) on Time\n| join kind=leftouter (BytesDownstream) on Time\n| project Time, BytesTotal, BytesUpstream, BytesDownstream\n| render areachart kind=unstacked \n'
+                  Query: userthroughputquery
                   ControlType: 'FrameControlChart'
-                  SpecificChart: 'UnstackedArea'
-                  PartTitle: 'Userplane Throughput'
+                  SpecificChart: 'StackedArea'
+                  PartTitle: 'Userplane Throughput (Mb/s)'
+                  Dimensions: {
+                    xAxis: {
+                      name: 'Time'
+                      type: 'datetime'
+                    }
+                    yAxis: [
+                      {
+                        name: 'BytesUpstream'
+                        type: 'real'
+                      }
+                      {
+                        name: 'BytesDownstream'
+                        type: 'real'
+                      }
+                    ]
+                    splitBy: []
+                    aggregation: 'Sum'
+                  }
                 }
               }
               partHeader: {
-                title: 'Userplane Throughput'
+                title: 'Userplane Throughput (Mb/s)'
                 subtitle: 'Private Edge Overview'
               }
             }
@@ -642,7 +834,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
                 }
                 {
                   name: 'Query'
-                  value: 'let rate_function=(tbl:(Val: real, Time: datetime))\n{\ntbl\n    | sort by Time asc\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\n    | extend cum_correction = row_cumsum(correction)\n    | extend Val = Val + cum_correction\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\n    | extend dt = (Time-PrevTime)/1s\n    | extend dv = Val-PrevVal\n    | extend rate = dv/dt\n}\n    ;\nlet TimeSeries = InsightsMetrics\n    | where Namespace == "prometheus"\n    | summarize by Time=TimeGenerated;\nlet session_setup_response = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_setup_response"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend SetupResponse=rate;\nlet session_setup_request = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_setup_request"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend SetupRequest=rate;\nlet session_modify_response = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_modify_response"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ModifyResponse=rate;\nlet session_modify_request = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_modify_request"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ModifyRequest=rate;\nlet session_release_command = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_release_command"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ReleaseCommand=rate;\nlet session_release_response = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_release_response"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ReleaseResponse=rate;\nlet registration = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_mm_initial_registration_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend Registration=rate;\nlet authentication_failure = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_n1_auth_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend AuthenticationFailure=rate;\nlet authentication_rejection = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_n1_auth_reject"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend AuthenticationRejection=rate;\nlet service_rejection = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_n1_service_reject"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend Service=rate;\nlet request_failure = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pathswitch_request_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend PathSwitch=rate;\nlet handover_failure = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_handover_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend Handover=rate;\nTimeSeries\n    | join kind=leftouter (registration) on Time\n    | join kind=leftouter (session_setup_request) on Time\n    | join kind=leftouter (session_setup_response) on Time\n    | join kind=leftouter (session_modify_request) on Time\n    | join kind=leftouter (session_modify_response) on Time\n    | join kind=leftouter (session_release_command) on Time\n    | join kind=leftouter (session_release_response) on Time\n    | join kind=leftouter (authentication_failure) on Time\n    | join kind=leftouter (authentication_rejection) on Time\n    | join kind=leftouter (service_rejection) on Time\n    | join kind=leftouter (request_failure) on Time\n    | join kind=leftouter (handover_failure) on Time\n    | project Time, Registration, AuthenticationFailure, AuthenticationRejection, SessionEstablishment=SetupResponse-SetupRequest, SessionModification=ModifyResponse-ModifyRequest, SessionRelease=ReleaseCommand-ReleaseResponse, Service, PathSwitch, Handover\n    | render areachart kind=unstacked \n\n'
+                  value: errorsquery
                   isOptional: true
                 }
                 {
@@ -728,7 +920,7 @@ resource exampleDashboard 'Microsoft.Portal/dashboards@2019-01-01-preview' = {
               type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
               settings: {
                 content: {
-                  Query: 'let rate_function=(tbl:(Val: real, Time: datetime))\n{\ntbl\n    | sort by Time asc\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\n    | extend cum_correction = row_cumsum(correction)\n    | extend Val = Val + cum_correction\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\n    | extend dt = (Time-PrevTime)/1s\n    | extend dv = Val-PrevVal\n    | extend rate = dv/dt\n}\n    ;\nlet TimeSeries = InsightsMetrics\n    | where Namespace == "prometheus"\n    | summarize by Time=TimeGenerated;\nlet session_setup_response = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_setup_response"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend SetupResponse=rate;\nlet session_setup_request = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_setup_request"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend SetupRequest=rate;\nlet session_modify_response = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_modify_response"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ModifyResponse=rate;\nlet session_modify_request = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_modify_request"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ModifyRequest=rate;\nlet session_release_command = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_release_command"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ReleaseCommand=rate;\nlet session_release_response = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pdu_session_resource_release_response"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend ReleaseResponse=rate;\nlet registration = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_mm_initial_registration_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend Registration=rate;\nlet authentication_failure = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_n1_auth_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend AuthenticationFailure=rate;\nlet authentication_rejection = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_n1_auth_reject"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend AuthenticationRejection=rate;\nlet service_rejection = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfcc_n1_service_reject"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend Service=rate;\nlet request_failure = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_pathswitch_request_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend PathSwitch=rate;\nlet handover_failure = InsightsMetrics\n    | where Namespace == "prometheus" \n    | where Name == "amfn2_n2_handover_failure"\n    | summarize Val=sum(Val) by Time=TimeGenerated\n    | invoke rate_function()\n    | extend Handover=rate;\nTimeSeries\n    | join kind=leftouter (registration) on Time\n    | join kind=leftouter (session_setup_request) on Time\n    | join kind=leftouter (session_setup_response) on Time\n    | join kind=leftouter (session_modify_request) on Time\n    | join kind=leftouter (session_modify_response) on Time\n    | join kind=leftouter (session_release_command) on Time\n    | join kind=leftouter (session_release_response) on Time\n    | join kind=leftouter (authentication_failure) on Time\n    | join kind=leftouter (authentication_rejection) on Time\n    | join kind=leftouter (service_rejection) on Time\n    | join kind=leftouter (request_failure) on Time\n    | join kind=leftouter (handover_failure) on Time\n    | project Time, Registration, AuthenticationFailure, AuthenticationRejection, SessionEstablishment=SetupResponse-SetupRequest, SessionModification=ModifyResponse-ModifyRequest, SessionRelease=ReleaseCommand-ReleaseResponse, Service, PathSwitch, Handover\n    | render areachart kind=unstacked \n\n'
+                  Query: errorsquery
                   ControlType: 'FrameControlChart'
                   SpecificChart: 'UnstackedArea'
                   PartTitle: 'Errors'
