@@ -14,15 +14,15 @@ az aks get-credentials -g $RESOURCEGROUP -n $CLUSTER_NAME
 # Install Simple Helm Chart https://github.com/bitnami/azure-marketplace-charts
 
 helm repo add \
-    azure-marketplace \
-    https://marketplace.azurecr.io/helm/v1/repo
+    $HELM_REPO \
+    $HELM_REPO_URL
 
 helm search repo \
-    azure-marketplace
+    $HELM_REPO
 
 helm install \
-    my-wordpress \
-    azure-marketplace/wordpress \
+    $HELM_APP_NAME \
+    $HELM_APP \
     --set global.imagePullSecrets={emptysecret}
 
 echo \{\"Status\":\"Complete\"\} > $AZ_SCRIPTS_OUTPUT_PATH
