@@ -1,4 +1,14 @@
-# Azure Cognitive Search service
+---
+description: This template creates an Azure Cognitive Search service with a private endpoint.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-search-create-private-endpoint
+languages:
+- json
+---
+# Azure Cognitive Search service with private endpoint
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.search/azure-search-create-private-endpoint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.search/azure-search-create-private-endpoint/PublicDeployment.svg)
 
@@ -20,3 +30,4 @@ Use this template to create an Azure Cognitive Search service that's configured 
 
 For more information about parameters, see [Microsoft.Search searchServices template reference](https://docs.microsoft.com/azure/templates/Microsoft.Search/searchServices).
 
+`Tags: `
