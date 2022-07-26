@@ -19,12 +19,14 @@ module vnet 'br/public:network/virtual-network:1.0' = {
     addressPrefixes: vnetAddressPrefix
     subnets: [
       {
-        name: subnetName
-        addressPrefix: subnetAddressPrefix
-        privateEndpointNetworkPolicies: 'Disabled'
-        privateLinkServiceNetworkPolicies: 'Enabled'
-        networkSecurityGroup: {
-          id: networkSecurityGroup.id
+        name: subnetName        
+        properties: {
+          addressPrefix: subnetAddressPrefix
+          privateEndpointNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
         }
       }
     ]
