@@ -35,7 +35,7 @@ module acr '../container-registry/main.bicep' = {
 }
 
 module loadContainer 'nested_template/deploymentScripts.bicep' = {
-  name: 'Container Deployment'
+  name: 'ContainerDeployment'
   params: {
     location: location
     installScriptUri: uri(_artifactsLocation, 'scripts/container_deploy.sh${_artifactsLocationSasToken}')
