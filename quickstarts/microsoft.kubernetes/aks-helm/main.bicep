@@ -59,7 +59,7 @@ module aks '../aks/main.bicep' = {
   }
 }
 
-module helm 'nested_template/helm.bicep' = {
+module helm 'modules/helm.bicep' = {
   name: 'HelmScripts'
   params: {
     location                  : location
