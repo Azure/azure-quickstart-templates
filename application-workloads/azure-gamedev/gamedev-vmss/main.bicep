@@ -212,7 +212,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
                   name: '${vmssName}IpConfig'
                   properties: {
                     subnet: {
-                      id: vnet.outputs.subnetId
+                      id: first(vnet.outputs.subnetResourceIds)
                     }
                   }
                 }
