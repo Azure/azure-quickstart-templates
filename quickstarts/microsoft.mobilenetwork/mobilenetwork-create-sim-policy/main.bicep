@@ -11,7 +11,7 @@ param existingSliceName string
 param existingDataNetworkName string
 
 @description('The name of the service')
-param serviceName string = 'Allow-all-traffic'
+param serviceName string = 'Allow_all_traffic'
 
 @description('The maximum bit rate (MBR) for uploads across all service data flows that match data flow policy rules configured on the generic service')
 param serviceMaximumBitRateUplink string = '2 Gbps'
@@ -25,7 +25,7 @@ param serviceMaximumBitRateDownlink string = '2 Gbps'
 param servicePrecedence int = 253
 
 @description('The name of the data flow policy rule that will be created for this service.')
-param dataFlowPolicyRuleName string = 'All-traffic'
+param dataFlowPolicyRuleName string = 'All_traffic'
 
 @description('The precedence value for the data flow policy rule being created.')
 @maxValue(255)
@@ -75,18 +75,22 @@ param sessionAggregateMaximumBitRateUplink string = '2 Gbps'
 @description('The session aggregated maximum bit rate (Session-AMBR) for downloads across all non-GBR QoS flows of an individual PDU session involving a particular UE')
 param sessionAggregateMaximumBitRateDownlink string = '2 Gbps'
 
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01-preview' existing = {
+#disable-next-line BCP081
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
   name: existingMobileNetworkName
 
-  resource existingDataNetwork 'dataNetworks@2022-03-01-preview' existing = {
+  #disable-next-line BCP081
+  resource existingDataNetwork 'dataNetworks@2022-04-01-preview' existing = {
     name: existingDataNetworkName
   }
 
-  resource existingSlice 'slices@2022-03-01-preview' existing = {
+  #disable-next-line BCP081
+  resource existingSlice 'slices@2022-04-01-preview' existing = {
     name: existingSliceName
   }
 
-  resource exampleService 'services@2022-03-01-preview' = {
+  #disable-next-line BCP081
+  resource exampleService 'services@2022-04-01-preview' = {
     name: serviceName
     location: location
     properties: {
@@ -115,7 +119,8 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-0
     }
   }
 
-  resource exampleSimPolicy 'simPolicies@2022-03-01-preview' = {
+  #disable-next-line BCP081
+  resource exampleSimPolicy 'simPolicies@2022-04-01-preview' = {
     name: simPolicyName
     location: location
     properties: {
