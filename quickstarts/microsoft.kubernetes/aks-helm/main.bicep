@@ -90,4 +90,4 @@ module helm 'modules/helm.bicep' = {
   }
 }
 
-output controlPlaneFQDN string = aks.outputs.controlPlaneFQDN
+output controlPlaneFQDN string = aks.properties.controlPlaneFQDN
