@@ -28,10 +28,10 @@ Below are the parameters which can be configured in the parameters file or templ
 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Multi-Region:** Enter locations for primary and secondary regions.
-- **Automatic Failover:** Select whether to enable automatic failover on the account.
+- **System Managed Failover:** Select whether to enable system managed failover on the account.
 - **Database Name:** Enter the database name for the account.
 - **Graph Name:** Enter the name for the graph.
-- **Autoscale Max Throughput:** Enter the maximum autoscale RU/s for the graph (default and minimum 4000).
+- **Autoscale Max Throughput:** Enter the maximum autoscale RU/s for the graph (default and minimum 1000).
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-gremlin-autoscale%2Fazuredeploy.json)
 
