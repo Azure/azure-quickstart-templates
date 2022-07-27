@@ -5,6 +5,12 @@ param vnetName                 string
 param subnetName               string 
 param networkSecurityGroupName string
 
+//By Default the nsg will allow the vnet access and deny all other access
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
+  name: networkSecurityGroupName
+  location: location
+}
+
 resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: vnetName
   location: location
@@ -15,13 +21,25 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
       ]
     }
     enableDdosProtection: false
+    subnet: [
+      {
+        name: subnetName
+        properties: {
+          addressPrefix                    : subnetAddressPrefix
+          privateEndpointNetworkPolicies   : 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
+        }
+      }
+    ]
   }
-}
-
-//By Default the nsg will allow the vnet access and deny all other access
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
-  name: networkSecurityGroupName
-  location: location
 }
 
 resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
