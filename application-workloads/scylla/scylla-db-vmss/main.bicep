@@ -58,28 +58,6 @@ param vnetAddressPrefix string = '172.17.72.0/24' //Change as needed
 @description('Virtual Network Subnet Address Prefix')
 param subnetAddressPrefix string = '172.17.72.0/25' // 172.17.72.[0-128] is part of this subnet
 
-var customData = {
-        "scylla_yaml": {
-            "cluster_name": vmssName
-            "experimental": "True"
-            "auto_bootstrap": "True"
-            "seed_provider": [
-	    	{
-			"class_name": "org.apache.cassandra.locator.SimpleSeedProvider"
-                        "parameters": [
-				{
-					"seeds": "172.17.0.5"
-				}
-			]
-		}
-	    ],
-            "auto_snapshot": "False"
-        },
-        "developer_mode": "True"
-}
-
-
-
 module vnet './nestedtemplates/virtualNetworks.bicep'  = {
   name:                       vnetName
   params: {
@@ -124,7 +102,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
           offer:     vmssImgProduct
           sku:       vmssImgSku
           version:   vmssImgVersion
-	      }
+	}
       }
       networkProfile: {
         networkInterfaceConfigurations: [
@@ -153,7 +131,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
         computerNamePrefix: vmssName
         adminUsername:      administratorLogin
         adminPassword:      passwordAdministratorLogin
-	customData:         base64(customData)
 	windowsConfiguration: {
           provisionVMAgent: true
         }	
