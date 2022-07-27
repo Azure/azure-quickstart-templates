@@ -42,24 +42,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
-  parent: vnet
-  name: subnetName
-  properties: {
-    addressPrefix: subnetAddressPrefix
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
-    networkSecurityGroup: {
-      id: networkSecurityGroup.id
-    }
-    serviceEndpoints: [
-      {
-        service: 'Microsoft.Storage'
-      }
-    ]
-  }
-}
-
 output subnetId string = subnet.id
 output vnetId   string = vnet.id
 output vnet     string = vnet.name
