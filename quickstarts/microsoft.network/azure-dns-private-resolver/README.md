@@ -8,7 +8,7 @@ This template will deploy the **Azure DNS Private resolver** with required resou
 
 # Overview and deployed resources
 
-A virtual network is deployed with two subnets, inbound and outbound. The dns resolver resource is then deployed in this virtual network along with inbound, outbound endpoints, forwarding ruleset and forwarding rules. This ruleset will be linked to the outbound endpoint for conditional forwarding.
+A virtual network is deployed with two subnets, inbound and outbound. The dns resolver resource is then deployed in this virtual network along with inbound, outbound endpoints, forwarding ruleset and forwarding rules with target DNS servers. The ruleset will be linked to the outbound endpoint for conditional forwarding.
 
 ### Microsoft.Network/dnsresolvers
 
