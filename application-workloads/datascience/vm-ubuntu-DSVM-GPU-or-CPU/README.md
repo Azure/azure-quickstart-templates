@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Deploy a Ubuntu Linux DataScience VM 18.04.
+# Deploy a Ubuntu Linux DataScience VM 18.04
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/datascience/vm-ubuntu-DSVM-GPU-or-CPU/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/datascience/vm-ubuntu-DSVM-GPU-or-CPU/PublicDeployment.svg)
