@@ -1,15 +1,15 @@
 ---
-description: Scylla DB, a NoSQL Datastore built with C++.
+description: ScyllaDB, a NoSQL Datastore built with C++.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: sclla-db-vmss
+urlFragment: scylladb-vmss
 languages:
 - json
 - bicep
 ---
-# Scylla DB
+# ScyllaDB
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/scylla/scylla-db-vmss/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/scylla/scylla-db-vmss/PublicDeployment.svg)
