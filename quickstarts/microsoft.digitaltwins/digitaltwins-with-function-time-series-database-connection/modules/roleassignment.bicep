@@ -67,7 +67,7 @@ resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
-// Assigns Digital Twins admin assignment to database
+// Assigns Digital Twins resource admin assignment to database
 resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/databases/principalAssignments@2022-02-01' = {
   name: '${adxClusterName}/${databaseName}/${guid(digitalTwins.id, resourceGroup().id, 'Admin')}'
   properties: {
