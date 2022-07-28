@@ -123,6 +123,8 @@ module roleAssignment 'modules/roleassignment.bicep' = {
     principalId: principalId
     principalType: principalType
     digitalTwinsName: digitalTwinsName
+    digitalTwinsIdentityPrincipalId: digitalTwins.outputs.digitalTwinsIdentityPrincipalId
+    digitalTwinsIdentityTenantId: digitalTwins.outputs.digitalTwinsIdentityTenantId
     eventHubsNamespaceName: eventHubsNamespaceName
     eventHubName: eventHubName
     adxClusterName: adxClusterName

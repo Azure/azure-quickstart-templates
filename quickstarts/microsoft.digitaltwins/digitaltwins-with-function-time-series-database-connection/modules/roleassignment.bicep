@@ -1,6 +1,12 @@
 @description('Existing Digital Twin resource name')
 param digitalTwinsName string
 
+@description('The principal id associated with identity on the Digital Twins resource')
+param digitalTwinsIdentityPrincipalId string
+
+@description('The tenant id associated with identity on the Digital Twins resource')
+param digitalTwinsIdentityTenantId string
+
 @description('Existing Event Hubs namespace resource name')
 param eventHubsNamespaceName string
 
@@ -55,7 +61,7 @@ resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssig
   name: guid(digitalTwins.id, resourceGroup().id, azureRbacAzureEventHubsDataOwner)
   scope: eventhub
   properties: {
-    principalId: digitalTwins.identity.principalId
+    principalId: digitalTwinsIdentityPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureRbacAzureEventHubsDataOwner)
     principalType: 'ServicePrincipal'
   }
@@ -65,9 +71,9 @@ resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssig
 resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/databases/principalAssignments@2022-02-01' = {
   name: '${adxClusterName}/${databaseName}/${guid(digitalTwins.id, resourceGroup().id, 'Admin')}'
   properties: {
-    principalId: digitalTwins.identity.principalId
+    principalId: digitalTwinsIdentityPrincipalId
     role: 'Admin'
-    tenantId: digitalTwins.identity.tenantId
+    tenantId: digitalTwinsIdentityTenantId
     principalType: 'App'
   }
 }
@@ -77,7 +83,7 @@ resource digitalTwinsToDatabaseRoleAssignment 'Microsoft.Authorization/roleAssig
   name: guid(digitalTwins.id, resourceGroup().id, azureRbacContributor)
   scope: database
   properties: {
-    principalId: digitalTwins.identity.principalId
+    principalId: digitalTwinsIdentityPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureRbacContributor)
     principalType: 'ServicePrincipal'
   }

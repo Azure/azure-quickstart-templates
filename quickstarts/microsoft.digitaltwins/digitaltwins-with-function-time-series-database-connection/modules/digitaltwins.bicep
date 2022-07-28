@@ -25,3 +25,6 @@ resource digitalTwins 'Microsoft.DigitalTwins/digitalTwinsInstances@2022-05-31' 
     type: 'SystemAssigned'
   }
 }
+
+output digitalTwinsIdentityPrincipalId string = digitalTwins.identity.principalId
+output digitalTwinsIdentityTenantId string = digitalTwins.identity.tenantId
