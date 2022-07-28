@@ -1,40 +1,40 @@
-@description('name of the new virtual network where DNS resolver should be created')
+@description('name of the new virtual network where DNS resolver will be created')
 param resolverVNETName string = 'dnsresolverVNET'
 
 @description('the IP address space for the resolver virtual network')
 param resolverVNETAddressSpace string = '10.7.0.0/24'
 
-@description('name of the private resolver')
+@description('name of the dns private resolver')
 param dnsResolverName string = 'dnsResolver'
 
-@description('the location for resolver VNET and private resolver')
+@description('the location for resolver VNET and dns private resolver')
 param resolverLocation string = 'westcentralus' //resolver available in specific region, refer the documenation for more information https://docs.microsoft.com/en-us/azure/dns/dns-private-resolver-overview#regional-availability
 
 @description('name of the subnet that will be used for private resolver inbound endpoint')
 param inboundSubnet string = 'snet-inbound'
 
-@description('the new inbound subnet address space')
+@description('the inbound endpoint subnet address space')
 param inboundAddressPrefix string = '10.7.0.0/28'
 
 @description('name of the subnet that will be used for private resolver outbound endpoint')
 param outboundSubnet string = 'snet-outbound'
 
-@description('the new outbound subnet address space')
+@description('the outbound endpoint subnet address space')
 param outboundAddressPrefix string = '10.7.0.16/28'
 
 @description('name of the vnet link that links outbound endpoint with forwarding rule set')
 param resolvervnetlink string = 'vnetlink'
 
-@description('name for forwarding ruleset')
+@description('name of the forwarding ruleset')
 param forwardingRulesetName string = 'forwardingRule'
 
-@description('forwarding rule name')
+@description('name of the forwarding rule name')
 param forwardingRuleName string = 'contosocom'
 
 @description('the target domain name for the forwarding ruleset')
 param DomainName string = 'contoso.com.'
 
-@description('the list of target DNS servers ip address and the port number')
+@description('the list of target DNS servers ip address and the port number for conditional forwarding')
 param targetDNS array = [
     {
       ipaddress: '10.0.0.4'
