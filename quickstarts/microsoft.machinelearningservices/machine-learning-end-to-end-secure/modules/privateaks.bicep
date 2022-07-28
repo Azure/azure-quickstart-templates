@@ -20,7 +20,7 @@ param computeName string
 @description('Size of the virtual machine')
 param vmSizeParam string // = 'Standard_DS2_v2'
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-04-01' = {
   name: aksClusterName
   location: location
   tags: tags
@@ -59,7 +59,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
 
 output aksResourceId string = aksCluster.id
 
-resource workspaceName_computeName 'Microsoft.MachineLearningServices/workspaces/computes@2021-01-01' = {
+resource workspaceName_computeName 'Microsoft.MachineLearningServices/workspaces/computes@2022-05-01' = {
   name: '${workspaceName}/${computeName}'
   location: location
   properties: {
