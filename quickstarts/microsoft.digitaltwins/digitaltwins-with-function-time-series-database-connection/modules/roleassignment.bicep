@@ -47,7 +47,7 @@ resource database 'Microsoft.Kusto/clusters/databases@2022-02-01' existing = {
 
 // Assigns the given principal id input data owner of Digital Twins resource
 resource givenIdToDigitalTwinsRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid(digitalTwins.id, resourceGroup().id, azureRbacAzureDigitalTwinsDataOwner)
+  name: guid(digitalTwins.id, principalId, azureRbacAzureDigitalTwinsDataOwner)
   scope: digitalTwins
   properties: {
     principalId: principalId
@@ -58,7 +58,7 @@ resource givenIdToDigitalTwinsRoleAssignment 'Microsoft.Authorization/roleAssign
 
 // Assigns Digital Twins resource data owner of event hub
 resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid(digitalTwins.id, resourceGroup().id, azureRbacAzureEventHubsDataOwner)
+  name: guid(eventhub.id, principalId, azureRbacAzureEventHubsDataOwner)
   scope: eventhub
   properties: {
     principalId: digitalTwinsIdentityPrincipalId
@@ -69,7 +69,7 @@ resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssig
 
 // Assigns Digital Twins resource admin assignment to database
 resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/databases/principalAssignments@2022-02-01' = {
-  name: '${adxClusterName}/${databaseName}/${guid(digitalTwins.id, resourceGroup().id, 'Admin')}'
+  name: '${adxClusterName}/${databaseName}/${guid(database.id, principalId, 'Admin')}'
   properties: {
     principalId: digitalTwinsIdentityPrincipalId
     role: 'Admin'
@@ -80,7 +80,7 @@ resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/dat
 
 // Assigns Digital Twins resource contributor assignment to database
 resource digitalTwinsToDatabaseRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid(digitalTwins.id, resourceGroup().id, azureRbacContributor)
+  name: guid(database.id, principalId, azureRbacContributor)
   scope: database
   properties: {
     principalId: digitalTwinsIdentityPrincipalId

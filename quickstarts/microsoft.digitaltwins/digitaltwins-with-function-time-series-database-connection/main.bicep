@@ -34,6 +34,20 @@ param eventHubsNamespaceTier string = 'Basic'
 @description('Event Hubs throughput units')
 param eventHubsNamespaceCapacity int = 1
 
+@allowed([
+  'Dev(No SLA)_Standard_D11_v2'
+  'Standard_D11_v2'
+  'Standard_D12_v2'
+  'Standard_D13_v2'
+  'Standard_D14_v2'
+  'Standard_DS13_v2+1TB_PS'
+  'Standard_DS13_v2+2TB_PS'
+  'Standard_DS14_v2+3TB_PS'
+  'Standard_DS14_v2+4TB_PS'
+  'Standard_L16s'
+  'Standard_L4s'
+  'Standard_L8s'
+])
 @description('Azure Data Explorer cluster SKU option')
 param clusterPlan string = 'Dev(No SLA)_Standard_D11_v2'
 
