@@ -1,4 +1,26 @@
+---
+description: Deploy Azure DNS Private Resolver
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-dns-private-resolver
+languages:
+- bicep
+---
+
 # Azure DNS Private resolver
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazure-dns-private-resolver%2Fazuredeploy.json)
 
@@ -10,6 +32,9 @@ This template will deploy **Azure DNS Private resolver** with required resources
 
 A virtual network is deployed with two subnets that will be used for resolver's inbound and outbound endpoint. The dns resolver resource is then deployed in this virtual network along with inbound, outbound endpoints, forwarding ruleset and forwarding rules with target DNS servers. The ruleset will be linked to the outbound endpoint for conditional forwarding.
 
+For more information on **Azure DNS Private Resolver**
+- [What is Azure DNS Private Resolver](https://docs.microsoft.com/en-us/azure/dns/dns-private-resolver-overview)
+
 ### Microsoft.Network/dnsresolvers
 
 Description
@@ -20,4 +45,10 @@ Description
 - **forwardingRuleSet:** Forwarding Ruleset
 - **forwardingRule:** Forwarding rules with the target DNS servers for conditional forwarding.
 
-`Tags: dns resolver, private resolver, private dns resolver,Microsoft.Network/dnsresolvers`
+## Deployment steps
+
+```Bash
+az deployment group create --resource-group <resourcegroup name> --template-file <bicep file location>
+```
+
+`Tags: dns resolver, private resolver, private dns resolver, Microsoft.Network, Microsoft.Network/dnsresolvers`
