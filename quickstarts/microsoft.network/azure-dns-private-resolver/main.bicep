@@ -7,6 +7,7 @@ param resolverVNETAddressSpace string = '10.7.0.0/24'
 @description('name of the dns private resolver')
 param dnsResolverName string = 'dnsResolver'
 
+@description('the location for resolver VNET and dns private resolver - Azure DNS private resolver available in specific region, refer the documenation to select the supported region for this deployment. For more information https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability')
 @allowed([
   'australiaeast'
   'uksouth'
@@ -21,9 +22,7 @@ param dnsResolverName string = 'dnsResolver'
   'eastus2'
   'westeurope'
 ])
-
-@description('the location for resolver VNET and dns private resolver')
-param location string = resourceGroup().location //resolver available in specific region, refer the documenation for more information https://docs.microsoft.com/en-us/azure/dns/dns-private-resolver-overview#regional-availability
+param location string
 
 @description('name of the subnet that will be used for private resolver inbound endpoint')
 param inboundSubnet string = 'snet-inbound'

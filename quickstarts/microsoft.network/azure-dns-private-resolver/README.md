@@ -47,7 +47,7 @@ Description
 
 ## Deployment steps
 
-The Resource group location should be chosen as one of the supported locations for DNS private resolver. More information [here.](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability)
+The virtual network and DNS private resolver location should be chosen as one of the supported locations for DNS private resolver. More information [here.](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability)
 ```Bash
 az deployment group create --resource-group <resourcegroup name> --template-file <bicep file location>
 ```
