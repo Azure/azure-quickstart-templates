@@ -1,5 +1,5 @@
 ---
-description: This template creates an empty Consumption logic app for defining a workflow.
+description: This template creates an empty logic app that can be used to define workflows.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create a Consumption logic app workflow with an ARM template
+# Create a Consumption logic app using an Azure Resource Manager template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-create/PublicDeployment.svg)
