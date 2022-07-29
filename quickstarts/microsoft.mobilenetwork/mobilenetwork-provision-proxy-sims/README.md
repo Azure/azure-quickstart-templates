@@ -1,5 +1,5 @@
 ---
-description: This template provisions proxy SIM(s) to be used with an existing mobile network.
+description: This template adds the SIM group and SIM(s) to an existing mobile network and provisions the SIM(s).
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Provision proxy SIM(s)
+# Provision proxy SIMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-provision-proxy-sims/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-provision-proxy-sims/PublicDeployment.svg)

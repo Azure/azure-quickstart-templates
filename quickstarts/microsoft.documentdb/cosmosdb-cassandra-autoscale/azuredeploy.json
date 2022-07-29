@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "14036350939110966160"
+      "version": "0.8.9.13224",
+      "templateHash": "9558567034094647188"
     }
   },
   "parameters": {
@@ -37,7 +37,7 @@
     },
     "defaultConsistencyLevel": {
       "type": "string",
-      "defaultValue": "Session",
+      "defaultValue": "Eventual",
       "metadata": {
         "description": "The default consistency level of the Cosmos DB account."
       },
@@ -53,7 +53,7 @@
       "type": "int",
       "defaultValue": 100000,
       "metadata": {
-        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2,147,483,647. Multi Region: 100,000 to 2,147,483,647."
       },
       "maxValue": 1000000,
       "minValue": 10
@@ -62,16 +62,16 @@
       "type": "int",
       "defaultValue": 300,
       "metadata": {
-        "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
+        "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84,600. Multi Region: 300 to 86,400."
       },
       "maxValue": 86400,
       "minValue": 5
     },
-    "automaticFailover": {
+    "systemManagedFailover": {
       "type": "bool",
       "defaultValue": true,
       "metadata": {
-        "description": "Enable automatic failover for regions"
+        "description": "Enable system managed failover for regions"
       },
       "allowedValues": [
         true,
@@ -92,16 +92,15 @@
     },
     "autoscaleMaxThroughput": {
       "type": "int",
-      "defaultValue": 4000,
+      "defaultValue": 1000,
       "metadata": {
         "description": "Maximum autoscale throughput for the Cassandra table"
       },
       "maxValue": 1000000,
-      "minValue": 4000
+      "minValue": 1000
     }
   },
   "variables": {
-    "accountName_var": "[toLower(parameters('accountName'))]",
     "consistencyPolicy": {
       "Eventual": {
         "defaultConsistencyLevel": "Eventual"
@@ -137,8 +136,8 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-04-15",
-      "name": "[variables('accountName_var')]",
+      "apiVersion": "2022-05-15",
+      "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
       "kind": "GlobalDocumentDB",
       "properties": {
@@ -150,26 +149,26 @@
         "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
-        "enableAutomaticFailover": "[parameters('automaticFailover')]"
+        "enableAutomaticFailover": "[parameters('systemManagedFailover')]"
       }
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('keyspaceName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('keyspaceName')]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('accountName')))]"
       ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces/tables",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName')), parameters('tableName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', format('{0}/{1}', toLower(parameters('accountName')), parameters('keyspaceName')), parameters('tableName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('tableName')]",
@@ -222,7 +221,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces', split(format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName')), '/')[0], split(format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName')), '/')[1])]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces', split(format('{0}/{1}', toLower(parameters('accountName')), parameters('keyspaceName')), '/')[0], split(format('{0}/{1}', toLower(parameters('accountName')), parameters('keyspaceName')), '/')[1])]"
       ]
     }
   ]

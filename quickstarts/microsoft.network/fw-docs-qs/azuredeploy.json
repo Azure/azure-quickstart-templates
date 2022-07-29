@@ -1,81 +1,87 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.8.9.13224",
+      "templateHash": "15231316908103169117"
+    }
+  },
   "parameters": {
     "adminUsername": {
-      "type": "String",
+      "type": "string",
       "metadata": {
         "description": "Admin username for the backend servers"
       }
     },
     "adminPassword": {
-      "type": "SecureString",
+      "type": "secureString",
       "metadata": {
         "description": "Password for the admin account on the backend servers"
       }
     },
     "location": {
+      "type": "string",
       "defaultValue": "[resourceGroup().location]",
-      "type": "String",
       "metadata": {
         "description": "Location for all resources."
       }
     },
     "vmSize": {
+      "type": "string",
       "defaultValue": "Standard_B2ms",
-      "type": "String",
       "metadata": {
         "description": "Size of the virtual machine."
       }
     }
   },
   "variables": {
-    "virtualMachines_myVM_name": "myVM",
-    "virtualNetworks_myVNet_name": "myVNet",
-    "net_interface": "net-int",
-    "ipconfig_name": "ipconfig",
-    "ipprefix_name": "public_ip_prefix",
-    "ipprefix_size": 31,
-    "publicIPAddress": "public_ip",
-    "nsg_name": "vm-nsg",
-    "firewall_name": "FW-01",
-    "vnet_prefix": "10.0.0.0/16",
-    "fw_subnet_prefix": "10.0.0.0/24",
-    "backend_subnet_prefix": "10.0.1.0/24",
-    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworks_myVNet_name'), 'AzureFirewallSubnet')]",
-    "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
     "copy": [
       {
         "name": "azureFirewallIpConfigurations",
-        "count": 2,
+        "count": "[length(range(0, 2))]",
         "input": {
-          "name": "[concat('IpConf', copyIndex('azureFirewallIpConfigurations',1))]",
+          "name": "[format('IpConf{0}', add(range(0, 2)[copyIndex('azureFirewallIpConfigurations')], 1))]",
           "properties": {
-            "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations',1), 1), variables('azureFirewallSubnetJSON'), json('null'))]",
+            "subnet": "[if(equals(range(0, 2)[copyIndex('azureFirewallIpConfigurations')], 0), json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId'))), json('null'))]",
             "publicIPAddress": {
-              "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddress'), copyIndex('azureFirewallIpConfigurations',1)))]"
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}', variables('publicIpAddressName'), add(range(0, 2)[range(0, 2)[copyIndex('azureFirewallIpConfigurations')]], 1)))]"
             }
           }
         }
       }
-    ]
+    ],
+    "virtualMachineName": "myVM",
+    "virtualNetworkName": "myVNet",
+    "networkInterfaceName": "net-int",
+    "ipConfigName": "ipconfig",
+    "ipPrefixName": "public_ip_prefix",
+    "ipPrefixSize": 31,
+    "publicIpAddressName": "public_ip",
+    "nsgName": "vm-nsg",
+    "firewallName": "FW-01",
+    "vnetPrefix": "10.0.0.0/16",
+    "fwSubnetPrefix": "10.0.0.0/24",
+    "backendSubnetPrefix": "10.0.1.0/24",
+    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'AzureFirewallSubnet')]"
   },
   "resources": [
     {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('nsg_name'), copyIndex(1))]",
-      "location": "[parameters('location')]",
       "copy": {
-        "name": "nsg-loop",
-        "count": 2
+        "name": "nsg",
+        "count": "[length(range(0, 2))]"
       },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}{1}', variables('nsgName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
             "name": "RDP",
             "properties": {
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "3389",
               "sourceAddressPrefix": "*",
@@ -89,62 +95,58 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
       "type": "Microsoft.Network/publicIPPrefixes",
-      "name": "[variables('ipprefix_name')]",
+      "apiVersion": "2022-01-01",
+      "name": "[variables('ipPrefixName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "prefixLength": "[variables('ipprefix_size')]",
+        "prefixLength": "[variables('ipPrefixSize')]",
         "publicIPAddressVersion": "IPv4"
       },
       "sku": {
-        "name": "Standard",
-        "tier": "Regional"
+        "name": "Standard"
       }
     },
     {
+      "copy": {
+        "name": "publicIPAddress",
+        "count": "[length(range(0, 2))]"
+      },
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('publicIPAddress'), copyIndex(1))]",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}{1}', variables('publicIpAddressName'), add(range(0, 2)[copyIndex()], 1))]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
-      "copy": {
-        "name": "publicip-loop",
-        "count": 2
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPPrefixes', variables('ipprefix_name'))]"
-      ],
       "properties": {
         "publicIPAddressVersion": "IPv4",
         "publicIPAllocationMethod": "Static",
         "publicIPPrefix": {
-          "id": "[resourceId('Microsoft.Network/publicIPPrefixes',variables('ipprefix_name'))]"
+          "id": "[resourceId('Microsoft.Network/publicIPPrefixes', variables('ipPrefixName'))]"
         },
         "idleTimeoutInMinutes": 4
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPPrefixes', variables('ipPrefixName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('virtualNetworks_myVNet_name')]",
+      "apiVersion": "2022-01-01",
+      "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/routeTables', 'rt-01')]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vnet_prefix')]"
+            "[variables('vnetPrefix')]"
           ]
         },
         "subnets": [
           {
             "name": "myBackendSubnet",
             "properties": {
-              "addressPrefix": "[variables('backend_subnet_prefix')]",
+              "addressPrefix": "[variables('backendSubnetPrefix')]",
               "routeTable": {
                 "id": "[resourceId('Microsoft.Network/routeTables', 'rt-01')]"
               },
@@ -155,33 +157,33 @@
         ],
         "enableDdosProtection": false,
         "enableVmProtection": false
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/routeTables', 'rt-01')]"
+      ]
     },
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('virtualNetworks_myVNet_name'), '/AzureFirewallSubnet')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworks_myVNet_name'))]"
-      ],
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', variables('virtualNetworkName'), 'AzureFirewallSubnet')]",
       "properties": {
-        "addressPrefix": "[variables('fw_subnet_prefix')]",
+        "addressPrefix": "[variables('fwSubnetPrefix')]",
         "privateEndpointNetworkPolicies": "Enabled",
         "privateLinkServiceNetworkPolicies": "Enabled"
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('virtualMachines_myVM_name'), copyIndex(1))]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "vm-loop",
-        "count": 2
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('net_interface'), copyIndex(1)))]"
-      ],
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "virtualMachine",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}{1}', variables('virtualMachineName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -204,7 +206,7 @@
           }
         },
         "osProfile": {
-          "computerName": "[concat(variables('virtualMachines_myVM_name'), copyIndex(1))]",
+          "computerName": "[format('{0}{1}', variables('virtualMachineName'), add(range(0, 2)[copyIndex()], 1))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -216,32 +218,31 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('net_interface'), copyIndex(1)))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}', variables('networkInterfaceName'), add(range(0, 2)[range(0, 2)[copyIndex()]], 1)))]"
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('net_interface'), copyIndex(1))]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "int-loop",
-        "count": 2
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworks_myVNet_name'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('nsg_name'), copyIndex(1)))]"
-      ],
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}', variables('networkInterfaceName'), add(range(0, 2)[range(0, 2)[copyIndex()]], 1)))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "netInterface",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}{1}', variables('networkInterfaceName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
-            "name": "[concat(variables('ipconfig_name'), copyIndex(1))]",
+            "name": "[format('{0}{1}', variables('ipConfigName'), add(range(0, 2)[copyIndex()], 1))]",
             "properties": {
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworks_myVNet_name'), 'myBackendSubnet')]"
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))).subnets[0].id]"
               },
               "primary": true
             }
@@ -250,20 +251,19 @@
         "enableAcceleratedNetworking": false,
         "enableIPForwarding": false,
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('nsg_name'), copyIndex(1)))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}{1}', variables('nsgName'), add(range(0, 2)[range(0, 2)[copyIndex()]], 1)))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}{1}', variables('nsgName'), add(range(0, 2)[range(0, 2)[copyIndex()]], 1)))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/azureFirewalls",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('firewall_name')]",
+      "apiVersion": "2022-01-01",
+      "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddress'), 1))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddress'), 2))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworks_myVNet_name'), 'AzureFirewallSubnet')]"
-      ],
       "properties": {
         "sku": {
           "name": "AZFW_VNet",
@@ -360,7 +360,9 @@
                   "sourceAddresses": [
                     "*"
                   ],
-                  "destinationAddresses": [ "[reference(resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddress'), 1))).ipAddress]" ],
+                  "destinationAddresses": [
+                    "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}', variables('publicIpAddressName'), add(range(0, 2)[0], 1)))).ipAddress]"
+                  ],
                   "destinationPorts": [
                     "3389"
                   ]
@@ -375,7 +377,9 @@
                   "sourceAddresses": [
                     "*"
                   ],
-                  "destinationAddresses": [ "[reference(resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddress'), 2))).ipAddress]" ],
+                  "destinationAddresses": [
+                    "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}', variables('publicIpAddressName'), add(range(0, 2)[1], 1)))).ipAddress]"
+                  ],
                   "destinationPorts": [
                     "3389"
                   ]
@@ -384,11 +388,15 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "publicIPAddress",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'AzureFirewallSubnet')]"
+      ]
     },
     {
       "type": "Microsoft.Network/routeTables",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-01-01",
       "name": "rt-01",
       "location": "[parameters('location')]",
       "properties": {
