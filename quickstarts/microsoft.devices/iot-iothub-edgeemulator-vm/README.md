@@ -8,7 +8,7 @@ urlFragment: iot-iothub-edgeemulator-vm
 languages:
 - json
 ---
-# Create an IOT Hub and Ubuntu edge simulator.
+# Create an IOT Hub and Ubuntu edge simulator
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iot-iothub-edgeemulator-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iot-iothub-edgeemulator-vm/PublicDeployment.svg)

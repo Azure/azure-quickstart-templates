@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Azure Container Registry Template
+# Simple Azure Container Registry Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerregistry/container-registry/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerregistry/container-registry/PublicDeployment.svg)
