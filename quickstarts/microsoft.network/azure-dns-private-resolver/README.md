@@ -9,7 +9,7 @@ languages:
 - bicep
 ---
 
-# Azure DNS Private resolver
+# Azure DNS Private Resolver (preview)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/PublicDeployment.svg)
