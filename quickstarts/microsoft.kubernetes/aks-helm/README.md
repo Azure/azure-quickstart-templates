@@ -1,15 +1,15 @@
 ---
-description: Deploy a managed cluster with Azure Container Service (AKS)
+description: Deploy a managed cluster with Azure Container Service (AKS) with Helm
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: aks
+urlFragment: aks-helm
 languages:
 - json
 - bicep
 ---
-# Azure Container Service (AKS)
+# Azure Container Service (AKS) with Helm
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-helm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-helm/PublicDeployment.svg)
