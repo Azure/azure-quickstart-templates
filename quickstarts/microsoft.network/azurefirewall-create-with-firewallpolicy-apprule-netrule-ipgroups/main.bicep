@@ -2,7 +2,7 @@
 param virtualNetworkName string = 'vnet${uniqueString(resourceGroup().id)}'
 
 @description('Azure Firewall name')
-param firewallName string = ''
+param firewallName string = 'fw${uniqueString(resourceGroup().id)}'
 
 @description('Number of public IP addresses for the Azure Firewall')
 @minValue(1)
@@ -14,8 +14,8 @@ param availabilityZones array = []
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
-param infraipgroup string = '${location}-infra-ipgroup-${uniqueString(resourceGroup().id)}'
-param workloadipgroup string = '${location}-workload-ipgroup-${uniqueString(resourceGroup().id)}'
+param infraIpGroupName string = '${location}-infra-ipgroup-${uniqueString(resourceGroup().id)}'
+param workloadIpGroupName string = '${location}-workload-ipgroup-${uniqueString(resourceGroup().id)}'
 param firewallPolicyName string = '${firewallName}-firewallPolicy'
 
 var vnetAddressPrefix = '10.10.0.0/24'
@@ -35,8 +35,8 @@ var azureFirewallIpConfigurations = [for i in range(0, numberOfPublicIPAddresses
   }
 }]
 
-resource workloadIpGroup 'Microsoft.Network/ipGroups@2021-08-01' = {
-  name: workloadipgroup
+resource workloadIpGroup 'Microsoft.Network/ipGroups@2022-01-01' = {
+  name: workloadIpGroupName
   location: location
   properties: {
     ipAddresses: [
@@ -46,8 +46,8 @@ resource workloadIpGroup 'Microsoft.Network/ipGroups@2021-08-01' = {
   }
 }
 
-resource infraIpGroup 'Microsoft.Network/ipGroups@2021-08-01' = {
-  name: infraipgroup
+resource infraIpGroup 'Microsoft.Network/ipGroups@2022-01-01' = {
+  name: infraIpGroupName
   location: location
   properties: {
     ipAddresses: [
@@ -57,7 +57,7 @@ resource infraIpGroup 'Microsoft.Network/ipGroups@2021-08-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
   name: virtualNetworkName
   location: location
   tags: {
@@ -81,7 +81,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = [for i in range(0, numberOfPublicIPAddresses): {
+resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = [for i in range(0, numberOfPublicIPAddresses): {
   name: '${azurepublicIpname}${i + 1}'
   location: location
   sku: {
@@ -93,7 +93,7 @@ resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = [for
   }
 }]
 
-resource firewallPolicy 'Microsoft.Network/firewallPolicies@2021-08-01'= {
+resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-01-01'= {
   name: firewallPolicyName
   location: location
   properties: {
@@ -101,7 +101,7 @@ resource firewallPolicy 'Microsoft.Network/firewallPolicies@2021-08-01'= {
   }
 }
 
-resource networkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2021-08-01' = {
+resource networkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2022-01-01' = {
   parent: firewallPolicy
   name: 'DefaultNetworkRuleCollectionGroup'
   properties: {
@@ -138,7 +138,7 @@ resource networkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleColl
   }
 }
 
-resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2021-08-01' = {
+resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2022-01-01' = {
   parent: firewallPolicy
   name: 'DefaultApplicationRuleCollectionGroup'
   dependsOn: [
@@ -211,7 +211,7 @@ resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/rule
   }
 }
 
-resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
+resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
   name: firewallName
   location: location
   zones: ((length(availabilityZones) == 0) ? null : availabilityZones)
