@@ -23,7 +23,7 @@ param dnsResolverName string = 'dnsResolver'
 ])
 
 @description('the location for resolver VNET and dns private resolver')
-param location string //resolver available in specific region, refer the documenation for more information https://docs.microsoft.com/en-us/azure/dns/dns-private-resolver-overview#regional-availability
+param location string = resourceGroup().location //resolver available in specific region, refer the documenation for more information https://docs.microsoft.com/en-us/azure/dns/dns-private-resolver-overview#regional-availability
 
 @description('name of the subnet that will be used for private resolver inbound endpoint')
 param inboundSubnet string = 'snet-inbound'

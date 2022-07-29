@@ -33,7 +33,7 @@ This template will deploy **Azure DNS Private resolver** with required resources
 A virtual network is deployed with two subnets that will be used for resolver's inbound and outbound endpoint. The dns resolver resource is then deployed in this virtual network along with inbound, outbound endpoints, forwarding ruleset and forwarding rules with target DNS servers. The ruleset will be linked to the outbound endpoint for conditional forwarding.
 
 For more information on **Azure DNS Private Resolver**
-- [What is Azure DNS Private Resolver](https://docs.microsoft.com/en-us/azure/dns/dns-private-resolver-overview)
+- [What is Azure DNS Private Resolver](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview)
 
 ### Microsoft.Network/dnsresolvers
 
@@ -47,6 +47,7 @@ Description
 
 ## Deployment steps
 
+The Resource group location should be chosen as one of the supported locations for DNS private resolver. More information [here.](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability)
 ```Bash
 az deployment group create --resource-group <resourcegroup name> --template-file <bicep file location>
 ```
