@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# ScyllaDB
+# ScyllaDB on Azure
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/scylladb/scylladb-vmss/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/scylladb/scylladb-vmss/PublicDeployment.svg)
