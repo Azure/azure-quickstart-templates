@@ -28,23 +28,23 @@ var environmentVariables = [
   {
     name: 'RESOURCEGROUP'
     secureValue: resourceGroup().name
-  }
+  },
   {
     name: 'SUBSCRIPTION_ID'
     secureValue: subscription().subscriptionId
-  }
+  },
   {
     name: 'PUBLISHER'
     secureValue: 'microsoftcorporation1590077852919'
-  }
+  },
   {
     name: 'OFFER'
     secureValue: 'horde-storage-container-preview'
-  }
+  },
   {
     name: 'PLAN'
     secureValue: 'storage-container-test'
-  }
+  },
   {
     name: 'CONFIG_GUID'
     secureValue: guid()
