@@ -1,4 +1,4 @@
-@description('The name of the DNS zone to be created.  Must have at least 2 segements, e.g. hostname.org')
+@description('The name of the DNS zone to be created.  Must have at least 2 segments, e.g. hostname.org')
 param zoneName string = '${uniqueString(resourceGroup().id)}.azurequickstart.org'
 
 @description('The name of the DNS record to be created.  The name is relative to the zone, not the FQDN.')
