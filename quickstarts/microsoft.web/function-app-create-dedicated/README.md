@@ -1,5 +1,5 @@
 ---
-description: This template provisions a function app on a dedicated hosting plan, meaning it will be run and billed just like any App Service site. There are other templates available for provisioning on a dynamic hosting plan.
+description: This template provisions a function app on a dedicated hosting plan, meaning it will be run and billed just like any App Service site.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: function-app-create-dedicated
 languages:
 - json
 ---
-# Provision a function app on a dedicated hosting plan
+# Provision a function app running on an App Service Plan
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-create-dedicated/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-create-dedicated/PublicDeployment.svg)
