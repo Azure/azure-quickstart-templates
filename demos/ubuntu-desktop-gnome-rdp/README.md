@@ -8,7 +8,7 @@ urlFragment: ubuntu-desktop-gnome-rdp
 languages:
 - json
 ---
-# Ubuntu Gnome Desktop, VS Code, Azure CLI and RDP Support
+# Linux VM with Gnome Desktop RDP VSCode and Azure CLI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/PublicDeployment.svg)
