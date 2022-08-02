@@ -71,7 +71,7 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       }
       {
         name: 'CONFIG_GUID'
-        secureValue: newGuid()
+        secureValue: guid(utcValue)
       }    
     ]
     primaryScriptUri: installScriptUri
