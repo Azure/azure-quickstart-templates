@@ -7,12 +7,9 @@ param installScriptUri string
 @description('Random Value for Caching')
 param utcValue string = utcNow()
 
-param environmentVariables object = [
-  {
-    name: 'RESOURCEGROUP'
-    secureValue: resourceGroup().name
-  }
-]
+param publisher string = 'microsoftcorporation1590077852919'
+param offer string = 'horde-storage-container-preview'
+param plan string = 'storage-container-test'
 
 var identityName = 'scratch${uniqueString(resourceGroup().id)}'
 var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
@@ -51,7 +48,32 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     forceUpdateTag: utcValue
     azCliVersion: '2.10.1'
     timeout: 'PT30M'
-    environmentVariables: environmentVariables
+    environmentVariables:  [
+      {
+        name: 'RESOURCEGROUP'
+        secureValue: resourceGroup().name
+      }
+      {
+        name: 'SUBSCRIPTION_ID'
+        secureValue: subscription().subscriptionId
+      }
+      {
+        name: 'PUBLISHER'
+        secureValue: publisher
+      }
+      {
+        name: 'OFFER'
+        secureValue: offer
+      }
+      {
+        name: 'PLAN'
+        secureValue: plan
+      }
+      {
+        name: 'CONFIG_GUID'
+        secureValue: guid()
+      }    
+    ]
     primaryScriptUri: installScriptUri
     cleanupPreference: 'OnExpiration'
     retentionInterval: 'P1D'
