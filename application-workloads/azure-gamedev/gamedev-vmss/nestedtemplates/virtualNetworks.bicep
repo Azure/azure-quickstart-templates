@@ -12,15 +12,15 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-0
 }
 
 module vnet 'br/public:network/virtual-network:1.0.2' = {
-  name: vnetName
-  location: location
+  name: vnetName  
   params: {
     name: vnetName
+    location: location
     addressPrefixes: vnetAddressPrefix
     subnets: [
       {
         name                             : subnetName        
-        addressPrefix                    : subnetAddressPrefix
+        addressPrefix                    : [subnetAddressPrefix]
         privateEndpointNetworkPolicies   : 'Disabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
         networkSecurityGroupId           : networkSecurityGroup.id
