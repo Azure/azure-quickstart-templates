@@ -14,7 +14,7 @@ param plan string = 'storage-container-test'
 var identityName = 'scratch${uniqueString(resourceGroup().id)}'
 var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var roleAssignmentName = guid(identityName, roleDefinitionId)
-var config_guid = guid(resourceGroup().id)
+var configGuid = guid()
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: identityName
@@ -72,7 +72,7 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       }
       {
         name: 'CONFIG_GUID'
-        secureValue: config_guid
+        secureValue: configGuid
       }    
     ]
     primaryScriptUri: installScriptUri
