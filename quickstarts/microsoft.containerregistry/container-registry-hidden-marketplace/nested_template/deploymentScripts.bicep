@@ -41,7 +41,7 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'dsId')}': {
+      '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)}': {
       }
     }
   }
