@@ -18,13 +18,13 @@ param location  string = resourceGroup().location
 param acrSku    string = 'Basic'
 
 @description('Marketplace Publisher')
-param publisher string = 'microsoftcorporation1590077852919'
+param publisher string = 'bitnami'
 
 @description('Marketplace Offer')
-param offer     string = 'horde-storage-container-preview'
+param offer     string = 'opencart-chart'
 
 @description('Marketplace Plan')
-param plan      string = 'storage-container-test'
+param plan      string = 'default'
 
 @description('The base URI where artifacts required by this template are located')
 param _artifactsLocation string = deployment().properties.templateLink.uri
