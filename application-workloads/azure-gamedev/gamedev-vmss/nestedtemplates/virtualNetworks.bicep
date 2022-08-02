@@ -16,11 +16,11 @@ module vnet 'br/public:network/virtual-network:1.0.2' = {
   params: {
     name: vnetName
     location: location
-    addressPrefixes: vnetAddressPrefix
+    addressPrefixes: [vnetAddressPrefix]
     subnets: [
       {
         name                             : subnetName        
-        addressPrefix                    : [subnetAddressPrefix]
+        addressPrefix                    : subnetAddressPrefix
         privateEndpointNetworkPolicies   : 'Disabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
         networkSecurityGroupId           : networkSecurityGroup.id
