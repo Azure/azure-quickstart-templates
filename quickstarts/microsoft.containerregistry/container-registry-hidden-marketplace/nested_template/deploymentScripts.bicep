@@ -7,9 +7,9 @@ param installScriptUri string
 @description('Random Value for Caching')
 param utcValue string = utcNow()
 
-param publisher string = 'microsoftcorporation1590077852919'
-param offer string = 'horde-storage-container-preview'
-param plan string = 'storage-container-test'
+param publisher string = 'bitnami'
+param offer string = 'opencart-chart'
+param plan string = 'default'
 
 var identityName = 'scratch${uniqueString(resourceGroup().id)}'
 var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
