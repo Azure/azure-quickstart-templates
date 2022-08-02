@@ -7,7 +7,7 @@ param acrName string
 param acrAdminUserEnabled bool = false
 
 @description('Location for all resources.')
-param location string = resourceGroup().location
+param location  string = resourceGroup().location
 
 @allowed([
   'Basic'
@@ -15,7 +15,16 @@ param location string = resourceGroup().location
   'Premium'
 ])
 @description('Tier of your Azure Container Registry.')
-param acrSku string = 'Basic'
+param acrSku    string = 'Basic'
+
+@description('Marketplace Publisher')
+param publisher string = 'microsoftcorporation1590077852919'
+
+@description('Marketplace Offer')
+param offer     string = 'horde-storage-container-preview'
+
+@description('Marketplace Plan')
+param plan      string = 'storage-container-test'
 
 @description('The base URI where artifacts required by this template are located')
 param _artifactsLocation string = deployment().properties.templateLink.uri
@@ -24,34 +33,12 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param _artifactsLocationSasToken string = ''
 
-var environmentVariables = [
-  {
-    name: 'RESOURCEGROUP'
-    secureValue: resourceGroup().name
-  },{
-    name: 'SUBSCRIPTION_ID'
-    secureValue: subscription().subscriptionId
-  },{
-    name: 'PUBLISHER'
-    secureValue: 'microsoftcorporation1590077852919'
-  },{
-    name: 'OFFER'
-    secureValue: 'horde-storage-container-preview'
-  },{
-    name: 'PLAN'
-    secureValue: 'storage-container-test'
-  },{
-    name: 'CONFIG_GUID'
-    secureValue: guid()
-  }    
-]
-
 module acr '../container-registry/main.bicep' = {
   name: 'ACR'
   params: {
-    location: location
-    acrName: acrName
-    acrSku: acrSku
+    location           : location
+    acrName            : acrName
+    acrSku             : acrSku
     acrAdminUserEnabled: acrAdminUserEnabled
   }
 }
@@ -59,8 +46,10 @@ module acr '../container-registry/main.bicep' = {
 module loadContainer 'nested_template/deploymentScripts.bicep' = {
   name: 'ContainerDeployment'
   params: {
-    location: location
+    location        : location
     installScriptUri: uri(_artifactsLocation, 'scripts/container_deploy.sh${_artifactsLocationSasToken}')
-    environmentVariables: environmentVariables
+    publisher       : publisher
+    offer           : offer
+    plan            : plan
   }
 }
