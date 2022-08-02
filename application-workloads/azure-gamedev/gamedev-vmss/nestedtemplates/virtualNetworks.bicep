@@ -11,7 +11,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-0
   location: location
 }
 
-module vnet 'br/public:network/virtual-network:1.0' = {
+module vnet 'br/public:network/virtual-network:1.0.2' = {
   name: vnetName
   location: location
   params: {
