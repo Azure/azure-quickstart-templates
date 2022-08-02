@@ -58,7 +58,7 @@
     },
     "vaultName": {
       "type": "string",
-      "defaultValue": "RSVault",
+      "defaultValue": "[format('RSVault-{0}', substring(uniqueString(resourceGroup().id),6))]",
       "metadata": {
         "description": "Name of the Recovery Services Vault. (Should have the same location as the Storage Account containing the File Share to be protected in case of an existing Recovery Services Vault)."
       }
@@ -134,11 +134,18 @@
         "description": "Number of years for which the yearly backup is to be retained. (Ignore if using existing Backup Policy)."
       }
     },
-    "scheduleWindowStartTime": {
+     "scheduleWindowStartTime": {
       "type": "string",
       "defaultValue": "[format('{0}08:00:00.000Z', substring(utcNow('2020-01-01T{0}:00Z'), 0, 11))]",
       "metadata": {
         "description": "Hourly Schedule window start time"
+      }
+    },
+    "backupFrequency": {
+      "type":"int",
+      "defaultValue":4,
+      "metadata":{
+         "description":"Hourly backup frequency (Ignore if using existing Backup Policy)."
       }
     }
   },
@@ -167,15 +174,17 @@
       "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
       "apiVersion": "2022-02-01",
       "name": "[format('{0}/{1}', parameters('vaultName'), parameters('policyName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ],
       "properties": {
         "backupManagementType": "[variables('backupManagementType')]",
         "schedulePolicy": {
           "schedulePolicyType": "SimpleSchedulePolicy",
           "scheduleRunFrequency": "Hourly",
-          "scheduleRunDays": null,
-          "scheduleRunTimes": null,
+          "scheduleRunTimes": "[variables('scheduleRunTimes')]",
           "hourlySchedule": {
-            "interval": 4,
+            "interval": "[parameters('backupFrequency')]",
             "scheduleWindowStartTime": "[parameters('scheduleWindowStartTime')]",
             "scheduleWindowDuration": 12
           }
@@ -233,39 +242,36 @@
         },
         "timeZone": "[parameters('timeZone')]",
         "workLoadType": "AzureFileShare"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
-      ]
+      }
     },
     {
       "condition": "[parameters('registerStorageAccount')]",
       "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers",
       "apiVersion": "2021-12-01",
       "name": "[format('{0}/{1}/storagecontainer;Storage;{2};{3}', parameters('vaultName'), variables('backupFabric'), parameters('existingResourceGroupName'), parameters('existingStorageAccountName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ],
       "properties": {
         "backupManagementType": "[variables('backupManagementType')]",
         "containerType": "StorageContainer",
         "sourceResourceId": "[resourceId(parameters('existingResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('existingStorageAccountName'))]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]",
-        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
       "apiVersion": "2021-12-01",
       "name": "[format('{0}/{1}/{2}/AzureFileShare;{3}', split(format('{0}/{1}/storagecontainer;Storage;{2};{3}', parameters('vaultName'), variables('backupFabric'), parameters('existingResourceGroupName'), parameters('existingStorageAccountName')), '/')[0], split(format('{0}/{1}/storagecontainer;Storage;{2};{3}', parameters('vaultName'), variables('backupFabric'), parameters('existingResourceGroupName'), parameters('existingStorageAccountName')), '/')[1], split(format('{0}/{1}/storagecontainer;Storage;{2};{3}', parameters('vaultName'), variables('backupFabric'), parameters('existingResourceGroupName'), parameters('existingStorageAccountName')), '/')[2], parameters('existingFileShareName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ],
       "properties": {
         "protectedItemType": "AzureFileShareProtectedItem",
         "sourceResourceId": "[resourceId(parameters('existingResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('existingStorageAccountName'))]",
         "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]",
-        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
-      ]
+      }
     }
   ]
 }

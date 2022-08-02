@@ -20,7 +20,7 @@ param isNewPolicy bool = true
 param registerStorageAccount bool = true
 
 @description('Name of the Recovery Services Vault. (Should have the same location as the Storage Account containing the File Share to be protected in case of an existing Recovery Services Vault).')
-param vaultName string = 'RSVault'
+param vaultName string = 'RSVault-${substring(uniqueString(resourceGroup().id), 6)}'
 
 @description('Name of the Backup Policy.')
 param policyName string = 'HourlyBackupPolicy'
@@ -60,6 +60,9 @@ param yearlyRetentionDurationCount int = 10
 @description('Hourly Schedule window start time')
 param scheduleWindowStartTime string = '${substring(utcNow('2020-01-01T{0}:00Z'), 0, 11)}08:00:00.000Z'
 
+@description('Hourly backup frequency (Ignore if using existing Backup Policy).')
+param backupFrequency int = 4
+
 var backupFabric = 'Azure'
 var backupManagementType = 'AzureStorage'
 var scheduleRunTimes = [
@@ -85,10 +88,9 @@ resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2022-02-
     schedulePolicy: {
       schedulePolicyType: 'SimpleSchedulePolicy'
       scheduleRunFrequency: 'Hourly'
-      scheduleRunDays: null
-      scheduleRunTimes: null
+      scheduleRunTimes: scheduleRunTimes
       hourlySchedule: {
-        interval: 4
+        interval: backupFrequency
         scheduleWindowStartTime: scheduleWindowStartTime
         scheduleWindowDuration: 12
       }
@@ -151,25 +153,25 @@ resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2022-02-
 
 resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers@2021-12-01' = if (registerStorageAccount) {
   name: '${vaultName}/${backupFabric}/storagecontainer;Storage;${existingResourceGroupName};${existingStorageAccountName}'
+  dependsOn: [
+    vault
+    backupPolicy
+  ]
   properties: {
     backupManagementType: backupManagementType
     containerType: 'StorageContainer'
     sourceResourceId: resourceId(existingResourceGroupName, 'Microsoft.Storage/storageAccounts', existingStorageAccountName)
   }
-  dependsOn: [
-    vault
-    backupPolicy
-  ]
 }
 
 resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2021-12-01'={
   name:'${split('${vaultName}/${backupFabric}/storagecontainer;Storage;${existingResourceGroupName};${existingStorageAccountName}', '/')[0]}/${split('${vaultName}/${backupFabric}/storagecontainer;Storage;${existingResourceGroupName};${existingStorageAccountName}', '/')[1]}/${split('${vaultName}/${backupFabric}/storagecontainer;Storage;${existingResourceGroupName};${existingStorageAccountName}', '/')[2]}/AzureFileShare;${existingFileShareName}'
+  dependsOn:[
+    vault
+  ]
   properties:{
     protectedItemType:'AzureFileShareProtectedItem'
     sourceResourceId:resourceId(existingResourceGroupName, 'Microsoft.Storage/storageAccounts', existingStorageAccountName)
     policyId:backupPolicy.id
   }
-  dependsOn:[
-    vault
-]
 }
