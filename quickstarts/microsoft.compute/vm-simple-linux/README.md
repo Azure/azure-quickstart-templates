@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Deploy a simple Ubuntu Linux VM 18.04-LTS.
+# Deploy a simple Ubuntu Linux VM 18.04-LTS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-linux/PublicDeployment.svg)

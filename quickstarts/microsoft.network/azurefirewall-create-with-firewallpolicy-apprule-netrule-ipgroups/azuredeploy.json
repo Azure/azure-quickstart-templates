@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "325583766955488713"
+      "version": "0.8.9.13224",
+      "templateHash": "2614956787969031174"
     }
   },
   "parameters": {
@@ -18,7 +18,7 @@
     },
     "firewallName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "[format('fw{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Azure Firewall name"
       }
@@ -46,11 +46,11 @@
         "description": "Location for all resources."
       }
     },
-    "infraipgroup": {
+    "infraIpGroupName": {
       "type": "string",
       "defaultValue": "[format('{0}-infra-ipgroup-{1}', parameters('location'), uniqueString(resourceGroup().id))]"
     },
-    "workloadipgroup": {
+    "workloadIpGroupName": {
       "type": "string",
       "defaultValue": "[format('{0}-workload-ipgroup-{1}', parameters('location'), uniqueString(resourceGroup().id))]"
     },
@@ -86,8 +86,8 @@
   "resources": [
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2021-08-01",
-      "name": "[parameters('workloadipgroup')]",
+      "apiVersion": "2022-01-01",
+      "name": "[parameters('workloadIpGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
         "ipAddresses": [
@@ -98,8 +98,8 @@
     },
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2021-08-01",
-      "name": "[parameters('infraipgroup')]",
+      "apiVersion": "2022-01-01",
+      "name": "[parameters('infraIpGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
         "ipAddresses": [
@@ -110,7 +110,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2022-01-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -139,7 +139,7 @@
         "count": "[length(range(0, parameters('numberOfPublicIPAddresses')))]"
       },
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2022-01-01",
       "name": "[format('{0}{1}', variables('azurepublicIpname'), add(range(0, parameters('numberOfPublicIPAddresses'))[copyIndex()], 1))]",
       "location": "[parameters('location')]",
       "sku": {
@@ -152,7 +152,7 @@
     },
     {
       "type": "Microsoft.Network/firewallPolicies",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2022-01-01",
       "name": "[parameters('firewallPolicyName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -161,7 +161,7 @@
     },
     {
       "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2022-01-01",
       "name": "[format('{0}/{1}', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
       "properties": {
         "priority": 200,
@@ -184,8 +184,8 @@
                   "13.86.101.172"
                 ],
                 "sourceIpGroups": [
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]"
                 ],
                 "destinationPorts": [
                   "123"
@@ -197,13 +197,13 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]"
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]"
       ]
     },
     {
       "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2022-01-01",
       "name": "[format('{0}/{1}', parameters('firewallPolicyName'), 'DefaultApplicationRuleCollectionGroup')]",
       "properties": {
         "priority": 300,
@@ -234,8 +234,8 @@
                 ],
                 "terminateTLS": false,
                 "sourceIpGroups": [
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]"
                 ]
               }
             ]
@@ -262,8 +262,8 @@
                 ],
                 "terminateTLS": false,
                 "sourceIpGroups": [
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]"
                 ]
               }
             ]
@@ -272,14 +272,14 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]",
         "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]"
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]"
       ]
     },
     {
       "type": "Microsoft.Network/azureFirewalls",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2021-03-01",
       "name": "[parameters('firewallName')]",
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), null(), parameters('availabilityZones'))]",
@@ -292,11 +292,11 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultApplicationRuleCollectionGroup')]",
         "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]",
         "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
         "publicIpAddress",
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]"
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]"
       ]
     }
   ]
