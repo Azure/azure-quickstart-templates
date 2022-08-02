@@ -31,18 +31,3 @@ module vnet 'br/public:network/virtual-network:1.0.2' = {
 
 @description('Network Security Group Resource ID')
 output nsgID string = networkSecurityGroup.id
-
-@description('The resource group the virtual network was deployed into')
-output resourceGroupName string = resourceGroup().name
-
-@description('The resource ID of the virtual network')
-output resourceId string = vnet.outputs.resourceId
-
-@description('The name of the virtual network')
-output name string = vnet.outputs.name
-
-@description('The names of the deployed subnets')
-output subnetNames array = vnet.outputs.subnetNames
-
-@description('The resource IDs of the deployed subnets')
-output subnetResourceIds array = vnet.outputs.subnetResourceIds
