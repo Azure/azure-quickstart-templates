@@ -46,7 +46,7 @@ module acr '../container-registry/main.bicep' = {
   }
 }
 
-module acceptTerms 'nested_template/deploymentScripts.bicep' = if (acceptTerms) {
+module acceptTermsScript 'nested_template/deploymentScripts.bicep' = if (acceptTerms) {
   name: 'ContainerDeployment'
   params: {
     location        : location
