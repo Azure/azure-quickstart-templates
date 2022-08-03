@@ -46,6 +46,17 @@ module acr '../container-registry/main.bicep' = {
   }
 }
 
+module loadContainer 'nested_template/deploymentScripts.bicep' = if (acceptTerms) {
+  name: 'ContainerDeployment'
+  params: {
+    location        : location
+    installScriptUri: uri(_artifactsLocation, 'scripts/accept_container_terms.sh${_artifactsLocationSasToken}')
+    publisher       : publisher
+    offer           : offer
+    plan            : plan
+  }
+}
+
 module loadContainer 'nested_template/deploymentScripts.bicep' = {
   name: 'ContainerDeployment'
   params: {
@@ -54,6 +65,5 @@ module loadContainer 'nested_template/deploymentScripts.bicep' = {
     publisher       : publisher
     offer           : offer
     plan            : plan
-    acceptTerms     : acceptTerms
   }
 }
