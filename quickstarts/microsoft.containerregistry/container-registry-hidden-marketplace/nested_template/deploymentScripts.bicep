@@ -4,6 +4,8 @@ param location string = resourceGroup().location
 @description('Custom Script to execute')
 param installScriptUri string
 
+param acceptTerms bool = false
+
 @description('Random Value for Caching')
 param utcValue string = utcNow()
 
@@ -30,7 +32,7 @@ resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2
   }
 }
 
-resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' if (acceptTerms) = {
   name: 'customScript'
   location: location
   dependsOn: [
