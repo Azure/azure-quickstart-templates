@@ -117,10 +117,10 @@ param parsecUserEmail string = ''
 param parsecIsGuestAccess bool = false
 
 @description('Virtual Network Resource Name')
-param vnetName string = 'vnet-${vmssName}'
+param vnetName string = uniqueString('vnet', vmssName, newGuid())
 
 @description('Virtual Network Subnet Name')
-param subnetName string = 'subnet${vmssName}'
+param subnetName string = uniqueString('subnet', vmssName, newGuid())
 
 @description('Virtual Network Security Group Name')
 param networkSecurityGroupName string = 'nsg-${vmssName}'
