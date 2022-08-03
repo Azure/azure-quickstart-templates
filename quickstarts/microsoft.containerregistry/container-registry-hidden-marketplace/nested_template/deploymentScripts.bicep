@@ -24,7 +24,7 @@ resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2
   scope: resourceGroup()
   name: roleAssignmentName
   properties: {
-    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
+    roleDefinitionId: roleDefinitionId
     principalId: managedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
