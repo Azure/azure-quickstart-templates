@@ -1,6 +1,6 @@
-AGREEMENT_URL="https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/providers/Microsoft.Marketplace/offerTypes/microsoft-container/publishers/$PUBLISHER/offers/$OFFER/plans/$PLAN/agreements/current"
-CONFIG_URL="https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/providers/Microsoft.Marketplace/offerTypes/microsoft-container/publishers/$PUBLISHER/offers/$OFFER/plans/$PLAN/configs/config$CONFIG_GUID"
-IMPORT_URL="https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/providers/Microsoft.Marketplace/offerTypes/microsoft-container/publishers/$PUBLISHER/offers/$OFFER/plans/$PLAN/configs/config$CONFIG_GUID/importImage"
+AGREEMENT_URL="https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/providers/Microsoft.Marketplace/offerTypes/microsoft-container/publishers/$PUBLISHER/offers/$OFFER/plans/$PLAN/agreements/current?api-version=2018-03-01-beta"
+CONFIG_URL="https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/providers/Microsoft.Marketplace/offerTypes/microsoft-container/publishers/$PUBLISHER/offers/$OFFER/plans/$PLAN/configs/config$CONFIG_GUID?api-version=2018-03-01-beta"
+IMPORT_URL="https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/providers/Microsoft.Marketplace/offerTypes/microsoft-container/publishers/$PUBLISHER/offers/$OFFER/plans/$PLAN/configs/config$CONFIG_GUID/importImage?api-version=2018-03-01-beta"
 
 az rest \
   --uri $AGREEMENT_URL \
