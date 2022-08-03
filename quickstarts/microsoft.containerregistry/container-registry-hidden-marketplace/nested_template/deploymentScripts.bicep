@@ -32,7 +32,7 @@ resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2
   }
 }
 
-resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' if (acceptTerms) = {
+resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = if (acceptTerms) {
   name: 'customScript'
   location: location
   dependsOn: [
