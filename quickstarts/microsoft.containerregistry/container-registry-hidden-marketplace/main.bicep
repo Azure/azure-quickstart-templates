@@ -47,7 +47,7 @@ module acr '../container-registry/main.bicep' = {
 }
 
 module acceptTermsScript 'nested_template/deploymentScripts.bicep' = if (acceptTerms) {
-  name: 'ContainerDeployment'
+  name: 'AcceptContainerTerms'
   params: {
     location        : location
     installScriptUri: uri(_artifactsLocation, 'scripts/accept_container_terms.sh${_artifactsLocationSasToken}')
