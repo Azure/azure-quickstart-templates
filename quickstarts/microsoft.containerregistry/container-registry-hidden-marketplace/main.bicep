@@ -26,6 +26,9 @@ param offer     string = 'opencart-chart'
 @description('Marketplace Plan')
 param plan      string = 'default'
 
+@description('Accept Container Terms of Usage, must be set to true by user.')
+param acceptTerms bool = false
+
 @description('The base URI where artifacts required by this template are located')
 param _artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -51,5 +54,6 @@ module loadContainer 'nested_template/deploymentScripts.bicep' = {
     publisher       : publisher
     offer           : offer
     plan            : plan
+    acceptTerms     : acceptTerms
   }
 }
