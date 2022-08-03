@@ -46,7 +46,7 @@ resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
   properties: {
     forceUpdateTag: utcValue
-    azCliVersion: '2.10.1'
+    azCliVersion: '2.15.0'
     timeout: 'PT30M'
     environmentVariables:  [
       {
