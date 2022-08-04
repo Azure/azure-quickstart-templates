@@ -52,7 +52,7 @@ module acrImportImage 'br/public:deployment-scripts/import-acr:2.1.1' =  {
   params: {
     acrName: acr.outputs.name
     location: location
-    images: array(containerImage)
+    images: [containerImage]
   }
 }
 
@@ -146,3 +146,4 @@ resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
 }
 
 output containerAppFQDN string = containerApp.properties.configuration.ingress.fqdn
+output containerImage string = acrImportImage.outputs.images[0].acrHostedImageUri
