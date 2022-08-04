@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "5817349859578875069"
+      "version": "0.9.1.41621",
+      "templateHash": "13701948159885019128"
     }
   },
   "parameters": {
@@ -13,26 +13,26 @@
       "type": "string",
       "defaultValue": "[format('sql-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
-        "description": "Cosmos DB account name, max length 44 characters"
+        "description": "Azure Cosmos DB account name, max length 44 characters"
       }
     },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for the Cosmos DB account."
+        "description": "Location for the Azure Cosmos DB account."
       }
     },
     "primaryRegion": {
       "type": "string",
       "metadata": {
-        "description": "The primary replica region for the Cosmos DB account."
+        "description": "The primary region for the Azure Cosmos DB account."
       }
     },
     "secondaryRegion": {
       "type": "string",
       "metadata": {
-        "description": "The secondary replica region for the Cosmos DB account."
+        "description": "The secondary region for the Azure Cosmos DB account."
       }
     },
     "defaultConsistencyLevel": {
@@ -53,7 +53,7 @@
       "type": "int",
       "defaultValue": 100000,
       "metadata": {
-        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647."
       },
       "maxValue": 2147483647,
       "minValue": 10
@@ -67,11 +67,11 @@
       "maxValue": 86400,
       "minValue": 5
     },
-    "automaticFailover": {
+    "systemManagedFailover": {
       "type": "bool",
       "defaultValue": true,
       "metadata": {
-        "description": "Enable automatic failover for regions"
+        "description": "Enable system managed failover for regions"
       },
       "allowedValues": [
         true,
@@ -138,7 +138,7 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-10-15",
+      "apiVersion": "2022-05-15",
       "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
       "kind": "GlobalDocumentDB",
@@ -146,12 +146,12 @@
         "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
-        "enableAutomaticFailover": "[parameters('automaticFailover')]"
+        "enableAutomaticFailover": "[parameters('systemManagedFailover')]"
       }
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-      "apiVersion": "2021-10-15",
+      "apiVersion": "2022-05-15",
       "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName'))]",
       "properties": {
         "resource": {
@@ -164,7 +164,7 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-      "apiVersion": "2021-10-15",
+      "apiVersion": "2022-05-15",
       "name": "[format('{0}/{1}', format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName')), parameters('containerName'))]",
       "properties": {
         "resource": {
@@ -185,6 +185,9 @@
             "excludedPaths": [
               {
                 "path": "/myPathToNotIndex/*"
+              },
+              {
+                "path": "/_etag/?"
               }
             ],
             "compositeIndexes": [
