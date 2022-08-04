@@ -28,7 +28,7 @@ var locations = [
   }
 ]
 
-resource virtualNetwork 'Microsoft.Network/VirtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/VirtualNetworks@2021-08-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -49,7 +49,7 @@ resource virtualNetwork 'Microsoft.Network/VirtualNetworks@2020-06-01' = {
   }
 }
 
-resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
   name: accountName
   location: location
   kind: 'GlobalDocumentDB'
@@ -65,7 +65,7 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   }
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-07-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-08-01' = {
   name: privateEndpointName
   location: location
   properties: {

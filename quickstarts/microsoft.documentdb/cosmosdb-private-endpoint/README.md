@@ -32,7 +32,7 @@ Below are the parameters which can be user configured in the parameters file inc
 
 - **Location:** Select where the resource should be created (default is target resource group's location).
 - **Virtual Network Name:** Enter a name for the virtual network.
-- **Account Name:** Enter a name for the new Cosmos account.
+- **Account Name:** Enter a name for the new Azure Cosmos DB account.
 - **Public Network Access:** Select whether public traffic is allowed to access the account (default is Enabled). When value is set to Disabled, public network traffic is blocked even before the private endpoint is created.
 - **Private Endpoint Name:** Enter a name for the private endpoint.
 
