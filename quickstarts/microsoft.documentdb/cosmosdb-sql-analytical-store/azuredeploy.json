@@ -4,23 +4,23 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "287995383392867966"
+      "version": "0.9.1.41621",
+      "templateHash": "4534243826746859694"
     }
   },
   "parameters": {
     "accountName": {
       "type": "string",
-      "defaultValue": "[toLower(uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('sql-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
-        "description": "Cosmos DB account name"
+        "description": "Azure Cosmos DB account name"
       }
     },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for the Cosmos DB account."
+        "description": "Location for the Azure Cosmos DB account."
       }
     },
     "databaseName": {
@@ -66,9 +66,9 @@
     },
     "autoscaleMaxThroughput": {
       "type": "int",
-      "defaultValue": 4000,
+      "defaultValue": 1000,
       "maxValue": 1000000,
-      "minValue": 4000,
+      "minValue": 1000,
       "metadata": {
         "description": "Maximum throughput when using Autoscale Throughput Policy for the container"
       }
@@ -93,7 +93,7 @@
     ],
     "throughput_Policy": {
       "Manual": {
-        "Throughput": "[parameters('manualProvisionedThroughput')]"
+        "throughput": "[parameters('manualProvisionedThroughput')]"
       },
       "Autoscale": {
         "autoscaleSettings": {
@@ -105,8 +105,8 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-04-15",
-      "name": "[parameters('accountName')]",
+      "apiVersion": "2022-05-15",
+      "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "consistencyPolicy": {
@@ -119,21 +119,21 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', parameters('accountName'), parameters('databaseName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('databaseName')]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('accountName')))]"
       ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}/{2}', parameters('accountName'), parameters('databaseName'), parameters('containerName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}/{2}', toLower(parameters('accountName')), parameters('databaseName'), parameters('containerName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('containerName')]",
@@ -148,7 +148,7 @@
         "options": "[variables('throughput_Policy')[parameters('throughputPolicy')]]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('accountName'), parameters('databaseName'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', toLower(parameters('accountName')), parameters('databaseName'))]"
       ]
     }
   ]
