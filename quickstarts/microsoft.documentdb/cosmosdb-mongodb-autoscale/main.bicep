@@ -156,9 +156,6 @@ resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/col
               'product_category_name'
             ]
           }
-          options: {
-            unique: true
-          }
         }
       ]
     }
@@ -195,9 +192,6 @@ resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/col
               'customer_id'
               'order_id'
             ]
-          }
-          options: {
-            unique: true
           }
         }
       ]
