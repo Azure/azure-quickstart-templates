@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create an Azure Cosmos account for Core (SQL) API
+# Create an Azure Cosmos DB account for Core (SQL) API
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql/PublicDeployment.svg)
