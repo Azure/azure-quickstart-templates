@@ -28,7 +28,7 @@ Below are the parameters which can be user configured in the parameters file inc
 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Multi-Region:** Enter locations for primary and secondary regions.
-- **Automatic Failover:** Select whether to enable automatic failover on the account.
+- **System Managed Failover:** Select whether to enable system managed failover on the account.
 - **Table Name:** Enter the table name for the account.
 - **Throughput:** Enter the RU/s for the table (default is 400).
 
