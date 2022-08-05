@@ -35,8 +35,8 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Primary Region:** Enter location for primary region.
 - **Secondary Region:** Enter location for secondary region.
-- **Automatic Failover:** Select whether to enable automatic failover on the account.
+- **System Managed Failover:** Select whether to enable system managed failover on the account.
 - **Table Name:** Enter the table name for the account.
-- **Autoscale Max Throughput:** Enter the maximum autoscale RU/s for the table (default and minimum is 4000).
+- **Autoscale Max Throughput:** Enter the maximum autoscale RU/s for the table (default and minimum is 1000).
 
 `Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.DocumentDB/databaseAccounts/tables`
