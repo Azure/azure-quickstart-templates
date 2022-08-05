@@ -46,6 +46,7 @@ param systemManagedFailover bool = true
 var apiType = {
   Sql: {
     kind: 'GlobalDocumentDB'
+    capabilities: []
   }
   MongoDB: {
     kind: 'MongoDB'
@@ -121,6 +122,6 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
     locations: locations
     databaseAccountOfferType: 'Standard'
     enableAutomaticFailover: systemManagedFailover
-    capabilities: contains(apiType[databaseApi], 'capabilities') ? apiType[databaseApi].capabilities : []
+    capabilities: apiType[databaseApi].capabilities
   }
 }
