@@ -161,9 +161,6 @@ resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/col
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
-      }
     }
   }
 }
@@ -204,11 +201,11 @@ resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/col
           }
         }
       ]
+      }
       options: {
         autoscaleSettings: {
           maxThroughput: dedicatedAutoscaleMaxThroughput
         }
-      }
     }
   }
 }
