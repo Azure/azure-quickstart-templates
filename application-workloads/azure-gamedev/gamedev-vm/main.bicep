@@ -150,7 +150,7 @@ param enableAAD bool = false
 @allowed([ 'AutomaticByOS', 'AutomaticByPlatform', 'Manual' ])
 param windowsUpdateOption string = 'AutomaticByOS'
 
-module gameDevVM'br/public:azure-gaming/game-dev-vm:1.0.0' = {
+module gameDevVM 'br/public:azure-gaming/game-dev-vm:1.0.0' = {
   name: 'gameDevVM'
   params: {
     location: location
