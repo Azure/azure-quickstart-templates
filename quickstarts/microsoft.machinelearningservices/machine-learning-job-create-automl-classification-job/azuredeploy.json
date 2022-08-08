@@ -25,9 +25,42 @@
             "metadata": {
                 "description": "Specifies the name of the Azure Machine Learning job to be created"
             }
+        },
+        "limitSettings": {
+            "type": "object",
+            "defaultValue": {
+                "maxTrials": 5,
+                "maxConcurrentTrials": 1,
+                "maxCoresPerTrial": -1,
+                "exitScore": null,
+                "enableEarlyTermination": true,
+                "timeout": "PT10H",
+                "trialTimeout": "PT20M"
+            },
+            "metadata": {
+                "description": "Specifies job execution contraints"
+            }
+        },
+        "trainingSettings": {
+            "type": "object",
+            "defaultValue": {
+                "allowedTrainingAlgorithms": [],
+                "blockedTrainingAlgorithms": ["LogisticRegression"],
+                "enableModelExplainability": true,
+                "enableOnnxCompatibleModels": false,
+                "enableStackEnsemble": true,
+                "stackEnsembleSettings": null,
+                "enableVoteEnsemble": true,
+                "ensembleModelDownloadTimeout": "PT5M",
+                "enableDnnTraining": false
+            },
+            "metadata": {
+                "description": "Specifies training related configuration"
+            }
         }
     },
     "variables": {
+        "compute": "[resourceId('Microsoft.MachineLearningServices/workspaces/computes', parameters('workspaceName'), parameters('computeName'))]"
     },
     "resources": [
         {
@@ -40,14 +73,14 @@
                     "ref": "https://github.com/Azure/azureml-examples/blob/main/sdk/jobs/automl-standalone-jobs/automl-classification-task-bankmarketing"
                 },
                 "experimentName": "[parameters('experimentName')]",
-                "computeId": "[concat('/subscriptions/381b38e9-9840-4719-a5a0-61d9585e1e91/resourceGroups/smamgain/providers/Microsoft.MachineLearningServices/workspaces/smamgain-ws/computes/', parameters('computeName'))]",
+                "computeId": "[variables('compute')]",
                 "taskDetails": {
-                    "logVerbosity": "info",
-                    "taskType": "classification",
-                    "primaryMetric": "accuracy",
+                    "logVerbosity": "Info",
+                    "taskType": "Classification",
+                    "primaryMetric": "Accuracy",
                     "targetColumnName": "y",
                     "trainingData": {
-                        "uri": "azureml://datastores/workspaceblobstore/paths/LocalUpload/3421f176a64fab3cb7e9e32b7e587316/training-mltable-folder",
+                        "uri": "https://raw.githubusercontent.com/Azure/azureml-examples/main/sdk/jobs/automl-standalone-jobs/automl-classification-task-bankmarketing/data/training-mltable-folder/",
                         "jobInputType": "MLTable"
                     },
                     "nCrossValidations": {
@@ -57,18 +90,16 @@
                     "featurizationSettings": {
                         "mode": "auto"
                     },
-                    "limitSettings": {
-                        "enableEarlyTermination": true,
-                        "maxTrials": 5,
-                        "timeout": "PT10H",
-                        "trialTimeout": "PT20M"
-                    },
-                    "trainingSettings": {
-                        "enableModelExplainability": true,
-                        "blockedTrainingAlgorithms": ["LogisticRegression"]
-                    }
+                    "limitSettings": "[parameters('limitSettings')]",
+                    "trainingSettings": "[parameters('trainingSettings')]"
                 }
             }
         }
-    ]
+    ],
+    "outputs": {
+        "Studio Endpoint URL": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces/jobs', parameters('workspaceName'), parameters('jobName'))).services.Studio.endpoint]"
+        }
+    }
 }
