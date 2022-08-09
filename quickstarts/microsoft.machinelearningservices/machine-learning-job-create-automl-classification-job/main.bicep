@@ -66,4 +66,4 @@ resource workspaceName_jobName 'Microsoft.MachineLearningServices/workspaces/job
   }
 }
 
-output Studio_Endpoint_URL string = workspaceName_jobName.properties.services.Studio.endpoint
+output Studio_Endpoint string = workspaceName_jobName.properties.services.Studio.endpoint
