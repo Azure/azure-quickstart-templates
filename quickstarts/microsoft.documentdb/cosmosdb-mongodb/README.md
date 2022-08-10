@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Cosmos DB account for MongoDB API 4.2 in two regions showing mixed throughput usage.
+description: This template creates an Azure Cosmos DB account for MongoDB API 4.2 in two regions using shared and dedicated throughput with two collections.
 page_type: sample
 products:
 - azure
