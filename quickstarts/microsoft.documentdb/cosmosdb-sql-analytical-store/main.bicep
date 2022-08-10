@@ -1,7 +1,7 @@
-@description('Cosmos DB account name')
-param accountName string = toLower(uniqueString(resourceGroup().id))
+@description('Azure Cosmos DB account name')
+param accountName string = 'sql-${uniqueString(resourceGroup().id)}'
 
-@description('Location for the Cosmos DB account.')
+@description('Location for the Azure Cosmos DB account.')
 param location string = resourceGroup().location
 
 @description('The name for the database')
@@ -26,9 +26,9 @@ param throughputPolicy string = 'Autoscale'
 param manualProvisionedThroughput int = 400
 
 @description('Maximum throughput when using Autoscale Throughput Policy for the container')
-@minValue(4000)
+@minValue(1000)
 @maxValue(1000000)
-param autoscaleMaxThroughput int = 4000
+param autoscaleMaxThroughput int = 1000
 
 @description('Time to Live for data in analytical store. (-1 no expiry)')
 @minValue(-1)
@@ -44,7 +44,7 @@ var locations = [
 ]
 var throughput_Policy = {
   Manual: {
-    Throughput: manualProvisionedThroughput
+    throughput: manualProvisionedThroughput
   }
   Autoscale: {
     autoscaleSettings: {
@@ -53,8 +53,8 @@ var throughput_Policy = {
   }
 }
 
-resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   properties: {
     consistencyPolicy: {
@@ -66,8 +66,8 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   }
 }
 
-resource sqlDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
-  parent: databaseAccount
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
+  parent: account
   name: databaseName
   properties: {
     resource: {
@@ -76,8 +76,8 @@ resource sqlDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04
   }
 }
 
-resource sqlContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-04-15' = {
-  parent: sqlDatabase
+resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-05-15' = {
+  parent: database
   name: containerName
   properties: {
     resource: {
