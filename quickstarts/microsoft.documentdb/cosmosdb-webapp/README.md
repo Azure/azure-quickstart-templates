@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create a zero touch Azure Cosmos DB account and Azure Web App
+# Create a zero touch Azure Cosmos account and Azure Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-webapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-webapp/PublicDeployment.svg)
