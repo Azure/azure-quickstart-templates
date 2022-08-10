@@ -7,6 +7,7 @@ products:
 urlFragment: vmss-bottle-autoscale
 languages:
 - json
+- bicep
 ---
 # Deploy VM Scale Set with Python Bottle server & AutoScale
 
