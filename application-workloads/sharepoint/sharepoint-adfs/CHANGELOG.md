@@ -1,5 +1,17 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in August 8, 2022
+
+* In SP SE, import site certificate in SharePoint, so it can manage the certificate itself.
+* Update LDAP security settings to mitigate CVE-2017-8563.
+* Remove tags on resources, as they did not bring any particular value.
+* Update network address to use the same as DevTest Labs templates.
+* Update apiVersion of resources to latest version.
+* Explicitly set the version of each DSC module used.
+* Update DSC modules used to latest version available.
+* Replace all resources xScript with Script and remove dependency on module xPSDesiredStateConfiguration.
+* Revert the workaround related to decryption issue in DSC as regression was fixed in Windows.
+
 ## Enhancements & bug-fixes - Published in June 24, 2022
 
 * Fix the credentials decryption issue in DSC extension when using latest version of Windows Server images.
