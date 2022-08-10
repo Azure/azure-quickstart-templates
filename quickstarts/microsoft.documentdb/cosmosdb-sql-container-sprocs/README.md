@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Cosmos account for Core (SQL) API and a container with a stored procedure, trigger and user defined function.
+description: This template creates an Azure Cosmos DB account for Core (SQL) API and a container with a stored procedure, trigger and user defined function.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create Azure Cosmos Core (SQL) API stored procedures
+# Create Azure Cosmos DB Core (SQL) API stored procedures
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-container-sprocs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-container-sprocs/PublicDeployment.svg)
