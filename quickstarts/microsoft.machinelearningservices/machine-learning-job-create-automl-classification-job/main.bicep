@@ -1,16 +1,16 @@
-@description('Specifies the name of the Azure Machine Learning workspace where job will be created')
+@description('Specifies the name of the Azure Machine Learning workspace where job will be created.')
 param existingWorkspaceName string
 
-@description('Specifies the name of the Azure Machine Learning compute instance/cluster on which job will be run')
+@description('Specifies the name of the Azure Machine Learning compute instance/cluster on which job will be run.')
 param existingComputeName string
 
-@description('Specifies the name of the Azure Machine Learning experiment under which job will be created')
+@description('Specifies the name of the Azure Machine Learning experiment under which job will be created.')
 param experimentName string
 
-@description('Specifies the name of the Azure Machine Learning job to be created')
+@description('Specifies the name of the Azure Machine Learning job to be created.')
 param jobName string
 
-@description('Specifies execution contraints for the job')
+@description('Specifies execution contraints for the job.')
 param limitSettings object = {
   maxTrials: 5
   maxConcurrentTrials: 1
@@ -20,7 +20,7 @@ param limitSettings object = {
   trialTimeout: 'PT20M'
 }
 
-@description('Specifies training related configuration for the job')
+@description('Specifies training related configuration for the job.')
 param trainingSettings object = {
   blockedTrainingAlgorithms: [
     'LogisticRegression'
