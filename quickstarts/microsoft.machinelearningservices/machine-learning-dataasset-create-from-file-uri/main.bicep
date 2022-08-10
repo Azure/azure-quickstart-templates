@@ -15,8 +15,8 @@ param dataVersionName string = '1'
 ])
 param dataType string = 'uri_file'
 
-@description('Specifies a URI for the data')
-param dataUri string = 'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-04.parquet'
+@description('Specifies a URI for the data, for testing purposes use: https://azbotstorage.blob.core.windows.net/sample-artifacts/yellow_tripdata_2022-04.parquet')
+param dataUri string
 
 @description('Optional: Description of the data asset.')
 param dataDescription string = 'Sample data asset'
