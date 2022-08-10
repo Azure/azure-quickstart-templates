@@ -30,7 +30,7 @@ This template creates an Azure Machine Learning AutoML classification job to fin
 
 ### Prerequisites
 
-To run this template you need to have an Azure Machine Learning Workspace and an Azure Machine Learning Compute Instance/Cluster. The template expects these as parameters: `existingWorkspaceName` and `existingComputeName`. You can use the following samples to create these:
+To run this template you need to have an Azure Machine Learning Workspace and an Azure Machine Learning Compute Instance/Cluster. The template expects these as parameters: `workspaceName` and `computeName`. You can use the following samples to create these:
 
 1. [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
 2. [Azure Machine Learning Compute Instance](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-computeinstance/)
