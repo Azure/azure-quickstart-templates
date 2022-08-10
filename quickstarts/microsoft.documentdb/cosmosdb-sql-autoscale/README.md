@@ -29,10 +29,10 @@ Below are the parameters which can be user configured in the parameters file or 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Primary Region:** Enter location for the primary write region.
 - **Secondary Region:** Enter location for secondary read region.
-- **Automatic Failover:** Select whether to enable automatic failover on the account.
+- **System Managed Failover:** Select whether to enable system managed failover on the account.
 - **Database Name:** Enter the database name for the account.
 - **Container Name:** Enter the name for the container for the account.
-- **Autoscale Max Throughput:** Enter the maximum RU/s autoscale throughput for the container (default and minimum is 4000).
+- **Autoscale Max Throughput:** Enter the maximum RU/s autoscale throughput for the container (default and minimum is 1000).
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-sql-autoscale%2Fazuredeploy.json)
 
