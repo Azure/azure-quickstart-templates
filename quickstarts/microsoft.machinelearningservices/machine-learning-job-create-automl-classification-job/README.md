@@ -28,6 +28,13 @@ languages:
 
 This template creates an Azure Machine Learning AutoML classification job to find out the best model for predicting if a client will subscribe to a fixed term deposit with a financial institution. See the tutorial for reference: [Tutorial](https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-first-experiment-automated-ml).
 
+### Prerequisites
+
+To run this template you need to have an Azure Machine Learning Workspace and an Azure Machine Learning Compute Instance/Cluster. The template expects these as parameters: `existingWorkspaceName` and `existingComputeName`. You can use the following samples to create these:
+
+1. [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
+2. [Azure Machine Learning Compute Instance](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-computeinstance/)
+
 ### Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.

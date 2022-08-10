@@ -1,8 +1,8 @@
 @description('Specifies the name of the Azure Machine Learning workspace where job will be created')
-param workspaceName string
+param existingWorkspaceName string
 
 @description('Specifies the name of the Azure Machine Learning compute instance/cluster on which job will be run')
-param computeName string
+param existingComputeName string
 
 @description('Specifies the name of the Azure Machine Learning experiment under which job will be created')
 param experimentName string
@@ -10,7 +10,7 @@ param experimentName string
 @description('Specifies the name of the Azure Machine Learning job to be created')
 param jobName string
 
-@description('Specifies job execution contraints')
+@description('Specifies execution contraints for the job')
 param limitSettings object = {
   maxTrials: 5
   maxConcurrentTrials: 1
@@ -20,7 +20,7 @@ param limitSettings object = {
   trialTimeout: 'PT20M'
 }
 
-@description('Specifies training related configuration')
+@description('Specifies training related configuration for the job')
 param trainingSettings object = {
   blockedTrainingAlgorithms: [
     'LogisticRegression'
@@ -33,10 +33,10 @@ param trainingSettings object = {
   enableDnnTraining: false
 }
 
-var compute = resourceId('Microsoft.MachineLearningServices/workspaces/computes', workspaceName, computeName)
+var compute = resourceId('Microsoft.MachineLearningServices/workspaces/computes', existingWorkspaceName, existingComputeName)
 
 resource workspaceName_jobName 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
-  name: '${workspaceName}/${jobName}'
+  name: '${existingWorkspaceName}/${jobName}'
   properties: {
     jobType: 'AutoML'
     tags: {
@@ -66,4 +66,4 @@ resource workspaceName_jobName 'Microsoft.MachineLearningServices/workspaces/job
   }
 }
 
-output Studio_Endpoint string = workspaceName_jobName.properties.services.Studio.endpoint
+output Job_Studio_Endpoint string = workspaceName_jobName.properties.services.Studio.endpoint
