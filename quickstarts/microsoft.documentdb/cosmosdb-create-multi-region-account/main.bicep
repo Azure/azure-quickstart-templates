@@ -1,13 +1,13 @@
 @description('Cosmos DB account name')
-param accountName string = toLower(uniqueString(resourceGroup().id))
+param accountName string = uniqueString(resourceGroup().id)
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
-@description('The primary replica region for the Cosmos DB account.')
+@description('The primary region for the Cosmos DB account.')
 param primaryRegion string
 
-@description('The secondary replica region for the Cosmos DB account.')
+@description('The secondary region for the Cosmos DB account.')
 param secondaryRegion string
 
 @description('Cosmos DB account type.')
@@ -18,7 +18,7 @@ param secondaryRegion string
   'Gremlin'
   'Table'
 ])
-param api string = 'Sql'
+param databaseApi string = 'Sql'
 
 @description('The default consistency level of the Cosmos DB account.')
 @allowed([
@@ -30,21 +30,18 @@ param api string = 'Sql'
 ])
 param defaultConsistencyLevel string = 'Session'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2,147,483,647. Multi Region: 100,000 to 2,147,483,647.')
 @minValue(10)
 @maxValue(2147483647)
 param maxStalenessPrefix int = 100000
 
-@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
+@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84,600. Multi Region: 300 to 86,400.')
 @minValue(5)
 @maxValue(86400)
 param maxIntervalInSeconds int = 300
 
-@description('Enable multi-master to make all regions writable.')
-param multipleWriteLocations bool = false
-
-@description('Enable automatic failover for regions. Ignored when Multi-Master is enabled')
-param automaticFailover bool = true
+@description('Enable system managed failover for regions. Ignored when mult-region writes is enabled')
+param systemManagedFailover bool = true
 
 var apiType = {
   Sql: {
@@ -53,7 +50,11 @@ var apiType = {
   }
   MongoDB: {
     kind: 'MongoDB'
-    capabilities: []
+    capabilities: [
+      {
+        name: 'DisableRateLimitingResponses'
+      }
+    ]
   }
   Cassandra: {
     kind: 'GlobalDocumentDB'
@@ -112,16 +113,15 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
-  kind: apiType[api].kind
+  kind: apiType[databaseApi].kind
   properties: {
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: automaticFailover
-    capabilities: apiType[api].capabilities
-    enableMultipleWriteLocations: multipleWriteLocations
+    enableAutomaticFailover: systemManagedFailover
+    capabilities: apiType[databaseApi].capabilities
   }
 }
