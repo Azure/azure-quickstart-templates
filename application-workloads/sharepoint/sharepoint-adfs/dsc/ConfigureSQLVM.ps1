@@ -9,7 +9,10 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, SqlServerDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -38,7 +41,7 @@ configuration ConfigureSQLVM
         
         SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; }
 
-        xScript EnableFileSharing
+        Script EnableFileSharing
         {
             TestScript = {
                 # Test if firewall rules for file sharing already exist
@@ -97,7 +100,7 @@ configuration ConfigureSQLVM
         #**********************************************************
         # By default, SPNs MSSQLSvc/SQL.contoso.local:1433 and MSSQLSvc/SQL.contoso.local are set on the machine account
         # They need to be removed before they can be set on the SQL service account
-        xScript RemoveSQLSpnOnSQLMachine
+        Script RemoveSQLSpnOnSQLMachine
         {
             SetScript = 
             {
@@ -132,14 +135,14 @@ configuration ConfigureSQLVM
             ServicePrincipalNames = @("MSSQLSvc/$ComputerName.$($DomainFQDN):1433", "MSSQLSvc/$ComputerName.$DomainFQDN", "MSSQLSvc/$($ComputerName):1433", "MSSQLSvc/$ComputerName")
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]RemoveSQLSpnOnSQLMachine"
+            DependsOn            = "[Script]RemoveSQLSpnOnSQLMachine"
         }
 
         # Tentative fix on random error on resources SqlServiceAccount/SqlLogin after computer joined domain (although SqlMaxDop Test succeeds):
         # Error on SqlServiceAccount: System.InvalidOperationException: Unable to set the service account for SQL on MSSQLSERVER. Message  ---> System.Management.Automation.MethodInvocationException: Exception calling "SetServiceAccount" with "2" argument(s): "Set service account failed. "
         # Error on SqlLogin: System.InvalidOperationException: Failed to connect to SQL instance 'SQL'. (SQLCOMMON0019) ---> System.Management.Automation.MethodInvocationException: Exception calling "Connect" with "0" argument(s): "Failed to connect to server SQL.
         # It would imply that somehow, SQL Server does not start upon computer restart
-        xScript EnsureSQLServiceStarted
+        Script EnsureSQLServiceStarted
         {
             SetScript = 
             {
@@ -171,7 +174,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[xScript]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+            DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
         }
 
         SqlLogin AddDomainAdminLogin
@@ -348,7 +351,7 @@ help ConfigureSQLVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SqlSvcCreds = Get-Credential -Credential "sqlsvc"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
-$DNSServer = "10.0.1.4"
+$DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureSQLVM.0"

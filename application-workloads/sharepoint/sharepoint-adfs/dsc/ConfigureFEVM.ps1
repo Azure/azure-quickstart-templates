@@ -15,7 +15,15 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
+    Import-DscResource -ModuleName xWebAdministration -ModuleVersion 3.3.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
+    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
+    Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -28,8 +36,13 @@ configuration ConfigureFEVM
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $SetupPath = "C:\Setup"
+    [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
+    [Boolean] $IsSharePointvNext = $false
+    if ([String]::Equals($SharePointVersion, "SE")) {
+        $IsSharePointvNext = $true
+    }
 
     Node localhost
     {
@@ -137,7 +150,7 @@ configuration ConfigureFEVM
             TcpPort              = 1433
         }
 
-        xScript DisableIESecurity
+        Script DisableIESecurity
         {
             TestScript = {
                 return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -170,7 +183,7 @@ configuration ConfigureFEVM
             GetScript = { }
         }
 
-        xScript EnableFileSharing
+        Script EnableFileSharing
         {
             TestScript = {
                 # Test if firewall rules for file sharing already exist
@@ -225,7 +238,7 @@ configuration ConfigureFEVM
         }
         
         # This script is still needed
-        xScript CreateWSManSPNsIfNeeded
+        Script CreateWSManSPNsIfNeeded
         {
             SetScript =
             {
@@ -347,7 +360,7 @@ configuration ConfigureFEVM
         #     }
         # }
 
-        if ($SharePointVersion -eq "Subscription") {
+        if ($true -eq $IsSharePointvNext) {
             #**********************************************************
             # Download and install for SharePoint
             #**********************************************************
@@ -412,7 +425,7 @@ configuration ConfigureFEVM
         # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
         # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
-        xScript WaitForSPFarmReadyToJoin
+        Script WaitForSPFarmReadyToJoin
         {
             SetScript =
             {
@@ -455,7 +468,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]CreateWSManSPNsIfNeeded"
+            DependsOn            = "[Script]CreateWSManSPNsIfNeeded"
         }
 
         # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
@@ -466,12 +479,12 @@ configuration ConfigureFEVM
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
+            DependsOn            = "[Script]WaitForSPFarmReadyToJoin"
         }
 
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         # At this point it is safe to assume that the DC finished provisioning AD CS
-        xScript UpdateGPOToTrustRootCACert
+        Script UpdateGPOToTrustRootCACert
         {
             SetScript =
             {
@@ -491,14 +504,14 @@ configuration ConfigureFEVM
                     return $true    # Root CA already present
                 }
             }
-            DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
+            DependsOn            = "[Script]WaitForSPFarmReadyToJoin"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         # If multiple servers join the SharePoint farm at the same time, resource JoinSPFarm may fail on a server with this error:
         # "Scheduling DiagnosticsService timer job failed" (SharePoint event id aitap or aitaq)
         # This script uses the computer name (FE-0 FE-1) to sequence the time when servers join the farm
-        xScript WaitToAvoidServersJoiningFarmSimultaneously
+        Script WaitToAvoidServersJoiningFarmSimultaneously
         {
             SetScript =
             {                
@@ -542,7 +555,7 @@ configuration ConfigureFEVM
                 IsSingleInstance          = "Yes"
                 SkipRegisterAsDistributedCacheHost = $true
                 Ensure                    = "Present"
-                DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
+                DependsOn                 = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
             }
         } else {
             # Set property ServerRole in all SharePoint versions that support it
@@ -561,7 +574,7 @@ configuration ConfigureFEVM
                 ServerRole                = "WebFrontEnd"
                 SkipRegisterAsDistributedCacheHost = $true
                 Ensure                    = "Present"
-                DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
+                DependsOn                 = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
             }
         }
 
@@ -601,41 +614,89 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        CertReq SPSSiteCert
-        {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-            KeyLength              = '2048'
-            Exportable             = $true
-            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-            OID                    = '1.3.6.1.5.5.7.3.1'
-            KeyUsage               = '0xa0'
-            CertificateTemplate    = 'WebServer'
-            AutoRenew              = $true
-            Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
-        }
-
-        xWebsite SetHTTPSCertificate
-        {
-            Name                 = "SharePoint - 443"
-            BindingInfo          = MSFT_xWebBindingInformation
+        if ($SharePointVersion -ne "SE") {
+            CertReq SPSSiteCert
             {
-                Protocol             = "HTTPS"
-                Port                 = 443
-                CertificateStoreName = "My"
-                CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                CARootName             = "$DomainNetbiosName-$DCName-CA"
+                CAServerFQDN           = "$DCName.$DomainFQDN"
+                Subject                = "$SPTrustedSitesName.$DomainFQDN"
+                SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+                KeyLength              = '2048'
+                Exportable             = $true
+                ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+                OID                    = '1.3.6.1.5.5.7.3.1'
+                KeyUsage               = '0xa0'
+                CertificateTemplate    = 'WebServer'
+                AutoRenew              = $true
+                Credential             = $DomainAdminCredsQualified
+                DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
             }
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
-        }
+
+            xWebsite SetHTTPSCertificate
+            {
+                Name                 = "SharePoint - 443"
+                BindingInfo          = MSFT_xWebBindingInformation
+                {
+                    Protocol             = "HTTPS"
+                    Port                 = 443
+                    CertificateStoreName = "My"
+                    CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                }
+                Ensure               = "Present"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
+            }
+        } else {
+            Script SetFarmPropertiesForOIDC
+            {
+                SetScript = 
+                {
+                    # Import OIDC-specific cookie certificate and set required permissions
+                    $spTrustedSitesName = $using:SPTrustedSitesName
+                    $dcSetupPath = $using:DCSetupPath
+                    
+                    # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
+                    $cookieCertificateName = "SharePoint Cookie Cert"
+                    $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
+                    $cert = Import-PfxCertificate -FilePath "$cookieCertificateFilePath.pfx" -CertStoreLocation Cert:\localMachine\My -Exportable
+
+                    # Grant the application pool access to the private key of the cookie certificate
+                    $wa = Get-SPWebApplication "http://$spTrustedSitesName"
+                    $apppoolUserName = $wa.ApplicationPool.Username
+                    $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
+                    $fileName = $rsaCert.key.UniqueName
+                    $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
+                    $permissions = Get-Acl -Path $path
+                    $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
+                    $permissions.AddAccessRule($access_rule)
+                    Set-Acl -Path $path -AclObject $permissions
+                }
+                GetScript =  
+                {
+                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                    return @{ "Result" = "false" }
+                }
+                TestScript = 
+                {
+                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                    # Import-Module SharePointServer | Out-Null
+                    # $f = Get-SPFarm
+                    # if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
+                    if ((Get-ChildItem -Path "cert:\LocalMachine\My\"| Where-Object{$_.Subject -eq "CN=SharePoint Cookie Cert"}) -eq $null) {
+                        return $false
+                    }
+                    else {
+                        return $true
+                    }
+                }
+                DependsOn            = "[SPFarm]JoinSPFarm"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
+        }        
 
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     xScript parseDscLogs
+        #     Script parseDscLogs
         #     {
         #         TestScript = { return $false }
         #         SetScript = {
@@ -712,27 +773,23 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork
-
-Install-Module -Name xPendingReboot
 help ConfigureFEVM
 
-$DomainAdminCreds = Get-Credential -Credential "yvand"
-$SPSetupCreds = Get-Credential -Credential "spsetup"
-$SPFarmCreds = Get-Credential -Credential "spfarm"
-$SPPassphraseCreds = Get-Credential -Credential "Passphrase"
-$SPSuperUserCreds = Get-Credential -Credential "spSuperUser"
-$SPSuperReaderCreds = Get-Credential -Credential "spSuperReader"
-$DNSServer = "10.0.1.4"
+$password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
+$DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
+$SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
+$SPFarmCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spfarm", $password
+$SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
+$DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = 2019
+$SharePointVersion = "SE"
+$EnableAnalysis = $false
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
-ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
