@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Cosmos DB account for any API Type with a primary and secondary region with choice of consistency level and options to enable multi-master and Failover Type.
+description: This template creates an Azure Cosmos DB account for any database API type with a primary and secondary region with choice of consistency level and failover type.
 page_type: sample
 products:
 - azure
