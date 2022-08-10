@@ -44,7 +44,7 @@ var subnet = {
   id: resourceId(vnetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
 }
 
-resource storageAccountName_resource 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccountResource 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -67,7 +67,7 @@ resource storageAccountName_resource 'Microsoft.Storage/storageAccounts@2021-04-
   }
 }
 
-resource keyVaultName_resource 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource keyVaultResource 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -80,7 +80,7 @@ resource keyVaultName_resource 'Microsoft.KeyVault/vaults@2019-09-01' = {
   }
 }
 
-resource applicationInsightsName_resource 'Microsoft.Insights/components@2020-02-02' = {
+resource applicationInsightsResource 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
   location: location
   kind: 'web'
@@ -89,7 +89,7 @@ resource applicationInsightsName_resource 'Microsoft.Insights/components@2020-02
   }
 }
 
-resource workspaceName_resource 'Microsoft.MachineLearningServices/workspaces@2020-03-01' = {
+resource workspaceResource 'Microsoft.MachineLearningServices/workspaces@2020-03-01' = {
   name: workspaceName
   location: location
   identity: {
@@ -97,14 +97,14 @@ resource workspaceName_resource 'Microsoft.MachineLearningServices/workspaces@20
   }
   properties: {
     friendlyName: workspaceName
-    storageAccount: storageAccountName_resource.id
-    keyVault: keyVaultName_resource.id
-    applicationInsights: applicationInsightsName_resource.id
+    storageAccount: storageAccountResource.id
+    keyVault: keyVaultResource.id
+    applicationInsights: applicationInsightsResource.id
   }
 }
 
-resource workspaceName_computeName 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
-  parent: workspaceName_resource
+resource computeResource 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
+  parent: workspaceResource
   name: computeName
   location: location
   properties: {

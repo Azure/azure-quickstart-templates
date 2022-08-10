@@ -1,8 +1,8 @@
 @description('Specifies the name of the Azure Machine Learning workspace where job will be created.')
-param existingWorkspaceName string
+param workspaceName string
 
 @description('Specifies the name of the Azure Machine Learning compute instance/cluster on which job will be run.')
-param existingComputeName string
+param computeName string
 
 @description('Specifies the name of the Azure Machine Learning experiment under which job will be created.')
 param experimentName string
@@ -33,14 +33,14 @@ param trainingSettings object = {
   enableDnnTraining: false
 }
 
-var compute = resourceId('Microsoft.MachineLearningServices/workspaces/computes', existingWorkspaceName, existingComputeName)
+var compute = resourceId('Microsoft.MachineLearningServices/workspaces/computes', workspaceName, computeName)
 
-resource workspaceName_jobName 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
-  name: '${existingWorkspaceName}/${jobName}'
+resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
+  name: '${workspaceName}/${jobName}'
   properties: {
     jobType: 'AutoML'
     tags: {
-      ref: 'https://github.com/Azure/azureml-examples/blob/main/sdk/jobs/automl-standalone-jobs/automl-classification-task-bankmarketing'
+      referenceNotebook: 'https://github.com/Azure/azureml-examples/blob/main/sdk/jobs/automl-standalone-jobs/automl-classification-task-bankmarketing'
     }
     experimentName: experimentName
     computeId: compute
@@ -66,4 +66,4 @@ resource workspaceName_jobName 'Microsoft.MachineLearningServices/workspaces/job
   }
 }
 
-output Job_Studio_Endpoint string = workspaceName_jobName.properties.services.Studio.endpoint
+output Job_Studio_Endpoint string = jobResource.properties.services.Studio.endpoint
