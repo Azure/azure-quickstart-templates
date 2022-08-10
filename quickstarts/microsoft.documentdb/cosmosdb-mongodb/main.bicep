@@ -1,5 +1,5 @@
 @description('Cosmos DB account name')
-param accountName string = toLower('mongodb-${uniqueString(resourceGroup().id)}')
+param accountName string = 'mongodb-${uniqueString(resourceGroup().id)}'
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -18,7 +18,7 @@ param secondaryRegion string
   'Strong'
 ])
 @description('The default consistency level of the Cosmos DB account.')
-param defaultConsistencyLevel string = 'Session'
+param defaultConsistencyLevel string = 'Eventual'
 
 @allowed([
   '3.2'
@@ -31,7 +31,7 @@ param serverVersion string = '4.2'
 
 @minValue(10)
 @maxValue(2147483647)
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647.')
 param maxStalenessPrefix int = 100000
 
 @minValue(5)
@@ -44,14 +44,19 @@ param databaseName string
 
 @minValue(400)
 @maxValue(1000000)
-@description('The shared throughput for the Mongo DB database')
-param throughput int = 400
+@description('The shared throughput for the Mongo DB database, up to 25 collections')
+param sharedThroughput int = 400
 
 @description('The name for the first Mongo DB collection')
 param collection1Name string
 
 @description('The name for the second Mongo DB collection')
 param collection2Name string
+
+@minValue(400)
+@maxValue(1000000)
+@description('The dedicated throughput for the orders collection')
+param dedicatedThroughput int = 400
 
 var consistencyPolicy = {
   Eventual: {
@@ -85,21 +90,27 @@ var locations = [
   }
 ]
 
-resource account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
-  name: accountName
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'MongoDB'
   properties: {
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
+    enableAutomaticFailover: true
     apiProperties: {
       serverVersion: serverVersion
     }
+    capabilities: [
+      {
+        name: 'DisableRateLimitingResponses'
+      }
+    ]
   }
 }
 
-resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-10-15' = {
+resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
   parent: account
   name: databaseName
   properties: {
@@ -107,12 +118,12 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-1
       id: databaseName
     }
     options: {
-      throughput: throughput
+      throughput: sharedThroughput
     }
   }
 }
 
-resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
   parent: database
   name: collection1Name
   properties: {
@@ -139,33 +150,17 @@ resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/col
         {
           key: {
             keys: [
-              'user_id'
-              'user_address'
+              'product_name'
+              'product_category_name'
             ]
-          }
-          options: {
-            unique: true
-          }
-        }
-        {
-          key: {
-            keys: [
-              '_ts'
-            ]
-          }
-          options: {
-            expireAfterSeconds: 2629746
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
-      }
     }
   }
 }
 
-resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-10-15' = {
+resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
   parent: database
   name: collection2Name
   properties: {
@@ -192,28 +187,15 @@ resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/col
         {
           key: {
             keys: [
-              'company_id'
-              'company_address'
+              'customer_id'
+              'order_id'
             ]
-          }
-          options: {
-            unique: true
-          }
-        }
-        {
-          key: {
-            keys: [
-              '_ts'
-            ]
-          }
-          options: {
-            expireAfterSeconds: 2629746
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
-      }
+    }
+    options: {
+      throughput: dedicatedThroughput
     }
   }
 }
