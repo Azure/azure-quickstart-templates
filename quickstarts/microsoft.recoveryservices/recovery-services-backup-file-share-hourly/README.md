@@ -1,5 +1,5 @@
 ---
-description: This template configures protection for an existing File Share present in an existing Storage Account. It creates a new or uses an existing Recovery Services Vault and Backup Policy based on the set parameter values.
+description: This template configures protection with hourly frequency for an existing File Share present in an existing Storage Account. It creates a new or uses an existing Recovery Services Vault and Backup Policy based on the set parameter values.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Backup existing File Share using Recovery Services (Hourly)
+# Backup existing File Share using Recovery Services (hourly)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share-hourly/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share-hourly/PublicDeployment.svg)
