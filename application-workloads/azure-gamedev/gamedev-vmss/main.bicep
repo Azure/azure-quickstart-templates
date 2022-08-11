@@ -77,7 +77,13 @@ param p4ClientViews string = ''
 param ibLicenseKey string = ''
 
 @description('GDK Version')
-param gdkVersion string = 'June_2021_Update_4'
+@allowed([
+  'June_2022_Update_1'
+  'March_2022_Update_1'
+  'October_2021_Update_5'
+  'June_2021_Update_9'
+])
+param gdkVersion string = 'June_2021_Update_9'
 
 @description('Use VM to sysprep an image from')
 param useVmToSysprepCustomImage bool = false
