@@ -10,6 +10,13 @@ param experimentName string
 @description('Specifies the name of the Azure Machine Learning job to be created.')
 param jobName string
 
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'.')
+param _artifactsLocation string = deployment().properties.templateLink.uri
+
+@description('The sasToken required to access _artifactsLocation.')
+@secure()
+param _artifactsLocationSasToken string = ''
+
 @description('Specifies execution contraints for the job.')
 param limitSettings object = {
   maxTrials: 5
@@ -50,11 +57,11 @@ resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-
       primaryMetric: 'Accuracy'
       targetColumnName: 'y'
       trainingData: {
-        uri: 'https://raw.githubusercontent.com/Azure/azureml-examples/main/sdk/jobs/automl-standalone-jobs/automl-classification-task-bankmarketing/data/training-mltable-folder/'
+        uri: uri(_artifactsLocation, 'data/training-mltable-folder/${_artifactsLocationSasToken}')
         jobInputType: 'MLTable'
       }
       validationData: {
-        uri: 'https://raw.githubusercontent.com/Azure/azureml-examples/main/sdk/jobs/automl-standalone-jobs/automl-classification-task-bankmarketing/data/validation-mltable-folder/'
+        uri: uri(_artifactsLocation, 'data/validation-mltable-folder/${_artifactsLocationSasToken}')
         jobInputType: 'MLTable'
       }
       featurizationSettings: {

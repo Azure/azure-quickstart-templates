@@ -26,7 +26,7 @@ languages:
 
 ### Overview
 
-This template creates an Azure Machine Learning AutoML classification job to find out the best model for predicting if a client will subscribe to a fixed term deposit with a financial institution. See the tutorial for reference: [Tutorial](https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-first-experiment-automated-ml).
+This template creates an Azure Machine Learning AutoML classification job to find out the best model for predicting if a client will subscribe to a fixed term deposit with a financial institution. See this tutorial for reference: [Tutorial](https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-first-experiment-automated-ml).
 
 ### Prerequisites
 
