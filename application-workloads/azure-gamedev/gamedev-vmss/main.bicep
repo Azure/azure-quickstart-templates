@@ -14,12 +14,6 @@ param vmssSku string = 'Standard_D4ds_v4'
 ])
 param vmssImgPublisher string = 'microsoftcorporation1602274591143'
 
-@description('GameDev Image Product Id')
-@allowed([
-  'game-dev-vm'
-])
-param vmssImgProduct string = 'game-dev-vm'
-
 @description('GameDev Image Sku')
 @allowed([
   'win10_no_engine_1_0'
@@ -140,7 +134,6 @@ module vmss 'br/public:azure-gaming/game-dev-vmss:1.0.1' = {
     vmssInstanceCount: vmssInstanceCount
     vmssImgSku: vmssImgSku
     vmssImgPublisher: vmssImgPublisher
-    vmssImgProduct: vmssImgProduct
     vmssOsDiskType: vmssOsDiskType
     vmssImgVersion: vmssImgVersion
     administratorLogin: administratorLogin
