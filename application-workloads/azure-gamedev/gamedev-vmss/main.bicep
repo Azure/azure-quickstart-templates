@@ -131,113 +131,46 @@ param vnetAddressPrefix string = '172.17.72.0/24' //Change as needed
 @description('Virtual Network Subnet Address Prefix')
 param subnetAddressPrefix string = '172.17.72.0/25' // 172.17.72.[0-128] is part of this subnet
 
-var customData = format('''
-fileShareStorageAccount={0}
-fileShareStorageAccountKey={1}
-fileShareName={2}
-p4Port={3}
-p4Username={4}
-p4Password={5}
-p4Workspace={6}
-p4Stream={7}
-p4ClientViews={8}
-ibLicenseKey={9}
-gdkVersion={10}
-useVmToSysprepCustomImage={11}
-remoteAccessTechnology={12}
-teradiciRegKey={13}
-parsecTeamId={14}
-parsecTeamKey={15}
-parsecHost={16}
-parsecUserEmail={17}
-parsecIsGuestAccess={18}
-deployedFromSolutionTemplate={19}
-''', fileShareStorageAccount, fileShareStorageAccountKey, fileShareName, p4Port, p4Username, p4Password, p4Workspace, p4Stream, p4ClientViews, ibLicenseKey, gdkVersion, useVmToSysprepCustomImage, remoteAccessTechnology, teradiciRegKey, parsecTeamId, parsecTeamKey, parsecHost, parsecUserEmail, parsecIsGuestAccess, false)
-
-
-module vnet './nestedtemplates/virtualNetworks.bicep'  = {
-  name:                       vnetName
+module vmss 'br/public:azure-gaming/game-dev-vmss:1.0.1' = {
+  name: 'gameDevVMSS'
   params: {
-    location:                 location
-    vnetName:                 vnetName
-    subnetName:               subnetName
+    location: location
+    vmssName: vmssName    
+    vmssSku: vmssSku
+    vmssInstanceCount: vmssInstanceCount
+    vmssImgSku: vmssImgSku
+    vmssImgPublisher: vmssImgPublisher
+    vmssImgProduct: vmssImgProduct
+    vmssOsDiskType: vmssOsDiskType
+    vmssImgVersion: vmssImgVersion
+    administratorLogin: administratorLogin
+    passwordAdministratorLogin: passwordAdministratorLogin
+    fileShareStorageAccount: fileShareStorageAccount
+    fileShareStorageAccountKey: fileShareStorageAccountKey
+    fileShareName: fileShareName
+    p4Port: p4Port
+    p4Username: p4Username
+    p4Password: p4Password
+    p4Workspace: p4Workspace
+    p4Stream: p4Stream
+    p4ClientViews: p4ClientViews
+    ibLicenseKey: ibLicenseKey
+    gdkVersion: gdkVersion
+    useVmToSysprepCustomImage: useVmToSysprepCustomImage
+    remoteAccessTechnology: remoteAccessTechnology
+    teradiciRegKey: teradiciRegKey
+    parsecTeamId: parsecTeamId
+    parsecTeamKey: parsecTeamKey
+    parsecHost: parsecHost
+    parsecUserEmail: parsecUserEmail
+    parsecIsGuestAccess: parsecIsGuestAccess	
+    vnetName: vnetName
+    subnetName: subnetName
     networkSecurityGroupName: networkSecurityGroupName
-    vnetAddressPrefix:        vnetAddressPrefix
-    subnetAddressPrefix:      subnetAddressPrefix
+    vnetAddressPrefix: vnetAddressPrefix
+    subnetAddressPrefix: subnetAddressPrefix    
   }
 }
 
-resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
-  name: vmssName
-  location: location
-  sku: {
-    name:     vmssSku
-    tier:     'Standard'
-    capacity: vmssInstanceCount
-  }
-  plan: {
-    name:      vmssImgSku
-    publisher: vmssImgPublisher
-    product:   vmssImgProduct
-  }  
-  properties: {
-    singlePlacementGroup: false
-    upgradePolicy: {
-      mode: 'Manual'
-    }
-    virtualMachineProfile: {
-      storageProfile: {
-        osDisk: {
-          createOption: 'FromImage'
-          caching: 'ReadWrite'
-          managedDisk: {
-            storageAccountType: vmssOsDiskType
-          }
-        }
-        imageReference: {
-          publisher: vmssImgPublisher
-          offer:     vmssImgProduct
-          sku:       vmssImgSku
-          version:   vmssImgVersion
-	}
-      }
-      networkProfile: {
-        networkInterfaceConfigurations: [
-          {
-            name: '${vmssName}Nic'
-            properties: {
-              primary: true
-              ipConfigurations: [
-                {
-                  name: '${vmssName}IpConfig'
-                  properties: {
-                    subnet: {
-                      id: vnet.outputs.subnetId
-                    }
-                  }
-                }
-              ]
-              networkSecurityGroup: {
-                id: vnet.outputs.nsgID
-              }
-            }
-          }
-        ]
-      }
-      osProfile: {
-        computerNamePrefix: vmssName
-        adminUsername:      administratorLogin
-        adminPassword:      passwordAdministratorLogin
-	customData:         base64(customData)
-	windowsConfiguration: {
-          provisionVMAgent: true
-        }	
-      }
-      priority: 'Regular'
-    }
-    overprovision: false
-  }
-}
-
-output id   string = vmss.id
-output name string = vmss.name
+output id   string = vmss.outputs.id
+output name string = vmss.outputs.name
