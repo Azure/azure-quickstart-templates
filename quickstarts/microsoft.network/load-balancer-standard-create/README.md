@@ -7,6 +7,7 @@ products:
 urlFragment: load-balancer-standard-create
 languages:
 - json
+- bicep
 ---
 # Create a standard load-balancer
 
