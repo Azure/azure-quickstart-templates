@@ -40,8 +40,7 @@ param enableLiveTrace bool = true
 
 @description('Set the list of origins that should be allowed to make cross-origin calls.')
 param allowedOrigins array = [
-  'https://foo.com'
-  'https://bar.com'
+  '*'
 ]
 
 resource signalR 'Microsoft.SignalRService/signalR@2022-02-01' = {
