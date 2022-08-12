@@ -156,7 +156,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: bastionPublicIPAddressName
+            id: bastionPublicIPAddress.id
           }
           subnet: {
             id: vNetName_bastionSubnet.id
