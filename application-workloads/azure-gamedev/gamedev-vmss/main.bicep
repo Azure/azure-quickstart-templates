@@ -10,9 +10,9 @@ param vmssSku string = 'Standard_D4ds_v4'
 @description('GameDev Image Publisher')
 @allowed([
   'microsoftcorporation1602274591143'
-  'azure-gaming'
+  'microsoft-azure-gaming'
 ])
-param vmssImgPublisher string = 'microsoftcorporation1602274591143'
+param vmssImgPublisher string = 'microsoft-azure-gaming'
 
 @description('GameDev Image Sku')
 @allowed([
