@@ -136,6 +136,9 @@ resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-
   properties: {
     addressPrefix: vNetBastionSubnetAddressPrefix
   }
+  dependsOn: [
+    vNetName_vNetSubnetName
+  ]
 }
 
 resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
@@ -165,9 +168,6 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
       }
     ]
   }
-  dependsOn: [
-    vNet
-  ]
 }
 
 resource bastionPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
