@@ -7,8 +7,9 @@ products:
 urlFragment: machine-learning-dataasset-create-from-file-uri
 languages:
 - json
+- bicep
 ---
-# Create a File URI Data Asset
+# Create a Data Asset from File URI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dataasset-create-from-file-uri/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dataasset-create-from-file-uri/PublicDeployment.svg)
