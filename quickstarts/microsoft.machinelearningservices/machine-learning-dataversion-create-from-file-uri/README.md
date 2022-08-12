@@ -1,5 +1,5 @@
 ---
-description: This template creates a data asset version from file URI in an Azure Machine Learning workspace.
+description: This template creates a new data version from file URI in an Azure Machine Learning workspace.
 page_type: sample
 products:
 - azure
@@ -7,8 +7,9 @@ products:
 urlFragment: machine-learning-dataversion-create-from-file-uri
 languages:
 - json
+- bicep
 ---
-# Create a File URI Data Asset Version
+# Create a Data Version from File URI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dataversion-create-from-file-uri/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dataversion-create-from-file-uri/PublicDeployment.svg)
