@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Machine Learning AutoML classification job to find out the best model for predicting if a client will subscribe to a fixed term deposit with a financial institution
+description: This template creates an Azure Machine Learning AutoML classification job to find out the best model for predicting if a client will subscribe to a fixed term deposit with a financial institution.
 page_type: sample
 products:
 - azure
@@ -7,8 +7,9 @@ products:
 urlFragment: machine-learning-job-create-automl-classification-job
 languages:
 - json
+- bicep
 ---
-# Create an Azure Machine Learning AutoML Classification Job
+# Create an Azure Machine Learning AutoML classification job
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-job-create-automl-classification-job/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-job-create-automl-classification-job/PublicDeployment.svg)
