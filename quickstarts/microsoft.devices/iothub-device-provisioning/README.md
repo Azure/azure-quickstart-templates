@@ -7,6 +7,7 @@ products:
 urlFragment: iothub-device-provisioning
 languages:
 - json
+- bicep
 ---
 # Create an IoT Hub Device Provisioning Service
 
