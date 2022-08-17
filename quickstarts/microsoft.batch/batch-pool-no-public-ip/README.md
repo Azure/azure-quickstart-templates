@@ -1,5 +1,5 @@
 ---
-description: This template creates Azure Data Factory with Git configuration and managed virtual network.
+description: This template creates Azure Batch pool without public IP addresses.
 page_type: sample
 products:
 - azure
