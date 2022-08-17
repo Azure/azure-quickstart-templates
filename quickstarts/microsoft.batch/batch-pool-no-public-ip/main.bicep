@@ -4,6 +4,9 @@ param accountName string = 'mytestaccount'
 @description('Name of the virtual network')
 param vnetName string = 'mytest-vnet'
 
+@description('Name of the VM SKU used by the Batch pool')
+param vmSize string = 'Standard_D1_v2'
+
 @description('Location for all resources')
 param location string = resourceGroup().location
 
@@ -33,7 +36,6 @@ resource batchAccount 'Microsoft.Batch/batchAccounts@2022-06-01' = {
       }
       nodeManagementAccess: {
         defaultAction: 'Deny'
-        ipRules: []
       }
     }
   }
@@ -133,7 +135,7 @@ resource nodeManagementPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-
   }
 }
 
-resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = {
   name: '${nodeManagementPrivateEndpointName}/default'
   dependsOn: [
     nodeManagementPrivateEndpoint
@@ -159,7 +161,7 @@ resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-06-01' = {
     vnet
   ]
   properties: {
-    vmSize: 'STANDARD_D1_V2'
+    vmSize: vmSize
     interNodeCommunication: 'Disabled'
     taskSlotsPerNode: 4
     taskSchedulingPolicy: {
