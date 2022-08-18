@@ -7,8 +7,48 @@ param vnetName string = 'mytest-vnet'
 @description('Name of the VM SKU used by the Batch pool')
 param vmSize string = 'Standard_D1_v2'
 
-@description('Location for all resources')
-param location string = resourceGroup().location
+@description('Location for all resources - Azure Batch simplified node communication pools available in specific region, refer the documenation to select the supported region for this deployment. For more information see https://docs.microsoft.com/en-us/azure/batch/simplified-compute-node-communication#supported-regions')
+@allowed([
+  'australiaeast'
+  'australiasoutheast'
+  'brazilsouth'
+  'brazilsoutheast'
+  'canadacentral'
+  'canadaeast'
+  'centralindia'
+  'centralus'
+  'centraluseuap'
+  'chinanorth3'
+  'eastasia'
+  'eastus'
+  'eastus2'
+  'eastus2euap'
+  'francecentral'
+  'germanywestcentral'
+  'japaneast'
+  'japanwest'
+  'koreacentral'
+  'koreasouth'
+  'northcentralus'
+  'northeurope'
+  'norwayeast'
+  'southafricanorth'
+  'southcentralus'
+  'southeastasia'
+  'switzerlandnorth'
+  'uaenorth'
+  'uksouth'
+  'ukwest'
+  'usgovarizona'
+  'usgovtexas'
+  'usgovvirginia'
+  'westcentralus'
+  'westeurope'
+  'westus'
+  'westus2'
+  'westus3'
+])
+param location string
 
 var nodeManagementPrivateEndpointName = '${accountName}-node-pe'
 var privateDnsZoneName = 'privatelink.batch.azure.com'
@@ -20,7 +60,7 @@ resource batchAccount 'Microsoft.Batch/batchAccounts@2022-06-01' = {
   name: accountName
   location: location
   identity: {
-     type: 'SystemAssigned'
+    type: 'SystemAssigned'
   }
   properties: {
     publicNetworkAccess: 'Enabled'

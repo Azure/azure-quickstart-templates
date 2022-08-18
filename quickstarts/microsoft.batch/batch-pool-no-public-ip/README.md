@@ -28,6 +28,14 @@ languages:
 
 This module will create Azure Batch account with node management private endpoint enabled, and provision a pool without public IP addresses in a virtual network.
 
+Following resources will be deployed:
+
+- Azure Batch account with IP firewall configured to block public network access to Batch node management endpoint
+- Virtual network with network security group to block internet outbound access
+- Private endpoint to access Batch node management endpoint of the account
+- DNS integration for the private endpoint using private DNS zone linked to the virtual network
+- Batch pool deployed in the virtual network and without public IP addresses
+
 ## Notes
 
 This deployment requires simplified node communication pool for Azure Batch, which is currently supported in selected regions. If the deployment failed due to private endpoint provisioning failure, please follow the document to opt in with this feature then retry. For more information please refer to [Simplified Node Communication pool without public IP addresses](https://docs.microsoft.com/en-us/azure/batch/simplified-node-communication-pool-no-public-ip).
