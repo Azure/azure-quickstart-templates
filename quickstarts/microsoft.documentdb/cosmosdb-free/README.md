@@ -1,5 +1,5 @@
 ---
-description: This template creates a free-tier Azure Cosmos account for SQL API, a database with 1000 RU/s and a container.
+description: This template creates a free-tier Azure Cosmos DB account for SQL API with a database with shared throughput and container.
 page_type: sample
 products:
 - azure
