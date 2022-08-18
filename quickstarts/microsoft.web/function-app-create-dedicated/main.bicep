@@ -77,15 +77,18 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   name: functionAppName
   location: location
   kind: 'functionapp'
+  identity:{
+    type:'SystemAssigned'
+  }
   properties: {
     serverFarmId: hostingPlan.id
     clientAffinityEnabled: false
     siteConfig: {
       alwaysOn: true
     }
+    httpsOnly: true
   }
   dependsOn: [
-
     storageAccount
   ]
 }
@@ -97,5 +100,7 @@ resource appsettings 'Microsoft.Web/sites/config@2022-03-01' = {
     AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, '2021-09-01').keys[0].value}'
     APPINSIGHTS_INSTRUMENTATIONKEY: reference(applicationInsights.id, '2020-02-02').InstrumentationKey
     FUNCTIONS_EXTENSION_VERSION: '~3'
+    ftpsState: 'Disabled'
+    minTlsVersion: '1.2'
   }
 }
