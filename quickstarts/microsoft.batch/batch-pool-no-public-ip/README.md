@@ -26,6 +26,10 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.batch%2Fbatch-pool-no-public-ip%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.batch%2Fbatch-pool-no-public-ip%2Fazuredeploy.json)
 
-This module will create Azure Batch account with node management private endpoint enabled, and provision a pool without public IP addresses in a virtual network. For more information please refer to [Simplified Node Communication pool without public IP addresses](https://docs.microsoft.com/en-us/azure/batch/simplified-node-communication-pool-no-public-ip).
+This module will create Azure Batch account with node management private endpoint enabled, and provision a pool without public IP addresses in a virtual network.
+
+## Notes
+
+This deployment requires simplified node communication pool for Azure Batch, which is currently supported in selected regions. If the deployment failed due to private endpoint provisioning failure, please follow the document to opt in with this feature then retry. For more information please refer to [Simplified Node Communication pool without public IP addresses](https://docs.microsoft.com/en-us/azure/batch/simplified-node-communication-pool-no-public-ip).
 
 `Tags: bicep, batch, pool, nodeManagement, privateEndpoint, VNET, NoPublicIP, Microsoft.Batch/batchAccounts, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones`
