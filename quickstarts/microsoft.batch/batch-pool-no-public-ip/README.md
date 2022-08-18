@@ -1,5 +1,5 @@
 ---
-description: This template creates Azure Batch pool without public IP addresses.
+description: This template creates Azure Batch simplified node communication pool without public IP addresses.
 page_type: sample
 products:
 - azure
