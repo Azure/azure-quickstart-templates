@@ -1,8 +1,8 @@
 @description('Name of the Batch account')
-param accountName string = 'mytestaccount'
+param accountName string
 
 @description('Name of the virtual network')
-param vnetName string = 'mytest-vnet'
+param vnetName string
 
 @description('Name of the VM SKU used by the Batch pool')
 param vmSize string = 'Standard_D1_v2'
@@ -46,7 +46,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   name: nsgName
   location: location
   properties: {
@@ -68,44 +68,37 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   name: vnetName
   location: location
-  dependsOn: [
-    nsg
-  ]
   properties: {
     addressSpace: {
       addressPrefixes: [
         '10.0.0.0/16'
       ]
     }
-    subnets: [
-      {
-        name: subnetName
-        properties: {
-          addressPrefix: '10.0.0.0/24'
-          networkSecurityGroup: {
-            id: resourceId('Microsoft.Network/networkSecurityGroups', nsgName)
-          }
-          privateEndpointNetworkPolicies: 'Disabled'
-        }
+  }
+
+  resource subnet 'subnets' = {
+    name: subnetName
+    properties: {
+      addressPrefix: '10.0.0.0/24'
+      networkSecurityGroup: {
+        id: nsg.id
       }
-    ]
+      privateEndpointNetworkPolicies: 'Disabled'
+    }
   }
 }
 
 resource vnetDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${privateDnsZoneName}/${vnetName}'
+  name: vnetName
   location: 'global'
-  dependsOn: [
-    privateDnsZone
-    vnet
-  ]
+  parent: privateDnsZone
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: resourceId('Microsoft.Network/virtualNetworks', vnetName)
+      id: vnet.id
     }
   }
 }
@@ -113,16 +106,12 @@ resource vnetDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
 resource nodeManagementPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: nodeManagementPrivateEndpointName
   location: location
-  dependsOn: [
-    batchAccount
-    vnet
-  ]
   properties: {
     privateLinkServiceConnections: [
       {
         name: nodeManagementPrivateEndpointName
         properties: {
-          privateLinkServiceId: resourceId('Microsoft.Batch/batchAccounts', accountName)
+          privateLinkServiceId: batchAccount.id
           groupIds: [
             'nodeManagement'
           ]
@@ -130,23 +119,20 @@ resource nodeManagementPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-
       }
     ]
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
+      id: vnet::subnet.id
     }
   }
 }
 
 resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = {
-  name: '${nodeManagementPrivateEndpointName}/default'
-  dependsOn: [
-    nodeManagementPrivateEndpoint
-    privateDnsZone
-  ]
+  name: 'default'
+  parent: nodeManagementPrivateEndpoint
   properties: {
     privateDnsZoneConfigs: [
       {
         name: 'private-dns-zone-integration'
         properties: {
-          privateDnsZoneId: resourceId('Microsoft.Network/privateDnsZones', privateDnsZoneName)
+          privateDnsZoneId: privateDnsZone.id
         }
       }
     ]
@@ -154,11 +140,10 @@ resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/priva
 }
 
 resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-06-01' = {
-  name: '${accountName}/${poolName}'
+  name: poolName
+  parent: batchAccount
   dependsOn: [
-    batchAccount
     nodeManagementPrivateEndpoint
-    vnet
   ]
   properties: {
     vmSize: vmSize
@@ -179,7 +164,7 @@ resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-06-01' = {
       }
     }
     networkConfiguration: {
-      subnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
+      subnetId: vnet::subnet.id
       publicIPAddressConfiguration: {
         provision: 'NoPublicIPAddresses'
       }
