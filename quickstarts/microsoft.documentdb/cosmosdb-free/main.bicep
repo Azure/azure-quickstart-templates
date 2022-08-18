@@ -28,16 +28,21 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
 }
 
 resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
-  name: '${account.name}/${databaseName}'
+  parent: account
+  name: databaseName
   properties: {
     resource: {
       id: databaseName
+    }
+    options: {
+      throughput: 1000
     }
   }
 }
 
 resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-05-15' = {
-  name: '${database.name}/${containerName}'
+  parent: database
+  name: containerName
   properties: {
     resource: {
       id: containerName
@@ -60,9 +65,6 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
           }
         ]
       }
-    }
-    options: {
-      throughput: 1000
     }
   }
 }
