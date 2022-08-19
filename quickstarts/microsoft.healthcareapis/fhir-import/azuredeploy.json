@@ -1,0 +1,149 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+      "_generator": {
+        "name": "bicep",
+        "version": "0.5.6.12127",
+        "templateHash": "4192486384743207684"
+      }
+    },
+    "parameters": {
+      "resourceLocation": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Region of the FHIR service"
+        }
+      },
+      "workspaceName": {
+        "type": "string",
+        "metadata": {
+          "description": "Workspace containing the Azure Health Data Services workspace"
+        }
+      },
+      "fhirName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of FHIR service"
+        }
+      },
+      "fhirKind": {
+        "type": "string",
+        "defaultValue": "fhir-R4",
+        "allowedValues": [
+          "fhir-R4",
+          "fhir-Stu3"
+        ],
+        "metadata": {
+          "description": "Kind of the FHIR service to update"
+        }
+      },
+      "storageName": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Name of storage account to use for import. Needs to be an existing storage account. Leave blank if this has already been configured."
+        }
+      },
+      "enableImport": {
+        "type": "bool",
+        "metadata": {
+          "description": "Flag to enable or disable $import"
+        }
+      }
+    },
+    "variables": {
+      "enableConfiguration": {
+        "enabled": true,
+        "initialImportMode": true,
+        "integrationDataStore": "[parameters('storageName')]"
+      },
+      "disableConfiguration": {
+        "enabled": false,
+        "initialImportMode": false
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.HealthcareApis/workspaces/fhirservices",
+        "apiVersion": "2022-01-31-preview",
+        "name": "[format('{0}/{1}', parameters('workspaceName'), parameters('fhirName'))]",
+        "location": "[parameters('resourceLocation')]",
+        "kind": "[parameters('fhirKind')]",
+        "identity": {
+          "type": "SystemAssigned"
+        },
+        "properties": "[union(reference(resourceId('Microsoft.Resources/deployments', parameters('fhirName'))).outputs.properties.value, createObject('importConfiguration', if(parameters('enableImport'), variables('enableConfiguration'), variables('disableConfiguration'))))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Resources/deployments', parameters('fhirName'))]"
+        ],
+        "metadata": {
+          "description": "Updated FHIR Service used to enable import"
+        }
+      },
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2020-10-01",
+        "name": "[parameters('fhirName')]",
+        "properties": {
+          "expressionEvaluationOptions": {
+            "scope": "inner"
+          },
+          "mode": "Incremental",
+          "parameters": {
+            "fhirName": {
+              "value": "[parameters('fhirName')]"
+            },
+            "workspaceName": {
+              "value": "[parameters('workspaceName')]"
+            }
+          },
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "metadata": {
+              "_generator": {
+                "name": "bicep",
+                "version": "0.5.6.12127",
+                "templateHash": "7405174855623910646"
+              }
+            },
+            "parameters": {
+              "workspaceName": {
+                "type": "string",
+                "metadata": {
+                  "description": "Name of the existing AHDS workspace"
+                }
+              },
+              "fhirName": {
+                "type": "string",
+                "metadata": {
+                  "description": "Name of the existing FHIR service"
+                }
+              }
+            },
+            "resources": [],
+            "outputs": {
+              "properties": {
+                "type": "object",
+                "value": "[reference(resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('workspaceName'), parameters('fhirName')), '2021-11-01')]"
+              }
+            }
+          }
+        },
+        "metadata": {
+          "description": "Used to pull existing configuration from FHIR serviceß"
+        }
+      }
+    ],
+    "outputs": {
+      "storageAccountName": {
+        "type": "string",
+        "value": "[if(parameters('enableImport'), parameters('storageName'), '')]",
+        "metadata": {
+          "description": "Used to validate that the storage account exists when enabling import"
+        }
+      }
+    }
+}
