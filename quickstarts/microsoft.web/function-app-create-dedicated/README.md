@@ -7,6 +7,7 @@ products:
 urlFragment: function-app-create-dedicated
 languages:
 - json
+- bicep
 ---
 # Provision a function app running on an App Service Plan
 
