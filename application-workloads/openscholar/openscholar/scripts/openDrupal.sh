@@ -40,7 +40,7 @@ tar -zxvf drupal-openscholar-7.x-3.90.1.tar.gz
 cd sites/default
 mkdir files
 cp default.settings.php settings.php
-chmod -R 777 *
+chmod -R 755 *
 sudo a2enmod rewrite
 sudo systemctl restart apache2
 cd /etc/php/5.6/apache2/
