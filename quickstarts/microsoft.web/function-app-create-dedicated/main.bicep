@@ -71,6 +71,7 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   sku: {
     name: sku
   }
+  properties: { }
 }
 
 resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
@@ -88,9 +89,6 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
     }
     httpsOnly: true
   }
-  dependsOn: [
-    storageAccount
-  ]
 }
 
 resource appsettings 'Microsoft.Web/sites/config@2022-03-01' = {
