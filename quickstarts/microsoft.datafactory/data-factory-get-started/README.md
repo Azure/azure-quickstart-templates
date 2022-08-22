@@ -11,15 +11,20 @@ languages:
 ---
 # Create a Data Factory, Blob source, SQL sink and Pipeline
 
-![Azure Public Test Date](https://camo.githubusercontent.com/b2d03164f9a5cab799210a3c38ef443d6e8b58fd4723aab90c4b99a24a9146f0/68747470733a2f2f617a757265717569636b737461727473736572766963652e626c6f622e636f72652e77696e646f77732e6e65742f6261646765732f717569636b7374617274732f6d6963726f736f66742e64617461666163746f72792f646174612d666163746f72792d6765742d737461727465642f5075626c69634c61737454657374446174652e737667) ![Azure Public Test Result](https://camo.githubusercontent.com/c1510b2a57cd6e7123b72b44685fea8f7141415164725e299c28c5ca6000e2ee/68747470733a2f2f617a757265717569636b737461727473736572766963652e626c6f622e636f72652e77696e646f77732e6e65742f6261646765732f717569636b7374617274732f6d6963726f736f66742e64617461666163746f72792f646174612d666163746f72792d6765742d737461727465642f5075626c69634465706c6f796d656e742e737667)
- 
-![Azure US Gov Last Test Date](https://camo.githubusercontent.com/a55797e859ee7f12835ad285e4160757031808690b66bdabffb71d8ed3f4619a/68747470733a2f2f617a757265717569636b737461727473736572766963652e626c6f622e636f72652e77696e646f77732e6e65742f6261646765732f717569636b7374617274732f6d6963726f736f66742e64617461666163746f72792f646174612d666163746f72792d6765742d737461727465642f466169726661784c61737454657374446174652e737667) ![Azure US Gov Last Test Result](https://camo.githubusercontent.com/a4f488badb7548c6a42d91761e35bcd91035685b36548f85e697ed142aa745e9/68747470733a2f2f617a757265717569636b737461727473736572766963652e626c6f622e636f72652e77696e646f77732e6e65742f6261646765732f717569636b7374617274732f6d6963726f736f66742e64617461666163746f72792f646174612d666163746f72792d6765742d737461727465642f466169726661784465706c6f796d656e742e737667)
- 
-![Best Practice Check](https://camo.githubusercontent.com/e984324c0c41026bd78ae562833c15245cfc27d568595c7550a1a5d52638a833/68747470733a2f2f617a757265717569636b737461727473736572766963652e626c6f622e636f72652e77696e646f77732e6e65742f6261646765732f717569636b7374617274732f6d6963726f736f66742e64617461666163746f72792f646174612d666163746f72792d6765742d737461727465642f426573745072616374696365526573756c742e737667) ![Cred Scan Check](https://camo.githubusercontent.com/799dbdb38190023695273d94e7cd682ee0d991fdd6298d869e597e0e462cbca8/68747470733a2f2f617a757265717569636b737461727473736572766963652e626c6f622e636f72652e77696e646f77732e6e65742f6261646765732f717569636b7374617274732f6d6963726f736f66742e64617461666163746f72792f646174612d666163746f72792d6765742d737461727465642f437265645363616e526573756c742e737667)
- 
-![Bicep Version](https://camo.githubusercontent.com/f9a0e1dba7e9cf283dbfcf601f01b5a8702a833876cc7d12810507efe1029cd8/68747470733a2f2f617a757265717569636b737461727473736572766963652e626c6f622e636f72652e77696e646f77732e6e65742f6261646765732f717569636b7374617274732f6d6963726f736f66742e64617461666163746f72792f646174612d666163746f72792d6765742d737461727465642f426963657056657273696f6e2e737667)
- 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-get-started%2Fazuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-get-started%2Fazuredeploy.json)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/BicepVersion.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-get-started%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-get-started%2Fazuredeploy.json)
+
 
 When you deploy this Azure Resource Template, a data factory is created with the following entities:
 
