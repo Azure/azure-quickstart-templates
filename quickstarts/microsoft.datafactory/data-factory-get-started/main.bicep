@@ -60,6 +60,9 @@ resource runPowerShellInlineWithOutput 'Microsoft.Resources/deploymentScripts@20
       }
     }
   }
+  dependsOn: [
+    bootstrapRoleAssignmentId
+  ]
   properties: {
     azPowerShellVersion: '6.4'
     arguments: '-name FileCreationScript'
@@ -82,9 +85,6 @@ resource runPowerShellInlineWithOutput 'Microsoft.Resources/deploymentScripts@20
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
-  dependsOn: [
-    bootstrapRoleAssignmentId
-  ]
 }
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
@@ -109,6 +109,10 @@ resource linkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-0
 resource datasetIn 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
   parent: dataFactory
   name: dataFactoryDataSetInName
+    dependsOn: [
+
+    linkedService
+  ]
   properties: {
     linkedServiceName: {
       referenceName: dataFactoryLinkedServiceName
@@ -124,15 +128,15 @@ resource datasetIn 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
       }
     }
   }
-  dependsOn: [
-
-    linkedService
-  ]
 }
 
 resource datasetOut 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
   parent: dataFactory
   name: dataFactoryDataSetOutName
+    dependsOn: [
+
+    linkedService
+  ]
   properties: {
     linkedServiceName: {
       referenceName: dataFactoryLinkedServiceName
@@ -147,15 +151,15 @@ resource datasetOut 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
       }
     }
   }
-  dependsOn: [
-
-    linkedService
-  ]
 }
 
 resource pipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
   parent: dataFactory
   name: pipelineName
+    dependsOn: [
+    datasetIn
+    datasetOut
+  ]
   properties: {
     activities: [
       {
@@ -192,8 +196,5 @@ resource pipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
       }
     ]
   }
-  dependsOn: [
-    datasetIn
-    datasetOut
-  ]
+
 }
