@@ -40,7 +40,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-
   location: location
 }
 
-resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-01-01' = {
   name: bootstrapRoleAssignmentId_var
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
@@ -64,7 +64,7 @@ resource runPowerShellInlineWithOutput 'Microsoft.Resources/deploymentScripts@20
     bootstrapRoleAssignmentId
   ]
   properties: {
-    azPowerShellVersion: '6.4'
+    azPowerShellVersion: '8.2'
     arguments: '-name FileCreationScript'
     environmentVariables: [
       {
