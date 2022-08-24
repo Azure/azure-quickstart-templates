@@ -51,6 +51,14 @@
         "metadata": {
           "description": "Flag to enable or disable $import"
         }
+      },
+      "newOrExisting": {
+        "type": "string",
+        "defaultValue": "existing",
+        "allowedValues": [
+            "new",
+            "existing"
+        ]
       }
     },
     "variables": {
@@ -62,7 +70,9 @@
       "disableConfiguration": {
         "enabled": false,
         "initialImportMode": false
-      }
+      },
+      "newdeployname": "[format('newdeploy{0}', parameters('fhirName'))]",
+      "existingdeployname": "[format('existingdeploy{0}', parameters('fhirName'))]"
     },
     "resources": [
       {
@@ -74,18 +84,19 @@
         "identity": {
           "type": "SystemAssigned"
         },
-        "properties": "[union(reference(resourceId('Microsoft.Resources/deployments', parameters('fhirName'))).outputs.properties.value, createObject('importConfiguration', if(parameters('enableImport'), variables('enableConfiguration'), variables('disableConfiguration'))))]",
+        "properties": "[union(reference(resourceId('Microsoft.Resources/deployments', if(equals(parameters('newOrExisting'), 'existing'), variables('existingdeployname'), variables('newdeployname'))), '2020-10-01').outputs.properties.value, createObject('importConfiguration', if(parameters('enableImport'), variables('enableConfiguration'), variables('disableConfiguration'))))]",
         "dependsOn": [
-          "[resourceId('Microsoft.Resources/deployments', parameters('fhirName'))]"
+          "[resourceId('Microsoft.Resources/deployments', if(equals(parameters('newOrExisting'), 'existing'), variables('existingdeployname'), variables('newdeployname')))]"
         ],
         "metadata": {
           "description": "Updated FHIR Service used to enable import"
         }
       },
       {
+        "condition": "[equals(parameters('newOrExisting'), 'existing')]",
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2020-10-01",
-        "name": "[parameters('fhirName')]",
+        "name": "[variables('existingdeployname')]",
         "properties": {
           "expressionEvaluationOptions": {
             "scope": "inner"
@@ -100,15 +111,8 @@
             }
           },
           "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
-            "metadata": {
-              "_generator": {
-                "name": "bicep",
-                "version": "0.5.6.12127",
-                "templateHash": "7405174855623910646"
-              }
-            },
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "parameters": {
               "workspaceName": {
                 "type": "string",
@@ -127,8 +131,79 @@
             "outputs": {
               "properties": {
                 "type": "object",
-                "value": "[reference(resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('workspaceName'), parameters('fhirName')), '2021-11-01')]"
+                "value": "[reference(resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('workspaceName'), parameters('fhirName')), '2022-06-01')]"
               }
+            }
+          }
+        },
+        "metadata": {
+          "description": "Used to pull existing configuration from FHIR serviceß"
+        }
+      },
+      {
+        "condition": "[equals(parameters('newOrExisting'), 'new')]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2020-10-01",
+        "name": "[variables('newdeployname')]",
+        "properties": {
+          "expressionEvaluationOptions": {
+            "scope": "inner"
+          },
+          "mode": "Incremental",
+          "parameters": {
+            "fhirName": {
+              "value": "[parameters('fhirName')]"
+            },
+            "workspaceName": {
+              "value": "[parameters('workspaceName')]"
+            },
+            "resourceLocation": {
+              "value": "[parameters('resourceLocation')]"
+            }
+          },
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+              "workspaceName": {
+                "type": "string",
+                "metadata": {
+                  "description": "Name of the existing AHDS workspace"
+                }
+              },
+              "fhirName": {
+                "type": "string",
+                "metadata": {
+                  "description": "Name of the existing FHIR service"
+                }
+              },
+              "resourceLocation": {
+                "type": "string",
+                "metadata": {
+                  "description": "Region of the FHIR service"
+                }
+              }
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.HealthcareApis/workspaces",
+                    "apiVersion": "2022-06-01",
+                    "name": "[parameters('workspaceName')]",
+                    "location": "[parameters('resourceLocation')]",
+                    "properties": {}
+                }
+            ],
+            "outputs": {
+                "properties": {
+                    "type": "object",
+                    "value": {
+                        "authenticationConfiguration": {
+                            "authority": "[format('{0}{1}', environment().authentication.loginEndpoint, subscription().tenantId)]",
+                            "audience": "[format('https://{0}-{1}.fhir.azurehealthcareapis.com', parameters('workspaceName'), parameters('fhirName'))]",
+                            "smartProxyEnabled": false
+                        }
+                    }
+                }
             }
           }
         },
