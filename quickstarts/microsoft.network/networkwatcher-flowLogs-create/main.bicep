@@ -1,7 +1,7 @@
 @description('Name of the Network Watcher attached to your subscription. Format: NetworkWatcher_<region_name>')
 param networkWatcherName string = 'NetworkWatcher_${location}'
 
-@description('Chosen name of your Flow log resource')
+@description('Name of your Flow log resource')
 param flowLogName string = 'FlowLog1'
 
 @description('Region where you resources are located')
