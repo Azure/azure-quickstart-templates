@@ -2,7 +2,7 @@
 param dataFactoryName string = 'datafactory${uniqueString(resourceGroup().id)}'
 
 @description('Location of the data factory.')
-param location string = resourceGroup().location
+param location string = parameters('location')
 
 @description('Name of the Azure storage account that contains the input/output data.')
 param storageAccountName string = 'storage${uniqueString(resourceGroup().id)}'
@@ -17,7 +17,7 @@ var dataFactoryLinkedServiceName = 'ArmtemplateStorageLinkedService'
 var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
-roleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var roleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var bootstrapRoleAssignmentName  = guid(resourceGroup().id, managedIdentity.id, roleDefinitionId)
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
