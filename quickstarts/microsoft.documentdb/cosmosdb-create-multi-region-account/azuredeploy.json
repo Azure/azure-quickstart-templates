@@ -4,14 +4,14 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "8188631450296164517"
+      "version": "0.9.1.41621",
+      "templateHash": "14445763000776666052"
     }
   },
   "parameters": {
     "accountName": {
       "type": "string",
-      "defaultValue": "[toLower(uniqueString(resourceGroup().id))]",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
       "metadata": {
         "description": "Cosmos DB account name"
       }
@@ -26,16 +26,16 @@
     "primaryRegion": {
       "type": "string",
       "metadata": {
-        "description": "The primary replica region for the Cosmos DB account."
+        "description": "The primary region for the Cosmos DB account."
       }
     },
     "secondaryRegion": {
       "type": "string",
       "metadata": {
-        "description": "The secondary replica region for the Cosmos DB account."
+        "description": "The secondary region for the Cosmos DB account."
       }
     },
-    "api": {
+    "databaseApi": {
       "type": "string",
       "defaultValue": "Sql",
       "allowedValues": [
@@ -69,7 +69,7 @@
       "maxValue": 2147483647,
       "minValue": 10,
       "metadata": {
-        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2,147,483,647. Multi Region: 100,000 to 2,147,483,647."
       }
     },
     "maxIntervalInSeconds": {
@@ -78,21 +78,14 @@
       "maxValue": 86400,
       "minValue": 5,
       "metadata": {
-        "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
+        "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84,600. Multi Region: 300 to 86,400."
       }
     },
-    "multipleWriteLocations": {
-      "type": "bool",
-      "defaultValue": false,
-      "metadata": {
-        "description": "Enable multi-master to make all regions writable."
-      }
-    },
-    "automaticFailover": {
+    "systemManagedFailover": {
       "type": "bool",
       "defaultValue": true,
       "metadata": {
-        "description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
+        "description": "Enable system managed failover for regions. Ignored when mult-region writes is enabled"
       }
     }
   },
@@ -104,7 +97,11 @@
       },
       "MongoDB": {
         "kind": "MongoDB",
-        "capabilities": []
+        "capabilities": [
+          {
+            "name": "DisableRateLimitingResponses"
+          }
+        ]
       },
       "Cassandra": {
         "kind": "GlobalDocumentDB",
@@ -166,17 +163,16 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-04-15",
-      "name": "[parameters('accountName')]",
+      "apiVersion": "2022-05-15",
+      "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
-      "kind": "[variables('apiType')[parameters('api')].kind]",
+      "kind": "[variables('apiType')[parameters('databaseApi')].kind]",
       "properties": {
         "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
-        "enableAutomaticFailover": "[parameters('automaticFailover')]",
-        "capabilities": "[variables('apiType')[parameters('api')].capabilities]",
-        "enableMultipleWriteLocations": "[parameters('multipleWriteLocations')]"
+        "enableAutomaticFailover": "[parameters('systemManagedFailover')]",
+        "capabilities": "[variables('apiType')[parameters('databaseApi')].capabilities]"
       }
     }
   ]

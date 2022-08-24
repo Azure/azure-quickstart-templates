@@ -27,34 +27,28 @@ The Azure VPN Gateway advertises through BGP the Azure Virtual network address s
 
 ## Network diagram
 
-[![1]][1]
+![1](./images/1.png)
 
-### Site-to-Site IPsec tunnels between the Azure VPN gateways:
+### Site-to-Site IPsec tunnels between the Azure VPN gateways
 
-[![2]][2]
+![2](./images/2.png)
 
 At the end of deployment, the two Azure VMs in the two VNets,vm1 and vm2, can communicate through private IPs.
 
-[![3]][3]
+![3](./images/3.png)
 
 ## Note1
+
 - the template works as expected only in **Azure regions with availability zones**.
 - VPN gateway supports two generations: **Generation1** and **Generation2**. The **VpnGw1AZ** gateway SKU is only available in **Generation1**.
 - the IPsec / IKE policy is set to default
 
 ## Note2
+
 Before running the template deployment, set your custom values in the parameters file:
+
 - **sharedKey**: pre-shared key used for Site-to-Site VPN tunnels
 - **adminUsername**: administrator username of the Azure VMs
 - **adminPassword**: administrator password of the Azure VMs
 
 `Tags: Azure VPN, site-to-site, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/localNetworkGateways, Microsoft.Network/connections, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`
-
-<!--Image References-->
-
-[1]: ./images/1.png "network diagram"
-[2]: ./images/2.png "Azure VPN Gateways"
-[3]: ./images/3.png "communication between VMs"
-
-<!--Link References-->
-

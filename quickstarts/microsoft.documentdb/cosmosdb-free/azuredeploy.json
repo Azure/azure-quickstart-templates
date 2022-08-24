@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "3618147425978951060"
+      "version": "0.9.1.41621",
+      "templateHash": "10464263782030935824"
     }
   },
   "parameters": {
@@ -26,14 +26,20 @@
     "databaseName": {
       "type": "string",
       "metadata": {
-        "description": "The name for the Core (SQL) database"
+        "description": "The name for the SQL API database"
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the SQL API container"
       }
     }
   },
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-04-15",
+      "apiVersion": "2022-05-15",
       "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -51,18 +57,50 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', toLower(parameters('accountName')), toLower(parameters('databaseName')))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('databaseName')]"
         },
         "options": {
-          "throughput": 400
+          "throughput": 1000
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('accountName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}/{2}', toLower(parameters('accountName')), parameters('databaseName'), parameters('containerName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('containerName')]",
+          "partitionKey": {
+            "paths": [
+              "/myPartitionKey"
+            ],
+            "kind": "Hash"
+          },
+          "indexingPolicy": {
+            "indexingMode": "consistent",
+            "includedPaths": [
+              {
+                "path": "/*"
+              }
+            ],
+            "excludedPaths": [
+              {
+                "path": "/_etag/?"
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', toLower(parameters('accountName')), parameters('databaseName'))]"
       ]
     }
   ]

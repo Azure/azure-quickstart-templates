@@ -4,7 +4,7 @@ param accountName string = 'sql-${toLower(uniqueString(resourceGroup().id))}'
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
-resource account 'Microsoft.DocumentDB/databaseAccounts@2021-11-15-preview' = {
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
   name: accountName
   location: location
   kind: 'GlobalDocumentDB'

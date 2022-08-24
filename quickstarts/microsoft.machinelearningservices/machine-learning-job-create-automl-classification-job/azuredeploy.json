@@ -1,0 +1,125 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.9.1.41621",
+      "templateHash": "9789656502448986732"
+    }
+  },
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning workspace where job will be created."
+      }
+    },
+    "computeName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning compute instance/cluster on which job will be run."
+      }
+    },
+    "experimentName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning experiment under which job will be created."
+      }
+    },
+    "jobName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning job to be created."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation."
+      }
+    },
+    "limitSettings": {
+      "type": "object",
+      "defaultValue": {
+        "maxTrials": 5,
+        "maxConcurrentTrials": 1,
+        "maxCoresPerTrial": -1,
+        "enableEarlyTermination": true,
+        "timeout": "PT10H",
+        "trialTimeout": "PT20M"
+      },
+      "metadata": {
+        "description": "Specifies execution contraints for the job."
+      }
+    },
+    "trainingSettings": {
+      "type": "object",
+      "defaultValue": {
+        "blockedTrainingAlgorithms": [
+          "LogisticRegression"
+        ],
+        "enableModelExplainability": true,
+        "enableOnnxCompatibleModels": false,
+        "enableStackEnsemble": true,
+        "enableVoteEnsemble": true,
+        "ensembleModelDownloadTimeout": "PT5M",
+        "enableDnnTraining": false
+      },
+      "metadata": {
+        "description": "Specifies training related configuration for the job."
+      }
+    }
+  },
+  "variables": {
+    "compute": "[resourceId('Microsoft.MachineLearningServices/workspaces/computes', parameters('workspaceName'), parameters('computeName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/jobs",
+      "apiVersion": "2022-06-01-preview",
+      "name": "[format('{0}/{1}', parameters('workspaceName'), parameters('jobName'))]",
+      "properties": {
+        "jobType": "AutoML",
+        "tags": {
+          "referenceNotebook": "https://github.com/Azure/azureml-examples/blob/main/sdk/jobs/automl-standalone-jobs/automl-classification-task-bankmarketing"
+        },
+        "experimentName": "[parameters('experimentName')]",
+        "computeId": "[variables('compute')]",
+        "taskDetails": {
+          "logVerbosity": "Info",
+          "taskType": "Classification",
+          "primaryMetric": "Accuracy",
+          "targetColumnName": "y",
+          "trainingData": {
+            "uri": "[uri(parameters('_artifactsLocation'), format('data/training-mltable-folder/{0}', parameters('_artifactsLocationSasToken')))]",
+            "jobInputType": "MLTable"
+          },
+          "validationData": {
+            "uri": "[uri(parameters('_artifactsLocation'), format('data/validation-mltable-folder/{0}', parameters('_artifactsLocationSasToken')))]",
+            "jobInputType": "MLTable"
+          },
+          "featurizationSettings": {
+            "mode": "auto"
+          },
+          "limitSettings": "[parameters('limitSettings')]",
+          "trainingSettings": "[parameters('trainingSettings')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "Job_Studio_Endpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces/jobs', split(format('{0}/{1}', parameters('workspaceName'), parameters('jobName')), '/')[0], split(format('{0}/{1}', parameters('workspaceName'), parameters('jobName')), '/')[1])).services.Studio.endpoint]"
+    }
+  }
+}

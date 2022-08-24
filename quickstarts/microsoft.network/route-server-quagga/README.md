@@ -25,50 +25,51 @@ The purpose of setup is shown interoperability between Quagga and Azure Route se
 
 ## Network diagram
 
-[![1]][1]
+[!(./images/1.png)](./images/1.png)
 
 ## Note1
+
 - Route Server is currently in Public Preview.
 - Route Server is not currently available in the US Government regions.
 - The ASN of Azure Route Server is **65515** and it can't be changed.
 - Setup of Quagga is executed by Azure customer script extension for linux, through the bash script **quaggadeploy.sh** stored in the folder **script**
 
 ## Note2
+
 After completion of the deployment, it is possible to check the network prefixes advertised from Quagga to the Router Server by powershell command:
 
 ```powershell
 Get-AzVirtualRouterPeerLearnedRoute -ResourceGroupName <Name_Resource_Group> -VirtualRouterName routesrv1 -PeerName bgp-conn1 | ft
 ```
+
 where
+
 - <Name_Resource_Group>: name of the resource group
 - routesrv1: name of the router server
 - bgp-conn1: bgp connection of router server with Quagga
 
 A complementary check can be done in the Quagga VM. Login with root credential in the VM and get in Quagga vty shell:
+
 ```bash
 root@vm1:~# vtysh
 ```
 
 Inside the vtysh shell, run the command to visualize the BGP table:
-```
+
+```bash
 vm1# show ip bgp
 ```
 
 To remove the peering in the Route Server:
+
 ```powershell
 Remove-AzVirtualRouterPeer -ResourceGroupName <Resource_Group_Name> -PeerName <BGP_Connection_Name> -VirtualRouterName <Route_Server_Name>
 ```
 
 To remove the Route Server:
+
 ```powershell
 Remove-AzVirtualRouter -ResourceGroupName <Resource_Group_Name> -RouterName <Route_Server_Name>
 ```
 
 `Tags: route server, BGP, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualHubs, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualHubs/ipConfigurations, Microsoft.Network/virtualHubs/bgpConnections, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
-
-<!--Image References-->
-
-[1]: ./images/1.png "network diagram"
-
-<!--Link References-->
-

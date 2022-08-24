@@ -1,5 +1,5 @@
 ---
-description: This template creates a Standard Stream Analytics Job without input and output
+description: This template creates a Standard Stream Analytics Job. For more information, Azure Stream Analytics is a real-time analytics and complex event-processing engine that is designed to analyze and process high volumes of fast streaming data from multiple sources simultaneously. Patterns and relationships can be identified in information extracted from a number of input sources including devices, sensors, clickstreams, social media feeds, and applications. These patterns can be used to trigger actions and initiate workflows such creating alerts, feeding information to a reporting tool, or storing transformed data for later use. Also, Stream Analytics is available on Azure IoT Edge runtime, and supports the same exact language or syntax as cloud.
 page_type: sample
 products:
 - azure

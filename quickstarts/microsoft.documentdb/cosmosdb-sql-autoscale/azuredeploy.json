@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "2605865773200000949"
+      "version": "0.9.1.41621",
+      "templateHash": "5060734554184834462"
     }
   },
   "parameters": {
@@ -26,13 +26,13 @@
     "primaryRegion": {
       "type": "string",
       "metadata": {
-        "description": "The primary replica region for the Cosmos DB account."
+        "description": "The primary region for the Cosmos DB account."
       }
     },
     "secondaryRegion": {
       "type": "string",
       "metadata": {
-        "description": "The secondary replica region for the Cosmos DB account."
+        "description": "The secondary region for the Cosmos DB account."
       }
     },
     "defaultConsistencyLevel": {
@@ -55,7 +55,7 @@
       "maxValue": 2147483647,
       "minValue": 10,
       "metadata": {
-        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647."
       }
     },
     "maxIntervalInSeconds": {
@@ -67,11 +67,11 @@
         "description": "Max lag time (minutes). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
       }
     },
-    "automaticFailover": {
+    "systemManagedFailover": {
       "type": "bool",
       "defaultValue": true,
       "metadata": {
-        "description": "Enable automatic failover for regions"
+        "description": "Enable system managed failover for regions"
       }
     },
     "databaseName": {
@@ -88,16 +88,15 @@
     },
     "autoscaleMaxThroughput": {
       "type": "int",
-      "defaultValue": 4000,
+      "defaultValue": 1000,
       "maxValue": 1000000,
-      "minValue": 4000,
+      "minValue": 1000,
       "metadata": {
-        "description": "Maximum throughput for the container"
+        "description": "Maximum autoscale throughput for the container"
       }
     }
   },
   "variables": {
-    "accountName_var": "[toLower(parameters('accountName'))]",
     "consistencyPolicy": {
       "Eventual": {
         "defaultConsistencyLevel": "Eventual"
@@ -133,34 +132,34 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-01-15",
-      "name": "[variables('accountName_var')]",
+      "apiVersion": "2022-05-15",
+      "name": "[toLower(parameters('accountName'))]",
       "kind": "GlobalDocumentDB",
       "location": "[parameters('location')]",
       "properties": {
         "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
-        "enableAutomaticFailover": "[parameters('automaticFailover')]"
+        "enableAutomaticFailover": "[parameters('systemManagedFailover')]"
       }
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-      "apiVersion": "2021-01-15",
-      "name": "[format('{0}/{1}', variables('accountName_var'), parameters('databaseName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('databaseName')]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('accountName')))]"
       ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-      "apiVersion": "2021-01-15",
-      "name": "[format('{0}/{1}/{2}', variables('accountName_var'), parameters('databaseName'), parameters('containerName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}/{2}', toLower(parameters('accountName')), parameters('databaseName'), parameters('containerName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('containerName')]",
@@ -180,6 +179,9 @@
             "excludedPaths": [
               {
                 "path": "/myPathToNotIndex/*"
+              },
+              {
+                "path": "/_etag/?"
               }
             ],
             "compositeIndexes": [
@@ -224,7 +226,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName_var'), parameters('databaseName'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', toLower(parameters('accountName')), parameters('databaseName'))]"
       ]
     }
   ]
