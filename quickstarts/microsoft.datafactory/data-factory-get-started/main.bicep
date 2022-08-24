@@ -17,7 +17,8 @@ var dataFactoryLinkedServiceName = 'ArmtemplateStorageLinkedService'
 var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
-var bootstrapRoleAssignmentId_var = guid('${resourceGroup().id}contributor')
+roleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var bootstrapRoleAssignmentName  = guid(resourceGroup().id, managedIdentity.id, roleDefinitionId)
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageAccountName
@@ -41,9 +42,9 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-
 }
 
 resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-01-01' = {
-  name: bootstrapRoleAssignmentId_var
+  name: bootstrapRoleAssignmentName 
   properties: {
-    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
+    roleDefinitionId: roleDefinitionId
     principalId: reference(managedIdentity.id, '2022-01-31-preview').principalId
     principalType: 'ServicePrincipal'
   }
@@ -101,7 +102,7 @@ resource linkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-0
   properties: {
     type: 'AzureBlobStorage'
     typeProperties: {
-      connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listKeys(storageAccount.id, '2021-09-01').keys[0].value}'
+      connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys()}'
     }
   }
 }
