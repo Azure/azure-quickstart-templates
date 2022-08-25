@@ -41,7 +41,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-
   location: location
 }
 
-resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-01-01' = {
+resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-01-01-preview' = {
   name: bootstrapRoleAssignmentName 
   properties: {
     roleDefinitionId: roleDefinitionId
