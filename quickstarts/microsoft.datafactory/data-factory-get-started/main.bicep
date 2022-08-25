@@ -13,12 +13,23 @@ param blobContainerName string = 'blob${uniqueString(resourceGroup().id)}'
 @description('Name of the managed identity created to access the Azure Storage account.')
 param managedIdentityName string = 'blob${uniqueString(resourceGroup().id)}'
 
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
+param _artifactsLocation string = deployment().properties.templateLink.uri
+
+@description('The sasToken required to access _artifactsLocation.')
+@secure()
+param _artifactsLocationSasToken string = ''
+
+@description('The file name that contains the content for the Data Factory')
+param csvFilename string = 'moviesDB2.csv'
+
 var dataFactoryLinkedServiceName = 'ArmtemplateStorageLinkedService'
 var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
 var roleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var bootstrapRoleAssignmentName  = guid(resourceGroup().id, managedIdentity.id, roleDefinitionId)
+var contentUri = uri(_artifactsLocation, '${csvFilename}${_artifactsLocationSasToken}')
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageAccountName
@@ -80,8 +91,12 @@ resource runPowerShellInlineWithOutput 'Microsoft.Resources/deploymentScripts@20
         name: 'ContainerName'
         value: blobContainerName
       }
+      {
+        name: 'contentUri'
+        value: contentUri
+      }
     ]
-    scriptContent: 'Invoke-WebRequest -Uri \'https://raw.githubusercontent.com/kromerm/adfdataflowdocs/master/sampledata/moviesDB2.csv\' -OutFile \'moviesDB2.csv\'; $storageAccount = Get-AzStorageAccount -ResourceGroupName \${Env:RGName} -Name \${Env:SAName}; $ctx = $storageAccount.Context; Set-AzStorageBlobContent -Container \${Env:ContainerName} -Blob \'input/moviesDB2.csv\' -Context $ctx -StandardBlobTier \'Hot\' -File \'moviesDB2.csv\''
+    scriptContent: loadTextContent('./scripts/copy-data.ps1')
     timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
@@ -197,5 +212,4 @@ resource pipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
       }
     ]
   }
-
 }
