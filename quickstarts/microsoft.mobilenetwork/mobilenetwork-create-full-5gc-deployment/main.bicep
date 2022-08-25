@@ -35,6 +35,9 @@ param simResources array = []
 ])
 param platformType string = 'AKS-HCI'
 
+@description('The resource ID of the Azure Stack Edge device to deploy to')
+param azureStackEdgeDevice string = ''
+
 @description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param controlPlaneAccessInterfaceName string = ''
 
@@ -254,12 +257,16 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       customLocation: empty(customLocation) ? null : {
         id: customLocation
       }
+      azureStackEdgeDevice: empty(azureStackEdgeDevice) ? null : {
+        id: azureStackEdgeDevice
+      }
     }
     controlPlaneAccessInterface: {
+      // TODO: check if needs to actually be not set at all, instead of just null.
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: accessSubnet
-      ipv4Gateway: accessGateway
-      name: controlPlaneAccessInterfaceName
+      ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCI
+      ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCI
+      name: empty(azureStackEdgeDevice) ? controlPlaneAccessInterfaceName : null // remove if ASE Device param is set and we're AKS-HCI, or if base VM (but assume quickstart isn't used for BVM)
     }
   }
 
@@ -269,10 +276,10 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     location: location
     properties: {
       userPlaneAccessInterface: {
-        ipv4Address: userPlaneAccessInterfaceIpAddress
-        ipv4Subnet: accessSubnet
-        ipv4Gateway: accessGateway
-        name: userPlaneAccessInterfaceName
+        ipv4Address: empty(azureStackEdgeDevice) ? userPlaneAccessInterfaceIpAddress : null// remove if ASE devide param is set and we're AKS-HCI
+        ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCI
+        ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCI
+        name: userPlaneAccessInterfaceName // remove if base VM
       }
     }
 
@@ -282,10 +289,10 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       location: location
       properties: {
         userPlaneDataInterface: {
-          ipv4Address: userPlaneDataInterfaceIpAddress
-          ipv4Subnet: userPlaneDataInterfaceSubnet
-          ipv4Gateway: userPlaneDataInterfaceGateway
-          name: userPlaneDataInterfaceName
+          ipv4Address: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceIpAddress : null // remove if AKS-HCI and ASE provided
+          ipv4Subnet: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceSubnet : null // remove if AKS-HCI and ASE provided
+          ipv4Gateway: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceGateway : null // remove if AKS-HCI and ASE provided
+          name: userPlaneDataInterfaceName // keep if AKS-HCI, remove if Base VM
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
           userEquipmentAddressPoolPrefix
