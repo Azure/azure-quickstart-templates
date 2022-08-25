@@ -8,7 +8,7 @@ urlFragment: app-function
 languages:
 - json
 ---
-# Empty Function App
+# Function App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-function/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-function/PublicDeployment.svg)
