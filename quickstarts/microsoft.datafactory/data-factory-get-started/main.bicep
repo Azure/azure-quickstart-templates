@@ -65,7 +65,7 @@ resource runPowerShellInlineWithOutput 'Microsoft.Resources/deploymentScripts@20
     bootstrapRoleAssignmentId
   ]
   properties: {
-    azPowerShellVersion: '8.2'
+    azPowerShellVersion: '8.0'
     arguments: '-name FileCreationScript'
     environmentVariables: [
       {
