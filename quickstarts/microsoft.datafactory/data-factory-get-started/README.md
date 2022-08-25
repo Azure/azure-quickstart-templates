@@ -1,15 +1,15 @@
 ---
-description: This template creates a data factory pipeline for a copy activity from Azure Blob into an Azure SQL Database
+description: This template creates a data factory pipeline for a copy activity from Azure Blob into another Azure Blob
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: data-factory-blob-to-sql-copy
+urlFragment: data-factory-get-started
 languages:
 - json
 - bicep
 ---
-# Create a Data Factory, Blob source, SQL sink and Pipeline
+# Create a Data Factory, Blob source, Blob sink and Pipeline
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/PublicDeployment.svg)
