@@ -7,6 +7,7 @@ products:
 urlFragment: azurefirewall-create-with-ipgroups-and-linux-jumpbox
 languages:
 - json
+- bicep
 ---
 # Create an Azure Firewall with IpGroups
 
