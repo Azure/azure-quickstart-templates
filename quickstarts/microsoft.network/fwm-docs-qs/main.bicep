@@ -11,7 +11,7 @@ param location string = resourceGroup().location
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_D2_v3'
 
-resource virtualVan 'Microsoft.Network/virtualWans@2021-08-01' = {
+resource virtualWan 'Microsoft.Network/virtualWans@2021-08-01' = {
   name: 'VWan-01'
   location: location
   properties: {
@@ -27,7 +27,7 @@ resource virtualHub 'Microsoft.Network/virtualHubs@2021-08-01' = {
   properties: {
     addressPrefix: '10.1.0.0/16'
     virtualWan: {
-      id: virtualVan.id
+      id: virtualWan.id
     }
   }
 }
