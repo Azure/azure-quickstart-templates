@@ -91,7 +91,7 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
   name: pipelineName
   properties: {
     activities: [
-      any({
+      {
         name: 'MyCopyActivity'
         type: 'Copy'
         policy: {
@@ -112,7 +112,7 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
           sink: {
             type: 'BinarySink'
             storeSettings: {
-              type: 'AzureBlobStorageWriterSettings'
+              type: 'AzureBlobStorageWriteSettings'
             }
           }
           enableStaging: false
@@ -129,7 +129,7 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
             type: 'DatasetReference'
           }
         ]
-      })
+      }
     ]
   }
 }
