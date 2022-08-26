@@ -1,9 +1,6 @@
 @description('Region where the Mobile Network will be deployed (must match the resource group region)')
 param location string = resourceGroup().location
 
-@description('The region in which you are deploying the Kubernetes base VM')
-param baseVmLocation string = resourceGroup().location
-
 @description('The name for the private mobile network')
 param mobileNetworkName string
 
@@ -36,24 +33,6 @@ param simResources array = []
   'BaseVM'
 ])
 param platformType string = 'BaseVM'
-
-@description('The resource ID of the Azure Stack Edge device to deploy to')
-param azureStackEdgeDevice string = ''
-
-@description('The stock keeping unit (SKU) for the version of the Kubernetes base VM you will deploy')
-param nfSku string = ''
-
-@description('The public key of an SSH keypair you can use to securely connect to the Kubernetes base VM')
-param mecUserSshPublicKey string = ''
-
-@description('The management IP address for the Kubernetes base VM')
-param mgmtIpAddress string = ''
-
-@description('The network address of the management subnet in CIDR notation')
-param mgmtSubnet string = ''
-
-@description('The management subnet default gateway')
-param mgmtGateway string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
