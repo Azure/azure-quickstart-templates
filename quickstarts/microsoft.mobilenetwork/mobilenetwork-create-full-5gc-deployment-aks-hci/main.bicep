@@ -31,24 +31,20 @@ param simResources array = []
 @description('The platform type where packet core is deployed.')
 @allowed([
   'AKS-HCI'
-  'BaseVM'
 ])
 param platformType string = 'AKS-HCI'
 
 @description('The resource ID of the Azure Stack Edge device to deploy to')
 param azureStackEdgeDevice string = ''
 
-@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The name of the control plane interface on the access network. This must match the corresponding virtual network name on port 5 on your Azure Stack Edge Pro device. For 5G, this interface is the N2 interface, whereas for 4G, it\'s the S1-MME interface.')
 param controlPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
 
-@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The name for the user plane interface on the access network. This must match the corresponding virtual network name on port 5 on your Azure Stack Edge Pro device. For 5G, this interface is the N3 interface, whereas for 4G, it\'s the S1-U interface.')
 param userPlaneAccessInterfaceName string = ''
-
-@description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI.')
-param userPlaneAccessInterfaceIpAddress string = ''
 
 @description('The network address of the access subnet in CIDR notation')
 param accessSubnet string = ''
@@ -56,11 +52,8 @@ param accessSubnet string = ''
 @description('The access subnet default gateway')
 param accessGateway string = ''
 
-@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The name for the user plane interface on the data network. This must match the corresponding virtual network name on port 6 on your Azure Stack Edge Pro device. For 5G, this interface is the N6 interface, whereas for 4G, it\'s the SGi interface.')
 param userPlaneDataInterfaceName string = ''
-
-@description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI.')
-param userPlaneDataInterfaceIpAddress string = ''
 
 @description('The network address of the data subnet in CIDR notation')
 param userPlaneDataInterfaceSubnet string = ''
@@ -264,9 +257,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     controlPlaneAccessInterface: {
       // TODO: check if needs to actually be not set at all, instead of just null.
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCI
-      ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCI
-      name: empty(azureStackEdgeDevice) ? controlPlaneAccessInterfaceName : null // remove if ASE Device param is set and we're AKS-HCI, or if base VM (but assume quickstart isn't used for BVM)
+      ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCI. Leave in if base VM.
+      ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCI. Leave in if base VM.
+      name: controlPlaneAccessInterfaceName //  remove if base VM
     }
   }
 
@@ -276,9 +269,8 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     location: location
     properties: {
       userPlaneAccessInterface: {
-        ipv4Address: empty(azureStackEdgeDevice) ? userPlaneAccessInterfaceIpAddress : null// remove if ASE devide param is set and we're AKS-HCI
-        ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCI
-        ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCI
+        ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCILeave in if base VM.
+        ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCILeave in if base VM.
         name: userPlaneAccessInterfaceName // remove if base VM
       }
     }
@@ -289,9 +281,8 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       location: location
       properties: {
         userPlaneDataInterface: {
-          ipv4Address: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceIpAddress : null // remove if AKS-HCI and ASE provided
-          ipv4Subnet: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceSubnet : null // remove if AKS-HCI and ASE provided
-          ipv4Gateway: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceGateway : null // remove if AKS-HCI and ASE provided
+          ipv4Subnet: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceSubnet : null // remove if AKS-HCI and ASE providedLeave in if base VM.
+          ipv4Gateway: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceGateway : null // remove if AKS-HCI and ASE providedLeave in if base VM.
           name: userPlaneDataInterfaceName // keep if AKS-HCI, remove if Base VM
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
