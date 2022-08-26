@@ -15,16 +15,6 @@
 This template will allow you to toggle the `[$import operation](https://docs.microsoft.com/azure/healthcare-apis/fhir/import-data)` on a FHIR service inside a Azure Health Data Services workspace. 
 
 
-### Template Input Parameters
-
-
-| Parameter | Required | Description |
-| --- | --- | --- |
-| workspaceName | Yes | The name of the Azure Health Data Services workspace containing the FHIR service to toggle import. |
-| fhirName | Yes | The name of the FHIR service to toggle import. |
-| storageName | Maybe | The name of the storage account to pull data from for import. This is required for enabling import but not disabling. The storage account must exist. |
-| enableImport | Yes | `true` to enable import and `false` to disable import. |
-
 ## Deployment via azure cli
 
 You can deploy the Bicep template directly with this azure cli command.
