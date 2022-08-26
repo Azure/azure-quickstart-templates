@@ -255,11 +255,10 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     }
     controlPlaneAccessInterface: {
-      // TODO: check if needs to actually be not set at all, instead of just null.
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCI. Leave in if base VM.
-      ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCI. Leave in if base VM.
-      name: controlPlaneAccessInterfaceName //  remove if base VM
+      ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null
+      ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null
+      name: controlPlaneAccessInterfaceName
     }
   }
 
@@ -269,9 +268,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     location: location
     properties: {
       userPlaneAccessInterface: {
-        ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null // remove if ASE Device param is set and we're AKS-HCILeave in if base VM.
-        ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null // remove if ASE Device param is set and we're AKS-HCILeave in if base VM.
-        name: userPlaneAccessInterfaceName // remove if base VM
+        ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null
+        ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null
+        name: userPlaneAccessInterfaceName
       }
     }
 
@@ -281,9 +280,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       location: location
       properties: {
         userPlaneDataInterface: {
-          ipv4Subnet: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceSubnet : null // remove if AKS-HCI and ASE providedLeave in if base VM.
-          ipv4Gateway: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceGateway : null // remove if AKS-HCI and ASE providedLeave in if base VM.
-          name: userPlaneDataInterfaceName // keep if AKS-HCI, remove if Base VM
+          ipv4Subnet: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceSubnet : null
+          ipv4Gateway: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceGateway : null
+          name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
           userEquipmentAddressPoolPrefix
