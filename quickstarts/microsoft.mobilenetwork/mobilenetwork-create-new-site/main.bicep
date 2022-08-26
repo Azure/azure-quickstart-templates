@@ -13,20 +13,21 @@ param siteName string = 'myExampleSite'
 @description('The platform type where packet core is deployed.')
 @allowed([
   'AKS-HCI'
+  'BaseVM'
 ])
 param platformType string = 'AKS-HCI'
 
-@description('The resource ID of the Azure Stack Edge device to deploy to')
-param azureStackEdgeDevice string = ''
-
-@description('The name of the control plane interface on the access network. This must match the corresponding virtual network name on port 5 on your Azure Stack Edge Pro device. For 5G, this interface is the N2 interface, whereas for 4G, it\'s the S1-MME interface.')
+@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param controlPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
 
-@description('The name for the user plane interface on the access network. This must match the corresponding virtual network name on port 5 on your Azure Stack Edge Pro device. For 5G, this interface is the N3 interface, whereas for 4G, it\'s the S1-U interface.')
+@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param userPlaneAccessInterfaceName string = ''
+
+@description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI.')
+param userPlaneAccessInterfaceIpAddress string = ''
 
 @description('The network address of the access subnet in CIDR notation')
 param accessSubnet string = ''
@@ -34,8 +35,11 @@ param accessSubnet string = ''
 @description('The access subnet default gateway')
 param accessGateway string = ''
 
-@description('The name for the user plane interface on the data network. This must match the corresponding virtual network name on port 6 on your Azure Stack Edge Pro device. For 5G, this interface is the N6 interface, whereas for 4G, it\'s the SGi interface.')
+@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
 param userPlaneDataInterfaceName string = ''
+
+@description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI.')
+param userPlaneDataInterfaceIpAddress string = ''
 
 @description('The network address of the data subnet in CIDR notation')
 param userPlaneDataInterfaceSubnet string = ''
@@ -113,8 +117,8 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null
-      ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null
+      ipv4Subnet: accessSubnet
+      ipv4Gateway: accessGateway
       name: controlPlaneAccessInterfaceName
     }
   }
@@ -125,8 +129,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     location: location
     properties: {
       userPlaneAccessInterface: {
-        ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null
-        ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null
+        ipv4Address: userPlaneAccessInterfaceIpAddress
+        ipv4Subnet: accessSubnet
+        ipv4Gateway: accessGateway
         name: userPlaneAccessInterfaceName
       }
     }
@@ -137,8 +142,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       location: location
       properties: {
         userPlaneDataInterface: {
-          ipv4Subnet: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceSubnet : null
-          ipv4Gateway: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceGateway : null
+          ipv4Address: userPlaneDataInterfaceIpAddress
+          ipv4Subnet: userPlaneDataInterfaceSubnet
+          ipv4Gateway: userPlaneDataInterfaceGateway
           name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
