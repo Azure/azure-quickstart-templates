@@ -12,19 +12,13 @@ param siteName string = 'myExampleSite'
 
 @description('The platform type where packet core is deployed.')
 @allowed([
-  'AKS-HCI'
   'BaseVM'
 ])
-param platformType string = 'AKS-HCI'
+param platformType string = 'BaseVM'
 
-@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param controlPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
-
-@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param userPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI.')
 param userPlaneAccessInterfaceIpAddress string = ''
@@ -34,9 +28,6 @@ param accessSubnet string = ''
 
 @description('The access subnet default gateway')
 param accessGateway string = ''
-
-@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param userPlaneDataInterfaceName string = ''
 
 @description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI.')
 param userPlaneDataInterfaceIpAddress string = ''
@@ -115,7 +106,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       ipv4Address: controlPlaneAccessIpAddress
       ipv4Subnet: accessSubnet
       ipv4Gateway: accessGateway
-      name: controlPlaneAccessInterfaceName
     }
   }
 
@@ -128,7 +118,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
         ipv4Address: userPlaneAccessInterfaceIpAddress
         ipv4Subnet: accessSubnet
         ipv4Gateway: accessGateway
-        name: userPlaneAccessInterfaceName
       }
     }
 
@@ -141,7 +130,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
           ipv4Address: userPlaneDataInterfaceIpAddress
           ipv4Subnet: userPlaneDataInterfaceSubnet
           ipv4Gateway: userPlaneDataInterfaceGateway
-          name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
           userEquipmentAddressPoolPrefix
