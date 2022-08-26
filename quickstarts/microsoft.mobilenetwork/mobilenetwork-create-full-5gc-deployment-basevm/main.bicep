@@ -1,6 +1,9 @@
 @description('Region where the Mobile Network will be deployed (must match the resource group region)')
 param location string = resourceGroup().location
 
+@description('The region in which you are deploying the Kubernetes base VM')
+param baseVmLocation string = resourceGroup().location
+
 @description('The name for the private mobile network')
 param mobileNetworkName string
 
@@ -30,19 +33,30 @@ param simResources array = []
 
 @description('The platform type where packet core is deployed.')
 @allowed([
-  'AKS-HCI'
   'BaseVM'
 ])
-param platformType string = 'AKS-HCI'
+param platformType string = 'BaseVM'
 
-@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param controlPlaneAccessInterfaceName string = ''
+@description('The resource ID of the Azure Stack Edge device to deploy to')
+param azureStackEdgeDevice string = ''
+
+@description('The stock keeping unit (SKU) for the version of the Kubernetes base VM you will deploy')
+param nfSku string = ''
+
+@description('The public key of an SSH keypair you can use to securely connect to the Kubernetes base VM')
+param mecUserSshPublicKey string = ''
+
+@description('The management IP address for the Kubernetes base VM')
+param mgmtIpAddress string = ''
+
+@description('The network address of the management subnet in CIDR notation')
+param mgmtSubnet string = ''
+
+@description('The management subnet default gateway')
+param mgmtGateway string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
-
-@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param userPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI.')
 param userPlaneAccessInterfaceIpAddress string = ''
@@ -52,9 +66,6 @@ param accessSubnet string = ''
 
 @description('The access subnet default gateway')
 param accessGateway string = ''
-
-@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param userPlaneDataInterfaceName string = ''
 
 @description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI.')
 param userPlaneDataInterfaceIpAddress string = ''
@@ -255,7 +266,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       ipv4Address: controlPlaneAccessIpAddress
       ipv4Subnet: accessSubnet
       ipv4Gateway: accessGateway
-      name: controlPlaneAccessInterfaceName
     }
   }
 
@@ -268,7 +278,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
         ipv4Address: userPlaneAccessInterfaceIpAddress
         ipv4Subnet: accessSubnet
         ipv4Gateway: accessGateway
-        name: userPlaneAccessInterfaceName
       }
     }
 
@@ -281,7 +290,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
           ipv4Address: userPlaneDataInterfaceIpAddress
           ipv4Subnet: userPlaneDataInterfaceSubnet
           ipv4Gateway: userPlaneDataInterfaceGateway
-          name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
           userEquipmentAddressPoolPrefix
