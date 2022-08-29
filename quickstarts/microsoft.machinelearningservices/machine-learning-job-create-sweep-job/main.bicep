@@ -86,7 +86,7 @@ module codeVersion 'modules/codeversion.bicep' = {
 var codeId = codeVersion.outputs.codeId
 
 // creating sweep job resource
-resource sweepjobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
+resource sweepjobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-05-01-preview' = {
   name: '${workspaceName}/${jobName}'
   properties: {
     description: 'Sweep Job Resource from ARM Template'

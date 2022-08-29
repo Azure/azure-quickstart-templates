@@ -4,9 +4,6 @@ param workspaceName string
 @description('Name of the blob as it is stored in the blob container')
 param filename string = 'main.py'
 
-@description('UTC timestamp used to create distinct deployment scripts for each deployment')
-param utcValue string = utcNow()
-
 @description('Name of the blob container')
 param containerName string = 'hdscript'
 
@@ -20,7 +17,7 @@ param storageAccountName string
 param codeVersion string = '1'
 
 @description('Specifies the env for sweep job.')
-param codeId string = 'code_${utcValue}'
+param codeId string = 'code'
 
 // fetching existing storage account
 resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
@@ -38,10 +35,13 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
   }
 }
 
+// unique value based on container id
+var uniqueIdentifier = uniqueString(storage::blobService::container.id)
+
 // creating deployment script to upload hyperdrive script 'main.py' to blob container
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   dependsOn: [ storage ]
-  name: 'deployscript-upload-blob-${utcValue}'
+  name: 'deployscript-upload-blob-${uniqueIdentifier}'
   location: location
   kind: 'AzureCLI'
   properties: {
@@ -59,19 +59,22 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       }
       {
         name: 'CONTENT'
-        value: loadTextContent('../script/main.py')
+        value: loadTextContent('../scripts/main.py')
       }
     ]
     scriptContent: 'echo "$CONTENT" > ${filename} && az storage blob upload -f ${filename} -c ${containerName} -n ${filename}'
   }
 }
 
+// fetching azure environment storage url
+var azureEnvUrl = environment().suffixes.storage
+
 // creating codeVersion resource using uploaded hyperdrive script blob url
 resource codeVersionResource 'Microsoft.MachineLearningServices/workspaces/codes/versions@2022-05-01' = {
   dependsOn: [ deploymentScript ]
-  name: '${workspaceName}/${codeId}/${codeVersion}'
+  name: '${workspaceName}/${codeId}-${uniqueIdentifier}/${codeVersion}'
   properties: {
-    codeUri: 'https://${storageAccountName}.blob.core.windows.net/${containerName}/'
+    codeUri: 'https://${storageAccountName}.blob.${azureEnvUrl}/${containerName}/'
     isAnonymous: false
   }
 }
