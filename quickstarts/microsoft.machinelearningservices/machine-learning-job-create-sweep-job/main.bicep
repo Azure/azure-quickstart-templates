@@ -17,11 +17,18 @@ param storageAccountName string
 @description('Specifies the name of the Azure Machine Learning experiment under which job will be created.')
 param experimentName string
 
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'.')
+param _artifactsLocation string = deployment().properties.templateLink.uri
+
+@description('The sasToken required to access _artifactsLocation.')
+@secure()
+param _artifactsLocationSasToken string = ''
+
 @description('Specifies dictionary of inputs search for sweep job.')
 param inputs object = {
   iris_csv: {
     mode: 'ReadOnlyMount'
-    uri: 'https://azuremlexamples.blob.core.windows.net/datasets/iris.csv'
+    uri: uri(_artifactsLocation, 'data/iris.csv${_artifactsLocationSasToken}')
     jobInputType: 'uri_file'
   }
 }
