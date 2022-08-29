@@ -40,6 +40,7 @@ To run this template you need to have an Azure Machine Learning Workspace, an Az
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
+You may set `_artifactsLocation` parameter to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.machinelearningservices/machine-learning-job-create-sweep-job/` to let the Azure Machine Learning Job use sample training and validation data.
 ### Notes
 
 If you are new to Azure Machine Learning, see:
