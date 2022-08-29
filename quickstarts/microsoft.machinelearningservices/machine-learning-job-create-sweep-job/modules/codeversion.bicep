@@ -74,7 +74,7 @@ resource codeVersionResource 'Microsoft.MachineLearningServices/workspaces/codes
   dependsOn: [ deploymentScript ]
   name: '${workspaceName}/${codeId}-${uniqueIdentifier}/${codeVersion}'
   properties: {
-    codeUri: 'https://${storageAccountName}.blob.${azureEnvUrl}/${containerName}/'
+    codeUri: uri('https://${storageAccountName}.blob.${azureEnvUrl}/','${containerName}/')
     isAnonymous: false
   }
 }
