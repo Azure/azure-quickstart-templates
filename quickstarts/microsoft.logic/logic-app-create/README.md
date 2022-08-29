@@ -1,5 +1,5 @@
 ---
-description: This template creates an empty logic app that can be used to define workflows.
+description: This template creates an empty logic app that you can use to define workflows.
 page_type: sample
 products:
 - azure
