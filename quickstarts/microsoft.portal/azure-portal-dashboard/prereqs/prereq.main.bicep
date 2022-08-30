@@ -26,7 +26,7 @@ param vmSize string = 'Standard_D2_v3'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-var storageAccountName_var = '${uniqueString(resourceGroup().id)}sawinvm'
+var storageAccountName = '${uniqueString(resourceGroup().id)}sawinvm'
 var nicName = 'myVMNic'
 var addressPrefix = '10.0.0.0/16'
 var subnetName = 'Subnet'
@@ -38,7 +38,7 @@ var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualN
 var networkSecurityGroupName = 'default-NSG'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
-  name: storageAccountName_var
+  name: storageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
