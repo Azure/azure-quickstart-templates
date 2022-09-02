@@ -28,12 +28,6 @@ param simGroupName string = ''
 @description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
 param simResources array = []
 
-@description('The platform type where packet core is deployed.')
-@allowed([
-  'BaseVM'
-])
-param platformType string = 'BaseVM'
-
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
 
@@ -236,7 +230,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     sku: 'EvaluationPackage'
     coreNetworkTechnology: coreNetworkTechnology
     platform: {
-      type: platformType
+      type: 'BaseVM'
       customLocation: empty(customLocation) ? null : {
         id: customLocation
       }
