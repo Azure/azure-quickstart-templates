@@ -10,12 +10,6 @@ param existingDataNetworkName string
 @description('The name for the site')
 param siteName string = 'myExampleSite'
 
-@description('The platform type where packet core is deployed.')
-@allowed([
-  'AKS-HCI'
-])
-param platformType string = 'AKS-HCI'
-
 @description('The resource ID of the Azure Stack Edge device to deploy to')
 param azureStackEdgeDevice string = ''
 
@@ -106,7 +100,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     sku: 'EvaluationPackage'
     coreNetworkTechnology: coreNetworkTechnology
     platform: {
-      type: platformType
+      type: 'AKS-HCI'
       customLocation: empty(customLocation) ? null : {
         id: customLocation
       }
