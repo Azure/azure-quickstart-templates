@@ -10,7 +10,7 @@ languages:
 ---
 #  Create a Public Load Balancer chained to a Gateway Load Balancer
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/load-balancer-gateway/PublicLastTestDate.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/demos/microsoft.network/load-balancer-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/demos/load-balancer-gateway/PublicDeployment.svg)
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/load-balancer-gateway/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/load-balancer-gateway/FairfaxDeployment.svg)
