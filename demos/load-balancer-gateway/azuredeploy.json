@@ -51,6 +51,41 @@
                 "description": "size of the Virtual Machine"
             }
         },
+        "nva1Name": {
+            "type": "string",
+            "defaultValue": "nva1",
+            "metadata": {
+                "description": "name of the nva1 in the backend pool of the Gateway Load Balancer"
+            }
+        },
+        "nva2Name": {
+            "type": "string",
+            "defaultValue": "nva2",
+            "metadata": {
+                "description": "name of the nva2 in the backend pool of the Gateway Load Balancer"
+            }
+        },
+        "vmapp1Name": {
+            "type": "string",
+            "defaultValue": "vmapp1",
+            "metadata": {
+                "description": "name of the of the application VM1 in the backend pool of the Public Load Balancer"
+            }
+        },
+         "vmapp2Name": {
+            "type": "string",
+            "defaultValue": "vmapp2",
+            "metadata": {
+                "description": "name of the of the application VM2 in the backend pool of the Public Load Balancer"
+            }
+        },
+        "vmclient1Name":{
+            "type": "string",
+            "defaultValue": "vmclient1",
+            "metadata": {
+                "description": "name of the of VM client in the vnet2"
+            }
+        },
         "adminUsername": {
             "type": "string",
             "metadata": {
@@ -147,15 +182,15 @@
         "adminUsername": "[parameters('adminUsername')]",
         "adminPassword": "[parameters('adminPassword')]",
         "vmSize": "[parameters('vmSize')]",
-        "nva1Name": "nva1",
-        "nva2Name": "nva2",
+        "nva1Name": "[parameters('nva1Name')]",
+        "nva2Name": "[parameters('nva2Name')]",
         "nva1IpAddresses": "10.0.1.10",
         "nva2IpAddresses": "10.0.1.11",
-        "vmapp1Name": "vmapp1",
-        "vmapp2Name": "vmapp2",
+        "vmapp1Name": "[parameters('vmapp1Name')]",
+        "vmapp2Name": "[parameters('vmapp2Name')]",
         "vmapp1IpAddress": "10.0.2.5",
         "vmapp2IpAddress": "10.0.2.6",
-        "vmclient1Name": "vmclient1",
+        "vmclient1Name": "[parameters('vmclient1Name')]",
         "nvaArray": [
             {
                 "location": "[variables('location')]",
@@ -258,11 +293,10 @@
         {
             "comments": "Create vnet1",
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('vnet1').name]",
             "location": "[variables('vnet1').location]",
             "dependsOn": [],
-
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -323,7 +357,7 @@
         {
             "comments": "This is the peering from vnet1 to vnet2",
             "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-            "apiVersion": "2021-05-01",
+            "apiVersion": "2022-01-01",
             "name": "[concat(variables('vnet1').name,'/',variables('vnet1').peeringName)]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -343,7 +377,7 @@
         {
             "comments": "This is the peering from vnet2 to vnet1",
             "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-            "apiVersion": "2021-05-01",
+            "apiVersion": "2022-01-01",
             "name": "[concat(variables('vnet2').name,'/',variables('vnet2').peeringName)]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -363,7 +397,7 @@
         {
             "comments": "Gateway Load Balancer in vnet1",
             "type": "Microsoft.Network/loadBalancers",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('gwlbName')]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -391,7 +425,7 @@
                     {
                         "name": "[variables('gwlbBackEndPoolName')]",
                         "properties": {
-                            "loadBalancerBackendAddresses": [],
+ //                           "loadBalancerBackendAddresses": [],
                             "tunnelInterfaces": [
                                 {
                                     "port": "[variables('vxlanTunnelInternalPort')]",
@@ -452,7 +486,7 @@
         {
             "comments": "public IP of the Ëxternal Load Balancer",
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2021-05-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('elbPublicIpAddressName')]",
             "location": "[variables('location')]",
             "sku": {
@@ -466,7 +500,7 @@
         {
             "comments": "Create the Ëxternal Load Balancer",
             "type": "Microsoft.Network/loadBalancers",
-            "apiVersion": "2021-05-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('elbName')]",
             "location": "[variables('location')]",
             "sku": {
@@ -604,7 +638,7 @@
         {
             "comments": "backed pool of the External Load Balancer",
             "type": "Microsoft.Network/loadBalancers/backendAddressPools",
-            "apiVersion": "2021-05-01",
+            "apiVersion": "2022-01-01",
             "name": "[concat(variables('elbName'), '/', variables('elbBackEndPoolName'))]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -637,7 +671,7 @@
         {
             "comments": "Create the Network Security Groups applied to the NIC of the NVAs",
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('nvaArray')[copyIndex()].nsgName]",
             "location": "[variables('nvaArray')[copyIndex()].location]",
             "properties": {
@@ -666,7 +700,7 @@
         {
             "comments": "Create public IPs for the NVAs",
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[concat(variables('nvaArray')[copyIndex()].vmName,'-pubIP')]",
             "location": "[variables('nvaArray')[copyIndex()].location]",
             "sku": {
@@ -684,7 +718,7 @@
         {
             "comments": "Create the NIC of the NVAs",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[concat( variables('nvaArray')[copyIndex()].vmName,'-NIC' )]",
             "location": "[variables('nvaArray')[copyIndex()].location]",
             "copy": {
@@ -729,7 +763,7 @@
         {
             "comments": "Create the NVAs",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2021-11-01",
+            "apiVersion": "2022-03-01",
             "name": "[variables('nvaArray')[copyIndex()].vmName]",
             "location": "[variables('nvaArray')[copyIndex()].location]",
             "copy": {
@@ -776,7 +810,7 @@
             "comments": "custom script extension to configure the NVAs through a bash script",
             "condition": "[not( empty(variables('nvaArray')[copyIndex()].scriptCommand) )]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2021-11-01",
+            "apiVersion": "2022-03-01",
             "name": "[concat(variables('nvaArray')[copyIndex()].vmName, '/', 'vmCustomScript')]",
             "location": "[variables('nvaArray')[copyIndex()].location]",
             "copy": {
@@ -802,7 +836,7 @@
         {
             "comments": "Create the Network Security rules to applied to the NIC of the application VMs",
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('vmArray')[copyIndex()].nsgName]",
             "location": "[variables('vmArray')[copyIndex()].location]",
             "copy": {
@@ -887,7 +921,7 @@
         {
             "comments": "Create public IPs for the application VMs",
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[concat(variables('vmArray')[copyIndex()].vmName,'-pubIP')]",
             "location": "[variables('vmArray')[copyIndex()].location]",
             "sku": {
@@ -905,7 +939,7 @@
         {
             "comments": "NIC of the application VMs",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2022-01-01",
             "name": "[concat( variables('vmArray')[copyIndex()].vmName,'-NIC' )]",
             "location": "[variables('vmArray')[copyIndex()].location]",
             "copy": {
@@ -944,7 +978,7 @@
         {
             "comments": "Create the application VMs in vnet2",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2021-11-01",
+            "apiVersion": "2022-03-01",
             "name": "[variables('vmArray')[copyIndex()].vmName]",
             "location": "[variables('vmArray')[copyIndex()].location]",
             "copy": {
@@ -991,7 +1025,7 @@
             "comments": "custom script extension to configure the application VMs through a bash script",
             "condition": "[not( empty(variables('vmArray')[copyIndex()].scriptCommand) )]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2021-11-01",
+            "apiVersion": "2022-03-01",
             "name": "[concat(variables('vmArray')[copyIndex()].vmName, '/', 'vmCustomScript')]",
             "location": "[variables('vmArray')[copyIndex()].location]",
             "copy": {
@@ -1018,7 +1052,7 @@
             "comments": "public IP of Azure Bastion",
             "condition": "[variables('deploymentBastion')]",
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2021-05-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('bastionPublicIPAddressName')]",
             "location": "[variables('vnet2').location]",
             "sku": {
@@ -1033,7 +1067,7 @@
             "comments": "Deployment of the Azure Bastion in vnet2",
             "condition": "[variables('deploymentBastion')]",
             "type": "Microsoft.Network/bastionHosts",
-            "apiVersion": "2021-05-01",
+            "apiVersion": "2022-01-01",
             "name": "[variables('bastionName')]",
             "location": "[variables('vnet2').location]",
             "sku": {
