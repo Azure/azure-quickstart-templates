@@ -12,17 +12,19 @@ languages:
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/load-balancer-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/demos/load-balancer-gateway/PublicDeployment.svg)
-
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/load-balancer-gateway/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demosload-balancer-gateway/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/demos/load-balancer-gateway/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/demos/load-balancer-gateway/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fdemos%2Fload-balancer-gateway%2Fazuredeploy.json)
+
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fdemos%2Fload-balancer-gateway%2Fazuredeploy.json)
 
 This template creates a Public Load Balancer chained to a Gateway Load Balancer.
 
-## Network diagram
+## Network diagram ##
 A hight level network diagram of the deployment is shown below:
 
 ![1](./images/1.png "high level diagram with Public Load Balancer chained to a Gateway Load Balancer")
@@ -54,7 +56,7 @@ The full network diagram inclusive of IP addresses and network IPs is shown belo
 
 ![4](./images/4.png "full network diagram inclusive of IP addresses")
 
-## Notes
+## Notes ##
 - Gateway LB maintains flow stickiness to a specific instance in the backend pool along with flow symmetry. As a result, packets traverse the same network path in both directions: from Stadard Public LB to the Gateway LB and from the Gateway LB to the Standard Public LB.
 - **Gateway LB is transparent**. Source and Destination IP addresses are unchanged when traffic traverses the Gateway LB, via VXLAN tunnels to backend pool members. 
 - The Gateway LB routes traffic to the backend instances using the HA ports rule
@@ -68,7 +70,7 @@ The diagram reported below shows the NGINX server blocks configurated in applica
 ![5](./images/5.png "NGINX server blockes configured in application VMs")
 
 - The bash scripts: **nva.sh** sets the VXLAN tunnels in the NVAs. A simplified version of bash script to create the VXLAN tunnels in the NVAs is shown below:
-```bash
+```
 # the VXLAN Network Idenfier (VNI) is specified with id 
 tunnel_internal_port=10800
 tunnel_internal_vni=800
@@ -91,10 +93,10 @@ ip link set vxlan${tunnel_external_vni} master br-tunnel
 ip link set br-tunnel up
 ```
 
-## Deployment check out 
+## Deployment check out ##
 
 Custom script extension logs are stored in:
-```bash
+```
 root@nva1:~# ll /var/lib/waagent/custom-script/download/0/
 root@nva1:~# cat /var/lib/waagent/custom-script/download/0/stderr
 root@nva1:~# cat /var/lib/waagent/custom-script/download/0/stdout
@@ -102,7 +104,7 @@ root@nva1:~# cat /var/lib/waagent/custom-script/download/0/nva.sh
 ```
 
 To check the setup of VXLAN tunnels in NVAs:
-```bash
+```
 root@nva1:~# systemctl status nvavxlan.service
 root@nva1:~# ip a
 root@nva1:~# ip -d link show vxlan800
@@ -110,18 +112,18 @@ root@nva1:~# ip -d link show vxlan801
 ```
 
 By installation of **net-tools** in NVA is possibile to use the utility ifconfig to see the packets received/transmit in the VXLAN tunnels:
-```bash
+```
 root@nva1:~# apt -y install net-tools
 root@nva1:~# ifconfig vxlan800
 root@nva1:~# ifconfig vxlan801
 ```
 
 Check the IP fowarding in NVAs using **sysctl** (used to set/modify/view kernel parameters at runtime):
-```bash
+```
 root@nva1:~# /sbin/sysctl net.ipv4.ip_forward
 ```
 or just check out the value in the **/proc** system:
-```bash
+```
 root@nva1:~# cat /proc/sys/net/ipv4/ip_forward
 ```
 the last command should return the value: **1**.
@@ -134,14 +136,14 @@ you should see the  vni service as _started_ and "nvavxlan.service: Succeeded".
 
 A check on traffic in NVAs can be done through tcpdump by the following command:
 
-```bash
+```
 nva1# tcpdump -i any -n host <public_IP_client_in_internet>
 nva1# tcpdump -i vxlan800 -n host <public_IP_client_in_internet>
 nva1# tcpdump -i vxlan801 -n host <public_IP_client_in_internet>
 ```
 
 In application VMs:
-```bash
+```
 vamapp1# tcpdump -i eth0 -n host <public_IP_client_in_internet>
 ```
 
