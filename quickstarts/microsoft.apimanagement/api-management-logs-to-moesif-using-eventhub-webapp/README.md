@@ -232,11 +232,11 @@ Before starting, make sure you fork the repo [ApimEventProcessor](https://github
 
 3. This will open the deployment panel as shown below, you'll want to click on GitHub.
 
-![Redeploy Webjob GitHub](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-github.png)
+  ![Redeploy Webjob GitHub](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-github.png)
 
 4. Click on _App Service build service_ (via Kudu) deployment
 
-![Redeploy Webjob Kudu](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-kudu.png)
+  ![Redeploy Webjob Kudu](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-kudu.png)
 
 5.  Select the repo you forked earlier and finish the walkthrough.
 
