@@ -54,6 +54,10 @@ param userEquipmentAddressPoolPrefix string = ''
 param userEquipmentStaticAddressPoolPrefix string = ''
 
 @description('The mode in which the packet core instance will run')
+@allowed([
+  'EPC'
+  '5GC'
+])
 param coreNetworkTechnology string = '5GC'
 
 @description('Whether or not Network Address and Port Translation (NAPT) should be enabled for this data network')
