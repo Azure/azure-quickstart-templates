@@ -1,14 +1,14 @@
 ---
-description: This template creates a Public Load Balancer chained to a Gateway Load Balancer
+description: This template allows you to deploy a Public Standard Load Balancer chained to a Gateway Load Balancer. The traffic incoming from internet is routed to the Gateway Load Balancer with linux VMs (NVAs) in the backend pool.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: gateway-load-balancer
+urlFragment: load-balancer-gateway
 languages:
 - json
 ---
-#  Create a Public Load Balancer chained to a Gateway Load Balancer
+# Public Load Balancer chained to a Gateway Load Balancer
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/load-balancer-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/load-balancer-gateway/PublicDeployment.svg)
