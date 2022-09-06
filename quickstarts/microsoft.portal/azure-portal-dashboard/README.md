@@ -7,6 +7,7 @@ products:
 urlFragment: azure-portal-dashboard
 languages:
 - json
+- bicep
 ---
 # Create an Azure portal dashboard
 
