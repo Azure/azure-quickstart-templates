@@ -73,7 +73,7 @@ The diagram reported below shows the NGINX server blocks configurated in applica
 ![5](./images/5.png "NGINX server blockes configured in application VMs")
 
 - The bash scripts: **nva.sh** sets the VXLAN tunnels in the NVAs. A simplified version of bash script to create the VXLAN tunnels in the NVAs is shown below:
-```
+```bash
 # the VXLAN Network Idenfier (VNI) is specified with id 
 tunnel_internal_port=10800
 tunnel_internal_vni=800
@@ -99,7 +99,7 @@ ip link set br-tunnel up
 ## Deployment check out ##
 
 Custom script extension logs are stored in:
-```
+```bash
 root@nva1:~# ll /var/lib/waagent/custom-script/download/0/
 root@nva1:~# cat /var/lib/waagent/custom-script/download/0/stderr
 root@nva1:~# cat /var/lib/waagent/custom-script/download/0/stdout
@@ -107,7 +107,7 @@ root@nva1:~# cat /var/lib/waagent/custom-script/download/0/nva.sh
 ```
 
 To check the setup of VXLAN tunnels in NVAs:
-```
+```bash
 root@nva1:~# systemctl status nvavxlan.service
 root@nva1:~# ip a
 root@nva1:~# ip -d link show vxlan800
@@ -115,39 +115,39 @@ root@nva1:~# ip -d link show vxlan801
 ```
 
 By installation of **net-tools** in NVA is possibile to use the utility ifconfig to see the packets received/transmit in the VXLAN tunnels:
-```
+```bash
 root@nva1:~# apt -y install net-tools
 root@nva1:~# ifconfig vxlan800
 root@nva1:~# ifconfig vxlan801
 ```
 
 Check the IP fowarding in NVAs using **sysctl** (used to set/modify/view kernel parameters at runtime):
-```
+```bash
 root@nva1:~# /sbin/sysctl net.ipv4.ip_forward
 ```
 or just check out the value in the **/proc** system:
-```
+```bash
 root@nva1:~# cat /proc/sys/net/ipv4/ip_forward
 ```
 the last command should return the value: **1**.
 
 Check the status of VXLAN service in NVAs:
-```
+```bash
 root@nva1:~# systemctl status nvavxlan.service
 ```
 you should see the  vni service as _started_ and "nvavxlan.service: Succeeded".
 
 A check on traffic in NVAs can be done through tcpdump by the following command:
 
-```
-nva1# tcpdump -i any -n host <public_IP_client_in_internet>
-nva1# tcpdump -i vxlan800 -n host <public_IP_client_in_internet>
-nva1# tcpdump -i vxlan801 -n host <public_IP_client_in_internet>
+```bash
+root@nva1:~# tcpdump -i any -n host <public_IP_client_in_internet>
+root@nva1:~# tcpdump -i vxlan800 -n host <public_IP_client_in_internet>
+root@nva1:~# tcpdump -i vxlan801 -n host <public_IP_client_in_internet>
 ```
 
 In application VMs:
-```
-vamapp1# tcpdump -i eth0 -n host <public_IP_client_in_internet>
+```bash
+root@vamapp1~# tcpdump -i eth0 -n host <public_IP_client_in_internet>
 ```
 
 `Tags: Microsoft.Network/loadbalancer, Public Load Balancer, Gateway Load Balancer`
