@@ -61,6 +61,10 @@ then
 fi
 #
 sleep 1m
+
+# eliminate debconf warnings
+echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
 sudo apt-get -y update
 sudo apt-get -y install unattended-upgrades
 # sudo apt-get install net-tools

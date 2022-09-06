@@ -36,6 +36,9 @@ then
     exit 3
 fi
 
+# eliminate debconf warnings
+echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
 sudo apt-get -y update
 # sudo apt upgrade
 ### install and start nginx
