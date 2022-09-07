@@ -7,6 +7,7 @@ products:
 urlFragment: azure-purview-deployment
 languages:
 - json
+- bicep
 ---
 # Deploy Microsoft Purview account
 
