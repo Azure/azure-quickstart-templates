@@ -7,6 +7,7 @@ products:
 urlFragment: iotconnectors
 languages:
 - json
+- biceps
 ---
 # Deploy an Azure Health Data Services MedTech service
 
@@ -26,18 +27,25 @@ This template deploys an instance of the Azure Health Data Services MedTech serv
 
 ## Sample overview and deployed resources
 
-This template creates an instance of the Azure Health Data Services MedTech service. The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and persist the health data in a Fast Healthcare Interoperability Resources (FHIR®) service within the Azure Health Data Services.
+The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and normalize, group, transform, and persist device health data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
 
-As a part of this solution, a MedTech service with the required resources, a sender role within the devicedata event hub, and the MedTech service system-assigned managed identity access permissions are created.
+As a part of this template, the following Azure resources and required access permissions are deployed within an existing or new Azure resource group:
 
-**NOTE:** The MedTech service will still require device and destination mappings to be fully functional.
+* An Azure Event Hubs Namespace and device message Azure event hub (the event hub is named: devicedata).
+* An Azure event hub consumer group (the consumer group is named: $Default).
+* An Azure event hub sender role (the sender role is named: devicedatasender).
+* An Azure Health Data Services workspace.
+* An Azure Health Data Services FHIR service.
+* An Azure Health Data Services MedTech service including the necessary system-assigned managed identity roles to the device message event   hub (Azure Events Hubs Receiver) and FHIR service (FHIR Data Writer).
+
+**NOTE:** The MedTech service will still require a properly conforming device and FHIR destination mapping to be fully functional.
 
 ## Deployment steps
 
 You can click the **Deploy to Azure** button at the beginning of this document to deploy an instance of the MedTech service.
 
-While in the final configuration stage within the Azure portal, you can specify the service names and Azure region location (optional). By default, the deployment will use the region of the Resource Group that is select for the deployment. All other parameters for deployment are automatically configured for you.
+While in the final configuration stage within the Azure portal, you can specify the service names and Azure region location (optional). By default, the deployment will use the region of the resource group that is select for the deployment. All other parameters for deployment are automatically configured for you.
 
-(FHIR®) is a registered trademark of Health Level Seven International, registered in the U.S. Trademark Office and is used with their permission.
+FHIR® is a registered trademark of Health Level Seven International, registered in the U.S. Trademark Office and is used with their permission.
 
 `Tags: Microsoft.EventHub/namespaces, Microsoft.EventHub/namespaces/eventhubs, Microsoft.EventHub/namespaces/eventhubs/authorizationRules, Microsoft.HealthcareApis/workspaces, Microsoft.HealthcareApis/workspaces/fhirservices, SystemAssigned, Microsoft.HealthcareApis/workspaces/iotconnectors, Microsoft.HealthcareApis/workspaces/iotconnectors/fhirdestinations, Microsoft.Authorization/roleAssignments`
