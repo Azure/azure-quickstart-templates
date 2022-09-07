@@ -154,7 +154,7 @@ resource fhirDestination 'Microsoft.HealthcareApis/workspaces/iotconnectors/fhir
   ]
 }
 
-resource FhirWriter 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+resource FhirWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: fhirService
   name: guid('${resourceGroup().id}-FhirWriter')
   properties: {
@@ -167,7 +167,7 @@ resource FhirWriter 'Microsoft.Authorization/roleAssignments@2020-08-01-preview'
   ]
 }
 
-resource EventHubDataReceiver 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+resource EventHubDataReceiver 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: eventHub
   name: guid('${resourceGroup().id}-EventHubDataReceiver')
   properties: {

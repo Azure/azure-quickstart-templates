@@ -1,5 +1,5 @@
 ---
-description: This template creates an instance of the Azure Health Data Services MedTech service. The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and persist the health data in a Fast Healthcare Interoperable Resources (FHIR®) service within the Azure Health Data Services workspace.
+description: The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and normalizes, groups, transforms, and persists device health data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
 page_type: sample
 products:
 - azure
@@ -27,7 +27,7 @@ This template deploys an instance of the Azure Health Data Services MedTech serv
 
 ## Sample overview and deployed resources
 
-The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and normalize, group, transform, and persist device health data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
+The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and normalizes, groups, transforms, and persists device health data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
 
 As a part of this template, the following Azure resources and required access permissions are deployed within an existing or new Azure resource group:
 
