@@ -11,6 +11,10 @@ param existingPacketCorePlatformType string = 'AKS-HCI'
 param existingMobileNetworkName string
 
 @description('The mode in which the packet core instance will run.')
+@allowed([
+  'EPC'
+  '5GC'
+])
 param existingPacketCoreNetworkTechnology string = '5GC'
 
 @description('The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
