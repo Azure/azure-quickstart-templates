@@ -1,8 +1,5 @@
-@description('Location for all resources except Application Insights.')
+@description('Location for all resources.')
 param location string = resourceGroup().location
-
-@description('Location for Application Insights.')
-param appInsightsLocation string  = resourceGroup().location
 
 @description('The language worker runtime to load in the function app.')
 @allowed([
@@ -31,7 +28,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: 'log-${functionAppName}'
-  location: appInsightsLocation
+  location: location
   properties: {
     sku: {
       name: 'PerGB2018'
@@ -39,9 +36,9 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06
   }
 }
 
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'ai-${functionAppName}'
-  location: appInsightsLocation
+  location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
