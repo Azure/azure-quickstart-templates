@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Deploy an Azure Function Premium plan with availability zones support
+# Deploy an AZ enabled Azure Function Premium plan
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-availability-zone/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-availability-zone/PublicDeployment.svg)
