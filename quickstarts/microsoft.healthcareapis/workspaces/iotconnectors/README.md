@@ -7,7 +7,7 @@ products:
 urlFragment: iotconnectors
 languages:
 - json
-- biceps
+- bicep
 ---
 # Deploy an Azure Health Data Services MedTech service
 
