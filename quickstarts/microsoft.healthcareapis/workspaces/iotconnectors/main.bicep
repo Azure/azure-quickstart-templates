@@ -39,21 +39,11 @@ param destinationMapping object = {
   template: []
 }
 
-var eventHubName = 'devicedata'
-var eventhubNamespaceName = 'en-${basename}'
-var eventHubFullName = '${eventhubNamespaceName}/${eventHubName}'
-var eventHubAuthRuleName = '${eventHubFullName}/devicedatasender'
-var workspaceName = replace('hw-${basename}', '-', '')
-var fhirServiceName = '${workspaceName}/fs-${basename}'
-var iotConnectorName = '${workspaceName}/hi-${basename}'
-var fhirDestinationName = '${iotConnectorName}/hd-${basename}'
-var fhirServiceResourceId = resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', workspaceName, split(fhirServiceName, '/')[1])
-var iotConnectorResourceId = resourceId('Microsoft.HealthcareApis/workspaces/iotconnectors', workspaceName, split(iotConnectorName, '/')[1])
 var fhirWriterRoleId = resourceId('Microsoft.Authorization/roleDefinitions', '3f88fce4-5892-4214-ae73-ba5294559913')
 var eventHubReceiverRoleId = resourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')
 
 resource eventhubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
-  name: eventhubNamespaceName
+  name: 'en-${basename}'
   location: location
   sku: {
     name: 'Standard'
@@ -69,37 +59,34 @@ resource eventhubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
 }
 
 resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = {
-  name: eventHubFullName
+  name: 'devicedata'
+  parent: eventhubNamespace
   properties: {
     messageRetentionInDays: 1
     partitionCount: 8
   }
-  dependsOn: [
-    eventhubNamespace
-  ]
 }
 
 resource eventHubAuthRule 'Microsoft.EventHub/namespaces/eventhubs/authorizationRules@2021-11-01' = {
-  name: eventHubAuthRuleName
+  name: 'devicedatasender'
+  parent: eventHub
   properties: {
     rights: [
       'Send'
     ]
   }
-  dependsOn: [
-    eventHub
-  ]
 }
 
 resource workspace 'Microsoft.HealthcareApis/workspaces@2022-05-15' = {
-  name: workspaceName
+  name: replace('hw-${basename}', '-', '')
   location: location
   properties: {
   }
 }
 
 resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-05-15' = {
-  name: fhirServiceName
+  name: 'fs-${basename}'
+  parent: workspace
   location: location
   kind: 'fhir-R4'
   identity: {
@@ -108,24 +95,22 @@ resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-05-1
   properties: {
     authenticationConfiguration: {
       authority: '${environment().authentication.loginEndpoint}${subscription().tenantId}'
-      audience: 'https://${workspaceName}-fs-${basename}.fhir.azurehealthcareapis.com'
+      audience: 'https://${workspace.name}-fs-${basename}.fhir.azurehealthcareapis.com'
       smartProxyEnabled: false
     }
   }
-  dependsOn: [
-    workspace
-  ]
 }
 
 resource iotConnector 'Microsoft.HealthcareApis/workspaces/iotconnectors@2022-05-15' = {
-  name: iotConnectorName
+  name: 'hi-${basename}'
+  parent: workspace
   location: location
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
     ingestionEndpointConfiguration: {
-      eventHubName: eventHubName
+      eventHubName: eventHub.name
       consumerGroup: '$Default'
       fullyQualifiedEventHubNamespace: 'en-${basename}.servicebus.windows.net'
     }
@@ -133,49 +118,37 @@ resource iotConnector 'Microsoft.HealthcareApis/workspaces/iotconnectors@2022-05
       content: deviceMapping
     }
   }
-  dependsOn: [
-    workspace
-  ]
 }
 
 resource fhirDestination 'Microsoft.HealthcareApis/workspaces/iotconnectors/fhirdestinations@2022-05-15' = {
-  name: fhirDestinationName
+  name: 'hd-${basename}'
+  parent: iotConnector
   location: location
   properties: {
     resourceIdentityResolutionType: 'Create'
-    fhirServiceResourceId: fhirServiceResourceId
+    fhirServiceResourceId: fhirService.id
     fhirMapping: {
       content: destinationMapping
     }
   }
-  dependsOn: [
-    workspace
-    iotConnector
-  ]
 }
 
 resource FhirWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: fhirService
-  name: guid('${resourceGroup().id}-FhirWriter')
+  name: guid(fhirWriterRoleId, iotConnector.id, fhirService.id)
   properties: {
     roleDefinitionId: fhirWriterRoleId
-    principalId: reference(iotConnectorResourceId, '2022-05-15', 'Full').identity.principalId
+    principalId: iotConnector.identity.principalId
     principalType: 'ServicePrincipal'
   }
-  dependsOn: [
-    iotConnector
-  ]
 }
 
 resource EventHubDataReceiver 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: eventHub
-  name: guid('${resourceGroup().id}-EventHubDataReceiver')
+  name: guid(eventHubReceiverRoleId, iotConnector.id, eventHub.id)
   properties: {
     roleDefinitionId: eventHubReceiverRoleId
-    principalId: reference(iotConnectorResourceId, '2022-05-15', 'Full').identity.principalId
+    principalId: iotConnector.identity.principalId
     principalType: 'ServicePrincipal'
   }
-  dependsOn: [
-    iotConnector
-  ]
 }
