@@ -284,7 +284,7 @@ resource dcVirtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
           }
           {
             Name: 'RegistrationUrl'
-            Value: reference(automationAccount.id, '2020-01-13-preview').registrationUrl
+            Value: reference(automationAccount.id, '2021-06-22').registrationUrl
             TypeName: 'System.String'
           }
           {
@@ -408,7 +408,7 @@ resource msVirtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
           }
           {
             Name: 'RegistrationUrl'
-            Value: reference(automationAccount.id, '2020-01-13-preview').registrationUrl
+            Value: reference(automationAccount.id, '2021-06-22').registrationUrl
             TypeName: 'System.String'
           }
           {
