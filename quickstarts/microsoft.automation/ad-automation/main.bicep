@@ -10,7 +10,7 @@ param adminPassword string
 param domainName string = 'ad.contoso.local'
 
 @description('The name of the DSC Compilation Job')
-param compileConfigurationJobName string = 'Compile-${newGuid()}'
+param compileConfigurationJobName string = 'Compile-${take(guid(deployment().name),5)}'
 
 @description('Specifies the Azure location where the resources will be created.')
 param location string = resourceGroup().location
