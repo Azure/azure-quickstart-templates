@@ -63,15 +63,6 @@ param command string = '''python main.py --iris-csv ${{inputs.iris_csv}} --learn
 @description('Specifies the curated environment to run sweep job.')
 param environmentName string = 'AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu'
 
-// fetching existing curated environment resource object
-resource environmemt 'Microsoft.MachineLearningServices/workspaces/environments@2022-05-01' existing = {
-  name: '${workspaceName}/${environmentName}'
-}
-
-// fetching exisitng compute/ environment resource ids
-var computeId = resourceId('Microsoft.MachineLearningServices/workspaces/computes', workspaceName, computeName)
-var environmentId = resourceId('Microsoft.MachineLearningServices/workspaces/environments/versions', workspaceName, environmentName, environmemt.properties.latestVersion)
-
 // creating codeVersion resource
 module codeVersion 'modules/codeversion.bicep' = {
   name: 'blob'
@@ -82,8 +73,10 @@ module codeVersion 'modules/codeversion.bicep' = {
   }
 }
 
-// fetching codeId from codeVersion module
-var codeId = codeVersion.outputs.codeId
+// fetching existing curated environment resource object
+resource environmemt 'Microsoft.MachineLearningServices/workspaces/environments@2022-05-01' existing = {
+  name: '${workspaceName}/${environmentName}'
+}
 
 // creating sweep job resource
 resource sweepjobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
@@ -94,7 +87,7 @@ resource sweepjobResource 'Microsoft.MachineLearningServices/workspaces/jobs@202
     tags: {
       referenceNotebook: 'https://github.com/Azure/azureml-examples/blob/main/sdk/jobs/single-step/lightgbm/iris/lightgbm-iris-sweep.ipynb'
     }
-    computeId: computeId
+    computeId: resourceId('Microsoft.MachineLearningServices/workspaces/computes', workspaceName, computeName)
     displayName: 'Sweep Job Resource'
     experimentName: experimentName
     isArchived: false
@@ -107,9 +100,9 @@ resource sweepjobResource 'Microsoft.MachineLearningServices/workspaces/jobs@202
     }
     searchSpace: searchSpace
     trial: {
-      codeId: codeId
+      codeId: codeVersion.outputs.codeId
       command: command
-      environmentId: environmentId
+      environmentId: resourceId('Microsoft.MachineLearningServices/workspaces/environments/versions', workspaceName, environmentName, environmemt.properties.latestVersion)
       environmentVariables: {}
     }
   }

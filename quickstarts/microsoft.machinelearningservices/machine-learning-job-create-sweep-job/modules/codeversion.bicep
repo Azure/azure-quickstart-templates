@@ -35,13 +35,10 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
   }
 }
 
-// unique value based on container id
-var uniqueIdentifier = uniqueString(storage::blobService::container.id)
-
 // creating deployment script to upload hyperdrive script 'main.py' to blob container
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   dependsOn: [ storage ]
-  name: 'deployscript-upload-blob-${uniqueIdentifier}'
+  name: 'deployscript-upload-blob-${uniqueString(storage::blobService::container.id)}'
   location: location
   kind: 'AzureCLI'
   properties: {
@@ -66,15 +63,12 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
 }
 
-// fetching azure environment storage url
-var azureEnvUrl = environment().suffixes.storage
-
 // creating codeVersion resource using uploaded hyperdrive script blob url
 resource codeVersionResource 'Microsoft.MachineLearningServices/workspaces/codes/versions@2022-05-01' = {
   dependsOn: [ deploymentScript ]
-  name: '${workspaceName}/${codeId}-${uniqueIdentifier}/${codeVersion}'
+  name: '${workspaceName}/${codeId}-${uniqueString(storage::blobService::container.id)}/${codeVersion}'
   properties: {
-    codeUri: uri('https://${storageAccountName}.blob.${azureEnvUrl}/','${containerName}/')
+    codeUri: uri('https://${storageAccountName}.blob.${environment().suffixes.storage}/', '${containerName}/')
     isAnonymous: false
   }
 }
