@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "3536104147426183285"
+      "version": "0.9.1.41621",
+      "templateHash": "11114398738530243204"
     }
   },
   "parameters": {
@@ -55,7 +55,7 @@
       "maxValue": 2147483647,
       "minValue": 10,
       "metadata": {
-        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647."
       }
     },
     "maxIntervalInSeconds": {
@@ -67,11 +67,11 @@
         "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
       }
     },
-    "automaticFailover": {
+    "systemManagedFailover": {
       "type": "bool",
       "defaultValue": true,
       "metadata": {
-        "description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
+        "description": "Enable system managed failover for regions"
       }
     },
     "tableName": {
@@ -91,7 +91,6 @@
     }
   },
   "variables": {
-    "accountName_var_var": "[toLower(parameters('accountName'))]",
     "consistencyPolicy": {
       "Eventual": {
         "defaultConsistencyLevel": "Eventual"
@@ -127,8 +126,8 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-04-15",
-      "name": "[variables('accountName_var_var')]",
+      "apiVersion": "2022-05-15",
+      "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
       "kind": "GlobalDocumentDB",
       "properties": {
@@ -140,13 +139,13 @@
         "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
-        "enableAutomaticFailover": "[parameters('automaticFailover')]"
+        "enableAutomaticFailover": "[parameters('systemManagedFailover')]"
       }
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/tables",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', variables('accountName_var_var'), parameters('tableName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('tableName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('tableName')]"
@@ -156,7 +155,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var_var'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('accountName')))]"
       ]
     }
   ]

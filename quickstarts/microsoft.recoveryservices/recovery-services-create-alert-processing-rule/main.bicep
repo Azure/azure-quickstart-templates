@@ -1,4 +1,4 @@
-@description('Email addresses to which the notifications should be sent. Should be specified as an array of strings, for example, [\'user1@contoso.com\', \'user2@contoso.com\'].')
+@description('Email addresses to which the notifications should be sent. Should be specified as an array of strings, for example, ["user1@contoso.com", "user2@contoso.com"].')
 param emailAddress array
 
 @description('An action group is the channel to which a notification is sent, for example, email. Edit this field if you wish to use a custom name for the action group, otherwise, you can leave this unchanged. An action group name can have a length of 1-260 characters. You cannot use :,<,>,+,/,&,%,\\,? or control characters. The name cannot end with a space or period.')

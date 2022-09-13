@@ -75,6 +75,10 @@ param userEquipmentStaticAddressPoolPrefix string = ''
 param dataNetworkName string = 'internet'
 
 @description('The mode in which the packet core instance will run')
+@allowed([
+  'EPC'
+  '5GC'
+])
 param coreNetworkTechnology string = '5GC'
 
 @description('Whether or not Network Address and Port Translation (NAPT) should be enabled for this data network')
@@ -83,6 +87,9 @@ param coreNetworkTechnology string = '5GC'
   'Disabled'
 ])
 param naptEnabled string
+
+@description('A list of DNS servers that UEs on this data network will use')
+param dnsAddresses array
 
 @description('The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
@@ -289,6 +296,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
         naptConfiguration: {
           enabled: naptEnabled
         }
+        dnsAddresses: dnsAddresses
       }
     }
   }

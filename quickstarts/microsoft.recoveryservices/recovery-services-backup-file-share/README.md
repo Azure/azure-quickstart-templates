@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Backup existing File Share using Recovery Services
+# Backup existing File Share using Recovery Services (Daily)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share/PublicDeployment.svg)
