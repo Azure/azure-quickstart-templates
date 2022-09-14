@@ -17,6 +17,8 @@ resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-
   properties: {
     jobType: 'Command'
     experimentName: experimentName
+    command: 'python hello_gdl.py'
+    environmentId: 'azureml://registries/azureml/environments/AzureML-ACPT-pytorch-1.11-py38-cuda11.3-gpu/versions/2'
     computeId: compute
   }
 }
