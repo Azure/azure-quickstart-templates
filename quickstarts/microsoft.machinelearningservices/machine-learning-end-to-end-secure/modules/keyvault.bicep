@@ -17,7 +17,7 @@ param subnetId string
 @description('The VNet ID where the Key Vault Private Link is to be created')
 param virtualNetworkId string
 
-var privateDnsZoneName = 'privatelink${environment().suffixes.keyvaultDns}'
+var privateDnsZoneName = 'privatelink.vaultcore.azure.net'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyvaultName
