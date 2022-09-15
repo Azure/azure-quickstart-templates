@@ -36,11 +36,20 @@ To run this template you need to have an Azure Machine Learning Workspace, an Az
 1. [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
 2. [Azure Machine Learning Compute Cluster](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-amlcompute/)
 
+Also, the prereq template in prereq folder can be deployed first to get Azure Machine Learning Workspace, an Azure Machine Learning Compute Cluster and an Azure Machine Learning Storage Account. The prereq template will help to setup the basic Azure Machine Learning resources needed to create Sweep job resource.
+
+`Important Note : main.py script is using lightgbm curated environment AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu defined in main.bicep. Please check if the curated environment is deprecated or not, if it is make sure to use the non deprecated curated environment.`
+
 ### Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 You may set `_artifactsLocation` parameter to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.machinelearningservices/machine-learning-job-create-sweep-job/` to let the Azure Machine Learning Sweep Job use sample iris csv data.
+
+- Deploying template using command line
+
+` az deployment group create --resource-group <resource_group> --template-file <template_file> --parameters <template_parameters_file> `
+
 ### Notes
 
 If you are new to Azure Machine Learning, see:
