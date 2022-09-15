@@ -1,13 +1,6 @@
 @description('Deployment Location')
 param location string = resourceGroup().location
 
-@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.uri
-
-@description('The sasToken required to access _artifactsLocation.')
-@secure()
-param _artifactsLocationSasToken string = ''
-
 @description('Select Game Engine Version')
 @allowed([
   'ue_4_27_2'
@@ -52,7 +45,7 @@ param passwordAdministratorLogin string
 ])
 param remoteAccessTechnology string = 'RDP'
 
-module gamedevvm './nestedtemplates/gamedev-vm.bicep'  = {
+module gameDevVM 'br/public:azure-gaming/game-dev-vm:1.0.1' = {
   name: 'gamingDevVM'
   params: {
     location: location
@@ -62,7 +55,5 @@ module gamedevvm './nestedtemplates/gamedev-vm.bicep'  = {
     osType: osType
     gameEngine: gameEngine
     remoteAccessTechnology: remoteAccessTechnology
-    _artifactsLocation: _artifactsLocation
-    _artifactsLocationSasToken: _artifactsLocationSasToken
   }
 }
