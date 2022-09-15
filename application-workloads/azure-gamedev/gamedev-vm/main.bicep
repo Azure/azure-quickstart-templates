@@ -169,5 +169,35 @@ module gameDevVM 'br/public:azure-gaming/game-dev-vm:1.0.1' = {
     parsec_teamId: parsec_teamId
     parsec_teamKey: parsec_teamKey
     parsec_host: parsec_host
+    parsec_isGuestAccess: parsec_isGuestAccess
+    numDataDisks: numDataDisks
+    dataDiskSize: dataDiskSize
+    fileShareStorageAccount: fileShareStorageAccount
+    fileShareStorageAccountKey: fileShareStorageAccountKey
+    fileShareName: fileShareName
+    p4Port: p4Port
+    p4Username: p4Username
+    p4Password: p4Password
+    p4Workspace: p4Workspace
+    p4Stream: p4Stream
+    p4ClientViews: p4ClientViews
+    vnetName: vnetName
+    vnetARPrefixes: vnetARPrefixes
+    vnetNewOrExisting: vnetNewOrExisting
+    vnetRGName: vnetRGName
+    subNetName: subNetName
+    subNetARPrefix: subNetARPrefix
+    publicIpName: publicIpName
+    publicIpDns: publicIpDns
+    publicIpAllocationMethod: publicIpAllocationMethod
+    publicIpSku: publicIpSku
+    publicIpNewOrExisting: publicIpNewOrExisting
+    publicIpRGName: publicIpRGName
+    environment: environment
+    outTagsByResource: outTagsByResource
+    unrealPixelStreamingEnabled: unrealPixelStreamingEnabled
+    enableManagedIdentity: enableManagedIdentity
+    enableAAD: enableAAD
+    windowsUpdateOption: windowsUpdateOption
   }
 }
