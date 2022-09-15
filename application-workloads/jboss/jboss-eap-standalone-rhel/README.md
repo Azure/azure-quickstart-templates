@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create a RHEL 8.4 VM running JBoss EAP 7.4 and also deploys a web application called JBoss-EAP on Azure, you can log into the admin console using the JBoss EAP username and password configured at the time of the deployment.
+description: This template allows you to create a RHEL 8.6 VM running JBoss EAP 7.4 and also deploys a web application called JBoss-EAP on Azure, you can log into the admin console using the JBoss EAP username and password configured at the time of the deployment.
 page_type: sample
 products:
 - azure
@@ -45,17 +45,17 @@ Red Hat Subscription Management (RHSM) is a customer-driven, end-to-end solution
 
 ## Template Solution Architecture
 
-This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.4 setup on Red Hat Enterprise Linux (RHEL) 8.4 VM as per the user choice. The following resources are created by this template:
+This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.4 setup on Red Hat Enterprise Linux (RHEL) 8.6 VM as per the user choice. The following resources are created by this template:
 
-- RHEL 8.4 Virtual Machine
+- RHEL 8.6 Virtual Machine
 - Virtual Network
 - JBoss EAP 7.4 setup on a RHEL VM
 - Sample Java application named **JBoss-EAP on Azure** deployed on JBoss EAP
 - Storage Account
 
-Note that the users will use Red Hat Enterprise Linux version 8.4 and JBoss EAP version for deployment.
+Note that the users will use Red Hat Enterprise Linux version 8.6 and JBoss EAP version for deployment.
 
-- JBoss EAP 7.4 on RHEL 8.4
+- JBoss EAP 7.4 on RHEL 8.6
 
 Following is the Architecture:
 
@@ -74,7 +74,7 @@ This ARM template is designed with flexible operating system (OS) options:
 
 By default this template uses the on-demand Red Hat Enterprise Linux PAYG image from the Azure Gallery. When using this on-demand image, there is an additional hourly RHEL subscription charge for using this image on top of the normal compute, network and storage costs. At the same time, the instance will be registered to your Red Hat subscription, therefore consuming one of your entitlements. This will lead to "double billing". To avoid this, you would need to build your own RHEL image, which is defined in this Red Hat KB article for [uploading RHEL image to Azure](https://access.redhat.com/articles/uploading-rhel-image-to-azure) or use RHEL Gold Image from the Azure Private Gallery offering.
 
-Read [Red Hat Enterprise Linux pricing](https://azure.microsoft.com/pricing/details/virtual-machines/red-hat/) for details on the RHEL VM pricing with PAYG model. In order to use RHEL in PAYG model, you will need an Azure Subscription with the specified payment method (RHEL 8.4 is an Azure Marketplace product and requires a payment method to be specified in the Azure Subscription).
+Read [Red Hat Enterprise Linux pricing](https://azure.microsoft.com/pricing/details/virtual-machines/red-hat/) for details on the RHEL VM pricing with PAYG model. In order to use RHEL in PAYG model, you will need an Azure Subscription with the specified payment method (RHEL 8.6 is an Azure Marketplace product and requires a payment method to be specified in the Azure Subscription).
 
 #### Using RHEL OS with BYOS Model
 
@@ -107,9 +107,9 @@ In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat sub
 
     3.4 Run the following command to accept the Marketplace Terms for RHEL BYOS.
 
-    `az vm image terms accept --publisher redhat --offer rhel-byos --plan rhel-lvm84` - *For RHEL 8.4 BYOS VM*
+    `az vm image terms accept --publisher redhat --offer rhel-byos --plan rhel-lvm86` - *For RHEL 8.6 BYOS VM*
 
-4. Your subscription is now ready to deploy RHEL 8.4 BYOS virtual machine.
+4. Your subscription is now ready to deploy RHEL 8.6 BYOS virtual machine.
 
 #### Using JBoss EAP with BYOS Model
 
@@ -131,7 +131,7 @@ JBoss EAP is available on Azure through BYOS model only; you need to supply your
 
 ## Deployment Steps
 
-Build your environment with JBoss EAP 7.4 on a VM running RHEL 8.4 on Azure by clicking the **Deploy to Azure** button and fill in the following parameter values:
+Build your environment with JBoss EAP 7.4 on a VM running RHEL 8.6 on Azure by clicking the **Deploy to Azure** button and fill in the following parameter values:
 
    - **Subscription** - Choose the appropriate subscription for deployment.
 
@@ -158,6 +158,8 @@ Build your environment with JBoss EAP 7.4 on a VM running RHEL 8.4 on Azure by c
    - **RHSM Pool ID for JBoss EAP** - RHSM Pool ID (ensure you have EAP entitlement)
 
    - **RHSM Pool ID for RHEL** - RHSM Pool ID (ensure you have RHEL entitlement). This is **mandatory when selecting BYOS RHEL OS** as Subscription Type. This should be left blank when selecting RHEL OS PAYG Subscription Type.
+
+   - **JAVA VERSION** - Select the Java version to be installed.
 
    - **VM Size** - Select the appropriate size of the VM from the dropdown options.
 
@@ -332,4 +334,4 @@ For any support related questions, issues or customization requirements with the
 
 If you are experiencing production deployment issues please contact [Red Hat Support](https://www.redhat.com/en/services/support).
 
-`Tags: JBoss, Red Hat, EAP 7.4, RHEL 8.4, Azure, Azure VM, JavaEE, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
+`Tags: JBoss, Red Hat, EAP 7.4, RHEL 8.6, Azure, Azure VM, JavaEE, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
