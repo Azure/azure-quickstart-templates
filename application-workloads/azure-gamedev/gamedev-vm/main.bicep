@@ -158,8 +158,8 @@ module gameDevVM 'br/public:azure-gaming/game-dev-vm:1.0.1' = {
     vmSize: vmSize
     useVmToSysprepCustomImage: useVmToSysprepCustomImage
     vmName: vmName
-    adminName: administratorLogin
-    adminPass: passwordAdministratorLogin
+    adminName: adminName
+    adminPass: adminPass
     osType: osType
     gameEngine: gameEngine
     gdkVersion: gdkVersion
