@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Machine Learning Sweep job for hyperparameter tuning to find the configuration of hyperparameters that results in the best performance.
+description: This template creates an Azure Machine Learning Sweep job for hyperparameter tuning.
 page_type: sample
 products:
 - azure
