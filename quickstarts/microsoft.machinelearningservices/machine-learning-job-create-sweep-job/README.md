@@ -40,16 +40,6 @@ Also, the prereq template in prereq folder can be deployed first to get Azure Ma
 
 `Important Note : main.py script is using lightgbm curated environment AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu defined in main.bicep. Please check if the curated environment is deprecated or not, if it is make sure to use the non deprecated curated environment.`
 
-### Deployment steps
-
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-
-You may set `_artifactsLocation` parameter to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.machinelearningservices/machine-learning-job-create-sweep-job/` to let the Azure Machine Learning Sweep Job use sample iris csv data.
-
-- Deploying template using command line
-
-` az deployment group create --resource-group <resource_group> --template-file <template_file> --parameters <template_parameters_file> `
-
 ### Notes
 
 If you are new to Azure Machine Learning, see:
