@@ -12,13 +12,25 @@ param jobName string
 
 var compute = resourceId('Microsoft.MachineLearningServices/workspaces/computes', workspaceName, computeName)
 
+resource environmentResource 'Microsoft.MachineLearningServices/workspaces/environments@2022-06-01-preview' = {
+  name: '${workspaceName}/baseEnvironment'
+  properties: {
+    description: 'The base environment to be used'
+    properties: {
+      name: 'AzureML-ACPT-pytorch-1.11-py38-cuda11.3-gpu'
+      version: '3'
+      asset: 'azureml://registries/azureml/environments/AzureML-ACPT-pytorch-1.11-py38-cuda11.3-gpu/versions/3'
+    }
+  }
+}
+
 resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
   name: '${workspaceName}/${jobName}'
   properties: {
     jobType: 'Command'
     experimentName: experimentName
     command: 'python hello_gdl.py'
-    environmentId: 'azureml://registries/azureml/environments/AzureML-ACPT-pytorch-1.11-py38-cuda11.3-gpu/versions/2'
+    environmentId: environmentResource.properties.properties.asset
     computeId: compute
   }
 }
