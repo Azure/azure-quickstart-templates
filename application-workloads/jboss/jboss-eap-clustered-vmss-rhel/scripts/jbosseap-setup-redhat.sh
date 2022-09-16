@@ -43,11 +43,13 @@ IP_ADDR=$(hostname -I)
 STORAGE_ACCOUNT_NAME=${15}
 CONTAINER_NAME=${16}
 STORAGE_ACCESS_KEY=$(echo "${17}" | openssl enc -d -base64)
+JAVA_VERSION=${18}
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> jbosseap.install.log
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | adddate >> jbosseap.install.log
 echo "Storage Container Name: " ${CONTAINER_NAME} | adddate >> jbosseap.install.log
 echo "RHSM_USER: " ${RHSM_USER} | adddate >> jbosseap.install.log
+echo "JAVA VERSION : " ${JAVA_VERSION} | adddate >> jbosseap.install.log
 
 echo "Configure firewall for ports 8080, 9990, 45700, 7600..." | adddate >> jbosseap.install.log
 
@@ -75,13 +77,31 @@ if [ $RHEL_OS_LICENSE_TYPE == "BYOS" ]
 then
     echo "Attaching Pool ID for RHEL OS" | adddate >> jbosseap.install.log
     echo "subscription-manager attach --pool=RHEL_POOL" | adddate >> jbosseap.install.log
-    subscription-manager attach --pool=${18} >> jbosseap.install.log 2>&1
+    subscription-manager attach --pool=${19} >> jbosseap.install.log 2>&1
 fi
 echo "Subscribing the system to get access to JBoss EAP repos" | adddate >> jbosseap.install.log
 
-echo "Install openjdk, wget, git, unzip, vim" | adddate >> jbosseap.install.log
-echo "sudo yum install java-1.8.0-openjdk wget unzip vim git -y" | adddate >> jbosseap.install.log
-sudo yum install java-1.8.0-openjdk wget unzip vim git -y | adddate >> jbosseap.install.log 2>&1
+# Install JAVA
+if [ $JAVA_VERSION == "JAVA_8" ]
+then
+    echo "Installing JAVA 8" | adddate >> jbosseap.install.log
+    echo "sudo yum install java-1.8.0-openjdk -y" | adddate >> jbosseap.install.log
+    sudo yum install java-1.8.0-openjdk -y | adddate >> jbosseap.install.log
+    echo "Successfully installed JAVA 8" | adddate >> jbosseap.install.log
+    echo "java -version" | adddate >> jbosseap.install.log
+    java -version >> jbosseap.install.log 2>&1
+else
+    echo "Installing JAVA 11" | adddate >> jbosseap.install.log
+    echo "sudo yum install java-11-openjdk -y" | adddate >> jbosseap.install.log
+    sudo yum install java-11-openjdk -y | adddate >> jbosseap.install.log
+    echo "Successfully installed JAVA 11" | adddate >> jbosseap.install.log
+    echo "java -version" | adddate >> jbosseap.install.log
+    java -version >> jbosseap.install.log 2>&1
+fi
+
+echo "Install wget, git, unzip, vim" | adddate >> jbosseap.install.log
+echo "sudo yum install wget unzip vim git -y" | adddate >> jbosseap.install.log
+sudo yum install wget unzip vim git -y | adddate >> jbosseap.install.log 2>&1
 echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | adddate >> jbosseap.install.log
 
 # Install JBoss EAP 7.4
