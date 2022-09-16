@@ -37,7 +37,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
 
 // creating deployment script to upload hyperdrive script 'main.py' to blob container
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  dependsOn: [ storage ]
   name: 'deployscript-upload-blob-${uniqueString(storage::blobService::container.id)}'
   location: location
   kind: 'AzureCLI'
