@@ -169,6 +169,7 @@ module gameDevVM 'br/public:azure-gaming/game-dev-vm:1.0.1' = {
     parsec_teamId: parsec_teamId
     parsec_teamKey: parsec_teamKey
     parsec_host: parsec_host
+    parsec_userEmail: parsec_userEmail
     parsec_isGuestAccess: parsec_isGuestAccess
     numDataDisks: numDataDisks
     dataDiskSize: dataDiskSize
