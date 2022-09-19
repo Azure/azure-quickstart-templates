@@ -11,15 +11,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsports-analytics-architecture%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsports-analytics-architecture%2Fazuredeploy.json)
 
-```
 
-To add a createUiDefinition.json file to the deploy button, append the url to the createUiDefinition.json file to the href for the button, e.g.
-
-https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsports-analytics-architecture%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsports-analytics-architecture%2FcreateUiDefinition.json
-
-Note the url is case sensitive.
-
-```
 ## Overview
 This template deploys the services that are used in the **Sports Analytics Architecture on Azure**. This reference architecture is designed to provide individuals with a path to quickly build sports analytics solutions in Azure. More information about this reference architecture can be found at https://docs.microsoft.com/en-us/azure/architecture/example-scenario/analytics/sports-analytics-architecture-azure.
 
