@@ -16,17 +16,22 @@
     },
     "uniqueNamePrefix": {
       "type": "string",
+      "defaultValue": "[take(format('shc{0}', uniqueString(resourceGroup().id)), 8)]",
+      "maxLength": 12,
       "metadata": {
         "description": "Unique name that will be used to generate various other names including the name of the Public IP used to access the Virtual Machine."
       }
     },
     "windowsOSVersion": {
       "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "2022-Datacenter",
       "allowedValues": [
         "2008-R2-SP1",
         "2012-Datacenter",
-        "2012-R2-Datacenter"
+        "2012-R2-Datacenter",
+        "2016-Datacenter",
+        "2019-Datacenter",
+        "2022-Datacenter"
       ],
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
@@ -66,58 +71,14 @@
     },
     "vmSizeFrontend": {
       "type": "string",
-      "defaultValue": "Standard_D4_v3",
-      "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D2_v3",
-        "Standard_D2_v3",
-        "Standard_D4_v3",
-        "Standard_D8_v3",
-        "Standard_D4_v3",
-        "Standard_D4_v3",
-        "Standard_D8_v3",
-        "Standard_D16_v3"
-      ],
+      "defaultValue": "Standard_D4s_v4",
       "metadata": {
         "description": "The size of the VM."
       }
     },
     "vmSizeDB": {
       "type": "string",
-      "defaultValue": "Standard_A0",
-      "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D2_v3",
-        "Standard_D2_v3",
-        "Standard_D4_v3",
-        "Standard_D8_v3",
-        "Standard_D4_v3",
-        "Standard_D4_v3",
-        "Standard_D8_v3",
-        "Standard_D16_v3"
-      ],
+      "defaultValue": "Standard_D2s_v4",
       "metadata": {
         "description": "The size of the database backend VM."
       }
@@ -129,23 +90,22 @@
         "description": "Location for all resources."
       }
     },
-   "_artifactsLocation": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
       "defaultValue": "[deployment().properties.templateLink.uri]"
-  },
+    },
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
-  }
-},
+    }
+  },
   "variables": {
-    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'shc')]",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "OSVersion": "[parameters('windowsOSVersion')]",
@@ -155,7 +115,6 @@
     "subnetPrefix": "10.0.0.0/24",
     "subnetNameDB": "SubnetDB",
     "subnetPrefixDB": "10.0.1.0/24",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('uniqueNamePrefix'),'IP')]",
     "publicDBIPAddressName": "[concat(parameters('uniqueNamePrefix'),'DBIP')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
@@ -171,30 +130,21 @@
   },
   "resources": [
     {
-      "apiVersion": "2021-01-01",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('newStorageAccountName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[variables('storageAccountType')]"
-      }	
-    },
-    {
       "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2022-08-01",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-        }
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-05-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -205,11 +155,11 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-05-01",
       "name": "[variables('virtualNetworkName')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', concat(variables('virtualNetworkName'), '-sg'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('virtualNetworkName'), '-sg'))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
@@ -238,14 +188,18 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-05-01",
       "name": "[concat(variables('nicName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/loadBalancers/',variables('lbName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]"
       ],
+      "copy": {
+        "name": "networkInterfacesCopy",
+        "count": "[parameters('vmCountFrontend')]"
+      },
       "properties": {
         "ipConfigurations": [
           {
@@ -268,19 +222,15 @@
             }
           }
         ]
-      },
-      "copy": {
-        "name": "networkInterfacesCopy",
-        "count": "[parameters('vmCountFrontend')]"
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('lbName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -388,23 +338,26 @@
             "properties": {
               "protocol": "Tcp",
               "port": 8443,
-              "intervalInSeconds": "5",
-              "numberOfProbes": "2"
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-08-01",
       "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
-        "[resourceId('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'),copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
       ],
+      "copy": {
+        "name": "virtualMachinesCopy",
+        "count": "[parameters('vmCountFrontend')]"
+      },
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
@@ -437,28 +390,24 @@
             }
           ]
         }
-      },
-      "copy": {
-        "name": "virtualMachinesCopy",
-        "count": "[parameters('vmCountFrontend')]"
       }
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('availabilitySetName'),'db')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2022-08-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-        }
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-05-01",
       "name": "[variables('publicDBIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -469,14 +418,14 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-05-01",
       "name": "[concat(variables('nicName'),'db')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicDBIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', concat(variables('virtualNetworkName'), '-sg'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicDBIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('virtualNetworkName'), '-sg'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -489,18 +438,18 @@
               },
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetNameDB'))]"
-              },
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('virtualNetworkName'), '-sg'))]"
               }
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('virtualNetworkName'), '-sg'))]"
+        }
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-05-01",
       "name": "[concat(variables('virtualNetworkName'), '-sg')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -565,14 +514,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2022-08-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),'db')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),'db'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets/',concat(variables('availabilitySetName'),'db'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'),'db'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('availabilitySetName'),'db'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -594,7 +542,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":  "[concat(variables('vmName'),'db','_OSDisk')]",
+            "name": "[concat(variables('vmName'),'db','_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -610,11 +558,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-08-01",
       "name": "[concat(variables('vmName'),'db','/CustomScriptExtension')]",
-      "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),'db'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines',concat(variables('vmName'),'db'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -633,11 +581,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-08-01",
       "name": "[concat(variables('vmName'),copyIndex(),'/CustomScriptExtension')]",
-      "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines',concat(variables('vmName'),copyIndex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -660,4 +608,3 @@
     }
   ]
 }
-
