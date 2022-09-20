@@ -1,3 +1,6 @@
+@description('Resource location')
+param location string
+
 @description('Specifies the object ID of a user in the Azure Active Directory tenant for the vault. The object ID must be unique for the list of access policies. Get it by using Get-AzADUser cmdlets.')
 param objectId string
 
@@ -40,7 +43,7 @@ var roleIdMapping = {
 
 resource kv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   name: akvAccountName
-  location: resourceGroup().location
+  location: location
   properties: {
     enableRbacAuthorization: true
     tenantId: subscription().tenantId

@@ -1,3 +1,6 @@
+@description('Resource location')
+param location string
+
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
 param disablePublicIp bool
 
@@ -8,7 +11,7 @@ var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(wo
 
 resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
   name: workspaceName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'premium'
   }

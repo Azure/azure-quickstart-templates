@@ -1,3 +1,6 @@
+@description('Resource location')
+param location string
+
 @description('Name of the SQL logical server')
 param serverName string
 
@@ -19,7 +22,7 @@ param principalId string
 
 resource sqlServer 'Microsoft.Sql/servers@2021-08-01-preview' = {
   name: serverName
-  location: resourceGroup().location
+  location: location
   properties: {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
@@ -37,7 +40,7 @@ resource sqlServer 'Microsoft.Sql/servers@2021-08-01-preview' = {
 resource sqlDB 'Microsoft.Sql/servers/databases@2021-08-01-preview' = {
   parent: sqlServer
   name: sqlDBName
-  location: resourceGroup().location
+  location: location
   sku: {
     capacity: 8
     family:'Gen5'

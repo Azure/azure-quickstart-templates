@@ -1,3 +1,6 @@
+@description('Resource location')
+param location string
+
 @description('Specifies the object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be unique for the list of access policies. Get it by using Get-AzADUser or Get-AzADServicePrincipal cmdlets.')
 param objectId string
 
@@ -24,7 +27,7 @@ resource sbdcRoleDefinitionResourceId 'Microsoft.Authorization/roleDefinitions@2
 
 resource adlsAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: adlsAccountName
-  location: resourceGroup().location
+  location: location
   sku: {name:'Standard_LRS'}
   kind: 'StorageV2'
   properties: {
@@ -45,7 +48,7 @@ resource userRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
   name: adfName
-  location: resourceGroup().location
+  location: location
   identity: {
     type: 'SystemAssigned'
   }

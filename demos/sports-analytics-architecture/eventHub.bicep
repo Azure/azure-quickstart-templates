@@ -1,3 +1,6 @@
+@description('Resource location')
+param location string
+
 @description('Specifies a project name that is used to generate the Event Hub name and the Namespace name.')
 param projectName string
 
@@ -13,7 +16,7 @@ var eventHubName = projectName
 
 resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
   name: eventHubNamespaceName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: eventHubSku
     tier: eventHubSku
