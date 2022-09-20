@@ -8,7 +8,7 @@ urlFragment: shibboleth-cluster-windows
 languages:
 - json
 ---
-# Deploy Shibboleth Identity Provider Cluster on Windows
+# Deploy Shibboleth Identity Provider cluster on Windows
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/PublicDeployment.svg)
