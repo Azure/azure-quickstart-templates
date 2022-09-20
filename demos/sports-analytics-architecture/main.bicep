@@ -24,6 +24,9 @@ targetScope = 'subscription'
 ])
 param location string = 'eastus2'
 
+@description('Resource Group Name')
+param resourceGroupName string
+
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
 param principalName string
 
@@ -68,7 +71,7 @@ param sqlAdministratorLogin string
 param sqlAdministratorLoginPassword string
 
 resource bicepRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: 'bicep-rg'
+  name: resourceGroupName
   location: location
   tags: {
     tagName1: 'Microsoft Sports Analytics RG'
