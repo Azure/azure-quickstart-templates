@@ -26,7 +26,7 @@ This template will deploy the following resources:
 In addition to these services, the template will set up the necessary permissions for your Azure AD identity and each deployed service's managed identity. The template will also create Azure Data Factory Linked Services for the Azure Key Vault, Azure SQL Database, and Azure Data Lake Storage Gen2 instances.
 
 ## Architecture
-![alt text](/images/sports-analytics-azure-reference-architecture.png)
+![alt text](https://github.com/jaswitze/azure-quickstart-templates/tree/sports-branch/demos/sports-analytics-architecture/images/sports-analytics-azure-reference-architecture.png)
 
 ## Prerequisites
 
