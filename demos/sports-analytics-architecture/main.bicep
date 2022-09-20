@@ -112,7 +112,7 @@ module adlsAndAdf 'adlsAndADF.bicep' = {
     adfName: adfName
     adlsLinkedServiceName: '${adlsAccountName}-linkedService'
     azureSQLLinkedServiceName: deploySqlDb ?'${azureSqlServerName}-linkedService' : 'na'
-    azureSqlCnString: deploySqlDb ? sqlDatabase.outputs.cnString : 'na'
+    azureSqlCnString: deploySqlDb ? 'Data Source=${azureSqlServerName}${environment().suffixes.sqlServerHostname};Initial Catalog=${azureSqlDatabaseName};User ID = ${sqlAdministratorLogin};Password=${sqlAdministratorLoginPassword};' : 'na'
   }
 }
 

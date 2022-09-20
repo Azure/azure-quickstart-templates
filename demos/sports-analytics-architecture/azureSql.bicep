@@ -57,5 +57,3 @@ resource sqlServerFirewallRules 'Microsoft.Sql/servers/firewallRules@2020-11-01-
     endIpAddress: '0.0.0.0'
   }
 }
-
-output cnString string = 'Data Source=${serverName}${environment().suffixes.sqlServerHostname};Initial Catalog=${sqlDBName};User ID = ${administratorLogin};Password=${administratorLoginPassword};'
