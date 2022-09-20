@@ -8,8 +8,8 @@
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/sports-analytics-architecture/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsports-analytics-architecture%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsports-analytics-architecture%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fsports-analytics-architecture%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fsports-analytics-architecture%2Fazuredeploy.json)
 
 
 ## Overview
@@ -26,7 +26,7 @@ This template will deploy the following resources:
 In addition to these services, the template will set up the necessary permissions for your Azure AD identity and each deployed service's managed identity. The template will also create Azure Data Factory Linked Services for the Azure Key Vault, Azure SQL Database, and Azure Data Lake Storage Gen2 instances.
 
 ## Architecture
-![alt text](https://github.com/jaswitze/azure-quickstart-templates/tree/sports-branch/demos/sports-analytics-architecture/images/sports-analytics-azure-reference-architecture.png)
+![alt text](images/sports-analytics-azure-reference-architecture.png "Reference architecture for sports analytics solutions on Azure")
 
 ## Prerequisites
 
