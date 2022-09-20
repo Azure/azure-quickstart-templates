@@ -25,50 +25,53 @@ targetScope = 'subscription'
 param location string = 'eastus2'
 
 @description('Resource Group Name')
-param resourceGroupName string = 'bicepRg'
+param resourceGroupName string
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
-param principalName string = 'jaswitze@microsoft.com'
+param principalName string
 
 @description('Object ID for your Azure AD user identity (see the README.md file in the Azure Quickstart guide for instructions on how to get your Azure AD user object ID).')
-param principalObjectId string = '8f07d5e5-fbee-43d7-84d6-a3f623f01e85'
+param principalObjectId string
 
 @description('Name of the Azure Data Lake Storage Gen2 account')
-param adlsAccountName string = 'bicepadls'
+param adlsAccountName string
 
 @description('Name of the Azure Data Factory instance')
-param adfName string = 'bicepADF-js11'
+param adfName string
 
 @description('Name of the Azure Databricks workspace')
-param azureDatabricksName string = 'bicep-databricks-ws'
+param azureDatabricksName string
 
 @description('Do you want to deploy a new Azure Event Hub for streaming use cases? (true or false)')
-param deployEh bool = false
+param deployEh bool
 
 @description('Name of the Azure Event Hub')
-param eventHubName string = 'bicep-eventHub'
+param eventHubName string
 
 @description('Do you want to deploy a new Azure SQL Database (true or false)?')
-param deploySqlDb bool = true
+param deploySqlDb bool
 
 @description('Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace? (true or false)')
-param databricksNpip bool = false
+param databricksNpip bool
 
 @description('Do you want to deploy a new Azure Key Vault instance? (true or false)')
-param deployAkv bool = true
+param deployAkv bool
+
+@description('Name of the Azure Key Vault')
+param akvName string
 
 @description('Name of Azure SQL logical server')
-param azureSqlServerName string = 'bicep-sqlServer'
+param azureSqlServerName string
 
 @description('Name of the SQL Database')
-param azureSqlDatabaseName string = 'Sample DB'
+param azureSqlDatabaseName string
 
 @description('SQL administrator Username')
-param sqlAdministratorLogin string = 'username123!'
+param sqlAdministratorLogin string
 
 @description('SQL administrator Password')
 @secure()
-param sqlAdministratorLoginPassword string = 'sqlUserPass188-'
+param sqlAdministratorLoginPassword string
 
 resource bicepRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: resourceGroupName
@@ -130,6 +133,6 @@ module akv 'akv.bicep' = if (deployAkv) {
     location: location
     objectId: principalObjectId
     spId: adlsAndAdf.outputs.adfId
-    akvAccountName: 'bicep-akv-${uniqueString(bicepRG.id)}'
+    akvAccountName: akvName
   }
 }
