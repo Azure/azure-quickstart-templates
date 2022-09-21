@@ -22,7 +22,7 @@ targetScope = 'subscription'
   'japaneast'
   'uaecentral'
 ])
-param location string = 'eastus2'
+param location string
 
 @description('Resource Group Name')
 param resourceGroupName string

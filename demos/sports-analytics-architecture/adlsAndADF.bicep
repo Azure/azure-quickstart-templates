@@ -55,7 +55,7 @@ resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
 }
 
 @description('Assigns the ADF Managed Identity to Storage Blob Data Contributor Role')
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: adlsAccount
   name: guid(adlsAccount.id, dataFactory.id, sbdcRoleDefinitionResourceId.id)
   properties: {
