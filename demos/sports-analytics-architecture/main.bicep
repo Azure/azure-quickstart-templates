@@ -87,7 +87,6 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = if(deploySqlDb) {
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: false
       login: principalName
-      principalType: 'User'
       sid: principalObjectId
       tenantId: subscription().tenantId
     }
@@ -139,7 +138,6 @@ resource userRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01'
   properties: {
     roleDefinitionId: sbdcRoleDefinitionResourceId.id
     principalId: principalObjectId
-    principalType: 'User'
   }
 }
 
@@ -229,7 +227,6 @@ resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', akvRoleIdMapping[akvRoleName])
     principalId: principalObjectId
-    principalType: 'User'
   }
 }
 
