@@ -1,31 +1,5 @@
-targetScope = 'subscription'
-
 @description('Resource Location.')
-@allowed([
-  'eastus'
-  'eastus2'
-  'westus'
-  'westus2'
-  'westus3'
-  'centralus'
-  'northcentralus'
-  'southcentralus'
-  'northeurope'
-  'westeurope'
-  'uksouth'
-  'francecentral'
-  'brazilsouth'
-  'canadaeast'
-  'canadacentral'
-  'australiaeast'
-  'centralindia'
-  'japaneast'
-  'uaecentral'
-])
-param location string
-
-@description('Resource Group Name')
-param resourceGroupName string
+param location string = resourceGroup().location
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
 param principalName string
@@ -73,66 +47,207 @@ param sqlAdministratorLogin string
 @secure()
 param sqlAdministratorLoginPassword string
 
-resource bicepRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: resourceGroupName
-  location: location
-  properties: {}
+var akvRoleName = 'Key Vault Secrets User'
+
+var akvRoleIdMapping = {
+  'Key Vault Secrets User': '4633458b-17de-408a-b874-0445c86b69e6'
 }
 
-module eventHub 'eventHub.bicep' = if(deployEh) {
-  scope: bicepRG
-  name: 'eventHub'
-  params: {
-    location: location
-    projectName: eventHubName
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = if(deployEh) {
+  name: '${eventHubName}ns'
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Standard'
+    capacity: 1
+  }
+  properties: {
+    isAutoInflateEnabled: false
+    maximumThroughputUnits: 0
   }
 }
 
-module sqlDatabase 'azureSql.bicep' = if(deploySqlDb) {
-  name: 'sqlDatabase'
-  scope: bicepRG
-  params: {
-    location: location
-    serverName: azureSqlServerName
-    sqlDBName: azureSqlDatabaseName
+resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = if(deployEh) {
+  parent: eventHubNamespace
+  name: eventHubName
+  properties: {
+    messageRetentionInDays: 7
+    partitionCount: 1
+  }
+}
+
+resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = if(deploySqlDb) {
+  name: azureSqlServerName
+  location: location
+  properties: {
     administratorLogin: sqlAdministratorLogin
     administratorLoginPassword: sqlAdministratorLoginPassword
-    principalName: principalName
+    administrators:{
+      administratorType: 'ActiveDirectory'
+      azureADOnlyAuthentication: false
+      login: principalName
+      principalType: 'User'
+      sid: principalObjectId
+      tenantId: subscription().tenantId
+    }
+  }
+}
+
+resource sqlDB 'Microsoft.Sql/servers/databases@2021-11-01' = if(deploySqlDb) {
+  parent: sqlServer
+  name: azureSqlDatabaseName
+  location: location
+  sku: {
+    capacity: 8
+    family:'Gen5'
+    name: 'GP_Gen5'
+    tier: 'GeneralPurpose'
+  }
+}
+
+resource sqlServerFirewallRules 'Microsoft.Sql/servers/firewallRules@2020-11-01-preview' = if(deploySqlDb) {
+  parent: sqlServer
+  name: 'Allow Azure Services'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+@description('This is the built-in Storage Blob Data Contributor role')
+resource sbdcRoleDefinitionResourceId 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  scope: subscription()
+  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+}
+
+resource adlsAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+  name: adlsAccountName
+  location: location
+  sku: {name:'Standard_LRS'}
+  kind: 'StorageV2'
+  properties: {
+    isHnsEnabled: true
+  }
+}
+
+@description('Assigns the user to Storage Blob Data Contributor Role')
+resource userRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: adlsAccount
+  name: guid(adlsAccount.id, principalObjectId, sbdcRoleDefinitionResourceId.id)
+  properties: {
+    roleDefinitionId: sbdcRoleDefinitionResourceId.id
     principalId: principalObjectId
+    principalType: 'User'
   }
 }
 
-module adlsAndAdf 'adlsAndADF.bicep' = {
-  name: 'adlsAndAdf'
-  scope: bicepRG
-  params: {
-    location: location
-    objectId: principalObjectId
-    adlsAccountName: adlsAccountName
-    adfName: adfName
-    adlsLinkedServiceName: '${adlsAccountName}-linkedService'
-    azureSQLLinkedServiceName: deploySqlDb ?'${azureSqlServerName}-linkedService' : 'na'
-    azureSqlCnString: deploySqlDb ? 'Data Source=${azureSqlServerName}${environment().suffixes.sqlServerHostname};Initial Catalog=${azureSqlDatabaseName};User ID = ${sqlAdministratorLogin};Password=${sqlAdministratorLoginPassword};' : 'na'
+resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
+  name: adfName
+  location: location
+  identity: {
+    type: 'SystemAssigned'
   }
 }
 
-module azureDatabricksws 'databricks.bicep' = {
-  name: 'databricks'
-  scope: bicepRG
-  params: {
-    location: location
-    disablePublicIp: databricksNpip
-    workspaceName: azureDatabricksName
+@description('Assigns the ADF Managed Identity to Storage Blob Data Contributor Role')
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: adlsAccount
+  name: guid(adlsAccount.id, dataFactory.id, sbdcRoleDefinitionResourceId.id)
+  properties: {
+    roleDefinitionId: sbdcRoleDefinitionResourceId.id
+    principalId: dataFactory.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
-module akv 'akv.bicep' = if (deployAkv) {
-  name: 'akv'
-  scope: bicepRG
-  params: {
-    location: location
-    objectId: principalObjectId
-    spId: adlsAndAdf.outputs.adfId
-    akvAccountName: akvName
+resource adlsLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = {
+  parent: dataFactory
+  name: '${adlsAccountName}-linkedService'
+  properties: {
+    type: 'AzureBlobFS'
+    typeProperties: {
+      accountKey: adlsAccount.listKeys().keys[0].value
+      url: adlsAccount.properties.primaryEndpoints.dfs
+    }
+  }
+}
+
+resource azureSqlDatabaseLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = if(deploySqlDb){
+  parent: dataFactory
+  name: '${azureSqlServerName}-linkedService'
+  properties: {
+    type: 'AzureSqlDatabase'
+    typeProperties: {
+      connectionString: 'Data Source=${azureSqlServerName}${environment().suffixes.sqlServerHostname};Initial Catalog=${azureSqlDatabaseName};User ID = ${sqlAdministratorLogin};Password=${sqlAdministratorLoginPassword};'
+    }
+  }
+}
+
+resource databricksWorkspace 'Microsoft.Databricks/workspaces@2018-04-01' = {
+  name: azureDatabricksName
+  location: location
+  sku: {
+    name: 'premium'
+  }
+  properties: {
+    managedResourceGroupId: managedResourceGroup.id
+    parameters: {
+      enableNoPublicIp: {
+        value: databricksNpip
+      }
+    }
+  }
+}
+
+resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+  scope: subscription()
+  name: 'databricks-rg-${azureDatabricksName}-${uniqueString(azureDatabricksName, resourceGroup().id)}'
+}
+
+resource akv 'Microsoft.KeyVault/vaults@2022-07-01' = if (deployAkv) {
+  name: akvName
+  location: location
+  properties: {
+    enableRbacAuthorization: true
+    tenantId: subscription().tenantId
+    sku: {
+      name: 'standard'
+      family: 'A'
+    }
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+  }
+}
+
+resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAkv) {
+  name: guid(akvRoleIdMapping[akvRoleName],principalObjectId,akv.id)
+  scope: akv
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', akvRoleIdMapping[akvRoleName])
+    principalId: principalObjectId
+    principalType: 'User'
+  }
+}
+
+resource spAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(akvRoleIdMapping[akvRoleName],resourceGroup().id,akv.id)
+  scope: akv
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', akvRoleIdMapping[akvRoleName])
+    principalId: dataFactory.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource azureKeyVaultLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = if(deployAkv){
+  parent: dataFactory
+  name: '${akvName}-linkedService'
+  properties: {
+    type: 'AzureKeyVault'
+    typeProperties: {
+      baseUrl: akv.properties.vaultUri
+    }
   }
 }
