@@ -36,7 +36,7 @@ resource adlsAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
 }
 
 @description('Assigns the user to Storage Blob Data Contributor Role')
-resource userRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource userRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: adlsAccount
   name: guid(adlsAccount.id, objectId, sbdcRoleDefinitionResourceId.id)
   properties: {

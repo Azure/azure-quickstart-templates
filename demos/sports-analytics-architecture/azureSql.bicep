@@ -20,7 +20,7 @@ param principalName string
 @description('Specifies the object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be unique for the list of access policies. Get it by using Get-AzADUser or Get-AzADServicePrincipal cmdlets.')
 param principalId string
 
-resource sqlServer 'Microsoft.Sql/servers@2021-08-01-preview' = {
+resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
   name: serverName
   location: location
   properties: {
@@ -37,7 +37,7 @@ resource sqlServer 'Microsoft.Sql/servers@2021-08-01-preview' = {
   }
 }
 
-resource sqlDB 'Microsoft.Sql/servers/databases@2021-08-01-preview' = {
+resource sqlDB 'Microsoft.Sql/servers/databases@2021-11-01' = {
   parent: sqlServer
   name: sqlDBName
   location: location

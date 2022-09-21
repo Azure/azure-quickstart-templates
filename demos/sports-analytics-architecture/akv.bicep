@@ -41,7 +41,7 @@ var roleIdMapping = {
   'Key Vault Secrets User': '4633458b-17de-408a-b874-0445c86b69e6'
 }
 
-resource kv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: akvAccountName
   location: location
   properties: {
@@ -58,7 +58,7 @@ resource kv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   }
 }
 
-resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(roleIdMapping[roleName],objectId,kv.id)
   scope: kv
   properties: {
@@ -68,7 +68,7 @@ resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-
   }
 }
 
-resource spAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource spAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(roleIdMapping[roleName],spId,kv.id)
   scope: kv
   properties: {
