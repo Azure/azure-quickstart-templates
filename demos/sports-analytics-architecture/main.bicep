@@ -80,6 +80,7 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = if(deploySqlDb) {
   name: azureSqlServerName
   location: location
   properties: {
+    minimalTlsVersion: '1.2'
     administratorLogin: sqlAdministratorLogin
     administratorLoginPassword: sqlAdministratorLoginPassword
     administrators:{
@@ -126,6 +127,7 @@ resource adlsAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   sku: {name:'Standard_LRS'}
   kind: 'StorageV2'
   properties: {
+    minimumTlsVersion: 'TLS1_2'
     isHnsEnabled: true
   }
 }
