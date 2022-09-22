@@ -1,5 +1,5 @@
 ---
-description: Azure Game Developer Virtual Machine includes Licencsed Engines like Unreal.
+description: Azure Game Developer Virtual Machine includes Licensed Engines like Unreal.
 page_type: sample
 products:
 - azure
