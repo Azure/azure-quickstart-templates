@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
-param principalName string
+param principalName string = 'TestAADAdminName'
 
 @description('Object ID for your Azure AD user identity (see the README.md file in the Azure Quickstart guide for instructions on how to get your Azure AD user object ID).')
 param principalObjectId string
@@ -17,19 +17,19 @@ param adfName string
 param azureDatabricksName string
 
 @description('Do you want to deploy a new Azure Event Hub for streaming use cases? (true or false)')
-param deployEh bool
+param deployEh bool = true
 
 @description('Name of the Azure Event Hub')
 param eventHubName string
 
 @description('Do you want to deploy a new Azure SQL Database (true or false)?')
-param deploySqlDb bool
+param deploySqlDb bool = true
 
 @description('Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace? (true or false)')
-param databricksNpip bool
+param databricksNpip bool = true
 
 @description('Do you want to deploy a new Azure Key Vault instance? (true or false)')
-param deployAkv bool
+param deployAkv bool = true
 
 @description('Name of the Azure Key Vault')
 param akvName string
@@ -231,7 +231,7 @@ resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 }
 
 resource spAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(akvRoleIdMapping[akvRoleName],resourceGroup().id,akv.id)
+  name: guid(akvRoleIdMapping[akvRoleName],dataFactory.id,akv.id)
   scope: akv
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', akvRoleIdMapping[akvRoleName])

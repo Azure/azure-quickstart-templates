@@ -1,10 +1,7 @@
-﻿<# Uncomment and run the following 5 lines of code if you are running the script locally and the AzureAD PowerShell module is not installed:
+﻿<# Uncomment and run the following 2 lines of code if you are running the script locally and the AzureAD PowerShell module is not installed:
 
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force
-Install-Module -Name AzureAD -Scope CurrentUser -Repository PSGallery -Force
-Get-InstalledModule -Name AzureAD -AllVersions
-Find-Module -Name AzureAD
 
 #>
 
@@ -13,5 +10,5 @@ $name = "<AAD_Username>"
 
 $null = Connect-AzureAD
 
-$output = $(Get-AzureADUser -Filter "UserPrincipalName eq '$name'").ObjectId
+$output = (Get-AzAdUser -UserPrincipalName $name).Id
 Write-Host "Azure AD principal object ID is: $output"
