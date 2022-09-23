@@ -57,6 +57,6 @@ Make a note of the object ID for later. You will use this value for the principa
 
 ## Deployment steps
 
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the DeployTemplate.ps1 file in the scripts folder of this repo.
+You can click the "Deploy to Azure" button at the beginning of this document to deploy this template.
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.DataFactory/factories, SystemAssigned, Microsoft.DataFactory/factories/linkedservices, Microsoft.Databricks/workspaces, Microsoft.KeyVault/vaults, Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Sql/servers/firewallRules, Microsoft.EventHub/namespaces, Microsoft.EventHub/namespaces/eventhubs, Sports Analytics, Microsoft Sports, Azure for Sports`
