@@ -12,6 +12,9 @@ param sliceName string
 @minValue(0)
 param sst int
 
+@description('The SD value for the slice being deployed.')
+param sd string=''
+
 #disable-next-line BCP081
 resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
   name: existingMobileNetworkName
@@ -20,9 +23,14 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-0
   resource exampleSlice 'slices@2022-04-01-preview' = {
     name: sliceName
     location: location
-    properties: {
+    properties:!empty(sd) ?{
       snssai: {       
         sst: sst
+        sd:sd
+      }     
+    }:{
+      snssai: {       
+        sst: sst        
       }     
     }
   }
