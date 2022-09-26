@@ -5,8 +5,11 @@ param (
     $bicepArgs = "decompile"
 )
 
-Get-ChildItem "*.bicep" -Recurse | ForEach-Object { 
+Get-ChildItem "*azuredeploy.json" -Recurse | ForEach-Object { 
     $fn = $_.FullName
     Write-Host $fn
-    & $bicep $bicepArgs $fn 2>> c.out
+    & $bicep $bicepArgs $fn --force *> a.out
+    cat a.out >> .\log.txt
+    echo "" >> .\log.txt
+    del a.out
 }
