@@ -14,10 +14,10 @@ Name of the Azure Data Lake Storage Gen2 storage account. Storage account name r
 ''')
 @minLength(3)
 @maxLength(24)
-param azureDataLakeStoreAccountName string
+param azureDataLakeStoreAccountName string = 'adls${uniqueString(resourceGroup().id)}'
 
 @description('Name of the Azure Data Factory instance.')
-param azureDataFactoryName string
+param azureDataFactoryName string = 'adf-${uniqueString(resourceGroup().id)}'
 
 @description('''
 Name of the Azure Databricks workspace. Databricks workspace name requirements:
@@ -25,7 +25,7 @@ Name of the Azure Databricks workspace. Databricks workspace name requirements:
 ''')
 @minLength(3)
 @maxLength(30)
-param azureDatabricksName string
+param azureDatabricksName string = 'databricks-${uniqueString(resourceGroup().id)}'
 
 @description('Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace (true or false)?')
 param databricksNPIP bool = true
@@ -51,17 +51,17 @@ Name of the Azure Key Vault. Key Vault name requirements:
 ''')
 @minLength(3)
 @maxLength(24)
-param azureKeyVaultName string
+param azureKeyVaultName string = '${uniqueString(resourceGroup().id)}-kv'
 
 @description('Do you want to deploy a new Azure SQL Database (true or false)? Leave default name if you choose false.')
 param deploySqlDb bool = true
 
 @description('Name of Azure SQL logical server')
-param azureSqlServerName string
+param azureSqlServerName string = '${uniqueString(resourceGroup().id)}-sqlsrvr'
 
 @description('Database name')
 @maxLength(128)
-param azureSqlDatabaseName string
+param azureSqlDatabaseName string = 'analytics-db'
 
 @description('SQL administrator username')
 param sqlAdministratorLogin string
