@@ -1,51 +1,74 @@
-@description('Resource Location.')
+@description('Resource Location. Leave the default value.')
 param location string = resourceGroup().location
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
-param principalName string
+param azureADUserName string = 'TestAADAdminName'
 
 @description('Object ID for your Azure AD user identity (see the README.md file in the Azure Quickstart guide for instructions on how to get your Azure AD user object ID).')
-param principalObjectId string
+param azureADObjectID string
 
-@description('Name of the Azure Data Lake Storage Gen2 account')
-param adlsAccountName string
+@description('''
+Name of the Azure Data Lake Storage Gen2 storage account. Storage account name requirements:
+- Storage account names must be between 3 and 24 characters in length and may contain numbers and lowercase letters only.
+- Your storage account name must be unique within Azure. No two storage accounts can have the same name.
+''')
+@minLength(3)
+@maxLength(24)
+param azureDataLakeStoreAccountName string
 
-@description('Name of the Azure Data Factory instance')
-param adfName string
+@description('Name of the Azure Data Factory instance.')
+param azureDataFactoryName string
 
-@description('Name of the Azure Databricks workspace')
+@description('''
+Name of the Azure Databricks workspace. Databricks workspace name requirements:
+- Databricks workspace names must be between 3 and 30 characters in length and may contain numbers, letters, underscores, and hyphens only.
+''')
+@minLength(3)
+@maxLength(30)
 param azureDatabricksName string
 
-@description('Do you want to deploy a new Azure Event Hub for streaming use cases? (true or false)')
-param deployEh bool = true
+@description('Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace (true or false)?')
+param databricksNPIP bool = true
 
-@description('Name of the Azure Event Hub')
-param eventHubName string
+@description('Do you want to deploy a new Azure Event Hub for streaming use cases (true or false)? Leave default name if you choose false.')
+param deployEventHub bool = true
 
-@description('Do you want to deploy a new Azure SQL Database (true or false)?')
+@description('''
+Name of the Azure Event Hub. Event Hub name requirements:
+- Event Hub names must be between 6 and 50 characters in length and may contain numbers, letters, and hyphens only.
+- The name must start with a letter, and it must end with a letter or number
+''')
+@minLength(6)
+@maxLength(50)
+param eventHubName string = '${uniqueString(resourceGroup().name)}-eh'
+
+@description('Do you want to deploy a new Azure Key Vault instance (true or false)? Leave default name if you choose false.')
+param deployAzureKeyVault bool = true
+
+@description('''
+Name of the Azure Key Vault. Key Vault name requirements:
+- Key vault names must be between 3 and 24 characters in length and may contain numbers, letters, and dashes only.
+''')
+@minLength(3)
+@maxLength(24)
+param azureKeyVaultName string = '${uniqueString(resourceGroup().name)}-kv'
+
+@description('Do you want to deploy a new Azure SQL Database (true or false)? Leave default name if you choose false.')
 param deploySqlDb bool = true
 
-@description('Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace? (true or false)')
-param databricksNpip bool = true
-
-@description('Do you want to deploy a new Azure Key Vault instance? (true or false)')
-param deployAkv bool = true
-
-@description('Name of the Azure Key Vault')
-param akvName string
-
 @description('Name of Azure SQL logical server')
-param azureSqlServerName string
+param azureSqlServerName string = '${uniqueString(resourceGroup().name)}-sqlsrvr'
 
-@description('Name of the SQL Database')
-param azureSqlDatabaseName string
+@description('Database name')
+@maxLength(128)
+param azureSqlDatabaseName string = '${uniqueString(resourceGroup().name)}-sqldb'
 
-@description('SQL administrator Username')
-param sqlAdministratorLogin string
+@description('SQL administrator username')
+param sqlAdministratorLogin string = 'admin'
 
-@description('SQL administrator Password')
+@description('SQL administrator password')
 @secure()
-param sqlAdministratorLoginPassword string
+param sqlAdministratorLoginPassword string = newGuid()
 
 var akvRoleName = 'Key Vault Secrets User'
 
@@ -53,7 +76,7 @@ var akvRoleIdMapping = {
   'Key Vault Secrets User': '4633458b-17de-408a-b874-0445c86b69e6'
 }
 
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = if(deployEh) {
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = if(deployEventHub) {
   name: '${eventHubName}ns'
   location: location
   sku: {
@@ -67,7 +90,7 @@ resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = if(deplo
   }
 }
 
-resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = if(deployEh) {
+resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = if(deployEventHub) {
   parent: eventHubNamespace
   name: eventHubName
   properties: {
@@ -86,8 +109,8 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = if(deploySqlDb) {
     administrators:{
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: false
-      login: principalName
-      sid: principalObjectId
+      login: azureADUserName
+      sid: azureADObjectID
       tenantId: subscription().tenantId
     }
   }
@@ -121,7 +144,7 @@ resource sbdcRoleDefinitionResourceId 'Microsoft.Authorization/roleDefinitions@2
 }
 
 resource adlsAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
-  name: adlsAccountName
+  name: azureDataLakeStoreAccountName
   location: location
   sku: {name:'Standard_LRS'}
   kind: 'StorageV2'
@@ -134,15 +157,15 @@ resource adlsAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
 @description('Assigns the user to Storage Blob Data Contributor Role')
 resource userRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: adlsAccount
-  name: guid(adlsAccount.id, principalObjectId, sbdcRoleDefinitionResourceId.id)
+  name: guid(adlsAccount.id, azureADObjectID, sbdcRoleDefinitionResourceId.id)
   properties: {
     roleDefinitionId: sbdcRoleDefinitionResourceId.id
-    principalId: principalObjectId
+    principalId: azureADObjectID
   }
 }
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
-  name: adfName
+  name: azureDataFactoryName
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -162,7 +185,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 resource adlsLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = {
   parent: dataFactory
-  name: '${adlsAccountName}-linkedService'
+  name: '${azureDataLakeStoreAccountName}-linkedService'
   properties: {
     type: 'AzureBlobFS'
     typeProperties: {
@@ -193,7 +216,7 @@ resource databricksWorkspace 'Microsoft.Databricks/workspaces@2018-04-01' = {
     managedResourceGroupId: managedResourceGroup.id
     parameters: {
       enableNoPublicIp: {
-        value: databricksNpip
+        value: databricksNPIP
       }
     }
   }
@@ -204,8 +227,8 @@ resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' ex
   name: 'databricks-rg-${azureDatabricksName}-${uniqueString(azureDatabricksName, resourceGroup().id)}'
 }
 
-resource akv 'Microsoft.KeyVault/vaults@2022-07-01' = if (deployAkv) {
-  name: akvName
+resource akv 'Microsoft.KeyVault/vaults@2022-07-01' = if (deployAzureKeyVault) {
+  name: azureKeyVaultName
   location: location
   properties: {
     enableRbacAuthorization: true
@@ -221,12 +244,12 @@ resource akv 'Microsoft.KeyVault/vaults@2022-07-01' = if (deployAkv) {
   }
 }
 
-resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAkv) {
-  name: guid(akvRoleIdMapping[akvRoleName],principalObjectId,akv.id)
+resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAzureKeyVault) {
+  name: guid(akvRoleIdMapping[akvRoleName],azureADObjectID,akv.id)
   scope: akv
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', akvRoleIdMapping[akvRoleName])
-    principalId: principalObjectId
+    principalId: azureADObjectID
   }
 }
 
@@ -240,9 +263,9 @@ resource spAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
 }
 
-resource azureKeyVaultLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = if(deployAkv){
+resource azureKeyVaultLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = if(deployAzureKeyVault){
   parent: dataFactory
-  name: '${akvName}-linkedService'
+  name: '${azureKeyVaultName}-linkedService'
   properties: {
     type: 'AzureKeyVault'
     typeProperties: {
