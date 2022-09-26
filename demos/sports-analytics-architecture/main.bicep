@@ -40,7 +40,7 @@ Name of the Azure Event Hub. Event Hub name requirements:
 ''')
 @minLength(6)
 @maxLength(50)
-param eventHubName string
+param eventHubName string = 'eh-${uniqueString(resourceGroup().id)}'
 
 @description('Do you want to deploy a new Azure Key Vault instance (true or false)? Leave default name if you choose false.')
 param deployAzureKeyVault bool = true
