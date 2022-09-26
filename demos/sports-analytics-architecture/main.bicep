@@ -57,7 +57,7 @@ param azureKeyVaultName string = '${uniqueString(resourceGroup().id)}-kv'
 param deploySqlDb bool = true
 
 @description('Name of Azure SQL logical server')
-param azureSqlServerName string = '${uniqueString(resourceGroup().id)}-sqlsrvr'
+param azureSqlServerName string = '${uniqueString(resourceGroup().id)}sqlsrv'
 
 @description('Database name')
 @maxLength(128)
