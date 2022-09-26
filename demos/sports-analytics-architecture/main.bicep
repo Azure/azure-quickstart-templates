@@ -64,7 +64,7 @@ param azureSqlServerName string = '${uniqueString(resourceGroup().name)}-sqlsrvr
 param azureSqlDatabaseName string = '${uniqueString(resourceGroup().name)}-sqldb'
 
 @description('SQL administrator username')
-param sqlAdministratorLogin string = 'admin'
+param sqlAdministratorLogin string = 'sql-administrator'
 
 @description('SQL administrator password')
 @secure()
