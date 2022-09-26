@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
-param azureADUserName string
+param azureADUserName string = 'TestAADAdminName'
 
 @description('Object ID for your Azure AD user identity (see the README.md file in the Azure Quickstart guide for instructions on how to get your Azure AD user object ID).')
 param azureADObjectID string
@@ -14,10 +14,10 @@ Name of the Azure Data Lake Storage Gen2 storage account. Storage account name r
 ''')
 @minLength(3)
 @maxLength(24)
-param azureDataLakeStoreAccountName string = 'stor${uniqueString(resourceGroup().id)}'
+param azureDataLakeStoreAccountName string
 
 @description('Name of the Azure Data Factory instance.')
-param azureDataFactoryName string = 'datafact-${uniqueString(resourceGroup().id)}'
+param azureDataFactoryName string
 
 @description('''
 Name of the Azure Databricks workspace. Databricks workspace name requirements:
@@ -25,7 +25,7 @@ Name of the Azure Databricks workspace. Databricks workspace name requirements:
 ''')
 @minLength(3)
 @maxLength(30)
-param azureDatabricksName string  = 'databricks-${uniqueString(resourceGroup().id)}'
+param azureDatabricksName string
 
 @description('Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace (true or false)?')
 param databricksNPIP bool = true
@@ -40,7 +40,7 @@ Name of the Azure Event Hub. Event Hub name requirements:
 ''')
 @minLength(6)
 @maxLength(50)
-param eventHubName string = '${uniqueString(resourceGroup().id)}-eh'
+param eventHubName string
 
 @description('Do you want to deploy a new Azure Key Vault instance (true or false)? Leave default name if you choose false.')
 param deployAzureKeyVault bool = true
@@ -51,17 +51,17 @@ Name of the Azure Key Vault. Key Vault name requirements:
 ''')
 @minLength(3)
 @maxLength(24)
-param azureKeyVaultName string = '${uniqueString(resourceGroup().id)}-kv'
+param azureKeyVaultName string
 
 @description('Do you want to deploy a new Azure SQL Database (true or false)? Leave default name if you choose false.')
 param deploySqlDb bool = true
 
 @description('Name of Azure SQL logical server')
-param azureSqlServerName string = '${uniqueString(resourceGroup().id)}-sqlsrvr'
+param azureSqlServerName string
 
 @description('Database name')
 @maxLength(128)
-param azureSqlDatabaseName string = 'analytics-db'
+param azureSqlDatabaseName string
 
 @description('SQL administrator username')
 param sqlAdministratorLogin string
@@ -71,6 +71,7 @@ param sqlAdministratorLogin string
 param sqlAdministratorLoginPassword string
 
 var akvRoleName = 'Key Vault Secrets User'
+
 var akvRoleIdMapping = {
   'Key Vault Secrets User': '4633458b-17de-408a-b874-0445c86b69e6'
 }
@@ -252,7 +253,7 @@ resource userAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }
 
-resource spAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource spAkvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAzureKeyVault) {
   name: guid(akvRoleIdMapping[akvRoleName],dataFactory.id,akv.id)
   scope: akv
   properties: {
