@@ -14,10 +14,10 @@ Name of the Azure Data Lake Storage Gen2 storage account. Storage account name r
 ''')
 @minLength(3)
 @maxLength(24)
-param azureDataLakeStoreAccountName string
+param azureDataLakeStoreAccountName string = 'stor${uniqueString(resourceGroup().id)}'
 
 @description('Name of the Azure Data Factory instance.')
-param azureDataFactoryName string
+param azureDataFactoryName string = 'datafact-${uniqueString(resourceGroup().id)}'
 
 @description('''
 Name of the Azure Databricks workspace. Databricks workspace name requirements:
@@ -25,7 +25,7 @@ Name of the Azure Databricks workspace. Databricks workspace name requirements:
 ''')
 @minLength(3)
 @maxLength(30)
-param azureDatabricksName string
+param azureDatabricksName string  = 'databricks-${uniqueString(resourceGroup().id)}'
 
 @description('Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace (true or false)?')
 param databricksNPIP bool = true
@@ -71,7 +71,6 @@ param sqlAdministratorLogin string
 param sqlAdministratorLoginPassword string
 
 var akvRoleName = 'Key Vault Secrets User'
-
 var akvRoleIdMapping = {
   'Key Vault Secrets User': '4633458b-17de-408a-b874-0445c86b69e6'
 }
