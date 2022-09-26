@@ -244,14 +244,12 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       customLocation: empty(customLocation) ? null : {
         id: customLocation
       }
-      azureStackEdgeDevice: empty(azureStackEdgeDevice) ? null : {
+      azureStackEdgeDevice: {
         id: azureStackEdgeDevice
       }
     }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null
-      ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null
       name: controlPlaneAccessInterfaceName
     }
   }
@@ -262,8 +260,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     location: location
     properties: {
       userPlaneAccessInterface: {
-        ipv4Subnet: empty(azureStackEdgeDevice) ? accessSubnet : null
-        ipv4Gateway: empty(azureStackEdgeDevice) ? accessGateway : null
         name: userPlaneAccessInterfaceName
       }
     }
@@ -274,8 +270,6 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       location: location
       properties: {
         userPlaneDataInterface: {
-          ipv4Subnet: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceSubnet : null
-          ipv4Gateway: empty(azureStackEdgeDevice) ? userPlaneDataInterfaceGateway : null
           name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
