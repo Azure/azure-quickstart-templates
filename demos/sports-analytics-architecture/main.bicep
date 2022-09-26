@@ -1,4 +1,4 @@
-@description('Resource Location. Leave the default value.')
+@description('Location for all resources. Leave the default value.')
 param location string = resourceGroup().location
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
