@@ -1,15 +1,4 @@
----
-description: Creates an Azure storage account with ADLS Gen 2 enabled, an Azure Data Factory instance with linked services for the storage account (an the Azure SQL Database if deployed), and an Azure Databricks instance. The AAD identity for the user deploying the template and the managed identity for the ADF instance will be granted the Storage Blob Data Contributor role on the storage account. There are also options to deploy an Azure Key Vault instance, an Azure SQL Database, and an Azure Event Hub (for streaming use cases). When an Azure Key Vault is deployed, the data factory managed identity and the AAD identity for the user deploying the template will be granted the Key Vault Secrets User role.
-page_type: sample
-products:
-- azure
-- azure-resource-manager
-urlFragment: sports-analytics-architecture
-languages:
-- json
-- bicep
----
-# Deploy the Sports Analytics on Azure Architecture
+# Deploy the Azure Sports Analytics Reference Architecture
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/sports-analytics-architecture/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/sports-analytics-architecture/PublicDeployment.svg)
@@ -64,7 +53,7 @@ $null = Connect-AzureAD
 $output = (Get-AzAdUser -UserPrincipalName $name).Id
 Write-Host "Azure AD principal object ID is: $output"
 ```
-Make a note of the object ID for later. You will use this value for the principalObjectId parameter when you deploy the template.
+Make a note of the object ID for later. You will use this value for the Azure AD Object ID parameter when you deploy the template.
 
 ## Deployment steps
 
