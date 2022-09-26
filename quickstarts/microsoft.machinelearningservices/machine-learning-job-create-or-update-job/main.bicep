@@ -7,12 +7,6 @@ param location string = resourceGroup().location
 @description('Specifies the name of the Azure Machine Learning compute instance/cluster on which job will be run.')
 param computeName string
 
-@description('Specifies the name of the Azure Machine Learning experiment name for the job.')
-param experimentName string
-
-@description('Specifies the name of the Azure Machine Learning job name.')
-param jobName string
-
 @description('Specifies the name of the Azure Machine Learning experiment under which job will be created.')
 param experimentName string
 
