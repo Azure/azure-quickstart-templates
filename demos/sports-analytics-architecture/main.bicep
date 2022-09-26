@@ -51,7 +51,7 @@ Name of the Azure Key Vault. Key Vault name requirements:
 ''')
 @minLength(3)
 @maxLength(24)
-param azureKeyVaultName string = '${uniqueString(resourceGroup().id)}-kv'
+param azureKeyVaultName string = 'kv-${uniqueString(resourceGroup().id)}'
 
 @description('Do you want to deploy a new Azure SQL Database (true or false)? Leave default name if you choose false.')
 param deploySqlDb bool = true
