@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
-param azureADUserName string = 'TestAADAdminName'
+param azureADUserName string
 
 @description('Object ID for your Azure AD user identity (see the README.md file in the Azure Quickstart guide for instructions on how to get your Azure AD user object ID).')
 param azureADObjectID string
@@ -40,7 +40,7 @@ Name of the Azure Event Hub. Event Hub name requirements:
 ''')
 @minLength(6)
 @maxLength(50)
-param eventHubName string = '${uniqueString(resourceGroup().name)}-eh'
+param eventHubName string = '${uniqueString(resourceGroup().id)}-eh'
 
 @description('Do you want to deploy a new Azure Key Vault instance (true or false)? Leave default name if you choose false.')
 param deployAzureKeyVault bool = true
@@ -51,24 +51,24 @@ Name of the Azure Key Vault. Key Vault name requirements:
 ''')
 @minLength(3)
 @maxLength(24)
-param azureKeyVaultName string = '${uniqueString(resourceGroup().name)}-kv'
+param azureKeyVaultName string = '${uniqueString(resourceGroup().id)}-kv'
 
 @description('Do you want to deploy a new Azure SQL Database (true or false)? Leave default name if you choose false.')
 param deploySqlDb bool = true
 
 @description('Name of Azure SQL logical server')
-param azureSqlServerName string = '${uniqueString(resourceGroup().name)}-sqlsrvr'
+param azureSqlServerName string = '${uniqueString(resourceGroup().id)}-sqlsrvr'
 
 @description('Database name')
 @maxLength(128)
-param azureSqlDatabaseName string = '${uniqueString(resourceGroup().name)}-sqldb'
+param azureSqlDatabaseName string = 'analytics-db'
 
 @description('SQL administrator username')
-param sqlAdministratorLogin string = 'sql-administrator'
+param sqlAdministratorLogin string
 
 @description('SQL administrator password')
 @secure()
-param sqlAdministratorLoginPassword string = newGuid()
+param sqlAdministratorLoginPassword string
 
 var akvRoleName = 'Key Vault Secrets User'
 
