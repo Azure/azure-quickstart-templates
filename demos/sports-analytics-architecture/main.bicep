@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance).')
-param azureADUserName string = 'TestAADAdminName'
+param azureADUserName string
 
 @description('Object ID for your Azure AD user identity (see the README.md file in the Azure Quickstart guide for instructions on how to get your Azure AD user object ID).')
 param azureADObjectID string
