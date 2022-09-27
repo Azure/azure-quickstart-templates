@@ -1,5 +1,5 @@
 ---
-description: Creates a simple Azure Command Job.
+description: Creates a simple hello world Azure Command Job.
 page_type: sample
 products:
 - azure
@@ -32,14 +32,17 @@ This template creates an Azure Machine Learning command job.
 
 ### Prerequisites
 
-To run this template you need to have an Azure Machine Learning Workspace and an Azure Machine Learning Compute Instance/Cluster. The template expects these as parameters: `workspaceName` and `computeName`. You can use the following samples to create these:
+To run this template you need to have an Azure Machine Learning Workspace and an Azure Machine Learning AML Compute Cluster. The template expects these as parameters: `workspaceName`, `storageAccountName` and `computeName`. You can use the following samples to create these:
 
 1. [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
-2. [Azure Machine Learning Compute Instance](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-computeinstance/)
+2. [Azure Machine Learning Compute Cluster](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-amlcompute/)
 
 ### Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
+`Important Note : hello_world.py script is using lightgbm curated environment AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu defined in main.bicep. Please check if the curated environment is deprecated or not, if it is make sure to use the non deprecated curated environment.`
+
 
 ### Notes
 
