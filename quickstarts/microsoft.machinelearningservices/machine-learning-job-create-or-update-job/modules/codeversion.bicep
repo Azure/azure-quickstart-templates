@@ -62,7 +62,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
 }
 
-// creating codeVersion resource using uploaded hyperdrive script blob url
+// creating codeVersion resource for command job
 resource codeVersionResource 'Microsoft.MachineLearningServices/workspaces/codes/versions@2022-05-01' = {
   dependsOn: [ deploymentScript ]
   name: '${workspaceName}/${codeId}-${uniqueString(storage::blobService::container.id)}/${codeVersion}'
