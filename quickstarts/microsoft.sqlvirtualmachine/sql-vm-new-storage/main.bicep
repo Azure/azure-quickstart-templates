@@ -92,8 +92,8 @@ var publicIpAddressSku = 'Basic'
 var diskConfigurationType = 'NEW'
 var nsgId = networkSecurityGroup.id
 var subnetRef = resourceId(existingVnetResourceGroup, 'Microsoft.Network/virtualNetWorks/subnets', existingVirtualNetworkName, existingSubnetName)
-var dataDisksLuns = array(range(0, sqlDataDisksCount))
-var logDisksLuns = array(range(sqlDataDisksCount, sqlLogDisksCount))
+var dataDisksLuns = range(0, sqlDataDisksCount)
+var logDisksLuns = range(sqlDataDisksCount, sqlLogDisksCount)
 var dataDisks = {
   createOption: 'Empty'
   caching: 'ReadOnly'
@@ -103,7 +103,7 @@ var dataDisks = {
 }
 var tempDbPath = 'D:\\SQLTemp'
 
-resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
+resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   name: publicIpAddressName
   location: location
   sku: {
@@ -114,7 +114,7 @@ resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -122,7 +122,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-0
   }
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = {
   name: networkInterfaceName
   location: location
   properties: {
@@ -147,7 +147,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   name: virtualMachineName
   location: location
   properties: {
@@ -197,7 +197,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-resource sqlVirtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2021-11-01-preview' = {
+resource sqlVirtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2022-07-01-preview' = {
   name: virtualMachineName
   location: location
   properties: {
