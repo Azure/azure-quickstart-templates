@@ -1,15 +1,15 @@
 ---
-description: This template creates an Azure blob for use by the copy data tool quickstart for Azure Data Factory.
+description: This template creates a blob storage and uploads a file for the copy data tool quickstart
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: data-factory-get-started
+urlFragment: data-factory-copy-data-tool
 languages:
 - json
 - bicep
 ---
-# Create a Data Factory, Blob source, Blob sink and Pipeline
+# Create a blob for the data factory copy data tool quickstart
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-copy-data-tool/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-copy-data-tool/PublicDeployment.svg)
