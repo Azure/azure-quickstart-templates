@@ -37,7 +37,6 @@ resource name_resource 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   }
   properties: {
     publicIPAllocationMethod: publicIPAllocationMethod
-    ipTags: []
     ddosSettings: {
       protectionMode: ddosProtectionMode
     }
