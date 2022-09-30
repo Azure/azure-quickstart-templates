@@ -1,4 +1,14 @@
-# Openshift 4.3 on Azure
+---
+description: Openshift Container Platform 4.3
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: openshift-container-platform
+languages:
+- json
+---
+# Openshift Container Platform 4.3
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/openshift/openshift-container-platform/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/openshift/openshift-container-platform/PublicDeployment.svg)
@@ -26,7 +36,7 @@
 
 * [Sign up](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212) for Cloud Pak for Data Trial Key if you don't have the entitlement api key
 
-* If you choose Portworx as your storage class, see [Portworx documentation](PORTWORX.md) for generating `portworx spec url`. 
+* If you choose Portworx as your storage class, see [Portworx documentation](PORTWORX.md) for generating `portworx spec url`.
 
 #### Generate Azure Client ID and Secret with Contributor and User Access Administrator roles:
 * Generate Service Principal
@@ -35,3 +45,5 @@ az login
 scripts/createServicePrincipal.sh -r "Contributor,User Access Administrator"
 ```
 * Save the `ClientID` and `ClientSecret` printed at the end of the script
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Storage/storageAccounts, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems, Microsoft.Compute/virtualMachines, Microsoft.DomainRegistration/domains, Microsoft.Network/dnszones`

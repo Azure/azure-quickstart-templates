@@ -40,11 +40,11 @@ RHSM_USER=${11}
 RHSM_PASSWORD=${12}
 RHEL_OS_LICENSE_TYPE=${13}
 RHSM_POOL=${14}
-EAP_RHEL_VERSION=${15}
 IP_ADDR=$(hostname -I)
+JAVA_VERSION=${15}
 
 echo "JBoss EAP admin user : " ${JBOSS_EAP_USER} | adddate >> jbosseap.install.log
-echo "JBoss EAP on RHEL version you selected : " ${EAP_RHEL_VERSION} | adddate >> jbosseap.install.log
+echo "JAVA VERSION : " ${JAVA_VERSION} | adddate >> jbosseap.install.log
 echo "Initial JBoss EAP setup" | adddate >> jbosseap.install.log
 echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | adddate >> jbosseap.install.log
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD >> jbosseap.install.log 2>&1
@@ -59,29 +59,23 @@ then
     subscription-manager attach --pool=${16} >> jbosseap.install.log 2>&1
 fi
 
-if [ ${EAP_RHEL_VERSION} == "JBoss-EAP7.3-on-RHEL8.4" ]
+# Install JAVA
+if [ $JAVA_VERSION == "JAVA_8" ]
 then
-echo "Subscribing the system to get access to JBoss EAP 7.3 repos" | adddate >> jbosseap.install.log
-
-# Install JBoss EAP 7.3
-echo "subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms" | adddate >> jbosseap.install.log
-subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms >> jbosseap.install.log 2>&1
-flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" | adddate >> jbosseap.install.log; exit $flag;  fi
-
-echo "Installing JBoss EAP 7.3 repos" | adddate >> jbosseap.install.log
-echo "yum groupinstall -y jboss-eap7" | adddate >> jbosseap.install.log
-yum groupinstall -y jboss-eap7 >> jbosseap.install.log 2>&1
-flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" | adddate >> jbosseap.install.log; exit $flag;  fi
-
-echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | adddate >> jbosseap.install.log
-sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
-echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | adddate >> jbosseap.install.log
-echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
+    echo "Installing JAVA 8" | adddate >> jbosseap.install.log
+    echo "sudo yum install java-1.8.0-openjdk -y" | adddate >> jbosseap.install.log
+    sudo yum install java-1.8.0-openjdk -y >> jbosseap.install.log
+    echo "Successfully installed JAVA 8" | adddate >> jbosseap.install.log
+    echo "java -version" | adddate >> jbosseap.install.log
+    java -version >> jbosseap.install.log 2>&1
+else
+    echo "Installing JAVA 11" | adddate >> jbosseap.install.log
+    echo "sudo yum install java-11-openjdk -y" | adddate >> jbosseap.install.log
+    sudo yum install java-11-openjdk -y >> jbosseap.install.log
+    echo "Successfully installed JAVA 11" | adddate >> jbosseap.install.log
+    echo "java -version" | adddate >> jbosseap.install.log
+    java -version >> jbosseap.install.log 2>&1
 fi
-
-if [ ${EAP_RHEL_VERSION} == "JBoss-EAP7.4-on-RHEL8.4" ]
-then
-echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | adddate >> jbosseap.install.log
 
 # Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | adddate >> jbosseap.install.log
@@ -97,7 +91,6 @@ echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" 
 sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
 echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | adddate >> jbosseap.install.log
 echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
-fi
 
 echo "systemctl restart sshd" | adddate >> jbosseap.install.log
 systemctl restart sshd | adddate >> jbosseap.install.log 2>&1

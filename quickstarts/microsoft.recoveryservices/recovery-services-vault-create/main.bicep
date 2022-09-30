@@ -17,7 +17,7 @@ param location string = resourceGroup().location
 var skuName = 'RS0'
 var skuTier = 'Standard'
 
-resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2020-02-02' = {
+resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2022-02-01' = {
   name: vaultName
   location: location
   sku: {
@@ -27,11 +27,11 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2020-02-02' = 
   properties: {}
 }
 
-resource vaultName_vaultstorageconfig 'Microsoft.RecoveryServices/vaults/backupstorageconfig@2020-02-02' = {
+resource vaultName_vaultstorageconfig 'Microsoft.RecoveryServices/vaults/backupstorageconfig@2022-02-01' = {
   parent: recoveryServicesVault
   name: 'vaultstorageconfig'
   properties: {
-    StorageModelType: vaultStorageType
-    CrossRegionRestoreFlag: enableCRR
+    storageModelType: vaultStorageType
+    crossRegionRestoreFlag: enableCRR
   }
 }

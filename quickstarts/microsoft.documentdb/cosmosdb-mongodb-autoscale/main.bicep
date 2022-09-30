@@ -15,8 +15,9 @@ param secondaryRegion string
   '3.2'
   '3.6'
   '4.0'
+  '4.2'
 ])
-param serverVersion string = '4.0'
+param serverVersion string = '4.2'
 
 @description('The default consistency level of the Cosmos DB account.')
 @allowed([
@@ -26,9 +27,9 @@ param serverVersion string = '4.0'
   'BoundedStaleness'
   'Strong'
 ])
-param defaultConsistencyLevel string = 'Session'
+param defaultConsistencyLevel string = 'Eventual'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647.')
 @minValue(10)
 @maxValue(2147483647)
 param maxStalenessPrefix int = 100000
@@ -41,18 +42,22 @@ param maxIntervalInSeconds int = 300
 @description('The name for the Mongo DB database')
 param databaseName string
 
+@description('Maximum autoscale throughput for the database shared with up to 25 collections')
+@minValue(1000)
+@maxValue(1000000)
+param sharedAutoscaleMaxThroughput int = 1000
+
 @description('The name for the first Mongo DB collection')
 param collection1Name string
 
 @description('The name for the second Mongo DB collection')
 param collection2Name string
 
-@description('Maximum throughput when using Autoscale Throughput Policy for the Database')
-@minValue(4000)
+@description('Maximum dedicated autoscale throughput for the orders collection')
+@minValue(1000)
 @maxValue(1000000)
-param autoscaleMaxThroughput int = 4000
+param dedicatedAutoscaleMaxThroughput int = 1000
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -85,22 +90,28 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'MongoDB'
   properties: {
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
+    enableAutomaticFailover: true
     apiProperties: {
       serverVersion: serverVersion
     }
+    capabilities: [
+      {
+        name: 'DisableRateLimitingResponses'
+      }
+    ]
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-04-15' = {
-  parent: accountName_resource
+resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
+  parent: account
   name: databaseName
   properties: {
     resource: {
@@ -108,14 +119,14 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/mongodb
     }
     options: {
       autoscaleSettings: {
-        maxThroughput: autoscaleMaxThroughput
+        maxThroughput: sharedAutoscaleMaxThroughput
       }
     }
   }
 }
 
-resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  parent: accountName_databaseName
+resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
+  parent: database
   name: collection1Name
   properties: {
     resource: {
@@ -141,34 +152,18 @@ resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/database
         {
           key: {
             keys: [
-              'user_id'
-              'user_address'
+              'product_name'
+              'product_category_name'
             ]
-          }
-          options: {
-            unique: true
-          }
-        }
-        {
-          key: {
-            keys: [
-              '_ts'
-            ]
-            options: {
-              expireAfterSeconds: 2629746
-            }
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
-      }
     }
   }
 }
 
-resource accountName_databaseName_collection2Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  parent: accountName_databaseName
+resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
+  parent: database
   name: collection2Name
   properties: {
     resource: {
@@ -194,28 +189,17 @@ resource accountName_databaseName_collection2Name 'Microsoft.DocumentDb/database
         {
           key: {
             keys: [
-              'company_id'
-              'company_address'
+              'customer_id'
+              'order_id'
             ]
-          }
-          options: {
-            unique: true
-          }
-        }
-        {
-          key: {
-            keys: [
-              '_ts'
-            ]
-            options: {
-              expireAfterSeconds: 2629746
-            }
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
       }
+      options: {
+        autoscaleSettings: {
+          maxThroughput: dedicatedAutoscaleMaxThroughput
+        }
     }
   }
 }

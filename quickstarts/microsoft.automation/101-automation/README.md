@@ -1,4 +1,14 @@
-# Azure Automation create account template
+---
+description: This template provides an example of how create an Azure Automation account and links it to a new or existing Azure Monitor Log Analytics workspace.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: 101-automation
+languages:
+- json
+---
+# Create Azure Automation account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.automation/101-automation/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.automation/101-automation/PublicDeployment.svg)
@@ -29,3 +39,5 @@ those artifacts can be expected to remain unchanged.
 **This does not change the operational best practice behavior of reviewing, validating, and testing
 all code artifacts including ARM templates, PowerShell scripts, and DSC resources,
 before production deployment.**
+
+`Tags: Microsoft.OperationalInsights/workspaces, Microsoft.Automation/automationAccounts, SystemAssigned, runbooks, Microsoft.OperationalInsights/workspaces/linkedServices`

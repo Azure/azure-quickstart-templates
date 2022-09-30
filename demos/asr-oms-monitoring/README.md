@@ -1,4 +1,14 @@
-# OMS ASR Monitoring
+---
+description: Enables the ASR (v2) Solution in OMS
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: asr-oms-monitoring
+languages:
+- json
+---
+# OMS ASR Solution
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/asr-oms-monitoring/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/asr-oms-monitoring/PublicDeployment.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fasr-oms-monitoring%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fasr-oms-monitoring%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fasr-oms-monitoring%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fasr-oms-monitoring%2Fazuredeploy.json)
 
 This solution (currently in private preview) will allow you to capture your Azure Site Recovery operations (across subscriptions and Recovery Vaults) and visualize them in Operations Management Suite (Log Analytics). This solution currently leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics to present data about all your ASR Recovery Vaults into a single log analytics workspace.
 
@@ -39,31 +49,31 @@ Log into Azure Portal (https://portal.azure.com) and ensure you are in the subsc
 
 Locate your existing OMS Log Analytics Workspace and note the name of the workspace, the location of the workspace, and the Resource Group
 
-![alt text](images/knomsworkspace.png "omsws") 
+![alt text](images/knomsworkspace.png "omsws")
 
 Next, create a new Automation Account and click on *New* and search for 'Automation'
 
 ![alt text](images/knautomation.png "automation")
- 
-Select Automation and click *Create* 
+
+Select Automation and click *Create*
 
 ![alt text](images/kncreate.png "create")
 
 Specify the name of the Automation Account and ensure you are selecting 'Use existing' and selects the Resource Group containing the OMS Log Analytics workspace. If possible, use the same Azure Region for the Automation Account. Ensure that 'Create Azure Run As account' is set to 'Yes' and click 'Create'
 
-![alt text](images/knaaccount.png "Create account") 
+![alt text](images/knaaccount.png "Create account")
 
 Once the deployment has completed, you should see the Automation account and the Log Analytics workspace in the same Resource Group
 
 ![alt text](images/knrg.png "Resource Group")
 
-###You can now deploy the template   
+### You can now deploy the template
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fasr-oms-monitoring%2F%2Fazuredeploy.json)
 
-This will send you to the Azure Portal with some default values for the template parameters. 
+This will send you to the Azure Portal with some default values for the template parameters.
 Ensure that the parameters reflects your setup so that you are deploying this into the *existing* Resource Group containing the Log Analytics Workspace and the Automation account.
 
-*It is important that you type the exact values for your workspace name and automation account name, and points to the regions where these resources are deployed.* 
+*It is important that you type the exact values for your workspace name and automation account name, and points to the regions where these resources are deployed.*
 
 You should also change the *INGESTSCHEDULEGUID* value. You can generate your own using PowerShell with the following cmdlet:
 
@@ -86,24 +96,25 @@ Log into Azure Portal (https://portal.azure.com) and ensure you are in the subsc
 Create a new Automation Account and click on *New* and search for 'Automation'
 
 ![alt text](images/knautomation.png "automation")
- 
-Select Automation and click *Create* 
+
+Select Automation and click *Create*
 
 ![alt text](images/kncreate.png "create")
 
 Specify the name of the Automation Account and create the account into a new Resource Group. Ensure that 'Create Azure Run As account' is set to 'Yes' and click 'Create'
 
-![alt text](images/knnewrg.png "Create account") 
+![alt text](images/knnewrg.png "Create account")
 
 Once the deployment has completed, you should see the new Resource Group with the Automation account
 
 ![alt text](images/knautorg.png "RG")
 
-###You can now deploy the template   
+### You can now deploy the template
+
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fasr-oms-monitoring%2F%2Fazuredeploy.json)
 
-This will send you to the Azure Portal with some default values for the template parameters. 
-Ensure that the parameters reflects your setup so that you are deploying this into the *existing* Resource Group containing the Automation account, and also change the parameters for 'omsautomationaccountname' and 'omsautomationregion' to point to the existing account. 
+This will send you to the Azure Portal with some default values for the template parameters.
+Ensure that the parameters reflects your setup so that you are deploying this into the *existing* Resource Group containing the Automation account, and also change the parameters for 'omsautomationaccountname' and 'omsautomationregion' to point to the existing account.
 
 This template will create a new OMS Log Analytics Workspace in the specified region.
 
@@ -126,6 +137,6 @@ You should expect to see the following view for the next hour.
 
 When the first data has been ingested, you can drill into the ASR Private Preview solution and explore the views
 
-![alt text](images/asrpreview.png "ASR Private Preview")           
+![alt text](images/asrpreview.png "ASR Private Preview")
 
-
+`Tags: PowerShell, Microsoft.OperationalInsights/workspaces, datasources, Microsoft.Automation/automationAccounts, variables, string, Modules, runbooks, microsoft.automation/automationAccounts/schedules, microsoft.automation/automationAccounts/jobSchedules`

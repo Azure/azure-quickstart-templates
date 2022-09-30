@@ -22,7 +22,7 @@ var frontDoorOriginGroupName = 'MyOriginGroup'
 var frontDoorOriginName = 'MyAppServiceOrigin'
 var frontDoorRouteName = 'MyRoute'
 
-resource frontDoorProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource frontDoorProfile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: frontDoorProfileName
   location: 'global'
   sku: {
@@ -36,7 +36,7 @@ module functionApp 'modules/function.bicep' = {
     location: location
     appName: functionAppName
     functionPlanSkuName: functionPlanSkuName
-    frontDoorId: frontDoorProfile.properties.frontdoorId
+    frontDoorId: frontDoorProfile.properties.frontDoorId
   }
 }
 

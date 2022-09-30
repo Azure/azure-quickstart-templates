@@ -1,4 +1,14 @@
-# Run the Open Source Parse Server in Docker on Microsoft Azure
+---
+description: This template allows you to deploy an Ubuntu VM with Docker installed (using the Docker Extension) and an Open Source Parse Server container created and configured to replace the (now sunset) Parse service.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: docker-parse
+languages:
+- json
+---
+# Deploy an Open-Source Parse Server with Docker
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/parse/docker-parse/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/parse/docker-parse/PublicDeployment.svg)
@@ -15,5 +25,4 @@
 This template allows you to deploy an Ubuntu Server 15.10 VM with Docker (using the [Docker Extension](https://github.com/Azure/azure-docker-extension))
 and starts an open-source Parse server container listening on port 80. For information [regarding the Parse Server image, please see the repository](https://github.com/felixrieseberg/parse-docker).
 
-
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DockerExtension`

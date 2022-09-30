@@ -1,4 +1,14 @@
-# Evidian SafeKit - Load Balancing Cluster with Failover in Azure - Farm Module
+---
+description: This template deploys a load balancing cluster with failover on 2 to 4 Windows or Linux VMs in different availability zones
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: safekit-cluster-farm
+languages:
+- json
+---
+# Evidian SafeKit Farm Cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/safekit/safekit-cluster-farm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/safekit/safekit-cluster-farm/PublicDeployment.svg)
@@ -63,7 +73,5 @@ After deployment, go to the resource group's 'Microsoft.Template' deployment out
 *   [Azure: The Simplest Load Balancing Cluster with Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-load-balancing-cluster-failover/)
 *   [Azure: The Simplest High Availability Cluster with Synchronous Replication and Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-high-availability-cluster-synchronous-replication-failover/)
 
-`Tags: load balancing, cluster, failover, high availability, business continuity, disaster recovery, evidian, safekit, farm`
-
-
+`Tags: load balancing, cluster, failover, high availability, business continuity, disaster recovery, evidian, safekit, farm, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers, Microsoft.Storage/storageAccounts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, systemAssigned, Microsoft.Authorization/roleAssignments`
 

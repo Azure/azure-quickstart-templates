@@ -1,4 +1,14 @@
-# Deploy an Azure SQL Server with Auditing enabled to write audit logs to Event Hubs
+---
+description: This template allows you to deploy an Azure SQL server with Auditing enabled to write audit logs to Event Hub
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-auditing-server-policy-to-eventhub
+languages:
+- json
+---
+# Azure SQL Server with Auditing written to Event Hub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-eventhub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-eventhub/PublicDeployment.svg)
@@ -26,3 +36,4 @@ Enable Auditing of Microsoft support operations (isMSDevOpsAuditEnabled) to trac
 
 For more information on Auditing of Microsoft support operations, see the [official documentation]( https://docs.microsoft.com/azure/azure-sql/database/auditing-overview#auditing-of-microsoft-support-operations).
 
+`Tags: Microsoft.EventHub/namespaces, eventhubs, Microsoft.Sql/servers, databases, databases/providers/diagnosticSettings, auditingSettings, devOpsAuditingSettings`

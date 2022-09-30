@@ -1,3 +1,13 @@
+---
+description: This template allows you to create RHEL 8.6 VMSS instances running JBoss EAP 7.4 cluster and also deploys a web application called eap-session-replication, you can log into the admin console using the JBoss EAP username and password configured at the time of the deployment.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: jboss-eap-clustered-vmss-rhel
+languages:
+- json
+---
 # JBoss EAP on RHEL (clustered, VMSS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jboss/jboss-eap-clustered-vmss-rhel/PublicLastTestDate.svg)
@@ -36,25 +46,24 @@ Red Hat Subscription Management (RHSM) is a customer-driven, end-to-end solution
 
 ## Template Solution Architecture
 
-This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP EAP 7.3/EAP 7.4 cluster running Red Hat Enterprise Linux (RHEL) 8.4 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement. The following resources are created by this template:
+This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.4 cluster running Red Hat Enterprise Linux (RHEL) 8.6 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement. The following resources are created by this template:
 
-- RHEL 8.4 Virtual Machine Scale Set instances
+- RHEL 8.6 Virtual Machine Scale Set instances
 - 1 Load Balancer
 - Virtual Network with a single subnet
-- JBoss EAP EAP 7.3/EAP 7.4 cluster setup on the VMSS instances
+- JBoss EAP 7.4 cluster setup on the VMSS instances
 - Sample Java application called **eap-session-replication** deployed on JBoss EAP
 - Storage Account
 
-Note that the users also have the option to choose between the Red Hat Enterprise Linux version 8.4 and JBoss EAP versions 7.3 and 7.4. Users can select one of the following combinations for deployment
+Note that users will use the Red Hat Enterprise Linux version 8.6 and JBoss EAP version 7.4 for deployment.
 
-- JBoss EAP 7.3 on RHEL 8.4
-- JBoss EAP 7.4 on RHEL 8.4
+- JBoss EAP 7.4 on RHEL 8.6
 
 Following is the Architecture:
 
 ![alt text](images/arch.png)
 
-To learn more about the JBoss Enterprise Application Platform, visit: [Documentation for JBoss EAP 7.3](https://access.redhat.com/documentation/red_hat_jboss_enterprise_application_platform/7.3/) and [Documentation for JBoss EAP 7.4](https://access.redhat.com/documentation/red_hat_jboss_enterprise_application_platform/7.4/).
+To learn more about the JBoss Enterprise Application Platform, visit: [Documentation for JBoss EAP 7.4](https://access.redhat.com/documentation/red_hat_jboss_enterprise_application_platform/7.4/).
 
 ## Subscriptions and Costs
 
@@ -67,7 +76,7 @@ This ARM template is designed with flexible operating system (OS) options:
 
 By default this template uses the on-demand Red Hat Enterprise Linux PAYG image from the Azure Gallery. When using this on-demand image, there is an additional hourly RHEL subscription charge for using this image on top of the normal compute, network and storage costs. At the same time, the instance will be registered to your Red Hat subscription, therefore consuming one of your entitlements. This will lead to "double billing". To avoid this, you would need to build your own RHEL image, which is defined in this Red Hat KB article for [uploading RHEL image to Azure](https://access.redhat.com/articles/uploading-rhel-image-to-azure) or use RHEL Gold Image from the Azure Private Gallery offering.
 
-Read [Red Hat Enterprise Linux pricing](https://azure.microsoft.com/pricing/details/virtual-machines/red-hat/) for details on the RHEL VMs pricing with PAYG model. In order to use RHEL in PAYG model, you will need an Azure Subscription with the specified payment method (RHEL 8.4 is an Azure Marketplace product and requires a payment method to be specified in the Azure Subscription).
+Read [Red Hat Enterprise Linux pricing](https://azure.microsoft.com/pricing/details/virtual-machines/red-hat/) for details on the RHEL VMs pricing with PAYG model. In order to use RHEL in PAYG model, you will need an Azure Subscription with the specified payment method (RHEL 8.6 is an Azure Marketplace product and requires a payment method to be specified in the Azure Subscription).
 
 #### Using RHEL OS with BYOS Model
 
@@ -81,17 +90,17 @@ In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat sub
     2.2 Add your Azure Subscription IDs.
 
     2.3 Enable new products for Cloud Access on Microsoft Azure.
-    
+
     2.4 Activate Red Hat Gold Images for your Azure Subscription. Refer to [Getting access to Gold Images](https://access.redhat.com/documentation/en/red_hat_subscription_management/1/html/red_hat_cloud_access_reference_guide/understanding-gold-images_cloud-access#getting-access-to-gold-images_cloud-access) for more details.
 
     2.5 Wait for Red Hat Gold Images to be available in your Azure subscription. These are typically available within 3 hours.
-    
+
 3. Accept the Marketplace Terms and Conditions in Azure for the RHEL BYOS Images. You can complete this by running Azure CLI commands, as instructed below. Refer to [RHEL BYOS Gold Images in Azure documentation](https://docs.microsoft.com/azure/virtual-machines/workloads/redhat/byos) for more details.
 
     3.1 Launch an Azure CLI session and make sure your CLI version is updated to version 2.8 or newer before running these commands. Check the CLI version by running the following command and if your [CLI version](https://docs.microsoft.com/cli/azure/install-azure-cli-windows?view=azure-cli-latest&tabs=azure-cli) requires updating.
 
     `az version`
-    
+
     3.2 Once your CLI session is ready, authenticate with your Azure account. Refer to [Signing in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-azure-cli?view=azure-cli-latest) for assistance.
 
     3.3 Verify the RHEL BYOS images are available in your subscription by running the following CLI command. If your RHEL BYOS is not listed, please refer to #2 and ensure that your Azure subscription is activated for RHEL BYOS image.
@@ -100,9 +109,9 @@ In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat sub
 
     3.4 Run the following command to accept the Marketplace Terms for RHEL BYOS.
 
-    `az vm image terms accept --publisher redhat --offer rhel-byos --plan rhel-lvm84` - *For RHEL 8.4 BYOS VM*
+    `az vm image terms accept --publisher redhat --offer rhel-byos --plan rhel-lvm86` - *For RHEL 8.6 BYOS VM*
 
-4. Your subscription is now ready to deploy RHEL 8.4 BYOS VMSS instances.
+4. Your subscription is now ready to deploy RHEL 8.6 BYOS VMSS instances.
 
 #### Using JBoss EAP with BYOS Model
 
@@ -121,11 +130,11 @@ JBoss EAP is available on Azure through BYOS model only; you need to supply your
    - **RHSM Username** and password
 
    - **RHSM Pool ID for JBoss EAP and/or RHEL OS**
-    
+
 ## Deployment Steps
 
-Build your environment with JBoss EAP 7.3/EAP 7.4 cluster setup on RHEL 8.4 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement on Azure in a few simple steps:
-1. Launch the template by clicking the **Deploy to Azure** button.  
+Build your environment with JBoss EAP 7.4 cluster setup on RHEL 8.6 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement on Azure in a few simple steps:
+1. Launch the template by clicking the **Deploy to Azure** button.
 2. Complete the following parameter values and accept the Terms and Conditions before clicking on the **Purchase** button.
 
     - **Subscription** - Choose the appropriate subscription for deployment.
@@ -135,12 +144,10 @@ Build your environment with JBoss EAP 7.3/EAP 7.4 cluster setup on RHEL 8.4 VMSS
     - **Location** - Choose the appropriate location for deployment.
 
     - **Admin Username** - User account name for logging into the RHEL VMSS instance.
-    
+
     - **Authentication Type** - Type of authentication to use on the VMSS instance (password or SSH key).
 
     - **Admin Password or SSH key** - User account password or SSH key data which is an SSH RSA public key for logging into the RHEL VMSS instance.
-
-    - **EAP on RHEL Version** - Select the EAP on RHEL version combination from the dropdown options, the default option selected here is JBoss EAP 7.3 on RHEL 8.4.
 
     - **JBoss EAP Username** - Username for JBoss EAP Admin Console.
 
@@ -151,10 +158,12 @@ Build your environment with JBoss EAP 7.3/EAP 7.4 cluster setup on RHEL 8.4 VMSS
     - **RHSM Username** - Username for the Red Hat Subscription Manager account.
 
     - **RHSM Password** - User account password for your RHSM account.
-   
+
     - **RHSM Pool ID for JBoss EAP** - RHSM Pool ID (ensure you have EAP entitlement)
 
     - **RHSM Pool ID for RHEL** - RHSM Pool ID (ensure you have RHEL entitlement). This is **mandatory when selecting BYOS RHEL OS** as Subscription Type.  This should be left blank when selecting RHEL OS PAYG Subscription Type.
+
+    - **JAVA VERSION** - Select the Java version to be installed.
 
     - **Storage Replication** - Select the [Replication Strategy](https://docs.microsoft.com/azure/storage/common/storage-redundancy) for the Storage account.
 
@@ -165,7 +174,7 @@ Build your environment with JBoss EAP 7.3/EAP 7.4 cluster setup on RHEL 8.4 VMSS
     - **VMSS Instance Size** - Select the appropriate size of the VMSS instance from the dropdown options.
 
     - Leave the rest of the parameter values (Artifacts and Location) as is, accept the Terms and Conditions, and proceed to purchase.
-    
+
 ## Deployment Time
 
 The deployment takes approximately 10 minutes to complete.
@@ -191,11 +200,11 @@ Once the deployment is successful, go to the outputs section of the deployment t
    - Inside the Jump VM, you will notice that the following page loads when you enter the Load Balancer private IP in a browser.
 
      ![alt text](images/eap.png)
-   
+
    - Go to the VMSS details page and under settings section select *Instances*, you will notice that all the instances have an ID appended at the end of their name. To access the Administration Console of an instance with ID 0, open a web browser and go to **http://<PRIVATE_IP_Address_LB>:9000** and enter JBoss EAP username and password. You can append the ID of the VMSS instance with 900 to access the Adminstration Console of the respective VMSS instance.
-   
+
      ![alt text](images/eap-admin-console.png)
-   
+
    - To obtain the Private IP of a RHEL VMSS instance, go to the VMSS details page and under settings section select *Instances*. Select the instance and copy the Private IP address. Use this Private IP to log into the VMSS instance.
 
    - To access the App UI console, copy the app URL from the output page and paste it in a browser inside the Jump VM. The web application displays the *Session ID*, *Session counter* and *Timestamp* (these are variables stored in the session that are replicated) and the VMSS instance Private IP address that the web page and session is being hosted from. Clicking on the *Increment Counter* updates the session counter and clicking on *Refresh* will refresh the page.
@@ -203,9 +212,9 @@ Once the deployment is successful, go to the outputs section of the deployment t
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/eap-session.png"/>
      </a>
-  
+
      ![alt text](images/eap-session-rep.png)
-     
+
    - Note that in the EAP Session Replication page of Load Balancer, the Private IP displayed is that of one of the VMSS instance. If you click on *Increment Counter* or *Refresh* button when the service of the VMSS instance corresponding to the Private IP displayed is down (can be due to various reasons like the instance in stopped state or instance restarting), the Private IP displayed will change to that of another VMSS instance Private IP but the Session ID remains the same. This validates that the Session was replicated.
 
      ![alt text](images/eap-ses-rep.png)
@@ -233,9 +242,9 @@ Once the deployment is successful, go to the outputs section of the deployment t
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/eap-session.png"/>
      </a>
-  
+
      ![alt text](images/eap-session-rep.png)
-     
+
    - Note that in the EAP Session Replication page of Load Balancer, the Private IP displayed is that of one of the VMSS instance. If you click on *Increment Counter* or *Refresh* button when the service of the VMSS instance corresponding to the Private IP displayed is down (can be due to various reasons like the instance in stopped state or instance restarting), the Private IP displayed will change to that of another VMSS instance Private IP but the Session ID remains the same. This validates that the Session was replicated.
 
      ![alt text](images/eap-ses-rep.png)
@@ -255,7 +264,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/eap-session.png"/>
      </a>
-  
+
      ![alt text](images/eap-session-rep.png)
 
    - Note that in the EAP Session Replication page of Load Balancer, the Private IP displayed is that of one of the VMSS instance. If you click on *Increment Counter* or *Refresh* button when the service of the VMSS instance corresponding to the Private IP displayed is down (can be due to various reasons like the instance in stopped state or instance restarting), the Private IP displayed will change to that of another VMSS instance Private IP but the Session ID remains the same. This validates that the Session was replicated.
@@ -278,7 +287,7 @@ Using Azure CLI - To create the autoscale resource, use [az monitor autoscale cr
 
 ## Troubleshooting
 
-This section includes common errors faced during deployments and details on how you can troubleshoot these errors. 
+This section includes common errors faced during deployments and details on how you can troubleshoot these errors.
 
 #### Azure Platform
 
@@ -327,10 +336,10 @@ Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VM
 
 If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Note that if you want to keep any resources in the resource group, you can delete other resources manually which does not have dependencies on the resources that you do not want to delete. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
 
-`Tags: JBoss, Red Hat, EAP 7.3, EAP 7.4, Cluster, Load Balancer, RHEL 8.4, Azure, Azure VMSS, Java EE`
-
 ## Support
 
 For any support related questions, issues or customization requirements with the GitHub template please contact [Spektra Systems](mailto:info@spektrasystems.com).
 
 If you are experiencing production deployment issues please contact [Red Hat Support](https://www.redhat.com/en/services/support).
+
+`Tags: JBoss, Red Hat, EAP 7.4, Cluster, Load Balancer, RHEL 8.6, Azure, Azure VMSS, Java EE, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachineScaleSets, CustomScript, Microsoft.Network/loadBalancers, blobServices/containers`

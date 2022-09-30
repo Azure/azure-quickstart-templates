@@ -1,4 +1,14 @@
-# Azure Sql Database Managed Instance (SQL MI) with JumpBox Creation inside New Virtual Network
+---
+description: Deploy Azure Sql Database Managed Instance (SQL MI) and JumpBox with SSMS inside new Virtual Network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sqlmi-new-vnet-w-jumpbox
+languages:
+- json
+---
+# Create SQL MI with jumpbox inside new virtual network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet-w-jumpbox/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet-w-jumpbox/PublicDeployment.svg)
@@ -12,9 +22,9 @@
 [![Deploy To Azure Government](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsqlmi-new-vnet-w-jumpbox%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsqlmi-new-vnet-w-jumpbox%2Fazuredeploy.json)
 
-This template allows you to create a [Azure SQL Database Managed Instances](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance) inside a new virtual network with Virtual Machine that comes with the latest version of SQL Server Management Studio (SSMS) preinstalled.
+This template allows you to create a [Azure SQL Database Managed Instances](https://docs.microsoft.com/azure/sql-database/sql-database-managed-instance) inside a new virtual network with Virtual Machine that comes with the latest version of SQL Server Management Studio (SSMS) preinstalled.
 
-`Tags: Azure, SqlDb, Managed Instance, SSMS`
+`Tags: Azure, SqlDb, Managed Instance, SSMS, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Sql/managedInstances, SystemAssigned, Microsoft.Compute/virtualMachines, extensions, CustomScriptExtension, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIpAddresses`
 
 ## Solution overview and deployed resources
 
@@ -28,7 +38,7 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
  - Name of the subnet where Managed Instance will be created. The name will be _ManagedInstance_, if you don't want to change it. Default address range is 10.0.0.0/24 but you could change it to fit your needs.
  - Name of the subnet where VM with SSMS will be created. The name will be _Management_, if you don't want to change it. Default address range is 10.0.1.0/24 but you could change it to fit your needs.
  - Sku name that combines service tear and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
- - License type that could be _BasePrice_ if you are eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/) or _LicenseIncluded_ otherwise
+ - License type that could be _BasePrice_ if you are eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/pricing/hybrid-benefit/) or _LicenseIncluded_ otherwise
 
 ||GP_Gen5|BC_Gen5|
 |----|------|------|

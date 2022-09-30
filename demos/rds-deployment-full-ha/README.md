@@ -1,4 +1,14 @@
-# Remote Desktop Services 2019 with High Availability
+---
+description: This ARM Template sample code will deploy a **Remote Desktop Services 2019 Session Collection** lab with high availability. The goal is to deploy a fully redundant, highly available solution for Remote Desktop Services, using Windows Server 2019.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: rds-deployment-full-ha
+languages:
+- json
+---
+# Remote Desktop Services with High Availability
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/rds-deployment-full-ha/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/rds-deployment-full-ha/PublicDeployment.svg)
@@ -19,7 +29,7 @@ It requests valid public certificates for the deployment automatically from Let'
 
 Even though multiple services are deployed, it is not using Azure best practices, since this is a LAB environment. Also, it does not integrate into existing resources, except for the Azure Public DNS Zone. Does not integrate with existing Active Directory domain and no networking connectivity with onpremises.
 
-**WVD is the production ready environment for Remote Desktop Services** -> [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)
+**WVD is the production ready environment for Remote Desktop Services** -> [Windows Virtual Desktop](https://azure.microsoft.com/services/virtual-desktop/)
 
 ## Prerequisites
 
@@ -28,14 +38,14 @@ To be able to request certificates and have a highly available environment, do t
 1. Create two CNAME entries ("remoteapps" and "broker") in your external DNS domain registrar, pointing to the following:
 
     **projectName**lbpip.**location**.cloudapp.azure.com
-    
+
     Example:
 
          Deployment parameters:
             "projectName"     -> "rds"
             "location"        -> "eastus"
             "externalDnsZone" -> "contosocorp.com"
-        
+
         DNS CNAMEs to be created:
 
         "remoteapps.contosocorp.com" CNAME "rdslbpip.eastus.cloudapp.azure.com"
@@ -114,3 +124,5 @@ Final expected configuration is:
 - Using this ARM Template on Visual Studio Code with ARM extension, incorrectly triggers ARM Template validation errors, due to using Nested Templates with "inner" scope option, as described on [issue 730](https://github.com/microsoft/vscode-azurearmtools/issues/730). This can be safely ignored as the template is valid.
 - Uses some code from examples [301-create-ad-forest-with-subdomain](https://github.com/Azure/azure-quickstart-templates/tree/master/301-create-ad-forest-with-subdomain) and [rds-deployment-existing-ad](https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-existing-ad) on Azure QuickStart Templates.
 - After a successful deployment, with RDS accessible via gateway, remove the rules in NSG for incoming TCP/UDP/3389 to improve lab security.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers, Microsoft.Network/publicIPAddresses, Microsoft.Sql/servers, firewallRules, Microsoft.Sql/servers/databases, Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC, CustomScriptExtension`

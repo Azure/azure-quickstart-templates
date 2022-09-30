@@ -1,4 +1,15 @@
-# Autoscale demo app on Ubuntu 16.04
+---
+description: Deploy a VM Scale Set behind a load balancer/NAT & each VM running a simple Python Bottle app that does work. With Autoscale configured Scale Set will scale out & in as needed
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vmss-bottle-autoscale
+languages:
+- json
+- bicep
+---
+# Deploy VM Scale Set with Python Bottle server & AutoScale
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/python/vmss-bottle-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/python/vmss-bottle-autoscale/PublicDeployment.svg)
@@ -10,6 +21,8 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/python/vmss-bottle-autoscale/CredScanResult.svg)
 
 Self-contained Ubuntu autoscale example which includes a Python Bottle server to do work. The VM Scale Set scales up when average CPU across all VMs > 60%, scales down when avg CPU < 30%.
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/python/vmss-bottle-autoscale/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fpython%2Fvmss-bottle-autoscale%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fpython%2Fvmss-bottle-autoscale%2Fazuredeploy.json)
@@ -23,3 +36,5 @@ Self-contained Ubuntu autoscale example which includes a Python Bottle server to
 - You can stop doing work by browsing to `dns:9000/stop_work`.
 
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/virtual-machine-scale-sets/quick-create-template-linux) article.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, CustomScript, Microsoft.Insights/autoscaleSettings, ChangeCount`

@@ -1,4 +1,14 @@
-﻿# Two-tier Nodejs app migration to Azure Container and PaaS DB
+---
+description: Two-tier app migration to azure containers and PaaS database.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: two-tier-nodejsapp-migration-to-containers-on-azure
+languages:
+- json
+---
+# Two-Tier-nodejsapp-migration-to-containers-on-Azure
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/two-tier-nodejsapp-migration-to-containers-on-azure/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/two-tier-nodejsapp-migration-to-containers-on-azure/PublicDeployment.svg)
@@ -12,8 +22,6 @@
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Ftwo-tier-nodejsapp-migration-to-containers-on-azure%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Ftwo-tier-nodejsapp-migration-to-containers-on-azure%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Ftwo-tier-nodejsapp-migration-to-containers-on-azure%2Fazuredeploy.json)
-
-
 
 <!-- TOC -->
 
@@ -41,12 +49,12 @@ This template will deploy:
 *	One Ubuntu Server VM
 *   Installation and configuration of Mongo database and Nodejs application
 
-<img src="images/onPremApp.jpg"/> 
+<img src="images/onPremApp.jpg"/>
 
 Post migration of the app and db using the guide, your Azure environment will be as per the below diagram
-<img src="images/ContainerApp.jpg"/> 
+<img src="images/ContainerApp.jpg"/>
 ## Licenses and Costs
-This uses Ubuntu Linux image which is freely available and no license is required to deploy the same. User will be charged hourly for Azure’s Linux VM rates. Click [here](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/Canonical.UbuntuServer?tab=PlansAndPrice) for pricing details.
+This uses Ubuntu Linux image which is freely available and no license is required to deploy the same. User will be charged hourly for Azure’s Linux VM rates. Click [here](https://azuremarketplace.microsoft.com/marketplace/apps/Canonical.UbuntuServer?tab=PlansAndPrice) for pricing details.
 
 ## Prerequisites
 *	Azure Subscription with specified payment method or Azure credits
@@ -55,8 +63,8 @@ Build your Two-tier on-premises app simulation on Azure in a few simple steps:
 *	Launch the Template by click on Deploy to Azure button.
 *	Fill in all the required parameter values. Accept the terms and condition on click Purchase.
 *	Access the deployment job once it is successful. In deployment job output, you will find the Public IP Address of VMs which can be used connect to the VMs.
-*	Start the Nodejs (ToDo) application and launch the same in browser 
-*	Populate the application by entering some records 
+*	Start the Nodejs (ToDo) application and launch the same in browser
+*	Populate the application by entering some records
 *	Open Mongo console and verify the database is successfully created.
 *	Follow the post deployment configuration document [here](https://github.com/SpektraSystems/2-Tier-nodejsapp-migration-to-containers-on-Azure/raw/master/Two-tier%20Nodejs%20App%20migration%20on%20Azure%20Container%20v0.1.pdf) to learn about further configuration.
 
@@ -66,4 +74,4 @@ The deployment takes about 20 minutes to complete.
 For any support related questions, issues or customization requirements, please contact info@spektrasystems.com <br/>
 ****End****
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

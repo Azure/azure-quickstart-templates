@@ -1,5 +1,32 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in September 29, 2022
+
+* Add an option to create a SharePoint Subscription farm running with feature update 22H2.
+* Use a gen2 image for SQL Server VM.
+* Enable LDAPS (LDAP over SSL) on the Active Directory domain.
+* Create a new AD user to run the directory synchronization, and grant it permission "Replicate Directory Changes".
+* Create a synchronization connection in the User Profile Service.
+* Change SKU of Public IP addresses to Standard, since Basic SKU will be retired
+* Update apiVersion of ARM resources.
+* Replace DSC module xWebAdministration 3.3.0 with WebAdministrationDsc 4.0.0.
+
+## Enhancements & bug-fixes - Published in August 8, 2022
+
+* In SP SE, import site certificate in SharePoint, so it can manage the certificate itself.
+* Update LDAP security settings to mitigate CVE-2017-8563.
+* Remove tags on resources, as they did not bring any particular value.
+* Update network address to use the same as DevTest Labs templates.
+* Update apiVersion of resources to latest version.
+* Explicitly set the version of each DSC module used.
+* Update DSC modules used to latest version available.
+* Replace all resources xScript with Script and remove dependency on module xPSDesiredStateConfiguration.
+* Revert the workaround related to decryption issue in DSC as regression was fixed in Windows.
+
+## Enhancements & bug-fixes - Published in June 24, 2022
+
+* Fix the credentials decryption issue in DSC extension when using latest version of Windows Server images.
+
 ## Enhancements & bug-fixes - Published in January 10, 2022
 
 * Add SharePoint Server Subscription and make it the default choice.
@@ -128,9 +155,9 @@
 * Update DSC on all VMs
 * Replace DSC module xActiveDirectory with ActiveDirectoryDsc 6.0.1
 * Update VM sizes to more recent, powerful and cheaper ones (prices per month in West US as of 2020-08-11):
-  - DC: from [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96)
-  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
-  - SP: from [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+  - DC: from [Standard_F4](https://docs.microsoft.com/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/azure/virtual-machines/dv2-dsv2-series) ($183.96)
+  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+  - SP: from [Standard_D11_v2](https://docs.microsoft.com/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/azure/virtual-machines/edv4-edsv4-series) ($185.42)
 
 ## July 2020 update
 
@@ -139,9 +166,9 @@
 * Rename some resources and variables with more meaningful names
 * Update apiVersion of each resource to latest version
 * Update VM sizes to more recent, powerful and cheaper ones (prices per month in West US as of 2020-08-11):
-  - DC: from [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96)
-  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
-  - SP: from [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+  - DC: from [Standard_F4](https://docs.microsoft.com/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/azure/virtual-machines/dv2-dsv2-series) ($183.96)
+  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+  - SP: from [Standard_D11_v2](https://docs.microsoft.com/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/azure/virtual-machines/edv4-edsv4-series) ($185.42)
 * Update DSC module NetworkingDsc from 7.4 to 8.0
 * Update DSC module xPSDesiredStateConfiguration from 8.10 to 9.1
 * Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
@@ -161,7 +188,7 @@
 * Add optional service Azure Bastion
 * Add parameter addPublicIPAddressToEachVM to set if virtual machines should have a public IP address and be reachable from Internet. If set to No, no inbound traffic is allowed from Internet. If set to Yes, only RDP port is allowed.
 * Replace SQL Server 2016 with SQL Server 2017
-* Use SQL Server Developer edition instead of Standard edition. More info: <https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sql/virtual-machines-windows-sql-server-pricing-guidance>
+* Use SQL Server Developer edition instead of Standard edition. More info: <https://docs.microsoft.com/azure/virtual-machines/windows/sql/virtual-machines-windows-sql-server-pricing-guidance>
 * Update DC to run with Windows Server 2019
 * Change default sizes of virtual machines SQL and SP
 * Update DSC module SharePointDSC from 3.5 (custom) to 3.6

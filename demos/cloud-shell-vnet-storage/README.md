@@ -1,4 +1,14 @@
-# Deploy Azure Cloud Shell storage to a virtual network
+---
+description: This template deploys Azure Cloud Shell storage into an Azure virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cloud-shell-vnet-storage
+languages:
+- json
+---
+# Azure Cloud Shell - VNet storage
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/cloud-shell-vnet-storage/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/cloud-shell-vnet-storage/PublicDeployment.svg)
@@ -18,7 +28,7 @@ This template deploys the necessary storage to run Azure Cloud Shell inside a cu
 ## Prerequisites
 
 In order to use this deployment there must be an existing resource group and a virtual network. Most users will already have a deesired resource group and virtual network they would like to connect to. If these resources do not exist, they must be created prior to running this template. Both the resource group and the virtual network must be in the same location.
-Important! While this functionality is in preview, only the following locations may be used: WestCentralUS, WestUS 
+> **Important!** Secondary storage regions are currently not supported in Cloud Shell VNET scenarios.
 
 ## Deployment steps
 
@@ -29,3 +39,5 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 After deploying this template and the 101-cloud-shell-vnet template, navigate to Cloud Shell in the Azure Portal or on shell.azure.com.
 If Cloud Shell has been used in the past, the existing clouddrive must be unmounted. To do this run `clouddrive unmount` from an active Cloud Shell session.
 Reconnect to Cloud Shell, you will be prompted with the first run experience. Select your preferred shell experience, then navigate to the advanced settings and select the show isolated VNET settings box. Fill in the fields with the desired resources create with this template.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices, Microsoft.Storage/storageAccounts/fileServices, Microsoft.Storage/storageAccounts/fileServices/shares, Microsoft.Network/virtualNetworks`

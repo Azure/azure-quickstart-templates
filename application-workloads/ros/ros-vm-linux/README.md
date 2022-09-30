@@ -1,3 +1,13 @@
+---
+description: This template creates a Linux VM and installs the ROS into it using the CustomScript extension.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: ros-vm-linux
+languages:
+- json
+---
 # ROS on Azure with Linux VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ros/ros-vm-linux/PublicLastTestDate.svg)
@@ -22,3 +32,5 @@ And it's all open source.
 This template creates a Linux VM and installs the Debian releases of ROS and ROS 2 distro from https://www.ros.org/.
 
 For any support related questions or issues, please go to our [GitHub repository](https://github.com/ms-iot/ROSOnWindows).
+
+`Tags: Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIpAddresses, Microsoft.Compute/virtualMachines, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, CustomScript, NvidiaGpuDriverLinux`

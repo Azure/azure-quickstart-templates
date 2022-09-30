@@ -1,4 +1,15 @@
-# Solution name
+---
+description: A template for creating a new Azure Container Registry.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: container-registry
+languages:
+- json
+- bicep
+---
+# Simple Azure Container Registry Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerregistry/container-registry/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerregistry/container-registry/PublicDeployment.svg)
@@ -17,7 +28,7 @@
 
 This template deploys an Azure Container Registry. Azure Container Registry is a PaaS offer for creating your own Docker image registry.
 
-`Tags: Azure Container Registry, Docker`
+`Tags: Azure Container Registry, Docker, Microsoft.ContainerRegistry/registries`
 
 ## Solution overview and deployed resources
 
@@ -35,8 +46,8 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ## Login to your registry
 
-Follow [this documentation](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication) for authenticating your docker client to your container registry.
+Follow [this documentation](https://docs.microsoft.com/azure/container-registry/container-registry-authentication) for authenticating your docker client to your container registry.
 
 #### Push images to your registry
 
-For pushing docker images on your registry, follow [this documentation](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli)
+For pushing docker images on your registry, follow [this documentation](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli)

@@ -1,4 +1,14 @@
-# Create a Machine Learning Workspace
+---
+description: This template creates a new Azure Machine Learning Workspace, along with an encrypted Storage Account, KeyVault and Applications Insights Logging
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-machine-learning-workspace-0.9
+languages:
+- json
+---
+# Azure Machine Learning Workspace
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/machine-learning-workspace/0.9/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/machine-learning-workspace/0.9/PublicDeployment.svg)
@@ -38,3 +48,5 @@ It is a simple module for creating a generic ML instance.
 | location | string | Specifies the location for all resources.|
 
 ```apiVersion: n/a```
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, systemAssigned`

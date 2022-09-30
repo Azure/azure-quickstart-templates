@@ -1,4 +1,14 @@
-# Autoscale a LANSA Windows VM Scale Set with Azure SQL Database
+---
+description: The template deploys a Windows VMSS with a desired count of VMs in the scale set and a LANSA MSI to install into each VM. Once the VM Scale Set is deployed a custom script extension is used to install the LANSA MSI)
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: lansa-vmss-windows-autoscale-sql-database
+languages:
+- json
+---
+# Autoscale LANSA Windows VM ScaleSet with Azure SQL Database
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/lansa/lansa-vmss-windows-autoscale-sql-database/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/lansa/lansa-vmss-windows-autoscale-sql-database/PublicDeployment.svg)
@@ -39,7 +49,7 @@ The Autoscale rules are configured as follows
 +	Two external Load Balancers
 +	One Virtual Machine Scale Set to contain the single virtual machine which is responsible for configuring the database
 +	One Virtual Machine Scale Set to contain the number of web servers requested by the deployer
-+	The Virtual Machines are all instantiated from the Marketplace LANSA SKU lansa-scalable-license. There is a software cost for using this image. [Click here](https://azure.microsoft.com/en-us/marketplace/partners/lansa/lansa-scalable-license/) for details.
++	The Virtual Machines are all instantiated from the Marketplace LANSA SKU lansa-scalable-license. There is a software cost for using this image. [Click here](https://azure.microsoft.com/marketplace/partners/lansa/lansa-scalable-license/) for details.
 +	Optionally, one Azure SQL Database server with one database, configured as per settings provided by the deployer
 
 ## Prerequisites
@@ -71,5 +81,4 @@ For full instructions for using this template go to [Azure Deployment Tutorial](
 
 3. Scale in slowly. Scale in action is 1 VM at a time after 5 mins of avg CPU < 30%. Another scaling event will not occur for 5 mins. Deletion does not take very long. Allows more VMs to be deleted or another to be created.
 
-
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, CustomScriptExtension, Microsoft.Insights/autoscaleSettings, PercentChangeCount, ChangeCount, Microsoft.Network/applicationGateways, Microsoft.Sql/servers, databases, firewallRules`
