@@ -10,7 +10,7 @@ param applicationInsightsName string
 
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
-  location: location
+  location: location == 'eastus2euap' || location == 'centraluseuap' ? 'eastus2' : location
   tags: tags
   kind: 'web'
   properties: {
