@@ -124,6 +124,23 @@
             PsDscRunAsCredential = $DomainCredsNetbios
         }
 
+        CertReq GenerateLDAPSCertificate
+        {
+            CARootName                = "$DomainNetbiosName-$ComputerName-CA"
+            CAServerFQDN              = "$ComputerName.$DomainFQDN"
+            Subject                   = "CN=$ComputerName.$DomainFQDN"
+            FriendlyName              = "LDAPS certificate for $ADFSSiteName.$DomainFQDN"
+            KeyLength                 = '2048'
+            Exportable                = $true
+            ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                       = '1.3.6.1.5.5.7.3.1'
+            KeyUsage                  = '0xa0'
+            CertificateTemplate       = 'WebServer'
+            AutoRenew                 = $true
+            Credential                = $DomainCredsNetbios
+            DependsOn                 = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
+        }
+
         #**********************************************************
         # Configure AD FS
         #**********************************************************
