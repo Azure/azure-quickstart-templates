@@ -117,6 +117,9 @@ resource blobStoragePrivateDnsVnetLink 'Microsoft.Network/privateDnsZones/virtua
 resource privateEndpointBlobStorage 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: privateEndpointName
   location: location
+  dependsOn: [
+    functionSubnet
+  ]
   properties: {
     subnet: {
       id: dataSubnet.id
