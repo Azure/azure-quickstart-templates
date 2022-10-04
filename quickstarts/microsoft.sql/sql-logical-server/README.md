@@ -8,7 +8,7 @@ urlFragment: sql-logical-server
 languages:
 - json
 ---
-# SQL logical server.
+# SQL logical server
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-logical-server/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-logical-server/PublicDeployment.svg)
