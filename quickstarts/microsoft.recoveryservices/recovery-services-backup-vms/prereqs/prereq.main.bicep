@@ -16,7 +16,7 @@ param publicIpAddressType string
 param publicIpAddressSku string
 param virtualMachineSize string = 'Standard_B1s'
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0, length(range(0, numberOfInstances))): {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0, numberOfInstances): {
   name: '${virtualMachineName}${range(0, numberOfInstances)[i]}'
   location: location
   properties: {
