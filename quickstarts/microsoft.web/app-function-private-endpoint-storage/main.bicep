@@ -93,7 +93,7 @@ resource functionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' =
   name: 'function'
   parent: vnet
   properties: {
-    addressPrefix: '10.0.0.1/24'
+    addressPrefix: '10.0.1.0/24'
   }
 }
 
@@ -125,6 +125,7 @@ resource privateEndpointBlobStorage 'Microsoft.Network/privateEndpoints@2022-01-
       {
         name: privateEndpointName
         properties: {
+          privateLinkServiceId: storageAccount.id
           groupIds: [
             'blob'
           ]
