@@ -104,9 +104,7 @@ resource blobStoragePrivateDns 'Microsoft.Network/privateDnsZones@2020-06-01' = 
 
 resource blobStoragePrivateDnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: 'link-${blobStoragePrivateLinkZoneName}'
-  dependsOn: [
-    blobStoragePrivateDns
-  ]
+  parent: blobStoragePrivateDns
   location: 'global'
   properties: {
     registrationEnabled: false
