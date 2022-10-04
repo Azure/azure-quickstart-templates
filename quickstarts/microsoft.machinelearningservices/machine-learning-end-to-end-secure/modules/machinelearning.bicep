@@ -54,7 +54,7 @@ param amlComputePublicIp bool = true
 @description('VM size for the default compute cluster')
 param vmSizeParam string
  
-resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2022-01-01-preview' = {
+resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2022-05-01' = {
   name: machineLearningName
   location: location
   tags: tags
