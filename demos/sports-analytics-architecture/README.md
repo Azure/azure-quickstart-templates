@@ -16,7 +16,7 @@
 
 
 ## Overview
-This template deploys the services that are used in the **Sports Analytics Architecture on Azure**. This reference architecture is designed to provide individuals with a path to quickly build sports analytics solutions in Azure. More information about this reference architecture can be found at https://docs.microsoft.com/en-us/azure/architecture/example-scenario/analytics/sports-analytics-architecture-azure.
+This template deploys the services that are used in the **Sports Analytics Architecture on Azure**. This reference architecture is designed to provide individuals with a path to quickly build sports analytics solutions in Azure. More information about this reference architecture can be found at, [Build a sports analytics architecture on Azure](https://learn.microsoft.com/azure/architecture/example-scenario/analytics/sports-analytics-architecture-azure).
 
 This template will deploy the following resources:
 - **Azure Data Factory**: a fully managed, scalable, and serverless data integration service. It provides a data integration and transformation layer that works with various data stores.
@@ -29,7 +29,7 @@ This template will deploy the following resources:
 In addition to these services, the template will set up the necessary permissions for your Azure AD identity and each deployed service's managed identity. The template will also create Azure Data Factory Linked Services for the Azure Key Vault, Azure SQL Database, and Azure Data Lake Storage Gen2 instances.
 
 ## Architecture
-![alt text](images/sports-analytics-azure-reference-architecture.png "Reference architecture for sports analytics solutions on Azure")
+![An architecture diagram to support sports analytics](images/sports-analytics-azure-reference-architecture.png "Reference architecture for sports analytics solutions on Azure")
 
 ## Prerequisites
 
