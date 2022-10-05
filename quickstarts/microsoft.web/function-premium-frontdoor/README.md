@@ -80,4 +80,6 @@ The Azure Frontdoor Private Link request needs to be approved inside the network
 Inside the Networking tab select Azure Private Endpoints and approve the request
 ![Azure Functions Networking - approve private endpoint request](/images/function-private-endpoint-approval.png)
 
+You could also approve the private link using the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/network/private-endpoint-connection?view=azure-cli-latest#az-network-private-endpoint-connection-approve)
+
 `Tags: FunctionApp, Microsoft.Web/serverfarms, Microsoft.Network/virtualNetworks, Microsoft.Web/sites, Microsoft.Storage/storageAccounts`
