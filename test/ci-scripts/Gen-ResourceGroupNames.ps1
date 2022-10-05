@@ -10,12 +10,6 @@ param(
     [string] $sampleFolder
 )
 
-# checks to see if there are prereqs that need to be deployed and sets the env variable to trigger prereq tasks
-$result = Test-Path "$sampleFolder\prereqs\prereq.azuredeploy.json"
-Write-Host "Result: $result"
-Write-Host "##vso[task.setvariable variable=deploy.prereqs]$result"
-#Write-Host "Deploy Prereqs: $(deploy.prereqs)"
-
 # check for .settings.json file 
 $settingsFilePath = "$sampleFolder\prereqs\.settings.json"
 
