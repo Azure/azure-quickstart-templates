@@ -183,6 +183,7 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   location: location
   kind: 'functionapp'
   properties: {
+    publicNetworkAccess: 'Disabled'
     serverFarmId: appServicePlan.id
     httpsOnly: true
   }
