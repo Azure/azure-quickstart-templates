@@ -78,31 +78,39 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         '10.0.0.0/20'
       ]
     }
-  }
-}
-
-resource dataSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
-  name: 'data'
-  parent: vnet
-  properties: {
-    addressPrefix: '10.0.0.0/24'
-  }
-}
-
-resource functionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
-  name: 'function'
-  parent: vnet
-  properties: {
-    addressPrefix: '10.0.1.0/24'
-    delegations: [
+    subnets: [
       {
-        name: 'AzureFunctions'
+        name: 'data'
         properties: {
-          serviceName: 'Microsoft.Web/serverFarms'
+          addressPrefix: '10.0.0.0/24'
+        }
+      }
+      {
+        name: 'function'
+        properties: {
+          addressPrefix: '10.0.1.0/24'
+          delegations: [
+            {
+              name: 'AzureFunctions'
+              properties: {
+                serviceName: 'Microsoft.Web/serverFarms'
+              }
+            }
+          ]
         }
       }
     ]
   }
+}
+
+resource dataSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' existing = {
+  name: 'data'
+  parent: vnet
+}
+
+resource functionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' existing = {
+  name: 'function'
+  parent: vnet
 }
 
 resource blobStoragePrivateDns 'Microsoft.Network/privateDnsZones@2020-06-01' = {
