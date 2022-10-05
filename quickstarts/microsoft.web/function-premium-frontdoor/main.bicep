@@ -397,6 +397,7 @@ resource wafPolicy 'Microsoft.Network/FrontDoorWebApplicationFirewallPolicies@20
       mode: 'Prevention'
       customBlockResponseStatusCode: 403
       requestBodyCheck: 'Enabled'
+      enabledState: 'Enabled'
     }
     managedRules: {
       managedRuleSets: [
