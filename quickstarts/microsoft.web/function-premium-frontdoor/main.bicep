@@ -60,6 +60,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
   properties: {
     publicNetworkAccess: 'Disabled'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
     networkAcls: {
       defaultAction: 'Deny'
       bypass: 'None'
@@ -269,6 +272,9 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
     privateEndpointBlobStorage
     privateEndpointFilesStorage
   ]
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     publicNetworkAccess: 'Disabled'
     serverFarmId: appServicePlan.id
@@ -278,10 +284,11 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
       vnetRouteAllEnabled: true
       functionsRuntimeScaleMonitoringEnabled: true
       minTlsVersion: '1.2'
+      ftpsState: 'Disabled'
       appSettings: [
         {
-          name: 'APPINSIGHTS_CONNECTION_STRING'
-          value: 'InstrumentationKey=${reference(applicationInsights.id, '2020-02-02').InstrumentationKey};'
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: applicationInsights.properties.InstrumentationKey
         }
         {
           name: 'AzureWebJobsStorage'
