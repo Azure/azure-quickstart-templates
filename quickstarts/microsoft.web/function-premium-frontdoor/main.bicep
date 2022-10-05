@@ -5,7 +5,7 @@ param functionAppName string = 'func-${uniqueString(resourceGroup().id)}'
 param frontdoorName string = 'fd-${uniqueString(resourceGroup().id)}'
 
 @description('Waf policy name.')
-param wafPolicyName string = 'waf-${uniqueString(resourceGroup().id)}'
+param wafPolicyName string = 'waf${uniqueString(resourceGroup().id)}'
 
 @description('Message for the private link request approval.')
 param frontdoorPrivateLinkRequestMessage string = 'Hi, I want to add frontdoor to functions'
@@ -240,7 +240,7 @@ resource frontdoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2021-06-01' =
   }
 }
 
-resource functionOrigion 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
+resource functionOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
   name: functionAppName
   parent: frontdoorOriginGroup
   properties: {
@@ -269,6 +269,11 @@ resource wafPolicy 'Microsoft.Network/FrontDoorWebApplicationFirewallPolicies@20
   }
   location: 'Global'
   properties: {
+    policySettings: {
+      mode: 'Prevention'
+      customBlockResponseStatusCode: 403
+      requestBodyCheck: 'Enabled'
+    }
     managedRules: {
       managedRuleSets: [
         {
@@ -287,7 +292,9 @@ resource waf 'Microsoft.Cdn/profiles/securityPolicies@2021-06-01' = {
   properties: {
     parameters: {
       type: 'WebApplicationFirewall'
-      wafPolicy: wafPolicy
+      wafPolicy: {
+        id: wafPolicy.id
+      }
       associations: [
         {
           domains: [
@@ -307,6 +314,9 @@ resource waf 'Microsoft.Cdn/profiles/securityPolicies@2021-06-01' = {
 resource frontdoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   name: 'default'
   parent: frontdoorEndpoint
+  dependsOn: [
+    functionOrigin
+  ]
   properties: {
     originGroup: {
       id: frontdoorOriginGroup.id
