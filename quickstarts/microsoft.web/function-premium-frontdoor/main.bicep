@@ -40,10 +40,12 @@ param appInsightsLocation string = resourceGroup().location
 param location string = resourceGroup().location
 
 @description('The SKU of App Service Plan.')
-param sku object = {
-  Name: 'EP1'
-  Tier: 'ElasticPremium'
-}
+@allowed([
+  'EP1'
+  'EP2'
+  'EP3'
+])
+param sku string = 'EP1'
 
 var blobStoragePrivateLinkZoneName = 'privatelink.blob.${environment().suffixes.storage}'
 var filesStoragePrivateLinkZoneName = 'privatelink.file.${environment().suffixes.storage}'
@@ -229,7 +231,16 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: appPlanName
   location: location
-  sku: sku
+  sku: {
+    tier: 'ElasticPremium'
+    family: 'EP'
+    size: sku
+    name: sku
+  }
+  kind: 'elastic'
+  properties: {
+    maximumElasticWorkerCount: 20
+  }
 }
 
 resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
@@ -243,6 +254,7 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     publicNetworkAccess: 'Disabled'
     serverFarmId: appServicePlan.id
+    virtualNetworkSubnetId: functionSubnet.id
     httpsOnly: true
     siteConfig: {
       vnetRouteAllEnabled: true

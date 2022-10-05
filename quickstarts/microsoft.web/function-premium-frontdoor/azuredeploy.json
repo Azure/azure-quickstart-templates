@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.10.61.36676",
-      "templateHash": "7819394129982493213"
+      "version": "0.8.9.13224",
+      "templateHash": "1789142737019678037"
     }
   },
   "parameters": {
@@ -99,11 +99,13 @@
       }
     },
     "sku": {
-      "type": "object",
-      "defaultValue": {
-        "Name": "EP1",
-        "Tier": "ElasticPremium"
-      },
+      "type": "string",
+      "defaultValue": "EP1",
+      "allowedValues": [
+        "EP1",
+        "EP2",
+        "EP3"
+      ],
       "metadata": {
         "description": "The SKU of App Service Plan."
       }
@@ -315,7 +317,16 @@
       "apiVersion": "2022-03-01",
       "name": "[parameters('appPlanName')]",
       "location": "[parameters('location')]",
-      "sku": "[parameters('sku')]"
+      "sku": {
+        "tier": "ElasticPremium",
+        "family": "EP",
+        "size": "[parameters('sku')]",
+        "name": "[parameters('sku')]"
+      },
+      "kind": "elastic",
+      "properties": {
+        "maximumElasticWorkerCount": 20
+      }
     },
     {
       "type": "Microsoft.Web/sites",
@@ -326,6 +337,7 @@
       "properties": {
         "publicNetworkAccess": "Disabled",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]",
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'function')]",
         "httpsOnly": true,
         "siteConfig": {
           "vnetRouteAllEnabled": true,
@@ -368,7 +380,8 @@
         "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]",
         "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-blob', parameters('privateEndpointName')))]",
         "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-files', parameters('privateEndpointName')))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ]
     },
     {
