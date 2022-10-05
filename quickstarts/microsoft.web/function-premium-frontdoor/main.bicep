@@ -60,7 +60,21 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
   properties: {
     publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      defaultAction: 'Deny'
+      bypass: 'None'
+    }
   }
+}
+
+resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01' existing = {
+  name: 'default'
+  parent: storageAccount
+}
+
+resource functionContentShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-04-01' = {
+  name: toLower(replace(functionAppName, '-', ''))
+  parent: fileServices
 }
 
 // Network
@@ -77,6 +91,8 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
       {
         name: 'data'
         properties: {
+          privateEndpointNetworkPolicies: 'Enabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
           addressPrefix: '10.0.0.0/24'
         }
       }
@@ -84,6 +100,8 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         name: 'function'
         properties: {
           addressPrefix: '10.0.1.0/24'
+          privateEndpointNetworkPolicies: 'Enabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
           delegations: [
             {
               name: 'AzureFunctions'
@@ -267,11 +285,11 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, '2021-09-01').keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, '2021-09-01').keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
