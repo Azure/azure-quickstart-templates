@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.7.4.23292",
-      "templateHash": "112281116387821958"
+      "version": "0.8.9.13224",
+      "templateHash": "11753781282361602515"
     }
   },
   "parameters": {
@@ -14,6 +14,27 @@
       "defaultValue": "[format('func-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Function app name."
+      }
+    },
+    "frontdoorName": {
+      "type": "string",
+      "defaultValue": "[format('fd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Frontdoor name."
+      }
+    },
+    "wafPolicyName": {
+      "type": "string",
+      "defaultValue": "[format('waf-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Waf policy name."
+      }
+    },
+    "frontdoorPrivateLinkRequestMessage": {
+      "type": "string",
+      "defaultValue": "Hi, I want to add frontdoor to functions",
+      "metadata": {
+        "description": "Message for the private link request approval."
       }
     },
     "appPlanName": {
@@ -269,6 +290,143 @@
         "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
         "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2021-06-01",
+      "name": "[parameters('frontdoorName')]",
+      "location": "Global",
+      "sku": {
+        "name": "Premium_AzureFrontDoor"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', parameters('frontdoorName'), parameters('frontdoorName'))]",
+      "location": "Global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', parameters('frontdoorName'), parameters('location'))]",
+      "properties": {
+        "healthProbeSettings": {
+          "probePath": "/",
+          "probeIntervalInSeconds": 120,
+          "probeProtocol": "Https",
+          "probeRequestType": "HEAD"
+        },
+        "loadBalancingSettings": {
+          "sampleSize": 4,
+          "additionalLatencyInMilliseconds": 50,
+          "successfulSamplesRequired": 3
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', parameters('frontdoorName'), parameters('location'), parameters('functionAppName'))]",
+      "properties": {
+        "hostName": "[format('{0}.azurewebsites.net', parameters('functionAppName'))]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[format('{0}.azurewebsites.net', parameters('functionAppName'))]",
+        "priority": 1,
+        "weight": 1000,
+        "enforceCertificateNameCheck": true,
+        "sharedPrivateLinkResource": {
+          "groupId": "sites",
+          "privateLinkLocation": "[parameters('location')]",
+          "privateLink": {
+            "id": "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+          },
+          "requestMessage": "[parameters('frontdoorPrivateLinkRequestMessage')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontdoorName'), parameters('location'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+      "apiVersion": "2022-05-01",
+      "name": "[parameters('wafPolicyName')]",
+      "sku": {
+        "name": "Premium_AzureFrontDoor"
+      },
+      "location": "Global",
+      "properties": {
+        "managedRules": {
+          "managedRuleSets": [
+            {
+              "ruleSetType": "Microsoft_DefaultRuleSet",
+              "ruleSetVersion": "2.0",
+              "ruleSetAction": "Block"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/securityPolicies",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', parameters('frontdoorName'), format('waf-{0}', parameters('frontdoorName')))]",
+      "properties": {
+        "parameters": {
+          "type": "WebApplicationFirewall",
+          "wafPolicy": "[reference(resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', parameters('wafPolicyName')), '2022-05-01', 'full')]",
+          "associations": [
+            {
+              "domains": [
+                {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('frontdoorName'), parameters('frontdoorName'))]"
+                }
+              ],
+              "patternsToMatch": [
+                "/*"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('frontdoorName'), parameters('frontdoorName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]",
+        "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', parameters('wafPolicyName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', parameters('frontdoorName'), parameters('frontdoorName'), 'default')]",
+      "properties": {
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontdoorName'), parameters('location'))]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternsToMatch": [
+          "/*"
+        ],
+        "httpsRedirect": "Enabled",
+        "forwardingProtocol": "MatchRequest",
+        "linkToDefaultDomain": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('frontdoorName'), parameters('frontdoorName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontdoorName'), parameters('location'))]"
       ]
     }
   ]

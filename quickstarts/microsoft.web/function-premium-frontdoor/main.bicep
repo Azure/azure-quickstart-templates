@@ -1,6 +1,15 @@
 @description('Function app name.')
 param functionAppName string = 'func-${uniqueString(resourceGroup().id)}'
 
+@description('Frontdoor name.')
+param frontdoorName string = 'fd-${uniqueString(resourceGroup().id)}'
+
+@description('Waf policy name.')
+param wafPolicyName string = 'waf-${uniqueString(resourceGroup().id)}'
+
+@description('Message for the private link request approval.')
+param frontdoorPrivateLinkRequestMessage string = 'Hi, I want to add frontdoor to functions'
+
 @description('Function app web app plan name.')
 param appPlanName string = 'plan-${uniqueString(resourceGroup().id)}'
 
@@ -197,4 +206,120 @@ resource appsettings 'Microsoft.Web/sites/config@2022-03-01' = {
     minTlsVersion: '1.2'
     WEBSITE_DNS_SERVER: '168.63.129.16'
   }
+}
+
+resource frontdoorProfile 'Microsoft.Cdn/profiles@2021-06-01' = {
+  name: frontdoorName
+  location: 'Global'
+  sku: {
+    name: 'Premium_AzureFrontDoor'
+  }
+}
+
+resource frontdoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
+  name: frontdoorName
+  location: 'Global'
+  parent: frontdoorProfile
+}
+
+resource frontdoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2021-06-01' = {
+  name: location
+  parent: frontdoorProfile
+  properties: {
+    healthProbeSettings: {
+      probePath: '/'
+      probeIntervalInSeconds: 120
+      probeProtocol: 'Https'
+      probeRequestType: 'HEAD'
+    }
+    loadBalancingSettings: {
+      sampleSize: 4
+      additionalLatencyInMilliseconds: 50
+      successfulSamplesRequired: 3
+    }
+  }
+}
+
+resource functionOrigion 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
+  name: functionAppName
+  parent: frontdoorOriginGroup
+  properties: {
+    hostName: '${functionAppName}.azurewebsites.net'
+    httpPort: 80
+    httpsPort: 443
+    originHostHeader: '${functionAppName}.azurewebsites.net'
+    priority: 1
+    weight: 1000
+    enforceCertificateNameCheck: true
+    sharedPrivateLinkResource: {
+      groupId: 'sites'
+      privateLinkLocation: location
+      privateLink: {
+         id: functionApp.id
+      }
+      requestMessage: frontdoorPrivateLinkRequestMessage
+    }
+  }
+}
+
+resource wafPolicy 'Microsoft.Network/FrontDoorWebApplicationFirewallPolicies@2022-05-01' = {
+  name: wafPolicyName
+  sku: {
+    name: 'Premium_AzureFrontDoor'
+  }
+  location: 'Global'
+  properties: {
+    managedRules: {
+      managedRuleSets: [
+        {
+          ruleSetType: 'Microsoft_DefaultRuleSet'
+          ruleSetVersion: '2.0'
+          ruleSetAction: 'Block'
+        }
+      ]
+    }
+  }
+}
+
+resource waf 'Microsoft.Cdn/profiles/securityPolicies@2021-06-01' = {
+  name: 'waf-${frontdoorName}'
+  parent: frontdoorProfile
+  properties: {
+    parameters: {
+      type: 'WebApplicationFirewall'
+      wafPolicy: wafPolicy
+      associations: [
+        {
+          domains: [
+            {
+              id: frontdoorEndpoint.id
+            }
+          ]
+          patternsToMatch: [
+             '/*'
+          ]
+        }
+      ]
+    }
+  }
+}
+
+resource frontdoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
+  name: 'default'
+  parent: frontdoorEndpoint
+  properties: {
+    originGroup: {
+      id: frontdoorOriginGroup.id
+    }
+    supportedProtocols: [
+      'Http' 
+      'Https'
+    ]
+    patternsToMatch: [
+      '/*'
+    ]
+    httpsRedirect: 'Enabled'
+    forwardingProtocol: 'MatchRequest'
+    linkToDefaultDomain: 'Enabled'
+  } 
 }
