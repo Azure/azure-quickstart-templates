@@ -1,14 +1,8 @@
 @description('Specifies the name of the Azure Machine Learning workspace where sweep job will be deployed')
 param workspaceName string
 
-@description('Name of the blob as it is stored in the blob container')
-param filename string = 'hello_world.py'
-
 @description('Name of the blob container')
 param containerName string = 'workspaceblobstore'
-
-@description('Azure region where resources should be deployed')
-param location string = resourceGroup().location
 
 @description('Desired name of the storage account')
 param storageAccountName string
@@ -20,7 +14,7 @@ param codeVersion string = '1'
 param codeId string = 'code'
 
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'.')
-param _artifactsLocation string = 'https://github.com/DannyMireles/azure-quickstart-templates/tree/master/quickstarts/microsoft.machinelearningservices/machine-learning-job-create-or-update-job/data'
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.')
 @secure()
