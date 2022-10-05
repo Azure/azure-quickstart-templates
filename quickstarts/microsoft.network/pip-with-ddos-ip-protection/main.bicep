@@ -1,5 +1,5 @@
 @description('Name of the Public IP Address resource')
-param publicIpName string
+param publicIpName string = 'publicIp'
 
 @description('SKU of the Public IP Address')
 @allowed([
