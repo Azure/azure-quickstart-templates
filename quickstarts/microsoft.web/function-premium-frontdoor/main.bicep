@@ -67,7 +67,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
 }
 
-resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01' existing = {
+resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2021-09-01' existing = {
   name: 'default'
   parent: storageAccount
 }
@@ -116,12 +116,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
   }
 }
 
-resource dataSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' existing = {
+resource dataSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' existing = {
   name: 'data'
   parent: vnet
 }
 
-resource functionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' existing = {
+resource functionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' existing = {
   name: 'function'
   parent: vnet
 }
@@ -306,6 +306,10 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
         {
           name: 'WEBSITE_CONTENTSHARE'
           value: toLower(replace(functionAppName, '-', ''))
+        }
+        {
+          name: 'WEBSITE_DNS_SERVER'
+          value: '168.63.129.16'
         }
       ]
     }
