@@ -14,7 +14,7 @@ param frontdoorPrivateLinkRequestMessage string = 'Hi, I want to add frontdoor t
 param appPlanName string = 'plan-${uniqueString(resourceGroup().id)}'
 
 @description('Application Insights name.')
-param appInsightsName string = 'plan-${uniqueString(resourceGroup().id)}'
+param appInsightsName string = 'appi-${uniqueString(resourceGroup().id)}'
 
 @description('Storage account name.')
 param storageAccountName string = 'st${uniqueString(resourceGroup().id)}'
