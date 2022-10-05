@@ -94,6 +94,14 @@ resource functionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' =
   parent: vnet
   properties: {
     addressPrefix: '10.0.1.0/24'
+    delegations: [
+      {
+        name: 'AzureFunctions'
+        properties: {
+          serviceName: 'Microsoft.Web/serverFarms'
+        }
+      }
+    ]
   }
 }
 
