@@ -1,8 +1,8 @@
 @description('Specifies the name of the container app.')
-param containerAppName string = 'containerapp-${uniqueString(resourceGroup().id)}'
+param containerAppName string = 'app-${uniqueString(resourceGroup().id)}'
 
 @description('Specifies the name of the container app environment.')
-param containerAppEnvName string = 'containerapp-env-${uniqueString(resourceGroup().id)}'
+param containerAppEnvName string = 'env-${uniqueString(resourceGroup().id)}'
 
 @description('Specifies the name of the log analytics workspace.')
 param containerAppLogAnalyticsName string = 'containerapp-log-${uniqueString(resourceGroup().id)}'
@@ -52,13 +52,16 @@ module acrImportImage 'br/public:deployment-scripts/import-acr:2.1.1' =  {
   params: {
     acrName: acr.outputs.name
     location: location
-    images: [containerImage]
+    images: array(containerImage)
   }
 }
 
-resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-03-01' = {
+resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-06-01-preview' = {
   name: containerAppEnvName
   location: location
+  sku: {
+    name: 'Consumption'
+  }
   properties: {
     appLogsConfiguration: {
       destination: 'log-analytics'
@@ -76,7 +79,7 @@ resource uai 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-previe
 }
 
 @description('This allows the managed identity of the container app to access the registry, note scope is applied to the wider ResourceGroup not the ACR')
-resource uaiRbac 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource uaiRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, uai.id, acrPullRole)
   properties: {
     roleDefinitionId: acrPullRole
@@ -85,7 +88,7 @@ resource uaiRbac 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = 
   }
 }
 
-resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
+resource containerApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
   name: containerAppName
   location: location
   identity: {
