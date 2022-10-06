@@ -16,6 +16,7 @@ param storageAccountName string
 @description('Specifies the name of the Azure Machine Learning job to be created.')
 param jobName string
 
+// param environmentId string
 @description('Specifies the curated environment to run sweep job.')
 param environmentName string = 'AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu'
 
