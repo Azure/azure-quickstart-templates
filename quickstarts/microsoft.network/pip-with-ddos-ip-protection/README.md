@@ -1,5 +1,5 @@
 ---
-description: This template creates a Public IP that is protected by DDoS IP Protection.
+description: This template creates a Public IP that is protected with DDoS IP Protection
 page_type: sample
 products:
 - azure
@@ -9,17 +9,7 @@ languages:
 - json
 - bicep
 ---
-
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/pip-with-ddos-ip-protection/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/pip-with-ddos-ip-protection/PublicDeployment.svg)
-
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/pip-with-ddos-ip-protection/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/pip-with-ddos-ip-protection/FairfaxDeployment.svg)
-
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/pip-with-ddos-ip-protection/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/pip-with-ddos-ip-protection/CredScanResult.svg)
-
-# Create a PIP wth DDoS IP Protection
+# Create Public IP with DDoS IP Protection
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/pip-with-ddos-ip-protection/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fpip-with-ddos-ip-protection%2Fazuredeploy.json)
