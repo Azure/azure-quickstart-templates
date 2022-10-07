@@ -46,6 +46,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-
 }
 
 resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
   name: bootstrapRoleAssignmentName 
   properties: {
     roleDefinitionId: roleDefinitionId
