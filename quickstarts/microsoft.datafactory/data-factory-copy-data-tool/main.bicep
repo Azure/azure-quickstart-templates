@@ -42,7 +42,7 @@ resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/container
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
   name: managedIdentityName
-  location: location
+  location: storageAccountName
 }
 
 resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
