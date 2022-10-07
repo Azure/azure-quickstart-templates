@@ -57,7 +57,7 @@ resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022
   name: bootstrapRoleAssignmentName 
   properties: {
     roleDefinitionId: roleDefinitionId
-    principalId: reference(managedIdentity.id, '2022-01-31-preview').principalId
+    principalId: managedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
