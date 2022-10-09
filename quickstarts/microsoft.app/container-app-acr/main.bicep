@@ -47,7 +47,7 @@ module acr 'containerRegistry.bicep' = {
 }
 
 @description('This module seeds the ACR with the public version of the app')
-module acrImportImage 'import-acr.bicep' = { //'br/public:deployment-scripts/import-acr:2.1.1' =  {
+module acrImportImage 'br/public:deployment-scripts/import-acr:3.0.1' =  {
   name: 'importContainerImage'
   params: {
     acrName: acr.outputs.name
@@ -123,7 +123,7 @@ resource containerApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
       containers: [
         {
           name: containerAppName
-          image: acrImportImage.outputs.images[0].acrHostedImageUri
+          image: acrImportImage.outputs.importedImages[0].acrHostedImage
           resources: {
             cpu: json('.25')
             memory: '.5Gi'
@@ -149,4 +149,4 @@ resource containerApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
 }
 
 output containerAppFQDN string = containerApp.properties.configuration.ingress.fqdn
-output containerImage string = acrImportImage.outputs.images[0].acrHostedImageUri
+output containerImage string = acrImportImage.outputs.importedImages[0].acrHostedImage
