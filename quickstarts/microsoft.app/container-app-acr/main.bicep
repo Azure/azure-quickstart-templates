@@ -47,7 +47,7 @@ module acr 'containerRegistry.bicep' = {
 }
 
 @description('This module seeds the ACR with the public version of the app')
-module acrImportImage 'br/public:deployment-scripts/import-acr:2.1.1' =  {
+module acrImportImage 'import-acr.bicep' = { //'br/public:deployment-scripts/import-acr:2.1.1' =  {
   name: 'importContainerImage'
   params: {
     acrName: acr.outputs.name
