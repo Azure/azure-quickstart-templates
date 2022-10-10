@@ -23,14 +23,10 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-0
   resource exampleSlice 'slices@2022-04-01-preview' = {
     name: sliceName
     location: location
-    properties:!empty(sd) ?{
+    properties:{
       snssai: {       
         sst: sst
-        sd:sd
-      }     
-    }:{
-      snssai: {       
-        sst: sst        
+        sd: empty(sd) ? null : sd
       }     
     }
   }
