@@ -14,7 +14,9 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.app%2Fcontainer-app-acr%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.app%2Fcontainer-app-acr%2Fazuredeploy.json)
 
-This template shows how to deploy a Container App leveraging a new Azure Container Registry. The Container Registry is seeded with a public container image, and the Container App uses a Managed Identity to pull the container image.
+This template shows how to deploy a Container App leveraging a new Azure Container Registry. 
+
+The Container Registry is seeded with a public container image, and the Container App uses a Managed Identity to pull the container image.
 
 If you're new to **Container Apps**, see:
 
