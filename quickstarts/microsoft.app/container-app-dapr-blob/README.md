@@ -1,5 +1,5 @@
 ---
-description: Creates a Dapr Microservices application that uses blob state using Container Apps.
+description: Create a Dapr microservices app using Container Apps.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Creates a Container App within a Container App Environment.
+# Creates a Dapr microservices app using Container Apps
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-dapr-blob/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-dapr-blob/PublicDeployment.svg)
