@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Deploy an azure function with private endpoints 
+# Function App secured by Azure Frontdoor
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-frontdoor/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-frontdoor/PublicDeployment.svg)
