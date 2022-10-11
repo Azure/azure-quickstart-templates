@@ -4,7 +4,7 @@ param dataFactoryName string = 'datafactory${uniqueString(resourceGroup().id)}'
 @description('Location of the data factory.')
 param location string = resourceGroup().location
 
-var contentUri = 'https://azbotstorage.blob.${environment().suffixes.storage}/sample-artifacts/data-factory/moviesDB2.csv'
+var contentUri = uri('https://azbotstorage.blob.${environment().suffixes.storage}', '/sample-artifacts/data-factory/moviesDB2.csv')
 var csvFilename = last(split(contentUri, '/'))
 var storageAccountName = 'storage${uniqueString(resourceGroup().id)}'
 var dataFactoryLinkedServiceName = 'ArmtemplateStorageLinkedService'
