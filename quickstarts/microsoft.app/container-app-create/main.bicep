@@ -1,20 +1,14 @@
 @description('Specifies the name of the container app.')
-param containerAppName string = 'containerapp-${uniqueString(resourceGroup().id)}'
+param containerAppName string = 'app-${uniqueString(resourceGroup().id)}'
 
 @description('Specifies the name of the container app environment.')
-param containerAppEnvName string = 'containerapp-env-${uniqueString(resourceGroup().id)}'
+param containerAppEnvName string = 'env-${uniqueString(resourceGroup().id)}'
 
 @description('Specifies the name of the log analytics workspace.')
-param containerAppLogAnalyticsName string = 'containerapp-log-${uniqueString(resourceGroup().id)}'
+param containerAppLogAnalyticsName string = 'log-${uniqueString(resourceGroup().id)}'
 
 @description('Specifies the location for all resources.')
-@allowed([
-  'northcentralusstage'
-  'eastus'
-  'northeurope'
-  'canadacentral'
-])
-param location string //cannot use resourceGroup().location since it's not available in most of regions
+param location string = resourceGroup().location
 
 @description('Specifies the docker container image to deploy.')
 param containerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
@@ -23,9 +17,28 @@ param containerImage string = 'mcr.microsoft.com/azuredocs/containerapps-hellowo
 param targetPort int = 80
 
 @description('Number of CPU cores the container can use. Can be with a maximum of two decimals.')
+@allowed([
+  '0.25'
+  '0.5'
+  '0.75'
+  '1'
+  '1.25'
+  '1.5'
+  '1.75'
+  '2'
+])
 param cpuCore string = '0.5'
 
 @description('Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2.')
+@allowed([
+  '0.5'
+  '1'
+  '1.5'
+  '2'
+  '3'
+  '3.5'
+  '4'
+])
 param memorySize string = '1'
 
 @description('Minimum number of replicas that will be deployed')
@@ -38,7 +51,7 @@ param minReplicas int = 1
 @maxValue(25)
 param maxReplicas int = 3
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: containerAppLogAnalyticsName
   location: location
   properties: {
@@ -48,9 +61,12 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
   }
 }
 
-resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-01-01-preview' = {
+resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-06-01-preview' = {
   name: containerAppEnvName
   location: location
+  sku: {
+    name: 'Consumption'
+  }
   properties: {
     appLogsConfiguration: {
       destination: 'log-analytics'
@@ -62,7 +78,7 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-01-01-preview' 
   }
 }
 
-resource containerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
+resource containerApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
   name: containerAppName
   location: location
   properties: {
