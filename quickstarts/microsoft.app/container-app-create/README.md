@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Creates a Container App within a Container App Environment.
+# Creates a Container App within a Container App Environment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-create/PublicDeployment.svg)
