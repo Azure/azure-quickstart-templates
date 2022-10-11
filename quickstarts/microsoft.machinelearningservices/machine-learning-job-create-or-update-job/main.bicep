@@ -16,10 +16,6 @@ param storageAccountName string
 @description('Specifies the name of the Azure Machine Learning job to be created.')
 param jobName string
 
-// param environmentId string
-@description('Specifies the curated environment to run sweep job.')
-param environmentName string = 'AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu'
-
 var compute = resourceId('Microsoft.MachineLearningServices/workspaces/computes', workspaceName, computeName)
 
 // creating codeVersion resource
@@ -32,11 +28,6 @@ module codeVersion 'modules/codeversion.bicep' = {
   }
 }
 
-// fetching existing curated environment resource object
-resource environmemt 'Microsoft.MachineLearningServices/workspaces/environments@2022-05-01' existing = {
-  name: '${workspaceName}/${environmentName}'
-}
-
 resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
   name: '${workspaceName}/${jobName}'
   properties: {
@@ -44,7 +35,7 @@ resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-
     experimentName: experimentName
     command: 'python hello_world.py'
     codeId: codeVersion.outputs.codeId
-    environmentId: resourceId('Microsoft.MachineLearningServices/workspaces/environments/versions', workspaceName, environmentName, environmemt.properties.latestVersion)
+    environmentId: codeVersion.outputs.codeId.value
     computeId: compute
   }
 }
