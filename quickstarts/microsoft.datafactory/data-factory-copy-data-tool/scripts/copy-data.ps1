@@ -1,10 +1,8 @@
 
-$localFileName = "${env:contentUri}" | Split-Path -Leaf
+$localFileName = "${env:csvFileName}"
 
 Invoke-WebRequest -Uri "${env:contentUri}" -OutFile $localFileName
 
-$storageAccount = Get-AzStorageAccount -ResourceGroupName "${Env:RGName}" -Name "${Env:SAName}" 
+$ctx = New-AzStorageContext -StorageAccountName "${Env:SAName}" -StorageAccountKey "${Env:storageKey}"
 
-$ctx = $storageAccount.Context
-
-Set-AzStorageBlobContent -Container "${Env:ContainerName}" -Blob "input/$localFileName" -Context $ctx -StandardBlobTier 'Hot' -File $localFileName
+Set-AzStorageBlobContent -Container "${Env:ContainerName}" -Blob "${env:csvInputFolder}/$localFileName" -Context $ctx -StandardBlobTier 'Hot' -File $localFileName
