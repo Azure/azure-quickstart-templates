@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Build Container Images with Azure Container Registry Tasks
+# Build container images with ACR Tasks
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-acr-build/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-acr-build/PublicDeployment.svg)
