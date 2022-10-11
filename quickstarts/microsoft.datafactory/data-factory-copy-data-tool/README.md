@@ -36,6 +36,7 @@ When you deploy this Azure Resource Template, a data factory is created with the
 - Pipeline with a copy activity
 
 ## Deploying sample
+
 You can deploy this sample directly through the Azure Portal or by using the scripts supplied in the root of the repository.
 
 To deploy a sample using the Azure Portal, click the **Deploy to Azure** button at the top of the article.
