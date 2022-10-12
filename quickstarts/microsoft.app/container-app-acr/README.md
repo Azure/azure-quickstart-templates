@@ -1,4 +1,15 @@
-# Deploy a Container App and Environment using Azure Container Registry
+---
+description: Create a Container App Environment with a basic Container App from an Azure Container Registry. It also deploys a Log Analytics Workspace to store logs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: container-app-acr
+languages:
+- json
+- bicep
+---
+# Creates a Container App and Environment with Registry
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-acr/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-acr/PublicDeployment.svg)
