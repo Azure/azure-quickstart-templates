@@ -25,7 +25,7 @@ choco install --no-progress --limit-output pwsh
 choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 
 # configure OpenSSH, make pwsh the default shell, show hostname in shell and restart sshd
-Copy-Item '.\sshd_config_wopwd' 'C:\ProgramData\ssh\sshd_config'
+Copy-Item "$basePath\sshd_config_wopwd" 'C:\ProgramData\ssh\sshd_config'
 $path = "c:\ProgramData\ssh\administrators_authorized_keys"
 "$publicSshKey" | Out-File -Encoding utf8 -FilePath $path
 $acl = Get-Acl -Path $path
