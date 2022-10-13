@@ -1,5 +1,15 @@
-
-# Copy a File from URI to blob Storage
+---
+description: This module downloads a file from a uri and copies it to an Azure storageAccount blob container.  The storageAccount must already exist and the source file must already be staged to the uri.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-microsoft.resources-deploymentScripts-copyBlob-0.9
+languages:
+- json
+- bicep
+---
+# Copy a file from a uri to a blob storage container
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.resources/deploymentScripts/copyBlob/0.9/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/microsoft.resources/deploymentScripts/copyBlob/0.9/PublicDeployment.svg)
@@ -31,3 +41,4 @@ The principal used to deploy the module must have permissions to get the storage
 | containerName | string | Yes | Container for the blob. Currently the container will be created so the principal deploying the module must have permission to create the container. |
 | contentUri | string | Yes | Uri to the source file including sasToken if necessary. |
 | storageAccountKey | string | No | storageAccountKey used for permission to copy the blob, if not provided, the module will attempt to retrieve the key. |
+`Tags: `
