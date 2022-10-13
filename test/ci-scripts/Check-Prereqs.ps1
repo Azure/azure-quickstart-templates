@@ -19,10 +19,15 @@ Write-Host "##vso[task.setvariable variable=deploy.prereqs]$deployPrereqs"
 $bicepPrereqTemplateFullPath = "$sampleFolder\prereqs\$prereqTemplateFilenameBicep"
 $jsonPrereqTemplateFullPath = "$sampleFolder\prereqs\$prereqTemplateFilenameJson"
 
+Write-Host "Checking for bicep: $bicepPrereqTemplateFullPath"
+Write-Host "Checking for JSON: $jsonPrereqTemplateFullPath"
+
 # if there is a bicep file use it
 if(Test-Path -Path $bicepPrereqTemplateFullPath){
+    Write-Host "Using bicep..."
     $prereqTemplateFullPath = $bicepPrereqTemplateFullPath
 }else{
+    Write-Host "Using JSON..."
     $prereqTemplateFullPath = $jsonPrereqTemplateFullPath
 }
 
