@@ -41,4 +41,5 @@ The principal used to deploy the module must have permissions to get the storage
 | containerName | string | Yes | Container for the blob. Currently the container will be created so the principal deploying the module must have permission to create the container. |
 | contentUri | string | Yes | Uri to the source file including sasToken if necessary. |
 | storageAccountKey | string | No | storageAccountKey used for permission to copy the blob, if not provided, the module will attempt to retrieve the key. |
+
 `Tags: `
