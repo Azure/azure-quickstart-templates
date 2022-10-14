@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Use a deployment script to create Azure Active Directory objects
+# Use a deployment script to create Azure AD objects
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-graph-azure-ad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-graph-azure-ad/PublicDeployment.svg)
@@ -149,3 +149,4 @@ az deployment group create \
   --template-file main.bicep \
   --parameters managedIdentityName=$managedIdentityName azureADApplicationName=MyApp
 ```
+`Tags: `
