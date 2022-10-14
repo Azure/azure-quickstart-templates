@@ -43,4 +43,4 @@ module buildAcrImage 'br/public:deployment-scripts/build-acr:1.0.1' = {
   }
 }
 
-output acrImageUri string = buildAcrImage.outputs.acrImage
+output acrImage string = buildAcrImage.outputs.acrImage
