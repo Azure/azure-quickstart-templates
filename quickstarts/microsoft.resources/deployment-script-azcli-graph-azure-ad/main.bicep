@@ -27,7 +27,7 @@ resource createAzureADApplicationScript 'Microsoft.Resources/deploymentScripts@2
   }
   properties: {
     forceUpdateTag: '1'
-    azCliVersion: '2.41.0'
+    azCliVersion: '2.40.0'
     environmentVariables: [
       {
         name: 'AzureADApplicationName'
