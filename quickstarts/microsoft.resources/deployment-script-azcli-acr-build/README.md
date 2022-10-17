@@ -32,6 +32,8 @@ This template leverages the Container Build capability in Azure Container Regist
 
 A new Azure Container Registry will be created, and the Deployment Script resource is used to initiate the container build.
 
+See the [Acr Build module](https://github.com/Azure/bicep-registry-modules/blob/main/modules/deployment-scripts/build-acr/README.md) in the Bicep Registry for more information.
+
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
