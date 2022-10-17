@@ -29,7 +29,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' = {
   }
 }
 
-module buildAcrImage 'build-acr.bicep' = {
+module buildAcrImage 'br/public:deployment-scripts/build-acr:1.0.1' = {
   name: 'buildAcrImage-${replace(imageName,'/','-')}'
   params: {
     AcrName: acr.name
@@ -42,3 +42,5 @@ module buildAcrImage 'build-acr.bicep' = {
     acrBuildPlatform: acrBuildPlatform
   }
 }
+
+output acrImage string = buildAcrImage.outputs.acrImage
