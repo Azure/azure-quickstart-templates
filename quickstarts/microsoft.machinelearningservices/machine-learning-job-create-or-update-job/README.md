@@ -43,8 +43,6 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 `Important Note : hello_world.py script is using lightgbm curated environment AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu defined in main.bicep. Please check if the curated environment is deprecated or not, if it is make sure to use the non deprecated curated environment.`
 
-You may set _artifactsLocation parameter to 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.machinelearningservices/machine-learning-job-create-or-update-job/data' to let the Azure Machine Learning Job use sample training and validation data.
-
 
 ### Notes
 
