@@ -18,14 +18,11 @@ param jobName string
 
 var compute = resourceId('Microsoft.MachineLearningServices/workspaces/computes', workspaceName, computeName)
 
-// creating codeVersion resource
-module codeVersion 'modules/codeversion.bicep' = {
-  name: 'blob'
-  params: {
-    location: location
-    workspaceName: workspaceName
-    storageAccountName: storageAccountName
-  }
+@description('Specifies the curated environment to run sweep job.')
+param environmentName string = 'AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu'
+
+resource environmemt 'Microsoft.MachineLearningServices/workspaces/environments@2022-05-01' existing = {
+  name: '${workspaceName}/${environmentName}'
 }
 
 resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-01-preview' = {
@@ -33,9 +30,8 @@ resource jobResource 'Microsoft.MachineLearningServices/workspaces/jobs@2022-06-
   properties: {
     jobType: 'Command'
     experimentName: experimentName
-    command: 'python hello_world.py'
-    codeId: codeVersion.outputs.codeId
-    environmentId: codeVersion.outputs.codeId.value
+    command: 'echo "hello_world"'
+    environmentId: resourceId('Microsoft.MachineLearningServices/workspaces/environments/versions', workspaceName, environmentName, environmemt.properties.latestVersion)
     computeId: compute
   }
 }
