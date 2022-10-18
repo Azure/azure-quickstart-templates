@@ -5,21 +5,21 @@ param basename string
 
 @description('The location where the resources(s) are deployed. This can be a different Azure region than where the Resource Group was deployed.')
 @allowed([
-  'Australia East'
-  'Canada Central'
-  'Central India'
-  'East US'
-  'East US 2'
-  'Korea Central'
-  'North Europe'
-  'South Central US'
-  'Southeast Asia'
-  'West Europe'
-  'West US 2'
-  'West US 3'
-  'Sweden Central'
-  'Switzerland North'
-  'UK South'
+  'australiaeast'
+  'canadacentral'
+  'centralindia'
+  'eastus'
+  'eastus2'
+  'koreacentral'
+  'northeurope'
+  'southcentralus'
+  'southeastasia'
+  'swedencentral'
+  'switzerlandnorth'
+  'westeurope'
+  'westus2'
+  'westus3'
+  'uksouth'
 ])
 param location string
 
