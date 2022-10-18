@@ -28,7 +28,7 @@ This template creates an Azure Payment HSM.
 
 ## Overview
 
-Azure Payment HSM is a "BareMetal" service delivered using [Thales payShield 10K payment hardware security modules (HSM)](https://cpl.thalesgroup.com/encryption/hardware-security-modules/payment-hsms/payshield-10k) to provide cryptographic key operations for real-time, critical payment transactions in the Azure cloud. Azure Payment HSM is designed specifically to help a service provider and an individual financial institution accelerate their payment system's digital transformation strategy and adopt the public cloud. For more information, see [Azure Payment HSM: Overview](/azure/payment-hsm/overview).
+Azure Payment HSM is a "BareMetal" service delivered using [Thales payShield 10K payment hardware security modules (HSM)](https://cpl.thalesgroup.com/encryption/hardware-security-modules/payment-hsms/payshield-10k) -- physical devices that provide cryptographic key operations for real-time, critical payment transactions in the Azure cloud. Azure Payment HSM is designed specifically to help a service provider and an individual financial institution accelerate their payment system's digital transformation strategy and adopt the public cloud. For more information, see [Azure Payment HSM: Overview](/azure/payment-hsm/overview).
 
 This template demonstrates a simple use case for creating an payment HSM. For more information see [Quickstart: Create an Azure Payment HSM with an ARM template](/azure/payment-hsm/quick-template).
 
