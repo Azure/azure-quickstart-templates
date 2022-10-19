@@ -28,6 +28,8 @@ languages:
 
 This template deploys an instance of the Azure Health Data Services MedTech service.
 
+To learn more about the Azure Health Data Service MedTech service, see [What is MedTech service?](https://learn.microsoft.com/azure/healthcare-apis/iot/iot-connector-overview)
+
 ## Sample overview and deployed resources
 
 The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices and normalizes, groups, transforms, and persists device health data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
@@ -39,7 +41,7 @@ As a part of this template, the following Azure resources and required access pe
 * An Azure event hub sender role (the sender role is named: devicedatasender).
 * An Azure Health Data Services workspace.
 * An Azure Health Data Services FHIR service.
-* An Azure Health Data Services MedTech service including the necessary system-assigned managed identity roles to the device message event   hub (Azure Events Hubs Receiver) and FHIR service (FHIR Data Writer).
+* An Azure Health Data Services MedTech service including the necessary system-assigned managed identity roles to the device message event hub (Azure Events Hubs Receiver) and FHIR service (FHIR Data Writer).
 
 **NOTE:** The MedTech service will still require a properly conforming device and FHIR destination mapping to be fully functional.
 

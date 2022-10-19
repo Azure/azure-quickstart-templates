@@ -10,20 +10,16 @@ param basename string
   'centralindia'
   'eastus'
   'eastus2'
-  'germanywestcentral'
-  'japaneast'
-  'northcentralus'
+  'koreacentral'
   'northeurope'
-  'southafricanorth'
   'southcentralus'
   'southeastasia'
+  'swedencentral'
   'switzerlandnorth'
-  'uksouth'
-  'ukwest'
-  'westcentralus'
   'westeurope'
   'westus2'
   'westus3'
+  'uksouth'
 ])
 param location string
 
