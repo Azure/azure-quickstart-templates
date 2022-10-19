@@ -1,5 +1,5 @@
 ---
-description: Creates a simple hello world Azure Command Job.
+description: This template creates an Azure Machine Learning Command job with a basic hello_world script
 page_type: sample
 products:
 - azure
