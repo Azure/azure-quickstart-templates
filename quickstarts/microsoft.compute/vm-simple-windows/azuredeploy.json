@@ -147,6 +147,55 @@
       "metadata": {
         "description": "Name of the virtual machine."
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "secureBoot": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Secure Boot setting of the virtual machine. Applicable for securityType TrustedLaunch."
+      }
+    },
+    "vTPM": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "vTPM setting of the virtual machine. Applicable for securityType TrustedLaunch."
+      }
+    },
+    "maaEndpoint": {
+      "type": "string",
+      "defaultValue": "https://sharedeus2.eus2.attest.azure.net/",
+      "allowedValues": [
+        "https://sharedcus.cus.attest.azure.net/",
+        "https://sharedcae.cae.attest.azure.net/",
+        "https://sharedeus2.eus2.attest.azure.net/",
+        "https://shareduks.uks.attest.azure.net/",
+        "https://sharedcac.cac.attest.azure.net/",
+        "https://sharedukw.ukw.attest.azure.net/",
+        "https://sharedneu.neu.attest.azure.net/",
+        "https://sharedeus.eus.attest.azure.net/",
+        "https://sharedeau.eau.attest.azure.net/",
+        "https://sharedncus.ncus.attest.azure.net/",
+        "https://sharedwus.wus.attest.azure.net/",
+        "https://sharedweu.weu.attest.azure.net/",
+        "https://sharedscus.scus.attest.azure.net/",
+        "https://sharedsasia.sasia.attest.azure.net/",
+        "https://sharedsau.sau.attest.azure.net/"
+      ],
+      "metadata": {
+        "description": "MAA Endpoint to attest to."
+      }
     }
   },
   "variables": {
@@ -156,7 +205,21 @@
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "MyVNET",
-    "networkSecurityGroupName": "default-NSG"
+    "networkSecurityGroupName": "default-NSG",
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
+    "ascReportingEndpoint": "https://sharedeus2.eus2.attest.azure.net/",
+    "disableAlerts": "false",
+    "useAlternateToken": "false",
+    "securityProfileJson": {
+	    "uefiSettings": {
+		    "secureBootEnabled": "[parameters('secureBoot')]",
+		    "vTpmEnabled": "[parameters('vTPM')]"
+	    },
+	    "securityType": "[parameters('securityType')]"
+	  }
   },
   "resources": [
     {
@@ -307,11 +370,37 @@
             "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
           }
-        }
+        },
+        "securityProfile": "[if(equals(parameters('securityType'),'TrustedLaunch'), variables('securityProfileJson'), json('null'))]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'),parameters('vTPM'), parameters('secureBoot'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), variables('extensionName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AttestationEndpointCfg": {
+            "maaEndpoint": "[parameters('maaEndpoint')]",
+            "maaTenantName": "[variables('maaTenantName')]",
+            "ascReportingEndpoint": "[variables('ascReportingEndpoint')]",
+            "useAlternateToken": "[variables('useAlternateToken')]",
+            "disableAlerts": "[variables('disableAlerts')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
     }
   ],
