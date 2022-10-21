@@ -66,8 +66,8 @@ After your Microsoft Purview account is created, you'll use the Microsoft Purvie
 
 After deployment, the first activities are usually:
 
-* [Create a collection](/azure/purview/quickstart-create-collection)
-* [Register a resource](/azure/purview/azure-purview-connector-overview)
-* [Scan the resource](/azure/purview/concept-scans-and-ingestion)
+* [Create a collection](https://learn.microsoft.com/azure/purview/how-to-create-and-manage-collections)
+* [Register a resource](https://learn.microsoft.com/azure/purview/microsoft-purview-connector-overview)
+* [Scan the resource](https://learn.microsoft.com/azure/purview/concept-scans-and-ingestion)
 
 `Tags: Microsoft.Purview/accounts, SystemAssigned`
