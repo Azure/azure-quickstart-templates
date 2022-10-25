@@ -1,0 +1,126 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "administratorLogin": {
+            "type": "string"
+        },
+        "administratorLoginPassword": {
+            "type": "securestring"
+        },
+        "location": {
+            "type": "string"
+        },
+        "serverName": {
+            "type": "string"
+        },
+        "serverEdition": {
+            "type": "string",
+            "defaultValue": "GeneralPurpose",
+            "metadata": {
+                "description": "The tier of the particular SKU, e.g. Burstable, GeneralPurpose, MemoryOptimized. High Availability is not available for Burstable sku."
+            }
+        },
+        "skuName": {
+            "type": "string",
+            "defaultValue": "Standard_D2ds_v4",
+            "metadata": {
+                "description": "The name of the sku, e.g. Standard_D32ds_v4."
+            }
+        },
+        "storageSizeGB": {
+            "type": "int"
+        },
+        "storageIops": {
+            "type": "int"
+        },
+        "storageAutogrow": {
+            "type": "string",
+            "defaultValue": "Enabled"
+        },
+        "availabilityZone": {
+            "type": "string",
+            "metadata": {
+                "description": "Availability Zone information of the server. (Leave blank for No Preference)."
+            }
+        },
+        "version": {
+            "type": "string"
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {}
+        },
+        "haEnabled": {
+            "type": "string",
+            "defaultValue": "Disabled",
+            "metadata": {
+                "description": "High availability mode for a server : Disabled, SameZone, or ZoneRedundant"
+            }
+        },
+        "standbyAvailabilityZone": {
+            "type": "string",
+            "metadata": {
+                "description": "Availability zone of the standby server."
+            }
+        },
+        "firewallRules": {
+            "type": "object",
+            "defaultValue": {}
+        },
+        "backupRetentionDays": {
+            "type": "int"
+        },
+        "geoRedundantBackup": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "api": "2021-05-01",
+        "firewallRules": "[parameters('firewallRules').rules]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.DBforMySQL/flexibleServers",
+            "apiVersion": "[variables('api')]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('serverName')]",
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('serverEdition')]"
+            },
+            "properties": {
+                "version": "[parameters('version')]",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "availabilityZone": "[parameters('availabilityZone')]",
+                "highAvailability": {
+                    "mode": "[parameters('haEnabled')]",
+                    "standbyAvailabilityZone": "[parameters('standbyAvailabilityZone')]"
+                },
+                "Storage": {
+                    "storageSizeGB": "[parameters('storageSizeGB')]",
+                    "iops": "[parameters('storageIops')]",
+                    "autogrow": "[parameters('storageAutogrow')]"
+                },
+                "Backup": {
+                    "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                } 
+            },
+            "tags": "[parameters('tags')]"  
+        },
+        {
+            "type": "Microsoft.DBforMySQL/flexibleServers/firewallRules",
+            "name": "[concat(parameters('serverName'),'/',variables('firewallRules')[0].name)]",
+            "apiVersion": "[variables('api')]",
+            "dependsOn": [
+                "[concat('Microsoft.DBforMySQL/flexibleServers/', parameters('serverName'))]"
+            ],
+            "properties": {
+                "StartIpAddress": "[variables('firewallRules')[0].startIPAddress]",
+                "EndIpAddress": "[variables('firewallRules')[0].endIPAddress]"
+            } 
+        }
+    ]
+}
