@@ -232,7 +232,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       customLocation: empty(customLocation) ? null : {
         id: customLocation
       }
-      azureStackEdgeDevice: empty(azureStackEdgeDevice) ? null : {
+      azureStackEdgeDevice: {
         id: azureStackEdgeDevice
       }
     }
