@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.9.1.41621",
-      "templateHash": "14710934012601725977"
+      "version": "0.11.1.770",
+      "templateHash": "2528250789031193473"
     }
   },
   "parameters": {
@@ -22,65 +22,26 @@
       "metadata": {
         "description": "Location of the data factory."
       }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the Azure storage account that contains the input/output data."
-      }
-    },
-    "blobContainerName": {
-      "type": "string",
-      "defaultValue": "[format('blob{0}', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the blob container in the Azure Storage account."
-      }
-    },
-    "managedIdentityName": {
-      "type": "string",
-      "defaultValue": "[format('blob{0}', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the managed identity created to access the Azure Storage account."
-      }
-    },
-    "_artifactsLocation": {
-      "type": "string",
-      "defaultValue": "[deployment().properties.templateLink.uri]",
-      "metadata": {
-        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-      }
-    },
-    "_artifactsLocationSasToken": {
-      "type": "secureString",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The sasToken required to access _artifactsLocation."
-      }
-    },
-    "csvFilename": {
-      "type": "string",
-      "defaultValue": "moviesDB2.csv",
-      "metadata": {
-        "description": "The file name that contains the content for the Data Factory"
-      }
     }
   },
   "variables": {
-    "$fxv#0": "\r\n$localFileName = \"${env:contentUri}\" | Split-Path -Leaf\r\n\r\nInvoke-WebRequest -Uri \"${env:contentUri}\" -OutFile $localFileName\r\n\r\n$storageAccount = Get-AzStorageAccount -ResourceGroupName \"${Env:RGName}\" -Name \"${Env:SAName}\" \r\n\r\n$ctx = $storageAccount.Context\r\n\r\nSet-AzStorageBlobContent -Container \"${Env:ContainerName}\" -Blob \"input/$localFileName\" -Context $ctx -StandardBlobTier 'Hot' -File $localFileName\r\n",
+    "$fxv#0": "\r\n$localFileName = \"${env:csvFileName}\"\r\n\r\nInvoke-WebRequest -Uri \"${env:contentUri}\" -OutFile $localFileName\r\n\r\n$ctx = New-AzStorageContext -StorageAccountName \"${Env:SAName}\" -StorageAccountKey \"${Env:storageKey}\"\r\n\r\nSet-AzStorageBlobContent -Container \"${Env:ContainerName}\" -Blob \"${env:csvInputFolder}/$localFileName\" -Context $ctx -StandardBlobTier 'Hot' -File $localFileName\r\n",
+    "contentUri": "[uri(format('https://azbotstorage.blob.{0}', environment().suffixes.storage), '/sample-artifacts/data-factory/moviesDB2.csv')]",
+    "csvFilename": "[last(split(variables('contentUri'), '/'))]",
+    "storageAccountName": "[format('storage{0}', uniqueString(resourceGroup().id))]",
     "dataFactoryLinkedServiceName": "ArmtemplateStorageLinkedService",
     "dataFactoryDataSetInName": "ArmtemplateTestDatasetIn",
     "dataFactoryDataSetOutName": "ArmtemplateTestDatasetOut",
     "pipelineName": "ArmtemplateSampleCopyPipeline",
-    "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-    "bootstrapRoleAssignmentName": "[guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), variables('roleDefinitionId'))]",
-    "contentUri": "[uri(parameters('_artifactsLocation'), format('{0}{1}', parameters('csvFilename'), parameters('_artifactsLocationSasToken')))]"
+    "csvInputFolder": "input",
+    "csvOutputFolder": "output",
+    "blobContainerName": "datafactory"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2021-09-01",
-      "name": "[parameters('storageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -90,28 +51,9 @@
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2021-09-01",
-      "name": "[format('{0}/default/{1}', parameters('storageAccountName'), parameters('blobContainerName'))]",
+      "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2022-01-31-preview",
-      "name": "[parameters('managedIdentityName')]",
-      "location": "[parameters('location')]"
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2022-01-01-preview",
-      "name": "[variables('bootstrapRoleAssignmentName')]",
-      "properties": {
-        "roleDefinitionId": "[variables('roleDefinitionId')]",
-        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2022-01-31-preview').principalId]",
-        "principalType": "ServicePrincipal"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
     },
     {
@@ -120,31 +62,32 @@
       "name": "copyFile",
       "location": "[parameters('location')]",
       "kind": "AzurePowerShell",
-      "identity": {
-        "type": "UserAssigned",
-        "userAssignedIdentities": {
-          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))]": {}
-        }
-      },
       "properties": {
         "azPowerShellVersion": "8.0",
-        "arguments": "-name FileCreationScript",
         "environmentVariables": [
           {
-            "name": "RGName",
-            "value": "[resourceGroup().name]"
+            "name": "storageKey",
+            "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value]"
           },
           {
             "name": "SAName",
-            "value": "[parameters('storageAccountName')]"
+            "value": "[variables('storageAccountName')]"
           },
           {
             "name": "ContainerName",
-            "value": "[parameters('blobContainerName')]"
+            "value": "[variables('blobContainerName')]"
           },
           {
             "name": "contentUri",
             "value": "[variables('contentUri')]"
+          },
+          {
+            "name": "csvFileName",
+            "value": "[variables('csvFilename')]"
+          },
+          {
+            "name": "csvInputFolder",
+            "value": "[variables('csvInputFolder')]"
           }
         ],
         "scriptContent": "[variables('$fxv#0')]",
@@ -153,8 +96,8 @@
         "retentionInterval": "P1D"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Authorization/roleAssignments', variables('bootstrapRoleAssignmentName'))]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', split(format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName')), '/')[0], split(format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName')), '/')[1], split(format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName')), '/')[2])]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
     },
     {
@@ -173,12 +116,12 @@
       "properties": {
         "type": "AzureBlobStorage",
         "typeProperties": {
-          "connectionString": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2021-09-01'))]"
+          "connectionString": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value)]"
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
     },
     {
@@ -194,9 +137,9 @@
         "typeProperties": {
           "location": {
             "type": "AzureBlobStorageLocation",
-            "container": "[parameters('blobContainerName')]",
-            "folderPath": "input",
-            "fileName": "moviesDB2.csv"
+            "container": "[variables('blobContainerName')]",
+            "folderPath": "[variables('csvInputFolder')]",
+            "fileName": "[variables('csvFilename')]"
           }
         }
       },
@@ -218,8 +161,8 @@
         "typeProperties": {
           "location": {
             "type": "AzureBlobStorageLocation",
-            "container": "[parameters('blobContainerName')]",
-            "folderPath": "output"
+            "container": "[variables('blobContainerName')]",
+            "folderPath": "[variables('csvOutputFolder')]"
           }
         }
       },
