@@ -30,7 +30,7 @@ This template deploys a Private 5G Core. The Private 5G Core is a deployed with 
 
 ## Prerequisites
 
-By default this template does not deploy any resources to the Azure Stack Edge. If you want to deploy to an Azure Stack Edge then you must follow the pre-requisite instructions in the Private 5G Core [documentation](https://docs.microsoft.com/azure/private-5g-core/complete-private-mobile-network-prerequisites) before starting the deployment so that you can specify the customLocation and azureStackEdgeDevice parameters.
+By default this template does not deploy any resources to the Azure Stack Edge. If you want to deploy to an Azure Stack Edge then you must follow the pre-requisite instructions in the Private 5G Core [documentation](https://docs.microsoft.com/azure/private-5g-core/complete-private-mobile-network-prerequisites) before starting the deployment so that you can specify the customLocation parameter.
 
 ## Deployment steps
 
