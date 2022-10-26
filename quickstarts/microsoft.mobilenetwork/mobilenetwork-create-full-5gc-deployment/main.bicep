@@ -192,13 +192,24 @@ resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@20
 }
 
 #disable-next-line BCP081
-resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = if (!empty(simGroupName)) {
+resource exampleSimGroupResource 'Microsoft.Network/simGroups@2022-04-01-preview' = if (!empty(simGroupName)) {
   name: empty(simGroupName) ? 'placeHolderForValidation' : simGroupName
   location: location
   properties: {
     mobileNetwork: {
       id: exampleMobileNetwork.id
     }
+    encryptionKey: {
+        keyUrl: existingEncryptionKeyUrl
+    }
+  }
+  identity: !empty(existingUserAssignedIdentityResourceId) ? {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${existingUserAssignedIdentityResourceId}': {}
+    }
+  } : {
+    type: 'None'
   }
 
   #disable-next-line BCP081
