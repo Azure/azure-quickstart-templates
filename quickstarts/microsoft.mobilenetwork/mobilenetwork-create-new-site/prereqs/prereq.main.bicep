@@ -25,6 +25,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
       mnc: mobileNetworkCode
     }
   }
+}
 
 #disable-next-line BCP081
 resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2022-04-01-preview' = {
