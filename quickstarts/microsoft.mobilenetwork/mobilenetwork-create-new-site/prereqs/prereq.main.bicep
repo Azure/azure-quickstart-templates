@@ -4,6 +4,12 @@ param location string = resourceGroup().location
 @description('The name for the private mobile network')
 param mobileNetworkName string
 
+@description('The mobile country code for the private mobile network')
+param mobileCountryCode string = '001'
+
+@description('The mobile network code for the private mobile network')
+param mobileNetworkCode string = '01'
+
 @description('The name for the AzureStackEdgeName')
 param azureStackEdgeName string
 
