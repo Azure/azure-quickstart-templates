@@ -8,7 +8,7 @@ urlFragment: sql-logical-server
 languages:
 - json
 ---
-# SQL logical server.
+# SQL logical server
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-logical-server/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-logical-server/PublicDeployment.svg)
@@ -25,5 +25,5 @@ languages:
 
 This template allows you to create [Azure SQL logical server](https://docs.microsoft.com/azure/sql-database/sql-database-logical-servers).
 
-`Tags: Azure, SQL logical server, Microsoft.Sql/servers, firewallRules, securityAlertPolicies, vulnerabilityAssessments, connectionPolicies, Microsoft.Storage/storageAccounts, Microsoft.Authorization/roleAssignments`
+`Tags: Azure, SQL logical server, Microsoft.Sql/servers, firewallRules, advancedThreatProtectionSettings, vulnerabilityAssessments, connectionPolicies, Microsoft.Storage/storageAccounts, Microsoft.Authorization/roleAssignments`
 

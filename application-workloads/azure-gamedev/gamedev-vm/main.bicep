@@ -1,4 +1,3 @@
-
 @description('Resource Location.')
 param location string = resourceGroup().location
 
@@ -152,7 +151,7 @@ param enableAAD bool = false
 param windowsUpdateOption string = 'AutomaticByOS'
 
 module gameDevVM 'br/public:azure-gaming/game-dev-vm:1.0.2' = {
-  name: 'gamingDevVM'
+  name: 'gameDevVM-${deployment().name}'
   params: {
     location: location
     vmSize: vmSize

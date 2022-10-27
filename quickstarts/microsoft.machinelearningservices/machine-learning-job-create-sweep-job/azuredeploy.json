@@ -1,0 +1,338 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.61.36676",
+      "templateHash": "4722508883802150279"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning workspace where sweep job will be deployed"
+      }
+    },
+    "jobName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the unique name for sweep job."
+      }
+    },
+    "computeName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning amlcompute cluster on which job will be run."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the storage account to created and associated with the workspace."
+      }
+    },
+    "experimentName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning experiment under which job will be created."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation."
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "defaultValue": {
+        "iris_csv": {
+          "mode": "ReadOnlyMount",
+          "uri": "[uri(parameters('_artifactsLocation'), format('data/iris.csv{0}', parameters('_artifactsLocationSasToken')))]",
+          "jobInputType": "uri_file"
+        }
+      },
+      "metadata": {
+        "description": "Specifies dictionary of inputs search for sweep job."
+      }
+    },
+    "limits": {
+      "type": "object",
+      "defaultValue": {
+        "jobLimitsType": "Sweep",
+        "timeout": "PT20M",
+        "trialTimeout": "PT50S",
+        "maxConcurrentTrials": 3,
+        "maxTotalTrials": 5
+      },
+      "metadata": {
+        "description": "Specifies execution contraints for sweep job."
+      }
+    },
+    "objective": {
+      "type": "object",
+      "defaultValue": {
+        "goal": "maximize",
+        "primaryMetric": "result"
+      },
+      "metadata": {
+        "description": "Specifies objective for sweep job."
+      }
+    },
+    "samplingAlgorithmType": {
+      "type": "string",
+      "defaultValue": "Random",
+      "metadata": {
+        "description": "Specifies sampling algorithm for sweep job."
+      }
+    },
+    "searchSpace": {
+      "type": "object",
+      "defaultValue": {
+        "learning_rate": [
+          "uniform",
+          [
+            "[json('0.01')]",
+            "[json('0.9')]"
+          ]
+        ],
+        "boosting": [
+          "choice",
+          [
+            [
+              "gbdt",
+              "dart"
+            ]
+          ]
+        ]
+      },
+      "metadata": {
+        "description": "Specifies different search space for sweep job."
+      }
+    },
+    "command": {
+      "type": "string",
+      "defaultValue": "python main.py --iris-csv ${{inputs.iris_csv}} --learning-rate ${{search_space.learning_rate}} --boosting ${{search_space.boosting}}",
+      "metadata": {
+        "description": "Specifies command to be executed by trials of sweep job."
+      }
+    },
+    "environmentName": {
+      "type": "string",
+      "defaultValue": "AzureML-lightgbm-3.2-ubuntu18.04-py37-cpu",
+      "metadata": {
+        "description": "Specifies the curated environment to run sweep job."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/jobs",
+      "apiVersion": "2022-06-01-preview",
+      "name": "[format('{0}/{1}', parameters('workspaceName'), parameters('jobName'))]",
+      "properties": {
+        "description": "Sweep Job Resource from ARM Template",
+        "properties": {},
+        "tags": {
+          "referenceNotebook": "https://github.com/Azure/azureml-examples/blob/main/sdk/jobs/single-step/lightgbm/iris/lightgbm-iris-sweep.ipynb"
+        },
+        "computeId": "[resourceId('Microsoft.MachineLearningServices/workspaces/computes', parameters('workspaceName'), parameters('computeName'))]",
+        "displayName": "Sweep Job Resource",
+        "experimentName": "[parameters('experimentName')]",
+        "isArchived": false,
+        "jobType": "Sweep",
+        "inputs": "[parameters('inputs')]",
+        "limits": "[parameters('limits')]",
+        "objective": "[parameters('objective')]",
+        "samplingAlgorithm": {
+          "samplingAlgorithmType": "[parameters('samplingAlgorithmType')]"
+        },
+        "searchSpace": "[parameters('searchSpace')]",
+        "trial": {
+          "codeId": "[reference(resourceId('Microsoft.Resources/deployments', 'blob')).outputs.codeId.value]",
+          "command": "[parameters('command')]",
+          "environmentId": "[resourceId('Microsoft.MachineLearningServices/workspaces/environments/versions', parameters('workspaceName'), parameters('environmentName'), reference(resourceId('Microsoft.MachineLearningServices/workspaces/environments', split(format('{0}/{1}', parameters('workspaceName'), parameters('environmentName')), '/')[0], split(format('{0}/{1}', parameters('workspaceName'), parameters('environmentName')), '/')[1]), '2022-05-01').latestVersion)]",
+          "environmentVariables": {}
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'blob')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "blob",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.10.61.36676",
+              "templateHash": "17993837818224864413"
+            }
+          },
+          "parameters": {
+            "workspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning workspace where sweep job will be deployed"
+              }
+            },
+            "filename": {
+              "type": "string",
+              "defaultValue": "main.py",
+              "metadata": {
+                "description": "Name of the blob as it is stored in the blob container"
+              }
+            },
+            "containerName": {
+              "type": "string",
+              "defaultValue": "hdscript",
+              "metadata": {
+                "description": "Name of the blob container"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region where resources should be deployed"
+              }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Desired name of the storage account"
+              }
+            },
+            "codeVersion": {
+              "type": "string",
+              "defaultValue": "1",
+              "metadata": {
+                "description": "Specifies the env version for sweep job."
+              }
+            },
+            "codeId": {
+              "type": "string",
+              "defaultValue": "code",
+              "metadata": {
+                "description": "Specifies the env for sweep job."
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": "# imports\r\nimport os\r\nimport mlflow\r\nimport argparse\r\n\r\nimport pandas as pd\r\nimport lightgbm as lgbm\r\nimport matplotlib.pyplot as plt\r\n\r\nfrom sklearn.metrics import log_loss, accuracy_score\r\nfrom sklearn.preprocessing import LabelEncoder\r\nfrom sklearn.model_selection import train_test_split\r\n\r\n# define functions\r\ndef main(args):\r\n    # enable auto logging\r\n    mlflow.autolog()\r\n\r\n    # setup parameters\r\n    num_boost_round = args.num_boost_round\r\n    params = {\r\n        \"objective\": \"multiclass\",\r\n        \"num_class\": 3,\r\n        \"boosting\": args.boosting,\r\n        \"num_iterations\": args.num_iterations,\r\n        \"num_leaves\": args.num_leaves,\r\n        \"num_threads\": args.num_threads,\r\n        \"learning_rate\": args.learning_rate,\r\n        \"metric\": args.metric,\r\n        \"seed\": args.seed,\r\n        \"verbose\": args.verbose,\r\n    }\r\n\r\n    # read in data\r\n    df = pd.read_csv(args.iris_csv)\r\n\r\n    # process data\r\n    X_train, X_test, y_train, y_test, enc = process_data(df)\r\n\r\n    # train model\r\n    model = train_model(params, num_boost_round, X_train, X_test, y_train, y_test)\r\n\r\n\r\ndef process_data(df):\r\n    # split dataframe into X and y\r\n    X = df.drop([\"species\"], axis=1)\r\n    y = df[\"species\"]\r\n\r\n    # encode label\r\n    enc = LabelEncoder()\r\n    y = enc.fit_transform(y)\r\n\r\n    # train/test split\r\n    X_train, X_test, y_train, y_test = train_test_split(\r\n        X, y, test_size=0.2, random_state=42\r\n    )\r\n\r\n    # return splits and encoder\r\n    return X_train, X_test, y_train, y_test, enc\r\n\r\n\r\ndef train_model(params, num_boost_round, X_train, X_test, y_train, y_test):\r\n    # create lightgbm datasets\r\n    train_data = lgbm.Dataset(X_train, label=y_train)\r\n    test_data = lgbm.Dataset(X_test, label=y_test)\r\n\r\n    # train model\r\n    model = lgbm.train(\r\n        params,\r\n        train_data,\r\n        num_boost_round=num_boost_round,\r\n        valid_sets=[test_data],\r\n        valid_names=[\"test\"],\r\n    )\r\n\r\n    # return model\r\n    return model\r\n\r\n\r\ndef parse_args():\r\n    # setup arg parser\r\n    parser = argparse.ArgumentParser()\r\n\r\n    # add arguments\r\n    parser.add_argument(\"--iris-csv\", type=str)\r\n    parser.add_argument(\"--num-boost-round\", type=int, default=10)\r\n    parser.add_argument(\"--boosting\", type=str, default=\"gbdt\")\r\n    parser.add_argument(\"--num-iterations\", type=int, default=16)\r\n    parser.add_argument(\"--num-leaves\", type=int, default=31)\r\n    parser.add_argument(\"--num-threads\", type=int, default=0)\r\n    parser.add_argument(\"--learning-rate\", type=float, default=0.1)\r\n    parser.add_argument(\"--metric\", type=str, default=\"multi_logloss\")\r\n    parser.add_argument(\"--seed\", type=int, default=42)\r\n    parser.add_argument(\"--verbose\", type=int, default=0)\r\n\r\n    # parse args\r\n    args = parser.parse_args()\r\n\r\n    # return args\r\n    return args\r\n\r\n\r\n# run script\r\nif __name__ == \"__main__\":\r\n    # parse args\r\n    args = parse_args()\r\n\r\n    # run main function\r\n    main(args)"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2021-04-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', parameters('containerName'))]",
+              "properties": {
+                "publicAccess": "Container"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2021-04-01",
+              "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]"
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2020-10-01",
+              "name": "[format('deployscript-upload-blob-{0}', uniqueString(resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName'))))]",
+              "location": "[parameters('location')]",
+              "kind": "AzureCLI",
+              "properties": {
+                "azCliVersion": "2.26.1",
+                "timeout": "PT5M",
+                "retentionInterval": "PT1H",
+                "environmentVariables": [
+                  {
+                    "name": "AZURE_STORAGE_ACCOUNT",
+                    "value": "[parameters('storageAccountName')]"
+                  },
+                  {
+                    "name": "AZURE_STORAGE_KEY",
+                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2021-04-01').keys[0].value]"
+                  },
+                  {
+                    "name": "CONTENT",
+                    "value": "[variables('$fxv#0')]"
+                  }
+                ],
+                "scriptContent": "[format('echo \"$CONTENT\" > {0} && az storage blob upload -f {1} -c {2} -n {3}', parameters('filename'), parameters('filename'), parameters('containerName'), parameters('filename'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.MachineLearningServices/workspaces/codes/versions",
+              "apiVersion": "2022-05-01",
+              "name": "[format('{0}/{1}-{2}/{3}', parameters('workspaceName'), parameters('codeId'), uniqueString(resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName'))), parameters('codeVersion'))]",
+              "properties": {
+                "codeUri": "[uri(format('https://{0}.blob.{1}/', parameters('storageAccountName'), environment().suffixes.storage), format('{0}/', parameters('containerName')))]",
+                "isAnonymous": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName'))]",
+                "[resourceId('Microsoft.Resources/deploymentScripts', format('deployscript-upload-blob-{0}', uniqueString(resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName')))))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "codeId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces/codes/versions', split(format('{0}/{1}-{2}/{3}', parameters('workspaceName'), parameters('codeId'), uniqueString(resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName'))), parameters('codeVersion')), '/')[0], split(format('{0}/{1}-{2}/{3}', parameters('workspaceName'), parameters('codeId'), uniqueString(resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName'))), parameters('codeVersion')), '/')[1], split(format('{0}/{1}-{2}/{3}', parameters('workspaceName'), parameters('codeId'), uniqueString(resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('containerName'))), parameters('codeVersion')), '/')[2])]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "Job_Studio_Endpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces/jobs', split(format('{0}/{1}', parameters('workspaceName'), parameters('jobName')), '/')[0], split(format('{0}/{1}', parameters('workspaceName'), parameters('jobName')), '/')[1])).services.Studio.endpoint]"
+    }
+  }
+}
