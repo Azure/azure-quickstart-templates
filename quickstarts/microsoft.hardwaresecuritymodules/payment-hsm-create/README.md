@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Payment HSM to provide cryptographic key operations for real-time, critical payment transactions in the Azure cloud.
+description: This template creates an Azure Payment HSM, to provide cryptographic key operations for real-time, critical payment transactions in the Azure cloud.
 page_type: sample
 products:
 - azure
