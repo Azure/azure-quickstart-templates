@@ -1,0 +1,142 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+       "workspaceName": {
+           "type": "string",
+           "metadata": {
+               "description": "The name of the Azure Databricks workspace to create."
+           }
+       },
+       "pricingTier": {
+           "type": "string",
+           "defaultValue": "premium",
+           "allowedValues": [
+               "standard",
+               "premium"
+           ],
+           "metadata": {
+               "description": "The pricing tier of workspace."
+           }
+       },
+       "apiVersion": {
+           "type": "string",
+           "defaultValue": "2022-04-01-preview",
+           "allowedValues": [
+               "2022-04-01-preview"
+           ],
+           "metadata": {
+               "description": "The api version to create the workspace resources"
+           }
+       },
+       "keyVaultName": {
+           "type": "string",
+           "metadata": {
+               "description": "The key vault name used for BYOK"
+           }
+       },
+       "keyName": {
+           "type": "string",
+           "metadata": {
+               "description": "The key name used for BYOK"
+           }
+       },
+       "keyVersion": {
+           "type": "string",
+           "metadata": {
+               "description": "The key version used for BYOK"
+           }
+       },
+       "keyVaultResourceGroupName": {
+           "type": "string",
+           "metadata": {
+               "description": "The resource group name of the key vault used for BYOK"
+           }
+       },
+		"enableAutoRotation": {
+			"type": "bool",
+			"defaultValue": false,
+		"allowedValues": [
+				true,
+				false
+		],
+			"metadata": {
+				"description": "Whether managed disk will pick up new key version automatically "
+		   }
+       }
+   },
+   "variables": {
+       "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]"
+   },
+   "resources": [
+       {
+           "type": "Microsoft.Databricks/workspaces",
+           "name": "[parameters('workspaceName')]",
+           "location": "[resourceGroup().location]",
+           "apiVersion": "[parameters('apiVersion')]",
+           "sku": {
+               "name": "[parameters('pricingTier')]"
+           },
+           "properties": {
+               "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
+               "encryption": {
+                   "entities": {
+                       "managedDisk": {
+                           "keySource": "Microsoft.Keyvault",
+                           "keyVaultProperties": {
+                               "keyVaultUri": "[concat('https://', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                               "keyName": "[parameters('keyName')]",
+                               "keyVersion": "[parameters('keyVersion')]"
+                           },
+                           "rotationToLatestKeyVersionEnabled": "[parameters('enableAutoRotation')]"
+                       }
+                   }
+               }
+           }
+       },
+       {
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2020-06-01",
+           "name": "addAccessPolicy",
+           "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
+           "dependsOn": [
+               "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "template": {
+                   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                   "contentVersion": "0.9.0.0",
+                   "resources": [
+                       {
+                           "type": "Microsoft.KeyVault/vaults/accessPolicies",
+                           "apiVersion": "2019-09-01",
+                           "name": "[concat(parameters('keyVaultName'), '/add')]",
+                           "properties": {
+                               "accessPolicies": [
+                                   {
+                                       "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview').managedDiskIdentity.principalId]",
+                                       "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview').managedDiskIdentity.tenantId]",
+                                       "permissions": {
+                                           "keys": [
+                                               "get",
+                                               "wrapKey",
+                                               "unwrapKey"
+                                           ]
+                                       }
+                                   }
+                               ]
+                           }
+                       }
+                   ]
+               }
+           }
+       }
+   ],
+   "outputs": {
+       "workspace": {
+           "type": "object",
+           "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')))]"
+       }
+   }
+}
