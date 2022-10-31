@@ -16,6 +16,7 @@
     },
     "IntegrationRuntimeName": {
       "type": "string",
+      "defaultValue": "[format('ir-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "IR name must be unique in subscription"
       }
@@ -24,13 +25,17 @@
       "type": "int",
       "maxValue": 4,
       "minValue": 1,
+      "defaultValue": 1,
       "metadata": {
         "description": "the node count is between 1 and 4."
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A4_v2"
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "SKU Size for the VMs"
+      }
     },
     "adminUserName": {
       "type": "string",
@@ -89,7 +94,6 @@
       "_"
     ],
     "prefix": "[split(parameters('IntegrationRuntimeName'), variables('delimiters'))[0]]",
-    "storageAccountName": "[take(concat(toLower(variables('prefix')), uniquestring(resourceGroup().id, parameters('IntegrationRuntimeName'))), 24)]",
     "networkSecurityGroupName": "[concat(parameters('IntegrationRuntimeName'), 'nsg')]",
     "vmTemplateLink": "[uri(parameters('_artifactsLocation'), concat('nested/VMtemplate.json', parameters('_artifactsLocationSasToken')))]",
     "irInstallTemplateLink": "[uri(parameters('_artifactsLocation'), concat('nested/IRInstall.json', parameters('_artifactsLocationSasToken')))]",
@@ -100,7 +104,7 @@
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2021-04-01",
       "name": "nestedTemplate",
       "resourceGroup": "[parameters('existingDataFactoryResourceGroup')]",
       "properties": {
@@ -120,9 +124,9 @@
       }
     },
     {
-      "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('existingVnetLocation')]",
       "properties": {
         "securityRules": [
@@ -143,27 +147,12 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[variables('storageAccountName')]",
-      "location": "[parameters('existingVnetLocation')]",
-      "dependsOn": [
-        "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]"
-      ],
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2021-04-01",
       "name": "[concat('VMtemplate-', copyIndex())]",
       "dependsOn": [
         "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "copy": {
         "name": "vmcopy",
@@ -196,19 +185,17 @@
           },
           "nsgId": {
             "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-          },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2019-09-01",
       "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
       "name": "[concat('IRInstalltemplate-', copyIndex())]",
       "dependsOn": [
-        "vmcopy"
+        "vmcopy",
+        "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]"
       ],
       "copy": {
         "name": "irinstallcopy",
@@ -223,7 +210,7 @@
         },
         "parameters": {
           "datafactoryId": {
-            "value": "[reference(resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')).outputs.irId.value]"
+            "value": "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.DataFactory/factories/integrationruntimes', parameters('existingDataFactoryName'), parameters('IntegrationRuntimeName'))]"
           },
           "virtualMachineName": {
             "value": "[take(concat('vm',copyIndex(),'-', variables('prefix')), 15)]"
