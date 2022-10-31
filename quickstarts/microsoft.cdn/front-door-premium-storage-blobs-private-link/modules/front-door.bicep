@@ -70,7 +70,7 @@ resource endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   }
 }
 
-resource customDomain 'Microsoft.Cdn/profiles/customDomains@2020-09-01' = {
+resource customDomain 'Microsoft.Cdn/profiles/customDomains@2021-06-01' = {
   name: customDomainResourceName
   parent: profile
   properties: {

@@ -16,7 +16,7 @@ param skuName string
 @description('The name of the Azure Storage blob container to create.')
 param blobContainerName string
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: accountName
   location: location
   kind: 'StorageV2'
