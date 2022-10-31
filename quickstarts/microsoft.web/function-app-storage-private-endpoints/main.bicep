@@ -64,7 +64,7 @@ var functionContentShareName = 'function-content-share'
 // See https://docs.microsoft.com/en-us/azure/templates/microsoft.web/serverfarms?tabs=json#appserviceplanproperties-object.
 var isReserved = (functionPlanOS == 'Linux') ? true : false
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: vnetName
   location: location
   properties: {
@@ -325,6 +325,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
   properties: {
     publicNetworkAccess: 'Disabled'
+    allowBlobPublicAccess: false
     networkAcls: {
       bypass: 'None'
       defaultAction: 'Deny'
