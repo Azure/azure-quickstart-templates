@@ -13,7 +13,7 @@ param siteName string = 'myExampleSite'
 @description('The resource ID of the Azure Stack Edge device to deploy to')
 param azureStackEdgeDevice string = ''
 
-@description('The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the control plane interface on the access network. For 5G, this interface is the N2 interface; for 4G, it's the S1-MME interface.)
+@description('The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the control plane interface on the access network. For 5G, this interface is the N2 interface; for 4G, it's the S1-MME interface.')
 param controlPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
