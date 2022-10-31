@@ -325,6 +325,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
   properties: {
     publicNetworkAccess: 'Disabled'
+    allowBlobPublicAccess: 'false'
     networkAcls: {
       bypass: 'None'
       defaultAction: 'Deny'
