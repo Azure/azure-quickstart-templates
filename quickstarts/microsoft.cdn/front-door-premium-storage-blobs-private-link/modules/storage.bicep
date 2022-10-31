@@ -24,6 +24,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
     name: skuName
   }
   properties: {
+    publicNetworkAccess: 'Disabled'
     networkAcls: {
       defaultAction: 'Deny'
     }

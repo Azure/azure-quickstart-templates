@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "18158832003495875880"
+      "version": "0.11.1.770",
+      "templateHash": "13428843541909884815"
     }
   },
   "parameters": {
@@ -48,6 +48,12 @@
       "metadata": {
         "description": "The name of the Front Door endpoint to create. This must be globally unique."
       }
+    },
+    "customDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The custom domain name to associate with your Front Door endpoint."
+      }
     }
   },
   "variables": {
@@ -83,8 +89,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "3787235414895220927"
+              "version": "0.11.1.770",
+              "templateHash": "13578675800344564995"
             }
           },
           "parameters": {
@@ -130,6 +136,7 @@
                 "name": "[parameters('skuName')]"
               },
               "properties": {
+                "publicNetworkAccess": "Disabled",
                 "networkAcls": {
                   "defaultAction": "Deny"
                 }
@@ -141,7 +148,10 @@
               "name": "[format('{0}/{1}/{2}', parameters('accountName'), 'default', parameters('blobContainerName'))]",
               "properties": {
                 "publicAccess": "None"
-              }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))]"
+              ]
             }
           ],
           "outputs": {
@@ -179,6 +189,9 @@
           "originPath": {
             "value": "[format('/{0}', parameters('storageBlobContainerName'))]"
           },
+          "customDomainName": {
+            "value": "[parameters('customDomainName')]"
+          },
           "privateEndpointResourceId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage')).outputs.storageResourceId.value]"
           },
@@ -195,8 +208,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "8463030937445125681"
+              "version": "0.11.1.770",
+              "templateHash": "3916609452033303015"
             }
           },
           "parameters": {
@@ -227,6 +240,12 @@
               ],
               "metadata": {
                 "description": "The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`."
+              }
+            },
+            "customDomainName": {
+              "type": "string",
+              "metadata": {
+                "description": "The custom domain name to associate with your Front Door endpoint."
               }
             },
             "originForwardingProtocol": {
@@ -276,7 +295,8 @@
             "profileName": "MyFrontDoor",
             "originGroupName": "MyOriginGroup",
             "originName": "MyOrigin",
-            "routeName": "MyRoute"
+            "routeName": "MyRoute",
+            "customDomainResourceName": "[replace(parameters('customDomainName'), '.', '-')]"
           },
           "resources": [
             {
@@ -295,6 +315,21 @@
               "location": "global",
               "properties": {
                 "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/customDomains",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('customDomainResourceName'))]",
+              "properties": {
+                "hostName": "[parameters('customDomainName')]",
+                "tlsSettings": {
+                  "certificateType": "ManagedCertificate",
+                  "minimumTlsVersion": "TLS12"
+                }
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
@@ -342,6 +377,11 @@
               "apiVersion": "2021-06-01",
               "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('endpointName'), variables('routeName'))]",
               "properties": {
+                "customDomains": [
+                  {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]"
+                  }
+                ],
                 "originGroup": {
                   "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
                 },
@@ -354,13 +394,14 @@
                   "/*"
                 ],
                 "cacheConfiguration": {
-                  "queryStringCachingBehavior": "IgnoreQueryString"
+                  "queryStringCachingBehavior": "UseQueryString"
                 },
                 "forwardingProtocol": "[parameters('originForwardingProtocol')]",
                 "linkToDefaultDomain": "Enabled",
                 "httpsRedirect": "Enabled"
               },
               "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]",
                 "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
                 "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
                 "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
@@ -375,6 +416,18 @@
             "frontDoorId": {
               "type": "string",
               "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontDoorId]"
+            },
+            "customDomainValidationDnsTxtRecordName": {
+              "type": "string",
+              "value": "[format('_dnsauth.{0}', reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).hostName)]"
+            },
+            "customDomainValidationDnsTxtRecordValue": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).validationProperties.validationToken]"
+            },
+            "customDomainValidationExpiry": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).validationProperties.expirationDate]"
             }
           }
         }
@@ -392,6 +445,18 @@
     "blobEndpointHostName": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage')).outputs.blobEndpointHostName.value]"
+    },
+    "customDomainValidationDnsTxtRecordName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.customDomainValidationDnsTxtRecordName.value]"
+    },
+    "customDomainValidationDnsTxtRecordValue": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.customDomainValidationDnsTxtRecordValue.value]"
+    },
+    "customDomainValidationExpiry": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.customDomainValidationExpiry.value]"
     }
   }
 }
