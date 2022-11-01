@@ -22,4 +22,13 @@ languages:
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/azure-api-management-create-with-external-redis-cache/BicepVersion.svg)
 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fwillvelida%2Fazure-quickstart-templates%2Fwillvelida%2Fapim-redis-cache-quickstart%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-create-with-external-redis-cache%2Fazuredeploy.json)
+
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fwillvelida%2Fazure-quickstart-templates%2Fwillvelida%2Fapim-redis-cache-quickstart%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-create-with-external-redis-cache%2Fazuredeploy.json)
+
+This template shows an example of how to deploy an [Azure API Management service with an Azure Cache for Redis configured as an external cache](https://learn.microsoft.com/azure/api-management/api-management-howto-cache-external).
+
+- The template creates a Consumption tier API Management instance.
+- The template deploys a Basic tier Azure Cache for Redis.
+
 `Tags: Microsoft.ApiManagement/service, Microsoft.ApiManagement/service/caches, Microsoft.Cache/redis`
