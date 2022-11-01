@@ -1,10 +1,10 @@
 ---
-description: This template creates a consumption instance of Azure API Management with an external Azure Cache for Redis
+description: This template demonstrates how to create an instance of Azure API Management in the Consumption tier with an external Azure Cache for Redis instance as the API Management external cache.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: azure-api-management-create-with-external-redis-cache
+urlFragment: api-management-create-with-external-redis-cache
 languages:
 - json
 - bicep
