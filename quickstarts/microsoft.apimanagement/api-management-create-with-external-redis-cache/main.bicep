@@ -5,12 +5,6 @@ param location string = resourceGroup().location
 @description('The name of the APIM instance')
 param apimName string = 'apim-${uniqueString(resourceGroup().id)}'
 
-@description('The instance size of this API Management service. Must be 0 for Consumption')
-@allowed([
-  0
-])
-param skuCount int = 0
-
 @description('The pricing tier of this API Management service.')
 @allowed([
   'Consumption'
@@ -21,11 +15,9 @@ param skuCount int = 0
 param sku string = 'Consumption'
 
 @description('The name of the publisher')
-@minLength(1)
 param publisherName string
 
 @description('The email of the publisher')
-@minLength(1)
 param publisherEmail string
 
 @description('The name of the Azure Cache for Redis instance to deploy')
@@ -46,15 +38,8 @@ param redisCacheSKU string = 'Basic'
 param redisCacheFamily string = 'C'
 
 @description('Specify the size of the new Azure Redis Cache instance. Valid values: for C (Basic/Standard) family (0, 1, 2, 3, 4, 5, 6), for P (Premium) family (1, 2, 3, 4)')
-@allowed([
-  0
-  1
-  2
-  3
-  4
-  5
-  6
-])
+@minValue(0)
+@maxValue(6)
 param redisCacheCapacity int = 1
 
 @description('Specify a boolean value that indicates whether to allow access via non-SSL ports.')
@@ -64,7 +49,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-12-01-preview' = {
   name: apimName
   location: location
   sku: {
-    capacity: skuCount
+    capacity: 0
     name: sku
   }
   properties: {
