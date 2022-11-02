@@ -1,5 +1,5 @@
 ---
-description: The MedTech service is an optional service of the Azure Health Data Services designed to ingest data from multiple and disparate Internet of Medical Things (IoMT) devices. The MedTech service normalizes, groups, transforms, and persists device health data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services (AHDS) workspace.
+description: The MedTech service is an optional service of the Azure Health Data Services designed to ingest data from multiple and disparate Internet of Medical Things (IoMT) devices. The MedTech service normalizes, groups, transforms, and persists device health data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
 page_type: sample
 products:
 - azure
@@ -14,7 +14,7 @@ languages:
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iot-hub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iot-hub/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-iothub/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iot-hub/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iot-hub/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iot-hub/BestPracticeResult.svg)
@@ -32,7 +32,7 @@ This template deploys a fully configured instance of the Azure Health Data Servi
 
 The MedTech service is an optional service of the Azure Health Data Services designed to ingest health data from multiple and disparate Internet of Medical Things (IoMT) devices. The MedTech service normalizes, groups, transforms, and persists device data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
 
-To learn more about this quickstart template, the resources deployed, and the configured access permissions, see [Receive device data through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-data-through-iot-hub)
+To learn more about this quickstart template, the resources deployed, and the configured access permissions, see the MedTech service tutorial [Tutorial: Receive device data through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-data-through-iot-hub)
 
 To learn more about the MedTech service, see [What is MedTech service?](https://learn.microsoft.com/azure/healthcare-apis/iot/iot-connector-overview)
 
@@ -50,9 +50,11 @@ While in the final configuration stage within the Azure portal, you will:
 
 * Choose the Azure region **location**  which can be the same region as the resource group or a different region than the resource group) where your resources will be deployed - **Required**.
 
-* Choose the **fhirContributorPrincipalId** which is the Azure AD user object ID that you would like to provide FHIR Contributor access to for viewing data on your FHIR service - **Optional**.
+* Choose the **fhirContributorPrincipalId** which is the Azure AD user object ID that you would like to provide FHIR Data Contributor access to for viewing data on your FHIR service - **Optional**.
 
-**NOTES** - If you do not wish to use the **fhirContributorPrincipalId** option, clear the field of any entries. To learn more about how to acquire an Azure AD user object ID, see [Find the user object ID](https://learn.microsoft.com/partner-center/find-ids-and-domain-names#find-the-user-object-id).
+* Leave the **Device Mapping** and **Destination Mapping** options at their defaults.
+
+**NOTE** - If you do not choose to use the **fhirContributorPrincipalId** option, clear the field of any entries. To learn more about how to acquire an Azure AD user object ID, see [Find the user object ID](https://learn.microsoft.com/partner-center/find-ids-and-domain-names#find-the-user-object-id).
 
 All other parameters for deployment are automatically configured for you.
 
