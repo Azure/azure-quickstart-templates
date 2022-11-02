@@ -10,37 +10,252 @@ param basename string
   'centralindia'
   'eastus'
   'eastus2'
-  'germanywestcentral'
-  'japaneast'
-  'northcentralus'
+  'koreacentral'
   'northeurope'
-  'southafricanorth'
   'southcentralus'
   'southeastasia'
+  'swedencentral'
   'switzerlandnorth'
-  'uksouth'
-  'ukwest'
-  'westcentralus'
   'westeurope'
   'westus2'
   'westus3'
+  'uksouth'
 ])
 param location string
+
+@description('OPTIONAL - A principal id for a user that will be granted FHIR Data Contributor access to the FHIR service.')
+param fhirContributorPrincipalId string = ''
 
 @description('The mapping JSON that determines how incoming device data is normalized.')
 param deviceMapping object = {
   templateType: 'CollectionContent'
-  template: []
+  template: [
+    {
+      templateType: 'IotJsonPathContentTemplate'
+      template: {
+        typeName: 'HeartRate'
+        typeMatchExpression: '$..[?(@Body.HeartRate)]'
+        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        values: [
+          {
+            required: true
+            valueExpression: '$.Body.HeartRate'
+            valueName: 'HeartRate'
+          }
+        ]
+      }
+    }
+    {
+      templateType: 'IotJsonPathContentTemplate'
+      template: {
+        typeName: 'HeartRateVariability'
+        typeMatchExpression: '$..[?(@Body.HeartRateVariability)]'
+        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        values: [
+          {
+            required: true
+            valueExpression: '$.Body.HeartRateVariability'
+            valueName: 'HeartRateVariability'
+          }
+        ]
+      }
+    }
+    {
+      templateType: 'IotJsonPathContentTemplate'
+      template: {
+        typeName: 'RespiratoryRate'
+        typeMatchExpression: '$..[?(@Body.RespiratoryRate)]'
+        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        values: [
+          {
+            required: true
+            valueExpression: '$.Body.RespiratoryRate'
+            valueName: 'RespiratoryRate'
+          }
+        ]
+      }
+    }
+    {
+      templateType: 'IotJsonPathContentTemplate'
+      template: {
+        typeName: 'BodyTemperature'
+        typeMatchExpression: '$..[?(@Body.BodyTemperature)]'
+        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        values: [
+          {
+            required: true
+            valueExpression: '$.Body.BodyTemperature'
+            valueName: 'BodyTemperature'
+          }
+        ]
+      }
+    }
+    {
+      templateType: 'IotJsonPathContentTemplate'
+      template: {
+        typeName: 'BloodPressure'
+        typeMatchExpression: '$..[?(@Body.BloodPressure.Systolic && @Body.BloodPressure.Diastolic)]'
+        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        values: [
+          {
+            required: true
+            valueExpression: '$.Body.BloodPressure.Systolic'
+            valueName: 'Systolic'
+          }
+          {
+            required: true
+            valueExpression: '$.Body.BloodPressure.Diastolic'
+            valueName: 'Diastolic'
+          }
+        ]
+      }
+    }
+  ]
 }
 
 @description('The mapping JSON that determines how normalized data is converted to FHIR Observations.')
 param destinationMapping object = {
   templateType: 'CollectionFhir'
-  template: []
+  template: [
+    {
+      templateType: 'CodeValueFhir'
+      template: {
+        codes: [
+          {
+            system: 'http://loinc.org'
+            code: '8867-4'
+            display: 'Heart rate'
+          }
+        ]
+        typeName: 'HeartRate'
+        value: {
+          system: 'http://unitsofmeasure.org'
+          code: 'count/min'
+          unit: 'count/min'
+          valueName: 'HeartRate'
+          valueType: 'Quantity'
+        }
+      }
+    }
+    {
+      templateType: 'CodeValueFhir'
+      template: {
+        codes: [
+          {
+            system: 'http://loinc.org'
+            code: '80404-7'
+            display: 'R-R interval.standard deviation (Heart rate variability)'
+          }
+        ]
+        typeName: 'HeartRateVariability'
+        value: {
+          system: 'http://unitsofmeasure.org'
+          code: 'ms'
+          unit: 'ms'
+          valueName: 'HeartRateVariability'
+          valueType: 'Quantity'
+        }
+      }
+    }
+    {
+      templateType: 'CodeValueFhir'
+      template: {
+        codes: [
+          {
+            system: 'http://loinc.org'
+            code: '9279-1'
+            display: 'Respiratory rate'
+          }
+        ]
+        typeName: 'RespiratoryRate'
+        value: {
+          system: 'http://unitsofmeasure.org'
+          code: 'count/min'
+          unit: 'count/min'
+          valueName: 'RespiratoryRate'
+          valueType: 'Quantity'
+        }
+      }
+    }
+    {
+      templateType: 'CodeValueFhir'
+      template: {
+        codes: [
+          {
+            system: 'http://loinc.org'
+            code: '8310-5'
+            display: 'Body temperature'
+          }
+        ]
+        typeName: 'BodyTemperature'
+        value: {
+          system: 'http://unitsofmeasure.org'
+          code: 'degC'
+          unit: 'degC'
+          valueName: 'BodyTemperature'
+          valueType: 'Quantity'
+        }
+      }
+    }
+    {
+      templateType: 'CodeValueFhir'
+      template: {
+        codes: [
+          {
+            display: 'Blood pressure panel'
+            code: '35094-2'
+            system: 'http://loinc.org'
+          }
+        ]
+        typeName: 'BloodPressure'
+        components: [
+          {
+            codes: [
+              {
+                system: 'http://loinc.org'
+                code: '8462-4'
+                display: 'Diastolic blood pressure'
+              }
+            ]
+            value: {
+              system: 'http://unitsofmeasure.org'
+              code: 'mmHg'
+              unit: 'mmHg'
+              valueName: 'Diastolic'
+              valueType: 'Quantity'
+            }
+          }
+          {
+            codes: [
+              {
+                system: 'http://loinc.org'
+                code: '8480-6'
+                display: 'Systolic blood pressure'
+              }
+            ]
+            value: {
+              system: 'http://unitsofmeasure.org'
+              code: 'mmHg'
+              unit: 'mmHg'
+              valueName: 'Systolic'
+              valueType: 'Quantity'
+            }
+          }
+        ]
+      }
+    }
+  ]
 }
 
 var fhirWriterRoleId = resourceId('Microsoft.Authorization/roleDefinitions', '3f88fce4-5892-4214-ae73-ba5294559913')
+var fhirContributorRoleId = resourceId('Microsoft.Authorization/roleDefinitions', '5a1fc7df-4bf1-4951-a576-89034ee01acd')
+var eventHubSenderRoleId = resourceId('Microsoft.Authorization/roleDefinitions', '2b629674-e913-4c01-ae53-ef4638d8f975')
 var eventHubReceiverRoleId = resourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')
+
+resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: 'id-${basename}'
+  location: location
+}
 
 resource eventhubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
   name: 'en-${basename}'
@@ -51,6 +266,7 @@ resource eventhubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
     capacity: 2
   }
   properties: {
+    disableLocalAuth: true
     zoneRedundant: true
     isAutoInflateEnabled: true
     maximumThroughputUnits: 8
@@ -64,16 +280,6 @@ resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = {
   properties: {
     messageRetentionInDays: 1
     partitionCount: 8
-  }
-}
-
-resource eventHubAuthRule 'Microsoft.EventHub/namespaces/eventhubs/authorizationRules@2021-11-01' = {
-  name: 'devicedatasender'
-  parent: eventHub
-  properties: {
-    rights: [
-      'Send'
-    ]
   }
 }
 
@@ -141,7 +347,10 @@ resource iotHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
     capacity: 1
   }
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identity.id}': {}
+    }
   }
   properties: {
     eventHubEndpoints: {
@@ -155,9 +364,12 @@ resource iotHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
         eventHubs: [
           {
             name: 'ih-endpoint-${basename}'
-            endpointUri: 'sb://${split(replace(eventhubNamespace.properties.serviceBusEndpoint, '//', ''), ':')[1]}'
+            endpointUri: 'sb://en-${basename}.servicebus.windows.net'
             entityPath: eventHub.name
-            authenticationType: 'identityBased'
+            authenticationType:'identityBased'
+            identity: {
+              userAssignedIdentity: identity.id
+            }
             id: guid(eventHub.id)
             subscriptionId: subscription().subscriptionId
             resourceGroup: resourceGroup().name
@@ -194,6 +406,26 @@ resource FhirWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   properties: {
     roleDefinitionId: fhirWriterRoleId
     principalId: iotConnector.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource FhirContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (fhirContributorPrincipalId != '') {
+  scope: fhirService
+  name: guid(fhirContributorRoleId, iotConnector.id, fhirService.id)
+  properties: {
+    roleDefinitionId: fhirContributorRoleId
+    principalId: fhirContributorPrincipalId
+    principalType: 'User'
+  }
+}
+
+resource EventHubDatasender 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: eventHub
+  name: guid(eventHubSenderRoleId, identity.id, eventHub.id)
+  properties: {
+    roleDefinitionId: eventHubSenderRoleId
+    principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
