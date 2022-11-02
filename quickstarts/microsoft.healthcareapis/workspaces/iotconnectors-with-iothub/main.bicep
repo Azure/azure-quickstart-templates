@@ -3,7 +3,7 @@
 @maxLength(16)
 param basename string
 
-@description('The location where the resources(s) are deployed. This can be a different Azure region than where the Resource Group was deployed.')
+@description('The location where the resources(s) are deployed. This can be a different Azure region than where the resource group was deployed.')
 @allowed([
   'australiaeast'
   'canadacentral'
