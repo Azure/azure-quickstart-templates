@@ -3,7 +3,7 @@
 @maxLength(16)
 param basename string
 
-@description('The location where the resources(s) are deployed. This can be a different Azure region than where the resource group was deployed.')
+@description('The location where the resources will be deployed. This can be a different Azure region than where the resource group was deployed. For a current list of Azure regions where the Azure Health Data Services are available, see [Products by region](https://azure.microsoft.com/explore/global-infrastructure/products-by-region/?products=health-data-services)')
 @allowed([
   'australiaeast'
   'canadacentral'
@@ -364,7 +364,7 @@ resource iotHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
         eventHubs: [
           {
             name: 'ih-endpoint-${basename}'
-            endpointUri: 'sb://en-${basename}.servicebus.windows.net'
+            endpointUri: uri('sb://', 'en-${basename}.servicebus.windows.net') 
             entityPath: eventHub.name
             authenticationType:'identityBased'
             identity: {
