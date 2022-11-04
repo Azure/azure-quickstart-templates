@@ -1,0 +1,42 @@
+name: Bicep Build and Scan
+on: pull_request
+
+env :
+  API_URL : "https://main.dev.api.zscwp.io"
+  AUTH_URL : "https://dev-auth.zscwp.io"
+
+jobs:
+
+  build_and_scan:
+
+    name: Build and Scan
+    runs-on: ubuntu-latest     
+
+    steps:
+
+    - name : Code Checkout
+      uses: actions/checkout@v2 
+
+    - name : Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }} 
+
+    - name: Bicep Build
+      uses: Azure/bicep-build-action@v1.0.0
+      with:
+        bicepFilePath: ./demos/nested-vms-in-virtual-network/main.bicep
+        outputFilePath: ./demos/nested-vms-in-virtual-networkazuredeploy.json 
+
+    - name : Zscaler IAC Scan
+      uses : ZscalerCWP/Zscaler-IaC-Action@main
+      id : zscaler-iac-scan
+
+      with:
+        client_id : ${{ secrets.ZSCANNER_CLIENT_ID }}
+        client_secret : ${{ secrets.ZSCANNER_CLIENT_SECRET }}
+        fail_build : 'true'
+        output_format : 'human+github-sarif'
+        region : 'CUSTOM'
+        log_level : 'debug'
+        iac_file : 'demos/nested-vms-in-virtual-networkazuredeploy.json'
