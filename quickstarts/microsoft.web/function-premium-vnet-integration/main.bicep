@@ -17,7 +17,7 @@ param runtime string = 'node'
 ])
 param storageAccountType string = 'Standard_LRS'
 
-var resourceBaseName = uniqueString(subscription().id, resourceGroup().id)
+var resourceBaseName = uniqueString(resourceGroup().id)
 var vnetAddressPrefix = '10.0.0.0/16'
 var subnetAddressPrefix = '10.0.0.0/24'
 var subnetName = 'default'
@@ -108,10 +108,7 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: serverFarm.id
     httpsOnly: true
-
-    // Specify a virtual network subnet resource ID to enable regional virtual network integration.
-    virtualNetworkSubnetId: virtualNetwork::integrationSubnet.id
-
+    virtualNetworkSubnetId: virtualNetwork::integrationSubnet.id // Specify a virtual network subnet resource ID to enable regional virtual network integration.
     siteConfig: {
       appSettings: [
         {
