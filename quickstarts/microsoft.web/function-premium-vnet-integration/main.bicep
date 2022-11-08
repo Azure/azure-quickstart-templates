@@ -23,7 +23,7 @@ var subnetAddressPrefix = '10.0.0.0/24'
 var subnetName = 'default'
 var functionWorkerRuntime = runtime
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: 'vnet-${resourceBaseName}'
   location: location
   properties: {
@@ -55,7 +55,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: 'st${resourceBaseName}'
   location: location
   sku: {
