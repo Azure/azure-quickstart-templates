@@ -1,9 +1,6 @@
 @description('Location for all resources except Application Insights.')
 param location string = resourceGroup().location
 
-@description('Location for Application Insights.')
-param appInsightsLocation string
-
 @description('The language worker runtime to load in the function app.')
 @allowed([
   'node'
@@ -11,9 +8,6 @@ param appInsightsLocation string
   'java'
 ])
 param runtime string = 'node'
-
-@description('The name of the function app that you wish to create.')
-param appName string = 'fnapp${uniqueString(resourceGroup().id)}'
 
 @description('Storage Account type')
 @allowed([
@@ -23,21 +17,14 @@ param appName string = 'fnapp${uniqueString(resourceGroup().id)}'
 ])
 param storageAccountType string = 'Standard_LRS'
 
-@description('The name of the virtual network to be created.')
-param vnetName string
-
-@description('The name of the subnet to be created within the virtual network.')
-param subnetName string
-
+var resourceBaseName = uniqueString(subscription().id, resourceGroup().id)
 var vnetAddressPrefix = '10.0.0.0/16'
 var subnetAddressPrefix = '10.0.0.0/24'
-var functionAppName = appName
-var hostingPlanName = appName
-var storageAccountName = '${uniqueString(resourceGroup().id)}azfunctions'
+var subnetName = 'default'
 var functionWorkerRuntime = runtime
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-  name: vnetName
+  name: 'vnet-${resourceBaseName}'
   location: location
   properties: {
     addressSpace: {
@@ -62,10 +49,14 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
       }
     ]
   }
+
+  resource integrationSubnet 'subnets' existing = {
+    name: subnetName
+  }
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
-  name: storageAccountName
+  name: 'st${resourceBaseName}'
   location: location
   sku: {
     name: storageAccountType
@@ -73,17 +64,27 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   kind: 'StorageV2'
 }
 
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: 'log-${resourceBaseName}'
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+  }
+}
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: functionAppName
-  location: appInsightsLocation
+  name: 'ai-${resourceBaseName}'
+  location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
   }
 }
 
-resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: hostingPlanName
+resource serverFarm 'Microsoft.Web/serverfarms@2022-03-01' = {
+  name: 'asp-${resourceBaseName}'
   location: location
   sku: {
     name: 'EP1'
@@ -95,12 +96,13 @@ resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
-resource function 'Microsoft.Web/sites@2020-06-01' = {
-  name: functionAppName
+resource function 'Microsoft.Web/sites@2022-03-01' = {
+  name: 'func-${resourceBaseName}'
   location: location
   kind: 'functionapp'
   properties: {
     serverFarmId: serverFarm.id
+    virtualNetworkSubnetId: virtualNetwork::integrationSubnet.id
     siteConfig: {
       appSettings: [
         {
@@ -117,7 +119,7 @@ resource function 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value};'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value};'
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -134,21 +136,4 @@ resource function 'Microsoft.Web/sites@2020-06-01' = {
       ]
     }
   }
-  dependsOn: [
-    virtualNetwork
-  ]
-}
-
-resource networkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
-  parent: function
-  name: 'virtualNetwork'
-  properties: {
-    subnetResourceId: subnet.id
-    swiftSupported: true
-  }
-}
-
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
-  parent: virtualNetwork
-  name: subnetName
 }
