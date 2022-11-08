@@ -62,6 +62,11 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     name: storageAccountType
   }
   kind: 'StorageV2'
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: false
+    supportsHttpsTrafficOnly: true
+  }
 }
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
@@ -102,7 +107,11 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
   kind: 'functionapp'
   properties: {
     serverFarmId: serverFarm.id
+    httpsOnly: true
+
+    // Specify a virtual network subnet resource ID to enable regional virtual network integration.
     virtualNetworkSubnetId: virtualNetwork::integrationSubnet.id
+
     siteConfig: {
       appSettings: [
         {
@@ -134,6 +143,14 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
           value: '~12'
         }
       ]
+    }
+  }
+
+  resource config 'config' = {
+    name: 'web'
+    properties: {
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
     }
   }
 }
