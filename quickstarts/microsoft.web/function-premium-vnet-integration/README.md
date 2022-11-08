@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Deploy an Azure Function Premium plan with virtual network integration
+# Deploy an Azure Function Premium plan with vnet integration
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-vnet-integration/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-vnet-integration/PublicDeployment.svg)
