@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Deploy an Azure Health Data Services MedTech service with an Azure IoT Hub
+# Deploy a MedTech service with an Azure IoT Hub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iothub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iothub/PublicDeployment.svg)
