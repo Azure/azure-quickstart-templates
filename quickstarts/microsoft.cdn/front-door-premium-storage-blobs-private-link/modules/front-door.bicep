@@ -199,6 +199,9 @@ resource securityPolicy 'Microsoft.Cdn/profiles/securityPolicies@2021-06-01' = {
             {
               id: endpoint.id
             }
+            {
+              id: customDomain.id
+            }
           ]
           patternsToMatch: [
             '/*'
