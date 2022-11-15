@@ -1,14 +1,14 @@
 ---
-description: This template allows you to create an Azure Databricks workspace and configure CMK.
+description: This template allows you to create an Azure Databricks workspace with managed disk and CMK.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: databricks-workspace-with-customer-managed-keys
+urlFragment: databricks-workspace-with-managed-disk-customer-managed-keys
 languages:
 - json
 ---
-# Deploy an Azure Databricks Workspace and configure CMK
+# Deploy an Azure Databricks Workspace with managed disk & CMK
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-customer-managed-keys/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-customer-managed-keys/PublicDeployment.svg)
