@@ -8,7 +8,7 @@ urlFragment: function-app-linux-consumption-remote-build
 languages:
 - json
 ---
-# Azure Function App Hosted on Linux Consumption Plan
+# Azure Function App Hosted on Linux Consumption Plan with Remote Build
 
 This sample Azure Resource Manager template deploys an Azure Function App on Linux Consumption plan and required resource including the app setting to deploy using zip package when **remote build** is needed (for example: to get Linux specific packages in python, node.js).
 
