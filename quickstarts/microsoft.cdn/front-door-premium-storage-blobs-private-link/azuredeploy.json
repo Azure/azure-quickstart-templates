@@ -1,0 +1,547 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.12.40.16777",
+      "templateHash": "16760466714571893089"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location into which the Azure Storage resources should be deployed."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('stor{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Storage account to create. This must be globally unique."
+      }
+    },
+    "storageSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Azure Storage account."
+      }
+    },
+    "storageBlobContainerName": {
+      "type": "string",
+      "defaultValue": "mycontainer",
+      "metadata": {
+        "description": "The name of the Azure Storage blob container to create."
+      }
+    },
+    "frontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    },
+    "customDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The custom domain name to associate with your Front Door endpoint."
+      }
+    }
+  },
+  "variables": {
+    "frontDoorSkuName": "Premium_AzureFrontDoor"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "storage",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "accountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "skuName": {
+            "value": "[parameters('storageSkuName')]"
+          },
+          "blobContainerName": {
+            "value": "[parameters('storageBlobContainerName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.12.40.16777",
+              "templateHash": "6512824255876887925"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the Azure Storage resources should be deployed."
+              }
+            },
+            "accountName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Storage account to create. This must be globally unique."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS",
+                "Premium_LRS"
+              ],
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Azure Storage account."
+              }
+            },
+            "blobContainerName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Storage blob container to create."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2022-05-01",
+              "name": "[parameters('accountName')]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "publicNetworkAccess": "Disabled",
+                "allowBlobPublicAccess": true,
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "networkAcls": {
+                  "defaultAction": "Deny"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2021-08-01",
+              "name": "[format('{0}/{1}/{2}', parameters('accountName'), 'default', parameters('blobContainerName'))]",
+              "properties": {
+                "publicAccess": "Blob"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "blobEndpointHostName": {
+              "type": "string",
+              "value": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('accountName')), '2022-05-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
+            },
+            "storageResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "front-door",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "skuName": {
+            "value": "[variables('frontDoorSkuName')]"
+          },
+          "endpointName": {
+            "value": "[parameters('frontDoorEndpointName')]"
+          },
+          "originHostName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2020-10-01').outputs.blobEndpointHostName.value]"
+          },
+          "originPath": {
+            "value": "[format('/{0}', parameters('storageBlobContainerName'))]"
+          },
+          "customDomainName": {
+            "value": "[parameters('customDomainName')]"
+          },
+          "privateEndpointResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2020-10-01').outputs.storageResourceId.value]"
+          },
+          "privateLinkResourceType": {
+            "value": "blob"
+          },
+          "privateEndpointLocation": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.12.40.16777",
+              "templateHash": "2331672968136515707"
+            }
+          },
+          "parameters": {
+            "originHostName": {
+              "type": "string",
+              "metadata": {
+                "description": "The host name that should be used when connecting to the origin."
+              }
+            },
+            "originPath": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The path that should be used when connecting to the origin."
+              }
+            },
+            "endpointName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Front Door endpoint to create. This must be globally unique."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "allowedValues": [
+                "Standard_AzureFrontDoor",
+                "Premium_AzureFrontDoor"
+              ],
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`."
+              }
+            },
+            "customDomainName": {
+              "type": "string",
+              "metadata": {
+                "description": "The custom domain name to associate with your Front Door endpoint."
+              }
+            },
+            "originForwardingProtocol": {
+              "type": "string",
+              "defaultValue": "HttpsOnly",
+              "allowedValues": [
+                "HttpOnly",
+                "HttpsOnly",
+                "MatchRequest"
+              ],
+              "metadata": {
+                "description": "The protocol that should be used when connecting from Front Door to the origin."
+              }
+            },
+            "privateEndpointResourceId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateLinkResourceType": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateEndpointLocation": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty."
+              }
+            },
+            "wafMode": {
+              "type": "string",
+              "defaultValue": "Prevention",
+              "metadata": {
+                "description": "The mode that the WAF should be deployed using. In 'Prevention' mode, the WAF will block requests it detects as malicious. In 'Detection' mode, the WAF will not block requests and will simply log the request."
+              },
+              "allowedValues": [
+                "Detection",
+                "Prevention"
+              ]
+            },
+            "wafManagedRuleSets": {
+              "type": "array",
+              "defaultValue": [
+                {
+                  "ruleSetType": "Microsoft_DefaultRuleSet",
+                  "ruleSetVersion": "2.0",
+                  "ruleSetAction": "Block"
+                },
+                {
+                  "ruleSetType": "Microsoft_BotManagerRuleSet",
+                  "ruleSetVersion": "1.0"
+                }
+              ],
+              "metadata": {
+                "description": "The list of managed rule sets to configure on the WAF."
+              }
+            }
+          },
+          "variables": {
+            "isPrivateLinkOrigin": "[not(equals(parameters('privateEndpointResourceId'), ''))]",
+            "privateLinkOriginDetails": {
+              "privateLink": {
+                "id": "[parameters('privateEndpointResourceId')]"
+              },
+              "groupId": "[if(not(equals(parameters('privateLinkResourceType'), '')), parameters('privateLinkResourceType'), null())]",
+              "privateLinkLocation": "[parameters('privateEndpointLocation')]",
+              "requestMessage": "Please approve this connection."
+            },
+            "profileName": "MyFrontDoor",
+            "originGroupName": "MyOriginGroup",
+            "originName": "MyOrigin",
+            "routeName": "MyRoute",
+            "wafPolicyName": "WafPolicy",
+            "securityPolicyName": "SecurityPolicy",
+            "customDomainResourceName": "[replace(parameters('customDomainName'), '.', '-')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2021-06-01",
+              "name": "[variables('profileName')]",
+              "location": "global",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', variables('profileName'), parameters('endpointName'))]",
+              "location": "global",
+              "properties": {
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/customDomains",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('customDomainResourceName'))]",
+              "properties": {
+                "hostName": "[parameters('customDomainName')]",
+                "tlsSettings": {
+                  "certificateType": "ManagedCertificate",
+                  "minimumTlsVersion": "TLS12"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('originGroupName'))]",
+              "properties": {
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3
+                },
+                "healthProbeSettings": {
+                  "probePath": "/",
+                  "probeRequestType": "HEAD",
+                  "probeProtocol": "Http",
+                  "probeIntervalInSeconds": 100
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+              "properties": {
+                "hostName": "[parameters('originHostName')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('originHostName')]",
+                "priority": 1,
+                "weight": 1000,
+                "sharedPrivateLinkResource": "[if(variables('isPrivateLinkOrigin'), variables('privateLinkOriginDetails'), null())]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('endpointName'), variables('routeName'))]",
+              "properties": {
+                "customDomains": [
+                  {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]"
+                  }
+                ],
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+                },
+                "originPath": "[if(not(equals(parameters('originPath'), '')), parameters('originPath'), null())]",
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternsToMatch": [
+                  "/*"
+                ],
+                "cacheConfiguration": {
+                  "queryStringCachingBehavior": "UseQueryString"
+                },
+                "forwardingProtocol": "[parameters('originForwardingProtocol')]",
+                "linkToDefaultDomain": "Enabled",
+                "httpsRedirect": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+              "apiVersion": "2022-05-01",
+              "name": "[variables('wafPolicyName')]",
+              "location": "global",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "policySettings": {
+                  "enabledState": "Enabled",
+                  "mode": "[parameters('wafMode')]"
+                },
+                "managedRules": {
+                  "managedRuleSets": "[parameters('wafManagedRuleSets')]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/securityPolicies",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('securityPolicyName'))]",
+              "properties": {
+                "parameters": {
+                  "type": "WebApplicationFirewall",
+                  "wafPolicy": {
+                    "id": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+                  },
+                  "associations": [
+                    {
+                      "domains": [
+                        {
+                          "id": "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]"
+                        },
+                        {
+                          "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]"
+                        }
+                      ],
+                      "patternsToMatch": [
+                        "/*"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]",
+                "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "frontDoorEndpointHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName')), '2021-06-01').hostName]"
+            },
+            "frontDoorId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName')), '2021-06-01').frontDoorId]"
+            },
+            "customDomainValidationDnsTxtRecordName": {
+              "type": "string",
+              "value": "[format('_dnsauth.{0}', reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName')), '2021-06-01').hostName)]"
+            },
+            "customDomainValidationDnsTxtRecordValue": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName')), '2021-06-01').validationProperties.validationToken]"
+            },
+            "customDomainValidationExpiry": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName')), '2021-06-01').validationProperties.expirationDate]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'storage')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.frontDoorEndpointHostName.value]"
+    },
+    "blobEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2020-10-01').outputs.blobEndpointHostName.value]"
+    },
+    "customDomainValidationDnsTxtRecordName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.customDomainValidationDnsTxtRecordName.value]"
+    },
+    "customDomainValidationDnsTxtRecordValue": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.customDomainValidationDnsTxtRecordValue.value]"
+    },
+    "customDomainValidationExpiry": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.customDomainValidationExpiry.value]"
+    }
+  }
+}
