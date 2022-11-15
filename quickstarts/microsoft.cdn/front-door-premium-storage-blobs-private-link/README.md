@@ -34,6 +34,7 @@ This template deploys a Front Door Premium with an Azure Storage blob container 
 The data flows through the solution are:
 
 1. The client establishes a connection to Azure Front Door by using a custom domain name. The client's connection terminates at a nearby Front Door point of presence (PoP).
+1. The Front Door web application firewall (WAF) scans the request. If the WAF determines the request's risk level is too high, it blocks the request and Front Door returns an HTTP 403 error response.
 1. If the Front Door PoP's cache contains a valid response for this request, Front Door returns the response immediately.
 1. Otherwise, the PoP sends the request to the origin storage account, wherever it is in the world, by using Microsoft's backbone network. The PoP connects to the storage account by using a separate, long-lived, TCP connection. In this scenario, Private Link is used to securely connect to the storage account.
 1. The storage account sends a response to the Front Door PoP.
@@ -54,8 +55,9 @@ The following resources are deployed as part of the solution:
 
 ### Front Door Premium
 
-- Front Door profile, endpoint, custom domain, origin group, origin, and route to direct traffic to the Azure Storage blob container.
+- Front Door profile, endpoint, custom domain, origin group, origin, route to direct traffic to the Azure Storage blob container, and security policy to link the endpoint to the WAF policy.
   - This sample must be deployed using the premium Front Door SKU, since this is required for Private Link integration.
+- Front Door web application firewall (WAF) policy, which uses the default managed rule set.
 
 ## Deployment steps
 
