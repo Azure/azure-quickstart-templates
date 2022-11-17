@@ -8,7 +8,7 @@ urlFragment: machine-learning-private-ip
 languages:
 - json
 ---
-# Create an AKS compute target with a Private IP address.
+# Create an AKS compute target with a Private IP address
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-private-ip/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-private-ip/PublicDeployment.svg)
