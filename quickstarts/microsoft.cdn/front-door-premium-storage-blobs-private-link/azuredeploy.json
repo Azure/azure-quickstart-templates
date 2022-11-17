@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.11.1.770",
-      "templateHash": "106451756078237366"
+      "version": "0.12.40.16777",
+      "templateHash": "16760466714571893089"
     }
   },
   "parameters": {
@@ -89,8 +89,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "15969665568985521194"
+              "version": "0.12.40.16777",
+              "templateHash": "6512824255876887925"
             }
           },
           "parameters": {
@@ -137,6 +137,9 @@
               },
               "properties": {
                 "publicNetworkAccess": "Disabled",
+                "allowBlobPublicAccess": true,
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
                 "networkAcls": {
                   "defaultAction": "Deny"
                 }
@@ -147,7 +150,7 @@
               "apiVersion": "2021-08-01",
               "name": "[format('{0}/{1}/{2}', parameters('accountName'), 'default', parameters('blobContainerName'))]",
               "properties": {
-                "publicAccess": "None"
+                "publicAccess": "Blob"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))]"
@@ -157,7 +160,7 @@
           "outputs": {
             "blobEndpointHostName": {
               "type": "string",
-              "value": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))).primaryEndpoints.blob, 'https://', ''), '/', '')]"
+              "value": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('accountName')), '2022-05-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
             },
             "storageResourceId": {
               "type": "string",
@@ -184,7 +187,7 @@
             "value": "[parameters('frontDoorEndpointName')]"
           },
           "originHostName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage')).outputs.blobEndpointHostName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2020-10-01').outputs.blobEndpointHostName.value]"
           },
           "originPath": {
             "value": "[format('/{0}', parameters('storageBlobContainerName'))]"
@@ -193,7 +196,7 @@
             "value": "[parameters('customDomainName')]"
           },
           "privateEndpointResourceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage')).outputs.storageResourceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2020-10-01').outputs.storageResourceId.value]"
           },
           "privateLinkResourceType": {
             "value": "blob"
@@ -208,8 +211,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "17137799598797196016"
+              "version": "0.12.40.16777",
+              "templateHash": "2331672968136515707"
             }
           },
           "parameters": {
@@ -280,6 +283,34 @@
               "metadata": {
                 "description": "If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty."
               }
+            },
+            "wafMode": {
+              "type": "string",
+              "defaultValue": "Prevention",
+              "metadata": {
+                "description": "The mode that the WAF should be deployed using. In 'Prevention' mode, the WAF will block requests it detects as malicious. In 'Detection' mode, the WAF will not block requests and will simply log the request."
+              },
+              "allowedValues": [
+                "Detection",
+                "Prevention"
+              ]
+            },
+            "wafManagedRuleSets": {
+              "type": "array",
+              "defaultValue": [
+                {
+                  "ruleSetType": "Microsoft_DefaultRuleSet",
+                  "ruleSetVersion": "2.0",
+                  "ruleSetAction": "Block"
+                },
+                {
+                  "ruleSetType": "Microsoft_BotManagerRuleSet",
+                  "ruleSetVersion": "1.0"
+                }
+              ],
+              "metadata": {
+                "description": "The list of managed rule sets to configure on the WAF."
+              }
             }
           },
           "variables": {
@@ -296,6 +327,8 @@
             "originGroupName": "MyOriginGroup",
             "originName": "MyOrigin",
             "routeName": "MyRoute",
+            "wafPolicyName": "WafPolicy",
+            "securityPolicyName": "SecurityPolicy",
             "customDomainResourceName": "[replace(parameters('customDomainName'), '.', '-')]"
           },
           "resources": [
@@ -406,28 +439,80 @@
                 "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
                 "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
               ]
+            },
+            {
+              "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+              "apiVersion": "2022-05-01",
+              "name": "[variables('wafPolicyName')]",
+              "location": "global",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "policySettings": {
+                  "enabledState": "Enabled",
+                  "mode": "[parameters('wafMode')]"
+                },
+                "managedRules": {
+                  "managedRuleSets": "[parameters('wafManagedRuleSets')]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/securityPolicies",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('securityPolicyName'))]",
+              "properties": {
+                "parameters": {
+                  "type": "WebApplicationFirewall",
+                  "wafPolicy": {
+                    "id": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+                  },
+                  "associations": [
+                    {
+                      "domains": [
+                        {
+                          "id": "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]"
+                        },
+                        {
+                          "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]"
+                        }
+                      ],
+                      "patternsToMatch": [
+                        "/*"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]",
+                "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+              ]
             }
           ],
           "outputs": {
             "frontDoorEndpointHostName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]"
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName')), '2021-06-01').hostName]"
             },
             "frontDoorId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontDoorId]"
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName')), '2021-06-01').frontDoorId]"
             },
             "customDomainValidationDnsTxtRecordName": {
               "type": "string",
-              "value": "[format('_dnsauth.{0}', reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).hostName)]"
+              "value": "[format('_dnsauth.{0}', reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName')), '2021-06-01').hostName)]"
             },
             "customDomainValidationDnsTxtRecordValue": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).validationProperties.validationToken]"
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName')), '2021-06-01').validationProperties.validationToken]"
             },
             "customDomainValidationExpiry": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).validationProperties.expirationDate]"
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName')), '2021-06-01').validationProperties.expirationDate]"
             }
           }
         }
@@ -440,23 +525,23 @@
   "outputs": {
     "frontDoorEndpointHostName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.frontDoorEndpointHostName.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.frontDoorEndpointHostName.value]"
     },
     "blobEndpointHostName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage')).outputs.blobEndpointHostName.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2020-10-01').outputs.blobEndpointHostName.value]"
     },
     "customDomainValidationDnsTxtRecordName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.customDomainValidationDnsTxtRecordName.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.customDomainValidationDnsTxtRecordName.value]"
     },
     "customDomainValidationDnsTxtRecordValue": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.customDomainValidationDnsTxtRecordValue.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.customDomainValidationDnsTxtRecordValue.value]"
     },
     "customDomainValidationExpiry": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.customDomainValidationExpiry.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2020-10-01').outputs.customDomainValidationExpiry.value]"
     }
   }
 }

@@ -25,6 +25,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   }
   properties: {
     publicNetworkAccess: 'Disabled'
+    allowBlobPublicAccess: true
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
     networkAcls: {
       defaultAction: 'Deny'
     }
@@ -39,7 +42,7 @@ resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/container
   name: blobContainerName
   parent: storageAccount::defaultBlobService
   properties:{
-    publicAccess: 'None'
+    publicAccess: 'Blob'
   }
 }
 
