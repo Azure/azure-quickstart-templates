@@ -30,7 +30,7 @@ languages:
 
 MedTech service is an optional service of the Azure Health Data Services designed to ingest device data from multiple and disparate Internet of Medical Things (IoMT) devices. The MedTech service normalizes, groups, transforms, and persists device data in the Fast Healthcare Interoperability Resources (FHIR®) service.
 
-* To learn more about this Azure Resource Manager (ARM) template, the resources deployed, and the configured access permissions, see the MedTech service tutorial [Tutorial: Receive device data through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-data-through-iot-hub)
+* To learn more about this Azure Resource Manager (ARM) template, the resources deployed, and the configured access permissions, see [Tutorial: Receive device data through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-data-through-iot-hub)
 
 * To learn more about MedTech service, see [What is MedTech service?](https://learn.microsoft.com/azure/healthcare-apis/iot/iot-connector-overview)
 
