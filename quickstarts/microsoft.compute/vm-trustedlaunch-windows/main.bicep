@@ -418,7 +418,7 @@ var subnetPrefix = '10.0.0.0/24'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var useAlternateToken = 'false'
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -432,7 +432,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -454,7 +454,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-0
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -477,7 +477,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: nicName
   location: location
   properties: {
@@ -545,7 +545,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
 
 resource vmName_extension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (vTPM && secureBoot) {
   parent: vm
-  name: '${extensionName}'
+  name: extensionName
   location: location
   properties: {
     publisher: extensionPublisher
