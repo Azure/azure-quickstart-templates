@@ -139,7 +139,7 @@ resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/priva
   }
 }
 
-resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-06-01' = {
+resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-10-01' = {
   name: poolName
   parent: batchAccount
   dependsOn: [
@@ -147,6 +147,7 @@ resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-06-01' = {
   ]
   properties: {
     vmSize: vmSize
+    targetNodeCommunicationMode: 'Simplified'
     interNodeCommunication: 'Disabled'
     taskSlotsPerNode: 4
     taskSchedulingPolicy: {
