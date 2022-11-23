@@ -59,6 +59,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     }
     supportsHttpsTrafficOnly: true
     allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    networkAcls: {
+      defaultAction: 'Deny'
+    }
   }
 }
 
@@ -91,7 +95,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2022-02-01-pr
     name: 'Standard'
   }
   properties: {
-    adminUserEnabled: true
+    adminUserEnabled: false
   }
 }
 
