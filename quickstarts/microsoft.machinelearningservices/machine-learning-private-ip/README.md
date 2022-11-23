@@ -4,10 +4,13 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- bicep
 urlFragment: machine-learning-private-ip
 languages:
 - json
+- bicep
 ---
+
 # Create an AKS compute target with a Private IP address
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-private-ip/PublicLastTestDate.svg)
