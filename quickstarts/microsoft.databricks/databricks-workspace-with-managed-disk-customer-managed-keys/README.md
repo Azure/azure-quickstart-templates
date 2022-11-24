@@ -10,6 +10,7 @@ languages:
 - json
 - bicep
 ---
+
 # Deploy an Azure Databricks Workspace with managed disk & CMK
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-customer-managed-keys/PublicLastTestDate.svg)
