@@ -46,6 +46,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
     httpsOnly: true
     siteConfig: {
       minTlsVersion: '1.2'
+      ftpsState: 'FtpsOnly'
     }
   }
 }
