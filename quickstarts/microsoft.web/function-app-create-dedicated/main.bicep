@@ -43,7 +43,7 @@ var hostingPlanName = appName
 var applicationInsightsName = appName
 var storageAccountName = '${uniqueString(resourceGroup().id)}functions'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: storageAccountName
   location: location
   kind: 'Storage'
@@ -86,6 +86,7 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
     clientAffinityEnabled: false
     siteConfig: {
       alwaysOn: true
+      ftpsState:'FtpsOnly'
     }
     httpsOnly: true
   }
