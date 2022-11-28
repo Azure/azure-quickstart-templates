@@ -1,5 +1,5 @@
 ---
-description: MedTech service is an optional service of the Azure Health Data Services designed to ingest data from multiple and disparate Internet of Medical Things (IoMT) devices. The MedTech service normalizes, groups, transforms, and persists device data in the Fast Healthcare Interoperability Resources (FHIR®) service within an Azure Health Data Services workspace.
+description: MedTech service is an optional service of the Azure Health Data Services (AHDS) designed to ingest data from multiple and disparate Internet of Medical Things (IoMT) devices. MedTech service normalizes, groups, transforms, and persists device data in the Fast Healthcare Interoperability Resources (FHIR®) service.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Deploy an Azure Health Data Services MedTech service including an Azure IoT Hub
+# Deploy an AHDS MedTech service including an Azure IoT Hub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iothub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iothub/PublicDeployment.svg)
