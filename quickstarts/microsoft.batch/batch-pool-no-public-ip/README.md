@@ -38,6 +38,6 @@ Following resources will be deployed:
 
 ## Notes
 
-This deployment requires simplified node communication pool for Azure Batch, which is currently supported in selected regions. If the deployment failed due to private endpoint provisioning failure, please follow the document to opt in with this feature then retry. For more information please refer to [Simplified Node Communication pool without public IP addresses](https://docs.microsoft.com/en-us/azure/batch/simplified-node-communication-pool-no-public-ip).
+This deployment requires simplified node communication pool for Azure Batch, which is currently supported in selected regions. If the deployment failed due to private endpoint provisioning failure, please follow the document to choose supported region then retry. For more information please refer to [Simplified Node Communication pool without public IP addresses](https://learn.microsoft.com/en-us/azure/batch/simplified-node-communication-pool-no-public-ip).
 
 `Tags: bicep, batch, pool, nodeManagement, privateEndpoint, VNET, NoPublicIP, Microsoft.Batch/batchAccounts, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones`
