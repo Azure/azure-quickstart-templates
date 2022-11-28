@@ -1,9 +1,9 @@
-@description('Base name that is used to name provisioned resources. Should be alphanumeric, at least 3 characters and up to or less than 16 characters.')
+@description('Basename that is used to name provisioned resources. Should be alphanumeric, at least 3 characters and up to or less than 16 characters.')
 @minLength(3)
 @maxLength(16)
 param basename string
 
-@description('The location where the resources(s) are deployed. This can be a different Azure region than where the Resource Group was deployed.')
+@description('The location where the resources are deployed. This can be a different Azure region than where the resource group was deployed. For a list of Azure regions where Azure Health Data Services are available, see [Products available by regions](https://azure.microsoft.com/explore/global-infrastructure/products-by-region/?products=health-data-services)')
 @allowed([
   'australiaeast'
   'canadacentral'
