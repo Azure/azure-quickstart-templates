@@ -1,9 +1,9 @@
-@description('Base name that is used to name provisioned resources. Should be alphanumeric, at least 3 characters and up to or less than 16 characters.')
+@description('Basename that is used to name provisioned resources. Should be alphanumeric, at least 3 characters and up to or less than 16 characters.')
 @minLength(3)
 @maxLength(16)
 param basename string
 
-@description('The location where the resources are deployed. This can be a different Azure region than where the resource group was deployed. For a list of Azure regions where Azure Health Data Services are available, see [Producst available by regions](https://azure.microsoft.com/explore/global-infrastructure/products-by-region/?products=health-data-services)')
+@description('The location where the resources are deployed. This can be a different Azure region than where the resource group was deployed. For a list of Azure regions where Azure Health Data Services are available, see [Products available by regions](https://azure.microsoft.com/explore/global-infrastructure/products-by-region/?products=health-data-services)')
 @allowed([
   'australiaeast'
   'canadacentral'
@@ -23,7 +23,7 @@ param basename string
 ])
 param location string
 
-@description('OPTIONAL - A principal id for a user that will be granted FHIR Data Contributor access to the FHIR service. If you do not choose to use the **fhirContributorPrincipalId** option, clear the field of any entries. To learn more about how to acquire an Azure AD user object ID, see [Find the user object ID](https://learn.microsoft.com/partner-center/find-ids-and-domain-names#find-the-user-object-id)')
+@description('OPTIONAL - A Principal ID for a user that will be granted FHIR Data Contributor access to the FHIR service. If you do not choose to use the **fhirContributorPrincipalId** option, clear the field of any entries. To learn more about how to acquire an Azure AD user object ID, see [Find the user object ID](https://learn.microsoft.com/partner-center/find-ids-and-domain-names#find-the-user-object-id)')
 param fhirContributorPrincipalId string = ''
 
 @description('The mapping JSON that determines how incoming device data is normalized.')
