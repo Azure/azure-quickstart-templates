@@ -9,6 +9,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
+        [Parameter()] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -23,12 +24,12 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
-    Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.3.0.0
+    Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
-    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -364,72 +365,66 @@ configuration ConfigureSPVM
         # Do SharePoint pre-reqs that require membership in AD domain
         #**********************************************************
         # Create DNS entries used by SharePoint
-        xDnsRecord AddTrustedSiteDNS
+        DnsRecordCname AddTrustedSiteDNS
         {
             Name                 = $SPTrustedSitesName
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddMySiteHostDNS
+        DnsRecordCname AddMySiteHostDNS
         {
             Name                 = $MySiteHostAlias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddHNSC1DNS
+        DnsRecordCname AddHNSC1DNS
         {
             Name                 = $HNSC1Alias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddAddinDNSWildcard
+        DnsRecordCname AddAddinDNSWildcard
         {
             Name                 = "*"
-            Zone                 = $AppDomainFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            ZoneName             = $AppDomainFQDN
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             DnsServer            = "$DCName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddAddinDNSWildcardInIntranetZone
+        DnsRecordCname AddAddinDNSWildcardInIntranetZone
         {
             Name                 = "*"
-            Zone                 = $AppDomainIntranetFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            ZoneName             = $AppDomainIntranetFQDN
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             DnsServer            = "$DCName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord ProviderHostedAddinsAlias
+        DnsRecordCname ProviderHostedAddinsAlias
         {
             Name                 = $AddinsSiteDNSAlias
-            Zone                 = $DomainFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            ZoneName             = $DomainFQDN
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             DnsServer            = "$DCName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -1383,6 +1378,40 @@ configuration ConfigureSPVM
             Ensure                         = "Present"
             DependsOn                      = "[Script]ExportHighTrustAddinsCert"
             PsDscRunAsCredential           = $SPSetupCredsQualified
+        }
+
+        Script WarmupSites
+        {
+            SetScript =
+            {
+                $warmupJobBlock = {
+                    $uri = $args[0]
+                    try {
+                        Write-Verbose "Connecting to $uri..."
+                        # -UseDefaultCredentials: Does NTLM authN
+                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                        # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
+                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Write-Verbose "Connected successfully to $uri"
+                    }
+                    catch {
+                    }
+                }
+                $spsite = "http://$($using:ComputerName):5000/"
+                Write-Verbose "Warming up '$spsite'..."
+                $job1 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                $spsite = "http://$($using:SPTrustedSitesName)/"
+                Write-Verbose "Warming up '$spsite'..."
+                $job2 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                
+                # Must wait for the jobs to complete, otherwise they do not actually run
+                Receive-Job -Job $job1 -AutoRemoveJob -Wait
+                Receive-Job -Job $job2 -AutoRemoveJob -Wait
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPSite]CreateRootSite"
         }
 
         # DSC resource File throws an access denied when accessing a remote location, so use Script instead

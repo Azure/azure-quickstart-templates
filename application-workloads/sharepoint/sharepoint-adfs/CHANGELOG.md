@@ -1,5 +1,18 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in November 28, 2022
+
+* Renamed parameter `addPublicIPAddressToEachVM` to `addPublicIPAddress` and changed its type to `string` to provide more granularity. Its default value is now `"SharePointVMsOnly"`, to assign a public IP address only to SharePoint VMs
+* Move the definition of SharePoint Subscription packages list from DSC to the template itself.
+* Improve the logic that installs SharePoint updates when deploying SharePoint Subscription.
+* Warm up SharePoint sites at the end of the configuration.
+* Revert the previous change on the SKU of Public IP addresses, to use again SKU basic when possible (except for Bastion which requires Standard).
+* Revert the previous change on the allocation method of Public IP addresses to use Dynamic instead of Static (except for Bastion which requires Static).
+* Fixed the random error `NetworkSecurityGroupNotCompliantForAzureBastionSubnet` when deploying Azure Bastion by updating the rules in the network security group attached to Bastion's subnet.
+* Update apiVersion of ARM resources to latest version available.
+* Update DSC modules used to latest version available.
+* Replace DSC module xDnsServer 2.0.0 with DnsServerDsc 3.0.0.
+
 ## Enhancements & bug-fixes - Published in September 29, 2022
 
 * Add an option to create a SharePoint Subscription farm running with feature update 22H2.

@@ -12,7 +12,7 @@
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.1.0 # With custom changes in AdfsFarm to set certificates based on their names
 
@@ -77,14 +77,14 @@
         #**********************************************************
         # Configuration needed by SharePoint farm
         #**********************************************************
-        xDnsServerPrimaryZone CreateAppsDnsZone
+        DnsServerPrimaryZone CreateAppsDnsZone
         {
             Name      = $AppDomainFQDN
             Ensure    = "Present"
             DependsOn = "[WaitForADDomain]WaitForDCReady"
         }
 
-        xDnsServerPrimaryZone CreateAppsIntranetDnsZone
+        DnsServerPrimaryZone CreateAppsIntranetDnsZone
         {
             Name      = $AppDomainIntranetFQDN
             Ensure    = "Present"
@@ -236,21 +236,19 @@
         }
 
 
-        xDnsRecord AddADFSHostDNS {
-            Name = $ADFSSiteName
-            Zone = $DomainFQDN
-            Target = $PrivateIP
-            Type = "ARecord"
-            Ensure = "Present"
-            DependsOn = "[WaitForADDomain]WaitForDCReady"
+        DnsRecordA AddADFSHostDNS {
+            Name        = $ADFSSiteName
+            ZoneName    = $DomainFQDN
+            IPv4Address = $PrivateIP
+            Ensure      = "Present"
+            DependsOn   = "[WaitForADDomain]WaitForDCReady"
         }
 
         # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
-        xDnsRecord AddADFSDevideRegistrationAlias {
+        DnsRecordCname AddADFSDevideRegistrationAlias {
             Name = "enterpriseregistration"
-            Zone = $DomainFQDN
-            Target = "$ComputerName.$DomainFQDN"
-            Type = "CName"
+            ZoneName = $DomainFQDN
+            HostNameAlias = "$ComputerName.$DomainFQDN"
             Ensure = "Present"
             DependsOn = "[WaitForADDomain]WaitForDCReady"
         }
