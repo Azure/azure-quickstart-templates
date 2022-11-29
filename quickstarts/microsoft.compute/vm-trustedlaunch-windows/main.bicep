@@ -42,8 +42,16 @@ param vmName string = 'myTVM'
   '2019-DataCenter-Core-With-Containers-G2'
   '2019-DataCenter-With-Containers-Smalldisk-G2'
   '2019-DataCenter-With-Containers-G2'
+  '2022-datacenter-azure-edition'
+  '2022-datacenter-azure-edition-core'
+  '2022-datacenter-azure-edition-core-smalldisk'
+  '2022-datacenter-azure-edition-smalldisk'
+  '2022-datacenter-core-g2'
+  '2022-datacenter-core-smalldisk-g2'
+  '2022-datacenter-g2'
+  '2022-datacenter-smalldisk-g2'
 ])
-param sku string = '2019-DataCenter-GenSecond'
+param sku string = '2022-datacenter-azure-edition-core'
 
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_D2s_v3'
@@ -349,6 +357,54 @@ var imageReference = {
     sku: sku
     version: 'latest'
   }
+  '2022-datacenter-azure-edition': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-azure-edition-core': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-azure-edition-core-smalldisk': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-azure-edition-smalldisk': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-core-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-core-smalldisk-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-smalldisk-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
 }
 var addressPrefix = '10.0.0.0/16'
 var ascReportingEndpoint = 'https://sharedeus2.eus2.attest.azure.net/'
@@ -362,7 +418,7 @@ var subnetPrefix = '10.0.0.0/24'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var useAlternateToken = 'false'
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -376,7 +432,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -398,7 +454,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-0
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -421,7 +477,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: nicName
   location: location
   properties: {
@@ -431,7 +487,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIP.id
+            id: publicIp.id
           }
           subnet: {
             id: subnetRef
@@ -441,11 +497,12 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
     ]
   }
   dependsOn: [
+
     virtualNetwork
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   name: vmName
   location: location
   identity: {
@@ -486,7 +543,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = if (vTPM && secureBoot) {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (vTPM && secureBoot) {
   parent: vm
   name: extensionName
   location: location
@@ -507,4 +564,4 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' =
   }
 }
 
-output hostname string = publicIP.properties.dnsSettings.fqdn
+output hostname string = publicIp.properties.dnsSettings.fqdn
