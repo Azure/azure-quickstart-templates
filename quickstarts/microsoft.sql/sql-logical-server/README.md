@@ -4,7 +4,6 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- bicep
 urlFragment: sql-logical-server
 languages:
 - json
