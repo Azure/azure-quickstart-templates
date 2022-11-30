@@ -155,9 +155,6 @@ param subnetName string = 'sn${uniqueString(resourceGroup().id, workspaceName)}'
 @description('Subnet prefix of the virtual network')
 param subnetPrefix string = '10.0.0.0/24'
 
-@description('Azure Databrick workspace to be linked to the workspace')
-param adbWorkspace string = ''
-
 @description('Specifies that the Azure Machine Learning workspace holds highly confidential data.')
 @allowed([
   false
@@ -184,15 +181,6 @@ param resource_cmk_uri string = ''
   'none'
 ])
 param privateEndpointType string = 'none'
-
-@description('Specifies customer managed cosmosDB for CMK workspace')
-param encryption_cosmosdb_armid string = ''
-
-@description('Specifies customer managed storage for CMK workspace')
-param encryption_storage_armid string = ''
-
-@description('Specifies customer managed search for CMK workspace')
-param encryption_search_armid string = ''
 
 var tenantId = subscription().tenantId
 var storageAccountId = resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts', storageAccountName)
@@ -379,7 +367,6 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
     keyVault: keyVaultId
     applicationInsights: applicationInsightsId
     containerRegistry: ((containerRegistryOption != 'none') ? containerRegistryId : json('null'))
-    adbWorkspace: (empty(adbWorkspace) ? json('null') : adbWorkspace)
     primaryUserAssignedIdentity: ((identityType == 'userAssigned') ? primaryUserAssignedIdentity : json('null'))
     encryption: {
       status: encryption_status
@@ -388,9 +375,6 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
         keyVaultArmId: cmk_keyvault
         keyIdentifier: resource_cmk_uri
       }
-      CosmosDbArmId: encryption_cosmosdb_armid
-      StorageAccountArmId: encryption_storage_armid
-      SearchAccountArmId: encryption_search_armid
     }
     hbiWorkspace: confidential_data
     publicNetworkAccess: 'Disabled'
