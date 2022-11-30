@@ -4,8 +4,8 @@ param privateAznbDnsZoneName object
 
 param enablePE bool
 param defaultPEConnections array
-param subnet string
-param vnet string
+param subnetId string
+param vnetId string
 
 @description('Specifies the name of the Azure Machine Learning workspace.')
 param workspaceName string
@@ -31,7 +31,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-05-01' = if (e
     privateLinkServiceConnections: ((privateEndpointType == 'AutoApproval') ? defaultPEConnections : json('null'))
     manualPrivateLinkServiceConnections: ((privateEndpointType == 'ManualApproval') ? defaultPEConnections : json('null'))
     subnet: {
-      id: subnet
+      id: subnetId
     }
   }
 }
@@ -59,12 +59,12 @@ resource privateAznbDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if 
 }
 
 resource dnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateDnsZoneName[toLower(environment().name)]}/${uniqueString(vnet)}'
+  name: '${privateDnsZoneName[toLower(environment().name)]}/${uniqueString(vnetId)}'
   location: 'global'
   tags: tagValues
   properties: {
     virtualNetwork: {
-      id: vnet
+      id: vnetId
     }
     registrationEnabled: false
   }
@@ -75,7 +75,7 @@ resource dnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020
 }
 
 resource aznbDnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateAznbDnsZone[toLower(environment().name)]}/${uniqueString(vnet)}'
+  name: '${privateAznbDnsZone[toLower(environment().name)]}/${uniqueString(vnetId)}'
   location: 'global'
   tags: tagValues
   dependsOn: [
@@ -83,7 +83,7 @@ resource aznbDnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
   ]
   properties: {
     virtualNetwork: {
-      id: vnet
+      id: vnetId
     }
     registrationEnabled: false
   }
@@ -91,7 +91,6 @@ resource aznbDnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
 
 resource privateDnsZoneGroups 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = if (privateEndpointType == 'AutoApproval') {
   name: '${privateEndpointName}/default'
-  location: vnetLocation
   dependsOn: [
     privateEndpoint
   ]

@@ -196,11 +196,11 @@ param encryption_search_armid string = ''
 
 var tenantId = subscription().tenantId
 var storageAccountId = resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts', storageAccountName)
-var keyVault = resourceId(keyVaultResourceGroupName, 'Microsoft.KeyVault/vaults', keyVaultName)
-var containerRegistry = resourceId(containerRegistryResourceGroupName, 'Microsoft.ContainerRegistry/registries', containerRegistryName)
-var applicationInsights = resourceId(applicationInsightsResourceGroupName, 'Microsoft.Insights/components', applicationInsightsName)
-var vnet = resourceId(vnetResourceGroupName, 'Microsoft.Network/virtualNetworks', vnetName)
-var subnet = resourceId(vnetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
+var keyVaultId = resourceId(keyVaultResourceGroupName, 'Microsoft.KeyVault/vaults', keyVaultName)
+var containerRegistryId = resourceId(containerRegistryResourceGroupName, 'Microsoft.ContainerRegistry/registries', containerRegistryName)
+var applicationInsightsId = resourceId(applicationInsightsResourceGroupName, 'Microsoft.Insights/components', applicationInsightsName)
+var vnetId = resourceId(vnetResourceGroupName, 'Microsoft.Network/virtualNetworks', vnetName)
+var subnetId = resourceId(vnetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
 var privateDnsZoneName = {
   azureusgovernment: 'privatelink.api.ml.azure.us'
   azurechinacloud: 'privatelink.api.ml.azure.cn'
@@ -218,7 +218,7 @@ var networkRuleSetBehindVNet = {
   virtualNetworkRules: [
     {
       action: 'Allow'
-      id: subnet
+      id: subnetId
     }
   ]
 }
@@ -376,9 +376,9 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
   properties: {
     friendlyName: workspaceName
     storageAccount: storageAccountId
-    keyVault: keyVault
-    applicationInsights: applicationInsights
-    containerRegistry: ((containerRegistryOption != 'none') ? containerRegistry : json('null'))
+    keyVault: keyVaultId
+    applicationInsights: applicationInsightsId
+    containerRegistry: ((containerRegistryOption != 'none') ? containerRegistryId : json('null'))
     adbWorkspace: (empty(adbWorkspace) ? json('null') : adbWorkspace)
     primaryUserAssignedIdentity: ((identityType == 'userAssigned') ? primaryUserAssignedIdentity : json('null'))
     encryption: {
@@ -413,8 +413,8 @@ module DeployPrivateEndpoints './nested_DeployPrivateEndpoints.bicep' = {
     privateAznbDnsZoneName: privateAznbDnsZoneName
     enablePE: enablePE
     defaultPEConnections: defaultPEConnections
-    subnet: subnet
-    vnet: vnet
+    subnetId: subnetId
+    vnetId: vnetId
     workspaceName: workspaceName
     vnetLocation: vnetLocation
     tagValues: tagValues
