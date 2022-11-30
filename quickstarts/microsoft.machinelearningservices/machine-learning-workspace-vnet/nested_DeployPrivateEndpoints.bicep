@@ -91,7 +91,6 @@ resource privateAznbDnsZoneVnLink 'Microsoft.Network/privateDnsZones/virtualNetw
 
 resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = if (privateEndpointType == 'AutoApproval') {
   name: '${privateEndpointName}/default'
-  location: vnetLocation
   properties: {
     privateDnsZoneConfigs: [
       {

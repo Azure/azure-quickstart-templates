@@ -369,10 +369,10 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
   tags: tagValues
   properties: {
     friendlyName: workspaceName
-    storageAccount: ((storageAccountOption == 'new') ? storageAccount.id : storageAccountId)
-    keyVault: ((keyVaultOption == 'new') ? vault.id : keyVaultId)
-    applicationInsights:((applicationInsightsOption == 'new') ? insight.id : applicationInsightId)
-    containerRegistry: ((containerRegistryOption == 'none') ? json('null') : (containerRegistryOption == 'new') ? registry.id : containerRegistryId)
+    storageAccount: storageAccountId
+    keyVault: keyVaultId
+    applicationInsights: applicationInsightId
+    containerRegistry: ((containerRegistryOption != 'none') ? containerRegistryId : json('null'))
     adbWorkspace: (empty(adbWorkspace) ? json('null') : adbWorkspace)
     primaryUserAssignedIdentity: ((identityType == 'userAssigned') ? primaryUserAssignedIdentity : json('null'))
     encryption: {
@@ -397,10 +397,10 @@ module DeployPrivateEndpoints './nested_DeployPrivateEndpoints.bicep' = {
   params: {
     enablePE: enablePE
     defaultPEConnections: defaultPEConnections
-    subnetId: ((subnetOption == 'none') ? '' : (subnetOption == 'new') ? subnet.id : subnetId)
+    subnetId: subnetId
     privateDnsZoneName: privateDnsZoneName
     privateAznbDnsZoneName: privateAznbDnsZoneName
-    vnetId: ((vnetOption == 'none') ? '' : (vnetOption == 'new') ? vnet.id : vnetId)
+    vnetId: vnetId
     privateEndpointName: privateEndpointName
     workspaceName: workspaceName
     vnetLocation: vnetLocation
