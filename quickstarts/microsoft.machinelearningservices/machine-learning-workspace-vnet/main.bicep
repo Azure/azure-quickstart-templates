@@ -155,15 +155,12 @@ param subnetName string = 'sn${uniqueString(resourceGroup().id, workspaceName)}'
 @description('Subnet prefix of the virtual network')
 param subnetPrefix string = '10.0.0.0/24'
 
-@description('Azure Databrick workspace to be linked to the workspace')
-param adbWorkspace string = ''
-
 @description('Specifies that the Azure Machine Learning workspace holds highly confidential data.')
 @allowed([
-  'false'
-  'true'
+  false
+  true
 ])
-param confidential_data string = 'false'
+param confidential_data bool = false
 
 @description('Specifies if the Azure Machine Learning workspace should be encrypted with customer managed key.')
 @allowed([
@@ -184,15 +181,6 @@ param resource_cmk_uri string = ''
   'none'
 ])
 param privateEndpointType string = 'none'
-
-@description('Specifies customer managed cosmosDB for CMK workspace')
-param encryption_cosmosdb_armid string = ''
-
-@description('Specifies customer managed storage for CMK workspace')
-param encryption_storage_armid string = ''
-
-@description('Specifies customer managed search for CMK workspace')
-param encryption_search_armid string = ''
 
 var tenantId = subscription().tenantId
 
@@ -272,7 +260,7 @@ var encryptionUserAssignedIdentity = {
 var encryptionIdentity = ((cmkUserAssignedIdentityName != '') ? encryptionUserAssignedIdentity : json('{}'))
 var appInsightsLocation = (((location == 'westcentralus') || (location == 'eastus2euap') || (location == 'centraluseuap') || (location == 'westus3')) ? 'southcentralus' : ((location == 'canadaeast') ? 'canadacentral' : location))
 
-resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' = if (vnetOption == 'new') {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' = if (vnetOption == 'new') {
   name: vnetName
   location: location
   tags: tagValues
@@ -373,7 +361,6 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
     keyVault: keyVaultId
     applicationInsights: applicationInsightId
     containerRegistry: ((containerRegistryOption != 'none') ? containerRegistryId : json('null'))
-    adbWorkspace: (empty(adbWorkspace) ? json('null') : adbWorkspace)
     primaryUserAssignedIdentity: ((identityType == 'userAssigned') ? primaryUserAssignedIdentity : json('null'))
     encryption: {
       status: encryption_status
@@ -382,9 +369,6 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
         keyVaultArmId: cmk_keyvault
         keyIdentifier: resource_cmk_uri
       }
-      CosmosDbArmId: encryption_cosmosdb_armid
-      StorageAccountArmId: encryption_storage_armid
-      SearchAccountArmId: encryption_search_armid
     }
     hbiWorkspace: confidential_data
     publicNetworkAccess: 'Disabled'
