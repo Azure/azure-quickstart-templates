@@ -53,7 +53,7 @@ resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
   }
 }
 
-resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2022-07-01' = {
+resource accessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2022-07-01' = {
   name: '${keyVaultName}/add'
   properties: {
     accessPolicies: [
