@@ -11,16 +11,16 @@ param location string = resourceGroup().location
 ])
 param pricingTier string = 'premium'
 
-@description('The key vault name used for BYOK')
+@description('The key vault name used for BYOK.')
 param keyVaultName string
 
-@description('The key name used for BYOK')
+@description('The key name used for BYOK.')
 param keyName string
 
-@description('The key version used for BYOK')
+@description('The key version used for BYOK.')
 param keyVersion string
 
-@description('Whether managed disk will pick up new key version automatically ')
+@description('Whether managed disk will pick up new key version automatically.')
 @allowed([
   true
   false
