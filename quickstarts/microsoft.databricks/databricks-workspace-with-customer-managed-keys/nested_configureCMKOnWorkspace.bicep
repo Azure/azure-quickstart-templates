@@ -22,6 +22,7 @@ param keyName string
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
 param disablePublicIp bool
 
+var keyVaultUri = 'https://${keyVaultName}${environment().suffixes.keyvaultDns}'
 resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
   name: workspaceName
   location: location
@@ -37,7 +38,7 @@ resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
       encryption: {
         value: {
           keySource: 'Microsoft.Keyvault'
-          keyvaulturi: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}'
+          keyvaulturi: keyVaultUri
           KeyName: keyName
         }
       }
