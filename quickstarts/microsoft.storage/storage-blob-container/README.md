@@ -1,5 +1,5 @@
 ---
-description: Creates an Azure Storage account and a blob container. Template originally authored by John Downs.
+description: This template creates an Azure Storage account and a blob container.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create Storage Account and Blob Container
+# Create an Azure Storage Account and Blob Container on Azure
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-blob-container/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-blob-container/PublicDeployment.svg)
 
