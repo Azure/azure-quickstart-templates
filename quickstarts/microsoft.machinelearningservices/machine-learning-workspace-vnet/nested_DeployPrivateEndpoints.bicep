@@ -58,7 +58,8 @@ resource privateAznbDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if 
 }
 
 resource privateDnsZoneVnLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateDnsZoneName[toLower(environment().name)]}/${uniqueString(vnetId)}'
+  parent: privateDnsZone
+  name: uniqueString(vnetId)
   location: 'global'
   tags: tagValues
   properties: {
@@ -69,12 +70,12 @@ resource privateDnsZoneVnLink 'Microsoft.Network/privateDnsZones/virtualNetworkL
   }
   dependsOn: [
     privateEndpoint
-    privateDnsZone
   ]
 }
 
 resource privateAznbDnsZoneVnLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateAznbDnsZoneName[toLower(environment().name)]}/${uniqueString(vnetId)}'
+  parent: privateAznbDnsZone
+  name: uniqueString(vnetId)
   location: 'global'
   tags: tagValues
   properties: {
@@ -85,7 +86,6 @@ resource privateAznbDnsZoneVnLink 'Microsoft.Network/privateDnsZones/virtualNetw
   }
   dependsOn: [
     privateEndpoint
-    privateAznbDnsZone
   ]
 }
 
