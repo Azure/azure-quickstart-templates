@@ -31,6 +31,11 @@ $metadata = Get-Content -Path "$SampleFolder\metadata.json" -Raw | ConvertFrom-J
 $H1 = "# $($metadata.itemDisplayName)" # this cannot be duplicated in the repo, doc samples index this for some strange reason
 $metadataDescription = $metadata.description # note this will be truncated to 150 chars but the summary is usually the same as the itemDisplayName
 
+# update the data in metadata.json
+$metadata.dateUpdated = (Get-Date).ToString("yyyy-MM-dd")
+$metadata | ConvertTo-Json | Set-Content "$SampleFolder\metadata.json" -NoNewline
+
+
 # find H1
 # we need to read the readme as an array to find the line and not some random # tag - though every readme should have this at the top by now
 [string[]]$readmeArray = Get-Content $readmePath

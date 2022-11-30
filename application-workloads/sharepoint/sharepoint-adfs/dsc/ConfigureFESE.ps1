@@ -9,6 +9,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
+        [Parameter(Mandatory)] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -19,11 +20,13 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
-    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName StorageDsc -ModuleVersion 5.0.1
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -34,17 +37,16 @@ configuration ConfigureFEVM
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
-    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $SetupPath = "C:\Setup"
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
-    $SharePointBuildsDetails = @(
-        @{ Label = "RTM";  DownloadUrls = "https://go.microsoft.com/fwlink/?linkid=2171943"; }
-        @{ Label = "22H2"; DownloadUrls = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe;https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; }
-    )
-    $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
-    $SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
+    [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
+    [String] $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
+    [String] $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
+    [String] $spIsoDriverLetter = "S"
+    [String] $spInstallFolder = "${spIsoDriverLetter}:\"
+    [String] $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
 
     Node localhost
     {
@@ -83,15 +85,6 @@ configuration ConfigureFEVM
         Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
-
-        # IIS cleanup
-        WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
-        WebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
-        WebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
-        WebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
-        WebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
-        WebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
-        WebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
@@ -215,121 +208,111 @@ configuration ConfigureFEVM
         #**********************************************************
         # Download and install for SharePoint
         #**********************************************************
-        Script DownloadSharePoint
+        xRemoteFile DownloadSharePoint
         {
-            SetScript = {
-                $SharePointBuildsDetails = $using:SharePointBuildsDetails
-                $sharePointRtmDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}
-                $dstFolder = [environment]::GetEnvironmentVariable("temp","machine")
-                $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
-                $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
-                $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
-                $count = 0
-                while (($count -lt 10) -and (-not(Test-Path $setupFile)))
-                {
-                    try {
-                        Start-BitsTransfer -Source $sharePointRtmDetails.DownloadUrls -Destination $dstFile
-                        $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
-                        $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
-                        Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
-                        Dismount-DiskImage -DevicePath $mountedIso.DevicePath -ErrorAction SilentlyContinue
-                        
-                        (Get-ChildItem -Path $spInstallFolder -Recurse -File).FullName | Foreach-Object {Unblock-File $_}
-                        $count++
-                    }
-                    catch {
-                        $count++
-                    }
-                }
-
-                if (-not(Test-Path $setupFile)) {
-                    Write-Error -Message "Failed to download SharePoint installation package" 
-                }
-            }
-            TestScript = { Test-Path "${env:windir}\Temp\OfficeServer\setup.exe" }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            DestinationPath = $spIsoPath
+            Uri             = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].DownloadUrl
+            ChecksumType    = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].ChecksumType
+            Checksum        = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].Checksum
+            MatchSource     = $false
+        }
+        
+        MountImage MountSharePointImage
+        {
+            ImagePath   = $spIsoPath
+            DriveLetter = $spIsoDriverLetter
+            DependsOn   = "[xRemoteFile]DownloadSharePoint"
+        }
+          
+        WaitForVolume WaitForSharePointImage
+        {
+            DriveLetter      = $spIsoDriverLetter
+            RetryIntervalSec = 5
+            RetryCount       = 10
+            DependsOn        = "[MountImage]MountSharePointImage"
         }
 
         SPInstallPrereqs InstallPrerequisites
         {
             IsSingleInstance  = "Yes"
-            InstallerPath     = "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
+            InstallerPath     = $spPrereqPath
             OnlineMode        = $true
-            DependsOn         = "[Script]DownloadSharePoint"
+            DependsOn         = "[WaitForVolume]WaitForSharePointImage"
         }
 
         SPInstall InstallBinaries
         {
             IsSingleInstance = "Yes"
-            BinaryDir        = "${env:windir}\Temp\OfficeServer"
+            BinaryDir        = $spInstallFolder
             ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
 
-        Script InstallSharePointUpdate
-        {
-            SetScript = {
-                $SharePointBuildLabel = $using:SharePointBuildLabel
-                $SharePointBuildDetails = $using:SharePointBuildDetails
-                Write-Verbose -Message "Starting installation of SharePoint build '$SharePointBuildLabel'..."
-                $exitRebootCodes = @(3010, 17022)
-                $downloadLinks = [uri []] $SharePointBuildDetails.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
-                $dstFiles = $downloadLinks | ForEach-Object { Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $_.Segments[$_.Segments.Count - 1] }                
+        if ($SharePointBuildLabel -ne "RTM") {
+            foreach ($package in ($SharePointBits | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages) {
+                $packageUrl = [uri] $package.DownloadUrl
+                $packageFilename = $packageUrl.Segments[$packageUrl.Segments.Count - 1]
+                $packageFilePath = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $packageFilename
                 
-                $count = 0
-                $downloadComplete = $false
-                while (($count -lt 10) -and $false -eq $downloadComplete) {
-                    try {
-                        Start-BitsTransfer -Source $downloadLinks -Destination $dstFiles
-                        Unblock-File -Path $dstFiles -Confirm:$false
-                        $downloadComplete = $true
-                    }
-                    catch {
-                        $count++
-                    }
+                xRemoteFile "DownloadSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                {
+                    DestinationPath = $packageFilePath
+                    Uri             = $packageUrl
+                    ChecksumType    = $package.ChecksumType
+                    Checksum        = $package.Checksum
+                    MatchSource     = $false
                 }
-                if ($false -eq $downloadComplete) {
-                    Write-Error -Message "Download of SharePoint update files for build '$SharePointBuildLabel' failed, skip installation."
-                    return;
-                }
-                Write-Verbose -Message "Download of SharePoint build '$SharePointBuildLabel' finished successfully."
 
-                $needReboot = $false
-                foreach ($dstFile in $dstFiles) {
-                    $file = Get-ChildItem -LiteralPath $dstFile
-                    Write-Verbose -Message "Starting installation of SharePoint update '$($file.Name)'..."
-                    $process = Start-Process $file.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
-                    if ($exitRebootCodes.Contains($process.ExitCode)) {
-                        $needReboot = $true
-                    }
-                    Write-Verbose -Message "Finished installation of SharePoint update '$($file.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
-                }
-                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled -Force
-                Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+                Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                {
+                    SetScript = {
+                        $SharePointBuildLabel = $using:SharePointBuildLabel
+                        $packageFilePath = $using:packageFilePath
+                        $packageFile = Get-ChildItem -Path $packageFilePath
+                        
+                        $exitRebootCodes = @(3010, 17022)
+                        $needReboot = $false
+                        Write-Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
+                        Unblock-File -Path $packageFile -Confirm:$false
+                        $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
+                        if ($exitRebootCodes.Contains($process.ExitCode)) {
+                            $needReboot = $true
+                        }
+                        Write-Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                        New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
+                        Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
-                if ($true -eq $needReboot) {
-                    $global:DSCMachineStatus = 1
+                        if ($true -eq $needReboot) {
+                            $global:DSCMachineStatus = 1
+                        }
+                    }
+                    TestScript = {
+                        $SharePointBuildLabel = $using:SharePointBuildLabel
+                        $packageFilePath = $using:packageFilePath
+                        $packageFile = Get-ChildItem -Path $packageFilePath
+                        return (Test-Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)")
+                    }
+                    GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                    DependsOn        = "[SPInstall]InstallBinaries"
+                }
+
+                PendingReboot "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                {
+                    Name             = "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                    SkipCcmClientSDK = $true
+                    DependsOn        = "[Script]InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 }
             }
-            TestScript = {
-                $SharePointBuildLabel = $using:SharePointBuildLabel
-                if ($true -eq $SharePointBuildLabel.ToUpper().Equals("RTM")) {
-                    return $true
-                }
-
-                # Not RTM, test if update was already installed
-                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled)
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            DependsOn        = "[SPInstall]InstallBinaries"
         }
 
-        PendingReboot RebootOnSignalFromInstallSharePointUpdate
-        {
-            Name             = "RebootOnSignalFromInstallSharePointUpdate"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[Script]InstallSharePointUpdate"
-        }
+        # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
+        WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
+        WebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
+        WebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
+        WebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
+        WebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
+        WebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
+        WebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
         #**********************************************************
         # Join AD forest
@@ -562,40 +545,67 @@ configuration ConfigureFEVM
             DependsOn                 = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
         }
 
-        xDnsRecord UpdateDNSAliasSPSites
+        DnsRecordCname UpdateDNSAliasSPSites
         {
             Name                 = $SPTrustedSitesName
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        xDnsRecord UpdateDNSAliasOhMy
+        DnsRecordCname UpdateDNSAliasOhMy
         {
             Name                 = $MySiteHostAlias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        xDnsRecord UpdateDNSAliasHNSC1
+        DnsRecordCname UpdateDNSAliasHNSC1
         {
             Name                 = $HNSC1Alias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]JoinSPFarm"
+        }
+
+        Script WarmupSites
+        {
+            SetScript =
+            {
+                $warmupJobBlock = {
+                    $uri = $args[0]
+                    try {
+                        Write-Verbose "Connecting to $uri..."
+                        # -UseDefaultCredentials: Does NTLM authN
+                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                        # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
+                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Write-Verbose "Connected successfully to $uri"
+                    }
+                    catch {
+                    }
+                }
+                $spsite = "http://$($using:SPTrustedSitesName)/"
+                Write-Verbose "Warming up '$spsite'..."
+                $job = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                
+                # Must wait for the jobs to complete, otherwise they do not actually run
+                Receive-Job -Job $job -AutoRemoveJob -Wait
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[DnsRecordCname]UpdateDNSAliasSPSites"
         }
 
         Script SetFarmPropertiesForOIDC
@@ -695,31 +705,6 @@ function Get-NetBIOSName
             return $DomainFQDN
         }
     }
-}
-
-function Get-AppDomain
-{
-    [OutputType([string])]
-    param(
-        [string]$DomainFQDN,
-        [string]$Suffix
-    )
-
-    $appDomain = [String]::Empty
-    if ($DomainFQDN.Contains('.')) {
-        $domainParts = $DomainFQDN.Split('.')
-        $appDomain = $domainParts[0]
-        $appDomain += "$Suffix."
-        $appDomain += $domainParts[1]
-    }
-    return $appDomain
-}
-
-function Get-SPDSCInstalledProductVersion
-{
-    $pathToSearch = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\*\ISAPI\Microsoft.SharePoint.dll"
-    $fullPath = Get-Item $pathToSearch | Sort-Object { $_.Directory } -Descending | Select-Object -First 1
-    return (Get-Command $fullPath).FileVersionInfo
 }
 
 <#
