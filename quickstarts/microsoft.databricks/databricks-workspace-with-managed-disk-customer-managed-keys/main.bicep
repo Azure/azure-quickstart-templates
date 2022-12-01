@@ -20,6 +20,9 @@ param keyName string
 @description('The key version used for BYOK.')
 param keyVersion string
 
+@description('The resource group name of the key vault used for BYOK')
+param keyVaultResourceGroupName string
+
 @description('Whether managed disk will pick up new key version automatically.')
 @allowed([
   true
@@ -53,22 +56,12 @@ resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
   }
 }
 
-resource accessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2022-07-01' = {
-  name: '${keyVaultName}/add'
-  properties: {
-    accessPolicies: [
-      {
-        objectId: workspace.properties.managedDiskIdentity.principalId
-        tenantId: workspace.properties.managedDiskIdentity.tenantId
-        permissions: {
-          keys: [
-            'get'
-            'wrapKey'
-            'unwrapKey'
-          ]
-        }
-      }
-    ]
+module addAccessPolicy './nested_addAccessPolicy.bicep' = {
+  name: 'addAccessPolicy'
+  scope: resourceGroup(keyVaultResourceGroupName)
+  params: {
+    workspace: workspace
+    keyVaultName: keyVaultName
   }
 }
 
