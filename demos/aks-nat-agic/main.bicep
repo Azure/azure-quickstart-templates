@@ -455,6 +455,12 @@ param publicIPPrefixName string = '${aksClusterName}PublicIpPrefix'
 @maxValue(31)
 param publicIPPrefixLength int = 28
 
+@description('Specify the email address where the alerts are sent to.')
+param emailAddress string = 'email@example.com'
+
+@description('Specify the email address name where the alerts are sent to.')
+param emailName string = 'Example'
+
 var readerRoleDefinitionName = 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
 var contributorRoleDefinitionName = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
@@ -1427,11 +1433,33 @@ resource acrPrivateEndpointName_acrPrivateDnsZoneGroup 'Microsoft.Network/privat
   ]
 }
 
+resource emailActionGroup 'Microsoft.Insights/actionGroups@2022-06-01' = {
+  name: 'emailActionGroupName'
+  location: 'global'
+  properties: {
+    groupShortName: 'string'
+    enabled: true
+    emailReceivers: [
+      {
+        name: emailName
+        emailAddress: emailAddress
+        useCommonAlertSchema: true
+      }
+    ]
+  }
+}
+
 resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {
   name: 'AllAzureAdvisorAlert'
   location: 'Global'
   properties: {
-    actions: {}
+    actions: {
+      actionGroups: [
+        {
+          actionGroupId: emailActionGroup.id
+        }
+      ]
+    }
     scopes: [
       resourceGroup().id
     ]
