@@ -10,6 +10,9 @@ param keyVaultName string
 @description('The Azure Key Vault encryption key name.')
 param keyName string
 
+@description('The Azure Key Vault resource group name.')
+param keyVaultResourceGroupName string
+
 @description('The pricing tier of workspace.')
 @allowed([
   'standard'
@@ -35,6 +38,15 @@ resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
         value: true
       }
     }
+  }
+}
+
+module addAccessPolicy './nested_addAccessPolicy.bicep' = {
+  name: 'addAccessPolicy'
+  scope: resourceGroup(keyVaultResourceGroupName)
+  params: {
+    workspace: workspace
+    keyVaultName: keyVaultName
   }
 }
 
