@@ -326,7 +326,7 @@ var networkSettings = {
   nsgSubnetSQLName: 'NSG-Subnet-SQL'
   nsgSubnetSPName: 'NSG-Subnet-SP'
   vmDCPublicIPNicAssociation: {
-    id: vmPublicIP.id
+    id: vmDC_vmPublicIP.id
   }
   vmSQLPublicIPNicAssociation: {
     id: vmSQL_vmPublicIP.id
@@ -497,7 +497,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   }
 }
 
-resource vmPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = if (addPublicIPAddress == 'Yes') {
+resource vmDC_vmPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = if (addPublicIPAddress == 'Yes') {
   name: vmDCSettings.vmPublicIPName
   location: location
   sku: {
@@ -512,7 +512,7 @@ resource vmPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = if (addPu
   }
 }
 
-resource vmNic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
+resource vmDC_vmNic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: vmDCSettings.vmNicName
   location: location
   properties: {
@@ -532,13 +532,15 @@ resource vmNic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   }
   dependsOn: [
     virtualNetwork
-
   ]
 }
 
 resource vmDC 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name: generalSettings.vmDCName
   location: location
+  dependsOn: [
+    vmDC_vmPublicIP
+  ]
   properties: {
     hardwareProfile: {
       vmSize: vmDCSettings.vmVmSize
@@ -578,7 +580,7 @@ resource vmDC 'Microsoft.Compute/virtualMachines@2022-08-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: vmNic.id
+          id: vmDC_vmNic.id
         }
       ]
     }
@@ -662,13 +664,15 @@ resource vmSQL_vmNic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   }
   dependsOn: [
     virtualNetwork
-
   ]
 }
 
 resource vmSQL 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name: generalSettings.vmSQLName
   location: location
+  dependsOn: [
+    vmSQL_vmPublicIP
+  ]
   properties: {
     hardwareProfile: {
       vmSize: vmSQLSettings.vmVmSize
@@ -750,7 +754,6 @@ resource vmSP_vmNic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   }
   dependsOn: [
     virtualNetwork
-
   ]
 }
 
@@ -1302,7 +1305,6 @@ resource NSG_Subnet_AzureBastion 'Microsoft.Network/networkSecurityGroups@2022-0
 
 resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' = if (addAzureBastion == true) {
   name: '${networkSettings.vNetPrivateName}/AzureBastionSubnet'
-  location: location
   properties: {
     addressPrefix: azureBastion.subnetPrefix
     networkSecurityGroup: {
@@ -1354,7 +1356,7 @@ resource Bastion 'Microsoft.Network/bastionHosts@2022-05-01' = if (addAzureBasti
 output publicIPAddressSP string = vmSP_vmPublicIP.properties.dnsSettings.fqdn
 output publicIPAddressFEs array = [for i in range(0, numberOfAdditionalFrontEnd): reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmFESettings.vmPublicIPName}-${i}')).dnsSettings.fqdn]
 output publicIPAddressSQL string = vmSQL_vmPublicIP.properties.dnsSettings.fqdn
-output publicIPAddressDC string = vmPublicIP.properties.dnsSettings.fqdn
+output publicIPAddressDC string = vmDC_vmPublicIP.properties.dnsSettings.fqdn
 output domainAdminAccount string = '${substring(domainFQDN, 0, indexOf(domainFQDN, '.'))}\\${adminUserName}'
 output domainAdminAccountFormatForBastion string = '${adminUserName}@${domainFQDN}'
 output localAdminAccount string = generalSettings.localAdminUserName
