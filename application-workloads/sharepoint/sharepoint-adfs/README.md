@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: sharepoint-adfs
 languages:
+- bicep
 - json
 ---
 # SharePoint Subscription / 2019 / 2016 / 2013 all configured
@@ -21,14 +22,16 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/BicepVersion.svg)
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 
 ## Features
 
-This templates creates a SharePoint Subscription / 2019 / 2016 / 2013 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profiles service and a web application with 2 zones and multiple path based and host-named site collections.  
-On the SharePoint virtual machines, [Chocolatey](https://chocolatey.org/) is used to install the latest version of Notepad++, Visual Studio Code, Fiddler, ULS Viewer and 7-Zip.  
+This templates creates a SharePoint Subscription / 2019 / 2016 / 2013 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profiles service and a web application with 2 zones and multiple path based and host-named site collections.
+On the SharePoint virtual machines, [Chocolatey](https://chocolatey.org/) is used to install the latest version of Notepad++, Visual Studio Code, Fiddler, ULS Viewer and 7-Zip.
 There are some differences in the configuration, depending on the SharePoint version:
 
 ### Common to all SharePoint versions
@@ -76,7 +79,7 @@ Valuable output parameters are returned by the module and recorded in the state 
 
 ## Remote access and security
 
-The template creates 1 virtual network with 3 subnets (+1 if [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is enabled), and each subnet is protected by a [Network Security Group](https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview) which denies all incoming traffic by default.  
+The template creates 1 virtual network with 3 subnets (+1 if [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is enabled), and each subnet is protected by a [Network Security Group](https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview) which denies all incoming traffic by default.
 Use the following parameters to configure how to connect to the virtual machines, and the level of network security:
 
 - parameter `addPublicIPAddress`:
@@ -94,7 +97,7 @@ Use the following parameters to configure how to connect to the virtual machines
 
 ## Cost of the resources deployed
 
-By default, virtual machines use [B-series burstable](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
+By default, virtual machines use [B-series burstable](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.
 Here is the default size and storage type per virtual machine role:
 
 - DC: Size [Standard_B2s](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) and OS disk is a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
@@ -105,7 +108,7 @@ You can visit <https://azure.com/e/c86a94bb7e3943fe96e2c71cf8ece33a> to view the
 
 ## More information
 
-Additional notes: 
+Additional notes:
 
 - Using the default options, the complete deployment takes about 1h (but it is worth it).
 - Once it is completed, the template will return valuable information in the 'Outputs' of the deployment.
