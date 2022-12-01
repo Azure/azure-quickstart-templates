@@ -51,25 +51,6 @@ module addAccessPolicy './nested_addAccessPolicy.bicep' = {
   }
 }
 
-resource accessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2022-07-01' = {
-  name: '${keyVaultName}/add'
-  properties: {
-    accessPolicies: [
-      {
-        objectId: workspace.properties.storageAccountIdentity.principalId
-        tenantId: workspace.properties.storageAccountIdentity.tenantId
-        permissions: {
-          keys: [
-            'get'
-            'wrapKey'
-            'unwrapKey'
-          ]
-        }
-      }
-    ]
-  }
-}
-
 module configureCMKOnWorkspace './nested_configureCMKOnWorkspace.bicep' = {
   name: 'configureCMKOnWorkspace'
   params: {
@@ -82,7 +63,7 @@ module configureCMKOnWorkspace './nested_configureCMKOnWorkspace.bicep' = {
     disablePublicIp: disablePublicIp
   }
   dependsOn: [
-    accessPolicy
+    addAccessPolicy
   ]
 }
 
