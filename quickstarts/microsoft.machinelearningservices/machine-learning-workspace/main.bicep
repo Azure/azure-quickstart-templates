@@ -27,28 +27,21 @@ param environment string
   'westeurope'
   'usgovvirginia'
 ])
-param location string = resourceGroup().location
-
-@description('Specifies whether to reduce telemetry collection and enable additional encryption.')
-@allowed([
-  'false'
-  'true'
-])
-param hbi_workspace string = 'false'
+param location string
 
 var tenantId = subscription().tenantId
-var storageAccountName_var = 'st${name}${environment}'
-var keyVaultName_var = 'kv-${name}-${environment}'
-var applicationInsightsName_var = 'appi-${name}-${environment}'
-var containerRegistryName_var = 'cr${name}${environment}'
-var workspaceName_var = 'mlw${name}${environment}'
-var storageAccount = storageAccountName.id
-var keyVault = keyVaultName.id
-var applicationInsights = applicationInsightsName.id
-var containerRegistry = containerRegistryName.id
+var storageAccountName = 'st${name}${environment}'
+var keyVaultName = 'kv-${name}-${environment}'
+var applicationInsightsName = 'appi-${name}-${environment}'
+var containerRegistryName = 'cr${name}${environment}'
+var workspaceName = 'mlw${name}${environment}'
+var storageAccountId = storageAccount.id
+var keyVaultId = vault.id
+var applicationInsightId = applicationInsight.id
+var containerRegistryId = registry.id
 
-resource storageAccountName 'Microsoft.Storage/storageAccounts@2021-01-01' = {
-  name: storageAccountName_var
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+  name: storageAccountName
   location: location
   sku: {
     name: 'Standard_RAGRS'
@@ -71,8 +64,8 @@ resource storageAccountName 'Microsoft.Storage/storageAccounts@2021-01-01' = {
   }
 }
 
-resource keyVaultName 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
-  name: keyVaultName_var
+resource vault 'Microsoft.KeyVault/vaults@2022-07-01' = {
+  name: keyVaultName
   location: location
   properties: {
     tenantId: tenantId
@@ -85,8 +78,8 @@ resource keyVaultName 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   }
 }
 
-resource applicationInsightsName 'Microsoft.Insights/components@2020-02-02' = {
-  name: applicationInsightsName_var
+resource applicationInsight 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
   location: (((location == 'eastus2') || (location == 'westcentralus')) ? 'southcentralus' : location)
   kind: 'web'
   properties: {
@@ -94,36 +87,28 @@ resource applicationInsightsName 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource containerRegistryName 'Microsoft.ContainerRegistry/registries@2019-12-01-preview' = {
+resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
   sku: {
     name: 'Standard'
-    tier: 'Standard'
   }
-  name: containerRegistryName_var
+  name: containerRegistryName
   location: location
   properties: {
     adminUserEnabled: true
   }
 }
 
-resource workspaceName 'Microsoft.MachineLearningServices/workspaces@2020-03-01' = {
+resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
   identity: {
     type: 'SystemAssigned'
   }
-  name: workspaceName_var
+  name: workspaceName
   location: location
   properties: {
-    friendlyName: workspaceName_var
-    storageAccount: storageAccount
-    keyVault: keyVault
-    applicationInsights: applicationInsights
-    containerRegistry: containerRegistry
-    hbiWorkspace: hbi_workspace
+    friendlyName: workspaceName
+    storageAccount: storageAccountId
+    keyVault: keyVaultId
+    applicationInsights: applicationInsightId
+    containerRegistry: containerRegistryId
   }
-  dependsOn: [
-    storageAccount
-    keyVault
-    applicationInsights
-    containerRegistry
-  ]
 }
