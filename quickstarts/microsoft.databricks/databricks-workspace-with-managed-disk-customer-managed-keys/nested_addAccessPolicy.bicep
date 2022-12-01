@@ -1,4 +1,5 @@
-param workspace object
+param principalId string
+param tenantId string
 
 @description('The key vault name used for BYOK')
 param keyVaultName string
@@ -8,8 +9,8 @@ resource accessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-previ
   properties: {
     accessPolicies: [
       {
-        objectId: workspace.properties.managedDiskIdentity.principalId
-        tenantId: workspace.properteis.managedDiskIdentity.tenantId
+        objectId: principalId
+        tenantId: tenantId
         permissions: {
           keys: [
             'get'
