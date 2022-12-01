@@ -1427,7 +1427,7 @@ resource acrPrivateEndpointName_acrPrivateDnsZoneGroup 'Microsoft.Network/privat
   ]
 }
 
-resource AllAzureAdvisorAlert 'microsoft.insights/activityLogAlerts@2017-04-01' = {
+resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {
   name: 'AllAzureAdvisorAlert'
   location: 'Global'
   properties: {
