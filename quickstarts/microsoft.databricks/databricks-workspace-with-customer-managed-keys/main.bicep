@@ -45,7 +45,8 @@ module addAccessPolicy './nested_addAccessPolicy.bicep' = {
   name: 'addAccessPolicy'
   scope: resourceGroup(keyVaultResourceGroupName)
   params: {
-    workspace: workspace
+    principalId: workspace.properties.storageAccountIdentity.principalId
+    tenantId: workspace.properties.storageAccountIdentity.tenantId
     keyVaultName: keyVaultName
   }
 }

@@ -1,4 +1,6 @@
-param workspace object
+
+param principalId string
+param tenantId string
 
 @description('The Azure Key Vault name.')
 param keyVaultName string
@@ -8,8 +10,8 @@ resource accessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2019-09-01' = {
   properties: {
     accessPolicies: [
       {
-        objectId: workspace.properties.storageAccountIdentity.principalId
-        tenantId: workspace.properties.storageAccountIdentity.tenantId
+        objectId: principalId
+        tenantId: tenantId
         permissions: {
           keys: [
             'get'

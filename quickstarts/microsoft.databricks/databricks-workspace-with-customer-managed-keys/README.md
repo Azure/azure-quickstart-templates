@@ -7,8 +7,8 @@ products:
 - bicep
 urlFragment: databricks-workspace-with-customer-managed-keys
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy an Azure Databricks Workspace and configure CMK
 
