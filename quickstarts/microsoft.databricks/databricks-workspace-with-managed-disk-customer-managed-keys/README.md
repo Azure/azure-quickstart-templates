@@ -4,7 +4,6 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- bicep
 urlFragment: databricks-workspace-with-managed-disk-customer-managed-keys
 languages:
 - json
