@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: sql-logical-server
 languages:
-- bicep
 - json
+- bicep
 ---
 # SQL logical server
 
