@@ -28,18 +28,21 @@ param bacpacuri string
 @maxValue(365)
 param logsRetentionInDays int = 0
 
-resource sqlServerName_databaseName 'Microsoft.Sql/servers/databases@2020-02-02-preview' = {
+resource database 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
   name: '${sqlServerName}/${databaseName}'
   tags: tags
   location: location
+  sku: {
+    name: edition
+    tier: edition
+  }
   properties: {
     createMode: 'Default'
-    edition: edition
   }
 }
 
-resource sqlServerName_databaseName_Import 'Microsoft.Sql/servers/databases/extensions@2014-04-01-preview' = {
-  parent: sqlServerName_databaseName
+resource import 'Microsoft.Sql/servers/databases/extensions@2022-05-01-preview' = {
+  parent: database
   name: 'Import'
   properties: {
     storageKey: '?'
@@ -51,8 +54,9 @@ resource sqlServerName_databaseName_Import 'Microsoft.Sql/servers/databases/exte
   }
 }
 
-resource sqlServerName_databaseName_Microsoft_Insights_service 'Microsoft.Sql/servers/databases/providers/diagnosticSettings@2017-05-01-preview' = {
-  name: '${sqlServerName}/${databaseName}/Microsoft.Insights/service'
+resource databaseDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  scope: database
+  name: 'service'
   properties: {
     workspaceId: omsWorkspaceResourceId
     logs: [
@@ -124,9 +128,6 @@ resource sqlServerName_databaseName_Microsoft_Insights_service 'Microsoft.Sql/se
       }
     ]
   }
-  dependsOn: [
-    sqlServerName_databaseName
-  ]
 }
 
 output databaseName string = databaseName

@@ -17,9 +17,8 @@ param location string
 param connectionType string = 'Custom'
 param connectionString string
 
-resource webAppName_connectionstrings 'Microsoft.Web/sites/config@2018-02-01' = {
+resource connectionstring 'Microsoft.Web/sites/config@2022-03-01' = {
   name: '${webAppName}/connectionstrings'
-  location: location
   properties: {
     DefaultConnection: {
       value: connectionString

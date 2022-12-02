@@ -76,19 +76,7 @@ var aspName = 'xss-attack-asp-${substring(uniqueString(resourceGroup().id), 0, 5
 var diagStorageAccName = 'xssattackstg${substring(uniqueString(resourceGroup().id), 0, 5)}'
 var appServiceConnectionType = 'SQLAzure'
 var sqlServerName = 'xssattackserver${substring(uniqueString(resourceGroup().id), 0, 5)}'
-var omsTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.loganalytics/workspaces.json'), _artifactsLocationSasToken)
-var vnetTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.network/virtualnetworks.json'), _artifactsLocationSasToken)
-var pipTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.network/publicipaddress.json'), _artifactsLocationSasToken)
-var appgwTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.network/applicationgateway.json'), _artifactsLocationSasToken)
-var storageTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.storage/storageaccounts.json'), _artifactsLocationSasToken)
-var aspTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.web/serverfarms.json'), _artifactsLocationSasToken)
-var webappConnectionStringTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.web/sites.config.connectionstrings.json'), _artifactsLocationSasToken)
-var webappTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.web/sites.json'), _artifactsLocationSasToken)
-var webappMsDeployTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.web/sites.extensions.msdeploy.json'), _artifactsLocationSasToken)
-var webPackageUri = concat(uri(_artifactsLocation, 'artifacts/ContosoClinic.zip'), _artifactsLocationSasToken)
-var sqlServerTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.sql/servers.v12.0.json'), _artifactsLocationSasToken)
-var sqlDatabaseTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.sql/servers.databases.json'), _artifactsLocationSasToken)
-var sqlAuditingTemplateUri = concat(uri(_artifactsLocation, 'nested/microsoft.sql/servers.auditingsettings.json'), _artifactsLocationSasToken)
+var webPackageUri = format('{0}{1}', uri(_artifactsLocation, 'artifacts/ContosoClinic.zip'), _artifactsLocationSasToken)
 
 module deploy_xss_attack_oms_resource 'nested/microsoft.loganalytics/workspaces.bicep' = {
   name: 'deploy-xss-attack-oms-resource'
@@ -153,7 +141,7 @@ module deploy_applicationGateways_name_applicationgateway_resource 'nested/micro
         properties: {
           BackendAddresses: [
             {
-              fqdn: webAppName_resource.properties.outputs.endpoint.value
+              fqdn: webAppName_resource.outputs.endpoint
             }
           ]
         }
@@ -209,7 +197,7 @@ module deploy_applicationGateways_name_applicationgateway_resource 'nested/micro
         name: httpProbeName
         properties: {
           protocol: 'Http'
-          host: webAppName_resource.properties.outputs.endpoint.value
+          host: webAppName_resource.outputs.endpoint
           path: '/'
           interval: 30
           timeout: 30
@@ -220,7 +208,7 @@ module deploy_applicationGateways_name_applicationgateway_resource 'nested/micro
         name: httpsProbeName
         properties: {
           protocol: 'Https'
-          host: webAppName_resource.properties.outputs.endpoint.value
+          host: webAppName_resource.outputs.endpoint
           path: '/'
           interval: 30
           timeout: 30
@@ -229,7 +217,7 @@ module deploy_applicationGateways_name_applicationgateway_resource 'nested/micro
       }
     ]
     wafMode: applicationGateways[i].wafMode
-    omsWorkspaceResourceId: deploy_xss_attack_oms_resource.properties.outputs.workspaceId.value
+    omsWorkspaceResourceId: deploy_xss_attack_oms_resource.outputs.workspaceId
   }
   dependsOn: [
     applicationGateways_name_pip_resource
@@ -274,7 +262,7 @@ module webAppName_connectionStrings_resource 'nested/microsoft.web/sites.config.
     webAppName: webAppName
     location: location
     connectionType: appServiceConnectionType
-    connectionString: '${databases_0_name_database_resource.properties.outputs.dbConnetcionString.value};User Id=${sqlAdministratorName};Password=${sqlServerPassword};Connection Timeout=300;'
+    connectionString: '${databases_0_name_database_resource.outputs.dbConnetcionString};User Id=${sqlAdministratorName};Password=${sqlServerPassword};Connection Timeout=300;'
   }
   dependsOn: [
     webAppName_resource
@@ -286,9 +274,7 @@ module webAppName_msdeploy_resource 'nested/microsoft.web/sites.extensions.msdep
   name: '${webAppName}-msdeploy-resource'
   params: {
     webAppName: webAppName
-    location: location
     packageUri: webPackageUri
-    tags: tags
   }
   dependsOn: [
     webAppName_connectionStrings_resource
@@ -324,7 +310,7 @@ module databases_0_name_database_resource 'nested/microsoft.sql/servers.database
     sqlServerName: sqlServerName
     location: location
     databaseName: databases[0].name
-    omsWorkspaceResourceId: deploy_xss_attack_oms_resource.properties.outputs.workspaceId.value
+    omsWorkspaceResourceId: deploy_xss_attack_oms_resource.outputs.workspaceId
     tags: tags
     administratorLogin: sqlAdministratorName
     administratorLoginPassword: sqlServerPassword

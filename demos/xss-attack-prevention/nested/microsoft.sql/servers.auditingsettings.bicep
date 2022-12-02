@@ -1,7 +1,7 @@
 param sqlServerName string
 param storageAccountName string
 
-resource sqlServerName_default 'Microsoft.Sql/servers/auditingSettings@2022-05-01-preview' = {
+resource auditingSetting 'Microsoft.Sql/servers/auditingSettings@2022-05-01-preview' = {
   name: '${sqlServerName}/default'
   properties: {
     state: 'Enabled'
