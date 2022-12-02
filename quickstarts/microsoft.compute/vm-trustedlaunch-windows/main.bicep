@@ -51,7 +51,7 @@ param vmName string = 'myTVM'
   '2022-datacenter-g2'
   '2022-datacenter-smalldisk-g2'
 ])
-param sku string = '2022-datacenter-azure-edition-core'
+param sku string = '2022-datacenter-azure-edition'
 
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_D2s_v3'
@@ -535,11 +535,16 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
     settings: {
-      AttestationEndpointCfg: {
-        maaEndpoint: maaEndpoint
-        maaTenantName: maaTenantName
-        ascReportingEndpoint: ''
-        useAlternateToken: useAlternateToken
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
+        AscSettings: {
+          ascReportingEndpoint: ''
+          ascReportingFrequency: ''
+        }
+        useCustomToken: useAlternateToken
         disableAlerts: disableAlerts
       }
     }
