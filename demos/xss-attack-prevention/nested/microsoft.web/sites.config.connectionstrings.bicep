@@ -1,5 +1,4 @@
 param webAppName string
-param location string
 
 @allowed([
   'MySql'

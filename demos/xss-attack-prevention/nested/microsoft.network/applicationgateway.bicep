@@ -85,7 +85,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2022-05-01' =
   }
 }
 
-resource applicationGatewayDiagnostics 'Microsoft.Insights/diagnosticSettings@2017-05-01-preview' = {
+resource applicationGatewayDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: applicationGateway
   name: 'service'
   properties: {

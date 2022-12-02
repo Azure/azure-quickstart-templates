@@ -260,7 +260,6 @@ module webAppName_connectionStrings_resource 'nested/microsoft.web/sites.config.
   name: '${webAppName}-connectionStrings-resource'
   params: {
     webAppName: webAppName
-    location: location
     connectionType: appServiceConnectionType
     connectionString: '${databases_0_name_database_resource.outputs.dbConnetcionString};User Id=${sqlAdministratorName};Password=${sqlServerPassword};Connection Timeout=300;'
   }
