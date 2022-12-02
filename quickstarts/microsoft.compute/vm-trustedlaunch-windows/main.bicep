@@ -71,7 +71,7 @@ param secureBoot bool = true
 param vTPM bool = true
 
 @description('Location for all resources.')
-param location string
+param location string = resourceGroup().location
 
 @description('Unique DNS Name for the Public IP used to access the virtual machine.')
 param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().id)}')
@@ -102,25 +102,8 @@ param virtualNetworkName string = 'vnet'
 @description('Name of the network security group')
 param networkSecurityGroupName string = 'nsg'
 
-@description('MAA Endpoint to attest to.')
-@allowed([
-  'https://sharedcus.cus.attest.azure.net/'
-  'https://sharedcae.cae.attest.azure.net/'
-  'https://sharedeus2.eus2.attest.azure.net/'
-  'https://shareduks.uks.attest.azure.net/'
-  'https://sharedcac.cac.attest.azure.net/'
-  'https://sharedukw.ukw.attest.azure.net/'
-  'https://sharedneu.neu.attest.azure.net/'
-  'https://sharedeus.eus.attest.azure.net/'
-  'https://sharedeau.eau.attest.azure.net/'
-  'https://sharedncus.ncus.attest.azure.net/'
-  'https://sharedwus.wus.attest.azure.net/'
-  'https://sharedweu.weu.attest.azure.net/'
-  'https://sharedscus.scus.attest.azure.net/'
-  'https://sharedsasia.sasia.attest.azure.net/'
-  'https://sharedsau.sau.attest.azure.net/'
-])
-param maaEndpoint string = 'https://sharedeus2.eus2.attest.azure.net/'
+@description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
+param maaEndpoint string = ''
 
 var imageReference = {
   'RS1-EnterpriseN-G2': {
@@ -407,7 +390,6 @@ var imageReference = {
   }
 }
 var addressPrefix = '10.0.0.0/16'
-var ascReportingEndpoint = 'https://sharedeus2.eus2.attest.azure.net/'
 var disableAlerts = 'false'
 var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
@@ -556,7 +538,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
       AttestationEndpointCfg: {
         maaEndpoint: maaEndpoint
         maaTenantName: maaTenantName
-        ascReportingEndpoint: ascReportingEndpoint
+        ascReportingEndpoint: ''
         useAlternateToken: useAlternateToken
         disableAlerts: disableAlerts
       }
@@ -564,4 +546,4 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
   }
 }
 
-output hostname string = publicIp.properties.dnsSettings.fqdn
+output hostname string = reference(publicIp.id, '2022-05-01').dnsSettings.fqdn
