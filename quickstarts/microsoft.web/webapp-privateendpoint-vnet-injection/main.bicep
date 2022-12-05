@@ -111,7 +111,7 @@ resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
   kind: 'app'
 }
 
-resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp1 'Microsoft.Web/sites@2022-03-01' = {
   name: site1_Name
   location: location
   kind: 'app'
@@ -120,7 +120,7 @@ resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource webApp2 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp2 'Microsoft.Web/sites@2022-03-01' = {
   name: site2_Name
   location: location
   kind: 'app'
