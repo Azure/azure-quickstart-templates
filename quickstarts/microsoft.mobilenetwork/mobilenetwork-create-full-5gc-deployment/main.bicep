@@ -93,10 +93,8 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01
 #disable-next-line BCP081
 resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' = {
   parent: exampleMobileNetwork
-  resource exampleSite 'sites@2022-11-01' = {
-    name: siteName
-    location: location
-  }
+  name: siteName
+  location: location
 }
 
 #disable-next-line BCP081
