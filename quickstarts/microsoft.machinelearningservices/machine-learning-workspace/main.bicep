@@ -80,7 +80,7 @@ resource vault 'Microsoft.KeyVault/vaults@2022-07-01' = {
 
 resource applicationInsight 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
-  location: (((location == 'eastus2') || (location == 'westcentralus')) ? 'southcentralus' : location)
+  location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
