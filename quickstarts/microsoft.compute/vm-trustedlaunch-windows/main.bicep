@@ -393,7 +393,6 @@ var addressPrefix = '10.0.0.0/16'
 var disableAlerts = 'false'
 var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
-var ascReportingEndpoint = ''
 var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
 var subnetName = 'Subnet'
@@ -542,8 +541,8 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
           maaTenantName: maaTenantName
         }
         AscSettings: {
-          ascReportingEndpoint: ascReportingEndpoint
-          ascReportingFrequency: ascReportingEndpoint
+          ascReportingEndpoint: substring(maaEndpoint, 0, 0)
+          ascReportingFrequency: substring(maaEndpoint, 0, 0)
         }
         useCustomToken: useAlternateToken
         disableAlerts: disableAlerts
