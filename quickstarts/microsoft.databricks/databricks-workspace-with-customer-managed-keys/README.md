@@ -4,11 +4,10 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- bicep
 urlFragment: databricks-workspace-with-customer-managed-keys
 languages:
-- bicep
 - json
+- bicep
 ---
 # Deploy an Azure Databricks Workspace and configure CMK
 
