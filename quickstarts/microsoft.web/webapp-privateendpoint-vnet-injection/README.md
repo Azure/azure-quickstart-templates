@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Web App with VNet Injection and Private Endpoint.
+# Web App with VNet Injection and Private Endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-privateendpoint-vnet-injection/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-privateendpoint-vnet-injection/PublicDeployment.svg)
