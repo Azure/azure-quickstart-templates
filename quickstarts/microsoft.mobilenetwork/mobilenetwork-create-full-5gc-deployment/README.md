@@ -2,13 +2,16 @@
 description: This template creates all resources required to deploy a Private 5G Core, including provisioning sims and creating sample QoS policy. It can optionally be deployed to a Kubernetes cluster running on an Azure Stack Edge device.
 page_type: sample
 products:
-- azure
-- azure-resource-manager
+  - azure
+  - azure-resource-manager
 urlFragment: mobilenetwork-create-full-5gc-deployment
 languages:
-- json
-- bicep
+  - json
+  - bicep
 ---
+
+<!-- @format -->
+
 # Create a full 5G Core deployment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mobilenetwork/mobilenetwork-create-full-5gc-deployment/PublicLastTestDate.svg)
@@ -26,7 +29,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mobilenetwork%2Fmobilenetwork-create-full-5gc-deployment%2Fazuredeploy.json)
 
-This template deploys a Private 5G Core. The Private 5G Core is a deployed with a sample sim and default policy.
+This template deploys a Private 5G Core. The Private 5G Core is a deployed with a sample SIM and default policy.
 
 ## Prerequisites
 
