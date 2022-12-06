@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: aks-nat-agic
 languages:
-- bicep
 - json
+- bicep
 ---
 # AKS Cluster with a NAT Gateway and an Application Gateway
 
