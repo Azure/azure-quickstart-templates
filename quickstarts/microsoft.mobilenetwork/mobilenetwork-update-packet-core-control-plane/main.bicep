@@ -7,9 +7,6 @@ param existingSiteName string = 'myExampleSite'
 @description('The name of the existing packet core platform type.')
 param existingPacketCorePlatformType string = 'AKS-HCI'
 
-@description('The name of the mobile network.')
-param existingMobileNetworkName string
-
 @description('The mode in which the packet core instance will run.')
 @allowed([
   'EPC'
@@ -36,19 +33,24 @@ param accessGateway string
 param newVersion string = ''
 
 #disable-next-line BCP081
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
-  name: existingMobileNetworkName
+resource existingSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' existing = {
+  name: existingSiteName
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
   name: existingSiteName
   location: location
   properties: {
-    mobileNetwork: {
-      id: existingMobileNetwork.id
+    sites: [
+      {
+        id: existingSite.id
+      }
+    ]
+    localDiagnosticsAccess: {
+      authenticationType: 'Password'
     }
-    sku: 'EvaluationPackage'
+    sku: 'G0'
     coreNetworkTechnology: existingPacketCoreNetworkTechnology
     platform: {
       type: existingPacketCorePlatformType
