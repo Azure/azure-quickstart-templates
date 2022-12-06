@@ -82,7 +82,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-0
 }
 
 module VMtemplate 'nested/VMtemplate.bicep' = [for i in range(0, NodeCount): {
-  name: 'VMtemplate-${i}'
+  name: 'vmCopy-${i}'
   params: {
     virtualMachineName: take('vm${i}-${prefix}', 15)
     vmSize: vmSize
@@ -99,7 +99,7 @@ module VMtemplate 'nested/VMtemplate.bicep' = [for i in range(0, NodeCount): {
 
 @batchSize(1)
 module IRInstalltemplate  'nested/IRInstall.bicep' = [for i in range(0, NodeCount): {
-  name: 'IRInstalltemplate-${i}'
+  name: 'irInstallCopy-${i}'
   params: {
     datafactoryId: resourceId(existingDataFactoryResourceGroup, 'Microsoft.DataFactory/factories/integrationruntimes', existingDataFactoryName, IntegrationRuntimeName)
     virtualMachineName: take('vm${i}-${prefix}', 15)
