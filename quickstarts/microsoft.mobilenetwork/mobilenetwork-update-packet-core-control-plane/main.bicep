@@ -4,9 +4,6 @@ param location string = resourceGroup().location
 @description('The name of the existing packet core / site.')
 param existingSiteName string = 'myExampleSite'
 
-@description('The name of the existing packet core platform type.')
-param existingPacketCorePlatformType string = 'AKS-HCI'
-
 @description('The mode in which the packet core instance will run.')
 @allowed([
   'EPC'
@@ -53,7 +50,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     sku: 'G0'
     coreNetworkTechnology: existingPacketCoreNetworkTechnology
     platform: {
-      type: existingPacketCorePlatformType
+      type: 'AKS-HCI'
       customLocation: empty(existingPacketCoreCustomLocationId) ? null : {
         id: existingPacketCoreCustomLocationId
       }
