@@ -98,7 +98,7 @@ module VMtemplate 'nested/VMtemplate.bicep' = [for i in range(0, NodeCount): {
 }]
 
 @batchSize(1)
-module IRInstalltemplate  'nested/IRInstall.bicep' = [for i in range(0, NodeCount): {
+module IRInstalltemplate 'nested/IRInstall.bicep' = [for i in range(0, NodeCount): {
   name: 'irInstallCopy-${i}'
   params: {
     datafactoryId: resourceId(existingDataFactoryResourceGroup, 'Microsoft.DataFactory/factories/integrationruntimes', existingDataFactoryName, IntegrationRuntimeName)
