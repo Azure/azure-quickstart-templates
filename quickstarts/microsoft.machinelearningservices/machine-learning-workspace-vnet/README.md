@@ -4,7 +4,6 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- bicep
 urlFragment: machine-learning-workspace-vnet
 languages:
 - json
