@@ -111,7 +111,7 @@ resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
   kind: 'app'
 }
 
-resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp1 'Microsoft.Web/sites@2022-03-01' = {
   name: site1_Name
   location: location
   kind: 'app'
@@ -120,21 +120,14 @@ resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource webApp2 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp2 'Microsoft.Web/sites@2022-03-01' = {
   name: site2_Name
   location: location
   kind: 'app'
   properties: {
     serverFarmId: serverFarm.id
-  }
-}
-
-resource webApp2AppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
-  parent: webApp2
-  name: 'appsettings'
-  properties: {
-    WEBSITE_DNS_SERVER: '168.63.129.16'
-    WEBSITE_VNET_ROUTE_ALL: '1'
+    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnet2Name)
+    vnetRouteAllEnabled: true
   }
 }
 
@@ -169,14 +162,6 @@ resource webApp2Binding 'Microsoft.Web/sites/hostNameBindings@2019-08-01' = {
   properties: {
     siteName: webApp2.name
     hostNameType: 'Verified'
-  }
-}
-
-resource webApp2NetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
-  parent: webApp2
-  name: 'virtualNetwork'
-  properties: {
-    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets',virtualNetwork.name ,subnet2Name)
   }
 }
 
