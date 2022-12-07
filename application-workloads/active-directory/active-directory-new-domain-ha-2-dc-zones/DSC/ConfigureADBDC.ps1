@@ -14,7 +14,7 @@ configuration ConfigureADBDC
 
     Import-DscResource -ModuleName xActiveDirectory, xPendingReboot
 
-    [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("$($Admincreds.UserName)@${DomainName}", $Admincreds.Password)
 
     Node localhost
     {
@@ -22,13 +22,28 @@ configuration ConfigureADBDC
         {
             RebootNodeIfNeeded = $true
         }
-        
+        xPendingReboot Reboot
+        {
+           Name = "Reboot"
+        }
+        Script Reboot
+        {
+            TestScript = {
+            return (Test-Path HKLM:\SOFTWARE\MyMainKey\RebootKey)
+            }
+            SetScript = {
+			New-Item -Path HKLM:\SOFTWARE\MyMainKey\RebootKey -Force
+			$global:DSCMachineStatus = 1 
+                }
+            GetScript = { return @{result = 'result'}}
+        }
         xWaitForADDomain DscForestWait
         {
             DomainName = $DomainName
             DomainUserCredential= $DomainCreds
             RetryCount = $RetryCount
             RetryIntervalSec = $RetryIntervalSec
+            DependsOn = "[Script]Reboot"
         }
         xADDomainController BDC
         {

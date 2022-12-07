@@ -53,7 +53,7 @@ configuration PrepareADBDC
             Name = "RSAT-AD-AdminCenter"
             DependsOn = "[WindowsFeature]ADDSTools"
         }
-
+<#
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -61,5 +61,6 @@ configuration PrepareADBDC
             AddressFamily  = 'IPv4'
             DependsOn="[WindowsFeature]ADDSInstall"
         }
+#>
    }
 }
