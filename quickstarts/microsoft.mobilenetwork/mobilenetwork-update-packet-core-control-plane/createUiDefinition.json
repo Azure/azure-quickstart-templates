@@ -18,14 +18,24 @@
 				}
 			},
 			{
+				"name": "getSupportedPacketCoreVersions",
+				"type": "Microsoft.Solutions.ArmApiControl",
+				"request": {
+				  "method": "GET",
+				  "path": "/providers/Microsoft.MobileNetwork/packetCoreControlPlaneVersions?api-version=2022-11-01"
+				}
+			},
+			{
 				"name": "newVersion",
-				"type": "Microsoft.Common.TextBox",
+				"type": "Microsoft.Common.DropDown",
 				"label": "New version",
 				"toolTip": "The new version of packet core to install. Contact your support engineer for instructions",
+				"defaultValue": {
+			      "value": "[first(map(filter(basics('getSupportedPacketCoreVersions').value, (item) => equals(concat(map(filter(item.properties.platforms, (platform) => equals(platform.platformType, 'AKS-HCI')), (platform) => platform.recommendedVersion), ''), 'Recommended')), (item) => item.name))]"
+				},
 				"constraints": {
-					"required": true,
-					"regex": "^.*$",
-					"validationMessage": "Please enter a valid version"
+                  "allowedValues": "[map(filter(basics('getSupportedPacketCoreVersions').value, (item) => equals('Active', concat(map(filter(item.properties.platforms, (platform) => equals(platform.platformType, 'AKS-HCI')), (platform) => platform.versionState), ''))), (item) => parse(concat('{\"label\":\"', toUpper(item.name), if(equals(concat(map(filter(item.properties.platforms, (platform) => equals(platform.platformType, 'AKS-HCI')), (platform) => platform.recommendedVersion), ''), 'Recommended'), ' (Recommended)', ''), '\",\"value\":\"', item.name, '\"}')))]",
+				  "required": true
 				}
 			},
 			{
@@ -33,7 +43,7 @@
 				"type": "Microsoft.Solutions.ArmApiControl",
 				"request": {
 					"method": "GET",
-					"path": "[concat(basics('packetCoreSelector').id, '?api-version=2022-04-01-preview')]"
+					"path": "[concat(basics('packetCoreSelector').id, '?api-version=2022-11-01')]"
 				},
 				"visible": false
 			}
@@ -41,8 +51,8 @@
 		"steps": [],
 		"outputs": {
 			"location": "[location()]",
-			"existingMobileNetworkName": "[last(split(basics('existingSiteConfig').properties.mobileNetwork.id, '/'))]",
-			"existingSiteName": "[basics('packetCoreSelector').name]",
+		    "existingSiteName": "[basics('packetCoreSelector').name]",
+			"existingSiteId": "[basics('existingSiteConfig').properties.sites[0].id]",
 			"existingPacketCoreNetworkTechnology": "[basics('existingSiteConfig').properties.coreNetworkTechnology]",
 			"existingPacketCoreCustomLocationId": "[basics('existingSiteConfig').properties.customLocation.id]",
 			"controlPlaneAccessInterfaceName": "[basics('existingSiteConfig').properties.controlPlaneAccessInterface.name]",
