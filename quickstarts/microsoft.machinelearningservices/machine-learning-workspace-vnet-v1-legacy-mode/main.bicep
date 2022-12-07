@@ -53,7 +53,7 @@ param storageAccountType string = 'Standard_LRS'
   'true'
   'false'
 ])
-param storageAccountBehindVNet string = 'false'
+param storageAccountBehindVNet string = 'true'
 
 @description('Resource group name of the storage account if using existing one')
 param storageAccountResourceGroupName string = resourceGroup().name
@@ -300,6 +300,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = if (sto
       keySource: 'Microsoft.Storage'
     }
     supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
     networkAcls: ((storageAccountBehindVNet == 'true') ? networkRuleSetBehindVNet : json('null'))
   }
@@ -334,7 +335,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = 
   }
   tags: tagValues
   properties: {
-    adminUserEnabled: true
+    adminUserEnabled: false
     networkRuleSet: ((containerRegistryBehindVNet == 'true') ? networkRuleSetBehindVNet : json('null'))
   }
   dependsOn: [
