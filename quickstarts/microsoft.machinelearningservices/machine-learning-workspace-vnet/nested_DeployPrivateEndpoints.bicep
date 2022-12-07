@@ -4,7 +4,6 @@ param subnetId string
 param privateDnsZoneName object
 param privateAznbDnsZoneName object
 param vnetId string
-param privateEndpointName string
 
 @description('Specifies the name of the Azure Machine Learning workspace.')
 param workspaceName string
@@ -90,7 +89,8 @@ resource privateAznbDnsZoneVnLink 'Microsoft.Network/privateDnsZones/virtualNetw
 }
 
 resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateEndpointName}/default'
+  parent: privateEndpoint
+  name: 'default'
   properties: {
     privateDnsZoneConfigs: [
       {
@@ -107,7 +107,4 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
       }
     ]
   }
-  dependsOn: [
-    privateEndpoint
-  ]
 }

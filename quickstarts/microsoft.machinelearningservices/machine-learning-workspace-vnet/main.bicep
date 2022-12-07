@@ -53,7 +53,7 @@ param storageAccountType string = 'Standard_LRS'
   'true'
   'false'
 ])
-param storageAccountBehindVNet string = 'false'
+param storageAccountBehindVNet string = 'true'
 
 @description('Resource group name of the storage account if using existing one')
 param storageAccountResourceGroupName string = resourceGroup().name
@@ -201,14 +201,13 @@ var privateAznbDnsZoneName = {
   azurecloud: 'privatelink.notebooks.azure.net'
   azurechinacloud: 'privatelink.notebooks.chinacloudapi.cn'
 }
-var privateEndpointName = '${workspaceName}-PrivateEndpoint'
 var enablePE = (privateEndpointType != 'none')
 var networkRuleSetBehindVNet = {
   defaultAction: 'deny'
   virtualNetworkRules: [
     {
       action: 'Allow'
-      id: subnet
+      id: subnetId
     }
   ]
 }
@@ -304,6 +303,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = if (sto
       keySource: 'Microsoft.Storage'
     }
     supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
     networkAcls: ((storageAccountBehindVNet == 'true') ? networkRuleSetBehindVNet : json('null'))
   }
@@ -385,7 +385,6 @@ module DeployPrivateEndpoints './nested_DeployPrivateEndpoints.bicep' = {
     privateDnsZoneName: privateDnsZoneName
     privateAznbDnsZoneName: privateAznbDnsZoneName
     vnetId: vnetId
-    privateEndpointName: privateEndpointName
     workspaceName: workspaceName
     vnetLocation: vnetLocation
     tagValues: tagValues
