@@ -4,6 +4,9 @@ param location string = resourceGroup().location
 @description('The name of the existing packet core / site.')
 param existingSiteName string = 'myExampleSite'
 
+@description('The ID of the site.')
+param existingSiteId string
+
 @description('The mode in which the packet core instance will run.')
 @allowed([
   'EPC'
@@ -30,18 +33,13 @@ param accessGateway string
 param newVersion string = ''
 
 #disable-next-line BCP081
-resource existingSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' existing = {
-  name: existingSiteName
-}
-
-#disable-next-line BCP081
 resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
   name: existingSiteName
   location: location
   properties: {
     sites: [
       {
-        id: existingSite.id
+        id: existingSiteId
       }
     ]
     localDiagnosticsAccess: {
