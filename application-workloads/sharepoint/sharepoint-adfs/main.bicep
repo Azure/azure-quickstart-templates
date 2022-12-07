@@ -589,7 +589,8 @@ resource vmDC 'Microsoft.Compute/virtualMachines@2022-08-01' = {
 }
 
 resource configureDCVM 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
-  name: '${generalSettings.vmDCName}/ConfigureDCVM'
+  parent: vmDC
+  name: 'ConfigureDCVM'
   location: location
   properties: {
     publisher: 'Microsoft.Powershell'
@@ -625,9 +626,6 @@ resource configureDCVM 'Microsoft.Compute/virtualMachines/extensions@2022-08-01'
       }
     }
   }
-  dependsOn: [
-    vmDC
-  ]
 }
 
 resource vmSQL_vmPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = if (addPublicIPAddress == 'Yes') {
@@ -809,7 +807,8 @@ resource vmSP 'Microsoft.Compute/virtualMachines@2022-08-01' = {
 }
 
 resource configureSQLVM 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
-  name: '${generalSettings.vmSQLName}/ConfigureSQLVM'
+  parent: vmSQL
+  name: 'ConfigureSQLVM'
   location: location
   properties: {
     publisher: 'Microsoft.Powershell'
@@ -849,13 +848,11 @@ resource configureSQLVM 'Microsoft.Compute/virtualMachines/extensions@2022-08-01
       }
     }
   }
-  dependsOn: [
-    vmSQL
-  ]
 }
 
 resource configureSPVM 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
-  name: '${generalSettings.vmSPName}/ConfigureSPVM'
+  parent: vmSP
+  name: 'ConfigureSPVM'
   location: location
   properties: {
     publisher: 'Microsoft.Powershell'
@@ -925,9 +922,6 @@ resource configureSPVM 'Microsoft.Compute/virtualMachines/extensions@2022-08-01'
       }
     }
   }
-  dependsOn: [
-    vmSP
-  ]
 }
 
 resource vmFE_vmPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = [for i in range(0, numberOfAdditionalFrontEnd): if ((numberOfAdditionalFrontEnd >= 1) && ((addPublicIPAddress == 'Yes') || (addPublicIPAddress == 'SharePointVMsOnly'))) {
@@ -1022,7 +1016,8 @@ resource vmFE 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0
 }]
 
 resource configureFEVM 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = [for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
-  name: '${generalSettings.vmFEName}-${i}/ConfigureFEVM'
+  parent: vmFE[i]
+  name: 'ConfigureFEVM'
   location: location
   properties: {
     publisher: 'Microsoft.Powershell'
@@ -1304,17 +1299,14 @@ resource NSG_Subnet_AzureBastion 'Microsoft.Network/networkSecurityGroups@2022-0
 }
 
 resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' = if (addAzureBastion == true) {
-  name: '${networkSettings.vNetPrivateName}/AzureBastionSubnet'
+  parent: virtualNetwork
+  name: 'AzureBastionSubnet'
   properties: {
     addressPrefix: azureBastion.subnetPrefix
     networkSecurityGroup: {
       id: NSG_Subnet_AzureBastion.id
     }
   }
-  dependsOn: [
-    virtualNetwork
-
-  ]
 }
 
 resource PublicIP_Bastion 'Microsoft.Network/publicIPAddresses@2022-05-01' = if (addAzureBastion == true) {
