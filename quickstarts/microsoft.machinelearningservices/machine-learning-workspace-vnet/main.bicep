@@ -290,6 +290,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = if (sto
   }
   kind: 'StorageV2'
   tags: tagValues
+  dependsOn: [
+    subnet
+  ]
   properties: {
     encryption: {
       services: {
@@ -313,6 +316,9 @@ resource vault 'Microsoft.KeyVault/vaults@2022-07-01' = if (keyVaultOption == 'n
   name: keyVaultName
   location: location
   tags: tagValues
+  dependsOn: [
+    subnet
+  ]
   properties: {
     tenantId: tenantId
     sku: {
@@ -331,6 +337,9 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = 
     name: containerRegistrySku
   }
   tags: tagValues
+  dependsOn:  [
+    subnet
+  ]
   properties: {
     adminUserEnabled: true
     networkRuleSet: ((containerRegistryBehindVNet == 'true') ? networkRuleSetBehindVNet : json('null'))
@@ -355,6 +364,12 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
     userAssignedIdentities: (((identityType == 'userAssigned') || (identityType == 'systemAssigned,userAssigned')) ? userAssignedIdentities : json('null'))
   }
   tags: tagValues
+  dependsOn: [
+    storageAccount
+    vault
+    registry
+    insight
+  ]
   properties: {
     friendlyName: workspaceName
     storageAccount: storageAccountId
