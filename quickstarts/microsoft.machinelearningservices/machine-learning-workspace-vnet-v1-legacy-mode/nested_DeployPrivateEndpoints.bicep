@@ -1,4 +1,3 @@
-param privateEndpointName string
 param privateDnsZoneName object
 param privateAznbDnsZoneName object
 
@@ -59,7 +58,8 @@ resource privateAznbDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if 
 }
 
 resource dnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateDnsZoneName[toLower(environment().name)]}/${uniqueString(vnetId)}'
+  parent: privateDnsZone
+  name: uniqueString(vnetId)
   location: 'global'
   tags: tagValues
   properties: {
@@ -70,12 +70,12 @@ resource dnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020
   }
   dependsOn: [
     privateEndpoint
-    privateDnsZone
   ]
 }
 
 resource aznbDnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateAznbDnsZone[toLower(environment().name)]}/${uniqueString(vnetId)}'
+  parent: privateAznbDnsZone
+  name: uniqueString(vnetId)
   location: 'global'
   tags: tagValues
   dependsOn: [
@@ -90,10 +90,8 @@ resource aznbDnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
 }
 
 resource privateDnsZoneGroups 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = if (privateEndpointType == 'AutoApproval') {
-  name: '${privateEndpointName}/default'
-  dependsOn: [
-    privateEndpoint
-  ]
+  parent: privateEndpoint
+  name: 'default'
   properties: {
     privateDnsZoneConfigs: [
       {

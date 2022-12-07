@@ -199,7 +199,6 @@ var privateAznbDnsZoneName = {
   azurecloud: 'privatelink.notebooks.azure.net'
   azurechinacloud: 'privatelink.notebooks.chinacloudapi.cn'
 }
-var privateEndpointName = '${workspaceName}-PrivateEndpoint'
 var enablePE = (privateEndpointType != 'none')
 var networkRuleSetBehindVNet = {
   defaultAction: 'deny'
@@ -392,7 +391,6 @@ module DeployPrivateEndpoints './nested_DeployPrivateEndpoints.bicep' = {
   name: 'DeployPrivateEndpoints'
   scope: resourceGroup(vnetResourceGroupName)
   params: {
-    privateEndpointName: privateEndpointName
     privateDnsZoneName: privateDnsZoneName
     privateAznbDnsZoneName: privateAznbDnsZoneName
     enablePE: enablePE
