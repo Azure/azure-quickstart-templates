@@ -2,7 +2,8 @@ param (
     $mail,
     $publicdnsname,
     $adminPwd,
-    $basePath
+    $basePath,
+    $publicSshKey
 )
 
 $ProgressPreference = 'SilentlyContinue' 
@@ -20,11 +21,18 @@ New-Item -Path f:\compose -ItemType Directory | Out-Null
 & .\chocoInstall.ps1
 choco feature enable -n allowGlobalConfirmation
 choco install --no-progress --limit-output vim
+choco install --no-progress --limit-output pwsh
 choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 
-# configure OpenSSH, make PS the default shell and restart sshd
-Copy-Item (Join-Path $basepath 'sshd_config_wpwd') 'C:\ProgramData\ssh\sshd_config'
-New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
+# configure OpenSSH, make pwsh the default shell, show hostname in shell and restart sshd
+Copy-Item "$basePath\sshd_config_wopwd" 'C:\ProgramData\ssh\sshd_config'
+$path = "c:\ProgramData\ssh\administrators_authorized_keys"
+"$publicSshKey" | Out-File -Encoding utf8 -FilePath $path
+$acl = Get-Acl -Path $path
+$acl.SetSecurityDescriptorSddlForm("O:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)")
+Set-Acl -Path $path -AclObject $acl
+New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Program Files\PowerShell\7\pwsh.exe" -PropertyType String -Force
+'function prompt { "PS [$env:COMPUTERNAME]:$($executionContext.SessionState.Path.CurrentLocation)$(''>'' * ($nestedPromptLevel + 1)) " }' | Out-File -FilePath "$($PROFILE.AllUsersAllHosts)" -Encoding utf8
 Restart-Service sshd
 
 # relocate docker data

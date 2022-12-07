@@ -387,10 +387,6 @@
         }
       ]
     },
-    "subnetPolicyForPE": {
-      "privateEndpointNetworkPolicies": "Disabled",
-      "privateLinkServiceNetworkPolicies": "Enabled"
-    },
     "serviceEndpointsAll": [
       {
         "service": "Microsoft.Storage"
@@ -441,7 +437,7 @@
     {
       "condition": "[equals(parameters('vnetOption'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-07-01",
       "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tagValues')]",
@@ -463,31 +459,8 @@
       ],
       "properties": {
         "addressPrefix": "[parameters('subnetPrefix')]",
-        "privateEndpointNetworkPolicies": "Disabled",
         "privateLinkServiceNetworkPolicies": "Enabled",
         "serviceEndpoints": "[if(equals(toLower(environment().name), 'azurechinacloud'), variables('serviceEndpointsAzureChinaCloud'), variables('serviceEndpointsAll') )]"
-      }
-    },
-    {
-      "condition": "[and(equals(parameters('subnetOption'), 'existing'), not(equals(parameters('privateEndpointType'), 'none')))]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
-      "name": "UpdateSubnetPolicy",
-      "resourceGroup": "[parameters('vnetResourceGroupName')]",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": [
-            {
-              "type": "Microsoft.Network/virtualNetworks/subnets",
-              "apiVersion": "2020-06-01",
-              "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
-              "properties": "[if(and(equals(parameters('subnetOption'), 'existing'), not(equals(parameters('privateEndpointType'), 'none'))), union(reference(variables('subnet'), '2020-06-01'), variables('subnetPolicyForPE')), json('null'))]"
-            }
-          ]
-        }
       }
     },
     {
@@ -517,6 +490,7 @@
           "keySource": "Microsoft.Storage"
         },
         "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
         "networkAcls": "[if(equals(parameters('storageAccountBehindVNet'), 'true'), variables('networkRuleSetBehindVNet'), json('null'))]"
       }
     },
@@ -572,7 +546,7 @@
     },
     {
       "type": "Microsoft.MachineLearningServices/workspaces",
-      "apiVersion": "2022-01-01-preview",
+      "apiVersion": "2022-10-01",
       "name": "[parameters('workspaceName')]",
       "location": "[parameters('location')]",
       "identity": {
@@ -611,7 +585,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "name": "DeployPrivateEndpoints",
       "resourceGroup": "[parameters('vnetResourceGroupName')]",
       "dependsOn": [
@@ -627,7 +601,7 @@
             {
               "condition": "[variables('enablePE')]",
               "type": "Microsoft.Network/privateEndpoints",
-              "apiVersion": "2020-06-01",
+              "apiVersion": "2021-04-01",
               "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
               "location": "[parameters('vnetLocation')]",
               "tags": "[parameters('tagValues')]",
@@ -702,7 +676,7 @@
             {
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-              "apiVersion": "2020-06-01",
+              "apiVersion": "2021-04-01",
               "name": "[concat(variables('privateEndpointName'), '/', 'default')]",
               "location": "[parameters('vnetLocation')]",
               "dependsOn":[
