@@ -95,14 +95,14 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
     }
     serverFarmId: hostingPlan.id
   }
-  dependsOn: [
-    database
-  ]
 }
 
 resource config 'Microsoft.Web/sites/config@2022-03-01' = {
   parent: site
   name: 'appsettings'
+  dependsOn: [
+    database
+  ]
   properties: {
     SONARQUBE_JDBC_URL: 'jdbc:postgresql://${server.properties.fullyQualifiedDomainName}:5432/${databaseName}?user=${jdbcSonarUserName}&password=${administratorLoginPassword}&ssl=true'
     SONARQUBE_JDBC_USERNAME: jdbcSonarUserName
