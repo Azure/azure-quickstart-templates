@@ -4,11 +4,10 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- bicep
 urlFragment: machine-learning-workspace-vnet-v1-legacy-mode
 languages:
-- json
 - bicep
+- json
 ---
 # Create an Azure Machine Learning service workspace (legacy)
 
