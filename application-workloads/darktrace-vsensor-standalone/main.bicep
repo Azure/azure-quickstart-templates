@@ -42,6 +42,8 @@ param adminPublicKey string = ''
 param applianceHostName string
 
 @description('Darktrace master instance connection port.')
+@minValue(1)
+@maxValue(65535)
 param appliancePort int = 443
 
 @description('Darktrace Update Key needed to install the vSensor package. Contact your Darktrace representative for more information.')
@@ -56,19 +58,12 @@ param pushToken string
 @secure()
 param osSensorHMACToken string
 
-var varLocation = location
-var nsgId = networkSecurityGroup.id
 var nsgSourceAddressPrefix = split(varMgmtSourceAddressOrRange, ',')
 var varMgmtSourceAddressOrRange = replace(MgmtSourceAddressOrRange, ' ', '')
-var updkey = updateKey
-var pusht = pushToken
-var oshmac = osSensorHMACToken
-var mastername = applianceHostName
-var masterport = appliancePort
 
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
   name: networkSecurityGroupName
-  location: varLocation
+  location: location
   properties: {
     securityRules: [
       {
@@ -122,16 +117,16 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-0
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(0, numberOfVsensors): {
-  name: '${vsensorName}-${(i + 1)}-nic'
-  location: varLocation
+resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(1, numberOfVsensors): {
+  name: '${vsensorName}-${i}-nic'
+  location: location
   properties: {
     ipConfigurations: [
       {
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnet1Name)
+            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnet1Name)
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -139,14 +134,14 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(
     ]
     enableAcceleratedNetworking: true
     networkSecurityGroup: {
-      id: nsgId
+      id: networkSecurityGroup.id
     }
   }
 }]
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, numberOfVsensors): {
-  name: '${vsensorName}-${(i + 1)}'
-  location: varLocation
+resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(1, numberOfVsensors): {
+  name: '${vsensorName}-${i}'
+  location: location
   properties: {
     hardwareProfile: {
       vmSize: virtualMachineSize
@@ -154,7 +149,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, 
     storageProfile: {
       osDisk: {
         createOption: 'fromImage'
-        diskSizeGB: int(diskSize)
+        diskSizeGB: diskSize
         managedDisk: {
           storageAccountType: 'StandardSSD_LRS'
         }
@@ -170,7 +165,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, 
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${vsensorName}-${(i + 1)}-nic')
+          id: nic[i].id
           properties: {
             deleteOption: 'delete'
           }
@@ -194,7 +189,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, 
           patchMode: 'ImageDefault'
         }
       }
-      customData: base64('#!/bin/bash\nbash <(wget https://packages.darktrace.com/install -O -) --updateKey "${updkey}"\n sleep 5\n/usr/sbin/set_pushtoken.sh "${pusht}" ${mastername}:${masterport}\nsleep 5\nset_ossensor_hmac.sh "${oshmac}"')
+      customData: base64('#!/bin/bash\nbash <(wget https://packages.darktrace.com/install -O -) --updateKey "${updateKey}"\n sleep 5\n/usr/sbin/set_pushtoken.sh "${pushToken}" ${applianceHostName}:${appliancePort}\nsleep 5\nset_ossensor_hmac.sh "${osSensorHMACToken}"')
     }
     diagnosticsProfile: {
       bootDiagnostics: {
@@ -202,9 +197,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, 
       }
     }
   }
-  dependsOn: [
-    nic
-  ]
 }]
 
 output allowedManagementIPsAndRanges array = nsgSourceAddressPrefix
