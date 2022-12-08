@@ -117,8 +117,8 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-0
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(1, numberOfVsensors): {
-  name: '${vsensorName}-${i}-nic'
+resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(0, numberOfVsensors): {
+  name: '${vsensorName}-${i+1}-nic'
   location: location
   properties: {
     ipConfigurations: [
@@ -139,8 +139,8 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(
   }
 }]
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(1, numberOfVsensors): {
-  name: '${vsensorName}-${i}'
+resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, numberOfVsensors): {
+  name: '${vsensorName}-${i+1}'
   location: location
   properties: {
     hardwareProfile: {
