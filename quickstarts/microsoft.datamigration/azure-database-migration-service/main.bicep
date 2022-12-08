@@ -42,8 +42,7 @@ var scriptFiles = [
   uri(_artifactsLocation, '${bakFileLocation}{_artifactsLocationSasToken}')
 ]
 var scriptParameters = '-userName ${sourceWindowsAdminUserName} -password "${sourceWindowsAdminPassword}'
-var storageAccountNamePrefix = 'storage'
-var storageAccountName = toLower('${storageAccountNamePrefix}{uniqueString(resourceGroup().id)}')
+var storageAccountName = toLower('store${uniqueString(resourceGroup().id)}')
 var sourceNicName = 'SourceNIC-1'
 var publicIPSourceServerName = 'SourceServer1-ip'
 var sourceServerNSGName = 'SourceServer1-nsg'
@@ -209,7 +208,7 @@ resource sqlToSqlDbMigrationProject 'Microsoft.DataMigration/services/projects@2
   }
 }
 
-resource sourceNic 'Microsoft.Network/networkInterfaces@2020-05-01' = {
+resource sourceNic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: sourceNicName
   location: location
   properties: {
@@ -377,11 +376,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   }
   kind: 'StorageV2'
   properties: {
+    allowBlobPublicAccess: false
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
     }
-    supportsHttpsTrafficOnly: false
+    supportsHttpsTrafficOnly: true
     minimumTlsVersion: 'TLS1_2'
     encryption: {
       services: {
