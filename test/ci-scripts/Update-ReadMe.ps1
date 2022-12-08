@@ -84,13 +84,15 @@ products:
 - azure-resource-manager
 urlFragment: %urlFragment%
 languages:
-- json
 "@
 
-    # add bicep to the list of languages as appropriate
+    # add bicep to the list of languages as appropriate - it needs to be first in the list since doc samples only shows one at the moment
     if ($bicepSupported) {
         $YAML = $YAML + "`n- bicep"
     }
+
+    # add JSON unconditionally, after bicep
+    $YAML = $YAML + "`n- json"
 
     # close the YAML block
     $YAML = $YAML + "`n---`n"
