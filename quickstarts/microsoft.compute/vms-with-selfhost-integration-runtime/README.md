@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vms-with-selfhost-integration-runtime
 languages:
-- json
 - bicep
+- json
 ---
 # Self-host Integration Runtime on Azure VMs
 
