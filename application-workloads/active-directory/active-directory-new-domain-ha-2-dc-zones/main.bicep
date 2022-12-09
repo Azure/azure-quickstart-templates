@@ -1,18 +1,7 @@
 @description('The name of the Administrator of the new VM and Domain')
 param adminUsername string
 
-@description('Location for the VM, only certain regions support zones during preview.')
-@allowed([
-  'centralus'
-  'eastus'
-  'eastus2'
-  'francecentral'
-  'northeurope'
-  'southeastasia'
-  'ukwest'
-  'westus2'
-  'westeurope'
-])
+@description('Location for the VM, the location selected must support availability zones. See: https://learn.microsoft.com/en-us/azure/reliability/availability-zones-service-support#azure-regions-with-availability-zone-support')
 param location string
 
 @description('The password for the Administrator account of the new VM and Domain')
