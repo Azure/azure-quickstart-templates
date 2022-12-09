@@ -246,7 +246,7 @@ resource sourceServerNSG 'Microsoft.Network/networkSecurityGroups@2022-05-01' = 
           sourceAddressPrefix: 'VirtualNetwork'
           destinationAddressPrefix: 'VirtualNetwork'
           access: 'Allow'
-          priority: 65000
+          priority: 4000
           direction: 'Inbound'
         }
       }
@@ -260,7 +260,7 @@ resource sourceServerNSG 'Microsoft.Network/networkSecurityGroups@2022-05-01' = 
           sourceAddressPrefix: 'AzureLoadBalancer'
           destinationAddressPrefix: '*'
           access: 'Allow'
-          priority: 65001
+          priority: 4001
           direction: 'Inbound'
         }
       }
@@ -274,7 +274,7 @@ resource sourceServerNSG 'Microsoft.Network/networkSecurityGroups@2022-05-01' = 
           sourceAddressPrefix: '*'
           destinationAddressPrefix: '*'
           access: 'Deny'
-          priority: 65500
+          priority: 4050
           direction: 'Inbound'
         }
       }
@@ -288,7 +288,7 @@ resource sourceServerNSG 'Microsoft.Network/networkSecurityGroups@2022-05-01' = 
           sourceAddressPrefix: 'VirtualNetwork'
           destinationAddressPrefix: 'VirtualNetwork'
           access: 'Allow'
-          priority: 65000
+          priority: 4000
           direction: 'Outbound'
         }
       }
@@ -302,7 +302,7 @@ resource sourceServerNSG 'Microsoft.Network/networkSecurityGroups@2022-05-01' = 
           sourceAddressPrefix: '*'
           destinationAddressPrefix: 'Internet'
           access: 'Allow'
-          priority: 65001
+          priority: 4001
           direction: 'Outbound'
         }
       }
@@ -316,7 +316,7 @@ resource sourceServerNSG 'Microsoft.Network/networkSecurityGroups@2022-05-01' = 
           sourceAddressPrefix: '*'
           destinationAddressPrefix: '*'
           access: 'Deny'
-          priority: 65500
+          priority: 4050
           direction: 'Outbound'
         }
       }
