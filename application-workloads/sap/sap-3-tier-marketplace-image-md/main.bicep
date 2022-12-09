@@ -16,11 +16,13 @@ param stackType string = 'ABAP'
   'Windows Server 2012 Datacenter'
   'Windows Server 2012 R2 Datacenter'
   'Windows Server 2016 Datacenter'
+  'Windows Server 2019 Datacenter'
+  'Windows Server 2022 Datacenter: Azure Edition - Gen2'
   'SLES 12'
   'RHEL 7'
   'Oracle Linux 7'
 ])
-param osType string = 'Windows Server 2016 Datacenter'
+param osType string = 'Windows Server 2022 Datacenter: Azure Edition - Gen2'
 
 @description('The type of the database')
 @allowed([
@@ -93,6 +95,18 @@ var images = {
   }
   'Windows Server 2016 Datacenter': {
     sku: '2016-Datacenter'
+    offer: 'WindowsServer'
+    publisher: 'MicrosoftWindowsServer'
+    OSType: 'Windows'
+  }
+  'Windows Server 2019 Datacenter': {
+    sku: '2019-Datacenter'
+    offer: 'WindowsServer'
+    publisher: 'MicrosoftWindowsServer'
+    OSType: 'Windows'
+  }
+  'Windows Server 2022 Datacenter: Azure Edition - Gen2': {
+    sku: '2022-Datacenter-Azure-Edition'
     offer: 'WindowsServer'
     publisher: 'MicrosoftWindowsServer'
     OSType: 'Windows'
