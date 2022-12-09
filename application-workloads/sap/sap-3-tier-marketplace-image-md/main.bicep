@@ -917,21 +917,21 @@ var vmName = sidlower
 var vnetName = '${sidlower}-vnet'
 var subnetName = 'Subnet'
 var selectedSubnetId = subnetId
-var publicIpNameASCS_var = '${sidlower}-pip-ascs'
-var avSetNameASCS_var = '${sidlower}-avset-ascs'
+var publicIpNameASCSName = '${sidlower}-pip-ascs'
+var avSetNameASCSName = '${sidlower}-avset-ascs'
 var nsgName = '${sidlower}-nsg'
-var loadBalancerNameASCS_var = '${sidlower}-lb-ascs'
-var loadBalancerNamePubASCS_var = '${sidlower}-lb-pub-ascs'
-var vmNameASCS_var = '${vmName}-ascs'
-var nicNameASCS_var = '${sidlower}-nic-ascs'
-var avSetNameDB_var = '${sidlower}-avset-db'
-var loadBalancerNameDB_var = '${sidlower}-lb-db'
-var loadBalancerNamePubDB_var = '${sidlower}-lb-pub-db'
-var nicNameDB_var = '${sidlower}-nic-db'
-var vmNameDB_var = '${vmName}-db'
-var avSetNameDI_var = '${sidlower}-avset-di'
-var nicNameDI_var = '${sidlower}-nic-di'
-var vmNameDI_var = '${vmName}-di'
+var loadBalancerNameASCSName = '${sidlower}-lb-ascs'
+var loadBalancerNamePubASCSName = '${sidlower}-lb-pub-ascs'
+var vmNameASCSName = '${vmName}-ascs'
+var nicNameASCSName = '${sidlower}-nic-ascs'
+var avSetNameDBName = '${sidlower}-avset-db'
+var loadBalancerNameDBName = '${sidlower}-lb-db'
+var loadBalancerNamePubDBName = '${sidlower}-lb-pub-db'
+var nicNameDBName = '${sidlower}-nic-db'
+var vmNameDBName = '${vmName}-db'
+var avSetNameDIName = '${sidlower}-avset-di'
+var nicNameDIName = '${sidlower}-nic-di'
+var vmNameDIName = '${vmName}-di'
 var osSecurityRules = {
   Windows: [
     {
@@ -1032,10 +1032,10 @@ var lbRulePrefixSCS = 'lbscsRule'
 var lbRulePrefixERS = 'lbersRule'
 var lbRulePrefixASCSCL = 'lbascsclRule'
 var idleTimeoutInMinutes = 30
-var publicIpNameLBDB_var = '${sidlower}-pip-lb-db'
-var publicIpNameLBASCS_var = '${sidlower}-pip-lb-ascs'
-var pipIdDB = publicIpNameLBDB.id
-var pipIdASCS = publicIpNameLBASCS.id
+var publicIpNameLBDBName = '${sidlower}-pip-lb-db'
+var publicIpNameLBASCSName = '${sidlower}-pip-lb-ascs'
+var pipIdDB = publicIpNameLBDBResource.id
+var pipIdASCS = publicIpNameLBASCSResource.id
 var lbFrontendConfigsDB = {
   HANA: {
     Linux: [
@@ -1180,13 +1180,13 @@ var lbRulesDB = {
       {
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameDB_var, frontendHANADB)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameDBName, frontendHANADB)
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDB_var, backendPoolHANADB)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDBName, backendPoolHANADB)
           }
           probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameDB_var, probePortHANADB)
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameDBName, probePortHANADB)
           }
           protocol: 'All'
           frontendPort: 0
@@ -1203,13 +1203,13 @@ var lbRulesDB = {
       {
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameDB_var, frontendSQLDB)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameDBName, frontendSQLDB)
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDB_var, backendPoolSQLDB)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDBName, backendPoolSQLDB)
           }
           probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameDB_var, probePortSQLDB)
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameDBName, probePortSQLDB)
           }
           protocol: 'All'
           frontendPort: 0
@@ -1222,13 +1222,13 @@ var lbRulesDB = {
       {
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameDB_var, frontendSQLCL)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameDBName, frontendSQLCL)
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDB_var, backendPoolSQLCL)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDBName, backendPoolSQLCL)
           }
           probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameDB_var, probePortSQLCL)
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameDBName, probePortSQLCL)
           }
           protocol: 'All'
           frontendPort: 0
@@ -1245,13 +1245,13 @@ var lbRulesABAP = [
   {
     properties: {
       frontendIPConfiguration: {
-        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCS_var, frontendASCS)
+        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCSName, frontendASCS)
       }
       backendAddressPool: {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolASCS)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolASCS)
       }
       probe: {
-        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCS_var, probePortASCS)
+        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCSName, probePortASCS)
       }
       protocol: 'All'
       frontendPort: 0
@@ -1264,13 +1264,13 @@ var lbRulesABAP = [
   {
     properties: {
       frontendIPConfiguration: {
-        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCS_var, frontendAERS)
+        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCSName, frontendAERS)
       }
       backendAddressPool: {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolAERS)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolAERS)
       }
       probe: {
-        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCS_var, probePortAERS)
+        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCSName, probePortAERS)
       }
       protocol: 'All'
       frontendPort: 0
@@ -1285,13 +1285,13 @@ var lbRulesJAVA = [
   {
     properties: {
       frontendIPConfiguration: {
-        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCS_var, frontendSCS)
+        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCSName, frontendSCS)
       }
       backendAddressPool: {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolSCS)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolSCS)
       }
       probe: {
-        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCS_var, probePortSCS)
+        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCSName, probePortSCS)
       }
       protocol: 'All'
       frontendPort: 0
@@ -1304,13 +1304,13 @@ var lbRulesJAVA = [
   {
     properties: {
       frontendIPConfiguration: {
-        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCS_var, frontendERS)
+        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCSName, frontendERS)
       }
       backendAddressPool: {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolERS)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolERS)
       }
       probe: {
-        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCS_var, probePortERS)
+        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCSName, probePortERS)
       }
       protocol: 'All'
       frontendPort: 0
@@ -1325,13 +1325,13 @@ var lbRulesIND = [
   {
     properties: {
       frontendIPConfiguration: {
-        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCS_var, frontendASCSCL)
+        id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerNameASCSName, frontendASCSCL)
       }
       backendAddressPool: {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolASCSCL)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolASCSCL)
       }
       probe: {
-        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCS_var, probePortASCSCL)
+        id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerNameASCSName, probePortASCSCL)
       }
       protocol: 'All'
       frontendPort: 0
@@ -1444,51 +1444,51 @@ var nicBackAddressPoolsDB = {
   HANA: {
     Linux: [
       {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubDB_var, backendPoolPubDB)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubDBName, backendPoolPubDB)
       }
       {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDB_var, backendPoolHANADB)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDBName, backendPoolHANADB)
       }
     ]
   }
   SQL: {
     Windows: [
       {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubDB_var, backendPoolPubDB)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubDBName, backendPoolPubDB)
       }
       {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDB_var, backendPoolSQLDB)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDBName, backendPoolSQLDB)
       }
       {
-        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDB_var, backendPoolSQLCL)
+        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameDBName, backendPoolSQLCL)
       }
     ]
   }
 }
 var nicBackAddressPoolsABAP = [
   {
-    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolASCS)
+    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolASCS)
   }
   {
-    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolAERS)
+    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolAERS)
   }
 ]
 var nicBackAddressPoolsJAVA = [
   {
-    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolSCS)
+    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolSCS)
   }
   {
-    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolERS)
+    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolERS)
   }
 ]
 var nicBackAddressPoolsIND = [
   {
-    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCS_var, backendPoolASCSCL)
+    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNameASCSName, backendPoolASCSCL)
   }
 ]
 var nicBackAddressPoolsPub = [
   {
-    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubASCS_var, backendPoolPubASCS)
+    id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubASCSName, backendPoolPubASCS)
   }
 ]
 var nicBackAddressPoolsINDPub = ((length(subnetId) > 0) ? concat(nicBackAddressPoolsIND, nicBackAddressPoolsPub) : nicBackAddressPoolsIND)
@@ -1529,8 +1529,8 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-05-01' = if (length(subnet
   }
 }
 
-resource avSetNameASCS 'Microsoft.Compute/availabilitySets@2020-06-01' = if (length(availabilityZones) == 0) {
-  name: avSetNameASCS_var
+resource avSetNameASCSResource 'Microsoft.Compute/availabilitySets@2020-06-01' = if (length(availabilityZones) == 0) {
+  name: avSetNameASCSName
   location: location
   sku: {
     name: 'Aligned'
@@ -1541,8 +1541,8 @@ resource avSetNameASCS 'Microsoft.Compute/availabilitySets@2020-06-01' = if (len
   }
 }
 
-resource publicIpNameLBASCS 'Microsoft.Network/publicIPAddresses@2020-05-01' = if ((ascsvmCount > 1) && (length(subnetId) > 0)) {
-  name: publicIpNameLBASCS_var
+resource publicIpNameLBASCSResource 'Microsoft.Network/publicIPAddresses@2020-05-01' = if ((ascsvmCount > 1) && (length(subnetId) > 0)) {
+  name: publicIpNameLBASCSName
   sku: {
     name: 'Standard'
   }
@@ -1552,8 +1552,8 @@ resource publicIpNameLBASCS 'Microsoft.Network/publicIPAddresses@2020-05-01' = i
   }
 }
 
-resource loadBalancerNamePubASCS 'Microsoft.Network/loadBalancers@2020-05-01' = if ((ascsvmCount > 1) && (length(subnetId) > 0)) {
-  name: loadBalancerNamePubASCS_var
+resource loadBalancerNamePubASCSResource 'Microsoft.Network/loadBalancers@2020-05-01' = if ((ascsvmCount > 1) && (length(subnetId) > 0)) {
+  name: loadBalancerNamePubASCSName
   location: location
   sku: {
     name: 'Standard'
@@ -1575,7 +1575,7 @@ resource loadBalancerNamePubASCS 'Microsoft.Network/loadBalancers@2020-05-01' = 
         properties: {
           frontendIPConfigurations: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerNamePubASCS_var, frontendPubASCS)
+              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerNamePubASCSName, frontendPubASCS)
             }
           ]
           allocatedOutboundPorts: 1000
@@ -1583,7 +1583,7 @@ resource loadBalancerNamePubASCS 'Microsoft.Network/loadBalancers@2020-05-01' = 
           enableTcpReset: true
           protocol: 'All'
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubASCS_var, backendPoolPubASCS)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubASCSName, backendPoolPubASCS)
           }
         }
       }
@@ -1596,8 +1596,8 @@ resource loadBalancerNamePubASCS 'Microsoft.Network/loadBalancers@2020-05-01' = 
   }
 }
 
-resource publicIpNameASCS 'Microsoft.Network/publicIPAddresses@2020-05-01' = [for i in range(0, ascsvmCount): if (length(subnetId) == 0) {
-  name: '${publicIpNameASCS_var}-${i}'
+resource publicIpNameASCSResource 'Microsoft.Network/publicIPAddresses@2020-05-01' = [for i in range(0, ascsvmCount): if (length(subnetId) == 0) {
+  name: '${publicIpNameASCSName}-${i}'
   sku: {
     name: 'Standard'
   }
@@ -1610,8 +1610,8 @@ resource publicIpNameASCS 'Microsoft.Network/publicIPAddresses@2020-05-01' = [fo
   ]
 }]
 
-resource loadBalancerNameASCS 'Microsoft.Network/loadBalancers@2020-05-01' = if (ascsvmCount > 1) {
-  name: loadBalancerNameASCS_var
+resource loadBalancerNameASCSResource 'Microsoft.Network/loadBalancers@2020-05-01' = if (ascsvmCount > 1) {
+  name: loadBalancerNameASCSName
   location: location
   sku: {
     name: 'Standard'
@@ -1627,8 +1627,8 @@ resource loadBalancerNameASCS 'Microsoft.Network/loadBalancers@2020-05-01' = if 
   ]
 }
 
-resource nicNameASCS 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(0, ascsvmCount): {
-  name: '${nicNameASCS_var}-${i}'
+resource nicNameASCSResource 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(0, ascsvmCount): {
+  name: '${nicNameASCSName}-${i}'
   location: location
   properties: {
     ipConfigurations: [
@@ -1636,7 +1636,7 @@ resource nicNameASCS 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i i
         name: 'ipconfig1'
         properties: {
           privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: ((length(subnetId) == 0) ? json('{"id": "${resourceId('Microsoft.Network/publicIPAddresses', '${publicIpNameASCS_var}-${i}')}"}') : json('null'))
+          publicIPAddress: ((length(subnetId) == 0) ? json('{"id": "${resourceId('Microsoft.Network/publicIPAddresses', '${publicIpNameASCSName}-${i}')}"}') : json('null'))
           subnet: {
             id: selectedSubnetId
           }
@@ -1646,24 +1646,26 @@ resource nicNameASCS 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i i
     ]
   }
   dependsOn: [
-    publicIpNameASCS
+    publicIpNameASCSResource
     vnet
-    loadBalancerNameASCS
-    loadBalancerNamePubASCS
+    loadBalancerNameASCSResource
+    loadBalancerNamePubASCSResource
   ]
 }]
 
-resource vmNameASCS 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in range(0, ascsvmCount): {
-  name: '${vmNameASCS_var}-${i}'
+resource vmNameASCSResource 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in range(0, ascsvmCount): {
+  name: '${vmNameASCSName}-${i}'
   location: location
   zones: ((length(availabilityZones) == 0) ? json('null') : array(azArray[(i % azArrayLength)]))
   properties: {
-    availabilitySet: ((azArrayLength == 0) ? avSetNameASCS.id : json('null'))
+/*
+    availabilitySet: ((azArrayLength == 0) ? avSetNameASCSResource.id : json('null'))
+*/
     hardwareProfile: {
       vmSize: ascsVMSize
     }
     osProfile: {
-      computerName: '${vmNameASCS_var}-${i}'
+      computerName: '${vmNameASCSName}-${i}'
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -1676,7 +1678,7 @@ resource vmNameASCS 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in r
         version: 'latest'
       }
       osDisk: {
-        name: '${vmNameASCS_var}-${i}-osdisk'
+        name: '${vmNameASCSName}-${i}-osdisk'
         caching: 'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
@@ -1694,19 +1696,18 @@ resource vmNameASCS 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in r
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${nicNameASCS_var}-${i}')
+          id: resourceId('Microsoft.Network/networkInterfaces', '${nicNameASCSName}-${i}')
         }
       ]
     }
   }
   dependsOn: [
-    nicNameASCS
-    avSetNameASCS
+    nicNameASCSResource
   ]
 }]
 
 resource vmNameASCS_csExtension_internalOSType 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, ascsvmCount): {
-  name: '${vmNameASCS_var}-${i}/${csExtension[internalOSType].Name}'
+  name: '${vmNameASCSName}-${i}/${csExtension[internalOSType].Name}'
   location: location
   properties: {
     publisher: csExtension[internalOSType].Publisher
@@ -1721,12 +1722,12 @@ resource vmNameASCS_csExtension_internalOSType 'Microsoft.Compute/virtualMachine
     }
   }
   dependsOn: [
-    vmNameASCS
+    vmNameASCSResource
   ]
 }]
 
-resource avSetNameDB 'Microsoft.Compute/availabilitySets@2020-06-01' = if (length(availabilityZones) == 0) {
-  name: avSetNameDB_var
+resource avSetNameDBResource 'Microsoft.Compute/availabilitySets@2020-06-01' = if (length(availabilityZones) == 0) {
+  name: avSetNameDBName
   location: location
   sku: {
     name: 'Aligned'
@@ -1737,8 +1738,8 @@ resource avSetNameDB 'Microsoft.Compute/availabilitySets@2020-06-01' = if (lengt
   }
 }
 
-resource publicIpNameLBDB 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
-  name: publicIpNameLBDB_var
+resource publicIpNameLBDBResource 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
+  name: publicIpNameLBDBName
   sku: {
     name: 'Standard'
   }
@@ -1748,8 +1749,8 @@ resource publicIpNameLBDB 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
   }
 }
 
-resource loadBalancerNamePubDB 'Microsoft.Network/loadBalancers@2020-05-01' = if (ascsvmCount > 1) {
-  name: loadBalancerNamePubDB_var
+resource loadBalancerNamePubDBResource 'Microsoft.Network/loadBalancers@2020-05-01' = if (ascsvmCount > 1) {
+  name: loadBalancerNamePubDBName
   location: location
   sku: {
     name: 'Standard'
@@ -1771,7 +1772,7 @@ resource loadBalancerNamePubDB 'Microsoft.Network/loadBalancers@2020-05-01' = if
         properties: {
           frontendIPConfigurations: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerNamePubDB_var, frontendPubDB)
+              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerNamePubDBName, frontendPubDB)
             }
           ]
           allocatedOutboundPorts: 1000
@@ -1779,7 +1780,7 @@ resource loadBalancerNamePubDB 'Microsoft.Network/loadBalancers@2020-05-01' = if
           enableTcpReset: true
           protocol: 'All'
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubDB_var, backendPoolPubDB)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerNamePubDBName, backendPoolPubDB)
           }
         }
       }
@@ -1792,8 +1793,8 @@ resource loadBalancerNamePubDB 'Microsoft.Network/loadBalancers@2020-05-01' = if
   }
 }
 
-resource loadBalancerNameDB 'Microsoft.Network/loadBalancers@2020-05-01' = if (dbvmCount > 1) {
-  name: loadBalancerNameDB_var
+resource loadBalancerNameDBResource 'Microsoft.Network/loadBalancers@2020-05-01' = if (dbvmCount > 1) {
+  name: loadBalancerNameDBName
   location: location
   sku: {
     name: 'Standard'
@@ -1809,8 +1810,8 @@ resource loadBalancerNameDB 'Microsoft.Network/loadBalancers@2020-05-01' = if (d
   ]
 }
 
-resource nicNameDB 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(0, dbvmCount): {
-  name: '${nicNameDB_var}-${i}'
+resource nicNameDBResource 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(0, dbvmCount): {
+  name: '${nicNameDBName}-${i}'
   location: location
   properties: {
     ipConfigurations: [
@@ -1828,22 +1829,24 @@ resource nicNameDB 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in 
   }
   dependsOn: [
     vnet
-    loadBalancerNameDB
-    loadBalancerNamePubDB
+    loadBalancerNameDBResource
+    loadBalancerNamePubDBResource
   ]
 }]
 
-resource vmNameDB 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in range(0, dbvmCount): {
-  name: '${vmNameDB_var}-${i}'
+resource vmNameDBResource 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in range(0, dbvmCount): {
+  name: '${vmNameDBName}-${i}'
   location: location
   zones: ((length(availabilityZones) == 0) ? json('null') : array(azArray[(i % azArrayLength)]))
   properties: {
-    availabilitySet: ((azArrayLength == 0) ? avSetNameDB.id : json('null'))
+/*
+    availabilitySet: ((azArrayLength == 0) ? avSetNameDBResource.id : json('null'))
+*/
     hardwareProfile: {
       vmSize: dbVMSize
     }
     osProfile: {
-      computerName: '${vmNameDB_var}-${i}'
+      computerName: '${vmNameDBName}-${i}'
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -1856,7 +1859,7 @@ resource vmNameDB 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in ran
         version: 'latest'
       }
       osDisk: {
-        name: '${vmNameDB_var}-${i}-osdisk'
+        name: '${vmNameDBName}-${i}-osdisk'
         caching: 'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
@@ -1868,19 +1871,18 @@ resource vmNameDB 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in ran
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${nicNameDB_var}-${i}')
+          id: resourceId('Microsoft.Network/networkInterfaces', '${nicNameDBName}-${i}')
         }
       ]
     }
   }
   dependsOn: [
-    nicNameDB
-    avSetNameDB
+    nicNameDBResource
   ]
 }]
 
 resource vmNameDB_csExtension_internalOSType 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, dbvmCount): {
-  name: '${vmNameDB_var}-${i}/${csExtension[internalOSType].Name}'
+  name: '${vmNameDBName}-${i}/${csExtension[internalOSType].Name}'
   location: location
   properties: {
     publisher: csExtension[internalOSType].Publisher
@@ -1895,12 +1897,12 @@ resource vmNameDB_csExtension_internalOSType 'Microsoft.Compute/virtualMachines/
     }
   }
   dependsOn: [
-    vmNameDB
+    vmNameDBResource
   ]
 }]
 
-resource avSetNameDI 'Microsoft.Compute/availabilitySets@2020-06-01' = if (length(availabilityZones) == 0) {
-  name: avSetNameDI_var
+resource avSetNameDIResource 'Microsoft.Compute/availabilitySets@2020-06-01' = if (length(availabilityZones) == 0) {
+  name: avSetNameDIName
   location: location
   sku: {
     name: 'Aligned'
@@ -1911,8 +1913,8 @@ resource avSetNameDI 'Microsoft.Compute/availabilitySets@2020-06-01' = if (lengt
   }
 }
 
-resource nicNameDI 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(0, divmCount): {
-  name: '${nicNameDI_var}-${i}'
+resource nicNameDIResource 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(0, divmCount): {
+  name: '${nicNameDIName}-${i}'
   location: location
   properties: {
     ipConfigurations: [
@@ -1932,17 +1934,19 @@ resource nicNameDI 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in 
   ]
 }]
 
-resource vmNameDI 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in range(0, divmCount): {
-  name: '${vmNameDI_var}-${i}'
+resource vmNameDIResource 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in range(0, divmCount): {
+  name: '${vmNameDIName}-${i}'
   location: location
   zones: ((length(availabilityZones) == 0) ? json('null') : array(azArray[(i % azArrayLength)]))
   properties: {
-    availabilitySet: ((azArrayLength == 0) ? avSetNameDI.id : json('null'))
+/*
+    availabilitySet: ((azArrayLength == 0) ? avSetNameDIResource.id : json('null'))
+*/
     hardwareProfile: {
       vmSize: diVMSize
     }
     osProfile: {
-      computerName: '${vmNameDI_var}-${i}'
+      computerName: '${vmNameDIName}-${i}'
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -1955,7 +1959,7 @@ resource vmNameDI 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in ran
         version: 'latest'
       }
       osDisk: {
-        name: '${vmNameDI_var}-${i}-osdisk'
+        name: '${vmNameDIName}-${i}-osdisk'
         caching: 'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
@@ -1973,19 +1977,18 @@ resource vmNameDI 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i in ran
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${nicNameDI_var}-${i}')
+          id: resourceId('Microsoft.Network/networkInterfaces', '${nicNameDIName}-${i}')
         }
       ]
     }
   }
   dependsOn: [
-    nicNameDI
-    avSetNameDI
+    nicNameDIResource
   ]
 }]
 
 resource vmNameDI_csExtension_internalOSType 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, divmCount): {
-  name: '${vmNameDI_var}-${i}/${csExtension[internalOSType].Name}'
+  name: '${vmNameDIName}-${i}/${csExtension[internalOSType].Name}'
   location: location
   properties: {
     publisher: csExtension[internalOSType].Publisher
@@ -2000,6 +2003,6 @@ resource vmNameDI_csExtension_internalOSType 'Microsoft.Compute/virtualMachines/
     }
   }
   dependsOn: [
-    vmNameDI
+    vmNameDIResource
   ]
 }]
