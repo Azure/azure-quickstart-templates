@@ -210,7 +210,7 @@ var sizes = {
       useFastNetwork: false
     }
     SQL: {
-      dbvmSize: 'Standard_E4s_v3'
+      dbvmSize: 'Standard_D4s_v3'
       ascsVMSize: 'Standard_D2s_v3'
       diVMSize: 'Standard_D2s_v3'
       diVMCount: 1
@@ -228,7 +228,7 @@ var sizes = {
       useFastNetwork: false
     }
     other: {
-      dbvmSize: 'Standard_E4s_v3'
+      dbvmSize: 'Standard_D4s_v3'
       ascsVMSize: 'Standard_D2s_v3'
       diVMSize: 'Standard_D2s_v3'
       diVMCount: 1
