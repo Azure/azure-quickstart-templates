@@ -1,7 +1,7 @@
 @description('The name of the NIC to Create or Update')
 param nicName string
 
-@descriptions('The IP configurations of the NIC')
+@description('The IP configurations of the NIC')
 param ipConfigurations array
 
 @description('The DNS Servers of the NIC')
