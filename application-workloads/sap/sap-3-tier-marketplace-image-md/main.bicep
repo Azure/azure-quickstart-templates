@@ -916,11 +916,7 @@ var sidlower = toLower(sapSystemId)
 var vmName = sidlower
 var vnetName = '${sidlower}-vnet'
 var subnetName = 'Subnet'
-var subnets = {
-true: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
-false: subnetId
-}
-var selectedSubnetId = subnets[string((length(subnetId) == 0))]
+var selectedSubnetId = subnetId
 var publicIpNameASCS_var = '${sidlower}-pip-ascs'
 var avSetNameASCS_var = '${sidlower}-avset-ascs'
 var nsgName = '${sidlower}-nsg'
