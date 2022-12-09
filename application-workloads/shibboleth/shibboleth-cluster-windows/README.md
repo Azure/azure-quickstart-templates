@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: shibboleth-cluster-windows
 languages:
+- bicep
 - json
 ---
 # Deploy Shibboleth Identity Provider cluster on Windows
