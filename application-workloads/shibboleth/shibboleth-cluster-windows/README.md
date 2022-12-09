@@ -16,6 +16,8 @@ languages:
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/FairfaxDeployment.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/BicepVersion.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/shibboleth/shibboleth-cluster-windows/CredScanResult.svg)
 
