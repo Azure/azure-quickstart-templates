@@ -221,7 +221,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
       computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     storageProfile: {
       osDisk: {
