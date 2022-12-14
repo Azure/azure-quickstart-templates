@@ -6,7 +6,6 @@ products:
 - azure-resource-manager
 urlFragment: function-app-windows-consumption
 languages:
-- bicep
 - json
 ---
 # Azure Function App Hosted on Windows Consumption Plan
