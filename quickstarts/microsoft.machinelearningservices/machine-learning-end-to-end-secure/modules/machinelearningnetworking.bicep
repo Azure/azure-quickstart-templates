@@ -29,7 +29,7 @@ var privateAznbDnsZoneName = {
     azurecloud: 'privatelink.notebooks.azure.net'
 }
 
-resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-06-01' = {
+resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: machineLearningPleName
   location: location
   tags: tags
@@ -84,7 +84,7 @@ resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtu
   }
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
   name: '${machineLearningPrivateEndpoint.name}/amlworkspace-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [

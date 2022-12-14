@@ -4,40 +4,35 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "4675416450603964424"
+      "version": "0.11.1.770",
+      "templateHash": "17200762197649390026"
     }
   },
   "parameters": {
     "containerAppName": {
       "type": "string",
-      "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('app-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Specifies the name of the container app."
       }
     },
     "containerAppEnvName": {
       "type": "string",
-      "defaultValue": "[format('containerapp-env-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('env-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Specifies the name of the container app environment."
       }
     },
     "containerAppLogAnalyticsName": {
       "type": "string",
-      "defaultValue": "[format('containerapp-log-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('log-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Specifies the name of the log analytics workspace."
       }
     },
     "location": {
       "type": "string",
-      "allowedValues": [
-        "northcentralusstage",
-        "eastus",
-        "northeurope",
-        "canadacentral"
-      ],
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Specifies the location for all resources."
       }
@@ -59,6 +54,16 @@
     "cpuCore": {
       "type": "string",
       "defaultValue": "0.5",
+      "allowedValues": [
+        "0.25",
+        "0.5",
+        "0.75",
+        "1",
+        "1.25",
+        "1.5",
+        "1.75",
+        "2"
+      ],
       "metadata": {
         "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals."
       }
@@ -66,6 +71,15 @@
     "memorySize": {
       "type": "string",
       "defaultValue": "1",
+      "allowedValues": [
+        "0.5",
+        "1",
+        "1.5",
+        "2",
+        "3",
+        "3.5",
+        "4"
+      ],
       "metadata": {
         "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
       }
@@ -92,7 +106,7 @@
   "resources": [
     {
       "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-10-01",
       "name": "[parameters('containerAppLogAnalyticsName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -103,15 +117,18 @@
     },
     {
       "type": "Microsoft.App/managedEnvironments",
-      "apiVersion": "2022-01-01-preview",
+      "apiVersion": "2022-06-01-preview",
       "name": "[parameters('containerAppEnvName')]",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "Consumption"
+      },
       "properties": {
         "appLogsConfiguration": {
           "destination": "log-analytics",
           "logAnalyticsConfiguration": {
             "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))).customerId]",
-            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2020-10-01').primarySharedKey]"
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2022-10-01').primarySharedKey]"
           }
         }
       },
@@ -121,7 +138,7 @@
     },
     {
       "type": "Microsoft.App/containerApps",
-      "apiVersion": "2022-01-01-preview",
+      "apiVersion": "2022-06-01-preview",
       "name": "[parameters('containerAppName')]",
       "location": "[parameters('location')]",
       "properties": {

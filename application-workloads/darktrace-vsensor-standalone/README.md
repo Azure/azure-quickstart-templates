@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: darktrace-vsensor-standalone
 languages:
+- bicep
 - json
 ---
 # Deploy Darktrace vSensors
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/darktrace-vsensor-standalone/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/darktrace-vsensor-standalone/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/darktrace-vsensor-standalone/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdarktrace-vsensor-standalone%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdarktrace-vsensor-standalone%2Fazuredeploy.json)
@@ -78,18 +81,6 @@ _‘if errors happen during execution of the configuration processing or scripts
 Therefore, if a failure occurs during the automated vSensor installation or configuration, the deployment will NOT fail. The expected resources will be created but there remains a possibility the vSensor has not been installed and configured successfully.
 
 Manual post-checks are currently recommended to mitigate this.
-
-##### Admin user public key for ssh authentication
-
-On Azure Portal it may or may not appear `SSH pubic key source` field that offers three options:
-
-![alt text](images/admin-ssh-public-key.png "Admin user ssh public key")
-
-At the time of writing, the first option "Generate new key pair" does not work as expected and should not be used.
-
-If that field does not appear there will be `Admin Public Key` field with a text box where you can copy/paste your exisitng ssh public key.
-
-Azure support have been notified.
 
 Pre-deployment requirements
 -------------------

@@ -1,0 +1,1527 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "basics": {
+        "resourceGroup": {
+          "allowExisting": true
+        }
+      }
+    },
+    "basics": [
+      {
+        "name": "useAsBuildServer",
+        "type": "Microsoft.Common.CheckBox",
+        "label": "Use as a build server",
+        "toolTip": "Check this if you want to use this VM as a build server, to enable selecting non-GPU VM SKUs."
+      },
+      {
+        "name": "quotaGuidanceBox",
+        "type": "Microsoft.Common.InfoBox",
+        "visible": true,
+        "options": {
+          "icon": "Warning",
+          "text": "<b>IMPORTANT: GPU VM availability and your GPU core quota</b>\r\n<b>---------------------------------------------------------------------</b>\r\n\r\nAs the Game Dev VM uses GPUs which are in high demand, please make sure you have requested quota for the desired GPU SKU before deploying the VM, otherwise you will receive a quota error when creating the VM. A quick way to validate if you have quota in a specific region, such as westus in the example below, is by running the following command in a Cloud Shell (icon on the right of the top search bar):\r\n\r\n<b><i>az account show</i></b> #use az account set to change the context of the bash session if needed\r\n\r\n<b><i>az vm list-usage --location westus -o table | grep \"Name\\b\\|---\\|\\(NV\\|NVSv3\\|NCASv3_T4\\|A10v5\\)\\b\" | (sed -u 2q; sort)</i></b>\r\n\r\n<b>CONTACT US:</b>\r\nOnce you request the desired quota, if you don't immediately receive a successful confirmation of the quota increase in the portal, please create a support ticket and email your ticket ID to <a href='mailto:gamedevvm@microsoft.com?subject=AGDVM Quota Increase Request'>gamedevvm@microsoft.com</a> to expedite your request. We recommend requesting quota for the following GPU SKU families: NCASv3_T4, NVSv3 and NV.\r\n\r\nIf you have any difficulty deploying the Game Dev VM, please reach out to us at the email mentioned earlier and we will get back to you quickly. You can also reach out to us on our <a href='https://aka.ms/msftgamedevdiscord' target='_blank'>Discord Channel</a> under Game Dev VM, #public-preview to talk directly with the product team. See <a href='https://docs.microsoft.com/gaming/azure/game-dev-virtual-machine/troubleshoot-support' target='_blank'>Troubleshooting and Support</a> for more details."
+        }
+      },
+      {
+        "name": "vmSize",
+        "type": "Microsoft.Compute.SizeSelector",
+        "label": "VM size",
+        "toolTip": "The size of the virtual machine",
+        "defaultValue": "Standard_NV12s_v3",
+        "recommendedSizes": [
+          "Standard_NV12s_v3",
+          "Standard_NV24s_v3",
+          "Standard_NC8as_T4_v3"
+        ],
+        "constraints": {
+          "allowedSizes": [
+            "Standard_NC4as_T4_v3",
+            "Standard_NC8as_T4_v3",
+            "Standard_NC16as_T4_v3",
+            "Standard_NC64as_T4_v3",
+            "Standard_NV6",
+            "Standard_NV12",
+            "Standard_NV24",
+            "Standard_NV12s_v3",
+            "Standard_NV24s_v3",
+            "Standard_NV48s_v3",
+            "Standard_NV6ads_A10_v5",
+            "Standard_NV12ads_A10_v5",
+            "Standard_NV18ads_A10_v5",
+            "Standard_NV36ads_A10_v5",
+            "Standard_NV36adms_A10_v5",
+            "Standard_NV72ads_A10_v5"
+          ]
+        },
+        "osPlatform": "Windows",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsDesktop",
+          "offer": "Windows-10",
+          "sku": "20h2-pro"
+        },
+        "visible": "[not(basics('useAsBuildServer'))]"
+      },
+      {
+        "name": "vmSizeBuildServer",
+        "type": "Microsoft.Compute.SizeSelector",
+        "label": "VM size",
+        "toolTip": "The size of the virtual machine",
+        "defaultValue": "Standard_NV12s_v3",
+        "recommendedSizes": [
+          "Standard_NV12s_v3",
+          "Standard_NV24s_v3",
+          "Standard_NC8as_T4_v3"
+        ],
+        "osPlatform": "Windows",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsDesktop",
+          "offer": "Windows-10",
+          "sku": "20h2-pro"
+        },
+        "visible": "[basics('useAsBuildServer')]"
+      },
+      {
+        "name": "vmName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Virtual machine name",
+        "toolTip": "Virtual machines in Azure have two distinct names: virtual machine name used as the Azure resource identifier, and in guest host name. When you create a VM in the portal, the same name is used for both the virtual machine name and the host name. The virtual machine name cannot be changed after the VM is created. You can change the host name when you log into the virtual machine.",
+        "defaultValue": "[concat('gamedevvm', take(replace(guid(), '-', ''), 6))]",
+        "constraints": {
+          "required": true,
+          "validations": [
+            {
+              "regex": "^[a-zA-Z0-9-]{0,14}[a-zA-Z0-9]$",
+              "message": "The virtual machine name can only contain alphanumeric values and hyphens, but may not end with a hyphen. The name must be between 1-15 characters."
+            }
+          ]
+        },
+        "visible": true
+      },
+      {
+        "name": "adminUsername",
+        "type": "Microsoft.Compute.UserNameTextBox",
+        "label": "Admin username",
+        "toolTip": "Admin username for the Game Development VM.",
+        "osPlatform": "Windows"
+      },
+      {
+        "name": "adminPassword",
+        "type": "Microsoft.Compute.CredentialsCombo",
+        "label": {
+          "password": "Password",
+          "confirmPassword": "Confirm password"
+        },
+        "toolTip": {
+          "password": "Admin password for the Game Development VM."
+        },
+        "constraints": {
+          "required": true
+        },
+        "options": {
+          "hideConfirmation": false
+        },
+        "osPlatform": "Windows",
+        "visible": true
+      },
+      {
+        "name": "osType",
+        "type": "Microsoft.Common.DropDown",
+        "label": "Operating System",
+        "defaultValue": "Windows 10",
+        "toolTip": "Selection of the VM Operating System",
+        "multiselect": false,
+        "selectAll": false,
+        "constraints": {
+          "allowedValues": [
+            {
+              "label": "Windows 10",
+              "description": "Windows 10",
+              "value": "win10"
+            },
+            {
+              "label": "Windows Server 2019",
+              "description": "Windows Server 2019",
+              "value": "ws2019"
+            }
+          ],
+          "required": true
+        },
+        "visible": true
+      },
+      {
+        "name": "licensingWindows",
+        "type": "Microsoft.Common.Section",
+        "label": "Licensing",
+        "elements": [
+          {
+            "name": "windows10LicenseAccept",
+            "type": "Microsoft.Common.CheckBox",
+            "toolTip": "Confirm eligible Windows 10 license.",
+            "label": "I confirm I have an eligible Windows 10 license with multi-tenant hosting rights. Or, I have an eligible Visual Studio subscription to deploy Windows 10 for dev/test purposes.",
+            "constraints": {
+              "required": true,
+              "validationMessage": "You must confirm Windows 10 licensing eligibility"
+            }
+          },
+          {
+            "name": "hostingRights",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "link": {
+                "label": "Review multi-tenant hosting rights for Windows 10 compliance.",
+                "uri": "http://go.microsoft.com/fwlink/?LinkId=2118246"
+              }
+            }
+          },
+          {
+            "name": "devTestScenarios",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "link": {
+                "label": "Review using Windows client in Azure for dev/test scenarios.",
+                "uri": "https://docs.microsoft.com/azure/virtual-machines/windows/client-images"
+              }
+            }
+          }
+        ],
+        "visible": "[equals(basics('osType'), 'win10')]"
+      }
+
+    ],
+    "steps": [
+      {
+        "name": "toolsConfig",
+        "label": "Game Developer Tools",
+        "subLabel": {
+          "preValidation": "Configure desired game developer tools",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Game Developer Tools",
+        "elements": [
+          {
+            "name": "toolsInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Learn more here about the tools installed on the Game Developer VM.",
+              "uri": "https://docs.microsoft.com/gaming/azure/game-dev-virtual-machine/tools-included-azure-game-dev-kit"
+            }
+          },
+          {
+            "name": "installedToolsConfig",
+            "type": "Microsoft.Common.Section",
+            "label": "Select Game Engine",
+            "elements": [
+              {
+                "name": "toolsEngineInfo",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": true,
+                "options": {
+                  "icon": "Info",
+                  "text": "Select the engine you want to come pre-installed on the virtual machine. If you intend to use your own engine from a source repository, or an engine that is currently not in the selection list, please choose the 'No game engine installed' option."
+                }
+              },
+              {
+                "name": "gameEngine",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Game Engine",
+                "toolTip": "Select the Game Engine version you want installed",
+                "placeholder": "Select the main game engine",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "No game engine installed",
+                      "value": "no_engine"
+                    },
+                    {
+                      "label": "Unreal Engine 5.0.1",
+                      "value": "ue_5_0_1"
+                    },
+                    {
+                      "label": "Unreal Engine 4.27.2",
+                      "value": "ue_4_27_2"
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "unrealEngineCopyright",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'ue')]",
+            "options": {
+              "text": "Unreal® Engine, Copyright 1998 – 2022, Epic Games, Inc. All rights reserved."
+            }
+          },
+          {
+            "name": "pixelStreamingUnreal",
+            "type": "Microsoft.Common.Section",
+            "label": "Unreal Pixel Streaming",
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'ue')]",
+            "elements": [
+              {
+                "name": "enableUnrealPixelStreaming",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Enable External Access to Unreal Pixel Streaming (Port 80)",
+                "toolTip": "Enables external access to the port used by Unreal Pixel Streaming."
+
+              },
+              {
+                "name": "pixelStreamingDocs",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Unreal's documentation for Pixel Streaming",
+                    "uri": "https://docs.unrealengine.com/4.27/SharingAndReleasing/PixelStreaming/"
+                  }
+                }
+              }
+            ]
+          },
+
+          {
+            "name": "ideToolsNoEngine",
+            "type": "Microsoft.Common.Section",
+            "label": "IDE's Installed",
+            "visible": "[equals(steps('toolsConfig').installedToolsConfig.gameEngine, 'no_engine')]",
+            "elements": [
+              {
+                "name": "visualStudio",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Visual Studio 2019 Community Edition",
+                    "uri": "https://visualstudio.microsoft.com/vs/community/"
+                  }
+                }
+              },
+              {
+                "name": "visualStudioCode",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Visual Studio Code",
+                    "uri": "https://code.visualstudio.com/"
+                  }
+                }
+              }
+            ]
+          },
+
+          {
+            "name": "ideToolsUnreal",
+            "type": "Microsoft.Common.Section",
+            "label": "IDE's Installed",
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'ue')]",
+            "elements": [
+              {
+                "name": "visualStudioUnreal",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Visual Studio 2019 Community Edition with UnrealVS Plugin",
+                    "uri": "https://visualstudio.microsoft.com/vs/community/"
+                  }
+                }
+              },
+              {
+                "name": "visualStudioCodeUnreal",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Visual Studio Code",
+                    "uri": "https://code.visualstudio.com/"
+                  }
+                }
+              }
+            ]
+          },
+
+          {
+            "name": "ideToolsUnity",
+            "type": "Microsoft.Common.Section",
+            "label": "IDE's Installed",
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'unity')]",
+            "elements": [
+              {
+                "name": "visualStudioUnity",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Visual Studio 2019 Community Edition with Unity Plugin",
+                    "uri": "https://visualstudio.microsoft.com/vs/community/"
+                  }
+                }
+              },
+              {
+                "name": "visualStudioCodeUnity",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Visual Studio Code with Unity Extension",
+                    "uri": "https://code.visualstudio.com/"
+                  }
+                }
+              }
+            ]
+          },
+
+          {
+            "name": "versionControlToolsUnreal",
+            "type": "Microsoft.Common.Section",
+            "label": "Version Control Tools Installed",
+            "elements": [
+              {
+                "name": "git",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Git / Git LFS",
+                    "uri": "https://git-scm.com/downloads"
+                  }
+                }
+              },
+              {
+                "name": "perforce",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Perforce's Helix Visual Client (P4V)",
+                    "uri": "https://www.perforce.com/downloads/helix-visual-client-p4v"
+                  }
+                }
+              },
+
+              {
+                "name": "perforceSync",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Connect to and sync a Perforce depot",
+                "toolTip": "Select to connect to an existing Perforce depot and sync to the new Virtual Machine"
+              }
+            ],
+            "visible": "[or(startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'no_engine'), startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'ue'))]"
+          },
+          {
+            "name": "versionControlToolsUnity",
+            "type": "Microsoft.Common.Section",
+            "label": "Version Control Tools Installed",
+            "elements": [
+              {
+                "name": "git",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Git / Git LFS",
+                    "uri": "https://git-scm.com/downloads"
+                  }
+                }
+              },
+              {
+                "name": "Plastic SCM",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Plastic SCM Client",
+                    "uri": "https://www.plasticscm.com/download"
+                  }
+                }
+              }
+            ],
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'unity')]"
+          },
+
+          {
+            "name": "perforceConfig",
+            "type": "Microsoft.Common.Section",
+            "label": "Perforce Configuration",
+            "visible": "[equals(steps('toolsConfig').versionControlToolsUnreal.perforceSync, true)]",
+            "elements": [
+              {
+                "name": "p4Port",
+                "type": "Microsoft.Common.TextBox",
+                "label": "P4 Port",
+                "toolTip": "Enter the P4 Port to use for the connection. E.g. tcp:perforce:1666, ssl:1.1.1.1:1666",
+                "placeholder": "tcp:perforce:1666",
+                "defaultValue": "",
+                "constraints": {
+                  "required": true,
+                  "validations": [
+                    {
+                      "regex": "^(tcp:|ssl:)?((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,}|(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3})):\\d{1,5}$",
+                      "message": "The address is invalid. Please specified a valid URL in the format [empty or tcp: or ssl:][domain]:[port number]"
+                    }
+                  ]
+                },
+                "visible": true
+              },
+              {
+                "name": "p4Username",
+                "type": "Microsoft.Common.TextBox",
+                "label": "P4 User",
+                "toolTip": "Enter the P4 User to be used for connecting to the P4 Port address. This username will also be used as P4 Client Workspace name",
+                "defaultValue": "",
+                "constraints": {
+                  "required": true,
+                  "validations": [
+                    {
+                      "regex": "[A-Za-z][A-Za-z0-9_]{4,128}$",
+                      "message": "P4 Username must only have alphanumeric characters or underscore, and be between 4 and 128 characters long."
+                    }
+                  ]
+                },
+                "visible": true
+              },
+              {
+                "name": "p4Password",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                  "password": "P4 User password",
+                  "confirmPassword": "Confirm P4 User password"
+                },
+                "toolTip": "Enter the password for the specified P4 User",
+                "constraints": {
+                  "required": true
+                },
+                "options": {
+                  "hideConfirmation": false
+                },
+                "visible": true
+              },
+              {
+                "name": "p4Workspace",
+                "type": "Microsoft.Common.TextBox",
+                "label": "P4 Client Workspace",
+                "toolTip": "Enter a name for the P4 Client Workspace to be created on the VM",
+                "defaultValue": "[concat(basics('vmName'), '-ws')]",
+                "constraints": {
+                  "required": true,
+                  "validations": [
+                    {
+                      "regex": "^[\\S]+$",
+                      "message": "The Workspace name must only contain alphanumeric characters."
+                    }
+                  ]
+                },
+                "visible": true
+              },
+              {
+                "name": "p4WorkspaceLabel",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "By default, the local Perforce Client Workspace will be created in C:\\p4depots. However, if you choose to add a striped data volume (via the Data Storage tab), the directory will be placed on that volume instead."
+                }
+              },
+              {
+                "name": "p4WorkspaceConfigOption",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "Configure P4 Workspace by",
+                "defaultValue": "Associating with a Stream",
+                "toolTip": "Select whether you want to associate the Client workspace with a Stream, or use Client View mapping instead",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "Associating with a Stream",
+                      "value": "Stream"
+                    },
+                    {
+                      "label": "Using Client View mappings",
+                      "value": "View"
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": true
+              },
+              {
+                "name": "p4Stream",
+                "type": "Microsoft.Common.TextBox",
+                "label": "P4 Stream",
+                "toolTip": "Enter the path of the P4 Stream to associated with the Client workspace on the VM",
+                "placeholder": "E.g. //game/main",
+                "constraints": {
+                  "required": true,
+                  "validations": [
+                    {
+                      "regex": "^(\\/\\/|\\+\\/\\/|-\\/|&\\/\\/)[\\S]+$",
+                      "message": "The Stream name must be in the format //depot/[path1[/path2[/..]]] "
+                    }
+                  ]
+                },
+                "visible": "[equals(steps('toolsConfig').perforceConfig.p4WorkspaceConfigOption, 'Stream')]"
+              },
+              {
+                "name": "p4ViewsLabel",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": "[equals(steps('toolsConfig').perforceConfig.p4WorkspaceConfigOption, 'View')]",
+                "options": {
+                  "text": "P4 Client Views",
+                  "link": {
+                    "label": "Learn more about Client Views",
+                    "uri": "https://www.perforce.com/manuals/cmdref/Content/CmdRef/views.html#Usage_Notes"
+                  }
+                }
+              },
+              {
+                "name": "p4Views",
+                "type": "Microsoft.Common.EditableGrid",
+                "visible": "[equals(steps('toolsConfig').perforceConfig.p4WorkspaceConfigOption, 'View')]",
+                "ariaLabel": "Enter mappings for depot views",
+                "label": "Client View",
+                "toolTip": "Enter up to 10 client view mappings",
+                "constraints": {
+                  "width": "Full",
+                  "rows": {
+                    "count": {
+                      "min": 1,
+                      "max": 10
+                    }
+                  },
+                  "columns": [
+                    {
+                      "id": "depotPath",
+                      "header": "Depot Path",
+                      "width": "1fr",
+                      "element": {
+                        "type": "Microsoft.Common.TextBox",
+                        "placeholder": "E.g. //depot/...",
+                        "toolTip": "Enter the remote depot path",
+                        "constraints": {
+                          "required": true,
+                          "validations": [
+                            {
+                              "regex": "^(\\/\\/|\\+\\/\\/|-\\/|&\\/\\/)[\\S]+(\\/\\.\\.\\.)$",
+                              "message": "Only values matching the pattern //depot/[path1[/path2[/..]]]/... are allowed"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "id": "clientPath",
+                      "header": "Relative path underneath the Client Workspace",
+                      "width": "1fr",
+                      "element": {
+                        "type": "Microsoft.Common.TextBox",
+                        "placeholder": "E.g. /...",
+                        "toolTip": "Enter the relative path underneath the Client Workspace. E.g. for client mapping to //workspace/dir1/... enter /dir1/...",
+                        "constraints": {
+                          "required": true,
+                          "validations": [
+                            {
+                              "regex": "^\\/([a-zA-Z][\\S]+\\/)*(\\.\\.\\.)$",
+                              "message": "Only values matching the pattern /[path1[/path2[/..]]]/... are allowed"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+
+          {
+            "name": "sdkSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Game SDKs Installed",
+            "elements": [
+              {
+                "name": "gdk",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Microsoft Game Development Kit",
+                "toolTip": "Select the Microsoft GDK version",
+                "default": "June_2022_Update_1",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "June 2022 Update 1",
+                      "value": "June_2022_Update_1"
+                    },
+                    {
+                      "label": "March 2022 Update 1",
+                      "value": "March_2022_Update_1"
+                    },
+                    {
+                      "label": "October 2021 Update 5",
+                      "value": "October_2021_Update_5"
+                    },
+                    {
+                      "label": "June 2021 Update 9",
+                      "value": "June_2021_Update_9"
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": true
+              },
+              {
+                "name": "playfabsdk",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "PlayFab SDK",
+                    "uri": "https://docs.microsoft.com/gaming/playfab/sdks/sdk-overview"
+                  }
+                }
+              },
+              {
+                "name": "windows10SDK",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "link": {
+                    "label": "Windows 10 SDK (Includes DirectX)",
+                    "uri": "https://developer.microsoft.com/windows/downloads/windows-10-sdk/"
+                  }
+                }
+              }
+            ],
+            "visible": "[not(equals(steps('toolsConfig').installedToolsConfig.gameEngine, ''))]"
+          },
+
+          {
+            "name": "ibSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Incredibuild for Accelerated Builds",
+            "elements": [
+              {
+                "name": "ibText",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "To enable Incredibuild, please upload your Incredibuild license. If you don't provide a license Incredibuild will be removed, due to a 1-core limitation when unlicensed.",
+                  "link": {
+                    "label": "Learn more about obtaining a license for Incredibuild",
+                    "uri": "https://www.incredibuild.com/"
+                  }
+                }
+              },
+              {
+                "name": "ibLicenseKey",
+                "type": "Microsoft.Common.FileUpload",
+                "label": "Incredibuild License File",
+                "toolTip": "The IncrediBuild License file required to enable Incredibuild",
+                "constraints": {
+                  "required": false,
+                  "accept": ".IB_lic"
+                },
+                "options": {
+                  "uploadMode": "file",
+                  "openMode": "binary"
+                }
+              }
+            ],
+            "visible": "[not(equals(steps('toolsConfig').installedToolsConfig.gameEngine, ''))]"
+          },
+
+          {
+            "name": "otherToolsNoEngine",
+            "type": "Microsoft.Common.Section",
+            "label": "Other Tools Installed",
+            "elements": [
+              {
+                "name": "otherToolsNoEngineText",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Quixel Bridge, NVIDIA GPU GRID drivers, Blender, DirectX Runtime, Azure CLI, Chocolatey, NodeJS, Python",
+                  "link": {
+                    "label": "Learn more",
+                    "uri": "https://docs.microsoft.com/gaming/azure/game-dev-virtual-machine/tools-included-azure-game-dev-kit"
+                  }
+                }
+              }
+            ],
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'no_engine')]"
+          },
+          {
+            "name": "otherToolsUnreal",
+            "type": "Microsoft.Common.Section",
+            "label": "Other Tools Installed",
+            "elements": [
+              {
+                "name": "otherToolsUnrealText",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Epic Game Launcher, Quixel Bridge, PlayFab SDK Unreal Plugin, NVIDIA GPU GRID drivers, Blender, DirectX Runtime, Azure CLI, Chocolatey, NodeJS, Python",
+                  "link": {
+                    "label": "Learn more",
+                    "uri": "https://docs.microsoft.com/gaming/azure/game-dev-virtual-machine/tools-included-azure-game-dev-kit"
+                  }
+                }
+              }
+            ],
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'ue')]"
+          },
+          {
+            "name": "otherToolsUnity",
+            "type": "Microsoft.Common.Section",
+            "label": "Other Tools Installed",
+            "elements": [
+              {
+                "name": "otherToolsUnityText",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Unity Hub, Quixel Bridge, NVIDIA GPU GRID drivers, Blender, DirectX Runtime, Azure CLI, Chocolatey, NodeJS, Python",
+                  "link": {
+                    "label": "Learn more",
+                    "uri": "https://docs.microsoft.com/gaming/azure/game-dev-virtual-machine/tools-included-azure-game-dev-kit"
+                  }
+                }
+              }
+            ],
+            "visible": "[startsWith(steps('toolsConfig').installedToolsConfig.gameEngine, 'unity')]"
+          }
+
+        ]
+      },
+      {
+        "name": "remoteAccessConfig",
+        "label": "Remote Access Configuration",
+        "subLabel": {
+          "preValidation": "Configure Remote Access settings ",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Remote Access Configuration",
+        "elements": [
+          {
+            "name": "remoteAccessType",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Remote Access Technology",
+            "defaultValue": "RDP",
+            "toolTip": "Selection of remote access technology/protocol",
+            "multiselect": false,
+            "selectAll": false,
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "RDP",
+                  "description": "Windows RDP",
+                  "value": "RDP"
+                },
+                {
+                  "label": "Teradici",
+                  "description": "Teradici",
+                  "value": "Teradici"
+                },
+                {
+                  "label": "Parsec",
+                  "description": "Parsec",
+                  "value": "Parsec"
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+
+          {
+            "name": "avdSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Azure Virtual Desktop (AVD) integration",
+            "elements": [
+              {
+                "name": "addToAVDHostPool",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Add to AVD Host Pool",
+                "toolTip": "Select if you want to add this VM to an AVD Host Pool.",
+                "visible": true
+              },
+              {
+                "name": "avdGuidanceBox",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": "[steps('remoteAccessConfig').avdSection.addToAVDHostPool]",
+                "options": {
+                  "icon": "Warning",
+                  "text": "<b>IMPORTANT:</b>\r\n\r\nIn order to successfully register and use this VM as an AVD session host you must enable the <b>System assigned managed identity</b> and <b>Login with Azure AD</b> options on the Management tab.\r\n\r\nAfter the deployment completes, you will also have to add the appropriate AAD users or groups to the <b>Virtual Machine Administrator Login</b> role for the VM resource. <a href='https://docs.microsoft.com/azure/active-directory/devices/howto-vm-sign-in-azure-ad-windows#configure-role-assignments-for-the-vm' target='_blank'>Learn more</a>. The following CLI command can be used:\r\n\r\n<i>az role assignment create --role 'Virtual Machine Administrator Login' --assignee '[Group or User ID]' --scope /subscriptions/[Subscription ID]/resourceGroups/[Resource Group name]/providers/Microsoft.Compute/virtualMachines/[VM name]</i>\r\n\r\nIf you are planning to access the session host from client devices that are not joined to the AAD tenant of the AVD infrastructure, you will need to add <b>targetisaadjoined:i:1</b> as a custom RDP property for the host pool. <a href='https://docs.microsoft.com/azure/virtual-desktop/deploy-azure-ad-joined-vm#access-azure-ad-joined-vms' target='_blank'>Learn more</a>\r\n\r\nThe registration with the AVD Host Pool is based on the default Windows user profile configuration (local to the VM). If you require roaming profiles, you will need to install <a href='https://docs.microsoft.com/fslogix/overview' target='_blank'>FSLogix</a> and configure it for one of the profile storage options described <a href='https://docs.microsoft.com/azure/virtual-desktop/store-fslogix-profile' target='_blank'>here</a>.\r\n\r\nIf you are using the Remote Desktop client application to connect to a Windows 10 session host, please make sure to use the following format for the user name: <b>AzureAD\\user@domain.com</b>."
+                }
+              },
+              {
+                "name": "hostPoolSelector",
+                "type": "Microsoft.Solutions.ResourceSelector",
+                "label": "AVD Host Pool",
+                "toolTip": "Select from existing Host Pools",
+                "resourceType": "Microsoft.DesktopVirtualization/hostPools",
+                "options": {
+                  "filter": {
+                    "subscription": "all"
+                  }
+                },
+                "constraints": {
+                  "required": true
+                },
+                "required": true,
+                "visible": "[steps('remoteAccessConfig').avdSection.addToAVDHostPool]"
+              },
+              {
+                "name": "hostPoolsApi",
+                "type": "Microsoft.Solutions.ArmApiControl",
+                "request": {
+                  "method": "POST",
+                  "path": "[concat(steps('remoteAccessConfig').avdSection.hostPoolSelector.id, '/retrieveRegistrationToken?api-version=2022-02-10-preview')]"
+                }
+              },
+              {
+                "name": "hostPoolsValidationMessage",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": "[and(empty(steps('remoteAccessConfig').avdSection.hostPoolsApi.token), not(empty(steps('remoteAccessConfig').avdSection.hostPoolsApi.registrationTokenOperation)))]",
+                "options": {
+                  "icon": "Error",
+                  "text": "The selected Host Pool does not have an active Registration key. Please generate a Registration key via the Host Pool properties or select a different Host Pool from the list."
+                }
+              }
+            ],
+            "visible": "[equals(steps('remoteAccessConfig').remoteAccessType, 'RDP')]"
+          },
+
+          {
+            "name": "teradiciSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Teridici Configuration",
+            "elements": [
+              {
+                "name": "teradiciRegKey",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Teradici CAS+ Registration Key",
+                "toolTip": "This optional field can be used to enter your registration code with the format: A1BC3D6Y2FVM@A123-4567-890B-CDEF. Click the links below for details on how to purchase or access a free trial.",
+                "constraints": {
+                  "required": true,
+                  "regex": "^[0-9A-Za-z]{12}@[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}$",
+                  "validationMessage": "Only alphanumeric characters and dashes are allowed (for example: A1BC3D6Y2FVM@A123-4567-890B-CDEF)."
+                },
+                "visible": true
+              },
+              {
+                "name": "teradiciRegKeySubscribeText",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "For a Teradici CAS+ (GPU enabled) license click here:",
+                  "link": {
+                    "label": "Teradici Cloud Access Plus annual subscription",
+                    "uri": "https://ms.portal.azure.com/#create/teradici.teradici_cloud_access_software"
+                  }
+                }
+              },
+              {
+                "name": "teradiciRegKeyTrialText",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "To learn more about Teradici All Access, or request for a demo, please contact us.",
+                  "link": {
+                    "label": "Learn more",
+                    "uri": "https://connect.teradici.com/contact-us"
+                  }
+                }
+              }
+            ],
+            "visible": "[equals(steps('remoteAccessConfig').remoteAccessType, 'Teradici')]"
+          },
+
+          {
+            "name": "parsecSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Parsec Configuration",
+            "elements": [
+              {
+                "name": "teamId",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Parsec Team ID",
+                "toolTip": "Team Computers are provisioned by using the Team ID and Team's Computer Key, which can be obtained from the Teams administrator panel, in the Team Computers section.",
+                "visible": true,
+                "constraints": {
+                  "required": true,
+                  "regex": "^.{1,}$",
+                  "validationMessage": "A team ID is required."
+                }
+              },
+              {
+                "name": "teamKey",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Parsec Team Key",
+                "toolTip": "Team Computers are provisioned by using the Team ID and Team's Computer Key, which can be obtained from the Teams administrator panel, in the Team Computers section.",
+                "visible": true,
+                "constraints": {
+                  "required": true,
+                  "regex": "^.{1,}$",
+                  "validationMessage": "A team key is required."
+                }
+              },
+              {
+                "name": "host",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Host Name",
+                "toolTip": "The name of your computer. Leave blank to use the virtual machine hostname.",
+                "visible": true,
+                "constraints": {
+                  "required": false,
+                  "regex": "^.{1,256}$",
+                  "validationMessage": "Host name must be 1-15 characters long."
+                }
+              },
+              {
+                "name": "userEmail",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Parsec User Email",
+                "toolTip": "You can assign a computer to a user using their Parsec email. If the email does not match an existing team member the computer becomes reserved and once a user with a matching email joins the team the computer is automatically assigned to them. You can revoke reservations through the admin dashboard.",
+                "visible": true,
+                "constraints": {
+                  "required": false,
+                  "regex": "^(\\S+@\\S+){1,1}$",
+                  "validationMessage": "Please enter a valid email address."
+                }
+              },
+              {
+                "name": "isGuestAccess",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Guest Access",
+                "toolTip": "Team Computers can be enabled for Guest Access. Once enabled the computer will show in the Guest Access tab for all admins and guest access coordinators.",
+                "visible": true
+              }
+            ],
+            "visible": "[equals(steps('remoteAccessConfig').remoteAccessType, 'Parsec')]"
+          }
+        ]
+      },
+
+
+      {
+        "name": "infrastructureConfig",
+        "label": "VM Network",
+        "subLabel": {
+          "preValidation": "Configure Public IP and DNS settings",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Network settings",
+        "elements": [
+          {
+            "name": "ipSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Configure Public IP and DNS",
+            "elements": [
+              {
+                "name": "dnsAndPublicIP",
+                "type": "Microsoft.Network.PublicIpAddressCombo",
+                "label": {
+                  "publicIpAddress": "Public IP Address",
+                  "domainNameLabel": "DNS Prefix"
+                },
+                "toolTip": {
+                  "domainNameLabel": "Unique DNS Prefix for the public IP address"
+                },
+                "defaultValue": {
+                  "publicIpAddressName": "[concat(basics('vmName'), '-ip')]",
+                  "domainNameLabel": "[toLower(concat(basics('vmName'), '-', take(replace(guid(), '-', ''), 6)))]"
+                },
+                "options": {
+                  "hideNone": false,
+                  "hideExisting": false,
+                  "hideDomainNameLabel": false
+                }
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "virtualNetwork",
+            "type": "Microsoft.Network.VirtualNetworkCombo",
+            "label": {
+              "virtualNetwork": "Virtual Network",
+              "subnets": "Subnet"
+            },
+            "toolTip": {
+              "virtualNetwork": "Virtual Network Name",
+              "subnets": "Subnet requried for Azure Application"
+            },
+            "defaultValue": {
+              "name": "[concat(basics('vmName'), '-vnet')]",
+              "addressPrefixSize": "/24"
+            },
+            "options": {
+              "hideExisting": false
+            },
+            "constraints": {
+              "minAddressPrefixSize": "/24"
+            },
+            "subnets": {
+              "subnet1": {
+                "label": "Subnet Name",
+                "defaultValue": {
+                  "name": "gamedevvms",
+                  "addressPrefixSize": "/26"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/26",
+                  "minAddressCount": 12,
+                  "requireContiguousAddresses": false
+                }
+              }
+            }
+          }
+        ]
+      },
+
+      {
+        "name": "diskConfig",
+        "label": "Data Storage",
+        "subLabel": {
+          "preValidation": "Configure Data Storage settings",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Data Storage settings",
+        "elements": [
+          {
+            "name": "infoTextStripedDiskText0",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "By default, the Virtual Machine created by this offer has one disk volume of 255GB - C: drive, hosting the OS and all software included in the offer. As the remaining free space is limited, if you plan to work on large projects that require large storage and high IOPS/throughput, it is recommended to provision a dedicated disk volume for your projects and data."
+            }
+          },
+          {
+            "name": "dataDiskSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Striped Disk Volume configuration",
+            "elements": [
+              {
+                "name": "infoTextStripedDiskText1",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "This section allows you to create a disk volume in the VM for data storage that is striped across multiple data disks. The size of this disk volume will be equal to [Number of Data Disks] * [Data Disk Size]. Each of the data disk sizes available for selection is associated with an IOPS and Throughput performance tier as per",
+                  "link": {
+                    "label": "Azure Managed Disks documentation",
+                    "uri": "https://docs.microsoft.com/azure/virtual-machines/disks-types#premium-ssd-size"
+                  }
+                }
+              },
+              {
+                "name": "infoTextStripedDiskText2",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Note that while the striped disk volume has the potential to deliver up to [Number of Data Disks] * [Provisioned IOPS for selected Data Disk Size], the actual IOPS cannot exceed the Virtual Machine's total IOPS limit. The same applies to the disk Throughput.",
+                  "link": {
+                    "label": "Learn more about Disk and Virtual Machine I/O capping",
+                    "uri": "https://docs.microsoft.com/azure/virtual-machines/disks-performance"
+                  }
+                }
+              },
+              {
+                "name": "numDataDisks",
+                "type": "Microsoft.Common.Slider",
+                "min": 0,
+                "max": 16,
+                "label": "Number of Data Disks",
+                "defaultValue": 0,
+                "showStepMarkers": true,
+                "toolTip": "Select the number of data disks to be attached to the VM",
+                "constraints": {
+                  "required": true
+                },
+                "visible": true
+              },
+              {
+                "name": "dataDiskSize",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Data Disk size",
+                "toolTip": "Select the size of each data disk",
+                "multiselect": false,
+                "selectAll": false,
+                "defaultValue": "1TB | 5000 IOPS | 200 MB/sec",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "1TB | 5000 IOPS | 200 MB/sec",
+                      "description": "1TB | 5000 IOPS | 200 MB/sec",
+                      "value": "1TB | 5000 IOPS | 200 MB/sec"
+                    },
+                    {
+                      "label": "2TB | 7500 IOPS | 250 MB/sec",
+                      "description": "2TB | 7500 IOPS | 250 MB/sec",
+                      "value": "2TB | 7500 IOPS | 250 MB/sec"
+                    },
+                    {
+                      "label": "4TB | 7500 IOPS | 250 MB/sec",
+                      "description": "4TB | 7500 IOPS | 250 MB/sec",
+                      "value": "4TB | 7500 IOPS | 250 MB/sec"
+                    },
+                    {
+                      "label": "8TB | 16000 IOPS | 500 MB/sec",
+                      "description": "8TB | 16000 IOPS | 500 MB/sec",
+                      "value": "8TB | 16000 IOPS | 500 MB/sec"
+                    },
+                    {
+                      "label": "16TB | 18000 IOPS | 750 MB/sec",
+                      "description": "16TB | 18000 IOPS | 750 MB/sec",
+                      "value": "16TB | 18000 IOPS | 750 MB/sec"
+                    },
+                    {
+                      "label": "32TB | 20000 IOPS | 900 MB/sec",
+                      "description": "32TB | 20000 IOPS | 900 MB/sec",
+                      "value": "32TB | 20000 IOPS | 900 MB/sec"
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": true
+              },
+              {
+                "name": "infoTextStripedDiskSize",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": true,
+                "options": {
+                  "icon": "Info",
+                  "text": "[concat('Striped Volume Characteristics        Total Size: ', string(mul(steps('diskConfig').dataDiskSection.numDataDisks, int(first(split(steps('diskConfig').dataDiskSection.dataDiskSize, 'T'))) )), 'TB    Max IOPS: ', string(mul(steps('diskConfig').dataDiskSection.numDataDisks, int(first(skip(split(steps('diskConfig').dataDiskSection.dataDiskSize, ' '), 2))) )), ' IOPS     Max Throughput: ', string(mul(steps('diskConfig').dataDiskSection.numDataDisks, int(first(skip(split(steps('diskConfig').dataDiskSection.dataDiskSize, ' '), 5))) )), ' MB/sec')]"
+                }
+              }
+            ]
+          },
+          {
+            "name": "fileShareSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Azure Storage File Share configuration",
+            "elements": [
+
+              {
+                "name": "infoTextFileShare",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "If your team is using an Azure Storage File Share as a common repository for project artifacts, you can mount it as a drive to your VM"
+                }
+              },
+
+              {
+                "name": "fileShareAdd",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Mount an existing Azure Storage File Share",
+                "toolTip": "Select to add an Azure Storage file share"
+              },
+
+              {
+                "name": "fileShareStorageSelector",
+                "type": "Microsoft.Solutions.ResourceSelector",
+                "label": "Storage Account",
+                "toolTip": "Select from existing Storage Accounts",
+                "resourceType": "Microsoft.Storage/storageAccounts",
+                "options": {
+                  "filter": {
+                    "subscription": "all"
+                  }
+                },
+                "constraints": {
+                  "required": true
+                },
+                "required": true,
+                "visible": "[equals(steps('diskConfig').fileShareSection.fileShareAdd, true)]"
+              },
+
+              {
+                "name": "fileShareApi",
+                "type": "Microsoft.Solutions.ArmApiControl",
+                "request": {
+                  "method": "GET",
+                  "path": "[concat(steps('diskConfig').fileShareSection.fileShareStorageSelector.id, '/fileServices/default/shares?api-version=2021-04-01')]"
+                }
+              },
+
+              {
+                "name": "fileShareStorageKeysApi",
+                "type": "Microsoft.Solutions.ArmApiControl",
+                "request": {
+                  "method": "POST",
+                  "path": "[concat(steps('diskConfig').fileShareSection.fileShareStorageSelector.id, '/listKeys?api-version=2021-04-01')]"
+                }
+              },
+
+              {
+                "name": "fileShareDropDown",
+                "type": "Microsoft.Common.DropDown",
+                "label": "File Share",
+                "toolTip": "Select the File Share",
+                "constraints": {
+                  "allowedValues": "[map(steps('diskConfig').fileShareSection.fileShareApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.name, '\"}')))]",
+                  "required": true
+                },
+                "visible": "[equals(steps('diskConfig').fileShareSection.fileShareAdd, true)]"
+              },
+
+              {
+                "name": "infoTextFileShare0",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": "[equals(steps('diskConfig').fileShareSection.fileShareAdd, true)]",
+                "options": {
+                  "icon": "Warning",
+                  "text": "<b>IMPORTANT:</b>\r\n\r\nMounting the file share within the VM will fail at startup if the selected Storage Account is not accessible.\r\n\r\nIf you are deploying this VM into a network that is newly created as part of the VM provisioning, your Storage Account firewall must be configured to \"Allow access from All networks\".\r\n\r\nIf you are deploying this VM into an existing network, ensure that:\r\n- The Network Security Group in effect for this VM has port 445 outbound open, and\r\n- The Storage Account Firewall would allow the connection by means of a Private Endpoint, a Service Endpoint for your network, or allowing access from All networks. <a href='https://docs.microsoft.com/azure/storage/common/storage-network-security' target='_blank'>Learn more</a>"
+                }
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "name": "management",
+        "label": "Management",
+        "subLabel": {
+          "preValidation": "Configure management options for your VM.",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Management",
+        "elements": [
+          {
+            "name": "managedIdentity",
+            "type": "Microsoft.Common.Section",
+            "label": "Identity",
+            "elements": [
+              {
+                "name": "enableManagedIdentity",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "System assigned managed identity",
+                "toolTip": "Enable Usage of Azure Managed Identity",
+                "constraints": {
+                  "required": false
+                }
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "AAD",
+            "type": "Microsoft.Common.Section",
+            "label": "Azure AD",
+            "elements": [
+              {
+                "name": "enableAAD",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Login with Azure AD",
+                "toolTip": "Enable Usage of Azure Active Directory for Login",
+                "constraints": {
+                  "required": false
+                }
+              },
+              {
+                "name": "AzureADUserLogin",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": "true",
+                "options": {
+                  "icon": "Info",
+                  "text": "RBAC role assignment of Virtual Machine Administrator Login or Virtual Machine User Login is required when using Azure AD login.",
+                  "uri": "https://docs.microsoft.com/azure/active-directory/devices/howto-vm-sign-in-azure-ad-windows#configure-role-assignments-for-the-vm"
+                }
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "windowsUpdate",
+            "type": "Microsoft.Common.Section",
+            "label": "Guest OS updates",
+            "elements": [
+              {
+                "name": "windowsUpdateOptionWin10",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Patch Orchestration Options",
+                "toolTip": "Patch orchestration options allow you to control how patches will be applied to your virtual machine. [Learn More](http://go.microsoft.com/fwlink/?LinkId=2141421)",
+                "defaultValue": "Automatic By OS (Windows Automatic Updates)",
+                "multiLine": true,
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "Automatic By OS (Windows Automatic Updates)",
+                      "description": "Best for scenarios where interrupting workloads for patching isn't an issue.",
+                      "value": "AutomaticByOS"
+                    },
+                    {
+                      "label": "Manual updates",
+                      "description": "Turns off Windows Automatic Updates. Install patches manually or pick a different solution.",
+                      "value": "Manual"
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": "[equals(basics('osType'), 'win10')]"
+              },
+              {
+                "name": "windowsUpdateOption",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Patch Orchestration Options",
+                "toolTip": "Patch orchestration options allow you to control how patches will be applied to your virtual machine. [Learn More](http://go.microsoft.com/fwlink/?LinkId=2141421)",
+                "defaultValue": "Automatic By OS (Windows Automatic Updates)",
+                "multiLine": true,
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "Automatic By OS (Windows Automatic Updates)",
+                      "description": "Best for scenarios where interrupting workloads for patching isn't an issue.",
+                      "value": "AutomaticByOS"
+                    },
+                    {
+                      "label": "Azure-orchestrated",
+                      "description": "Orchestrates patches across availability sets. Best for workload availability.",
+                      "value": "AutomaticByPlatform"
+                    },
+                    {
+                      "label": "Manual updates",
+                      "description": "Turns off Windows Automatic Updates. Install patches manually or pick a different solution.",
+                      "value": "Manual"
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": "[not(equals(basics('osType'), 'win10'))]"
+              }
+            ],
+            "visible": true
+          }
+        ]
+      },
+
+      {
+        "name": "advancedUsage",
+        "label": "Advanced",
+        "subLabel": {
+          "preValidation": "Options for advanced usage scenarios",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Advanced",
+        "elements": [
+          {
+            "name": "customImage",
+            "type": "Microsoft.Common.Section",
+            "label": "Support for custom image creation using sysprep",
+            "elements": [
+              {
+                "name": "useVmToSysprepCustomImage",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "VM will be used with sysprep to create a custom image",
+                "toolTip": "Check this if you are planning to use this VM as the base for creating a custom image using sysprep"
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "infoTextCustomImage",
+            "type": "Microsoft.Common.InfoBox",
+            "options": {
+              "icon": "Warning",
+              "text": "<b>IMPORTANT:</b>\r\n\r\nIf you plan on building a custom image on top of the Game Dev VM (for example - create a new base image with added tools/configurations), you will need to select the option above so that the sysprep process can complete successfully. By default the VM installs the Microsoft GDK and Gaming Services, which currently do not support sysprep. Therefore, to support sysprep, the following components will not be configured on the VM when above option is selected:\r\n- Microsoft Game Development Kit (GDK)\r\n- Incredibuild license registration\r\n- Pinned taskbar icons for Blender, Perforce, Visual Studio, Microsoft Edge, and Unreal Engine\r\n\r\nThis option is also required for creating a custom image to be used with the Azure Virtual Desktop solution."
+            }
+          }
+        ]
+      },
+
+      {
+        "name": "tags",
+        "label": "Tags",
+        "elements": [
+          {
+            "name": "tagsByResource",
+            "type": "Microsoft.Common.TagsByResource",
+            "resources": [
+              "Microsoft.Compute/virtualMachines",
+              "Microsoft.Network/publicIPAddresses",
+              "Microsoft.Network/networkSecurityGroups",
+              "Microsoft.Network/virtualNetworks",
+              "Microsoft.Network/networkInterfaces"
+            ],
+            "toolTip": {
+              "Tags": "Create Name/Value pairs to categorize your resources"
+            }
+          }
+        ]
+      }
+    ],
+
+    "outputs": {
+      "location": "[location()]",
+      "vmSize": "[if(basics('useAsBuildServer'), basics('vmSizeBuildServer'), basics('vmSize'))]",
+      "vmName": "[basics('vmName')]",
+      "adminName": "[basics('adminUsername')]",
+      "adminPass": "[basics('adminPassword').password]",
+      "osType": "[basics('osType')]",
+
+      "enableManagedIdentity": "[if(steps('management').AAD.enableAAD, steps('management').AAD.enableAAD, steps('management').managedIdentity.enableManagedIdentity)]",
+      "enableAAD": "[steps('management').AAD.enableAAD]",
+      "windowsUpdateOption": "[if(equals(basics('osType'), 'win10'), steps('management').windowsUpdate.windowsUpdateOptionWin10, steps('management').windowsUpdate.windowsUpdateOption)]",
+
+      "vnetName": "[steps('infrastructureConfig').virtualNetwork.name]",
+      "vnetARPrefixes": "[steps('infrastructureConfig').virtualNetwork.addressPrefixes]",
+      "vnetNewOrExisting": "[steps('infrastructureConfig').virtualNetwork.newOrExisting]",
+      "vnetRGName": "[steps('infrastructureConfig').virtualNetwork.resourceGroup]",
+
+      "subNetName": "[steps('infrastructureConfig').virtualNetwork.subnets.subnet1.name]",
+      "subNetARPrefix": "[steps('infrastructureConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
+
+      "publicIpName": "[steps('infrastructureConfig').ipSection.dnsAndPublicIP.name]",
+      "publicIpDns": "[steps('infrastructureConfig').ipSection.dnsAndPublicIP.domainNameLabel]",
+      "publicIpAllocationMethod": "[steps('infrastructureConfig').ipSection.dnsAndPublicIP.publicIPAllocationMethod]",
+      "publicIpSku": "[steps('infrastructureConfig').ipSection.dnsAndPublicIP.sku]",
+      "publicIpNewOrExisting": "[steps('infrastructureConfig').ipSection.dnsAndPublicIP.newOrExistingOrNone]",
+      "publicIpRGName": "[steps('infrastructureConfig').ipSection.dnsAndPublicIP.resourceGroup]",
+
+      "gameEngine": "[steps('toolsConfig').installedToolsConfig.gameEngine]",
+      "gdkVersion": "[steps('toolsConfig').sdkSection.gdk]",
+      "ibLicenseKey": "[steps('toolsConfig').ibSection.ibLicenseKey]",
+      "remoteAccessTechnology": "[steps('remoteAccessConfig').remoteAccessType]",
+      "unrealPixelStreamingEnabled": "[steps('toolsConfig').pixelStreamingUnreal.enableUnrealPixelStreaming]",
+
+      "avdRegistrationKey": "[steps('remoteAccessConfig').avdSection.hostPoolsApi.token]",
+
+      "teradiciRegKey": "[steps('remoteAccessConfig').teradiciSection.teradiciRegKey]",
+
+      "parsec_teamId": "[steps('remoteAccessConfig').parsecSection.teamId]",
+      "parsec_teamKey": "[steps('remoteAccessConfig').parsecSection.teamKey]",
+      "parsec_host": "[steps('remoteAccessConfig').parsecSection.host]",
+      "parsec_userEmail": "[steps('remoteAccessConfig').parsecSection.userEmail]",
+      "parsec_isGuestAccess": "[steps('remoteAccessConfig').parsecSection.isGuestAccess]",
+
+      "numDataDisks": "[steps('diskConfig').dataDiskSection.numDataDisks]",
+      "dataDiskSize": "[sub(mul(int(first(split(steps('diskConfig').dataDiskSection.dataDiskSize, 'T'))), 1024), 1)]",
+      "fileShareStorageAccount": "[if(steps('diskConfig').fileShareSection.fileShareAdd, steps('diskConfig').fileShareSection.fileShareStorageSelector.name, '')]",
+      "fileShareStorageAccountKey": "[if(steps('diskConfig').fileShareSection.fileShareAdd, first(steps('diskConfig').fileShareSection.fileShareStorageKeysApi.keys).value, '')]",
+      "fileShareName": "[if(steps('diskConfig').fileShareSection.fileShareAdd, steps('diskConfig').fileShareSection.fileShareDropDown, '')]",
+
+      "p4Port": "[steps('toolsConfig').perforceConfig.p4Port]",
+      "p4Username": "[steps('toolsConfig').perforceConfig.p4Username]",
+      "p4Password": "[steps('toolsConfig').perforceConfig.p4Password]",
+      "p4Workspace": "[steps('toolsConfig').perforceConfig.p4Workspace]",
+      "p4Stream": "[steps('toolsConfig').perforceConfig.p4Stream]",
+      "p4ClientViews": "[encodeBase64(string(steps('toolsConfig').perforceConfig.p4Views))]",
+
+      "useVmToSysprepCustomImage": "[steps('advancedUsage').customImage.useVmToSysprepCustomImage]",
+
+      "outTagsByResource": "[steps('tags').tagsByResource]"
+    }
+  }
+}

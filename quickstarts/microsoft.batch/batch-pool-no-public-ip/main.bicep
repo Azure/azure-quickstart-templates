@@ -16,7 +16,7 @@ var subnetName = 'default'
 var poolName = 'no-public-ip-pool'
 var nsgName = 'deny-internet-outbound'
 
-resource batchAccount 'Microsoft.Batch/batchAccounts@2022-06-01' = {
+resource batchAccount 'Microsoft.Batch/batchAccounts@2022-10-01' = {
   name: accountName
   location: location
   identity: {
@@ -46,7 +46,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
   name: nsgName
   location: location
   properties: {
@@ -68,7 +68,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: vnetName
   location: location
   properties: {
@@ -103,7 +103,7 @@ resource vnetDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
   }
 }
 
-resource nodeManagementPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
+resource nodeManagementPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-05-01' = {
   name: nodeManagementPrivateEndpointName
   location: location
   properties: {
@@ -124,7 +124,7 @@ resource nodeManagementPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-
   }
 }
 
-resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = {
+resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
   name: 'default'
   parent: nodeManagementPrivateEndpoint
   properties: {
@@ -139,7 +139,7 @@ resource privateEndpointDnsIntegration 'Microsoft.Network/privateEndpoints/priva
   }
 }
 
-resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-06-01' = {
+resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-10-01' = {
   name: poolName
   parent: batchAccount
   dependsOn: [
@@ -147,6 +147,7 @@ resource batchPool 'Microsoft.Batch/batchAccounts/pools@2022-06-01' = {
   ]
   properties: {
     vmSize: vmSize
+    targetNodeCommunicationMode: 'Simplified'
     interNodeCommunication: 'Disabled'
     taskSlotsPerNode: 4
     taskSchedulingPolicy: {

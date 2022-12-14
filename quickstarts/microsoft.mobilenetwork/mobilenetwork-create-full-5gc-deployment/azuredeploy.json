@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.9.1.41621",
-      "templateHash": "3429803938440032495"
+      "version": "0.13.1.58284",
+      "templateHash": "12190327913457059410"
     }
   },
   "parameters": {
@@ -71,6 +71,20 @@
         "description": "The name for the SIM group."
       }
     },
+    "existingEncryptionKeyUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "A unversioned key vault key to encrypt the SIM data that belongs to this SIM group. For example: https://contosovault.vault.azure.net/keys/azureKey."
+      }
+    },
+    "existingUserAssignedIdentityResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "User-assigned identity is an identity in Azure Active Directory that can be used to give access to other Azure resource such as Azure Key Vault. This identity should have Get, Wrap key, and Unwrap key permissions on the key vault."
+      }
+    },
     "simResources": {
       "type": "array",
       "defaultValue": [],
@@ -78,22 +92,18 @@
         "description": "An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format."
       }
     },
-    "platformType": {
+    "azureStackEdgeDevice": {
       "type": "string",
-      "defaultValue": "AKS-HCI",
-      "allowedValues": [
-        "AKS-HCI",
-        "BaseVM"
-      ],
+      "defaultValue": "",
       "metadata": {
-        "description": "The platform type where packet core is deployed."
+        "description": "The resource ID of the Azure Stack Edge device to deploy to"
       }
     },
     "controlPlaneAccessInterfaceName": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine."
+        "description": "The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the control plane interface on the access network. For 5G, this interface is the N2 interface; for 4G, it's the S1-MME interface."
       }
     },
     "controlPlaneAccessIpAddress": {
@@ -107,56 +117,14 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine."
-      }
-    },
-    "userPlaneAccessInterfaceIpAddress": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI."
-      }
-    },
-    "accessSubnet": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The network address of the access subnet in CIDR notation"
-      }
-    },
-    "accessGateway": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The access subnet default gateway"
+        "description": "The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the user plane interface on the access network. For 5G, this interface is the N3 interface; for 4G, it's the S1-U interface."
       }
     },
     "userPlaneDataInterfaceName": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine."
-      }
-    },
-    "userPlaneDataInterfaceIpAddress": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI."
-      }
-    },
-    "userPlaneDataInterfaceSubnet": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The network address of the data subnet in CIDR notation"
-      }
-    },
-    "userPlaneDataInterfaceGateway": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The data subnet default gateway"
+        "description": "The virtual network name on port 6 on your Azure Stack Edge Pro device corresponding to the user plane interface on the data network. For 5G, this interface is the N6 interface; for 4G, it's the SGi interface."
       }
     },
     "userEquipmentAddressPoolPrefix": {
@@ -217,34 +185,13 @@
   },
   "resources": [
     {
-      "type": "Microsoft.MobileNetwork/mobileNetworks/sites",
-      "apiVersion": "2022-04-01-preview",
-      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('siteName'))]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "networkFunctions": [
-          {
-            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]"
-          },
-          {
-            "id": "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
-          }
-        ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]",
-        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes', parameters('siteName'))]",
-        "[resourceId('Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes', parameters('siteName'), parameters('siteName'))]"
-      ]
-    },
-    {
       "condition": "[not(empty(parameters('simGroupName')))]",
       "copy": {
         "name": "exampleSimResources",
         "count": "[length(parameters('simResources'))]"
       },
       "type": "Microsoft.MobileNetwork/simGroups/sims",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[format('{0}/{1}', if(empty(parameters('simGroupName')), 'placeHolderForValidation', parameters('simGroupName')), parameters('simResources')[copyIndex()].simName)]",
       "properties": {
         "integratedCircuitCardIdentifier": "[parameters('simResources')[copyIndex()].integratedCircuitCardIdentifier]",
@@ -263,14 +210,11 @@
     },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes/attachedDataNetworks",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[format('{0}/{1}/{2}', parameters('siteName'), parameters('siteName'), parameters('dataNetworkName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "userPlaneDataInterface": {
-          "ipv4Address": "[parameters('userPlaneDataInterfaceIpAddress')]",
-          "ipv4Subnet": "[parameters('userPlaneDataInterfaceSubnet')]",
-          "ipv4Gateway": "[parameters('userPlaneDataInterfaceGateway')]",
           "name": "[parameters('userPlaneDataInterfaceName')]"
         },
         "userEquipmentAddressPoolPrefix": "[if(empty(parameters('userEquipmentAddressPoolPrefix')), null(), createArray(parameters('userEquipmentAddressPoolPrefix')))]",
@@ -286,14 +230,11 @@
     },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[format('{0}/{1}', parameters('siteName'), parameters('siteName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "userPlaneAccessInterface": {
-          "ipv4Address": "[parameters('userPlaneAccessInterfaceIpAddress')]",
-          "ipv4Subnet": "[parameters('accessSubnet')]",
-          "ipv4Gateway": "[parameters('accessGateway')]",
           "name": "[parameters('userPlaneAccessInterfaceName')]"
         }
       },
@@ -303,7 +244,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[parameters('mobileNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -314,8 +255,17 @@
       }
     },
     {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/sites",
+      "apiVersion": "2022-11-01",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('siteName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.MobileNetwork/mobileNetworks/dataNetworks",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('dataNetworkName'))]",
       "location": "[parameters('location')]",
       "properties": {},
@@ -325,7 +275,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/slices",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('sliceName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -339,7 +289,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/services",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('serviceName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -370,7 +320,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/simPolicies",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('simPolicyName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -418,42 +368,53 @@
     {
       "condition": "[not(empty(parameters('simGroupName')))]",
       "type": "Microsoft.MobileNetwork/simGroups",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[if(empty(parameters('simGroupName')), 'placeHolderForValidation', parameters('simGroupName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "mobileNetwork": {
           "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+        },
+        "encryptionKey": {
+          "keyUrl": "[parameters('existingEncryptionKeyUrl')]"
         }
       },
+      "identity": "[if(not(empty(parameters('existingUserAssignedIdentityResourceId'))), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', parameters('existingUserAssignedIdentityResourceId')), createObject())), createObject('type', 'None'))]",
       "dependsOn": [
         "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
       ]
     },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes",
-      "apiVersion": "2022-04-01-preview",
+      "apiVersion": "2022-11-01",
       "name": "[parameters('siteName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "mobileNetwork": {
-          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
-        },
-        "sku": "EvaluationPackage",
+        "sites": [
+          {
+            "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/sites', parameters('mobileNetworkName'), parameters('siteName'))]"
+          }
+        ],
+        "sku": "G0",
         "coreNetworkTechnology": "[parameters('coreNetworkTechnology')]",
         "platform": {
-          "type": "[parameters('platformType')]",
-          "customLocation": "[if(empty(parameters('customLocation')), null(), createObject('id', parameters('customLocation')))]"
+          "type": "AKS-HCI",
+          "customLocation": "[if(empty(parameters('customLocation')), null(), createObject('id', parameters('customLocation')))]",
+          "azureStackEdgeDevice": {
+            "id": "[parameters('azureStackEdgeDevice')]"
+          }
+        },
+        "localDiagnosticsAccess": {
+          "authenticationType": "Password"
         },
         "controlPlaneAccessInterface": {
           "ipv4Address": "[parameters('controlPlaneAccessIpAddress')]",
-          "ipv4Subnet": "[parameters('accessSubnet')]",
-          "ipv4Gateway": "[parameters('accessGateway')]",
           "name": "[parameters('controlPlaneAccessInterfaceName')]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/sites', parameters('mobileNetworkName'), parameters('siteName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
       ]
     }
   ]

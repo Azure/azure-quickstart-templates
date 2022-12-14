@@ -25,45 +25,29 @@ param sliceName string = 'slice-1'
 @description('The name for the SIM group.')
 param simGroupName string = ''
 
+@description('A unversioned key vault key to encrypt the SIM data that belongs to this SIM group. For example: https://contosovault.vault.azure.net/keys/azureKey.')
+param existingEncryptionKeyUrl string = ''
+
+@description('User-assigned identity is an identity in Azure Active Directory that can be used to give access to other Azure resource such as Azure Key Vault. This identity should have Get, Wrap key, and Unwrap key permissions on the key vault.')
+param existingUserAssignedIdentityResourceId string = ''
+
 @description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
 param simResources array = []
 
-@description('The platform type where packet core is deployed.')
-@allowed([
-  'AKS-HCI'
-  'BaseVM'
-])
-param platformType string = 'AKS-HCI'
+@description('The resource ID of the Azure Stack Edge device to deploy to')
+param azureStackEdgeDevice string = ''
 
-@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the control plane interface on the access network. For 5G, this interface is the N2 interface; for 4G, it\'s the S1-MME interface.')
 param controlPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
 
-@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the user plane interface on the access network. For 5G, this interface is the N3 interface; for 4G, it\'s the S1-U interface.')
 param userPlaneAccessInterfaceName string = ''
 
-@description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI.')
-param userPlaneAccessInterfaceIpAddress string = ''
-
-@description('The network address of the access subnet in CIDR notation')
-param accessSubnet string = ''
-
-@description('The access subnet default gateway')
-param accessGateway string = ''
-
-@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The virtual network name on port 6 on your Azure Stack Edge Pro device corresponding to the user plane interface on the data network. For 5G, this interface is the N6 interface; for 4G, it\'s the SGi interface.')
 param userPlaneDataInterfaceName string = ''
-
-@description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI.')
-param userPlaneDataInterfaceIpAddress string = ''
-
-@description('The network address of the data subnet in CIDR notation')
-param userPlaneDataInterfaceSubnet string = ''
-
-@description('The data subnet default gateway')
-param userPlaneDataInterfaceGateway string = ''
 
 @description('The network address of the subnet from which dynamic IP addresses must be allocated to UEs, given in CIDR notation. Optional if userEquipmentStaticAddressPoolPrefix is specified. If both are specified, they must be the same size and not overlap.')
 param userEquipmentAddressPoolPrefix string = ''
@@ -95,7 +79,7 @@ param dnsAddresses array
 param customLocation string = ''
 
 #disable-next-line BCP081
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -104,26 +88,17 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
       mnc: mobileNetworkCode
     }
   }
-
-  #disable-next-line BCP081
-  resource exampleSite 'sites@2022-04-01-preview' = {
-    name: siteName
-    location: location
-    properties: {
-      networkFunctions: [
-        {
-          id: examplePacketCoreControlPlane.id
-        }
-        {
-          id: examplePacketCoreControlPlane::examplePacketCoreDataPlane.id
-        }
-      ]
-    }
-  }
 }
 
 #disable-next-line BCP081
-resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2022-04-01-preview' = {
+resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' = {
+  parent: exampleMobileNetwork
+  name: siteName
+  location: location
+}
+
+#disable-next-line BCP081
+resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2022-11-01' = {
   parent: exampleMobileNetwork
   name: dataNetworkName
   location: location
@@ -131,7 +106,7 @@ resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks
 }
 
 #disable-next-line BCP081
-resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-04-01-preview' = {
+resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01' = {
   parent: exampleMobileNetwork
   name: sliceName
   location: location
@@ -143,7 +118,7 @@ resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-04-01-
 }
 
 #disable-next-line BCP081
-resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-04-01-preview' = {
+resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-11-01' = {
   parent: exampleMobileNetwork
   name: serviceName
   location: location
@@ -172,7 +147,7 @@ resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-04
 }
 
 #disable-next-line BCP081
-resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-04-01-preview' = {
+resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-11-01' = {
   parent: exampleMobileNetwork
   name: simPolicyName
   location: location
@@ -214,17 +189,28 @@ resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@20
 }
 
 #disable-next-line BCP081
-resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-preview' = if (!empty(simGroupName)) {
+resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-11-01' = if (!empty(simGroupName)) {
   name: empty(simGroupName) ? 'placeHolderForValidation' : simGroupName
   location: location
   properties: {
     mobileNetwork: {
       id: exampleMobileNetwork.id
     }
+    encryptionKey: {
+        keyUrl: existingEncryptionKeyUrl
+    }
+  }
+  identity: !empty(existingUserAssignedIdentityResourceId) ? {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${existingUserAssignedIdentityResourceId}': {}
+    }
+  } : {
+    type: 'None'
   }
 
   #disable-next-line BCP081
-  resource exampleSimResources 'sims@2022-04-01-preview' = [for item in simResources: {
+  resource exampleSimResources 'sims@2022-11-01' = [for item in simResources: {
     name: item.simName
     properties: {
       integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
@@ -240,51 +226,54 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-04-01-p
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
   name: siteName
   location: location
+  dependsOn: [
+    exampleSlice
+  ]
   properties: {
-    mobileNetwork: {
-      id: exampleMobileNetwork.id
-    }
-    sku: 'EvaluationPackage'
+    sites: [
+      {
+        id: exampleSite.id
+      }
+    ]
+    sku: 'G0'
     coreNetworkTechnology: coreNetworkTechnology
     platform: {
-      type: platformType
+      type: 'AKS-HCI'
       customLocation: empty(customLocation) ? null : {
         id: customLocation
       }
+      azureStackEdgeDevice: {
+        id: azureStackEdgeDevice
+      }
+    }
+    localDiagnosticsAccess: {
+      authenticationType: 'Password'
     }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: accessSubnet
-      ipv4Gateway: accessGateway
       name: controlPlaneAccessInterfaceName
     }
   }
 
   #disable-next-line BCP081
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-04-01-preview' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-11-01' = {
     name: siteName
     location: location
     properties: {
       userPlaneAccessInterface: {
-        ipv4Address: userPlaneAccessInterfaceIpAddress
-        ipv4Subnet: accessSubnet
-        ipv4Gateway: accessGateway
         name: userPlaneAccessInterfaceName
       }
     }
 
     #disable-next-line BCP081
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-04-01-preview' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-11-01' = {
       name: dataNetworkName
       location: location
       properties: {
         userPlaneDataInterface: {
-          ipv4Address: userPlaneDataInterfaceIpAddress
-          ipv4Subnet: userPlaneDataInterfaceSubnet
-          ipv4Gateway: userPlaneDataInterfaceGateway
           name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [

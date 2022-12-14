@@ -4,32 +4,16 @@ param dataFactoryName string = 'datafactory${uniqueString(resourceGroup().id)}'
 @description('Location of the data factory.')
 param location string = resourceGroup().location
 
-@description('Name of the Azure storage account that contains the input/output data.')
-param storageAccountName string = 'storage${uniqueString(resourceGroup().id)}'
-
-@description('Name of the blob container in the Azure Storage account.')
-param blobContainerName string = 'blob${uniqueString(resourceGroup().id)}'
-
-@description('Name of the managed identity created to access the Azure Storage account.')
-param managedIdentityName string = 'blob${uniqueString(resourceGroup().id)}'
-
-@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.uri
-
-@description('The sasToken required to access _artifactsLocation.')
-@secure()
-param _artifactsLocationSasToken string = ''
-
-@description('The file name that contains the content for the Data Factory')
-param csvFilename string = 'moviesDB2.csv'
-
+var contentUri = uri('https://azbotstorage.blob.${environment().suffixes.storage}', '/sample-artifacts/data-factory/moviesDB2.csv')
+var csvFilename = last(split(contentUri, '/'))
+var storageAccountName = 'storage${uniqueString(resourceGroup().id)}'
 var dataFactoryLinkedServiceName = 'ArmtemplateStorageLinkedService'
 var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
-var roleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
-var bootstrapRoleAssignmentName  = guid(resourceGroup().id, managedIdentity.id, roleDefinitionId)
-var contentUri = uri(_artifactsLocation, '${csvFilename}${_artifactsLocationSasToken}')
+var csvInputFolder = 'input'
+var csvOutputFolder = 'output'
+var blobContainerName = 'datafactory'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageAccountName
@@ -47,41 +31,19 @@ resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/container
   ]
 }
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
-  name: managedIdentityName
-  location: location
-}
-
-resource bootstrapRoleAssignmentId 'Microsoft.Authorization/roleAssignments@2022-01-01-preview' = {
-  name: bootstrapRoleAssignmentName 
-  properties: {
-    roleDefinitionId: roleDefinitionId
-    principalId: reference(managedIdentity.id, '2022-01-31-preview').principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 resource runPowerShellInlineWithOutput 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'copyFile'
   location: location
   kind: 'AzurePowerShell'
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${managedIdentity.id}': {
-      }
-    }
-  }
   dependsOn: [
-    bootstrapRoleAssignmentId
+    blobContainer
   ]
   properties: {
     azPowerShellVersion: '8.0'
-    arguments: '-name FileCreationScript'
     environmentVariables: [
       {
-        name: 'RGName'
-        value: resourceGroup().name
+        name: 'storageKey'
+        secureValue: storageAccount.listKeys().keys[0].value
       }
       {
         name: 'SAName'
@@ -94,6 +56,14 @@ resource runPowerShellInlineWithOutput 'Microsoft.Resources/deploymentScripts@20
       {
         name: 'contentUri'
         value: contentUri
+      }
+      {
+        name: 'csvFileName'
+        value: csvFilename
+      }
+      {
+        name: 'csvInputFolder'
+        value: csvInputFolder
       }
     ]
     scriptContent: loadTextContent('./scripts/copy-data.ps1')
@@ -117,7 +87,7 @@ resource linkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-0
   properties: {
     type: 'AzureBlobStorage'
     typeProperties: {
-      connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys()}'
+      connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys().keys[0].value}'
     }
   }
 }
@@ -126,7 +96,6 @@ resource datasetIn 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
   parent: dataFactory
   name: dataFactoryDataSetInName
     dependsOn: [
-
     linkedService
   ]
   properties: {
@@ -139,8 +108,8 @@ resource datasetIn 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
       location: {
         type: 'AzureBlobStorageLocation'
         container: blobContainerName
-        folderPath: 'input'
-        fileName: 'moviesDB2.csv'
+        folderPath: csvInputFolder
+        fileName: csvFilename
       }
     }
   }
@@ -163,7 +132,7 @@ resource datasetOut 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
       location: {
         type: 'AzureBlobStorageLocation'
         container: blobContainerName
-        folderPath: 'output'
+        folderPath: csvOutputFolder
       }
     }
   }

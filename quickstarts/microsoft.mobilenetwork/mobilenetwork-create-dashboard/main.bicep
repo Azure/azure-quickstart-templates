@@ -22,7 +22,7 @@ var devicesquery = '''let Time = InsightsMetrics
     | where Namespace == "prometheus"
     | summarize by Time=TimeGenerated;
 let RegisteredDevices = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amf_registered_subscribers"
     | summarize by RegisteredDevices=Val, Time=TimeGenerated;
 let ProvisionedDevices = InsightsMetrics
@@ -39,7 +39,7 @@ Time
     | join kind=leftouter (ProvisionedDevices) on Time
     | join kind=leftouter (ConnectedDevices) on Time
     | project Time, RegisteredDevices, ProvisionedDevices, ConnectedDevices
-    | render areachart kind=unstacked 
+    | render areachart kind=unstacked
 '''
 
 var gnodequery = '''InsightsMetrics
@@ -52,7 +52,7 @@ var gnodequery = '''InsightsMetrics
 '''
 
 var pdusessionsquery = '''InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "subgraph_counts"
     | summarize PduSessions=max(Val) by Time=TimeGenerated
     | render areachart kind=unstacked
@@ -73,16 +73,19 @@ var userthroughputquery = '''let rate_function=(tbl: (Val: real, Time: datetime)
 let BytesUpstream = InsightsMetrics
     | where Namespace == "prometheus"
     | where Name == "cppe_bytes_total"
-    | where Tags has '"direction":"tx"'
-    | where Tags has '"interface":"n6"'
+    | extend Tags = todynamic(Tags)
+    | where Tags.direction == "tx"
+    | where Tags.interface startswith "n6"
+    | where not (Tags.interface has "kernel")
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | project BytesUpstream=rate, Time;
 let BytesDownstream = InsightsMetrics
     | where Namespace == "prometheus"
     | where Name == "cppe_bytes_total"
-    | where Tags has '"direction":"tx"'
-    | where Tags has '"interface":"n3"'
+    | extend Tags = todynamic(Tags)
+    | where Tags.direction == "tx"
+    | where Tags.interface == "n3"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | project BytesDownstream=rate, Time;
@@ -108,73 +111,73 @@ let TimeSeries = InsightsMetrics
     | where Namespace == "prometheus"
     | summarize by Time=TimeGenerated;
 let session_setup_response = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_pdu_session_resource_setup_response"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend SetupResponse=rate;
 let session_setup_request = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_pdu_session_resource_setup_request"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend SetupRequest=rate;
 let session_modify_response = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_pdu_session_resource_modify_response"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend ModifyResponse=rate;
 let session_modify_request = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_pdu_session_resource_modify_request"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend ModifyRequest=rate;
 let session_release_command = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_pdu_session_resource_release_command"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend ReleaseCommand=rate;
 let session_release_response = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_pdu_session_resource_release_response"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend ReleaseResponse=rate;
 let registration = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfcc_mm_initial_registration_failure"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend Registration=rate;
 let authentication_failure = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfcc_n1_auth_failure"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend AuthenticationFailure=rate;
 let authentication_rejection = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfcc_n1_auth_reject"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend AuthenticationRejection=rate;
 let service_rejection = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfcc_n1_service_reject"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend Service=rate;
 let request_failure = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_pathswitch_request_failure"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()
     | extend PathSwitch=rate;
 let handover_failure = InsightsMetrics
-    | where Namespace == "prometheus" 
+    | where Namespace == "prometheus"
     | where Name == "amfn2_n2_handover_failure"
     | summarize Val=sum(Val) by Time=TimeGenerated
     | invoke rate_function()

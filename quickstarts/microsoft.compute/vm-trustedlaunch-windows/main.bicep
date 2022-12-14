@@ -42,8 +42,16 @@ param vmName string = 'myTVM'
   '2019-DataCenter-Core-With-Containers-G2'
   '2019-DataCenter-With-Containers-Smalldisk-G2'
   '2019-DataCenter-With-Containers-G2'
+  '2022-datacenter-azure-edition'
+  '2022-datacenter-azure-edition-core'
+  '2022-datacenter-azure-edition-core-smalldisk'
+  '2022-datacenter-azure-edition-smalldisk'
+  '2022-datacenter-core-g2'
+  '2022-datacenter-core-smalldisk-g2'
+  '2022-datacenter-g2'
+  '2022-datacenter-smalldisk-g2'
 ])
-param sku string = '2019-DataCenter-GenSecond'
+param sku string = '2022-datacenter-azure-edition'
 
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_D2s_v3'
@@ -63,7 +71,7 @@ param secureBoot bool = true
 param vTPM bool = true
 
 @description('Location for all resources.')
-param location string
+param location string = resourceGroup().location
 
 @description('Unique DNS Name for the Public IP used to access the virtual machine.')
 param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().id)}')
@@ -94,25 +102,8 @@ param virtualNetworkName string = 'vnet'
 @description('Name of the network security group')
 param networkSecurityGroupName string = 'nsg'
 
-@description('MAA Endpoint to attest to.')
-@allowed([
-  'https://sharedcus.cus.attest.azure.net/'
-  'https://sharedcae.cae.attest.azure.net/'
-  'https://sharedeus2.eus2.attest.azure.net/'
-  'https://shareduks.uks.attest.azure.net/'
-  'https://sharedcac.cac.attest.azure.net/'
-  'https://sharedukw.ukw.attest.azure.net/'
-  'https://sharedneu.neu.attest.azure.net/'
-  'https://sharedeus.eus.attest.azure.net/'
-  'https://sharedeau.eau.attest.azure.net/'
-  'https://sharedncus.ncus.attest.azure.net/'
-  'https://sharedwus.wus.attest.azure.net/'
-  'https://sharedweu.weu.attest.azure.net/'
-  'https://sharedscus.scus.attest.azure.net/'
-  'https://sharedsasia.sasia.attest.azure.net/'
-  'https://sharedsau.sau.attest.azure.net/'
-])
-param maaEndpoint string = 'https://sharedeus2.eus2.attest.azure.net/'
+@description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
+param maaEndpoint string = ''
 
 var imageReference = {
   'RS1-EnterpriseN-G2': {
@@ -349,9 +340,56 @@ var imageReference = {
     sku: sku
     version: 'latest'
   }
+  '2022-datacenter-azure-edition': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-azure-edition-core': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-azure-edition-core-smalldisk': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-azure-edition-smalldisk': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-core-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-core-smalldisk-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
+  '2022-datacenter-smalldisk-g2': {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: sku
+    version: 'latest'
+  }
 }
 var addressPrefix = '10.0.0.0/16'
-var ascReportingEndpoint = 'https://sharedeus2.eus2.attest.azure.net/'
 var disableAlerts = 'false'
 var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
@@ -362,7 +400,7 @@ var subnetPrefix = '10.0.0.0/24'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var useAlternateToken = 'false'
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -376,7 +414,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -398,7 +436,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-0
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -421,7 +459,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: nicName
   location: location
   properties: {
@@ -431,7 +469,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIP.id
+            id: publicIp.id
           }
           subnet: {
             id: subnetRef
@@ -441,11 +479,12 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
     ]
   }
   dependsOn: [
+
     virtualNetwork
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   name: vmName
   location: location
   identity: {
@@ -486,7 +525,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = if (vTPM && secureBoot) {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (vTPM && secureBoot) {
   parent: vm
   name: extensionName
   location: location
@@ -496,15 +535,20 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' =
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
     settings: {
-      AttestationEndpointCfg: {
-        maaEndpoint: maaEndpoint
-        maaTenantName: maaTenantName
-        ascReportingEndpoint: ascReportingEndpoint
-        useAlternateToken: useAlternateToken
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
+        AscSettings: {
+          ascReportingEndpoint: substring(maaEndpoint, 0, 0)
+          ascReportingFrequency: substring(maaEndpoint, 0, 0)
+        }
+        useCustomToken: useAlternateToken
         disableAlerts: disableAlerts
       }
     }
   }
 }
 
-output hostname string = publicIP.properties.dnsSettings.fqdn
+output hostname string = reference(publicIp.id, '2022-05-01').dnsSettings.fqdn
