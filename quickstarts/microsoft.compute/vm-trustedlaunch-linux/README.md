@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vm-trustedlaunch-linux
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy a trusted launch capable Linux virtual machine
 

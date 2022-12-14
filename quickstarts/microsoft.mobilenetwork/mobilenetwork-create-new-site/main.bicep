@@ -64,6 +64,7 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-0
 #disable-next-line BCP081
 resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' = {
   name: siteName
+  parent: existingMobileNetwork
   location: location
 }
 
