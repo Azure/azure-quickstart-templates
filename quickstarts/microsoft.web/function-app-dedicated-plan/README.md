@@ -6,7 +6,6 @@ products:
 - azure-resource-manager
 urlFragment: function-app-dedicated-plan
 languages:
-- bicep
 - json
 ---
 # Azure Function App Hosted on Dedicated Plan
