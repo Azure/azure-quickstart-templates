@@ -20,6 +20,8 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/BicepVersion.svg)
+
 This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the AzureWebJobsStorage and WEBSITE_CONTENTAZUREFILECONNECTIONSTRING app settings, [via private endpoints](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#private-endpoint-connections).
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-private-endpoints-storage-private-endpoints%2Fazuredeploy.json)
