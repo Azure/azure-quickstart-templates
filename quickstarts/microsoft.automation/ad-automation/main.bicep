@@ -131,6 +131,9 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-03-01' = {
 resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' = {
   name: automationAccountName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     sku: {
       name: automationAccountSku
