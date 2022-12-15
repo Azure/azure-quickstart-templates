@@ -242,7 +242,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
   ]
 }
 
-resource cpuautoscale 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
+resource cpuautoscale 'Microsoft.Insights/autoscalesettings@2022-03-01' = {
   name: 'cpuautoscale'
   location: location
   properties: {
