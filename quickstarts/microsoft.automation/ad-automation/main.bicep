@@ -138,7 +138,7 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' 
   }
 }
 
-resource modules 'Microsoft.Automation/automationAccounts/modules@2020-01-13-preview' = [for item in dscResourceModules: {
+resource modules 'Microsoft.Automation/automationAccounts/modules@2022-08-08' = [for item in dscResourceModules: {
   parent: automationAccount
   name: item.name
   location: location
@@ -150,7 +150,7 @@ resource modules 'Microsoft.Automation/automationAccounts/modules@2020-01-13-pre
   }
 }]
 
-resource domainCredential 'Microsoft.Automation/automationAccounts/credentials@2020-01-13-preview' = {
+resource domainCredential 'Microsoft.Automation/automationAccounts/credentials@2022-08-08' = {
   parent: automationAccount
   name: credentialsName
   properties: {
@@ -159,7 +159,7 @@ resource domainCredential 'Microsoft.Automation/automationAccounts/credentials@2
   }
 }
 
-resource configuration 'Microsoft.Automation/automationAccounts/configurations@2019-06-01' = {
+resource configuration 'Microsoft.Automation/automationAccounts/configurations@2022-08-08' = {
   parent: automationAccount
   name: dscConfigurationName
   location: location
