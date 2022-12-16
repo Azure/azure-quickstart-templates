@@ -174,7 +174,7 @@ resource configuration 'Microsoft.Automation/automationAccounts/configurations@2
   }
 }
 
-resource compileConfiguration 'Microsoft.Automation/automationAccounts/compilationjobs@2020-01-13-preview' = {
+resource compileConfiguration 'Microsoft.Automation/automationAccounts/compilationjobs@2022-08-08' = {
   parent: automationAccount
   name: compileConfigurationJobName
   location: location
