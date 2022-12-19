@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create a secure, highly available, multi-region end to end solution with two web apps behind Azure Front Door
+description: This template allows you to create a secure, highly available, multi-region end to end solution with two web apps in different regions behind Azure Front Door
 page_type: sample
 products:
 - azure
@@ -27,6 +27,8 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-multi-region-front-door%2Fazuredeploy.json)
 
 This template deploys a identical web app infrastructure in two separate regions as well as an Azure Front Door to direct traffic. By default, one web app is set to the primary and the other is set to the secondary and all traffic is routed to the primary. In the case of a region outage in the primary region, Front Door will direct all traffic to the secondary region.
+
+The primary region will be set to the region you select for your resource group. The secondary region will be set to East US. For a true fault tolerant deployment, don't use East US as the location for your resource group and instead use West US as those regions form one of the [regional pairs](https://learn.microsoft.com/azure/reliability/cross-region-replication-azure#azure-cross-region-replication-pairings-for-all-geographies) assigned by Azure.
 
 If you are new to Azure App Service, see:
 
