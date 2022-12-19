@@ -1,222 +1,375 @@
-@description('Name of the VNet')
-param virtualNetworkName string = 'vnet1'
-
-@description('Name of the Web Farm')
-param serverFarmName string = 'serverfarm'
-
-@description('Web App 1 name must be unique DNS name worldwide')
-param site1_Name string = 'webapp1-${uniqueString(resourceGroup().id)}'
-
-@description('Web App 2 name must be unique DNS name worldwide')
-param site2_Name string = 'webapp2-${uniqueString(resourceGroup().id)}'
-
-@description('CIDR of your VNet')
-param virtualNetwork_CIDR string = '10.200.0.0/16'
-
-@description('Name of the subnet')
-param subnet1Name string = 'Subnet1'
-
-@description('Name of the subnet')
-param subnet2Name string = 'Subnet2'
-
-@description('CIDR of your subnet')
-param subnet1_CIDR string = '10.200.1.0/24'
-
-@description('CIDR of your subnet')
-param subnet2_CIDR string = '10.200.2.0/24'
-
-@description('Location for all resources.')
+@description('The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource.')
 param location string = resourceGroup().location
 
-@description('SKU name, must be minimum P1v2')
+@description('The location into which regionally scoped resources for the secondary should be deployed.')
+param secondaryLocation string = 'eastus'
+
+@description('The name of the App Service application to create. This must be globally unique.')
+param webAppName string = 'myApp-${uniqueString(resourceGroup().id)}'
+
+@description('The name of the secondary App Service application to create. This must be globally unique.')
+param secondaryWebAppName string = 'mySecondaryApp-${uniqueString(resourceGroup().id)}'
+
+@description('The name of the SKU to use when creating the App Service plan.')
+param appServicePlanSkuName string = 'P1V2'
+
+@description('The number of worker instances of your App Service plan that should be provisioned.')
+param appServicePlanCapacity int = 1
+
+@description('The name of the Front Door endpoint to create. This must be globally unique.')
+param frontDoorEndpointName string = 'afd-${uniqueString(resourceGroup().id)}'
+
+@description('The name of the SKU to use when creating the Front Door profile.')
 @allowed([
-  'P1v2'
-  'P2v2'
-  'P3v2'
+  'Standard_AzureFrontDoor'
+  'Premium_AzureFrontDoor'
 ])
-param skuName string = 'P1v2'
+param frontDoorSkuName string = 'Standard_AzureFrontDoor'
 
-@description('SKU size, must be minimum P1v2')
-@allowed([
-  'P1v2'
-  'P2v2'
-  'P3v2'
-])
-param skuSize string = 'P1v2'
+var appServicePlanName = 'AppServicePlan'
+var secondaryAppServicePlanName = 'SecondaryAppServicePlan'
 
-@description('SKU family, must be minimum P1v2')
-@allowed([
-  'P1v2'
-  'P2v2'
-  'P3v2'
-])
-param skuFamily string = 'P1v2'
+var frontDoorProfileName = 'MyFrontDoor'
+var frontDoorOriginGroupName = 'MyOriginGroup'
+var frontDoorOriginName = 'MyAppServiceOrigin'
+var secondaryFrontDoorOriginName = 'MySecondaryAppServiceOrigin'
+var frontDoorRouteName = 'MyRoute'
 
-@description('Name of your Private Endpoint')
-param privateEndpointName string = 'PrivateEndpoint1'
-
-@description('Link name between your Private Endpoint and your Web App')
-param privateLinkConnectionName string = 'PrivateEndpointLink1'
-
-var webapp_dns_name = '.azurewebsites.net'
-var privateDNSZoneName = 'privatelink.azurewebsites.net'
-var SKU_tier = 'PremiumV2'
-
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-  name: virtualNetworkName
-  location: location
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        virtualNetwork_CIDR
-      ]
-    }
-    subnets: [
-      {
-        name: subnet1Name
-        properties: {
-          addressPrefix: subnet1_CIDR
-          privateEndpointNetworkPolicies: 'Disabled'
-        }
-      }
-      {
-        name: subnet2Name
-        properties: {
-          addressPrefix: subnet2_CIDR
-          delegations: [
-            {
-              name: 'delegation'
-              properties: {
-                serviceName: 'Microsoft.Web/serverfarms'
-              }
-            }
-          ]
-          privateEndpointNetworkPolicies: 'Enabled'
-        }
-      }
-    ]
+resource frontDoorProfile 'Microsoft.Cdn/profiles@2021-06-01' = {
+  name: frontDoorProfileName
+  location: 'global'
+  sku: {
+    name: frontDoorSkuName
   }
 }
 
-resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: serverFarmName
+resource appServicePlan 'Microsoft.Web/serverFarms@2020-06-01' = {
+  name: appServicePlanName
   location: location
   sku: {
-    name: skuName
-    tier: SKU_tier
-    size: skuSize
-    family: skuFamily
-    capacity: 1
+    name: appServicePlanSkuName
+    capacity: appServicePlanCapacity
+  }
+  properties: {
+    reserved: true
   }
   kind: 'app'
 }
 
-resource webApp1 'Microsoft.Web/sites@2022-03-01' = {
-  name: site1_Name
+resource secondaryAppServicePlan 'Microsoft.Web/serverFarms@2020-06-01' = {
+  name: secondaryAppServicePlanName
+  location: secondaryLocation
+  sku: {
+    name: appServicePlanSkuName
+    capacity: appServicePlanCapacity
+  }
+  properties: {
+    reserved: true
+  }
+  kind: 'app'
+}
+
+resource app 'Microsoft.Web/sites@2020-06-01' = {
+  name: webAppName
   location: location
   kind: 'app'
-  properties: {
-    serverFarmId: serverFarm.id
+  identity: {
+    type: 'SystemAssigned'
   }
-}
-
-resource webApp2 'Microsoft.Web/sites@2022-03-01' = {
-  name: site2_Name
-  location: location
-  kind: 'app'
   properties: {
-    serverFarmId: serverFarm.id
-    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnet2Name)
-    vnetRouteAllEnabled: true
-  }
-}
-
-resource webApp1Config 'Microsoft.Web/sites/config@2020-06-01' = {
-  parent: webApp1
-  name: 'web'
-  properties: {
-    ftpsState: 'AllAllowed'
-  }
-}
-
-resource webApp2Config 'Microsoft.Web/sites/config@2020-06-01' = {
-  parent: webApp2
-  name: 'web'
-  properties: {
-    ftpsState: 'AllAllowed'
-  }
-}
-
-resource webApp1Binding 'Microsoft.Web/sites/hostNameBindings@2019-08-01' = {
-  parent: webApp1
-  name: '${webApp1.name}${webapp_dns_name}'
-  properties: {
-    siteName: webApp1.name
-    hostNameType: 'Verified'
-  }
-}
-
-resource webApp2Binding 'Microsoft.Web/sites/hostNameBindings@2019-08-01' = {
-  parent: webApp2
-  name: '${webApp2.name}${webapp_dns_name}'
-  properties: {
-    siteName: webApp2.name
-    hostNameType: 'Verified'
-  }
-}
-
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-06-01' = {
-  name: privateEndpointName
-  location: location
-  properties: {
-    subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets',virtualNetwork.name ,subnet1Name)
-    }
-    privateLinkServiceConnections: [
-      {
-        name: privateLinkConnectionName
-        properties: {
-          privateLinkServiceId: webApp1.id
-          groupIds: [
-            'sites'
-          ]
+    serverFarmId: appServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      detailedErrorLoggingEnabled: true
+      httpLoggingEnabled: true
+      requestTracingEnabled: true
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      ipSecurityRestrictions: [
+        {
+          tag: 'ServiceTag'
+          ipAddress: 'AzureFrontDoor.Backend'
+          action: 'Allow'
+          priority: 100
+          headers: {
+            'x-azure-fdid': [
+              frontDoorProfile.properties.frontDoorId
+            ]
+          }
+          name: 'Allow traffic from Front Door'
         }
-      }
-    ]
+      ]
+      scmIpSecurityRestrictionsDefaultAction: 'Deny'
+    }
   }
 }
 
-resource privateDnsZones 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: privateDNSZoneName
-  location: 'global'
+resource ftpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'ftp'
+  kind: 'string'
+  parent: app
+  location: location
+  properties: {
+    allow: false
+  }
+}
+
+resource scmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'scm'
+  kind: 'string'
+  parent: app
+  location: location
+  properties: {
+    allow: false
+  }
+}
+
+resource appSlot 'Microsoft.Web/sites/slots@2020-06-01' = {
+  name: '${webAppName}/stage'
+  location: location
+  kind: 'app'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    serverFarmId: appServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      detailedErrorLoggingEnabled: true
+      httpLoggingEnabled: true
+      requestTracingEnabled: true
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      ipSecurityRestrictions: [
+        {
+          tag: 'ServiceTag'
+          ipAddress: 'AzureFrontDoor.Backend'
+          action: 'Allow'
+          priority: 100
+          headers: {
+            'x-azure-fdid': [
+              frontDoorProfile.properties.frontDoorId
+            ]
+          }
+          name: 'Allow traffic from Front Door'
+        }
+      ]
+    }
+  }
   dependsOn: [
-    virtualNetwork
+    app
   ]
 }
 
-resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: privateDnsZones
-  name: '${privateDnsZones.name}-link'
-  location: 'global'
+resource ftpPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'ftp'
+  kind: 'string'
+  parent: appSlot
+  location: location
   properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetwork.id
+    allow: false
+  }
+}
+
+resource scmPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'scm'
+  kind: 'string'
+  parent: appSlot
+  location: location
+  properties: {
+    allow: false
+  }
+}
+
+resource secondaryApp 'Microsoft.Web/sites@2020-06-01' = {
+  name: secondaryWebAppName
+  location: secondaryLocation
+  kind: 'app'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    serverFarmId: secondaryAppServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      detailedErrorLoggingEnabled: true
+      httpLoggingEnabled: true
+      requestTracingEnabled: true
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      ipSecurityRestrictions: [
+        {
+          tag: 'ServiceTag'
+          ipAddress: 'AzureFrontDoor.Backend'
+          action: 'Allow'
+          priority: 100
+          headers: {
+            'x-azure-fdid': [
+              frontDoorProfile.properties.frontDoorId
+            ]
+          }
+          name: 'Allow traffic from Front Door'
+        }
+      ]
+      scmIpSecurityRestrictionsDefaultAction: 'Deny'
     }
   }
 }
 
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
-  parent: privateEndpoint
-  name: 'dnsgroupname'
+resource secondaryFtpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'ftp'
+  kind: 'string'
+  parent: secondaryApp
+  location: secondaryLocation
   properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config1'
-        properties: {
-          privateDnsZoneId: privateDnsZones.id
-        }
-      }
-    ]
+    allow: false
   }
 }
+
+resource secondaryScmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'scm'
+  kind: 'string'
+  parent: secondaryApp
+  location: secondaryLocation
+  properties: {
+    allow: false
+  }
+}
+
+resource secondaryAppSlot 'Microsoft.Web/sites/slots@2020-06-01' = {
+  name: '${secondaryWebAppName}/stage'
+  location: secondaryLocation
+  kind: 'app'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    serverFarmId: secondaryAppServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      detailedErrorLoggingEnabled: true
+      httpLoggingEnabled: true
+      requestTracingEnabled: true
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      ipSecurityRestrictions: [
+        {
+          tag: 'ServiceTag'
+          ipAddress: 'AzureFrontDoor.Backend'
+          action: 'Allow'
+          priority: 100
+          headers: {
+            'x-azure-fdid': [
+              frontDoorProfile.properties.frontDoorId
+            ]
+          }
+          name: 'Allow traffic from Front Door'
+        }
+      ]
+    }
+  }
+  dependsOn: [
+    secondaryApp
+  ]
+}
+
+resource secondaryFtpPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'ftp'
+  kind: 'string'
+  parent: secondaryAppSlot
+  location: secondaryLocation
+  properties: {
+    allow: false
+  }
+}
+
+resource secondaryScmPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
+  name: 'scm'
+  kind: 'string'
+  parent: secondaryAppSlot
+  location: secondaryLocation
+  properties: {
+    allow: false
+  }
+}
+
+resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
+  name: frontDoorEndpointName
+  parent: frontDoorProfile
+  location: 'global'
+  properties: {
+    enabledState: 'Enabled'
+  }
+}
+
+resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2021-06-01' = {
+  name: frontDoorOriginGroupName
+  parent: frontDoorProfile
+  properties: {
+    loadBalancingSettings: {
+      sampleSize: 4
+      successfulSamplesRequired: 3
+    }
+    healthProbeSettings: {
+      probePath: '/'
+      probeRequestType: 'HEAD'
+      probeProtocol: 'Http'
+      probeIntervalInSeconds: 100
+    }
+  }
+}
+
+resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
+  name: frontDoorOriginName
+  parent: frontDoorOriginGroup
+  properties: {
+    hostName: app.properties.defaultHostName
+    httpPort: 80
+    httpsPort: 443
+    originHostHeader: app.properties.defaultHostName
+    priority: 1
+    weight: 1000
+  }
+}
+
+resource secondaryFrontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
+  name: secondaryFrontDoorOriginName
+  parent: frontDoorOriginGroup
+  properties: {
+    hostName: secondaryApp.properties.defaultHostName
+    httpPort: 80
+    httpsPort: 443
+    originHostHeader: app.properties.defaultHostName
+    priority: 2
+    weight: 1000
+  }
+}
+
+resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
+  name: frontDoorRouteName
+  parent: frontDoorEndpoint
+  properties: {
+    originGroup: {
+      id: frontDoorOriginGroup.id
+    }
+    supportedProtocols: [
+      'Http'
+      'Https'
+    ]
+    patternsToMatch: [
+      '/*'
+    ]
+    forwardingProtocol: 'HttpsOnly'
+    linkToDefaultDomain: 'Enabled'
+    httpsRedirect: 'Enabled'
+  }
+  dependsOn: [
+    frontDoorOrigin
+  ]
+}
+
+output appServiceHostName string = app.properties.defaultHostName
+output secondaryAppServiceHostName string = secondaryApp.properties.defaultHostName
+output appServiceSlotHostName string = appSlot.properties.defaultHostName
+output secondaryAppServiceSlotHostName string = secondaryAppSlot.properties.defaultHostName
+output frontDoorEndpointHostName string = frontDoorEndpoint.properties.hostName
