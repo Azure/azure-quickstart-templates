@@ -14,6 +14,9 @@ param endpointName string
 ])
 param skuName string
 
+@description('The custom domain name to associate with your Front Door endpoint.')
+param customDomainName string
+
 @description('The protocol that should be used when connecting from Front Door to the origin.')
 @allowed([
   'HttpOnly'
@@ -31,6 +34,26 @@ param privateLinkResourceType string = ''
 @description('If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty.')
 param privateEndpointLocation string = ''
 
+@allowed([
+  'Detection'
+  'Prevention'
+])
+@description('The mode that the WAF should be deployed using. In \'Prevention\' mode, the WAF will block requests it detects as malicious. In \'Detection\' mode, the WAF will not block requests and will simply log the request.')
+param wafMode string = 'Prevention'
+
+@description('The list of managed rule sets to configure on the WAF.')
+param wafManagedRuleSets array = [
+  {
+    ruleSetType: 'Microsoft_DefaultRuleSet'
+    ruleSetVersion: '2.0'
+    ruleSetAction: 'Block'
+  }
+  {
+    ruleSetType: 'Microsoft_BotManagerRuleSet'
+    ruleSetVersion: '1.0'
+  }
+]
+
 // When connecting to Private Link origins, we need to assemble the privateLinkOriginDetails object with various pieces of data.
 var isPrivateLinkOrigin = (privateEndpointResourceId != '')
 var privateLinkOriginDetails = {
@@ -46,6 +69,11 @@ var profileName = 'MyFrontDoor'
 var originGroupName = 'MyOriginGroup'
 var originName = 'MyOrigin'
 var routeName = 'MyRoute'
+var wafPolicyName = 'WafPolicy'
+var securityPolicyName = 'SecurityPolicy'
+
+// Create a valid resource name for the custom domain. Resource names don't include periods.
+var customDomainResourceName = replace(customDomainName, '.', '-')
 
 resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
@@ -61,6 +89,18 @@ resource endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   location: 'global'
   properties: {
     enabledState: 'Enabled'
+  }
+}
+
+resource customDomain 'Microsoft.Cdn/profiles/customDomains@2021-06-01' = {
+  name: customDomainResourceName
+  parent: profile
+  properties: {
+    hostName: customDomainName
+    tlsSettings: {
+      certificateType: 'ManagedCertificate'
+      minimumTlsVersion: 'TLS12'
+    }
   }
 }
 
@@ -102,6 +142,11 @@ resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
     origin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
   ]
   properties: {
+    customDomains: [
+      {
+        id: customDomain.id
+      }
+    ]
     originGroup: {
       id: originGroup.id
     }
@@ -114,7 +159,7 @@ resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
       '/*'
     ]
     cacheConfiguration: {
-      queryStringCachingBehavior: 'IgnoreQueryString'
+      queryStringCachingBehavior: 'UseQueryString'
     }
     forwardingProtocol: originForwardingProtocol
     linkToDefaultDomain: 'Enabled'
@@ -122,5 +167,53 @@ resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   }
 }
 
+resource wafPolicy 'Microsoft.Network/FrontDoorWebApplicationFirewallPolicies@2022-05-01' = {
+  name: wafPolicyName
+  location: 'global'
+  sku: {
+    name: skuName
+  }
+  properties: {
+    policySettings: {
+      enabledState: 'Enabled'
+      mode: wafMode
+    }
+    managedRules: {
+      managedRuleSets: wafManagedRuleSets
+    }
+  }
+}
+
+resource securityPolicy 'Microsoft.Cdn/profiles/securityPolicies@2021-06-01' = {
+  parent: profile
+  name: securityPolicyName
+  properties: {
+    parameters: {
+      type: 'WebApplicationFirewall'
+      wafPolicy: {
+        id: wafPolicy.id
+      }
+      associations: [
+        {
+          domains: [
+            {
+              id: endpoint.id
+            }
+            {
+              id: customDomain.id
+            }
+          ]
+          patternsToMatch: [
+            '/*'
+          ]
+        }
+      ]
+    }
+  }
+}
+
 output frontDoorEndpointHostName string = endpoint.properties.hostName
 output frontDoorId string = profile.properties.frontDoorId
+output customDomainValidationDnsTxtRecordName string = '_dnsauth.${customDomain.properties.hostName}'
+output customDomainValidationDnsTxtRecordValue string = customDomain.properties.validationProperties.validationToken
+output customDomainValidationExpiry string = customDomain.properties.validationProperties.expirationDate

@@ -28,7 +28,7 @@ languages:
 
 This template creates an Azure App Configuration store, then creates a feature flag inside the new store.
 
-Feature flag belongs to `keyValues` resouce type. To be a feature flag, the key of `keyValues` resouce requires prefix `.appconfig.featureflag/`. However, `/` is forbidden in resource's name. `~2F` is used to espace the forward slash character. For more information about the `keyValues` resrouce's name, refer to the `Tip` section of [this tutorial](https://docs.microsoft.com/azure/azure-app-configuration/quickstart-resource-manager).
+Feature flag belongs to `keyValues` resource type. To be a feature flag, the key of `keyValues` resource requires prefix `.appconfig.featureflag/`. However, `/` is forbidden in resource's name. `~2F` is used to espace the forward slash character. For more information about the `keyValues` resrouce's name, refer to the `Tip` section of [this tutorial](https://docs.microsoft.com/azure/azure-app-configuration/quickstart-resource-manager).
 
 If you're new to App Configuration, see:
 

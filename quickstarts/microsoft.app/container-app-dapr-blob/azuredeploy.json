@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "8866491873272737977"
+      "templateHash": "12349458310726309764"
     }
   },
   "parameters": {
@@ -73,8 +73,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.9.1.41621",
-              "templateHash": "3435344949521712332"
+              "version": "0.11.1.770",
+              "templateHash": "17061185190568727130"
             }
           },
           "parameters": {
@@ -88,6 +88,20 @@
               "type": "string",
               "metadata": {
                 "description": "Used to name the Azure resources that are created"
+              }
+            },
+            "environmentAlreadyExists": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Indicates if we should deploy the Dapr components to an existing environment"
+              }
+            },
+            "containerAppEnvName": {
+              "type": "string",
+              "defaultValue": "[format('env-{0}', parameters('nameseed'))]",
+              "metadata": {
+                "description": "Specifies the name of the container app environment."
               }
             },
             "applicationEntityName": {
@@ -123,6 +137,20 @@
                 "description": "Names of container apps that can use this dapr component"
               }
             },
+            "infrastructureSubnetId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "For deploying in your own Virtual Network, provide the Infrastructure Subnet Id"
+              }
+            },
+            "zoneRedundant": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Zone Redundant (needs infrastructureSubnetId)"
+              }
+            },
             "tags": {
               "type": "object",
               "defaultValue": {},
@@ -133,14 +161,15 @@
           },
           "variables": {
             "autoDaprComponentNameMap": {
-              "pubsub.azure.servicebus": "[format('{0}pubsub', parameters('applicationEntityName'))]",
-              "state.azure.blobstorage": "[format('{0}statestore', parameters('applicationEntityName'))]",
-              "state.azure.cosmosdb": "[format('{0}statestore', parameters('applicationEntityName'))]"
+              "pubsub.azure.servicebus": "[format('{0}pubsub', toLower(parameters('applicationEntityName')))]",
+              "state.azure.blobstorage": "[format('{0}statestore', toLower(parameters('applicationEntityName')))]",
+              "state.azure.cosmosdb": "[format('{0}statestore', toLower(parameters('applicationEntityName')))]"
             },
             "autoDaprComponentName": "[if(empty(parameters('daprComponentName')), variables('autoDaprComponentNameMap')[parameters('daprComponentType')], parameters('daprComponentName'))]"
           },
           "resources": [
             {
+              "condition": "[not(parameters('environmentAlreadyExists'))]",
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2020-10-01",
               "name": "[format('containerAppEnv-{0}', parameters('nameseed'))]",
@@ -156,6 +185,12 @@
                   "nameseed": {
                     "value": "[parameters('nameseed')]"
                   },
+                  "infraSubnetId": {
+                    "value": "[parameters('infrastructureSubnetId')]"
+                  },
+                  "zoneRedundant": {
+                    "value": "[parameters('zoneRedundant')]"
+                  },
                   "tags": {
                     "value": "[parameters('tags')]"
                   }
@@ -166,8 +201,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "7113524258138135795"
+                      "version": "0.11.1.770",
+                      "templateHash": "15032274980026305573"
                     }
                   },
                   "parameters": {
@@ -187,6 +222,18 @@
                       "metadata": {
                         "description": "Specifies the name of the log analytics workspace."
                       }
+                    },
+                    "sku": {
+                      "type": "string",
+                      "defaultValue": "Consumption",
+                      "allowedValues": [
+                        "Consumption",
+                        "Premium"
+                      ]
+                    },
+                    "zoneRedundant": {
+                      "type": "bool",
+                      "defaultValue": false
                     },
                     "logRetentionDays": {
                       "type": "int",
@@ -221,15 +268,19 @@
                   "resources": [
                     {
                       "type": "Microsoft.App/managedEnvironments",
-                      "apiVersion": "2022-03-01",
+                      "apiVersion": "2022-06-01-preview",
                       "name": "[parameters('containerAppEnvName')]",
                       "location": "[parameters('location')]",
+                      "sku": {
+                        "name": "[parameters('sku')]"
+                      },
                       "properties": {
+                        "zoneRedundant": "[parameters('zoneRedundant')]",
                         "appLogsConfiguration": {
                           "destination": "log-analytics",
                           "logAnalyticsConfiguration": {
                             "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))).customerId]",
-                            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2020-10-01').primarySharedKey]"
+                            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2022-10-01').primarySharedKey]"
                           }
                         },
                         "vnetConfiguration": {
@@ -247,7 +298,7 @@
                     },
                     {
                       "type": "Microsoft.OperationalInsights/workspaces",
-                      "apiVersion": "2020-10-01",
+                      "apiVersion": "2022-10-01",
                       "name": "[parameters('containerAppLogAnalyticsName')]",
                       "location": "[parameters('location')]",
                       "properties": {
@@ -283,8 +334,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.9.1.41621",
-                              "templateHash": "17491185132151222103"
+                              "version": "0.11.1.770",
+                              "templateHash": "12893374766320771628"
                             }
                           },
                           "parameters": {
@@ -373,7 +424,7 @@
                     "value": "[parameters('location')]"
                   },
                   "containerAppEnvName": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))).outputs.containerAppEnvironmentName.value]"
+                    "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]"
                   },
                   "entityName": {
                     "value": "[parameters('applicationEntityName')]"
@@ -385,8 +436,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "4951669750013197138"
+                      "version": "0.11.1.770",
+                      "templateHash": "1490041037123059482"
                     }
                   },
                   "parameters": {
@@ -507,7 +558,7 @@
                     "value": "[parameters('location')]"
                   },
                   "containerAppEnvName": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))).outputs.containerAppEnvironmentName.value]"
+                    "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]"
                   },
                   "entityName": {
                     "value": "[parameters('applicationEntityName')]"
@@ -522,8 +573,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "11272959808670979133"
+                      "version": "0.11.1.770",
+                      "templateHash": "5324293688587926095"
                     }
                   },
                   "parameters": {
@@ -551,14 +602,14 @@
                   "variables": {
                     "daprComponent": "state.azure.blobstorage",
                     "rawStorageAccountName": "[format('st{0}{1}', parameters('name'), uniqueString(resourceGroup().id, parameters('name')))]",
-                    "storageAccountName": "[if(greater(length(variables('rawStorageAccountName')), 24), substring(variables('rawStorageAccountName'), 0, 24), variables('rawStorageAccountName'))]"
+                    "storageAccountName": "[if(greater(length(variables('rawStorageAccountName')), 24), substring(toLower(variables('rawStorageAccountName')), 0, 24), variables('rawStorageAccountName'))]"
                   },
                   "resources": [
                     {
                       "condition": "[and(parameters('createAzureServiceForComponent'), equals(variables('daprComponent'), 'state.azure.blobstorage'))]",
                       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
                       "apiVersion": "2021-09-01",
-                      "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', parameters('entityName'))]",
+                      "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', toLower(parameters('entityName')))]",
                       "properties": {
                         "publicAccess": "None"
                       },
@@ -642,7 +693,7 @@
                     "value": "[parameters('location')]"
                   },
                   "containerAppEnvName": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))).outputs.containerAppEnvironmentName.value]"
+                    "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]"
                   },
                   "componentName": {
                     "value": "[variables('autoDaprComponentName')]"
@@ -660,8 +711,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "9049349038582607649"
+                      "version": "0.11.1.770",
+                      "templateHash": "997573331547175945"
                     }
                   },
                   "parameters": {
@@ -801,14 +852,14 @@
           "outputs": {
             "containerAppEnvironmentName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))).outputs.containerAppEnvironmentName.value]",
+              "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]",
               "metadata": {
                 "description": "The name of the created Azure Container Apps Environment"
               }
             },
             "appInsightsInstrumentationKey": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))).outputs.appInsightsInstrumentationKey.value]",
+              "value": "[if(parameters('environmentAlreadyExists'), '', reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.appInsightsInstrumentationKey.value)]",
               "metadata": {
                 "description": "The Azure Applications Insights (telemetry) instrumentation key"
               }
@@ -863,8 +914,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.9.1.41621",
-              "templateHash": "7966047607025495492"
+              "version": "0.11.1.770",
+              "templateHash": "18066693510890011191"
             }
           },
           "parameters": {
@@ -1087,8 +1138,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "13090141787330058627"
+                      "version": "0.11.1.770",
+                      "templateHash": "7009689267588982199"
                     }
                   },
                   "parameters": {
@@ -1233,7 +1284,7 @@
                   "resources": [
                     {
                       "type": "Microsoft.App/containerApps",
-                      "apiVersion": "2022-03-01",
+                      "apiVersion": "2022-06-01-preview",
                       "name": "[parameters('containerAppName')]",
                       "location": "[parameters('location')]",
                       "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
@@ -1247,8 +1298,7 @@
                             "appPort": "[if(equals(parameters('enableIngress'), true()), parameters('daprAppPort'), null())]",
                             "enabled": true
                           },
-                          "activeRevisionsMode": "[parameters('revisionMode')]",
-                          "registries": []
+                          "activeRevisionsMode": "[parameters('revisionMode')]"
                         },
                         "template": {
                           "revisionSuffix": "[parameters('revisionSuffix')]",
@@ -1376,8 +1426,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "3502482138940038235"
+                      "version": "0.11.1.770",
+                      "templateHash": "1021504825763956878"
                     }
                   },
                   "parameters": {
@@ -1532,7 +1582,7 @@
                   "resources": [
                     {
                       "type": "Microsoft.App/containerApps",
-                      "apiVersion": "2022-03-01",
+                      "apiVersion": "2022-06-01-preview",
                       "name": "[parameters('containerAppName')]",
                       "location": "[parameters('location')]",
                       "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
@@ -1589,7 +1639,7 @@
                     {
                       "condition": "[and(parameters('createUserManagedId'), not(empty(parameters('azureContainerRegistry'))))]",
                       "type": "Microsoft.Authorization/roleAssignments",
-                      "apiVersion": "2020-10-01-preview",
+                      "apiVersion": "2022-04-01",
                       "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('azureContainerRegistry'))]",
                       "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), variables('acrPullRole'))]",
                       "properties": {
@@ -1757,8 +1807,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.9.1.41621",
-              "templateHash": "7966047607025495492"
+              "version": "0.11.1.770",
+              "templateHash": "18066693510890011191"
             }
           },
           "parameters": {
@@ -1981,8 +2031,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "13090141787330058627"
+                      "version": "0.11.1.770",
+                      "templateHash": "7009689267588982199"
                     }
                   },
                   "parameters": {
@@ -2127,7 +2177,7 @@
                   "resources": [
                     {
                       "type": "Microsoft.App/containerApps",
-                      "apiVersion": "2022-03-01",
+                      "apiVersion": "2022-06-01-preview",
                       "name": "[parameters('containerAppName')]",
                       "location": "[parameters('location')]",
                       "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
@@ -2141,8 +2191,7 @@
                             "appPort": "[if(equals(parameters('enableIngress'), true()), parameters('daprAppPort'), null())]",
                             "enabled": true
                           },
-                          "activeRevisionsMode": "[parameters('revisionMode')]",
-                          "registries": []
+                          "activeRevisionsMode": "[parameters('revisionMode')]"
                         },
                         "template": {
                           "revisionSuffix": "[parameters('revisionSuffix')]",
@@ -2270,8 +2319,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.9.1.41621",
-                      "templateHash": "3502482138940038235"
+                      "version": "0.11.1.770",
+                      "templateHash": "1021504825763956878"
                     }
                   },
                   "parameters": {
@@ -2426,7 +2475,7 @@
                   "resources": [
                     {
                       "type": "Microsoft.App/containerApps",
-                      "apiVersion": "2022-03-01",
+                      "apiVersion": "2022-06-01-preview",
                       "name": "[parameters('containerAppName')]",
                       "location": "[parameters('location')]",
                       "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
@@ -2483,7 +2532,7 @@
                     {
                       "condition": "[and(parameters('createUserManagedId'), not(empty(parameters('azureContainerRegistry'))))]",
                       "type": "Microsoft.Authorization/roleAssignments",
-                      "apiVersion": "2020-10-01-preview",
+                      "apiVersion": "2022-04-01",
                       "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('azureContainerRegistry'))]",
                       "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), variables('acrPullRole'))]",
                       "properties": {

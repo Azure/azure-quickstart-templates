@@ -1,0 +1,123 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceBusNamespaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The suffix to add to resource names that require global uniqueness."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location in which the Service Bus and Azure Scheduler resources should be deployed."
+            }
+        },
+        "queueName": {
+            "type": "string",
+            "defaultValue": "autoposted",
+            "metadata": {
+                "description": "The name of the queue that should have the messages automatically posted to it. The queue will be created by the template deployment if it doesn't already exist."
+            }
+        },
+        "messageContents": {
+            "type": "string",
+            "defaultValue": "mymessage",
+            "metadata": {
+                "description": "The contents of the message to post to the queue."
+            }
+        },
+        "postRecurrence": {
+            "type": "object",
+            "defaultValue": {
+                "interval": 1,
+                "frequency": "Minute"
+            },
+            "metadata": {
+                "description": "The frequency at which the message should be posted to the queue."
+            }
+        }
+    },
+    "variables": {
+        "serviceBusNamespaceName": "[parameters('serviceBusNamespaceName')]",
+        "queueSendOnlyKeyName": "Scheduler",
+        "schedulerJobCollectionName": "QueuePoster",
+        "schedulerJobName": "PostMessage"
+    },
+    "resources": [
+        {
+            "name": "[variables('serviceBusNamespaceName')]",
+            "type": "Microsoft.ServiceBus/namespaces",
+            "apiVersion": "2021-01-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {},
+            "resources": [
+                {
+                    "name": "[parameters('queueName')]",
+                    "type": "queues",
+                    "apiVersion": "2018-01-01-preview",
+                    "resources": [
+                        {
+                            "name": "[variables('queueSendOnlyKeyName')]",
+                            "type": "authorizationRules",
+                            "apiVersion": "2018-01-01-preview",
+                            "properties": {
+                                "rights": [
+                                    "Send"
+                                ]
+                            },
+                            "dependsOn": [
+                                "[parameters('queueName')]"
+                            ]
+                        }
+                    ],
+                    "dependsOn": [
+                        "[variables('serviceBusNamespaceName')]"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "[variables('schedulerJobCollectionName')]",
+            "type": "Microsoft.Scheduler/jobCollections",
+            "apiVersion": "2016-03-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "name": "Standard"
+                }
+            },
+            "resources": [
+                {
+                    "type": "jobs",
+                    "name": "[variables('schedulerJobName')]",
+                    "apiVersion": "2016-03-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Scheduler/jobCollections', variables('schedulerJobCollectionName'))]",
+                        "[variables('queueSendOnlyKeyName')]"
+                    ],
+                    "properties": {
+                        "state": "Enabled",
+                        "action": {
+                            "type": "ServiceBusQueue",
+                            "serviceBusQueueMessage": {
+                                "namespace": "[variables('serviceBusNamespaceName')]",
+                                "queueName": "[parameters('queueName')]",
+                                "transportType": "AMQP",
+                                "authentication": {
+                                    "sasKey": "[listKeys(variables('queueSendOnlyKeyName'), '2018-01-01-preview').primaryKey]",
+                                    "sasKeyName": "[listKeys(variables('queueSendOnlyKeyName'), '2018-01-01-preview').keyName]",
+                                    "type": "SharedAccessKey"
+                                },
+                                "message": "[parameters('messageContents')]"
+                            }
+                        },
+                        "recurrence": "[parameters('postRecurrence')]"
+                    }
+                }
+            ]
+        }
+    ]
+}

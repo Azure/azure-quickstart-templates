@@ -10,42 +10,20 @@ param existingDataNetworkName string
 @description('The name for the site')
 param siteName string = 'myExampleSite'
 
-@description('The platform type where packet core is deployed.')
-@allowed([
-  'AKS-HCI'
-  'BaseVM'
-])
-param platformType string = 'AKS-HCI'
+@description('The resource ID of the Azure Stack Edge device to deploy to')
+param azureStackEdgeDevice string = ''
 
-@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the control plane interface on the access network. For 5G, this interface is the N2 interface; for 4G, it\'s the S1-MME interface.')
 param controlPlaneAccessInterfaceName string = ''
 
 @description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
 param controlPlaneAccessIpAddress string = ''
 
-@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The virtual network name on port 5 on your Azure Stack Edge Pro device corresponding to the user plane interface on the access network. For 5G, this interface is the N3 interface; for 4G, it\'s the S1-U interface.')
 param userPlaneAccessInterfaceName string = ''
 
-@description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. Not required for AKS-HCI.')
-param userPlaneAccessInterfaceIpAddress string = ''
-
-@description('The network address of the access subnet in CIDR notation')
-param accessSubnet string = ''
-
-@description('The access subnet default gateway')
-param accessGateway string = ''
-
-@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+@description('The virtual network name on port 6 on your Azure Stack Edge Pro device corresponding to the user plane interface on the data network. For 5G, this interface is the N6 interface; for 4G, it\'s the SGi interface.')
 param userPlaneDataInterfaceName string = ''
-
-@description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. Not required for AKS-HCI.')
-param userPlaneDataInterfaceIpAddress string = ''
-
-@description('The network address of the data subnet in CIDR notation')
-param userPlaneDataInterfaceSubnet string = ''
-
-@description('The data subnet default gateway')
-param userPlaneDataInterfaceGateway string = ''
 
 @description('The network address of the subnet from which dynamic IP addresses must be allocated to UEs, given in CIDR notation. Optional if userEquipmentStaticAddressPoolPrefix is specified. If both are specified, they must be the same size and not overlap.')
 param userEquipmentAddressPoolPrefix string = ''
@@ -74,77 +52,68 @@ param dnsAddresses array
 param customLocation string = ''
 
 #disable-next-line BCP081
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01' existing = {
   name: existingMobileNetworkName
 
   #disable-next-line BCP081
-  resource existingDataNetwork 'dataNetworks@2022-04-01-preview' existing = {
+  resource existingDataNetwork 'dataNetworks@2022-11-01' existing = {
     name: existingDataNetworkName
-  }
-
-  #disable-next-line BCP081
-  resource exampleSite 'sites@2022-04-01-preview' = {
-    name: siteName
-    location: location
-    properties: {
-      networkFunctions: [
-        {
-          id: examplePacketCoreControlPlane.id
-        }
-        {
-          id: examplePacketCoreControlPlane::examplePacketCoreDataPlane.id
-        }
-      ]
-    }
   }
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-04-01-preview' = {
+resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' = {
+  name: siteName
+  parent: existingMobileNetwork
+  location: location
+}
+
+#disable-next-line BCP081
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
   name: siteName
   location: location
   properties: {
-    mobileNetwork: {
-      id: existingMobileNetwork.id
+    sites: [
+      {
+        id: exampleSite.id
+      }
+    ]
+    sku: 'G0'
+    localDiagnosticsAccess: {
+      authenticationType: 'Password'
     }
-    sku: 'EvaluationPackage'
     coreNetworkTechnology: coreNetworkTechnology
     platform: {
-      type: platformType
+      type: 'AKS-HCI'
       customLocation: empty(customLocation) ? null : {
         id: customLocation
+      }
+      azureStackEdgeDevice: {
+        id: azureStackEdgeDevice
       }
     }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: accessSubnet
-      ipv4Gateway: accessGateway
       name: controlPlaneAccessInterfaceName
     }
   }
 
   #disable-next-line BCP081
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-04-01-preview' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-11-01' = {
     name: siteName
     location: location
     properties: {
       userPlaneAccessInterface: {
-        ipv4Address: userPlaneAccessInterfaceIpAddress
-        ipv4Subnet: accessSubnet
-        ipv4Gateway: accessGateway
         name: userPlaneAccessInterfaceName
       }
     }
 
     #disable-next-line BCP081
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-04-01-preview' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-11-01' = {
       name: existingDataNetworkName
       location: location
       properties: {
         userPlaneDataInterface: {
-          ipv4Address: userPlaneDataInterfaceIpAddress
-          ipv4Subnet: userPlaneDataInterfaceSubnet
-          ipv4Gateway: userPlaneDataInterfaceGateway
           name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [

@@ -1,0 +1,531 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location where these resources will be deployed.  By default this will be the location of the resource group."
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "OS": {
+      "type": "string",
+      "allowedValues": [
+        "Ubuntu 16.04 LTS",
+        "CentOS 7.5", 
+        "RHEL 7.7", 
+        "Windows 2019-Datacenter",
+        "Windows 2016-Datacenter",
+        "Windows 2012-R2-Datacenter",
+        "Windows 2012-Datacenter"
+      ],
+      "metadata": {
+        "description": "The operating system of the VM."
+      }
+    },
+    "tableau_version": {
+      "type": "string",
+      "allowedValues": ["2020.1.3","2019.4.6","2019.3.7","2019.2.11","2019.1.15"],
+      "metadata": {
+        "description": "The version of Tableau Server to install."
+      },
+      "defaultValue": "2020.1.3"
+    },
+    "VMSize": {
+      "type": "string",
+      "allowedValues": ["Standard_D16s_v3","Standard_D32s_v3","Standard_D48s_v3","Standard_D4s_v3"],
+      "metadata": {
+        "description": "Please select the size of the VM you wish to deploy.  Tableau Server should be deployed on a machine with at least 16 vCPUs.  Standard_D4s_v3 is provided for testing only.  Read more about sizing options here: https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-general"
+      },
+      "defaultValue": "Standard_D16s_v3"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for Virtual Machine"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "source_CIDR": {
+      "type": "string",
+      "metadata": {
+        "description": "CIDR block for SSH source - limit to your IP for secure access."
+      }
+    },
+    "tableau_admin_username": {
+      "type": "string",
+      "metadata": {
+        "description": "Tableau Server administrator username."
+      }
+    },
+    "tableau_admin_password": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Tableau Server administrator password."
+      }
+    },
+    "registration_first_name": {
+      "type": "string",
+      "metadata": {
+        "description": "First name to use for registering Tableau Server"
+      }
+    },
+    "registration_last_name": {
+      "type": "string",
+      "metadata": {
+        "description": "Last name to use for registering Tableau Server"
+      }
+    },
+    "registration_email": {
+      "type": "string",
+      "metadata": {
+        "description": "Email address to use for registering Tableau Server"
+      }
+    },
+    "registration_company": {
+      "type": "string",
+      "metadata": {
+        "description": "Company name to use for registering Tableau Server"
+      }
+    },
+    "registration_title": {
+      "type": "string",
+      "metadata": {
+        "description": "Job title to use for registering Tableau Server"
+      }
+    },
+    "registration_department": {
+      "type": "string",
+      "metadata": {
+        "description": "Department name to use for registering Tableau Server"
+      }
+    },
+    "registration_industry": {
+      "type": "string",
+      "metadata": {
+        "description": "Industry name to use for registering Tableau Server"
+      }
+    },
+    "registration_phone": {
+      "type": "string",
+      "metadata": {
+        "description": "Phone number to use for registering Tableau Server"
+      }
+    },
+    "registration_city": {
+      "type": "string",
+      "metadata": {
+        "description": "Your current City - to use for registering Tableau Server"
+      }
+    },
+    "registration_state": {
+      "type": "string",
+      "metadata": {
+        "description": "Your current State - to use for registering Tableau Server"
+      }
+    },
+    "registration_zip": {
+      "type": "string",
+      "metadata": {
+        "description": "Your current zip - to use for registering Tableau Server"
+      }
+    },
+    "registration_country": {
+      "type": "string",
+      "metadata": {
+        "description": "Your current Country - to use for registering Tableau Server"
+      }
+    },
+    "license_key": {
+      "type": "string",
+      "defaultValue": "trial",
+      "metadata": {
+        "description": "Enter Tableau Server License key.  ** If you would like to run a 2-week free trial please leave as 'trial'"
+      }
+    },
+    "accept_eula": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Please type 'Yes' to accept the Tableau EULA which can be found here: https://mkt.tableau.com/files/tableau_eula.pdf. If you type No then the Azure resources will still be deployed but Tableau Server will not be installed."
+      }
+    }
+  },
+  "variables": {
+    "virtualNetworkName": "TABVNET",
+    "NSGName": "TABNSG",
+    "publicIPAddressType": "Dynamic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "numberOfInstances": 1,
+    "virtualMachineSize": "[parameters('VMSize')]",
+    "linux_os": [
+      "Ubuntu 16.04 LTS",
+      "CentOS 7.5", 
+      "RHEL 7.7"
+    ],
+    "os_is_linux": "[contains(variables('linux_os'),parameters('OS'))]", //true if linux
+    "imageReference": {
+      "Ubuntu 16.04 LTS": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "16.04.0-LTS",
+        "version": "latest"
+      },
+      "CentOS 7.5": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "7.5",
+        "version": "latest"
+      },
+      "RHEL 7.7": {
+        "publisher": "RedHat",
+        "offer": "RHEL",
+        "sku": "7-RAW",
+        "version": "latest"
+      },
+      "Windows 2016-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2016-Datacenter",
+        "version": "latest"
+      },
+      "Windows 2019-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2019-Datacenter",
+        "version": "latest"
+      },
+      "Windows 2012-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-Datacenter",
+        "version": "latest"
+      },
+      "Windows 2012-R2-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-R2-Datacenter",
+        "version": "latest"
+      }
+    },
+    "publicIpName": "[substring(concat(uniqueString(resourceGroup().id, deployment().name)), 0, 6)]",
+    "LinuxExecute": "[concat('-u ''', parameters('adminUsername'), ''' -p ''', parameters('adminPassword'), ''' -h ''', parameters('tableau_admin_username'), ''' -e ''', parameters('tableau_version'), ''' -i ''', parameters('tableau_admin_password'), ''' -j ''', parameters('registration_zip'), ''' -k ''', parameters('registration_country'), ''' -l ''', parameters('registration_city'), ''' -m ''', parameters('registration_last_name'), ''' -n ''', parameters('registration_industry'), ''' -o yes -q ''', parameters('registration_title'),''' -r ''', parameters('registration_phone'),''' -s ''', parameters('registration_company'), ''' -t ''', parameters('registration_state'), ''' -x ''', parameters('registration_email'), ''' -v ''', parameters('registration_department'), ''' -g ''', variables('installscripturi'), ''' -y ''', parameters('license_key'), ''' -f ''', parameters('OS'), ''' -w ''', parameters('registration_first_name'), '''')]",
+    "LinCmdWrapper": "[concat('bash ./config-linux.sh ', variables('LinuxExecute'))]",
+    "linuxscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/config-linux.sh', parameters('_artifactsLocationSasToken')))]",
+    "installscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/automated-installer', parameters('_artifactsLocationSasToken')))]",
+    "winscriptfile":"config-win.ps1",
+    "winscripturi": "[concat(parameters('_artifactsLocation'), concat('scripts/config-win.ps1', parameters('_artifactsLocationSasToken')))]",
+    "WinExecute" : "[concat('-local_admin_user ', parameters('adminUsername'), ' -local_admin_pass ', parameters('adminPassword'), ' -ts_admin_un ', parameters('tableau_admin_username'), ' -ts_admin_pass ', parameters('tableau_admin_password'), ' -reg_zip ', parameters('registration_zip'), ' -reg_country ', parameters('registration_country'), ' -reg_city ', parameters('registration_city'), ' -reg_last_name ', parameters('registration_last_name'), ' -reg_industry ', parameters('registration_industry'), ' -eula ', parameters('accept_eula') ,' -reg_title ', parameters('registration_title'),' -reg_phone ', parameters('registration_phone'),' -reg_company ', parameters('registration_company'), ' -reg_state ', parameters('registration_state'), ' -reg_email ', parameters('registration_email'), ' -reg_department ', parameters('registration_department'), ' -install_script_url ', variables('winscripturi'), ' -license_key ', parameters('license_key'), ' -reg_first_name ', parameters('registration_first_name'), ' -ts_build ', parameters('tableau_version'), '')]",
+    "WinCmdWrapper" : "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('winscriptfile'), ' ', variables('WinExecute'))]",
+    "win_CSE_properties": {
+      "publisher": "Microsoft.Compute",
+      "type": "CustomScriptExtension",
+      "typeHandlerVersion": "1.7",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "fileUris": "[split(variables('winscripturi'), ' ')]"
+        },
+      "protectedSettings": {
+        "commandToExecute": "[variables('WinCmdWrapper')]"
+      }
+    },
+    "lin_CSE_properties": {
+      "publisher": "Microsoft.Azure.Extensions",
+      "type": "CustomScript",
+      "typeHandlerVersion": "2.0",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "skipDos2Unix": false,
+        "timestamp": 123456789
+      },
+        "protectedSettings": {
+        "commandToExecute": 
+          "[variables('LinCmdWrapper')]",
+        "fileUris": [
+          "[variables('linuxscripturi')]"
+        ]
+      }
+    },
+    "LinuxsecurityRules": [
+      {
+        "name": "ssh-rule",
+        "properties": {
+          "description": "Allow SSH",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "22",
+          "sourceAddressPrefix": "[parameters('source_CIDR')]",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 100,
+          "direction": "Inbound"
+        }
+      },
+      {
+        "name": "mngagent-rule",
+        "properties": {
+          "description": "Allow Management",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "8850",
+          "sourceAddressPrefix": "[parameters('source_CIDR')]",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 110,
+          "direction": "Inbound"
+        }
+      },
+      {
+        "name": "web-rule",
+        "properties": {
+          "description": "Allow WEB",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "80",
+          "sourceAddressPrefix": "Internet",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 120,
+          "direction": "Inbound"
+        }
+      }
+    ],
+    "WindowssecurityRules": [
+      {
+        "name": "rdp-rule",
+        "properties": {
+          "description": "Allow RDP",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "3389",
+          "sourceAddressPrefix": "[parameters('source_CIDR')]",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 100,
+          "direction": "Inbound"
+        }
+      },
+      {
+        "name": "mngagent-rule",
+        "properties": {
+          "description": "Allow Management",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "8850",
+          "sourceAddressPrefix": "[parameters('source_CIDR')]",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 110,
+          "direction": "Inbound"
+        }
+      },
+      {
+        "name": "web-rule",
+        "properties": {
+          "description": "Allow WEB",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "80",
+          "sourceAddressPrefix": "Internet",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 120,
+          "direction": "Inbound"
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-10-01",
+      "name": "pid-6c922c23-cc65-4b76-8290-74feb0f3c476",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('NSGName')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('NSGName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "[variables('NSGName')]"
+      },
+      "properties": {
+        "securityRules": "[if(variables('os_is_linux'),variables('LinuxsecurityRules'),variables('WindowssecurityRules'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat('tabpip', copyindex(1))]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "PipLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('a', variables('publicIpName'), copyIndex(1))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('tabnic', copyIndex(1))]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[variables('virtualNetworkName')]",
+        "PipLoop"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('tabpip', copyIndex(1)))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('subnet1Name'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('tableau', copyIndex(1))]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('virtualMachineSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('tableauvm', copyIndex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')[parameters('OS')]]",
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": 1,
+              "input": {
+                "diskSizeGB": 64,
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('tabnic', copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "condition": "[equals(parameters('accept_eula'), 'Yes')]",
+          "name": "[concat('tableau', copyIndex(1),'/CustomScript')]",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('tableau', copyIndex(1)))]"
+          ],
+          "tags": {
+            "displayName": "customscriptextension"
+          },
+          "properties":
+            "[if(variables('os_is_linux'),variables('lin_CSE_properties'),variables('win_CSE_properties'))]"
+        }
+      ]
+    }
+  ]
+}

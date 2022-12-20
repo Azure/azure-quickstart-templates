@@ -7,7 +7,7 @@ param resolverVNETAddressSpace string = '10.7.0.0/24'
 @description('name of the dns private resolver')
 param dnsResolverName string = 'dnsResolver'
 
-@description('the location for resolver VNET and dns private resolver - Azure DNS private resolver available in specific region, refer the documenation to select the supported region for this deployment. For more information https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability')
+@description('the location for resolver VNET and dns private resolver - Azure DNS Private Resolver available in specific region, refer the documenation to select the supported region for this deployment. For more information https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability')
 @allowed([
   'australiaeast'
   'uksouth'
@@ -19,6 +19,17 @@ param dnsResolverName string = 'dnsResolver'
   'westcentralus'
   'eastus2'
   'westeurope'
+  'centralus'
+  'canadacentral'
+  'brazilsouth'
+  'francecentral'
+  'swedencentral'
+  'switzerlandnorth'
+  'eastasia'
+  'southeastasia'
+  'japaneast'
+  'koreacentral'
+  'southafricanorth'
 ])
 param location string
 
@@ -58,7 +69,7 @@ param targetDNS array = [
     }
   ]
 
-resource resolver 'Microsoft.Network/dnsResolvers@2020-04-01-preview' = {
+resource resolver 'Microsoft.Network/dnsResolvers@2022-07-01' = {
   name: dnsResolverName
   location: location
   properties: {
@@ -68,7 +79,7 @@ resource resolver 'Microsoft.Network/dnsResolvers@2020-04-01-preview' = {
   }
 }
 
-resource inEndpoint 'Microsoft.Network/dnsResolvers/inboundEndpoints@2020-04-01-preview' = {
+resource inEndpoint 'Microsoft.Network/dnsResolvers/inboundEndpoints@2022-07-01' = {
   parent: resolver
   name: inboundSubnet
   location: location
@@ -84,7 +95,7 @@ resource inEndpoint 'Microsoft.Network/dnsResolvers/inboundEndpoints@2020-04-01-
   }
 }
 
-resource outEndpoint 'Microsoft.Network/dnsResolvers/outboundEndpoints@2020-04-01-preview' = {
+resource outEndpoint 'Microsoft.Network/dnsResolvers/outboundEndpoints@2022-07-01' = {
   parent: resolver
   name: outboundSubnet
   location: location
@@ -95,7 +106,7 @@ resource outEndpoint 'Microsoft.Network/dnsResolvers/outboundEndpoints@2020-04-0
   }
 }
 
-resource fwruleSet 'Microsoft.Network/dnsForwardingRulesets@2020-04-01-preview' = {
+resource fwruleSet 'Microsoft.Network/dnsForwardingRulesets@2022-07-01' = {
   name: forwardingRulesetName
   location: location
   properties: {
@@ -107,7 +118,7 @@ resource fwruleSet 'Microsoft.Network/dnsForwardingRulesets@2020-04-01-preview' 
   }
 }
 
-resource resolverLink 'Microsoft.Network/dnsForwardingRulesets/virtualNetworkLinks@2020-04-01-preview' = {
+resource resolverLink 'Microsoft.Network/dnsForwardingRulesets/virtualNetworkLinks@2022-07-01' = {
   parent: fwruleSet
   name: resolvervnetlink
   properties: {
@@ -117,7 +128,7 @@ resource resolverLink 'Microsoft.Network/dnsForwardingRulesets/virtualNetworkLin
   }
 }
 
-resource fwRules 'Microsoft.Network/dnsForwardingRulesets/forwardingRules@2020-04-01-preview' = {
+resource fwRules 'Microsoft.Network/dnsForwardingRulesets/forwardingRules@2022-07-01' = {
   parent: fwruleSet
   name: forwardingRuleName
   properties: {
@@ -126,7 +137,7 @@ resource fwRules 'Microsoft.Network/dnsForwardingRulesets/forwardingRules@2020-0
   }
 }
 
-resource resolverVnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
+resource resolverVnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
   name: resolverVNETName
   location: location
   properties: {

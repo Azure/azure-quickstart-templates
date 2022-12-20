@@ -5,10 +5,11 @@ param vmName string = 'myTVM'
 @allowed([
   'Ubuntu-1804'
   'Ubuntu-2004'
+  'Ubuntu-2204'
   'RHEL-83'
   'SUSE-15-SP2'
 ])
-param os string = 'Ubuntu-1804'
+param sku string = 'Ubuntu-2004'
 
 @description('The size of the virtual machine')
 param vmSize string = 'Standard_D2s_v3'
@@ -34,7 +35,7 @@ param secureBoot bool = true
 param vTPM bool = true
 
 @description('Location for all resources.')
-param location string
+param location string = resourceGroup().location
 
 @description('Unique DNS Name for the Public IP used to access the virtual machine.')
 param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().id)}')
@@ -65,25 +66,8 @@ param virtualNetworkName string = 'vnet'
 @description('Name of the network security group')
 param networkSecurityGroupName string = 'nsg'
 
-@description('MAA Endpoint to attest to.')
-@allowed([
-  'https://sharedcus.cus.attest.azure.net/'
-  'https://sharedcae.cae.attest.azure.net/'
-  'https://sharedeus2.eus2.attest.azure.net/'
-  'https://shareduks.uks.attest.azure.net/'
-  'https://sharedcac.cac.attest.azure.net/'
-  'https://sharedukw.ukw.attest.azure.net/'
-  'https://sharedneu.neu.attest.azure.net/'
-  'https://sharedeus.eus.attest.azure.net/'
-  'https://sharedeau.eau.attest.azure.net/'
-  'https://sharedncus.ncus.attest.azure.net/'
-  'https://sharedwus.wus.attest.azure.net/'
-  'https://sharedweu.weu.attest.azure.net/'
-  'https://sharedscus.scus.attest.azure.net/'
-  'https://sharedsasia.sasia.attest.azure.net/'
-  'https://sharedsau.sau.attest.azure.net/'
-])
-param maaEndpoint string = 'https://sharedeus2.eus2.attest.azure.net/'
+@description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
+param maaEndpoint string = ''
 
 var imageReference = {
   'Ubuntu-1804': {
@@ -96,6 +80,12 @@ var imageReference = {
     publisher: 'Canonical'
     offer: '0001-com-ubuntu-server-focal'
     sku: '20_04-lts-gen2'
+    version: 'latest'
+  }
+  'Ubuntu-2204': {
+    publisher: 'Canonical'
+    offer: '0001-com-ubuntu-server-jammy'
+    sku: '22_04-lts-gen2'
     version: 'latest'
   }
   'RHEL-83': {
@@ -112,7 +102,6 @@ var imageReference = {
   }
 }
 var addressPrefix = '10.0.0.0/16'
-var ascReportingEndpoint = 'https://sharedeus2.eus2.attest.azure.net/'
 var disableAlerts = 'false'
 var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.LinuxAttestation'
@@ -134,7 +123,7 @@ var linuxConfiguration = {
   }
 }
 
-resource publicIP 'Microsoft.Network/publicIpAddresses@2020-06-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -148,7 +137,7 @@ resource publicIP 'Microsoft.Network/publicIpAddresses@2020-06-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -170,7 +159,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-0
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -193,7 +182,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: nicName
   location: location
   properties: {
@@ -203,7 +192,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIP.id
+            id: publicIp.id
           }
           subnet: {
             id: subnetRef
@@ -213,11 +202,12 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-06-01' = {
     ]
   }
   dependsOn: [
+
     virtualNetwork
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   name: vmName
   location: location
   identity: {
@@ -231,7 +221,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
       computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     storageProfile: {
       osDisk: {
@@ -240,7 +230,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
           storageAccountType: 'StandardSSD_LRS'
         }
       }
-      imageReference: imageReference[os]
+      imageReference: imageReference[sku]
     }
     networkProfile: {
       networkInterfaces: [
@@ -259,7 +249,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-12-01' = {
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = if (vTPM && secureBoot) {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (vTPM && secureBoot) {
   parent: vm
   name: extensionName
   location: location
@@ -269,15 +259,20 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' =
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
     settings: {
-      AttestationEndpointCfg: {
-        maaEndpoint: maaEndpoint
-        maaTenantName: maaTenantName
-        ascReportingEndpoint: ascReportingEndpoint
-        useAlternateToken: useAlternateToken
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
+        AscSettings: {
+          ascReportingEndpoint: substring(maaEndpoint, 0, 0)
+          ascReportingFrequency: substring(maaEndpoint, 0, 0)
+        }
+        useCustomToken: useAlternateToken
         disableAlerts: disableAlerts
       }
     }
   }
 }
 
-output hostname string = publicIP.properties.dnsSettings.fqdn
+output hostname string = publicIp.properties.dnsSettings.fqdn

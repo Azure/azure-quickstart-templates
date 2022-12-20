@@ -30,7 +30,7 @@ This template deploys an Azure Function Premium plan with [regional virtual netw
 
 ## Overview and deployed resources
 
-An Azure Function Premium plan with virtual network integration enabled allows the Azure Function to utilizes resources within the virtual network.
+An Azure Function Premium plan with virtual network integration enabled allows the Azure Function to utilize resources within the virtual network.
 
 The following resources are deployed as part of the solution:
 
@@ -52,11 +52,12 @@ The function app to be deployed as part of the Azure Functions Premium plan.
 
 + **Microsoft.Web/sites**: The function app instance.
 
-### Application Insights
+### Application Insights with Log Analytics Workspace
 
 Application Insights is used to provide [monitoring for the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
 
 + **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
++ **Microsoft.OperationalInsights/workspaces**: The Log Analytics Workspace used with Application Insights.
 
 ### Azure Storage
 
@@ -68,4 +69,4 @@ The Azure Storage account used by the Azure Function.
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/networkConfig`
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Insights/components, Microsoft.OperationalInsights/workspaces, Microsoft.Web/serverfarms, Microsoft.Web/sites`
