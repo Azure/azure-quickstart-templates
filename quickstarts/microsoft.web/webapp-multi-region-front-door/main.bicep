@@ -50,10 +50,10 @@ resource appServicePlan 'Microsoft.Web/serverFarms@2020-06-01' = {
     name: appServicePlanSkuName
     capacity: appServicePlanCapacity
   }
+  kind: 'app'
   properties: {
     reserved: true
   }
-  kind: 'app'
 }
 
 resource secondaryAppServicePlan 'Microsoft.Web/serverFarms@2020-06-01' = {
@@ -63,10 +63,10 @@ resource secondaryAppServicePlan 'Microsoft.Web/serverFarms@2020-06-01' = {
     name: appServicePlanSkuName
     capacity: appServicePlanCapacity
   }
+  kind: 'app'
   properties: {
     reserved: true
   }
-  kind: 'app'
 }
 
 resource app 'Microsoft.Web/sites@2020-06-01' = {
@@ -106,9 +106,9 @@ resource app 'Microsoft.Web/sites@2020-06-01' = {
 
 resource ftpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: location
   kind: 'string'
   parent: app
-  location: location
   properties: {
     allow: false
   }
@@ -116,9 +116,9 @@ resource ftpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-
 
 resource scmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: location
   kind: 'string'
   parent: app
-  location: location
   properties: {
     allow: false
   }
@@ -131,6 +131,9 @@ resource appSlot 'Microsoft.Web/sites/slots@2020-06-01' = {
   identity: {
     type: 'SystemAssigned'
   }
+  dependsOn: [
+    app
+  ]
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
@@ -156,16 +159,13 @@ resource appSlot 'Microsoft.Web/sites/slots@2020-06-01' = {
       ]
     }
   }
-  dependsOn: [
-    app
-  ]
 }
 
 resource ftpPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: location
   kind: 'string'
   parent: appSlot
-  location: location
   properties: {
     allow: false
   }
@@ -173,9 +173,9 @@ resource ftpPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPoli
 
 resource scmPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: location
   kind: 'string'
   parent: appSlot
-  location: location
   properties: {
     allow: false
   }
@@ -218,9 +218,9 @@ resource secondaryApp 'Microsoft.Web/sites@2020-06-01' = {
 
 resource secondaryFtpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: secondaryLocation
   kind: 'string'
   parent: secondaryApp
-  location: secondaryLocation
   properties: {
     allow: false
   }
@@ -228,9 +228,9 @@ resource secondaryFtpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolic
 
 resource secondaryScmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: secondaryLocation
   kind: 'string'
   parent: secondaryApp
-  location: secondaryLocation
   properties: {
     allow: false
   }
@@ -243,6 +243,9 @@ resource secondaryAppSlot 'Microsoft.Web/sites/slots@2020-06-01' = {
   identity: {
     type: 'SystemAssigned'
   }
+  dependsOn: [
+    secondaryApp
+  ]
   properties: {
     serverFarmId: secondaryAppServicePlan.id
     httpsOnly: true
@@ -268,16 +271,13 @@ resource secondaryAppSlot 'Microsoft.Web/sites/slots@2020-06-01' = {
       ]
     }
   }
-  dependsOn: [
-    secondaryApp
-  ]
 }
 
 resource secondaryFtpPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: secondaryLocation
   kind: 'string'
   parent: secondaryAppSlot
-  location: secondaryLocation
   properties: {
     allow: false
   }
@@ -285,9 +285,9 @@ resource secondaryFtpPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCreden
 
 resource secondaryScmPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: secondaryLocation
   kind: 'string'
   parent: secondaryAppSlot
-  location: secondaryLocation
   properties: {
     allow: false
   }
@@ -295,8 +295,8 @@ resource secondaryScmPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCreden
 
 resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   name: frontDoorEndpointName
-  parent: frontDoorProfile
   location: 'global'
+  parent: frontDoorProfile
   properties: {
     enabledState: 'Enabled'
   }
@@ -348,6 +348,9 @@ resource secondaryFrontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2
 resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   name: frontDoorRouteName
   parent: frontDoorEndpoint
+  dependsOn: [
+    frontDoorOrigin
+  ]
   properties: {
     originGroup: {
       id: frontDoorOriginGroup.id
@@ -363,9 +366,6 @@ resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' 
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
   }
-  dependsOn: [
-    frontDoorOrigin
-  ]
 }
 
 output appServiceHostName string = app.properties.defaultHostName
