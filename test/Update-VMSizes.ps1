@@ -1,3 +1,6 @@
+<#
+When VM skus are retired, this script can be used to scrub the repo and update any sizes to a new one
+#>
 
 $a = @(
 "Standard_D2_v3", "Standard_D1",

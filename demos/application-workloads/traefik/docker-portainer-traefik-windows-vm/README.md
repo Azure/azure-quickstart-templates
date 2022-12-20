@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: docker-portainer-traefik-windows-vm
 languages:
+- bicep
 - json
 ---
 # Windows Docker Host with Portainer and Traefik pre-installed
@@ -19,6 +20,8 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/traefik/docker-portainer-traefik-windows-vm/BestPracticeResult.svg)
 
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/traefik/docker-portainer-traefik-windows-vm/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/traefik/docker-portainer-traefik-windows-vm/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftraefik%2Fdocker-portainer-traefik-windows-vm%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftraefik%2Fdocker-portainer-traefik-windows-vm%2FcreateUiDefinition.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftraefik%2Fdocker-portainer-traefik-windows-vm%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftraefik%2Fdocker-portainer-traefik-windows-vm%2FcreateUiDefinition.json)
