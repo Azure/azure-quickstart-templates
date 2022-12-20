@@ -25,5 +25,5 @@ languages:
 
 This template allows you to create [Azure SQL logical server](https://docs.microsoft.com/azure/sql-database/sql-database-logical-servers).
 
-`Tags: Azure, SQL logical server, Microsoft.Sql/servers, firewallRules, securityAlertPolicies, vulnerabilityAssessments, connectionPolicies, Microsoft.Storage/storageAccounts, Microsoft.Authorization/roleAssignments`
+`Tags: Azure, SQL logical server, Microsoft.Sql/servers, firewallRules, advancedThreatProtectionSettings, vulnerabilityAssessments, connectionPolicies, Microsoft.Storage/storageAccounts, Microsoft.Authorization/roleAssignments`
 

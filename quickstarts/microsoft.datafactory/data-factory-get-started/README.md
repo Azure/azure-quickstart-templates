@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create a Data Factory, Blob source, Blob sink and Pipeline
+# More is possible with Azure Data Factory - One click to try Azure Data Factory
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-get-started/PublicDeployment.svg)

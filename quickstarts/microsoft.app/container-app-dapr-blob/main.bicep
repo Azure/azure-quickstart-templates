@@ -13,7 +13,7 @@ param containerAppEnvName string = 'env-${uniqueString(resourceGroup().id)}'
 @description('Specifies the location for all resources.')
 param location string = resourceGroup().location 
 
-module myenv 'br/public:app/dapr-containerapps-environment:1.0.1' = {
+module myenv 'br/public:app/dapr-containerapps-environment:1.2.1' = {
   name: containerAppEnvName
   params: {
     location: location
@@ -26,7 +26,7 @@ module myenv 'br/public:app/dapr-containerapps-environment:1.0.1' = {
   }
 }
 
-module appNodeService 'br/public:app/dapr-containerapp:1.0.1' = {
+module appNodeService 'br/public:app/dapr-containerapp:1.0.2' = {
   name: 'stateNodeApp'
   params: {
     location: location
@@ -45,7 +45,7 @@ module appNodeService 'br/public:app/dapr-containerapp:1.0.1' = {
   }
 }
 
-module appPythonClient 'br/public:app/dapr-containerapp:1.0.1' = {
+module appPythonClient 'br/public:app/dapr-containerapp:1.0.2' = {
   name: 'statePyApp'
   params: {
     location: location

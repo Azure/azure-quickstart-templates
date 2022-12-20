@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "14772710719127745280"
+      "templateHash": "4121684413515623854"
     }
   },
   "parameters": {
@@ -115,7 +115,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.11.1.770",
-              "templateHash": "2326671120520451392"
+              "templateHash": "13642411578150246430"
             }
           },
           "parameters": {
@@ -129,7 +129,7 @@
               "type": "string",
               "defaultValue": "[resourceGroup().location]",
               "metadata": {
-                "description": "The location to deploy the resources to"
+                "description": "The location of the ACR and where to deploy the module resources to"
               }
             },
             "forceUpdateTag": {
@@ -235,9 +235,10 @@
             }
           },
           "variables": {
+            "$fxv#0": "#!/bin/bash\nset -e\n\necho \"Waiting on RBAC replication ($initialDelay)\"\nsleep $initialDelay\n\naz acr build --resource-group $acrResourceGroup \\\n  --registry $acrName \\\n  --image $taggedImageName $repo \\\n  --platform $platform",
             "repo": "[format('{0}#{1}:{2}', parameters('gitRepositoryUrl'), parameters('gitBranch'), parameters('gitRepoDirectory'))]",
             "cleanRepoName": "[last(split(parameters('gitRepositoryUrl'), '/'))]",
-            "tag": "[format('{0}:{1}', parameters('imageName'), parameters('imageTag'))]"
+            "taggedImageName": "[format('{0}:{1}', parameters('imageName'), parameters('imageTag'))]"
           },
           "resources": [
             {
@@ -289,8 +290,8 @@
                     "value": "[resourceGroup().name]"
                   },
                   {
-                    "name": "tag",
-                    "value": "[variables('tag')]"
+                    "name": "taggedImageName",
+                    "value": "[variables('taggedImageName')]"
                   },
                   {
                     "name": "repo",
@@ -305,7 +306,7 @@
                     "value": "[parameters('initialScriptDelay')]"
                   }
                 ],
-                "scriptContent": "      #!/bin/bash\r\n      set -e\r\n      \r\n      echo \"Waiting on RBAC replication ($initialDelay)\"\r\n      sleep $initialDelay\r\n      \r\n      az acr build -g $acrResourceGroup -r $acrName -t $tag $repo --platform $platform\r\n    ",
+                "scriptContent": "[variables('$fxv#0')]",
                 "cleanupPreference": "[parameters('cleanupPreference')]"
               },
               "dependsOn": [
@@ -313,12 +314,27 @@
                 "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), parameters('rbacRoleNeeded'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))))]"
               ]
             }
-          ]
+          ],
+          "outputs": {
+            "acrImage": {
+              "type": "string",
+              "value": "[format('{0}/{1}', reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), '2021-12-01-preview').loginServer, variables('taggedImageName'))]",
+              "metadata": {
+                "description": "The ACR uri the image can be accessed on if building was successful"
+              }
+            }
+          }
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName'))]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "acrImage": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('buildAcrImage-{0}', replace(parameters('imageName'), '/', '-')))).outputs.acrImage.value]"
+    }
+  }
 }
