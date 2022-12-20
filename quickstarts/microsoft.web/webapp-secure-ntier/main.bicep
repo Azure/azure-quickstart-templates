@@ -139,9 +139,9 @@ resource webAppBackend 'Microsoft.Web/sites@2022-03-01' = {
 
 resource ftpPolicyBackend 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: location
   kind: 'string'
   parent: webAppBackend
-  location: location
   properties: {
     allow: false
   }
@@ -149,9 +149,9 @@ resource ftpPolicyBackend 'Microsoft.Web/sites/basicPublishingCredentialsPolicie
 
 resource scmPolicyBackend 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: location
   kind: 'string'
   parent: webAppBackend
-  location: location
   properties: {
     allow: false
   }
@@ -161,6 +161,9 @@ resource webAppSlotBackend 'Microsoft.Web/sites/slots@2022-03-01' = {
   name: '${webAppNameBackend}/stage'
   location: location
   kind: 'app'
+  dependsOn: [
+    webAppBackend
+  ]
   properties: {
     serverFarmId: serverFarm.id
     httpsOnly: true
@@ -172,16 +175,13 @@ resource webAppSlotBackend 'Microsoft.Web/sites/slots@2022-03-01' = {
       minTlsVersion: '1.2'
     }
   }
-  dependsOn: [
-    webAppBackend
-  ]
 }
 
 resource ftpPolicySlotBackend 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: location
   kind: 'string'
   parent: webAppSlotBackend
-  location: location
   properties: {
     allow: false
   }
@@ -189,9 +189,9 @@ resource ftpPolicySlotBackend 'Microsoft.Web/sites/slots/basicPublishingCredenti
 
 resource scmPolicySlotBackend 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: location
   kind: 'string'
   parent: webAppSlotBackend
-  location: location
   properties: {
     allow: false
   }
@@ -204,6 +204,8 @@ resource webAppFrontend 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: serverFarm.id
     httpsOnly: true
+    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetNameVnetIntegration)
+    vnetRouteAllEnabled: true
     siteConfig: {
       detailedErrorLoggingEnabled: true
       httpLoggingEnabled: true
@@ -211,16 +213,14 @@ resource webAppFrontend 'Microsoft.Web/sites@2022-03-01' = {
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
     }
-    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetNameVnetIntegration)
-    vnetRouteAllEnabled: true
   }
 }
 
 resource ftpPolicyFrontend 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: location
   kind: 'string'
   parent: webAppFrontend
-  location: location
   properties: {
     allow: false
   }
@@ -228,9 +228,9 @@ resource ftpPolicyFrontend 'Microsoft.Web/sites/basicPublishingCredentialsPolici
 
 resource scmPolicyFrontend 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: location
   kind: 'string'
   parent: webAppFrontend
-  location: location
   properties: {
     allow: false
   }
@@ -240,9 +240,14 @@ resource webAppSlotFrontend 'Microsoft.Web/sites/slots@2022-03-01' = {
   name: '${webAppNameFrontend}/stage'
   location: location
   kind: 'app'
+  dependsOn: [
+    webAppFrontend
+  ]
   properties: {
     serverFarmId: serverFarm.id
     httpsOnly: true
+    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetNameVnetIntegration)
+    vnetRouteAllEnabled: true
     siteConfig: {
       detailedErrorLoggingEnabled: true
       httpLoggingEnabled: true
@@ -250,19 +255,14 @@ resource webAppSlotFrontend 'Microsoft.Web/sites/slots@2022-03-01' = {
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
     }
-    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetNameVnetIntegration)
-    vnetRouteAllEnabled: true
   }
-  dependsOn: [
-    webAppFrontend
-  ]
 }
 
 resource ftpPolicySlotFrontend 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'ftp'
+  location: location
   kind: 'string'
   parent: webAppSlotFrontend
-  location: location
   properties: {
     allow: false
   }
@@ -270,17 +270,17 @@ resource ftpPolicySlotFrontend 'Microsoft.Web/sites/slots/basicPublishingCredent
 
 resource scmPolicySlotFrontend 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies@2022-03-01' = {
   name: 'scm'
+  location: location
   kind: 'string'
   parent: webAppSlotFrontend
-  location: location
   properties: {
     allow: false
   }
 }
 
 resource webAppBindingBackend 'Microsoft.Web/sites/hostNameBindings@2019-08-01' = {
-  parent: webAppBackend
   name: '${webAppBackend.name}${webappDnsName}'
+  parent: webAppBackend
   properties: {
     siteName: webAppBackend.name
     hostNameType: 'Verified'
@@ -288,8 +288,8 @@ resource webAppBindingBackend 'Microsoft.Web/sites/hostNameBindings@2019-08-01' 
 }
 
 resource webAppBindingFrontend 'Microsoft.Web/sites/hostNameBindings@2019-08-01' = {
-  parent: webAppFrontend
   name: '${webAppFrontend.name}${webappDnsName}'
+  parent: webAppFrontend
   properties: {
     siteName: webAppFrontend.name
     hostNameType: 'Verified'
@@ -320,6 +320,9 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-06-01' = {
 resource privateEndpointSlot 'Microsoft.Network/privateEndpoints@2020-06-01' = {
   name: privateEndpointSlotName
   location: location
+  dependsOn: [
+    webAppSlotBackend
+  ]
   properties: {
     subnet: {
       id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetNamePrivateEndpoint)
@@ -336,9 +339,6 @@ resource privateEndpointSlot 'Microsoft.Network/privateEndpoints@2020-06-01' = {
       }
     ]
   }
-  dependsOn: [
-    webAppSlotBackend
-  ]
 }
 
 resource privateDnsZones 'Microsoft.Network/privateDnsZones@2018-09-01' = {
@@ -350,8 +350,8 @@ resource privateDnsZones 'Microsoft.Network/privateDnsZones@2018-09-01' = {
 }
 
 resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: privateDnsZones
   name: '${privateDnsZones.name}-link'
+  parent: privateDnsZones
   location: 'global'
   properties: {
     registrationEnabled: false
@@ -362,8 +362,8 @@ resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
 }
 
 resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
-  parent: privateEndpoint
   name: 'dnsgroupname'
+  parent: privateEndpoint
   properties: {
     privateDnsZoneConfigs: [
       {
@@ -377,8 +377,8 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
 }
 
 resource privateDnsZoneGroupSlot 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
-  parent: privateEndpointSlot
   name: 'slotdnsgroupname'
+  parent: privateEndpointSlot
   properties: {
     privateDnsZoneConfigs: [
       {
