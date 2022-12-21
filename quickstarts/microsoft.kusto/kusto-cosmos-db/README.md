@@ -11,6 +11,8 @@ languages:
 ---
 # Deploy Azure Data Explorer db with Cosmos DB connection.
 
+![Fairfax Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-cosmos-db/FairfaxLastTestDate.svg)
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-cosmos-db/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-cosmos-db/PublicDeployment.svg)
 
