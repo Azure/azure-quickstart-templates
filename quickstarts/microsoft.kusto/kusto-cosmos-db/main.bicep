@@ -24,8 +24,10 @@ param cosmosDbDatabaseName string = 'mydb'
 @description('Name of Cosmos DB container')
 param cosmosDbContainerName string = 'mycontainer'
 
+//  Id of the Cosmos DB data reader role
 var cosmosDataReader = '00000000-0000-0000-0000-000000000001'
 
+//  Cosmos DB account, DB, container and role assignment
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
   name: cosmosDbAccountName
   location: location
@@ -72,6 +74,7 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
 
 }
 
+//  Kusto Cluster, DB, script and data connection
 resource cluster 'Microsoft.Kusto/clusters@2022-11-11' = {
   name: clusterName
   location: location
@@ -107,7 +110,7 @@ resource cluster 'Microsoft.Kusto/clusters@2022-11-11' = {
         //  We need the table to be present in the database
         kustoScript
         //  We need the cluster to be receiver on the Event Hub
-        // clusterCosmosDbAuthorization
+        cosmosDbAccount::clusterCosmosDbAuthorization
       ]
       kind: 'CosmosDb'
       properties: {
