@@ -100,7 +100,15 @@ Lastly, it will enable access for SSH management from (private) IP addresses and
 The VM size should be decided based on the vSensor Requirements as described in the ‘Example Sizings’ in the below link:
 https://customerportal.darktrace.com/product-guides/main/vsensor-requirements
 
-Various sizes have been provided in the 'VMSS Instance Size' parameter, from small burstable CPU sizes for small levels of traffic to large 32 core sizes for high levels of traffic.
+Various recommended sizes have been provided below, from small burstable CPU sizes for small levels of traffic to large 32 core sizes for high levels of traffic:
+
+* Standard_B2ms
+* Standard_D2_v3
+* Standard_D4_v3
+* Standard_D8_v3
+* Standard_D8s_v5
+* Standard_D16s_v5
+* Standard_D32s_v5
 
 Note that, vSensor performance will vary by CPU speed and the nature of the traffic - estimated sizings are provided for guidance only.
 
