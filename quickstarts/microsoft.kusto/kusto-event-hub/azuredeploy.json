@@ -1,0 +1,183 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "11556612112757819680"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "defaultValue": "[format('kusto{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the cluster"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_D12_v2",
+      "metadata": {
+        "description": "Name of the sku"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "maxValue": 1000,
+      "minValue": 2,
+      "metadata": {
+        "description": "# of nodes"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "kustodb",
+      "metadata": {
+        "description": "Name of the database"
+      }
+    },
+    "eventHubNamespaceName": {
+      "type": "string",
+      "defaultValue": "[format('eventHub{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of Event Hub's namespace"
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "defaultValue": "kustoHub",
+      "metadata": {
+        "description": "Name of Event Hub"
+      }
+    }
+  },
+  "variables": {
+    "dataReceiverId": "a638d3c7-ab3a-418d-83e6-5f17a39d4fde",
+    "fullDataReceiverId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('dataReceiverId'))]",
+    "eventHubRoleAssignmentName": "[format('{0}{1}{2}{3}', resourceGroup().id, parameters('clusterName'), variables('dataReceiverId'), parameters('eventHubName'))]",
+    "roleAssignmentName": "[guid(variables('eventHubRoleAssignmentName'), parameters('eventHubName'), variables('dataReceiverId'), parameters('clusterName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}/{2}', parameters('eventHubNamespaceName'), parameters('eventHubName'), 'kustoConsumerGroup')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+      "properties": {
+        "messageRetentionInDays": 2,
+        "partitionCount": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases/scripts",
+      "apiVersion": "2022-02-01",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('databaseName'), 'db-script')]",
+      "properties": {
+        "scriptContent": "//  Create a landing table for Event Hub's events\n.create-merge table RawEvents(document:dynamic)\n\n//  Create mapping from JSON ingestion to landing table\n.create-or-alter table RawEvents ingestion json mapping 'DirectJson' '[{\"column\":\"document\",\"path\":\"$\",\"datatype\":\"dynamic\"}]'\n\n//  We modify the ingestion batching policy to make it easy to see records coming ingestion\n//  THIS CONFIGURATION SHOULDN'T BE USED IN PRODUCTION:  MaximumBatchingTimeSpan SHOULD BE AT LEAST 1 MINUTE\n.alter table RawEvents policy ingestionbatching \"{'MaximumBatchingTimeSpan': '0:0:10', 'MaximumNumberOfItems': 10000}\"",
+        "continueOnErrors": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('databaseName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases/dataConnections",
+      "apiVersion": "2022-02-01",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('databaseName'), 'eventConnection')]",
+      "location": "[parameters('location')]",
+      "kind": "EventHub",
+      "properties": {
+        "compression": "None",
+        "consumerGroup": "kustoConsumerGroup",
+        "dataFormat": "MULTIJSON",
+        "eventHubResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "eventSystemProperties": [
+          "x-opt-enqueued-time"
+        ],
+        "managedIdentityResourceId": "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "mappingRuleName": "DirectJson",
+        "tableName": "RawEvents"
+      },
+      "dependsOn": [
+        "[extensionResourceId(resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName')), 'Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs/consumergroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), 'kustoConsumerGroup')]",
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.Kusto/clusters/databases/scripts', parameters('clusterName'), parameters('databaseName'), 'db-script')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases",
+      "apiVersion": "2022-02-01",
+      "name": "[format('{0}/{1}', parameters('clusterName'), parameters('databaseName'))]",
+      "location": "[parameters('location')]",
+      "kind": "ReadWrite",
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2021-11-01",
+      "name": "[parameters('eventHubNamespaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": 1,
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Kusto/clusters",
+      "apiVersion": "2022-02-01",
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "Standard",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2021-04-01-preview",
+      "scope": "[format('Microsoft.EventHub/namespaces/{0}/eventhubs/{1}', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+      "name": "[variables('roleAssignmentName')]",
+      "properties": {
+        "description": "Give \"Azure Event Hubs Data Receiver\" to the cluster",
+        "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2022-02-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('fullDataReceiverId')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
+      ]
+    }
+  ]
+}

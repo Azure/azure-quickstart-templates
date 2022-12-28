@@ -22,6 +22,13 @@
         "description": "Location for all resources."
       }
     },
+    "vmSize":{
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Location for all resources."
+      }        
+    },
     "authenticationType": {
       "type": "string",
       "defaultValue": "sshPublicKey",
@@ -78,11 +85,11 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS2_V2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -95,13 +102,11 @@
             "name": "[concat(parameters('vmName'),'_OSDisk')]",
             "createOption": "FromImage",
             "caching": "ReadWrite"
-          },
-          "dataDisks": []
+          }
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('vmAdminUsername')]",
-          "secrets": [],
           "adminPassword": "[parameters('adminPasswordOrKey')]",
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
@@ -121,10 +126,10 @@
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'),'/installcustomscript')]",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2020-12-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName') )]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName') )]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -144,7 +149,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
@@ -157,14 +162,11 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/default')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'default')]"
               }
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": []
-        },
         "enableIPForwarding": false,
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
@@ -179,7 +181,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -197,24 +199,22 @@
             }
           }
         ]
-      },
-      "dependsOn": []
+      }
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('pipName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4
-      },
-      "dependsOn": []
+      }
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -230,30 +230,26 @@
             }
           }
         ]
-      },
-      "dependsOn": []
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountDiagnostics')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "properties": {
-        "accountType": "Standard_LRS"
-      },
-      "dependsOn": []
+      "sku": {
+        "name":"Standard_LRS"
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountVms')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "properties": {
-        "accountType": "Premium_LRS"
-      },
-      "dependsOn": []
+      "sku": {
+        "name":"Premium_LRS"
+      }      
     }
   ]
 }
+

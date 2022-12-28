@@ -51,31 +51,42 @@ while(((Get-CMDiscoveryMethod | ?{$_.ItemName -eq "SMS_AD_SYSTEM_DISCOVERY_AGENT
 "[$(Get-Date -format HH:mm:ss)] Invoke system descovery..." | Out-File -Append $logpath
 Invoke-CMSystemDiscovery 
 
-#Get Client IP
-$clientIP= (Test-Connection $ClientName -count 1 | select @{Name="Computername";Expression={$_.Address}},Ipv4Address).IpV4Address.IPAddressToString
-
-"[$(Get-Date -format HH:mm:ss)] Client IP is $clientIP." | Out-File -Append $logpath
-$boundaryrange = $clientIP+"-"+$clientIP
-
-"[$(Get-Date -format HH:mm:ss)] Create boundary and boundary group..." | Out-File -Append $logpath
-New-CMBoundary -Type IPRange -Name Client -Value $boundaryrange
-
+#Create Boundry Group
+"[$(Get-Date -format HH:mm:ss)] Create boundary group." | Out-File -Append $logpath
 New-CMBoundaryGroup -Name $SiteCode -DefaultSiteCode $SiteCode -AddSiteSystemServerName $DPMPMachineName
 
-Add-CMBoundaryToGroup -BoundaryName Client -BoundaryGroupName $SiteCode
+#Get Client IP
+$ClientNameList = $ClientName.split(",")
+foreach($client in $ClientNameList)
+{
+    $clientIP= (Test-Connection $client -count 1 | select @{Name="Computername";Expression={$_.Address}},Ipv4Address).IpV4Address.IPAddressToString
+
+    "[$(Get-Date -format HH:mm:ss)] $client IP is $clientIP." | Out-File -Append $logpath
+    $boundaryrange = $clientIP+"-"+$clientIP
+    
+    "[$(Get-Date -format HH:mm:ss)] Create boundary..." | Out-File -Append $logpath
+    New-CMBoundary -Type IPRange -Name $client -Value $boundaryrange
+
+    "[$(Get-Date -format HH:mm:ss)] Add $client IP to Boundry Group..." | Out-File -Append $logpath
+    Add-CMBoundaryToGroup -BoundaryName $client -BoundaryGroupName $SiteCode
+}
 
 #Wait collection
 $machinelist = (get-cmdevice -CollectionName "all systems").Name
-while($machinelist -notcontains $ClientName)
+
+foreach($client in $ClientNameList)
 {
-    Invoke-CMDeviceCollectionUpdate -Name "all systems"
-    "[$(Get-Date -format HH:mm:ss)] Waiting for client appear in all systems collection." | Out-File -Append $logpath
-    Start-Sleep -Seconds 20
-    $machinelist = (get-cmdevice -CollectionName "all systems").Name
+    while($machinelist -notcontains $client)
+    {
+        Invoke-CMDeviceCollectionUpdate -Name "all systems"
+        "[$(Get-Date -format HH:mm:ss)] Waiting for " + $client + " appear in all systems collection." | Out-File -Append $logpath
+        Start-Sleep -Seconds 20
+        $machinelist = (get-cmdevice -CollectionName "all systems").Name
+    }
+    "[$(Get-Date -format HH:mm:ss)] " + $client + "push Client..." | Out-File -Append $logpath
+    Install-CMClient -DeviceName $client -SiteCode $SiteCode -AlwaysInstallClient $true
+    "[$(Get-Date -format HH:mm:ss)] " + $client + "push Client Done." | Out-File -Append $logpath
 }
-"[$(Get-Date -format HH:mm:ss)]Push Client..." | Out-File -Append $logpath
-Install-CMClient -DeviceName $ClientName -SiteCode $SiteCode -AlwaysInstallClient $true
-"[$(Get-Date -format HH:mm:ss)]Done." | Out-File -Append $logpath
 
 $Configuration.InstallClient.Status = 'Completed'
 $Configuration.InstallClient.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"

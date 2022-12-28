@@ -63,7 +63,8 @@
             "allowedValues": [
                 "2012-R2-Datacenter",
                 "2016-Datacenter",
-                "2019-Datacenter"
+                "2019-Datacenter",
+                "2022-datacenter"
             ],
             "metadata": {
                 "description": "Windows server SKU"
@@ -104,23 +105,45 @@
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
             },
             "defaultValue": ""
+        },
+        "gatewayIpDNS": {
+            "type": "string",
+            "defaultValue": "[concat('gwd-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "DNS name for the gateway, must be globally unique."
+            }
+        },
+        "connBrokerIpDNS": {
+            "type": "string",
+            "defaultValue": "[concat('cbd-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "DNS name for the connection broker, must be globally unique."
+            }
+        },
+        "rdshNamingPrefix": {
+            "type": "string",
+            "defaultValue": "rdsh-",
+            "maxLength": 16,
+            "metadata": {
+                "description": "Naming prefix for the RDS Host VMs and resources"
+            }
         }
     },
     "variables": {
-        "gwdnsLabelPrefix": "[concat('gwd-', uniqueString(resourceGroup().id))]",
-        "cbdnsLabelPrefix": "[concat('cbd-', uniqueString(resourceGroup().id))]",
+
         "imagePublisher": "MicrosoftWindowsServer",
         "imageOffer": "WindowsServer",
         "subnet-id": "[resourceId(parameters('adVnetSubscriptionId'), parameters('adVnetRG'),'Microsoft.Network/virtualNetworks/subnets', parameters('adVnetName'), parameters('adSubnetName'))]",
-        "publicIpRef": "publicIp",
-        "brokerIpRef": "brokerpublicIp",
-        "gatewayIpRef": "gatewaypublicIp"
+        "publicIpAddressName": "publicIp",
+        "gatewayPublicIpAddressName": "gatewayPublicIp",
+        "brokerPublicIpAddressName": "brokerPublicIp"
+
     },
     "resources": [
         {
             "apiVersion": "2020-06-01",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('publicIpRef')]",
+            "name": "[variables('publicIpAddressName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
@@ -132,24 +155,24 @@
         {
             "apiVersion": "2020-06-01",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('gatewayIpRef')]",
+            "name": "[variables('gatewayPublicIpAddressName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
-                    "domainNameLabel": "[variables('gwdnsLabelPrefix')]"
+                    "domainNameLabel": "[parameters('gatewayIpDNS')]"
                 }
             }
         },
         {
             "apiVersion": "2020-06-01",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('brokerIpRef')]",
+            "name": "[variables('brokerPublicIpAddressName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
-                    "domainNameLabel": "[variables('cbdnsLabelPrefix')]"
+                    "domainNameLabel": "[parameters('connBrokerIpDNS')]"
                 }
             }
         },
@@ -183,7 +206,7 @@
             "apiVersion": "2020-06-01",
             "type": "Microsoft.Compute/availabilitySets",
             "location": "[parameters('location')]",
-            "name": "rdsh-availabilityset",
+            "name": "[concat(parameters('rdshNamingPrefix'), 'availabilityset')]",
             "properties": {
                 "PlatformUpdateDomainCount": 20,
                 "PlatformFaultDomainCount": 2
@@ -198,7 +221,7 @@
             "name": "loadBalancer",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpRef'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -206,7 +229,7 @@
                         "name": "LBFE",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpRef'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]"
                             }
                         }
                     }
@@ -309,7 +332,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayIpRef'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayPublicIpAddressName'))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnet-id')]"
@@ -349,7 +372,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('brokerIpRef'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('brokerPublicIpAddressName'))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnet-id')]"
@@ -367,7 +390,7 @@
         {
             "apiVersion": "2020-06-01",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat('rdsh-', copyindex(), '-nic')]",
+            "name": "[concat(parameters('rdshNamingPrefix'), copyindex(), '-nic')]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "rdsh-nic-loop",
@@ -455,9 +478,9 @@
                         "typeHandlerVersion": "2.11",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('Configuration.zip', parameters('_artifactsLocationSasToken')))]",
+                            "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip', parameters('_artifactsLocationSasToken')))]",
                             "ConfigurationFunction": "Configuration.ps1\\Gateway",
-                            "Properties": {
+                            "properties": {
                                 "DomainName": "[parameters('adDomainName')]",
                                 "AdminCreds": {
                                     "UserName": "[parameters('adminUsername')]",
@@ -477,25 +500,25 @@
         {
             "apiVersion": "2020-06-01",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat('rdsh-', copyindex())]",
+            "name": "[concat(parameters('rdshNamingPrefix'), copyindex())]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "rdsh-vm-loop",
                 "count": "[parameters('numberOfRdshInstances')]"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]",
-                "[resourceId('Microsoft.Network/networkInterfaces/', concat('rdsh-', copyindex(), '-nic'))]"
+                "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('rdshNamingPrefix'), 'availabilityset'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('rdshNamingPrefix'), copyindex(), '-nic'))]"
             ],
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[parameters('rdshVmSize')]"
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('rdshNamingPrefix'), 'availabilityset'))]"
                 },
                 "osProfile": {
-                    "computerName": "[concat('rdsh-', copyIndex())]",
+                    "computerName": "[concat(parameters('rdshNamingPrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -507,7 +530,7 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[concat('rdsh-', copyIndex(),'_OSDisk')]",
+                        "name": "[concat(parameters('rdshNamingPrefix'), copyIndex(),'-OSDisk')]",
                         "caching": "ReadWrite",
                         "createOption": "FromImage",
                         "managedDisk": {
@@ -518,7 +541,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('rdsh-', copyindex(), '-nic'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('rdshNamingPrefix'), copyindex(), '-nic'))]"
                         }
                     ]
                 }
@@ -527,10 +550,10 @@
                 {
                     "apiVersion": "2020-06-01",
                     "type": "Microsoft.Compute/virtualMachines/extensions",
-                    "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
+                    "name": "[concat(parameters('rdshNamingPrefix'), copyindex(),'/sessionhost')]",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
+                        "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('rdshNamingPrefix'), copyindex()))]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Powershell",
@@ -538,7 +561,7 @@
                         "typeHandlerVersion": "2.11",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('Configuration.zip', parameters('_artifactsLocationSasToken')))]",
+                            "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip', parameters('_artifactsLocationSasToken')))]",
                             "ConfigurationFunction": "Configuration.ps1\\SessionHost",
                             "Properties": {
                                 "DomainName": "[parameters('adDomainName')]",
@@ -620,7 +643,7 @@
                 "typeHandlerVersion": "2.11",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                    "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('Configuration.zip', parameters('_artifactsLocationSasToken')))]",
+                    "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip', parameters('_artifactsLocationSasToken')))]",
                     "configurationFunction": "Configuration.ps1\\RDSDeployment",
                     "properties": {
                         "adminCreds": {
@@ -629,9 +652,9 @@
                         },
                         "connectionBroker": "[concat('broker.',parameters('adDomainName'))]",
                         "domainName": "[parameters('adDomainName')]",
-                        "externalfqdn": "[reference(variables('gatewayIpRef')).dnsSettings.fqdn]",
+                        "externalfqdn": "[reference(variables('gatewayPublicIpAddressName')).dnsSettings.fqdn]",
                         "numberOfRdshInstances": "[parameters('numberOfRdshInstances')]",
-                        "sessionHostNamingPrefix": "rdsh-",
+                        "sessionHostNamingPrefix": "[parameters('rdshNamingPrefix')]",
                         "webAccessServer": "[concat('gateway.',parameters('adDomainName'))]"
                     }
                 },

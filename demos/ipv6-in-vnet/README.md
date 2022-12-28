@@ -1,4 +1,14 @@
-# Create a dual stack IPv4/IPv6 VNET with 2 VMs
+---
+description: Create a dual stack IPv4/IPv6 VNET with 2 VMs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: ipv6-in-vnet
+languages:
+- json
+---
+# IPv6 in Azure Virtual Network (VNET)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ipv6-in-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ipv6-in-vnet/PublicDeployment.svg)
@@ -25,4 +35,6 @@ The template creates the following Azure resources:
 - an IPv4 Public IP address for each VM to facilitate remote connection to the VM (RDP)
 - two virtual machines with both IPv4 and IPv6 endpoints in the VNET/subnet
 
-For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/en-us/azure/virtual-network/ipv6-overview/)
+For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/azure/virtual-network/ipv6-overview/)
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Storage/storageAccounts, Microsoft.Network/loadBalancers, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

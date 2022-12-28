@@ -1,0 +1,872 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "7735540225521918061"
+    }
+  },
+  "parameters": {
+    "connectedClusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing Azure ARC enabled Kubernetes cluster where the Private 5G Core is running"
+      }
+    },
+    "connectedClusterResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resource group containing the existing Azure ARC enabled Kubernetes cluster"
+      }
+    },
+    "dashboardDisplayName": {
+      "type": "string",
+      "defaultValue": "Private 5G Core Metrics",
+      "metadata": {
+        "description": "Name of the dashboard to display in Azure portal"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Region where the dashboard will be deployed"
+      }
+    }
+  },
+  "variables": {
+    "dashboardName": "[guid(parameters('connectedClusterName'), parameters('connectedClusterResourceGroup'))]",
+    "devicesquery": "let Time = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | summarize by Time=TimeGenerated;\r\nlet RegisteredDevices = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amf_registered_subscribers\"\r\n    | summarize by RegisteredDevices=Val, Time=TimeGenerated;\r\nlet ProvisionedDevices = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"subscribers_count\"\r\n    | where Tags has '\"type\":\"provisioned\"'\r\n    | summarize by ProvisionedDevices=Val, Time=TimeGenerated;\r\nlet ConnectedDevices = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amf_registered_subscribers_connected\"\r\n    | summarize by ConnectedDevices=Val, Time=TimeGenerated;\r\nTime\r\n    | join kind=leftouter (RegisteredDevices) on Time\r\n    | join kind=leftouter (ProvisionedDevices) on Time\r\n    | join kind=leftouter (ConnectedDevices) on Time\r\n    | project Time, RegisteredDevices, ProvisionedDevices, ConnectedDevices\r\n    | render areachart kind=unstacked\r\n",
+    "gnodequery": "InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amf_connected_gnb\"\r\n    | extend Time=TimeGenerated\r\n    | extend GnBs=Val\r\n    | project GnBs, Time\r\n    | render timechart\r\n",
+    "pdusessionsquery": "InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"subgraph_counts\"\r\n    | summarize PduSessions=max(Val) by Time=TimeGenerated\r\n    | render areachart kind=unstacked\r\n",
+    "userthroughputquery": "let rate_function=(tbl: (Val: real, Time: datetime)) {\r\n    tbl\r\n    | sort by Time asc\r\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\r\n    | extend cum_correction = row_cumsum(correction)\r\n    | extend Val = Val + cum_correction\r\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\r\n    | extend dt = (Time - PrevTime) / 1s\r\n    | extend dv = Val - PrevVal\r\n    | extend rate = (dv * 8) / (dt * 1000000) // convert to Megabits per second\r\n}\r\n;\r\nlet BytesUpstream = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"cppe_bytes_total\"\r\n    | extend Tags = todynamic(Tags)\r\n    | where Tags.direction == \"tx\"\r\n    | where Tags.interface startswith \"n6\"\r\n    | where not (Tags.interface has \"kernel\")\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | project BytesUpstream=rate, Time;\r\nlet BytesDownstream = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"cppe_bytes_total\"\r\n    | extend Tags = todynamic(Tags)\r\n    | where Tags.direction == \"tx\"\r\n    | where Tags.interface == \"n3\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | project BytesDownstream=rate, Time;\r\nBytesUpstream\r\n| join kind=leftouter (BytesDownstream) on Time\r\n| project Time, BytesUpstream, BytesDownstream\r\n| render areachart kind=stacked title=\"Userplane Throughput (Mb/s)\"\r\n",
+    "errorsquery": "let rate_function=(tbl:(Val: real, Time: datetime))\r\n{\r\ntbl\r\n    | sort by Time asc\r\n    | extend correction = iff(Val < prev(Val), prev(Val), 0.0)    // if the value decreases we assume it was reset to 0, so add last value\r\n    | extend cum_correction = row_cumsum(correction)\r\n    | extend Val = Val + cum_correction\r\n    | extend PrevTime = prev(Time), PrevVal = prev(Val)\r\n    | extend dt = (Time-PrevTime)/1s\r\n    | extend dv = Val-PrevVal\r\n    | extend rate = dv/dt\r\n};\r\nlet TimeSeries = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | summarize by Time=TimeGenerated;\r\nlet session_setup_response = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_pdu_session_resource_setup_response\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend SetupResponse=rate;\r\nlet session_setup_request = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_pdu_session_resource_setup_request\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend SetupRequest=rate;\r\nlet session_modify_response = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_pdu_session_resource_modify_response\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend ModifyResponse=rate;\r\nlet session_modify_request = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_pdu_session_resource_modify_request\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend ModifyRequest=rate;\r\nlet session_release_command = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_pdu_session_resource_release_command\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend ReleaseCommand=rate;\r\nlet session_release_response = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_pdu_session_resource_release_response\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend ReleaseResponse=rate;\r\nlet registration = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfcc_mm_initial_registration_failure\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend Registration=rate;\r\nlet authentication_failure = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfcc_n1_auth_failure\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend AuthenticationFailure=rate;\r\nlet authentication_rejection = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfcc_n1_auth_reject\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend AuthenticationRejection=rate;\r\nlet service_rejection = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfcc_n1_service_reject\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend Service=rate;\r\nlet request_failure = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_pathswitch_request_failure\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend PathSwitch=rate;\r\nlet handover_failure = InsightsMetrics\r\n    | where Namespace == \"prometheus\"\r\n    | where Name == \"amfn2_n2_handover_failure\"\r\n    | summarize Val=sum(Val) by Time=TimeGenerated\r\n    | invoke rate_function()\r\n    | extend Handover=rate;\r\nTimeSeries\r\n    | join kind=leftouter (registration) on Time\r\n    | join kind=leftouter (session_setup_request) on Time\r\n    | join kind=leftouter (session_setup_response) on Time\r\n    | join kind=leftouter (session_modify_request) on Time\r\n    | join kind=leftouter (session_modify_response) on Time\r\n    | join kind=leftouter (session_release_command) on Time\r\n    | join kind=leftouter (session_release_response) on Time\r\n    | join kind=leftouter (authentication_failure) on Time\r\n    | join kind=leftouter (authentication_rejection) on Time\r\n    | join kind=leftouter (service_rejection) on Time\r\n    | join kind=leftouter (request_failure) on Time\r\n    | join kind=leftouter (handover_failure) on Time\r\n    | project Time, Registration, AuthenticationFailure, AuthenticationRejection, SessionEstablishment=SetupResponse-SetupRequest, SessionModification=ModifyResponse-ModifyRequest, SessionRelease=ReleaseCommand-ReleaseResponse, Service, PathSwitch, Handover\r\n    | render areachart kind=unstacked\r\n"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Portal/dashboards",
+      "apiVersion": "2019-01-01-preview",
+      "name": "[variables('dashboardName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "hidden-title": "[parameters('dashboardDisplayName')]"
+      },
+      "properties": {
+        "lenses": {
+          "0": {
+            "order": 0,
+            "parts": {
+              "0": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "resourceTypeMode",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ComponentId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Scope",
+                      "value": {
+                        "resourceIds": [
+                          "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('connectedClusterResourceGroup')), 'Microsoft.Kubernetes/connectedClusters', parameters('connectedClusterName'))]"
+                        ]
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "81a647c6-1efc-413a-8839-cda9fa14aea4",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Version",
+                      "value": "2.0",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "TimeRange",
+                      "value": "P1D",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DashboardId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DraftRequestParameters",
+                      "value": {
+                        "scope": "hierarchy"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Query",
+                      "value": "[variables('devicesquery')]",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "FrameControlChart",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "UnstackedArea",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Devices",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "Private Edge Overview",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "ConnectedDevices",
+                            "type": "real"
+                          },
+                          {
+                            "name": "RegisteredDevices",
+                            "type": "real"
+                          },
+                          {
+                            "name": "ProvisionedDevices",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "LegendOptions",
+                      "value": {
+                        "isEnabled": true,
+                        "position": "Bottom"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "IsQueryContainTimeRange",
+                      "value": false,
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "settings": {
+                    "content": {
+                      "Query": "[variables('devicesquery')]",
+                      "ControlType": "FrameControlChart",
+                      "SpecificChart": "UnstackedArea",
+                      "Dimensions": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "RegisteredDevices",
+                            "type": "real"
+                          },
+                          {
+                            "name": "ProvisionedDevices",
+                            "type": "real"
+                          },
+                          {
+                            "name": "ConnectedDevices",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      }
+                    }
+                  },
+                  "partHeader": {
+                    "title": "Devices",
+                    "subtitle": "Private Edge Overview"
+                  }
+                }
+              },
+              "1": {
+                "position": {
+                  "x": 8,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "resourceTypeMode",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ComponentId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Scope",
+                      "value": {
+                        "resourceIds": [
+                          "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('connectedClusterResourceGroup')), 'Microsoft.Kubernetes/connectedClusters', parameters('connectedClusterName'))]"
+                        ]
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "1253851d-9037-4acb-8c14-44ebe1f2b94b",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Version",
+                      "value": "2.0",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "TimeRange",
+                      "value": "P1D",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DashboardId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DraftRequestParameters",
+                      "value": {
+                        "scope": "hierarchy"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Query",
+                      "value": "[variables('gnodequery')]",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "FrameControlChart",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "Line",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Analytics",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "Private Edge Overview",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "GnBs",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Max"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "LegendOptions",
+                      "value": {
+                        "isEnabled": true,
+                        "position": "Bottom"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "IsQueryContainTimeRange",
+                      "value": false,
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "settings": {
+                    "content": {
+                      "Query": "[variables('gnodequery')]",
+                      "PartTitle": "gNodeBs",
+                      "Dimensions": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "GnBs",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Max"
+                      }
+                    }
+                  },
+                  "partHeader": {
+                    "title": "gNodeBs",
+                    "subtitle": "Private Edge Overview"
+                  }
+                }
+              },
+              "2": {
+                "position": {
+                  "x": 0,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "resourceTypeMode",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ComponentId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Scope",
+                      "value": {
+                        "resourceIds": [
+                          "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('connectedClusterResourceGroup')), 'Microsoft.Kubernetes/connectedClusters', parameters('connectedClusterName'))]"
+                        ]
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "1253851d-9037-4acb-8c14-44ebe1f2b94b",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Version",
+                      "value": "2.0",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "TimeRange",
+                      "value": "P1D",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DashboardId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DraftRequestParameters",
+                      "value": {
+                        "scope": "hierarchy"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Query",
+                      "value": "[variables('pdusessionsquery')]",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "FrameControlChart",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "UnstackedArea",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Pdu Sessions",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "Private Edge Overview",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "PduSessions",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "LegendOptions",
+                      "value": {
+                        "isEnabled": true,
+                        "position": "Bottom"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "IsQueryContainTimeRange",
+                      "value": false,
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "settings": {
+                    "content": {
+                      "Query": "[variables('pdusessionsquery')]",
+                      "ControlType": "FrameControlChart",
+                      "SpecificChart": "UnstackedArea",
+                      "PartTitle": "PDU Sessions",
+                      "Dimensions": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "PduSessions",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      }
+                    }
+                  },
+                  "partHeader": {
+                    "title": "Pdu Sessions",
+                    "subtitle": "Private Edge Overview"
+                  }
+                }
+              },
+              "3": {
+                "position": {
+                  "x": 8,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "resourceTypeMode",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ComponentId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Scope",
+                      "value": {
+                        "resourceIds": [
+                          "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('connectedClusterResourceGroup')), 'Microsoft.Kubernetes/connectedClusters', parameters('connectedClusterName'))]"
+                        ]
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "80821e28-5363-4aee-a2ba-0335313613e2",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Version",
+                      "value": "2.0",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "TimeRange",
+                      "value": "P1D",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DashboardId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DraftRequestParameters",
+                      "value": {
+                        "scope": "hierarchy"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Query",
+                      "value": "[variables('userthroughputquery')]",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "FrameControlChart",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "UnstackedArea",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Userplane Throughput (Mb/s)",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "Private Edge Overview",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "BytesUpstream",
+                            "type": "real"
+                          },
+                          {
+                            "name": "BytesDownstream",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "LegendOptions",
+                      "value": {
+                        "isEnabled": true,
+                        "position": "Bottom"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "IsQueryContainTimeRange",
+                      "value": false,
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "settings": {
+                    "content": {
+                      "Query": "[variables('userthroughputquery')]",
+                      "ControlType": "FrameControlChart",
+                      "SpecificChart": "StackedArea",
+                      "PartTitle": "Userplane Throughput (Mb/s)",
+                      "Dimensions": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "BytesUpstream",
+                            "type": "real"
+                          },
+                          {
+                            "name": "BytesDownstream",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      }
+                    }
+                  },
+                  "partHeader": {
+                    "title": "Userplane Throughput (Mb/s)",
+                    "subtitle": "Private Edge Overview"
+                  }
+                }
+              },
+              "4": {
+                "position": {
+                  "x": 0,
+                  "y": 8,
+                  "colSpan": 14,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "resourceTypeMode",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ComponentId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Scope",
+                      "value": {
+                        "resourceIds": [
+                          "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('connectedClusterResourceGroup')), 'Microsoft.Kubernetes/connectedClusters', parameters('connectedClusterName'))]"
+                        ]
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "1253851d-9037-4acb-8c14-44ebe1f2b94b",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Version",
+                      "value": "2.0",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "TimeRange",
+                      "value": "P1D",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DashboardId",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "DraftRequestParameters",
+                      "value": {
+                        "scope": "hierarchy"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Query",
+                      "value": "[variables('errorsquery')]",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "FrameControlChart",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "Line",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Errors",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "Private Edge Overview",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "Registration",
+                            "type": "real"
+                          },
+                          {
+                            "name": "AuthenticationFailure",
+                            "type": "real"
+                          },
+                          {
+                            "name": "AuthenticationRejection",
+                            "type": "real"
+                          },
+                          {
+                            "name": "SessionEstablishment",
+                            "type": "real"
+                          },
+                          {
+                            "name": "SessionModification",
+                            "type": "real"
+                          },
+                          {
+                            "name": "SessionRelease",
+                            "type": "real"
+                          },
+                          {
+                            "name": "PathSwitch",
+                            "type": "real"
+                          },
+                          {
+                            "name": "Service",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "LegendOptions",
+                      "value": {
+                        "isEnabled": true,
+                        "position": "Bottom"
+                      },
+                      "isOptional": true
+                    },
+                    {
+                      "name": "IsQueryContainTimeRange",
+                      "value": false,
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "settings": {
+                    "content": {
+                      "Query": "[variables('errorsquery')]",
+                      "ControlType": "FrameControlChart",
+                      "SpecificChart": "UnstackedArea",
+                      "PartTitle": "Errors",
+                      "Dimensions": {
+                        "xAxis": {
+                          "name": "Time",
+                          "type": "datetime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "Registration",
+                            "type": "real"
+                          },
+                          {
+                            "name": "AuthenticationFailure",
+                            "type": "real"
+                          },
+                          {
+                            "name": "AuthenticationRejection",
+                            "type": "real"
+                          },
+                          {
+                            "name": "SessionEstablishment",
+                            "type": "real"
+                          },
+                          {
+                            "name": "SessionModification",
+                            "type": "real"
+                          },
+                          {
+                            "name": "SessionRelease",
+                            "type": "real"
+                          },
+                          {
+                            "name": "PathSwitch",
+                            "type": "real"
+                          },
+                          {
+                            "name": "Service",
+                            "type": "real"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      }
+                    }
+                  },
+                  "partHeader": {
+                    "title": "Errors",
+                    "subtitle": "Private Edge Overview"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "metadata": {
+          "model": {
+            "timeRange": {
+              "value": {
+                "relative": {
+                  "duration": 24,
+                  "timeUnit": 1
+                }
+              },
+              "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+            },
+            "filterLocale": {
+              "value": "en-us"
+            },
+            "filters": {
+              "value": {
+                "MsPortalFx_TimeRange": {
+                  "model": {
+                    "format": "local",
+                    "granularity": "auto",
+                    "relative": "1h"
+                  },
+                  "displayCache": {
+                    "name": "Local Time",
+                    "value": "Past hour"
+                  },
+                  "filteredPartIds": [
+                    "StartboardPart-LogsDashboardPart-93bd5b99-6d06-43e7-b59c-d1619b31218b",
+                    "StartboardPart-LogsDashboardPart-93bd5b99-6d06-43e7-b59c-d1619b31218d",
+                    "StartboardPart-LogsDashboardPart-93bd5b99-6d06-43e7-b59c-d1619b31218f",
+                    "StartboardPart-LogsDashboardPart-93bd5b99-6d06-43e7-b59c-d1619b312191",
+                    "StartboardPart-LogsDashboardPart-93bd5b99-6d06-43e7-b59c-d1619b312193"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

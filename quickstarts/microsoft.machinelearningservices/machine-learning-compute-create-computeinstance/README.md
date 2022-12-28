@@ -1,4 +1,14 @@
-# Create an Azure Machine Learning Compute Instance
+---
+description: This template creates an Azure Machine Learning compute instance on behalf of another user with a sample inline setup script
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-compute-create-computeinstance
+languages:
+- json
+---
+# Create an Azure Machine Learning compute instance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-compute-create-computeinstance/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-compute-create-computeinstance/PublicDeployment.svg)
@@ -18,7 +28,8 @@ If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Azure Machine Learning compute instance documentation](https://docs.microsoft.com/en-us/azure/machine-learning/concept-compute-instance)
+- [Azure Machine Learning compute instance documentation](https://docs.microsoft.com/azure/machine-learning/concept-compute-instance)
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
+`Tags: Microsoft.MachineLearningServices/workspaces/computes, Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, systemAssigned`

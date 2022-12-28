@@ -1,0 +1,530 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "PrimaryVmNamePrefix": {
+      "type": "string",
+      "defaultValue": "myVM",
+      "metadata": {
+        "description": "Virtual machine name prefix for primary vm instances"
+      }
+    },
+    "SecondaryVmNamePrefix": {
+      "type": "string",
+      "defaultValue": "mytestVM",
+      "metadata": {
+        "description": "Virtual machine name prefix for secondary vm instances"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2012-Datacenter",
+        "2012-R2-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2012-Datacenter, 2012-R2-Datacenter."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "Virtual machine size"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "location"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "availabilitySetName": "myAvSet",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet-1",
+    "subnetPrefix": "10.0.0.0/24",
+    "publicIPAddressType": "Dynamic",
+    "vnetName": "myVNET",
+    "publicIPAddressName": "myPublicIP",
+    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+    "lbName": "myLB",
+    "numberOfInstances": 1,
+    "hostDNSNameScriptArgument": "[concat('*.',parameters('location'),'.cloudapp.azure.com')]",
+    "primaryNicNamePrefix": "nic",
+    "secondaryNicNamePrefix": "nicN",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 2
+      },
+      "sku": 
+      {
+			  "name": "Aligned"
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('primaryNicNamePrefix'), copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables ('subnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/',variables('lbName'),'LoadBalancerBackend')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'), concat('PRDP-VM', copyindex()))]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'), concat('PWINRM-VM', copyindex()))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('secondaryNicNamePrefix'), copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig2",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables ('subnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/',variables('lbName'),'LoadBalancerBackend')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'), concat('SRDP-VM', copyindex()))]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'), concat('SWINRM-VM', copyindex()))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "name": "[variables('lbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontend",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "LoadBalancerBackend"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "PRDP-VM0",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50001,
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "PRDP-VM1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50002,
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "PWINRM-VM0",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 40001,
+              "backendPort": 5986,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "PWINRM-VM1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 40002,
+              "backendPort": 5986,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SRDP-VM0",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50003,
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SRDP-VM1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50004,
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SWINRM-VM0",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 40003,
+              "backendPort": 5986,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SWINRM-VM1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 40004,
+              "backendPort": 5986,
+              "enableFloatingIP": false
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "LBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/',variables('lbName'),'LoadBalancerBackend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes/',variables('lbName'),'tcpProbe')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcpProbe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('primaryVmNamePrefix'), copyindex())]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('primaryNicNamePrefix'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+      ],
+      "tags": {
+        "Role": "Web"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('primaryVmNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('primaryNicNamePrefix'),copyindex()))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-12-01",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('primaryVmNamePrefix'), copyIndex(),'/WinRMCustomScriptExtension')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('primaryVmNamePrefix'),copyIndex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "[uri(parameters('_artifactsLocation'), concat('ConfigureWinRM.ps1', parameters('_artifactsLocationSasToken')))]",
+                "[uri(parameters('_artifactsLocation'), concat('makecert.exe', parameters('_artifactsLocationSasToken')))]",
+                "[uri(parameters('_artifactsLocation'), concat('winrmconf.cmd', parameters('_artifactsLocationSasToken')))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file ConfigureWinRM.ps1 ',variables('hostDNSNameScriptArgument'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('secondaryVmNamePrefix'), copyindex())]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('secondaryNicNamePrefix'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+      ],
+      "tags": {
+        "Role": "Test"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('secondaryVmNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('secondaryNicNamePrefix'),copyindex()))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-12-01",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('secondaryVmNamePrefix'), copyindex(),'/WinRMCustomScriptExtension')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('secondaryVmNamePrefix'),copyindex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "[uri(parameters('_artifactsLocation'), concat('ConfigureWinRM.ps1', parameters('_artifactsLocationSasToken')))]",
+                "[uri(parameters('_artifactsLocation'), concat('makecert.exe', parameters('_artifactsLocationSasToken')))]",
+                "[uri(parameters('_artifactsLocation'), concat('winrmconf.cmd', parameters('_artifactsLocationSasToken')))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file ConfigureWinRM.ps1 ',variables('hostDNSNameScriptArgument'))]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

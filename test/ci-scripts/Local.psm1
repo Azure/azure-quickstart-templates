@@ -14,7 +14,7 @@ function Find-VarsFromWriteHostOutput {
             # Convert variable name from xxx.yyy.zzz to XXX_YYY_ZZZ
             $var = $var.ToUpperInvariant().Replace(".", "_")
             $vars[$var] = $value
-            Write-Host "$var = '$value'"
+            #  "$var = '$value'"
         }
     }
 
@@ -65,12 +65,49 @@ function Remove-GeneratorMetadata(
     # Remove the top-level metadata the generator information is there, including the bicep version, and this would
     # affect file comparisons where only the bicep version differs
     $json = ConvertFrom-Json $jsonContent
-    if ($json) {
-        $json.PSObject.properties.remove('metadata')
-    } else {
-        Write-Error "Template is empty"
-    }
+    $json = Remove-GeneratorMetadataFromJson $json
+
     return ConvertTo-JSON $json -Depth 100
+}
+
+function Remove-GeneratorMetadataFromJson(
+    [PSCustomObject]$json
+) {
+    if (!($json -is [object])) {
+        return $json
+    }
+
+    # Remove the top-level metadata the generator information is there, including the bicep version, and this would
+    # affect file comparisons where only the bicep version differs
+    if ($json.metadata -and $json.metadata._generator) {
+        $json.PSObject.properties.remove('metadata')
+    }
+
+    if ($json -is [array]) {
+        $newArray = @()
+        for ($i = 0; $i -lt $json.Count; $i++) {
+            $child = $json[$i]
+            $child2 = Remove-GeneratorMetadataFromJson $child
+            $newArray += $child2
+        }
+
+        return $newArray
+    }
+    else {
+        foreach ($child in  ($json | Get-Member -Type NoteProperty)) {
+            $childValue = $json.($child.Name)
+            if ($childValue) {
+                $child2 = Remove-GeneratorMetadataFromJson $childValue
+                if ($childValue -is [array] -and !($child2 -is [array])) {
+                    # PowerShell likes to unroll arrays of size 1
+                    $child2 = [array]$child2
+                }
+                $json | Add-Member -Type NoteProperty -Force -Name $child.Name -Value $child2
+            }
+        }
+    }
+
+    return $json
 }
 
 function Convert-StringToLines(
@@ -81,5 +118,33 @@ function Convert-StringToLines(
         Converts a multi-line string to an array of strings, each element corresponding to a line
     #>
     
-    return $content -split '\r\n|\n|\r'
+    return @($content -split '\r\n|\n|\r')
+}
+
+function Convert-LinesToString(
+    [string[]] $lines
+) {
+    <#
+        .SYNOPSIS
+        Converts an array of strings, each element corresponding to a line, into a multi-line string
+    #>
+    
+    return $lines -join [System.Environment]::NewLine
+}
+
+function Get-GithubLabel(
+    [string][Parameter(Mandatory = $true)] $LabelName,
+    [string]$RepositoryID = $ENV:BUILD_REPOSITORY_ID,
+    [string]$IssueOrPullRequestId = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+) {
+    Write-Host "Looking for label $LabelName in $RepositoryID for issue or PR #$IssueOrPullRequestId"
+    $curlResult = curl -s "https://api.github.com/repos/$RepositoryID/issues/$IssueOrPullRequestId/labels"
+    if ($curlResult -like '*"name": "$LabelName"*') {
+        Write-Host "... Found"
+        return $true
+    }
+    else {
+        Write-Host "... Not Found"
+        return $false
+    }
 }

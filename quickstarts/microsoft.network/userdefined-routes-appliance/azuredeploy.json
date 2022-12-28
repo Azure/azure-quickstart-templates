@@ -27,6 +27,13 @@
         "description": "VM Name Prefix for the Virtual Machine."
       }
     },
+    "vmsize": {
+      "type": "string",
+      "defaultValue": "Standard_A2",
+      "metadata": {
+        "description": "VM size"
+      }
+    },
     "publicIPAddressType": {
       "type": "string",
       "defaultValue": "Dynamic",
@@ -61,15 +68,10 @@
   "variables": {
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
-    "vmSize": "Standard_A2",
     "VNetName": "Contoso_Network",
     "Subnet1Name": "FrontendSubnet",
     "Subnet2Name": "NVASubnet",
     "Subnet3Name": "BackendSubnet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('VNetName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('Subnet1Name'))]",
-    "subnet2Ref": "[concat(variables('vnetID'),'/subnets/', variables('Subnet2Name'))]",
-    "subnet3Ref": "[concat(variables('vnetID'),'/subnets/', variables('Subnet3Name'))]",
     "VNetAddressPrefix": "10.1.0.0/16",
     "Subnet1Prefix": "10.1.0.0/24",
     "Subnet2Prefix": "10.1.1.0/24",
@@ -77,12 +79,11 @@
     "routeTableName": "BasicNVA",
     "NvmPrivateIPAddress": "10.1.1.4",
     "nsgname": "DefaultNSG",
-    "scaleNumber": 3,
-    "apiVer": "2015-06-15"
+    "scaleNumber": 3
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('uniqueDnsPrefixForVM'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -145,8 +146,8 @@
       "name": "[variables('VNetName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/routeTables/', variables('routeTableName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgname'))]"
+        "[resourceId('Microsoft.Network/routeTables/', variables('routeTableName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgname'))]"
       ],
       "properties": {
         "addressSpace": {
@@ -194,8 +195,8 @@
       "name": "Nic0",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('uniqueDnsPrefixForVM'), '0')]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('uniqueDnsPrefixForVM'), '0'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -207,7 +208,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('uniqueDnsPrefixForVM'), '0'))]"
               },
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VNetName'), variables('Subnet1Name'))]"
               }
             }
           }
@@ -220,8 +221,8 @@
       "name": "Nic1",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('uniqueDnsPrefixForVM'), '1')]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('uniqueDnsPrefixForVM'), '1'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -234,7 +235,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('uniqueDnsPrefixForVM'), '1'))]"
               },
               "subnet": {
-                "id": "[variables('subnet2Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VNetName'), variables('Subnet2Name'))]"
               }
             }
           }
@@ -248,8 +249,8 @@
       "name": "Nic2",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('uniqueDnsPrefixForVM'), '2')]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('uniqueDnsPrefixForVM'), '2'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -261,7 +262,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('uniqueDnsPrefixForVM'), '2'))]"
               },
               "subnet": {
-                "id": "[variables('subnet3Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VNetName'), variables('Subnet3Name'))]"
               }
             }
           }
@@ -278,13 +279,13 @@
         "count": "[variables('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/Nic0')]",
-        "[concat('Microsoft.Network/networkInterfaces/Nic1')]",
-        "[concat('Microsoft.Network/networkInterfaces/Nic2')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', 'Nic0')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'Nic1')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'Nic2')]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat(parameters('vmNamePrefix'), copyIndex())]",

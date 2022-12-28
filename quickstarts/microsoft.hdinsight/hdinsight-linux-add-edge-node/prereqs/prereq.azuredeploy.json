@@ -1,0 +1,165 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "maxLength": 59,
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create. This must be a unique name, less than 59 characters, can contain letters, numbers, and hyphens (the first and last characters must be a letter or number).  The name can not contain a reserved keyword."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 20,
+      "defaultValue": "admin",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards. The cluster login username must be 2-20 characters and consist of digits, lowercase letters, and/or the following special characters: (!#$%&'()-^_`{}~).  The name can not contain a reserved keyword."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "minLength": 10,
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character except (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
+      }
+    },
+    "sshUserName": {
+      "type": "string",
+      "defaultValue": "sshuser",
+      "minLength":2,
+      "metadata": {
+         "description": "These credentials can be used to remotely access the cluster. The sshUserName can only consit of digits, upper or lowercase letters, and/or the following special characters (%&'^_`{}~). Also, it cannot be the same as the cluster login username or a reserved keyword."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "minLength": 6,
+      "maxLength": 72,
+      "metadata": {
+        "description": "SSH password must be 6-72 characters long, must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name."
+      }
+    },
+    "clusterType": {
+      "type": "string",
+      "defaultValue": "hadoop",
+      "allowedValues": [
+        "hadoop",
+        "hbase",
+        "storm",
+        "spark"
+      ],
+      "metadata": {
+        "description": "The type of the HDInsight cluster to create."
+      }
+    },
+    "clusterHeadNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of HeadNodes in the HDInsight cluster."
+      }
+    },    
+    "clusterWorkerNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of WokerNodes in the HDInsight cluster."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "clusterStorageAccountName": "[concat('clustrstg',uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_LRS"
+  },
+  "resources": [
+     {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('clusterStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-04-01",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]"
+      ],
+      "properties": {
+        "clusterVersion": "4.0",
+        "osType": "Linux",
+        "tier": "standard",
+        "clusterDefinition": {
+          "kind": "[parameters('clusterType')]",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2021-04-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2021-04-01').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "[parameters('clusterHeadNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "Standard_E4_v3"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "Standard_E4_v3"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "clusterName": {
+      "type": "string",
+      "value": "[parameters('clusterName')]"
+    }
+  }
+}

@@ -161,37 +161,4 @@ runuser -l $SUDOUSER -c "oc create -f $OCPTEMPLATES/chrony-mc.yaml"
 runuser -l $SUDOUSER -c "echo 'Sleeping for 12mins while MCs apply and the cluster restarts' "
 runuser -l $SUDOUSER -c "sleep 12m"
 
-#CPD Config
-runuser -l $SUDOUSER -c "wget https://raw.githubusercontent.com/IBM/cloud-pak/master/repo/case/ibm-cp-datacore-1.3.3.tgz -O $INSTALLERHOME/ibm-cp-datacore-1.3.3.tgz"
-runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.6.1-2002/cloudctl-linux-amd64.tar.gz -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz"
-runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.6.1-2002/cloudctl-linux-amd64.tar.gz.sig -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz.sig"
-runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf cloudctl-linux-amd64.tar.gz)"
-runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf ibm-cp-datacore-1.3.3.tgz)"
-runuser -l $SUDOUSER -c "chmod +x $INSTALLERHOME/cloudctl-linux-amd64"
-
-# Service Account Token for COD installation
-runuser -l $SUDOUSER -c "oc new-project $NAMESPACE"
-runuser -l $SUDOUSER -c "oc create serviceaccount cpdtoken"
-runuser -l $SUDOUSER -c "oc policy add-role-to-user admin system:serviceaccount:$NAMESPACE:cpdtoken"
-
-#Install operator
-export CPD_REGISTRY=cp.icr.io/cp/cpd
-export CPD_REGISTRY_USER=cp
-export CPD_REGISTRY_PASSWORD=$APIKEY
-export OPT_NAMESPACE="cpd-meta-ops"
-
-runuser -l $SUDOUSER -c "oc new-project $OPT_NAMESPACE"
-runuser -l $SUDOUSER -c "$INSTALLERHOME/cloudctl-linux-amd64 case launch              \
-    --case $INSTALLERHOME/ibm-cp-datacore     \
-    --namespace ${OPT_NAMESPACE}              \
-    --inventory cpdMetaOperatorSetup          \
-    --action install-operator                 \
-    --tolerance=1                             \
-    --args \"--entitledRegistry ${CPD_REGISTRY} --entitledUser ${CPD_REGISTRY_USER} --entitledPass ${CPD_REGISTRY_PASSWORD}\""
-
-runuser -l $SUDOUSER -c "echo 'Sleeping 7m for operator to install'"
-runuser -l $SUDOUSER -c "sleep 7m"
-runuser -l $SUDOUSER -c "OP_STATUS=$(oc get pods -n $OPT_NAMESPACE -l name=ibm-cp-data-operator --no-headers --kubeconfig /home/$SUDOUSER/.kube/config | awk '{print $3}')"
-runuser -l $SUDOUSER -c "echo OP_STATUS is {$OP_STATUS}"
-runuser -l $SUDOUSER -c "if [ $OP_STATUS != 'Running' ]; then echo \"CPD Operator Installation Failed\" ; exit 1 ; fi"
 echo "$(date) - ############### Script Complete #############"

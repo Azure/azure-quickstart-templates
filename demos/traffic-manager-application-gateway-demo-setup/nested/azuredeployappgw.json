@@ -76,11 +76,10 @@
     "publicIPAddressName": "[concat(parameters('appGwName'),'IP')]",
     "virtualNetworkName": "[concat(parameters('appGwName'),'VNet')]",
     "subnetName": "[concat(parameters('appGwName'),'Subnet')]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]",
     "backendDnsPrefix": "[concat(parameters('appGwName'),'-backend-')]",
     "wsDeploymentName": "[concat(parameters('appGwName'),'ws')]",
+    "wsDeploymentName1": "[concat(parameters('appGwName'),'ws1')]",
+    "wsDeploymentName2": "[concat(parameters('appGwName'),'ws2')]",
     "appGatewayIPConfigName": "[concat(parameters('appGwName'),'-ipconfig')]",
     "appGatewayrequestRoutingRuleName": "[concat(parameters('appGwName'),'-rule1')]",
     "appGatewayHttpListenerName": "[concat(parameters('appGwName'),'-listener')]",
@@ -104,7 +103,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('wsDeploymentName'), copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -112,7 +111,7 @@
         "count": 2
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -128,7 +127,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-', copyIndex(1))]"
+            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-', copyIndex(1))]"
           },
           "testPageBody": {
             "value": "[concat(variables('serverTestPage')[copyIndex()], variables('serverTestPageInfo'))]"
@@ -155,7 +154,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -164,7 +163,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -185,13 +184,13 @@
       }
     },
     {
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-08-01",
       "name": "[variables('applicationGatewayName')]",
       "type": "Microsoft.Network/applicationGateways",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "wscopy"
       ],
       "properties": {
@@ -205,7 +204,7 @@
             "name": "[variables('appGatewayIPConfigName')]",
             "properties": {
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
@@ -215,7 +214,7 @@
             "name": "[variables('appGatewayFrontendIPConfigName')]",
             "properties": {
               "PublicIPAddress": {
-                "id": "[variables('publicIPRef')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               }
             }
           }
@@ -234,10 +233,10 @@
             "properties": {
               "BackendAddresses": [
                 {
-                  "IpAddress": "[reference(concat(variables('wsDeploymentName'),'1')).outputs.fqdn.value]"
+                  "IpAddress": "[reference(variables('wsDeploymentName1')).outputs.fqdn.value]"
                 },
                 {
-                  "IpAddress": "[reference(concat(variables('wsDeploymentName'),'2')).outputs.fqdn.value]"
+                  "IpAddress": "[reference(variables('wsDeploymentName2')).outputs.fqdn.value]"
                 }
               ]
             }
@@ -253,7 +252,7 @@
               "requestTimeout": 30,
               "requestRoutingRules": [
                 {
-                  "id": "[concat(variables('applicationGatewayID'), '/requestRoutingRules/', variables('appGatewayrequestRoutingRuleName'))]"
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/requestRoutingRules/', variables('applicationGatewayName'), variables('appGatewayrequestRoutingRuleName'))]"
                 }
               ]
             }
@@ -264,13 +263,12 @@
             "name": "[variables('appGatewayHttpListenerName')]",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/', variables('appGatewayFrontendIPConfigName'))]"
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations/', variables('applicationGatewayName'), variables('appGatewayFrontendIPConfigName'))]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/', variables('appGatewayFrontendPortName'))]"
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts/', variables('applicationGatewayName'), variables('appGatewayFrontendPortName'))]"
               },
-              "Protocol": "Http",
-              "SslCertificate": null
+              "Protocol": "Http"
             }
           }
         ],
@@ -280,13 +278,13 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/', variables('appGatewayHttpListenerName'))]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners/', variables('applicationGatewayName'), variables('appGatewayHttpListenerName'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/', variables('appGatewayBackendPoolName'))]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/', variables('applicationGatewayName'), variables('appGatewayBackendPoolName'))]"
               },
               "backendHttpSettings": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/', variables('appGatewayBackendHttpSettingsName'))]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/', variables('applicationGatewayName'), variables('appGatewayBackendHttpSettingsName'))]"
               }
             }
           }

@@ -1,4 +1,14 @@
-# Create Azure Front Door in front of Azure API Management #
+---
+description: This sample demonstrates how to use Azure Front Door as a global load balancer in front of Azure API Management.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-api-management
+languages:
+- json
+---
+# Create Azure Front Door in front of Azure API Management
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-api-management/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-api-management/PublicDeployment.svg)
@@ -13,7 +23,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Ffront-door-api-management%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Ffront-door-api-management%2Fazuredeploy.json)
 
-This sample demonstrates how to use [Azure Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-overview) as a global load balancer in front of [Azure API Management](https://docs.microsoft.com/en-us/azure/api-management/api-management-key-concepts) to get the following advantages:
+This sample demonstrates how to use [Azure Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-overview) as a global load balancer in front of [Azure API Management](https://docs.microsoft.com/azure/api-management/api-management-key-concepts) to get the following advantages:
 
 - Dynamic request acceleration allows to decrease the latency and increase the throughput of backend APIs.
 - The use of a WAF policy at the edge provides API security against DDoS attacks and malicious users.
@@ -25,9 +35,9 @@ The following picture shows the architecture and network topology of the sample.
 
 ![Architecture](images/architecture.png)
 
-The ARM template included in this project deploys a virtual network with a single subnet. The API Management is deployed in a separate subnet of the same virtual network and is configured to use the external access type for resources. For more information, see [How to use Azure API Management with virtual networks](https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet). The ARM template creates two APIs:
+The ARM template included in this project deploys a virtual network with a single subnet. The API Management is deployed in a separate subnet of the same virtual network and is configured to use the external access type for resources. For more information, see [How to use Azure API Management with virtual networks](https://docs.microsoft.com/azure/api-management/api-management-using-with-vnet). The ARM template creates two APIs:
 
-- Mock API: this API exposes a HTTP GET method that makes use of the [mock-response](https://docs.microsoft.com/en-us/azure/api-management/api-management-advanced-policies#mock-response) policy to return a mocked response directly to the caller. For more information, see [Mock API responses](https://docs.microsoft.com/en-us/azure/api-management/mock-api-responses).
+- Mock API: this API exposes a HTTP GET method that makes use of the [mock-response](https://docs.microsoft.com/azure/api-management/api-management-advanced-policies#mock-response) policy to return a mocked response directly to the caller. For more information, see [Mock API responses](https://docs.microsoft.com/azure/api-management/mock-api-responses).
 - Postman Echo API: this API exposes a HTTP GET method that in turn calls the GET Request method exposed by the Postman Echo. This is service that developers can use to test REST clients and make sample API calls. It provides endpoints for GET, POST, PUT, various auth mechanisms and other utility endpoints. The documentation for the endpoints as well as example responses can be found [here](https://postman-echo.com).
 
 Both APIs:
@@ -44,15 +54,15 @@ A Network Security Groups (NSG) is used to control inbound and outbound traffic 
 
 You can optionally deploy a Web Access Firewall (WAF) policy and associate it to the frontend of Azure Front Door to protect the API Management from malicious attacks just setting the value of the deployWaf parameter to true. The WAF policy deployed by the ARM template is configured to use the OWASP default rule set. For more information, see:
 
-- [Azure Web Application Firewall on Azure Front Door](https://docs.microsoft.com/en-us/azure/web-application-firewall/afds/afds-overview) 
-- [Tutorial: Create a Web Application Firewall policy on Azure Front Door using the Azure portal](https://docs.microsoft.com/en-us/azure/web-application-firewall/afds/waf-front-door-create-portal).
+- [Azure Web Application Firewall on Azure Front Door](https://docs.microsoft.com/azure/web-application-firewall/afds/afds-overview)
+- [Tutorial: Create a Web Application Firewall policy on Azure Front Door using the Azure portal](https://docs.microsoft.com/azure/web-application-firewall/afds/waf-front-door-create-portal).
 - [Open Web Application Security Project (OWASP)](https://owasp.org/)
 
-Front Door is a modern Content Delivery Network (CDN) and so along with dynamic site acceleration and load balancing, it also supports caching behaviors just like any other CDN. The ARM template allows to configure Front Door to response caching at the edge and dynamic compression. If you want to disable caching, just set the value of the cacheConfiguration property to {} in the afdRoutingRule parameter. For more information, see [Caching with Azure Front Door](https://docs.microsoft.com/en-us/azure/frontdoor/front-door-caching).
+Front Door is a modern Content Delivery Network (CDN) and so along with dynamic site acceleration and load balancing, it also supports caching behaviors just like any other CDN. The ARM template allows to configure Front Door to response caching at the edge and dynamic compression. If you want to disable caching, just set the value of the cacheConfiguration property to {} in the afdRoutingRule parameter. For more information, see [Caching with Azure Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-caching).
 
-When API Management is deployed in a virtual network and configured to use the external access type as explained at [How to use Azure API Management with virtual networks](https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet), the API Gateway and Developer Portal are accessible from the public internet via an external load balancer and the API Gateway can access resources within the virtual network. If you want to force client applications to invoke the API Gateway through Azure Front Door, you can proceed as follows:
+When API Management is deployed in a virtual network and configured to use the external access type as explained at [How to use Azure API Management with virtual networks](https://docs.microsoft.com/azure/api-management/api-management-using-with-vnet), the API Gateway and Developer Portal are accessible from the public internet via an external load balancer and the API Gateway can access resources within the virtual network. If you want to force client applications to invoke the API Gateway through Azure Front Door, you can proceed as follows:
 
-- You can set an inbound rule in the [Network Security Group](https://docs.microsoft.com/en-us/azure/virtual-network/security-overview) (NSG) associated with the subnet hosting API Management to accept inbound traffic on HTTP/HTTPS ports only from Front Door using the AzureFrontDoor.Backend service tag. This way the public endpoints exposed by API Management, including the endpoints exposed by the API Gateway and developer portal, will accept calls only via Azure Front Door. For more information, see [How do I lock down the access to my backend to only Azure Front Door?](https://docs.microsoft.com/en-us/azure/frontdoor/front-door-faq).
+- You can set an inbound rule in the [Network Security Group](https://docs.microsoft.com/azure/virtual-network/security-overview) (NSG) associated with the subnet hosting API Management to accept inbound traffic on HTTP/HTTPS ports only from Front Door using the AzureFrontDoor.Backend service tag. This way the public endpoints exposed by API Management, including the endpoints exposed by the API Gateway and developer portal, will accept calls only via Azure Front Door. For more information, see [How do I lock down the access to my backend to only Azure Front Door?](https://docs.microsoft.com/azure/frontdoor/front-door-faq).
 - If you want to provide access to the API Management developer portal to users, you can create an additional inbound rule to provide access to one or more ranges of IP addresses, or you can deploy the self-hosted developer portal, on-premises or in the cloud (e.g. a VM on Azure), and create an inbound rule in the NSG associated to the subnet hosting API Management to accept inbound traffic on HTTP/HTTPS ports fromt the IP address of the physical server or virtual machine hosting the self-hosted developer portal.
 
 The ARM template provides a boolean parameter called allowTrafficOnlyFromFrontDoor that specifies whether the inbound traffic on ports 80 (HTTP) and 443 (HTTPS) is allowed only from Azure Front Door.
@@ -72,7 +82,7 @@ API Management helps organizations publish APIs to external, partner, and intern
 - Monitoring requests via Application Insights
 - Change request/response messages via policies
 
-For more information, see [Azure API Management](https://docs.microsoft.com/en-us/azure/api-management/api-management-key-concepts).
+For more information, see [Azure API Management](https://docs.microsoft.com/azure/api-management/api-management-key-concepts).
 
 ## Azure Front Door ##
 
@@ -116,7 +126,7 @@ If you want to invoke the GET method exposed by the Postman Echo API via Azure F
 https://front-door-name.azurefd.net/postman-echo/get?color=red&vehicle=car&subscription-key=apim-subscription-key
 ```
 
-You can use [Apache JMeter](https://jmeter.apache.org/) to create a load test for the Postman Echo API, or use your favorite tool for load testing to generate traffic against the GET method. While running a load test against the API, you can use [Application Insights Live Metrics Stream](https://docs.microsoft.com/en-us/azure/azure-monitor/app/live-stream) to see incoming and outgoint requests, as shown in the following picture.
+You can use [Apache JMeter](https://jmeter.apache.org/) to create a load test for the Postman Echo API, or use your favorite tool for load testing to generate traffic against the GET method. While running a load test against the API, you can use [Application Insights Live Metrics Stream](https://docs.microsoft.com/azure/azure-monitor/app/live-stream) to see incoming and outgoint requests, as shown in the following picture.
 
 ![Live Metrics Stream](images/LiveMetricsStream.png)
 
@@ -141,8 +151,8 @@ let interval = 1s;
 AzureDiagnostics
 | where Resource == 'AFDAPIMSAMPLEAFD'
   and TimeGenerated  between(startDatetime .. endDatetime)
-| extend duration = toreal(timeTaken_s) * 1000, 
-         service = "Front Door", 
+| extend duration = toreal(timeTaken_s) * 1000,
+         service = "Front Door",
          timestamp = TimeGenerated
 | project service, duration, timestamp
 | union (app("AfdApimSampleAppInsights").requests
@@ -155,3 +165,5 @@ AzureDiagnostics
 ```
 
 ![Timechart01](images/Timechart02.png)
+
+`Tags: Microsoft.OperationalInsights/workspaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Insights/components, Microsoft.ApiManagement/service/loggers, Microsoft.ApiManagement/service, SystemAssigned, products, apis, operations, policies, diagnostics, Microsoft.ApiManagement/service/providers/diagnosticsettings, Microsoft.Network/FrontDoorWebApplicationFirewallPolicies, Microsoft.Network/frontdoors, Microsoft.Network/frontdoors/providers/diagnosticsettings`

@@ -30,6 +30,7 @@
     "instanceCountPerVMSS": {
       "type": "int",
       "maxValue": 1000,
+      "minValue": 3,
       "metadata": {
         "description": "Number of VM instances per scale set; if singlePlacementGroup is true (the default), then this value must be 100 or less; if singlePlacementGroup is false, then this value must be 1000 or less"
       }
@@ -39,7 +40,15 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/multi-vmss-windows/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Default location"
+      }
+
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -58,10 +67,10 @@
   },
   "resources": [
     {
-      "apiVersion": "2017-04-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('newVNETName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -87,7 +96,7 @@
         "count": "[parameters('numberOfVMSS')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('newVNETName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('newVNETName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -107,6 +116,9 @@
           },
           "subnetId": {
             "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('newVnetName'), variables('subnetName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"

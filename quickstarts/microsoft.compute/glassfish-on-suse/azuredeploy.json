@@ -7,7 +7,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/glassfish-on-suse/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -18,7 +18,6 @@
     },
     "glassfishVersion": {
       "type": "int",
-      "minValue": 3,
       "allowedValues": [
         3,
         4
@@ -58,20 +57,9 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_DS2_v2",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "VM(s) size"
-      }
-    },
-    "osImage": {
-      "type": "string",
-      "allowedValues": [
-        "opensuse",
-        "sles"
-      ],
-      "defaultValue": "opensuse",
-      "metadata": {
-        "description": "Operating System to use for VM image(s)."
       }
     },
     "adminUsername": {
@@ -110,29 +98,9 @@
     "subnetName": "[concat(variables('namePrefix'), 'subnet')]",
     "nsgName": "[concat(variables('subnetName'), '-nsg')]",
     "lbName": "[concat(variables('namePrefix'), 'lb')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'LoadBalancerFrontEnd')]",
     "lbPoolName": "lbBackend",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('lbPoolName'))]",
     "lbProbeName": "[concat(variables('namePrefix'), 'tcp-probe')]",
-    "lbProbeID": "[concat(variables('lbID'),'/probes/', variables('lbProbeName'))]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
-    "opensuse": {
-      "publisher": "SUSE",
-      "offer": "openSUSE-Leap",
-      "sku": "15-2",
-      "version": "latest"
-    },
-    "sles": {
-      "publisher": "SUSE",
-      "offer": "SLES",
-      "sku": "12-SP3",
-      "version": "latest"
-    },
-    "vmStorageAccountContainerName": "vhd",
-    "osDiskName": "osdisk",
-    "imageReference": "[variables(parameters('osImage'))]",
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
     "nestedTemplateFolder": "nestedtemplates/",
     "nestedTemplateFileName": "azuredeploy.json",
@@ -140,29 +108,29 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "location": "[variables('location')]",
       "name": "[variables('storageAccountName')]",
-      "properties": {
-        "accountType": "Standard_LRS"
+      "sku": {
+        "name": "Standard_LRS"
       },
       "type": "Microsoft.Storage/storageAccounts"
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "location": "[variables('location')]",
       "name": "[variables('availabilitySetName')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-            },
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      },
       "type": "Microsoft.Compute/availabilitySets"
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[variables('location')]",
       "name": "[variables('publicIPAddressName')]",
       "properties": {
@@ -174,7 +142,7 @@
       "type": "Microsoft.Network/publicIPAddresses"
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
       "location": "[variables('location')]",
@@ -212,11 +180,11 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[variables('location')]",
       "name": "[variables('vnetName')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "properties": {
         "addressSpace": {
@@ -239,12 +207,12 @@
       "type": "Microsoft.Network/virtualNetworks"
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -252,7 +220,7 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
@@ -260,6 +228,7 @@
         "backendAddressPools": [
           {
             "name": "[variables('lbPoolName')]"
+
           }
         ],
         "loadBalancingRules": [
@@ -267,7 +236,7 @@
             "name": "LBRule",
             "properties": {
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbPoolName'))]"
               },
               "backendPort": 8080,
               "enableFloatingIP": false,
@@ -277,7 +246,7 @@
               "frontendPort": 80,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[variables('lbProbeID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),variables('lbProbeName'))]"
               },
               "protocol": "Tcp"
             }
@@ -297,7 +266,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(variables('lbName'), '/ssh-', variables('namePrefix'), copyIndex())]",
       "location": "[variables('location')]",
@@ -306,7 +275,7 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "frontendIPConfiguration": {
@@ -319,7 +288,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(variables('lbName'), '/admin-', variables('namePrefix'), copyIndex())]",
       "location": "[variables('location')]",
@@ -328,7 +297,7 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "frontendIPConfiguration": {
@@ -341,7 +310,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('namePrefix'), 'nic-', copyindex())]",
       "location": "[variables('location')]",
@@ -350,10 +319,10 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatRules/', 'ssh-', variables('namePrefix'), copyIndex())]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatRules/', 'admin-', variables('namePrefix'), copyIndex())]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('ssh-', variables('namePrefix'), copyIndex()))]",
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('admin-', variables('namePrefix'), copyIndex()))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -362,19 +331,19 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/', variables('lbPoolName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbPoolName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/ssh-', variables('namePrefix'), copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('ssh-', variables('namePrefix'), copyIndex()))]"
                 },
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/admin-', variables('namePrefix'), copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('admin-', variables('namePrefix'), copyIndex()))]"
                 }
               ]
             }
@@ -383,7 +352,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('namePrefix'), 'vm-', copyindex())]",
       "copy": {
@@ -392,9 +361,9 @@
       },
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('namePrefix'), 'nic-', copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('namePrefix'),'nic-', copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -419,7 +388,12 @@
           }
         },
         "storageProfile": {
-          "imageReference": "[variables('imageReference')]",
+          "imageReference": {
+            "publisher": "SUSE",
+            "offer": "openSUSE-Leap",
+            "sku": "15-2",
+            "version": "latest"
+          },
           "osDisk": {
             "name": "[concat(variables('namePrefix'), 'vm-', copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
@@ -436,7 +410,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob)]"
+            "storageUri": "[reference(variables('storageAccountName'),'2021-02-01').primaryendpoints['blob']]"
           }
         }
       }
@@ -444,7 +418,7 @@
     {
       "name": "GlassFishDeployment",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-02-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "virtualMachineLoop"
       ],
@@ -487,3 +461,4 @@
     }
   }
 }
+

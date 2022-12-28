@@ -1,5 +1,15 @@
-# Create/Upgrade a VM scale set running IIS configured for autoscale
-
+---
+description: Deploys a Windows VM Scale Set running IIS and a very basic .NET MVC web app. The VMSS PowerShell DSC Extension is leveraged to do the IIS install and WebDeploy package deployment.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vmss-windows-webapp-dsc-autoscale
+languages:
+- json
+- bicep
+---
+# VM Scale Set with autoscale running an IIS WebApp
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/PublicDeployment.svg)
@@ -9,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-windows-webapp-dsc-autoscale/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fvmss-windows-webapp-dsc-autoscale%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fvmss-windows-webapp-dsc-autoscale%2Fazuredeploy.json)
@@ -43,3 +55,5 @@ The Autoscale rules are configured as follows
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/virtual-machine-scale-sets/quick-create-template-windows) article.
 
 Tags: `VMSS, VM Scale Set, Windows, DSC Extension`
+
+`Tags: Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, DSC, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Insights/autoscalesettings, ChangeCount`

@@ -1,4 +1,14 @@
-# Deployment of a simple CDN WAF policy and linked endpoint with default managed rules enabled.
+---
+description: This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also links a CDN WAF Policy to the Endpoint which applies the managed rule set DefaultRuleSet_1.0.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-waf-managed-rules
+languages:
+- json
+---
+# Apply a WAF Policy for the OWASP top 10 to a CDN Endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-waf-managed-rules/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-waf-managed-rules/PublicDeployment.svg)
@@ -13,4 +23,4 @@
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also enables a CDN WAF Policy on the Endpoint which applies the managed rule set DefaultRuleSet_1.0.
 
-
+`Tags: Microsoft.Cdn/CdnWebApplicationFirewallPolicies, Microsoft.Cdn/profiles, endpoints`
