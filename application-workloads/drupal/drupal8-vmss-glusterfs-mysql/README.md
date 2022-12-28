@@ -1,4 +1,14 @@
-# Drupal 8 VM scaleset (with Azure Files and MySQL) Template
+---
+description: Deploy a VM Scale Set behind a load balancer/NAT & each VM running  Drupal (Apache / PHP). All nodes share the created Azure file share storage and MySQL database
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: drupal8-vmss-glusterfs-mysql
+languages:
+- json
+---
+# Deploy Drupal with VM Scale Set, Azure Files and Mysql
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/drupal/drupal8-vmss-glusterfs-mysql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/drupal/drupal8-vmss-glusterfs-mysql/PublicDeployment.svg)
@@ -37,3 +47,5 @@ This template deploys a Drupal 8 installation using a VM scale set.  It has the 
 - Install Drupal Console
 - Optionally supply new relic key as parameter, to send VM metrics to new relic
 - Optionally adding nginx and memcache into the mix
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/fileServices/shares, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachineScaleSets, CustomScript, LinuxDiagnostic, Microsoft.Insights/autoscaleSettings, ChangeCount`

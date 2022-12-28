@@ -1,4 +1,14 @@
-# VMM Analytics
+---
+description: Provides a single view  of the jobs' status across multiple VMM instances that helps you gain insight about the health & performance of these jobs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: oms-vmm-analytics
+languages:
+- json
+---
+# OMS VMM Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-vmm-analytics/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-vmm-analytics/PublicDeployment.svg)
@@ -36,7 +46,7 @@ Use the following procedure:
 
 4. Provide the details for the following parameters:
 
-   - **Subscription** - Select the resource group. More information about resource groups, see [Resource groups](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups). You can select and existing group or create a new one.
+   - **Subscription** - Select the resource group. More information about resource groups, see [Resource groups](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-overview#resource-groups). You can select and existing group or create a new one.
   - **Location** - Select the location of your resource group
   - **Workspace name** - Specify the name of the OMS workspace where you want to deploy this solution.
   - **Workspace region** - Select the region for the selected workspace.
@@ -63,7 +73,7 @@ in UTC string format "yyyy-MM-ddTHH:mm:ss.fffffffZ".
     The solution syncs the jobs completed after the set time. Default value is Null.
 ![lastRunTime](images/vmm-analytics-last-run-time.png)
 
-8. Create a runbook worker with **appropriate credentials**, which can read jobs data from your VMM instances. [Learn more](https://docs.microsoft.com/en-us/azure/automation/automation-hybrid-runbook-worker
+8. Create a runbook worker with **appropriate credentials**, which can read jobs data from your VMM instances. [Learn more](https://docs.microsoft.com/azure/automation/automation-hybrid-runbook-worker
 ).
 
 ![VMM Analytics Credentials](images/vmm-analytics-credential.png)
@@ -96,3 +106,4 @@ In case of any queries or feedback, [contact us](mailto:vmmanalytics@microsoft.c
 ## Related Community Articles
 [OMS Log Analytics: How to collect Virtual Machine Manager jobs](http://francescomolfese.it/en/2017/10/oms-log-analytics-come-collezionare-i-job-di-virtual-machine-manager/)
 
+`Tags: PowerShell, Microsoft.OperationalInsights/workspaces, views, Blade, OverviewTile, Microsoft.OperationsManagement/solutions, Microsoft.Automation/automationAccounts, variables, runbooks`

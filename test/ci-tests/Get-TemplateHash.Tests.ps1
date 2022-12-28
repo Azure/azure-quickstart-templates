@@ -13,6 +13,14 @@
         }
     }
     
+    It 'Correctly removes metadata from all nested deployments before hashing' {
+        # hash with and without metadata should be the same
+        $hash1 = Get-TemplateHash "$dataFolder/ModularTemplateWithMetadata.json" -RemoveGeneratorMetadata
+        $hash2 = Get-TemplateHash "$dataFolder/ModularTemplateWithoutMetadata.json" -RemoveGeneratorMetadata
+
+        $hash1 | Should -Be $hash2
+    }
+
     It 'Correctly removes metadata before hashing' {
         # hash with and without metadata should be the same
         $hash1 = Get-TemplateHash "$dataFolder/TemplateWithMetadata.json" -RemoveGeneratorMetadata

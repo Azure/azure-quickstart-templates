@@ -1,3 +1,13 @@
+---
+description: This module allows you to create a storageAccount.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: modules-Microsoft.Storage-storageAccounts-0.9
+languages:
+- json
+---
 # Create a Storage Account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/Microsoft.Storage/storageAccounts/0.9/PublicLastTestDate.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.Storage%2FstorageAccounts%2F0.9%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.Storage%2FstorageAccounts%2F0.9%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.Storage%2FstorageAccounts%2F0.9%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmodules%2FMicrosoft.Storage%2FstorageAccounts%2F0.9%2Fazuredeploy.json)
 
 This module creates a storage account. This version does not support configuration of individual IPRules or storage services.
 
@@ -40,3 +50,5 @@ This module creates a storage account. This version does not support configurati
 | storageAccountResourceGroup | string | The name of resource group for the storage account. |
 
 ```apiVersion: 2021-01-01```
+
+`Tags: Microsoft.Storage/storageAccounts`

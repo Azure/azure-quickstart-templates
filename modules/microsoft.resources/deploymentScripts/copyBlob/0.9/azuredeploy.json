@@ -1,0 +1,87 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "10789144825714664485"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the deploymentScript resource."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storageAccount to copy the blob to."
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the blob container to create and copy blob to."
+      }
+    },
+    "contentUri": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Uri of the source or staged blob to copy."
+      }
+    },
+    "storageAccountKey": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Account key for the permission to copy the blob to the storage account, if not provided will attempt with listKeys()."
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": "# copy the file to the local disk\r\nInvoke-WebRequest -Uri \"${env:contentUri}\" -OutFile \"${env:csvFileName}\"\r\n\r\n# get storageAccount context using the key\r\n$ctx = New-AzStorageContext -StorageAccountName \"${Env:storageAccountName}\" -StorageAccountKey \"${Env:storageAccountKey}\"\r\n\r\nNew-AzStorageContainer -Context $ctx -Name \"${env:containerName}\" -Verbose\r\n\r\n# copy blob\r\nSet-AzStorageBlobContent -Context $ctx `\r\n                         -Container \"${Env:containerName}\" `\r\n                         -Blob \"${env:csvFileName}\" `\r\n                         -StandardBlobTier 'Hot' `\r\n                         -File \"${env:csvFileName}\"\r\n",
+    "csvFilename": "[first(split(last(split(parameters('contentUri'), '/')), '?'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "copyFile",
+      "location": "[parameters('location')]",
+      "kind": "AzurePowerShell",
+      "properties": {
+        "azPowerShellVersion": "8.0",
+        "environmentVariables": [
+          {
+            "name": "storageAccountKey",
+            "secureValue": "[if(empty(parameters('storageAccountKey')), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-05-01').keys[0].value, parameters('storageAccountKey'))]"
+          },
+          {
+            "name": "storageAccountName",
+            "value": "[parameters('storageAccountName')]"
+          },
+          {
+            "name": "containerName",
+            "value": "[parameters('containerName')]"
+          },
+          {
+            "name": "contentUri",
+            "value": "[parameters('contentUri')]"
+          },
+          {
+            "name": "csvFileName",
+            "value": "[variables('csvFilename')]"
+          }
+        ],
+        "scriptContent": "[variables('$fxv#0')]",
+        "timeout": "PT4H",
+        "cleanupPreference": "OnSuccess",
+        "retentionInterval": "P1D"
+      }
+    }
+  ]
+}

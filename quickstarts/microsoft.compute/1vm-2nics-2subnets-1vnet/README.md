@@ -1,4 +1,15 @@
-# Multi-NIC Virtual Machine Creation using Two Subnets
+---
+description: Creates a new VM with two NICs which connect to two different subnets within the same VNet.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: 1vm-2nics-2subnets-1vnet
+languages:
+- json
+- bicep
+---
+# 101-1vm-2nics-2subnets-1vnet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/1vm-2nics-2subnets-1vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/1vm-2nics-2subnets-1vnet/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/1vm-2nics-2subnets-1vnet/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/1vm-2nics-2subnets-1vnet/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/1vm-2nics-2subnets-1vnet/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2F1vm-2nics-2subnets-1vnet%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2F1vm-2nics-2subnets-1vnet%2Fazuredeploy.json)
@@ -21,3 +34,5 @@ This template creates a new VM with two NICs which connect to two different subn
 2. Customize parameters in **azuredeploy.parameters** as you see appropriate, at the very least the **adminPassword**.
 
 Feel free to post questions and enjoy!
+
+`Tags: Microsoft.Compute/virtualMachines, Microsoft.Storage/storageAccounts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIPAddresses`

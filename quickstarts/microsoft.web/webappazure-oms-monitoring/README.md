@@ -1,4 +1,14 @@
-# Azure Web App Analytics
+---
+description: Azure Web Apps Monitoring with Azure Log Analytics (OMS)
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webappazure-oms-monitoring
+languages:
+- json
+---
+# Azure Web App Monitoring
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webappazure-oms-monitoring/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webappazure-oms-monitoring/PublicDeployment.svg)
@@ -9,17 +19,15 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webappazure-oms-monitoring/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webappazure-oms-monitoring/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)
 
-
-
 This template deploys **Azure Web App Analytics Solution** on an Azure Log Analytics workspace. This allows you to view analytic data for metrics across all your Azure Web App resources.
 
-`Tags: Azure Web App, OMS Log Analytics, Monitoring`
+`Tags: Azure Web App, OMS Log Analytics, Monitoring, Microsoft.OperationalInsights/workspaces, views, Blade, OverviewTile, Microsoft.OperationsManagement/solutions`
 
-The Azure Web Apps Analytics solution provides insights into your [Azure Web Apps](https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview) by collecting different metrics across all your Azure Web App resources. With the solution, you can analyze and search for web app resource metric data.
+The Azure Web Apps Analytics solution provides insights into your [Azure Web Apps](https://docs.microsoft.com/azure/app-service/app-service-web-overview) by collecting different metrics across all your Azure Web App resources. With the solution, you can analyze and search for web app resource metric data.
 
 Using the solution, you can view the:
 
@@ -36,7 +44,7 @@ Perform the following steps to configure the Azure Web Apps Analytics solution f
 1. Enable the Azure Web Apps Analytics solution from<BR> [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)
 
 <BR>
-2. [Enable Azure resource metrics logging to Log Analytics using PowerShell](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-collect-azurepass-posh).
+2. [Enable Azure resource metrics logging to Log Analytics using PowerShell](https://docs.microsoft.com/azure/log-analytics/log-analytics-collect-azurepass-posh).
 
 The Azure Web Apps Analytics solution collects two set of metrics from Azure:
 
@@ -112,6 +120,4 @@ If you are using dedicated Service Plans, you can also collect metrics for your 
 The **List of Popular Azure Web Apps Search queries** shows you all the related activity logs for Web Apps, which provides insights into the operations that were performed on your Web Apps resources. It also lists all the related operations and the number of times they have occurred.
 
 Using any of the log search queries as a starting point, you can easily create an alert. For example, you might want to create an alert when a metric's average response time is greater than every 1 second.
-
-
 

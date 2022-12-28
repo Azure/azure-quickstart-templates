@@ -1,4 +1,14 @@
-# Create a EfficientIP virtual machine in an existing virtual network attach to a Network Security Group
+---
+description: This template creates a VM from a EfficientIP VHD and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-efficientip-vhd
+languages:
+- json
+---
+# Create a VM from a EfficientIP VHD
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-efficientip-vhd/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-efficientip-vhd/PublicDeployment.svg)
@@ -27,3 +37,5 @@ This template will create an additional Standard_GRS storage account for enablin
 ```
 
 This template creates a VM from a EfficientIP VHD and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/disks, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups`

@@ -18,24 +18,24 @@ param secondaryRegion string
   'Strong'
 ])
 @description('The default consistency level of the Cosmos DB account.')
-param defaultConsistencyLevel string = 'Session'
+param defaultConsistencyLevel string = 'Eventual'
 
 @minValue(10)
 @maxValue(1000000)
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2,147,483,647. Multi Region: 100,000 to 2,147,483,647.')
 param maxStalenessPrefix int = 100000
 
 @minValue(5)
 @maxValue(86400)
-@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
+@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84,600. Multi Region: 300 to 86,400.')
 param maxIntervalInSeconds int = 300
 
 @allowed([
   true
   false
 ])
-@description('Enable automatic failover for regions')
-param automaticFailover bool = true
+@description('Enable system managed failover for regions')
+param systemManagedFailover bool = true
 
 @description('The name for the Cassandra Keyspace')
 param keyspaceName string
@@ -43,12 +43,11 @@ param keyspaceName string
 @description('The name for the Cassandra table')
 param tableName string
 
-@minValue(4000)
+@minValue(1000)
 @maxValue(1000000)
 @description('Maximum autoscale throughput for the Cassandra table')
-param autoscaleMaxThroughput int = 4000
+param autoscaleMaxThroughput int = 1000
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -81,8 +80,8 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
@@ -94,12 +93,12 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: automaticFailover
+    enableAutomaticFailover: systemManagedFailover
   }
 }
 
-resource accountName_keyspaceName 'Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces@2021-04-15' = {
-  name: '${accountName_resource.name}/${keyspaceName}'
+resource keyspace 'Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces@2022-05-15' = {
+  name: '${account.name}/${keyspaceName}'
   properties: {
     resource: {
       id: keyspaceName
@@ -107,8 +106,8 @@ resource accountName_keyspaceName 'Microsoft.DocumentDB/databaseAccounts/cassand
   }
 }
 
-resource accountName_keyspaceName_tableName 'Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables@2021-04-15' = {
-  name: '${accountName_keyspaceName.name}/${tableName}'
+resource table 'Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables@2022-05-15' = {
+  name: '${keyspace.name}/${tableName}'
   properties: {
     resource: {
       id: tableName

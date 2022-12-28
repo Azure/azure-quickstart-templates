@@ -1,4 +1,14 @@
-# Create Application Gateway with Http Redirects
+---
+description: This template creates an application gateway with Redirect functionalities in a virtual network and sets up load balancing and redirect rules (basic and pathbased)
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: application-gateway-redirect
+languages:
+- json
+---
+# Create an Application Gateway with Redirect
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-redirect/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-redirect/PublicDeployment.svg)
@@ -99,5 +109,4 @@ A RedirectConfiguration can be associated with either a listener in a basic rule
 ### Notes:
 Supported apiVersion to use http redirect feature is "2017-04-01" and above.
 
-
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/applicationGateways`

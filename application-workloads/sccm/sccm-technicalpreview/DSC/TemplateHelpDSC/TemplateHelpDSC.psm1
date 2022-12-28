@@ -48,7 +48,7 @@ class InstallADK
         while(!(Test-Path $adkinstallpath))
         {
             $cmd = $_adkpath
-            $arg1  = "/Features"
+            $arg1 = "/Features"
             $arg2 = "OptionId.DeploymentTools"
             $arg3 = "/q"
 
@@ -72,7 +72,7 @@ class InstallADK
         while(!(Test-Path $adkinstallpath))
         {
             $cmd = $_adkpath
-            $arg1  = "/Features"
+            $arg1 = "/Features"
             $arg2 = "OptionId.UserStateMigrationTool"
             $arg3 = "/q"
 
@@ -96,7 +96,7 @@ class InstallADK
         while(!(Test-Path $adkinstallpath))
         {
             $cmd = $_adkWinPEpath
-            $arg1  = "/Features"
+            $arg1 = "/Features"
             $arg2 = "OptionId.WindowsPreinstallationEnvironment"
             $arg3 = "/q"
 
@@ -732,7 +732,7 @@ class WaitForDomainReady
 
     [bool] Test()
     {
-         $_DCName = $this.DCName
+        $_DCName = $this.DCName
         Write-Verbose "Domain computer is: $_DCName"
         $testconnection = test-connection -ComputerName $_DCName -ErrorAction Ignore
 
@@ -764,14 +764,17 @@ class VerifyComputerJoinDomain
     [void] Set()
     {
         $_Computername = $this.ComputerName
-        $searcher = [adsisearcher] "(cn=$_Computername)"
-        while($searcher.FindAll().count -ne 1)
-        {
-            Write-Verbose "$_Computername not join into domain yet , will search again after 1 min"
-            Start-Sleep -Seconds 60
-            $searcher = [adsisearcher] "(cn=$_Computername)"
+        $_ComputernameList = $_Computername.Split(',')
+        foreach($CL in $_ComputernameList){
+            $searcher = [adsisearcher] "(cn=$CL)"
+            while($searcher.FindAll().count -ne 1)
+            {
+                Write-Verbose "$CL not join into domain yet , will search again after 1 min"
+                Start-Sleep -Seconds 60
+                $searcher = [adsisearcher] "(cn=$CL)"
+            }
+            Write-Verbose "$CL joined into the domain."
         }
-        Write-Verbose "$_Computername joined into the domain."
     }
 
     [bool] Test()
@@ -984,7 +987,7 @@ class RegisterTaskScheduler
 		$trigger = $triggers.Create(1)
 		$trigger.StartBoundary = $TaskStartTime.ToString("yyyy-MM-dd'T'HH:mm:ss")
 		$trigger.Enabled = $true
-		# http://msdn.microsoft.com/en-us/library/windows/desktop/aa381841(v=vs.85).aspx
+		#http://msdn.microsoft.com/en-us/library/windows/desktop/aa381841(v=vs.85).aspx
 		$Action = $TaskDefinition.Actions.Create(0)
 		$action.Path = "$TaskCommand"
 		$action.Arguments = "$TaskArg"
@@ -1654,8 +1657,7 @@ class SetCustomPagingFile
         else
         {
             Set-CimInstance $currentpagingfile -Property @{InitialSize = $_InitialSize ; MaximumSize = $_MaximumSize}
-        }
-        
+        }        
 
         $global:DSCMachineStatus = 1
     }
@@ -1777,11 +1779,34 @@ class FileReadAccessShare
     [string[]] $Account
 
     [void] Set()
-    {
+    {        
         $_Name = $this.Name
         $_Path = $this.Path
         $_Account = $this.Account
 
+        for($i = 0; $i -lt $_Account.Length; $i++)
+        {    
+            if($_Account[$i].ToLower().Contains(","))
+            {   
+                $DName = $_Account[$i].Split("\")[0]         
+                $clientNamelist = ($_Account[$i].Split("\")[1]).Split(",")        
+                        
+                foreach($clientname in $clientNamelist)
+                {
+                    if($clientname -eq $clientNamelist[$clientNamelist.Length-1])
+                    {
+                        $clientaccount = "$DName\$clientname"
+                        $_Account[$i] = $clientaccount
+                    }else
+                    {
+                        $clientaccount = "$DName\$clientname$"                 
+                        $_Account+=$clientaccount           
+                    }  
+                    
+                }
+                    
+            }
+        }
         New-SMBShare -Name $_Name -Path $_Path -ReadAccess $_Account
     }
 

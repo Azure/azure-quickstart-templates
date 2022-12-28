@@ -9,7 +9,10 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, SqlServerDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -37,6 +40,23 @@ configuration ConfigureSQLVM
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
         
         SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; }
+
+        Script EnableFileSharing
+        {
+            TestScript = {
+                # Test if firewall rules for file sharing already exist
+                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
+                if ($null -eq $rulesSet) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Rules already set
+                }
+            }
+            SetScript = {
+                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
+            }
+            GetScript = { }
+        }
 
         #**********************************************************
         # Join AD forest
@@ -80,7 +100,7 @@ configuration ConfigureSQLVM
         #**********************************************************
         # By default, SPNs MSSQLSvc/SQL.contoso.local:1433 and MSSQLSvc/SQL.contoso.local are set on the machine account
         # They need to be removed before they can be set on the SQL service account
-        xScript RemoveSQLSpnOnSQLMachine
+        Script RemoveSQLSpnOnSQLMachine
         {
             SetScript = 
             {
@@ -115,14 +135,14 @@ configuration ConfigureSQLVM
             ServicePrincipalNames = @("MSSQLSvc/$ComputerName.$($DomainFQDN):1433", "MSSQLSvc/$ComputerName.$DomainFQDN", "MSSQLSvc/$($ComputerName):1433", "MSSQLSvc/$ComputerName")
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]RemoveSQLSpnOnSQLMachine"
+            DependsOn            = "[Script]RemoveSQLSpnOnSQLMachine"
         }
 
         # Tentative fix on random error on resources SqlServiceAccount/SqlLogin after computer joined domain (although SqlMaxDop Test succeeds):
         # Error on SqlServiceAccount: System.InvalidOperationException: Unable to set the service account for SQL on MSSQLSERVER. Message  ---> System.Management.Automation.MethodInvocationException: Exception calling "SetServiceAccount" with "2" argument(s): "Set service account failed. "
         # Error on SqlLogin: System.InvalidOperationException: Failed to connect to SQL instance 'SQL'. (SQLCOMMON0019) ---> System.Management.Automation.MethodInvocationException: Exception calling "Connect" with "0" argument(s): "Failed to connect to server SQL.
         # It would imply that somehow, SQL Server does not start upon computer restart
-        xScript EnsureSQLServiceStarted
+        Script EnsureSQLServiceStarted
         {
             SetScript = 
             {
@@ -154,7 +174,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[xScript]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+            DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
         }
 
         SqlLogin AddDomainAdminLogin
@@ -192,7 +212,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleSysadmin
         {
             ServerRoleName   = "sysadmin"
-            MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($DomainAdminCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
@@ -202,7 +222,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleSecurityAdmin
         {
             ServerRoleName   = "securityadmin"
-            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
@@ -212,7 +232,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleDBCreator
         {
             ServerRoleName   = "dbcreator"
-            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
@@ -232,15 +252,30 @@ configuration ConfigureSQLVM
             DependsOn            = "[SqlLogin]AddSPSetupLogin"
         }
 
+        # Reference: https://learn.microsoft.com/en-us/sql/t-sql/statements/grant-schema-permissions-transact-sql?view=sql-server-ver16
         SqlDatabasePermission GrantPermissionssToTempdb
         {
             Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             ServerName           =  $ComputerName
             InstanceName         = "MSSQLSERVER"
             DatabaseName         = "tempdb"
-            Permissions          = @('Select', 'CreateTable', 'Execute')
-            PermissionState      = "Grant"
-            Ensure               = "Present"
+            Permission   = @(
+                DatabasePermission
+                {
+                    State      = 'Grant'
+                    Permission = @('Select', 'CreateTable', 'Execute', 'DELETE', 'INSERT', 'UPDATE')
+                }
+                DatabasePermission
+                {
+                    State      = 'GrantWithGrant'
+                    Permission = @()
+                }
+                DatabasePermission
+                {
+                    State      = 'Deny'
+                    Permission = @()
+                }
+            )
             DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
         }
 
@@ -257,11 +292,48 @@ configuration ConfigureSQLVM
                 DSC_DatabaseObjectPermission
                 {
                     State      = "Grant"
-                    Permission = @("Select", "Update", "Insert", "Execute", "Control", "References")
+                    Permission = "Select"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Update"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Insert"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Execute"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Control"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "References"
                 }
             )
             DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
         }
+
+        # SqlDatabaseRole 'GrantPermissionsToTempdb'
+        # {
+        #     ServerName           = $ComputerName
+        #     InstanceName         = "MSSQLSERVER"
+        #     DatabaseName         = "tempdb"
+        #     Name                 = "db_owner"
+        #     Ensure               = "Present"
+        #     MembersToInclude     = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
+        #     PsDscRunAsCredential = $SqlAdministratorCredential
+        #     DependsOn            = "[SqlLogin]AddSPSetupLogin"
+        # }
 
         # Open port on the firewall only when everything is ready, as SharePoint DSC is testing it to start creating the farm
         Firewall AddDatabaseEngineFirewallRule
@@ -323,18 +395,14 @@ function WaitForSqlSetup
 
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
-Install-Module -Name SqlServerDsc
-
-help ConfigureSQLVM
-$DomainAdminCreds = Get-Credential -Credential "yvand"
-$SqlSvcCreds = Get-Credential -Credential "sqlsvc"
-$SPSetupCreds = Get-Credential -Credential "spsetup"
-$DNSServer = "10.0.1.4"
+$password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
+$DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
+$SqlSvcCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "sqlsvc", $password
+$SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
+$DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureSQLVM.0"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
 ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

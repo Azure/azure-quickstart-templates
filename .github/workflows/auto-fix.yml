@@ -1,0 +1,152 @@
+name: Auto Fix Sample
+# This action can be run on-demand against a branch.
+# It attempts to auto-fix some errors in the most recently updated sample in the branch:
+#    Builds main.bicep -> azuredeploy.json
+#    Attempts some fixes with the metadata
+
+# To run/debug locally, try https://github.com/nektos/act
+# Actions documentation: https://docs.github.com/en/actions/reference
+
+on:
+  workflow_dispatch:
+  
+permissions:
+  contents: read
+
+jobs:
+  main:
+    permissions:
+      contents: write # for git push
+    name: Auto Fix Sample
+    runs-on: ubuntu-latest
+
+    env:
+      # don't print dotnet logo
+      DOTNET_NOLOGO: true
+
+      # disable telemetry (reduces dotnet tool output in logs)
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1.8.0
+      
+      - name: Install TTK
+        run: |
+          TTK_FOLDER="$RUNNER_TEMP/arm-ttk"
+          TTK_URI="https://aka.ms/arm-ttk-latest"
+
+          curl -sLo arm-ttk.zip $TTK_URI
+          unzip -q arm-ttk.zip -d $TTK_FOLDER
+          rm arm-ttk.zip
+          ls -al $TTK_FOLDER
+
+          echo "TTK_FOLDER=$TTK_FOLDER" >> $GITHUB_ENV
+
+      - name: Install Bicep
+        run: |
+          # See https://github.com/Azure/bicep/blob/main/docs/installing.md#windows-installer
+
+          # Create the install folder
+          INSTALL_PATH="$RUNNER_TEMP/bicep"
+          BICEP_PATH="$RUNNER_TEMP/bicep/bicep"
+          mkdir -p $INSTALL_PATH
+ 
+          # Fetch the latest Bicep CLI binary
+          curl -sLo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x ./bicep
+          sudo mv ./bicep $INSTALL_PATH
+          echo Using bicep at $BICEP_PATH:
+          $BICEP_PATH --version
+
+          echo "BICEP_PATH=$BICEP_PATH" >> $GITHUB_ENV
+
+      - name: Install PowerShell
+        run: |
+          # Update the list of packages
+          sudo apt-get update
+          # Install pre-requisite packages.
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          # Download the Microsoft repository GPG keys
+          wget -q https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb
+          # Register the Microsoft repository GPG keys
+          sudo dpkg -i packages-microsoft-prod.deb
+          # Update the list of packages after we added packages.microsoft.com
+          sudo apt-get update
+          # Install PowerShell
+          sudo apt-get install -y powershell
+
+      - name: Sync master
+        uses: actions/checkout@v2.3.4
+        with:
+          ref: master
+          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+
+      - uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+
+      - name: Find sample folder
+        run: |
+          git status
+          # Get path of last file checked in
+          pwd
+          cd $GITHUB_WORKSPACE
+          pwd
+          LAST_PATH=$( git log --pretty="" --name-only -n 100 origin/master... -- | fgrep -v ".github" | head -1 )
+          echo Last file modified: $LAST_PATH
+
+          # Look for the main template file in this file's path or parents
+          SAMPLEFOLDER_PATH=$( dirname "$LAST_PATH" )
+          echo Last folder modified: $SAMPLEFOLDER_PATH
+
+          TESTFOLDER_PATH=$SAMPLEFOLDER_PATH
+          FOUNDFOLDER_PATH=
+          while [ "$TESTFOLDER_PATH" != "." ]
+          do
+            echo "Looking for main template in $TESTFOLDER_PATH"
+            MAINBICEP_PATH=$TESTFOLDER_PATH/main.bicep
+            AZDEPLOYJSON_PATH=$TESTFOLDER_PATH/azuredeploy.json
+            if [ -f "$MAINBICEP_PATH" ] || [ -f "$AZDEPLOYJSON_PATH" ]; then
+              FOUNDFOLDER_PATH=$TESTFOLDER_PATH
+              echo Found main template in $FOUNDFOLDER_PATH
+              break
+            fi
+
+            TESTFOLDER_PATH=$( dirname "$TESTFOLDER_PATH" )
+          done
+
+          if [ ! $FOUNDFOLDER_PATH ]; then
+              echo "Could not find main.bicep or azdeploy.json in folder or parents of $SAMPLEFOLDER_PATH" 1>&2
+              exit 1
+          fi
+
+          echo "SAMPLEFOLDER_PATH=$FOUNDFOLDER_PATH" >> $GITHUB_ENV
+          echo "MAINBICEP_PATH=$MAINBICEP_PATH" >> $GITHUB_ENV
+          echo "AZDEPLOYJSON_PATH=$AZDEPLOYJSON_PATH" >> $GITHUB_ENV
+
+      - name: Build main.bicep -> azuredeploy.json
+        run: |
+          if [ -f $MAINBICEP_PATH ]; then          
+            echo Running: bicep build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
+            $BICEP_PATH build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
+          fi
+
+      - name: Attempt Metadata Fixes
+        run: |
+          echo Running Test-LocalSample -fix
+          echo $TTK_FOLDER
+          pwsh -noprofile -nologo -command "$GITHUB_WORKSPACE/test/ci-scripts/Test-LocalSample.ps1 $SAMPLEFOLDER_PATH -TtkFolder $TTK_FOLDER -fix; if (\$error.Count) { exit 1 }"
+
+      - name: Commit changes
+        if: always()
+        run: |
+          git config --global user.email "azure-quickstart-templates@noreply.github.com"
+          git config --global user.name "azure-quickstart-templates Automation"
+
+          git add $SAMPLEFOLDER_PATH
+
+          if ! git diff-index --quiet HEAD --; then
+            git commit -m "Automatic fixes"
+            git push
+          fi

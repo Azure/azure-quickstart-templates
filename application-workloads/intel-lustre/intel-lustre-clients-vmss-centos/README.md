@@ -1,4 +1,14 @@
-# Azure VM Scale Set as clients of Intel Lustre shared parallel filesystem
+---
+description: This template creates a set of Intel Lustre 2.7 clients using Azure VM Scale Sets and Azure gallery OpenLogic CentOS 6.6 or 7.0 images and mounts an existing Intel Lustre filesystem
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: intel-lustre-clients-vmss-centos
+languages:
+- json
+---
+# Azure VM Scale Set as clients of Intel Lustre
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/intel-lustre/intel-lustre-clients-vmss-centos/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/intel-lustre/intel-lustre-clients-vmss-centos/PublicDeployment.svg)
@@ -19,7 +29,7 @@ This template creates an Azure VM Scale Set with 1-99 of Intel Lustre 2.7 client
 
 - Intel Lustre clients must be deployed into an **existing Virtual Network*- that already contains operational Intel Lustre filesystem consisting of MGS (management server), MDS (metadata server), and OSS (object storage server) nodes.
 
-- The actual Lustre filesystem is deployed via the solution template from Azure Marketplace [Intel Cloud Edition for Lustre- Software - Eval](https://azure.microsoft.com/en-us/marketplace/partners/intel/)
+- The actual Lustre filesystem is deployed via the solution template from Azure Marketplace [Intel Cloud Edition for Lustre- Software - Eval](https://azure.microsoft.com/marketplace/partners/intel/)
 
 - When deploying this template, you will need to provide the private IP address of the MGS node (e.g. 10.1.0.4) and the name of the filesystem that was created when Lustre servers were deployed (e.g. scratch)
 
@@ -40,3 +50,5 @@ This template creates an Azure VM Scale Set with 1-99 of Intel Lustre 2.7 client
 ## Scale Up or Down
 
 To scale up or down an existing Virtual Machine ScaleSet, simply deploy the template again, to the resource group that contains the existing ScaleSet and provide the appropriate values for NewOrScaleExisting and the clientVmSize and clientCount.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, CustomScript`

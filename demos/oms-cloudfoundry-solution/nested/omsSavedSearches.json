@@ -1,0 +1,523 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Input the name of your OMS Workspace"
+            }
+        }
+    },
+    "variables": {
+        "savedSearches": {
+            "templates": [
+                {
+                    "name": "CF-Average CPU Usage by Application Instance",
+                    "category": "CF-Apps",
+                    "query": "CF_ContainerMetric_CL | summarize avg(CPUPercentage_d) by Environment_s, ApplicationName_s, InstanceIndex_d, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Average Memory Usage by Application Instance",
+                    "category": "CF-Apps",
+                    "query": "CF_ContainerMetric_CL | summarize avg(MemoryBytes_d) by Environment_s, ApplicationName_s, InstanceIndex_d, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Average Memory Quota Application Instance",
+                    "category": "CF-Apps",
+                    "query": "CF_ContainerMetric_CL | summarize avg(MemoryBytesQuota_d) by Environment_s, ApplicationName_s, InstanceIndex_d, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Average Disk Usage by Application Instance",
+                    "category": "CF-Apps",
+                    "query": "CF_ContainerMetric_CL | summarize avg(DiskBytes_d) by Environment_s, ApplicationName_s, InstanceIndex_d, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Average Disk Quota Application Instance",
+                    "category": "CF-Apps",
+                    "query": "CF_ContainerMetric_CL | summarize avg(DiskBytesQuota_d) by Environment_s, ApplicationName_s, InstanceIndex_d, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Total BBS Request Count",
+                    "category": "CF-BBS",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"bbs\" and Name_s == \"RequestCount\" | summarize max(Total_d) by Environment_s, Job_s, IP_s"
+                },
+                {
+                    "name": "CF-BBS Request Latency",
+                    "category": "CF-BBS",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and Name_s == \"RequestLatency\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Total Convergence LRP & Task Runs",
+                    "category": "CF-BBS",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"bbs\" and (Name_s == \"ConvergenceLRPRuns\" or Name_s == \"ConvergenceTaskRuns\") | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Total Convergence Tasks Kicked & Pruned",
+                    "category": "CF-BBS",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"bbs\" and (Name_s == \"ConvergenceTasksKicked\" or Name_s == \"ConvergenceTasksPruned\") | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Convergence LRP & Task Duration",
+                    "category": "CF-BBS",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and (Name_s == \"ConvergenceLRPDuration\" or Name_s == \"ConvergenceTaskDuration\") | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Malformed LRPs",
+                    "category": "CF-BBS",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and (Name_s == \"ConvergenceLRPDuration\" or Name_s == \"ConvergenceLRPPreProcessing\") | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Number of HTTP Responses",
+                    "category": "CF-CC",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"cc\" and Name_s contains_cs \"http_status\" | summarize max(Value_d) by Environment_s, IP_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Job Queue Length",
+                    "category": "CF-CC",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"cc\" and Name_s contains_cs \"job_queue_length\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Failed Job Count",
+                    "category": "CF-CC",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"cc\" and Name_s contains_cs \"failed_job_count\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of Requests Completed",
+                    "category": "CF-CC",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"cc\" and Name_s == \"requests.completed\" | summarize max(Value_d) by Environment_s, Job_s, IP_s"
+                },
+                {
+                    "name": "CF-Number of Requests Being Processed",
+                    "category": "CF-CC",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"cc\" and Name_s == \"requests.outstanding\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of Log Messages",
+                    "category": "CF-CC",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"cc\" and Name_s contains_cs \"log_count\" | summarize avg(Value_d) by Environment_s, IP_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Total & Remaining Containers",
+                    "category": "CF-Cells Capacity",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"rep\" and Name_s contains_cs \"Containers\" | summarize avg(Value_d) by Environment_s, IP_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Total & Remaining Memory",
+                    "category": "CF-Cells Capacity",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"rep\" and Name_s contains_cs \"Memory\" | summarize avg(Value_d) by Environment_s, IP_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Total & Remaining Disk",
+                    "category": "CF-Cells Capacity",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"rep\" and Name_s contains_cs \"Disk\" | summarize avg(Value_d) by Environment_s, IP_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of CPUs",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"numCPUS\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of Go Routines",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"numGoRoutines\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Memory Usage",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"memoryStats.numBytesAllocated\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Stack Allocator Memory Usage",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"memoryStats.numBytesAllocatedStack\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Main Heap Memory Usage",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"memoryStats.numBytesAllocatedHeap\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Garbage Collector Pause Duration",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"memoryStats.lastGCPauseTimeNS\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of Memory Allocations",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"memoryStats.numMallocs\" | summarize max(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of Memory Deallocations",
+                    "category": "CF-Component Metrics",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"memoryStats.numFrees\" | summarize max(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Total Auctions",
+                    "category": "CF-Diego Auctions",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"auctioneer\" and Name_s contains_cs \"Auctions\" | summarize max(Total_d) by Environment_s, Name_s"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Auctions per Minute",
+                    "category": "CF-Diego Auctions",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"auctioneer\" and Name_s contains_cs \"Auctions\" | summarize sum(Delta_d) by Environment_s, Name_s, bin(TimeGenerated, 1m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Fetch States Duration",
+                    "category": "CF-Diego Auctions",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"auctioneer\" and Name_s == \"AuctioneerFetchStatesDuration\" | summarize max(Value_d) by Environment_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-CF Apps Synchronized",
+                    "category": "CF-Diego Health",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and Name_s == \"Domain.cf-apps\" | summarize min(Value_d) by Environment_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-CF Tasks Synchronized",
+                    "category": "CF-Diego Health",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and Name_s == \"Domain.cf-tasks\" | summarize min(Value_d) by Environment_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Unhealthy Cells",
+                    "category": "CF-Diego Health",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"rep\" and Name_s == \"UnhealthyCell\" | summarize max(Value_d) by Environment_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of Sinks",
+                    "category": "CF-Doppler Server",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"DopplerServer\" and Name_s contains_cs \"messageRouter.numberOf\" | summarize max(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Number of Messages Unmarshalled",
+                    "category": "CF-Doppler Server",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"DopplerServer\" and Name_s contains_cs \"dropsondeUnmarshaller\" and Name_s != \"dropsondeUnmarshaller.unmarshalErrors\" | summarize max(Total_d) by Environment_s, Name_s"
+                },
+                {
+                    "name": "CF-Number of Messages Received by Listeners",
+                    "category": "CF-Doppler Server",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"DopplerServer\" and Name_s == \"listeners.totalReceivedMessageCount\" | summarize max(Total_d) by Environment_s"
+                },
+                {
+                    "name": "CF-Unmarshal Errors",
+                    "category": "CF-Doppler Server",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"DopplerServer\" and Name_s == \"dropsondeUnmarshaller.unmarshalErrors\" | summarize max(Total_d) by Environment_s"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Dropped Messages",
+                    "category": "CF-Doppler Server",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"DopplerServer\" and (Name_s == \"TruncatingBuffer.totalDroppedMessages\" or Name_s == \"doppler.shedEnvelopes\") | summarize max(Total_d) by Environment_s, Name_s"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Leader",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s == \"IsLeader\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Followers",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s == \"Followers\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Watchers",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s == \"Watchers\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Raft Term",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s == \"RaftTerm\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Raft Index",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s == \"RaftIndex\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Sending & Receiving Bandwidth Rate",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"BandwidthRate\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Sending & Receiving Request Rate",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"RequestRate\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Latency",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s == \"Latency\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Sent & Received Append Requests Rate",
+                    "category": "CF-Etcd",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"AppendRequests\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Sets Success & Fail",
+                    "category": "CF-Etcd Operations",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"Sets\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Gets Success & Fail",
+                    "category": "CF-Etcd Operations",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"Gets\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Create Success & Fail",
+                    "category": "CF-Etcd Operations",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"Create\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Update Success & Fail",
+                    "category": "CF-Etcd Operations",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"Update\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Delete Success & Fail",
+                    "category": "CF-Etcd Operations",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and (Name_s == \"DeleteSuccess\" or Name_s == \"DeleteFail\") | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-CompareAndDelete Success & Fail",
+                    "category": "CF-Etcd Operations",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"CompareAndDelete\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-CompareAndSwap Success & Fail",
+                    "category": "CF-Etcd Operations",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"etcd\" and Name_s contains_cs \"CompareAndSwap\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Number of Container Backing Store Files",
+                    "category": "CF-Garden Linux",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"garden-linux\" and Name_s == \"BackingStores\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "_shownOnPcf2": "false",
+                    "name": "CF-Number of Directories in the Garden Depot",
+                    "category": "CF-Garden Linux",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"garden-linux\" and Name_s == \"LoopDevices\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Number of Attached Loop Devices",
+                    "category": "CF-Garden Linux",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"garden-linux\" and Name_s == \"DepotDirs\" | summarize avg(Value_d) by Environment_s, Job_s, IP_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-LRPs",
+                    "category": "CF-LRPs & Tasks",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and Name_s contains_cs \"LRPs\" and Name_s !contains_cs \"Crash\" | summarize avg(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Tasks",
+                    "category": "CF-LRPs & Tasks",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and Name_s contains_cs \"Tasks\" and Name_s !contains_cs \"Convergence\" | summarize avg(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Crashing LRPs",
+                    "category": "CF-LRPs & Tasks",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"bbs\" and Name_s contains_cs \"Crash\" | summarize avg(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Desired LRP Sync Duration",
+                    "category": "CF-LRPs & Tasks",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"nsync_bulker\" and Name_s == \"DesiredLRPSyncDuration\" | summarize avg(Value_d) by Environment_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Sent & Received Dropsonde Envelopes",
+                    "category": "CF-Metron Agent",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"MetronAgent\" and Name_s contains_cs \"Envelopes\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Messages Unmarshalled",
+                    "category": "CF-Metron Agent",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"MetronAgent\" and ((Name_s contains_cs \"dropsondeUnmarshaller\" and Name_s contains_cs \"Received\") or Name_s == \"dropsondeUnmarshaller.logMessageTotal\") | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Dropsonde Messages Received by Agent Listener",
+                    "category": "CF-Metron Agent",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"MetronAgent\" and Name_s == \"dropsondeAgentListener.receivedMessageCount\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Dropsonde Bytes Received by Agent Listener",
+                    "category": "CF-Metron Agent",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"MetronAgent\" and Name_s == \"dropsondeAgentListener.receivedByteCount\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Messages Sent to Doppler",
+                    "category": "CF-Metron Agent",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"MetronAgent\" and Name_s contains_cs \"sentMessageCount\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Bytes Sent to Doppler",
+                    "category": "CF-Metron Agent",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"MetronAgent\" and Name_s contains_cs \"sentByteCount\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Errors Sent to Doppler",
+                    "category": "CF-Metron Agent",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"MetronAgent\" and Name_s contains_cs \"sendErrorCount\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Number of Routes",
+                    "category": "CF-Route Emitter",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"route_emitter\" and Name_s == \"RoutesTotal\" | summarize avg(Value_d) by Environment_s, Job_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Total Routes Registered, Synced and Unregistered",
+                    "category": "CF-Route Emitter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"route_emitter\" and (Name_s == \"RoutesRegistered\" or Name_s == \"RoutesSynced\" or Name_s == \"RoutesUnregistered\") | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Total Registration Messages Emitted",
+                    "category": "CF-Route Emitter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"route_emitter\" and Name_s == \"MessagesEmitted\" | summarize max(Total_d) by Environment_s, Job_s"
+                },
+                {
+                    "name": "CF-Route Emitter Time to Sync",
+                    "category": "CF-Route Emitter",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"route_emitter\" and Name_s == \"RouteEmitterSyncDuration\" | summarize avg(Value_d) by Environment_s, Job_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Requests per Minute",
+                    "category": "CF-Gorouter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"gorouter\" and (Name_s == \"rejected_requests\" or Name_s == \"total_requests\") | summarize sum(Delta_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 1m)"
+                },
+                {
+                    "name": "CF-Responses per Minute",
+                    "category": "CF-Gorouter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"gorouter\" and Name_s contains_cs \"responses\" | summarize sum(Delta_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 1m)"
+                },
+                {
+                    "name": "CF-Total Requests",
+                    "category": "CF-Gorouter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"gorouter\" and (Name_s == \"rejected_requests\" or Name_s == \"total_requests\") | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Total Responses",
+                    "category": "CF-Gorouter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"gorouter\" and Name_s contains_cs \"responses\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Latency",
+                    "category": "CF-Gorouter",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"gorouter\" and Name_s contains_cs \"latency\" | summarize avg(Value_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Route Lookup Time",
+                    "category": "CF-Gorouter",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"gorouter\" and Name_s == \"route_lookup_time\" | summarize avg(Value_d) by Environment_s, Job_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Register Messages Received per Minute",
+                    "category": "CF-Gorouter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"gorouter\" and Name_s contains_cs \"registry_message\" | summarize sum(Delta_d) by Environment_s, Job_s, Name_s, bin(TimeGenerated, 1m)"
+                },
+                {
+                    "name": "CF-Total Register Messages Received",
+                    "category": "CF-Gorouter",
+                    "query": "CF_CounterEvent_CL | where Origin_s == \"gorouter\" and Name_s contains_cs \"registry_message\" | summarize max(Total_d) by Environment_s, Job_s, Name_s"
+                },
+                {
+                    "name": "CF-Total Routes Registered",
+                    "category": "CF-Gorouter",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"gorouter\" and Name_s == \"total_routes\" | summarize avg(Value_d) by Environment_s, Job_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-User & Non-user Not Found",
+                    "category": "CF-UAA",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"uaa\" and Name_s contains_cs \"not_found_count\" | summarize max(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Failed Non-user Authentication Attempts",
+                    "category": "CF-UAA",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"uaa\" and Name_s == \"audit_service.principal_authentication_failure_count\" | summarize max(Value_d) by Environment_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Successful & Failed User Authentications",
+                    "category": "CF-UAA",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"uaa\" and Name_s contains_cs \"user_authentication\" | summarize max(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Successful & Failed Client Authentications",
+                    "category": "CF-UAA",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"uaa\" and Name_s contains_cs \"client_authentication\" | summarize max(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Successful & Failed Password Changes",
+                    "category": "CF-UAA",
+                    "query": "CF_ValueMetric_CL | where Origin_s == \"uaa\" and Name_s contains_cs \"user_password\" | summarize max(Value_d) by Environment_s, Name_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Receiving Rate by Nozzle Instance Every 5 Minutes",
+                    "category": "CF-Nozzle Status",
+                    "query": "CF_CounterEvent_CL | where Job_s == \"nozzle\" and Name_s == \"eventsReceived\" | summarize sum(Delta_d) by NozzleInstance_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Sending Rate by Nozzle Instance Every 5 Minutes",
+                    "category": "CF-Nozzle Status",
+                    "query": "CF_CounterEvent_CL | where Job_s == \"nozzle\" and Name_s == \"eventsSent\" | summarize sum(Delta_d) by NozzleInstance_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Lost Messages by Nozzle Instance",
+                    "category": "CF-Nozzle Status",
+                    "query": "CF_CounterEvent_CL | where Job_s == \"nozzle\" and Name_s == \"eventsLost\" | summarize max(Total_d) by NozzleInstance_s, bin(TimeGenerated, 5m)"
+                },
+                {
+                    "name": "CF-Total Recieved, Sent & Lost Messages by Nozzle Instance",
+                    "category": "CF-Nozzle Status",
+                    "query": "CF_CounterEvent_CL | where Job_s == \"nozzle\" | summarize max(Total_d) by NozzleInstance_s, Name_s"
+                },
+                {
+                    "name": "CF-Slow Consumer Alert",
+                    "category": "CF-Nozzle Status",
+                    "query": "CF_ValueMetric_CL | where Name_s == \"slowConsumerAlert\" | summarize max(Value_d) by NozzleInstance_s, bin(TimeGenerated, 5m)"
+                }
+            ]
+        } 
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('omsWorkspaceName'), '/', 'CF-SavedSearches-', uniquestring('SavedSearch'), '-', copyIndex())]",
+            "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+            "apiVersion": "2017-03-15-preview",
+            "copy": {
+                "name": "CF-searchCopy",
+                "mode": "Parallel",
+                "count": "[length(variables('savedSearches').templates)]"
+            },
+            "tags": {
+                "Source": "QuickstartTemplates"
+            },
+            "properties": {
+                "etag": "*",
+                "query": "[variables('savedSearches').templates[copyIndex()].query]",
+                "displayName": "[variables('savedSearches').templates[copyIndex()].name]",
+                "category": "[variables('savedSearches').templates[copyIndex()].category]"
+            }
+        }
+    ],
+    "outputs": {}
+}

@@ -1,0 +1,456 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountName": {
+      "type": "String",
+      "metadata": {
+        "description": "Your existing storage account name where you want the blobs be archived"
+      }
+    },
+	"location": {
+      "type": "String",
+      "metadata": {
+        "description": "location for stream analytics"
+      }
+    },
+    "DataCleaningInputStream": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the Event Hub"
+      }
+    },
+    "DataCleaningOutputStream": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the second Event Hub"
+      }
+    },
+    "eventHubNamespaceName": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the EventHub namespace"
+      }
+    },
+    "DataCleaningStreamAnalyticsJob": {
+      "type": "String",
+      "metadata": {
+        "description": "First stream Analytics Job"
+      }
+    },
+    "DataAggregatorStreamAnalyticsJob1": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the Second stream Analytics Job"
+      }
+    },
+    "DataAggregatorStreamAnalyticsJob2": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the Third stream Analytics Job"
+      }
+    },
+    "DataAggregatorStreamAnalyticsJob3": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the Fourth stream Analytics Job"
+      }
+    }
+  },
+  "variables": {
+    "defaultSASKeyName": "RootManageSharedAccessKey"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "name": "[parameters('DataCleaningStreamAnalyticsJob')]",
+      "apiVersion": "2019-06-01",
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "outputErrorPolicy": "stop",
+        "eventsOutOfOrderPolicy": "adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "eventsLateArrivalMaxDelayInSeconds": 5,
+        "dataLocale": "en-US",
+        "inputs": [
+          {
+            "name": "EventHub",
+            "properties": {
+              "type": "stream",
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              },
+              "datasource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
+                  "sharedAccessPolicyName": "RootManageSharedAccessKey",
+                  "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName')), '2021-01-01-preview').primaryKey]",
+                  "eventHubName": "[parameters('DataCleaningInputStream')]"
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "Transformation",
+          "properties": {
+            "streamingUnits": "[variables('numberOfStreamingUnits')]",
+            "query": "SELECT\r\n *\r\nINTO EventhubOutput \r\nFROM EventHub \r\nWHERE orderDate IS NOT NULL"
+          }
+        },
+        "outputs": [
+          {
+            "name": "EventhubOutput",
+            "type": "Microsoft.StreamAnalytics/streamingjobs/outputs",
+            "apiVersion": "2019-06-01",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  "eventHubName": "[parameters('DataCleaningOutputStream')]",
+                  "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
+                  "sharedAccessPolicyName": "RootManageSharedAccessKey",
+                  "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName')), '2021-01-01-preview').primaryKey]"
+                }
+              },
+              "serialization": {
+                "type": "Json",
+                "properties": {
+                  "encoding": "UTF8",
+                  "format": "LineSeparated"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "name": "[parameters('DataAggregatorStreamAnalyticsJob1')]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "outputErrorPolicy": "stop",
+        "eventsOutOfOrderPolicy": "adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "eventsLateArrivalMaxDelayInSeconds": 5,
+        "dataLocale": "en-US",
+        "inputs": [
+          {
+            "name": "EventHub",
+            "properties": {
+              "type": "stream",
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              },
+              "datasource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
+                  "sharedAccessPolicyName": "RootManageSharedAccessKey",
+                  "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName')), '2021-01-01-preview').primaryKey]",
+                  "eventHubName": "[parameters('DataCleaningOutputStream')]"
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "Transformation",
+          "properties": {
+            "streamingUnits": "[variables('numberOfStreamingUnits')]",
+            "query": "SELECT \n System.Timestamp AS allEvents, \n COUNT(sku) AS allsku \n INTO \n Blob \n FROM \n EventHub \n GROUP BY \n TumblingWindow(second,10) \n \n SELECT \n System.Timestamp AS allEvents, \n COUNT(sku) AS allsku \n INTO \n PBI \n FROM \n EventHub \n GROUP BY \n TumblingWindow(second,10)"
+          }
+        },
+        "outputs": [
+          {
+            "name": "PBI",
+            "properties": {
+              "dataSource": {
+                "type": "PowerBI",
+                "outputPowerBISource": {
+                  "dataSet": "Quickstart-sellingProductPerMin-Dataset",
+                  "table": "sellingProductPerMin-Table",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "anurag.doe@git.com",
+                  "tokenUserPrincipalName": "anurag.doe@git.com"
+                },
+                "properties": {
+                  "dataSet": "Quickstart-sellingProductPerMin-Dataset",
+                  "table": "sellingProductPerMin-Table",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "anurag.doe@git.com",
+                  "tokenUserPrincipalName": "anurag.doe@git.com"
+                }
+              },
+            }
+          },
+          {
+            "name": "Blob",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.Storage/Blob",
+                "properties": {
+                  "storageAccounts": [
+                    {
+                      "accountName": "[parameters('StorageAccountName')]",
+                      "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')),'2021-01-01').keys[0].value]"
+                    }
+                  ],
+                  "container": "[variables('DataAggregatorOutputContainerName')]",
+                  "pathPattern": "publishOrderStream/sellingProductPerMinJob"
+                }
+              },
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8",
+                  "format": "lineSeparated"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "name": "[parameters('DataAggregatorStreamAnalyticsJob2')]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "outputErrorPolicy": "stop",
+        "eventsOutOfOrderPolicy": "adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "eventsLateArrivalMaxDelayInSeconds": 5,
+        "dataLocale": "en-US",
+        "inputs": [
+          {
+            "name": "EventHub",
+            "properties": {
+              "type": "stream",
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              },
+              "datasource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
+                  "sharedAccessPolicyName": "RootManageSharedAccessKey",
+                  "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName')), '2021-01-01-preview').primaryKey]",
+                  "eventHubName": "[parameters('DataCleaningOutputStream')]"
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "Transformation",
+          "properties": {
+            "streamingUnits": "[variables('numberOfStreamingUnits')]",
+            "query": "SELECT \n System.Timestamp AS allEvents, COUNT(customerID) as Customer, \n LatLong AS allsku \n INTO \n Blob \n FROM \n EventHub \n GROUP BY \n LatLong, \n TumblingWindow(second, 10) \n \n SELECT \n System.Timestamp AS allEvents, COUNT(customerID) as Customer, \n LatLong AS allsku \n INTO \n PBI \n FROM \n EventHub \n GROUP BY \n LatLong, \n TumblingWindow(second, 10)"
+          }
+        },
+        "outputs": [
+          {
+            "name": "PBI",
+            "properties": {
+              "dataSource": {
+                "type": "PowerBI",
+                "outputPowerBISource": {
+                  "dataSet": "Quickstart-geoLocations-dataset",
+                  "table": "geoLocations-table",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "anurag.doe@git.com",
+                  "tokenUserPrincipalName": "anurag.doe@git.com"
+                },
+                "properties": {
+                  "dataSet": "Quickstart-geoLocations-dataset",
+                  "table": "geoLocations-table",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "anurag.doe@git.com",
+                  "tokenUserPrincipalName": "anurag.doe@git.com"
+                }
+              },
+            }
+          },
+          {
+            "name": "Blob",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.Storage/Blob",
+                "properties": {
+                  "storageAccounts": [
+                    {
+                      "accountName": "[parameters('StorageAccountName')]",
+                      "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')),'2021-01-01').keys[0].value]"
+                    }
+                  ],
+                  "container": "[variables('DataAggregatorOutputContainerName')]",
+                  "pathPattern": "publishOrderStream/geoLocationsJob"
+                }
+              },
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8",
+                  "format": "lineSeparated"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "name": "[parameters('DataAggregatorStreamAnalyticsJob3')]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "outputErrorPolicy": "stop",
+        "eventsOutOfOrderPolicy": "adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "eventsLateArrivalMaxDelayInSeconds": 5,
+        "dataLocale": "en-US",
+        "inputs": [
+          {
+            "name": "CustomerReferenceDataSet",
+            "properties": {
+              "type": "Reference",
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              },
+              "datasource": {
+                "type": "Microsoft.Storage/Blob",
+                "properties": {
+                  "storageAccounts": [
+                    {
+                      "accountName": "[parameters('StorageAccountName')]",
+                      "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')),'2021-01-01').keys[0].value]"
+                    }
+                  ],
+                  "container": "raw",
+                  "pathPattern": "customer_updated_refrence.json"
+                }
+              }
+            }
+          },
+          {
+            "name": "EventHub",
+            "properties": {
+              "type": "stream",
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              },
+              "datasource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
+                  "sharedAccessPolicyName": "RootManageSharedAccessKey",
+                  "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName')), '2021-01-01-preview').primaryKey]",
+                  "eventHubName": "[parameters('DataCleaningOutputStream')]"
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "Transformation",
+          "properties": {
+            "streamingUnits": "[variables('numberOfStreamingUnits')]",
+            "query": "SELECT System.Timestamp AS allEvents, \n CASE \n WHEN CS2.age >= 18 AND CS2.age < 30 THEN '18-29' \n WHEN CS2.age >= 30 AND CS2.age < 50 THEN '30-49' \n WHEN CS2.age >= 50 AND CS2.age < 65 THEN '50-64' \n WHEN CS2.age >= 65 AND CS2.age < 80 THEN '65-older' \n ELSE CONCAT( ' ', 'N A') \n END AS age_grp_category, \n COUNT(CS1.sku) AS count_customers \n INTO \n Blob \n FROM \n EventHub CS1 \n JOIN \n CustomerReferenceDataSet CS2 \n ON \n CS1.customerID = CS2.customerID \n GROUP BY \n TumblingWindow(second,10),CS2.age \n \n SELECT \n System.Timestamp AS allEvents, \n CASE \n WHEN CS2.age >= 18 AND CS2.age < 30 THEN '18-29' \n WHEN CS2.age >= 30 AND CS2.age < 50 THEN '30-49' \n WHEN CS2.age >= 50 AND CS2.age < 65 THEN '50-64' \n WHEN CS2.age >= 65 AND CS2.age < 80 THEN '65-older' \n ELSE CONCAT( ' ', 'N A') \n END AS age_grp_category, \n COUNT(CS1.sku) AS count_customers \n INTO \n PBI \n FROM \n EventHub CS1 \n JOIN \n CustomerReferenceDataSet CS2 \n ON \n CS1.customerID = CS2.customerID \n GROUP BY \n TumblingWindow(second,10),CS2.age"
+          }
+        },
+        "outputs": [
+          {
+            "name": "PBI",
+            "properties": {
+              "dataSource": {
+                "type": "PowerBI",
+                "outputPowerBISource": {
+                  "dataSet": "Quickstart-ageGroupWiseRevenue-dataset",
+                  "table": "ageGroupWiseRevenue-table",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "anurag.doe@git.com",
+                  "tokenUserPrincipalName": "anurag.doe@git.com"
+                },
+                "properties": {
+                  "dataSet": "Quickstart-ageGroupWiseRevenue-dataset",
+                  "table": "ageGroupWiseRevenue-table",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "anurag.doe@git.com",
+                  "tokenUserPrincipalName": "anurag.doe@git.com"
+                }
+              },
+            }
+          },
+          {
+            "name": "Blob",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.Storage/Blob",
+                "properties": {
+                  "storageAccounts": [
+                    {
+                      "accountName": "[parameters('StorageAccountName')]",
+                      "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')),'2021-01-01').keys[0].value]"
+                    }
+                  ],
+                  "container": "[variables('DataAggregatorOutputContainerName')]",
+                  "pathPattern": "publishOrderStream/ageGroupWiseRevenueJob"
+                }
+              },
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8",
+                  "format": "lineSeparated"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "variables": {
+    "numberOfStreamingUnits": 3,
+    "DataAggregatorOutputContainerName": "publish"
+  }
+}

@@ -16,15 +16,7 @@
     },
     "lapVmSize": {
       "type": "string",
-      "defaultValue": "Standard_D1_V2",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_D1_V2",
-        "Standard_D3_V2",
-        "Standard_D4_V2"
-      ],
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "The size of the virtual machines used when provisioning the Lap node"
       }
@@ -38,15 +30,7 @@
     },
     "neo4jVmSize": {
       "type": "string",
-      "defaultValue": "Standard_D1_V2",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_D1_V2",
-        "Standard_D3_V2",
-        "Standard_D4_V2"
-      ],
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "The size of the virtual machines used when provisioning Neo4J node(s)"
       }
@@ -141,7 +125,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -151,6 +135,9 @@
         "parameters": {
           "networkSettings": {
             "value": "[variables('networkSettings')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
@@ -158,9 +145,9 @@
     {
       "name": "lanpLapNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -190,9 +177,6 @@
           "vmSize": {
             "value": "[parameters('lapVmSize')]"
           },
-          "neo4jNodes": {
-            "value": "[parameters('neo4jNodes')]"
-          },
           "osSettings": {
             "value": "[variables('lapOsSettings')]"
           },
@@ -201,6 +185,9 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -208,10 +195,10 @@
     {
       "name": "[concat('lanpNeo4jNode', copyindex())]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'lanpLapNode')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'lanpLapNode')]"
       ],
       "copy": {
         "name": "vmLoop",
@@ -233,8 +220,8 @@
           "vmbasename": {
             "value": "[concat('neo4j', copyindex())]"
           },
-          "lapNode": {
-            "value": "[variables('networkSettings').statics.lapip]"
+          "location": {
+              "value": "[parameters('location')]"
           },
           "neo4jstaticIp": {
             "value": "[variables('networkSettings').statics.neo4jip]"
@@ -257,6 +244,6 @@
         }
       }
     }
-  ],
-  "outputs": {}
+  ]
 }
+

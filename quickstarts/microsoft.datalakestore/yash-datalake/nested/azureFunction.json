@@ -1,0 +1,337 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Deployment location"
+      }
+    },
+    "KibanaESDeployedVMIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Public IP of VM on which kibana install."
+      }
+    },
+    "web_app_id": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of the service principal web/api"
+      }
+    },
+    "web_app_secret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The ID of the service principal web/api"
+      }
+    },
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "Web application name"
+      }
+    },
+    "datafactory_name": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of the service principal"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "storage account name"
+      }
+    },
+    "eventhub_name": {
+      "type": "string",
+      "metadata": {
+        "description": "Event hub name"
+      }
+    },
+    "eventhub_namespace": {
+      "type": "string",
+      "metadata": {
+        "description": "eventhub namespace name"
+      }
+    },
+    "adla_account_name": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure datalake analytics name"
+      }
+    },
+    "DataCleaningStreamAnalyticsJob": {
+      "type": "String",
+      "metadata": {
+        "description": " Azure stream analytics job name 1"
+      }
+    },
+    "DataAggregatorStreamAnalyticsJob1": {
+      "type": "String",
+      "metadata": {
+        "description": " Azure stream analytics job name 1"
+      }
+    },
+    "DataAggregatorStreamAnalyticsJob2": {
+      "type": "String",
+      "metadata": {
+        "description": " Azure stream analytics job name 2"
+      }
+    },
+    "DataAggregatorStreamAnalyticsJob3": {
+      "type": "String",
+      "metadata": {
+        "description": " Azure stream analytics job name 3"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    }
+  },
+  "variables": {
+    "config_web_name": "web",
+    "pythonExtension": "azureappservice-python2714x64",
+    "functionAppName": "[parameters('appName')]",
+    "hostingPlanName": "[parameters('appName')]",
+    "tenant": "[subscription().tenantId]",
+    "msd": "MSDeploy"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[variables('hostingPlanName')]",
+      "apiVersion": "2020-06-01",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      },
+      "kind": "functionapp",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "perSiteScaling": false,
+        "reserved": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('functionAppName')]",
+      "apiVersion": "2020-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      ],
+      "kind": "functionapp",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "name": "[variables('pythonExtension')]",
+          "type": "siteextensions",
+          "apiVersion": "2020-06-01",
+          "properties": {},
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites',variables('functionAppName'))]"
+          ]
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-06-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('functionAppName'))]",
+            "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+            "[resourceId('Microsoft.Web/sites/siteextensions', variables('functionAppName'), variables('pythonExtension'))]"
+          ],
+          "tags": {
+            "displayName": "pythonextension"
+          },
+          "properties": {
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('scripts/quickstart_function_app.zip', parameters('_artifactsLocationSasToken')))]",
+            "dbType": "None"
+          }
+        }
+      ],
+      "properties": {
+        "enabled": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "siteConfig": {
+          "handlerMappings": [
+            {
+              "arguments": "D:\\home\\Python27\\wfastcgi.py",
+              "extension": "fastCgi",
+              "scriptProcessor": "D:\\home\\Python27\\python.exe"
+            }
+          ],
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2021-01-01').keys[0].value)]"
+            },
+            {
+              "name": "datafactory_name",
+              "value": "[parameters('datafactory_name')]"
+            },
+            {
+              "name": "vm_ip",
+              "value": "[parameters('KibanaESDeployedVMIP')]"
+            },
+            {
+              "name": "function_app_name",
+              "value": "[parameters('appName')]"
+            },
+            {
+              "name": "resource_group",
+              "value": "[resourceGroup().name]"
+            },
+            {
+              "name": "storage_name",
+              "value": "[parameters('storageAccountName')]"
+            },
+            {
+              "name": "subscription_id",
+              "value": "[subscription().subscriptionId]"
+            },
+            {
+              "name": "tenant",
+              "value": "[subscription().tenantId]"
+            },
+            {
+              "name": "web_app_id",
+              "value": "[parameters('web_app_id')]"
+            },
+            {
+              "name": "web_app_secret",
+              "value": "[parameters('web_app_secret')]"
+            },
+            {
+              "name": "adla_account_name",
+              "value": "[parameters('adla_account_name')]"
+            },
+            {
+              "name": "eventhub_name",
+              "value": "[parameters('eventhub_name')]"
+            },
+            {
+              "name": "eventhub_namespace",
+              "value": "[parameters('eventhub_namespace')]"
+            },
+            {
+              "name": "sas_key",
+              "value": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventhub_namespace'), 'RootManageSharedAccessKey'), '2021-01-01-preview').primaryKey]"
+            },
+            {
+              "name": "DataCleaningStreamAnalyticsJob",
+              "value": "[parameters('DataCleaningStreamAnalyticsJob')]"
+            },
+            {
+              "name": "DataAggregatorStreamAnalyticsJob1",
+              "value": "[parameters('DataAggregatorStreamAnalyticsJob1')]"
+            },
+            {
+              "name": "DataAggregatorStreamAnalyticsJob2",
+              "value": "[parameters('DataAggregatorStreamAnalyticsJob2')]"
+            },
+            {
+              "name": "DataAggregatorStreamAnalyticsJob3",
+              "value": "[parameters('DataAggregatorStreamAnalyticsJob3')]"
+            }
+          ]
+        },
+        "reserved": false,
+        "scmSiteAlsoStopped": false,
+        "clientAffinityEnabled": false,
+        "clientCertEnabled": false,
+        "hostNamesDisabled": false,
+        "containerSize": 1536,
+        "dailyMemoryTimeQuota": 0
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "name": "[concat(variables('functionAppName'), '/', variables('config_web_name'))]",
+      "apiVersion": "2018-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "[resourceId('Microsoft.Web/sites/extensions', variables('functionAppName'), variables('msd'))]"
+      ],
+      "properties": {
+        "numberOfWorkers": 1,
+        "defaultDocuments": [
+          "Default.htm",
+          "Default.html",
+          "Default.asp",
+          "index.htm",
+          "index.html",
+          "iisstart.htm",
+          "default.aspx",
+          "index.php"
+        ],
+        "netFrameworkVersion": "v4.0",
+        "phpVersion": "5.6",
+        "pythonVersion": "2.7",
+        "requestTracingEnabled": false,
+        "remoteDebuggingEnabled": false,
+        "httpLoggingEnabled": false,
+        "logsDirectorySizeLimit": 35,
+        "detailedErrorLoggingEnabled": false,
+        "publishingUsername": "[concat('$',variables('functionAppName'))]",
+        "scmType": "None",
+        "use32BitWorkerProcess": true,
+        "webSocketsEnabled": false,
+        "alwaysOn": false,
+        "managedPipelineMode": "Integrated",
+        "virtualApplications": [
+          {
+            "virtualPath": "/",
+            "physicalPath": "site\\wwwroot",
+            "preloadEnabled": false
+          }
+        ],
+        "winAuthAdminState": 0,
+        "winAuthTenantState": 0,
+        "customAppPoolIdentityAdminState": false,
+        "customAppPoolIdentityTenantState": false,
+        "loadBalancing": "LeastRequests",
+        "autoHealEnabled": false,
+        "siteAuthEnabled": true,
+        "siteAuthSettings": {
+          "enabled": true,
+          "unauthenticatedClientAction": "RedirectToLoginPage",
+          "tokenStoreEnabled": true,
+          "defaultProvider": "AzureActiveDirectory",
+          "clientId": "[parameters('web_app_id')]",
+          "issuer": "[concat('https://sts.windows.net/',variables('tenant'))]",
+          "isAadAutoProvisioned": false
+        },
+        "localMySqlEnabled": false,
+        "http20Enabled": false,
+        "minTlsVersion": "1.0",
+        "ftpsState": "AllAllowed"
+      },
+      "location": "[parameters('location')]"
+    }
+  ],
+  "outputs": {
+    "websiteUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/Sites', parameters('appName'))).hostNames[0]]"
+    }
+  }
+}

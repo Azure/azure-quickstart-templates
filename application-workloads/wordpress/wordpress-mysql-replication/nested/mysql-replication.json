@@ -57,13 +57,6 @@
         "description": "New or existing Virtual network name"
       }
     },
-    "VNETExistingResourceGroupName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "If using existing VNet, specifies the resource group for the existing VNet"
-      }
-    },
     "dbSubnetName": {
       "type": "string",
       "defaultValue": "default",
@@ -164,7 +157,6 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -186,13 +178,9 @@
     "templateAPIVersion": "2015-01-01",
     "nodeCount": 2,
     "lbPublicIPName": "[parameters('publicIPName')]",
-    "lbPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]",
     "lbName": "[concat(parameters('dnsName'), '-lb')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "ilbBackendAddressPoolName": "[concat(parameters('dnsName'), '-ilbBackendPool')]",
-    "ilbBackendAddressPoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('ilbBackendAddressPoolName'))]",
     "sshIPConfigName": "[concat(parameters('dnsName'), '-sshIPCfg')]",
-    "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]",
     "nicName": "[concat(parameters('dnsName'), '-nic')]",
     "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
     "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat('scripts/azuremysql.sh', parameters('_artifactsLocationSasToken')))]",
@@ -219,7 +207,7 @@
     {
       "name": "SettingUpVirtualNetwork",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -239,14 +227,14 @@
           "dbSubnetAddressPrefix": {
             "value": "[parameters('dbSubnetAddressPrefix')]"
           },
-          "VNETExistingResourceGroupName": {
-            "value": "[parameters('VNETExistingResourceGroupName')]"
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('lbPublicIPName')]",
       "location": "[parameters('location')]",
@@ -271,7 +259,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -280,8 +268,8 @@
         "count": "[variables('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+        "[resourceId('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -295,18 +283,18 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[variables('ilbBackendAddressPoolID')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/',variables('lbName'), variables('ilbBackendAddressPoolName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'NatRule', copyIndex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat(parameters('dnsName'), 'NatRule', copyIndex()))]"
                 },
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'ProbeNatRule', copyIndex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat(parameters('dnsName'), 'ProbeNatRule', copyIndex()))]"
                 },
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'MySQLNatRule', copyIndex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat(parameters('dnsName'), 'MySQLNatRule', copyIndex()))]"
                 }
               ]
             }
@@ -317,15 +305,15 @@
     {
       "name": "[concat(parameters('dnsName'), copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2018-10-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoop",
         "count": "[variables('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -370,7 +358,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',variables('nicName')), copyIndex())]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
             }
           ]
         }
@@ -386,7 +374,7 @@
         "count": "[variables('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsName'), copyIndex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('dnsName'), copyIndex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -404,12 +392,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -417,7 +405,7 @@
             "name": "[variables('sshIPConfigName')]",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('lbPublicIPRef')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]"
               }
             }
           }
@@ -432,7 +420,7 @@
             "name": "[concat(parameters('dnsName'),'NatRule0')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('sshIPConfig')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('sshIPConfigName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort0')]",
@@ -444,7 +432,7 @@
             "name": "[concat(parameters('dnsName'),'NatRule1')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('sshIPConfig')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('sshIPConfigName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
@@ -456,7 +444,7 @@
             "name": "[concat(parameters('dnsName'),'MySQLNatRule0')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('sshIPConfig')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('sshIPConfigName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlFrontEndPort0')]",
@@ -468,7 +456,7 @@
             "name": "[concat(parameters('dnsName'),'MySQLNatRule1')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('sshIPConfig')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('sshIPConfigName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlFrontEndPort1')]",
@@ -480,7 +468,7 @@
             "name": "[concat(parameters('dnsName'),'ProbeNatRule0')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('sshIPConfig')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('sshIPConfigName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlProbePort0')]",
@@ -492,7 +480,7 @@
             "name": "[concat(parameters('dnsName'),'ProbeNatRule1')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('sshIPConfig')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('sshIPConfigName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlProbePort1')]",
@@ -506,11 +494,11 @@
   ],
   "outputs": {
     "fqdn": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2015-06-15').dnsSettings.fqdn]",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2020-08-01').dnsSettings.fqdn]",
       "type": "string"
     },
     "ipaddress": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2015-06-15').ipAddress]",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2020-08-01').ipAddress]",
       "type": "string"
     }
   }

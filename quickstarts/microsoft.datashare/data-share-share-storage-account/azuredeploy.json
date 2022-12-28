@@ -1,0 +1,161 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "9068130575551523333"
+    }
+  },
+  "parameters": {
+    "projectName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify a project name that is used to generate resource names."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specify the location for the resources."
+      }
+    },
+    "invitationEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify an email address for receiving data share invitations."
+      }
+    },
+    "syncInterval": {
+      "type": "string",
+      "defaultValue": "Day",
+      "allowedValues": [
+        "Day",
+        "Hour"
+      ],
+      "metadata": {
+        "description": "Specify snapshot schedule recurrence."
+      }
+    },
+    "syncTime": {
+      "type": "string",
+      "defaultValue": "[utcNow('yyyy-MM-ddTHH:mm:ssZ')]",
+      "metadata": {
+        "description": "Specify snapshot schedule start time."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[format('{0}store', parameters('projectName'))]",
+    "containerName": "[format('{0}container', parameters('projectName'))]",
+    "dataShareAccountName": "[format('{0}shareaccount', parameters('projectName'))]",
+    "dataShareName": "[format('{0}share', parameters('projectName'))]",
+    "roleAssignmentName": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('storageBlobDataReaderRoleDefinitionId'), resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName')))]",
+    "inviteName": "[format('{0}invite', variables('dataShareName'))]",
+    "storageBlobDataReaderRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2021-04-01",
+      "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('containerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataShare/accounts",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('dataShareAccountName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.DataShare/accounts/shares",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('dataShareAccountName'), variables('dataShareName'))]",
+      "properties": {
+        "shareKind": "CopyBased"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageAccountName'))]",
+      "name": "[variables('roleAssignmentName')]",
+      "properties": {
+        "roleDefinitionId": "[variables('storageBlobDataReaderRoleDefinitionId')]",
+        "principalId": "[reference(resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName')), '2021-08-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataShare/accounts/shares/dataSets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}/{2}', variables('dataShareAccountName'), variables('dataShareName'), variables('containerName'))]",
+      "kind": "Container",
+      "properties": {
+        "subscriptionId": "[subscription().subscriptionId]",
+        "resourceGroup": "[resourceGroup().name]",
+        "storageAccountName": "[variables('storageAccountName')]",
+        "containerName": "[variables('containerName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', split(format('{0}/default/{1}', variables('storageAccountName'), variables('containerName')), '/')[0], split(format('{0}/default/{1}', variables('storageAccountName'), variables('containerName')), '/')[1], split(format('{0}/default/{1}', variables('storageAccountName'), variables('containerName')), '/')[2])]",
+        "[resourceId('Microsoft.DataShare/accounts/shares', variables('dataShareAccountName'), variables('dataShareName'))]",
+        "[resourceId('Microsoft.DataShare/accounts/shares/invitations', variables('dataShareAccountName'), variables('dataShareName'), variables('inviteName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.DataShare/accounts/shares/synchronizationSettings', variables('dataShareAccountName'), variables('dataShareName'), format('{0}_synchronizationSetting', variables('dataShareName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataShare/accounts/shares/invitations",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}/{2}', variables('dataShareAccountName'), variables('dataShareName'), variables('inviteName'))]",
+      "properties": {
+        "targetEmail": "[parameters('invitationEmail')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataShare/accounts/shares', variables('dataShareAccountName'), variables('dataShareName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataShare/accounts/shares/synchronizationSettings",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}/{2}', variables('dataShareAccountName'), variables('dataShareName'), format('{0}_synchronizationSetting', variables('dataShareName')))]",
+      "kind": "ScheduleBased",
+      "properties": {
+        "recurrenceInterval": "[parameters('syncInterval')]",
+        "synchronizationTime": "[parameters('syncTime')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataShare/accounts/shares', variables('dataShareAccountName'), variables('dataShareName'))]"
+      ]
+    }
+  ]
+}

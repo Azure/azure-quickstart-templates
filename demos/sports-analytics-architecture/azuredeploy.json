@@ -1,0 +1,385 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.61.36676",
+      "templateHash": "3351458417114662416"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources. Leave the default value."
+      }
+    },
+    "azureADUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Your Azure AD user identity (this identity will be granted admin rights to the Azure SQL instance)."
+      }
+    },
+    "azureADObjectID": {
+      "type": "string",
+      "metadata": {
+        "description": "Object ID for your Azure AD user identity (see the README.md file in the Azure Quickstart guide for instructions on how to get your Azure AD user object ID)."
+      }
+    },
+    "azureDataLakeStoreAccountName": {
+      "type": "string",
+      "defaultValue": "[format('adls{0}', uniqueString(resourceGroup().id))]",
+      "maxLength": 24,
+      "minLength": 3,
+      "metadata": {
+        "description": "Name of the Azure Data Lake Storage Gen2 storage account. Storage account name requirements:\r\n- Storage account names must be between 3 and 24 characters in length and may contain numbers and lowercase letters only.\r\n- Your storage account name must be unique within Azure. No two storage accounts can have the same name.\r\n"
+      }
+    },
+    "azureDataFactoryName": {
+      "type": "string",
+      "defaultValue": "[format('adf-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Azure Data Factory instance."
+      }
+    },
+    "azureDatabricksName": {
+      "type": "string",
+      "defaultValue": "[format('databricks-{0}', uniqueString(resourceGroup().id))]",
+      "maxLength": 30,
+      "minLength": 3,
+      "metadata": {
+        "description": "Name of the Azure Databricks workspace. Databricks workspace name requirements:\r\n- Databricks workspace names must be between 3 and 30 characters in length and may contain numbers, letters, underscores, and hyphens only.\r\n"
+      }
+    },
+    "databricksNPIP": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Do you want to enable No Public IP (NPIP) for your Azure Databricks workspace (true or false)?"
+      }
+    },
+    "deployEventHub": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Do you want to deploy a new Azure Event Hub for streaming use cases (true or false)? Leave default name if you choose false."
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "defaultValue": "[format('eh-{0}', uniqueString(resourceGroup().id))]",
+      "maxLength": 50,
+      "minLength": 6,
+      "metadata": {
+        "description": "Name of the Azure Event Hub. Event Hub name requirements:\r\n- Event Hub names must be between 6 and 50 characters in length and may contain numbers, letters, and hyphens only.\r\n- The name must start with a letter, and it must end with a letter or number\r\n"
+      }
+    },
+    "deployAzureKeyVault": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Do you want to deploy a new Azure Key Vault instance (true or false)? Leave default name if you choose false."
+      }
+    },
+    "azureKeyVaultName": {
+      "type": "string",
+      "defaultValue": "[format('kv-{0}', uniqueString(resourceGroup().id))]",
+      "maxLength": 24,
+      "minLength": 3,
+      "metadata": {
+        "description": "Name of the Azure Key Vault. Key Vault name requirements:\r\n- Key vault names must be between 3 and 24 characters in length and may contain numbers, letters, and dashes only.\r\n"
+      }
+    },
+    "deploySqlDb": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Do you want to deploy a new Azure SQL Database (true or false)? Leave default name if you choose false."
+      }
+    },
+    "azureSqlServerName": {
+      "type": "string",
+      "defaultValue": "[format('{0}sqlsrv', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of Azure SQL logical server"
+      }
+    },
+    "azureSqlDatabaseName": {
+      "type": "string",
+      "defaultValue": "analytics-db",
+      "maxLength": 128,
+      "metadata": {
+        "description": "Database name"
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL administrator username"
+      }
+    },
+    "sqlAdministratorLoginPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "SQL administrator password"
+      }
+    }
+  },
+  "variables": {
+    "akvRoleName": "Key Vault Secrets User",
+    "akvRoleIdMapping": {
+      "Key Vault Secrets User": "4633458b-17de-408a-b874-0445c86b69e6"
+    }
+  },
+  "resources": [
+    {
+      "condition": "[parameters('deployEventHub')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}ns', parameters('eventHubName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard",
+        "capacity": 1
+      },
+      "properties": {
+        "isAutoInflateEnabled": false,
+        "maximumThroughputUnits": 0
+      }
+    },
+    {
+      "condition": "[parameters('deployEventHub')]",
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}', format('{0}ns', parameters('eventHubName')), parameters('eventHubName'))]",
+      "properties": {
+        "messageRetentionInDays": 7,
+        "partitionCount": 1
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', format('{0}ns', parameters('eventHubName')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deploySqlDb')]",
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2021-11-01",
+      "name": "[parameters('azureSqlServerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "minimalTlsVersion": "1.2",
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "administrators": {
+          "administratorType": "ActiveDirectory",
+          "azureADOnlyAuthentication": false,
+          "login": "[parameters('azureADUserName')]",
+          "sid": "[parameters('azureADObjectID')]",
+          "tenantId": "[subscription().tenantId]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('deploySqlDb')]",
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}', parameters('azureSqlServerName'), parameters('azureSqlDatabaseName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": 8,
+        "family": "Gen5",
+        "name": "GP_Gen5",
+        "tier": "GeneralPurpose"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('azureSqlServerName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deploySqlDb')]",
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2020-11-01-preview",
+      "name": "[format('{0}/{1}', parameters('azureSqlServerName'), 'Allow Azure Services')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('azureSqlServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-09-01",
+      "name": "[parameters('azureDataLakeStoreAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "isHnsEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('azureDataLakeStoreAccountName'))]",
+      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('azureDataLakeStoreAccountName')), parameters('azureADObjectID'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "principalId": "[parameters('azureADObjectID')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('azureDataLakeStoreAccountName'))]"
+      ],
+      "metadata": {
+        "description": "Assigns the user to Storage Blob Data Contributor Role"
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[parameters('azureDataFactoryName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('azureDataLakeStoreAccountName'))]",
+      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('azureDataLakeStoreAccountName')), resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName')), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "principalId": "[reference(resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName')), '2018-06-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('azureDataLakeStoreAccountName'))]",
+        "[resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName'))]"
+      ],
+      "metadata": {
+        "description": "Assigns the ADF Managed Identity to Storage Blob Data Contributor Role"
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/linkedservices",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', parameters('azureDataFactoryName'), format('{0}-linkedService', parameters('azureDataLakeStoreAccountName')))]",
+      "properties": {
+        "type": "AzureBlobFS",
+        "typeProperties": {
+          "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('azureDataLakeStoreAccountName')), '2021-09-01').keys[0].value]",
+          "url": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('azureDataLakeStoreAccountName'))).primaryEndpoints.dfs]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('azureDataLakeStoreAccountName'))]",
+        "[resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deploySqlDb')]",
+      "type": "Microsoft.DataFactory/factories/linkedservices",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', parameters('azureDataFactoryName'), format('{0}-linkedService', parameters('azureSqlServerName')))]",
+      "properties": {
+        "type": "AzureSqlDatabase",
+        "typeProperties": {
+          "connectionString": "[format('Data Source={0}{1};Initial Catalog={2};User ID = {3};Password={4};', parameters('azureSqlServerName'), environment().suffixes.sqlServerHostname, parameters('azureSqlDatabaseName'), parameters('sqlAdministratorLogin'), parameters('sqlAdministratorLoginPassword'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2018-04-01",
+      "name": "[parameters('azureDatabricksName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "premium"
+      },
+      "properties": {
+        "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', format('databricks-rg-{0}-{1}', parameters('azureDatabricksName'), uniqueString(parameters('azureDatabricksName'), resourceGroup().id)))]",
+        "parameters": {
+          "enableNoPublicIp": {
+            "value": "[parameters('databricksNPIP')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[parameters('deployAzureKeyVault')]",
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2022-07-01",
+      "name": "[parameters('azureKeyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enableRbacAuthorization": true,
+        "tenantId": "[subscription().tenantId]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "bypass": "AzureServices"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('deployAzureKeyVault')]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('azureKeyVaultName'))]",
+      "name": "[guid(variables('akvRoleIdMapping')[variables('akvRoleName')], parameters('azureADObjectID'), resourceId('Microsoft.KeyVault/vaults', parameters('azureKeyVaultName')))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('akvRoleIdMapping')[variables('akvRoleName')])]",
+        "principalId": "[parameters('azureADObjectID')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('azureKeyVaultName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployAzureKeyVault')]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('azureKeyVaultName'))]",
+      "name": "[guid(variables('akvRoleIdMapping')[variables('akvRoleName')], resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName')), resourceId('Microsoft.KeyVault/vaults', parameters('azureKeyVaultName')))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('akvRoleIdMapping')[variables('akvRoleName')])]",
+        "principalId": "[reference(resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName')), '2018-06-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('azureKeyVaultName'))]",
+        "[resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployAzureKeyVault')]",
+      "type": "Microsoft.DataFactory/factories/linkedservices",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', parameters('azureDataFactoryName'), format('{0}-linkedService', parameters('azureKeyVaultName')))]",
+      "properties": {
+        "type": "AzureKeyVault",
+        "typeProperties": {
+          "baseUrl": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('azureKeyVaultName')), '2022-07-01').vaultUri]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('azureKeyVaultName'))]",
+        "[resourceId('Microsoft.DataFactory/factories', parameters('azureDataFactoryName'))]"
+      ]
+    }
+  ]
+}

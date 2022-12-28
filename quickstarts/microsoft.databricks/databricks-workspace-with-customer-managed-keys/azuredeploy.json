@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "1991883325699832433"
+    }
+  },
   "parameters": {
     "disablePublicIp": {
       "type": "bool",
@@ -11,7 +18,7 @@
     },
     "workspaceName": {
       "type": "string",
-      "defaultValue": "[concat('ws', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('ws{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Azure Databricks workspace to create."
       }
@@ -54,12 +61,12 @@
     }
   },
   "variables": {
-    "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]"
+    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]"
   },
   "resources": [
     {
       "type": "Microsoft.Databricks/workspaces",
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2022-04-01-preview",
       "name": "[parameters('workspaceName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -76,27 +83,59 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "name": "addAccessPolicy",
       "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
-      ],
       "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
         "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview').storageAccountIdentity.principalId]"
+          },
+          "tenantId": {
+            "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview').storageAccountIdentity.tenantId]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          }
+        },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "0.9.0.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.13.1.58284",
+              "templateHash": "17130504706316249836"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string"
+            },
+            "tenantId": {
+              "type": "string"
+            },
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "The Azure Key Vault name."
+              }
+            }
+          },
           "resources": [
             {
               "type": "Microsoft.KeyVault/vaults/accessPolicies",
-              "apiVersion": "2019-09-01",
-              "name": "[concat(parameters('keyVaultName'), '/add')]",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/add', parameters('keyVaultName'))]",
               "properties": {
                 "accessPolicies": [
                   {
-                    "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2018-04-01').storageAccountIdentity.principalId]",
-                    "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2018-04-01').storageAccountIdentity.tenantId]",
+                    "objectId": "[parameters('principalId')]",
+                    "tenantId": "[parameters('tenantId')]",
                     "permissions": {
                       "keys": [
                         "get",
@@ -110,31 +149,109 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
+      ]
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "name": "configureCMKOnWorkspace",
-      "dependsOn": [
-        "addAccessPolicy"
-      ],
       "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
         "mode": "Incremental",
+        "parameters": {
+          "managedResourceGroupName": {
+            "value": "[variables('managedResourceGroupName')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "pricingTier": {
+            "value": "[parameters('pricingTier')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "keyName": {
+            "value": "[parameters('keyName')]"
+          },
+          "disablePublicIp": {
+            "value": "[parameters('disablePublicIp')]"
+          }
+        },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "0.9.0.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.13.1.58284",
+              "templateHash": "17861589507538098701"
+            }
+          },
+          "parameters": {
+            "managedResourceGroupName": {
+              "type": "string"
+            },
+            "workspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Databricks workspace to create."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "pricingTier": {
+              "type": "string",
+              "allowedValues": [
+                "standard",
+                "premium"
+              ],
+              "metadata": {
+                "description": "The pricing tier of workspace."
+              }
+            },
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "The Azure Key Vault name."
+              }
+            },
+            "keyName": {
+              "type": "string",
+              "metadata": {
+                "description": "The Azure Key Vault encryption key name."
+              }
+            },
+            "disablePublicIp": {
+              "type": "bool",
+              "metadata": {
+                "description": "Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not"
+              }
+            }
+          },
           "resources": [
             {
               "type": "Microsoft.Databricks/workspaces",
-              "apiVersion": "2018-04-01",
+              "apiVersion": "2022-04-01-preview",
               "name": "[parameters('workspaceName')]",
               "location": "[parameters('location')]",
               "sku": {
                 "name": "[parameters('pricingTier')]"
               },
               "properties": {
-                "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
+                "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('managedResourceGroupName'))]",
                 "parameters": {
                   "prepareEncryption": {
                     "value": true
@@ -142,7 +259,7 @@
                   "encryption": {
                     "value": {
                       "keySource": "Microsoft.Keyvault",
-                      "keyvaulturi": "[concat('https://', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyvaulturi": "[uri(format('https://{0}{1}', parameters('keyVaultName'), environment().suffixes.keyvaultDns), '/')]",
                       "KeyName": "[parameters('keyName')]"
                     }
                   },
@@ -154,13 +271,16 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('keyVaultResourceGroupName')), 'Microsoft.Resources/deployments', 'addAccessPolicy')]"
+      ]
     }
   ],
   "outputs": {
     "workspace": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')))]"
+      "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview')]"
     }
   }
 }

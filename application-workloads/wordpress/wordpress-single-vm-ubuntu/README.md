@@ -1,3 +1,13 @@
+---
+description: This template deploys a complete LAMP stack, then installs and initializes WordPress. Once the deployment is finished, you need to go to http&#58;//fqdn.of.your.vm/wordpress/ to finish the configuration, create an account, and get started with WordPress.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: wordpress-single-vm-ubuntu
+languages:
+- json
+---
 # Deploy a single-VM WordPress to Azure
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wordpress/wordpress-single-vm-ubuntu/PublicLastTestDate.svg)
@@ -17,4 +27,4 @@ This template deploys a complete LAMP stack, then installs and initializes WordP
 
 Once the deployment is finished, you need to go to http://fqdn.of.your.vm/wordpress/ to finish the configuration, create an account, and get started with WordPress.
 
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

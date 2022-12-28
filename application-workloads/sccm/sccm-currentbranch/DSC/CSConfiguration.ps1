@@ -1,4 +1,4 @@
-configuration Configuration
+﻿configuration Configuration
 {
    param
    (
@@ -13,7 +13,7 @@ configuration Configuration
         [Parameter(Mandatory)]
         [String]$PSName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [System.Array]$ClientName,
         [Parameter(Mandatory)]
         [String]$Configuration,
         [Parameter(Mandatory)]
@@ -30,6 +30,7 @@ configuration Configuration
     $DCComputerAccount = "$DName\$DCName$"
     $PSComputerAccount = "$DName\$PSName$"
     $DPMPComputerAccount = "$DName\$DPMPName$"
+    [String]$Clients = [system.String]::Join(",", $ClientName)
     $CurrentRole = "CS"
     $PrimarySiteName = $PSName.split(".")[0] + "$"
     
@@ -119,8 +120,8 @@ configuration Configuration
 
         FileReadAccessShare DomainSMBShare
         {
-            Name   = $LogFolder
-            Path =  $LogPath
+            Name = $LogFolder
+            Path = $LogPath
             Account = $DCComputerAccount,$PSComputerAccount
             DependsOn = "[WaitForConfigurationFile]WaitPSJoinDomain"
         }
@@ -151,8 +152,8 @@ configuration Configuration
 
         FileReadAccessShare CMSourceSMBShare
         {
-            Name   = $CM
-            Path =  "c:\$CM"
+            Name = $CM
+            Path = "c:\$CM"
             Account = $DCComputerAccount
             DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
         }
@@ -168,7 +169,7 @@ configuration Configuration
             TaskName = "ScriptWorkFlow"
             ScriptName = "ScriptWorkFlow.ps1"
             ScriptPath = $PSScriptRoot
-            ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+            ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $Clients $Configuration $CurrentRole $LogFolder $CSName $PSName"
             Ensure = "Present"
             DependsOn = "[AddUserToLocalAdminGroup]AddADComputerToLocalAdminGroup"
         }

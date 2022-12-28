@@ -1,3 +1,13 @@
+---
+description: This ARM template is intented to create a CosmosDB Account quickly with the minimal required values
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-create-account
+languages:
+- json
+---
 # Create an Azure CosmosDB Account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-create-account/PublicLastTestDate.svg)
@@ -20,10 +30,10 @@ This ARM template is intended to create a **CosmosDB Account** quickly with the 
 ## Parameters
 The following parameters has default value allowing to deploy the template as-is without providing any parameter but could be overriden at the deployment time :
 
-`name` : Name of the CosmosDB Account, default is a unique string calculated from the "cosmosdb" token and the resource group id.  
+`name` : Name of the CosmosDB Account, default is a unique string calculated from the "cosmosdb" token and the resource group id.
 
-`location` : Location of the CosmosDB Account, default to the location of the resource group.  
+`location` : Location of the CosmosDB Account, default to the location of the resource group.
 
 `tier` : Offering type of the CosmosDB Account, default to Standard.
 
-
+`Tags: Microsoft.DocumentDB/databaseAccounts`

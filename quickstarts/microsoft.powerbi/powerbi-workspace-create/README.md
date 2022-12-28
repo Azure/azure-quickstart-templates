@@ -1,3 +1,13 @@
+---
+description: This template creates a PowerBI Workspace Collection
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: powerbi-workspace-create
+languages:
+- json
+---
 # Create a PowerBI Workspace Collection using a template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.powerbi/powerbi-workspace-create/PublicLastTestDate.svg)
@@ -15,4 +25,4 @@
 
 This ARM template creates a PowerBI Workspace collection resource in Azure.
 
-
+`Tags: Microsoft.PowerBI/workspaceCollections`

@@ -29,7 +29,8 @@
       "minValue": 1,
       "metadata": {
         "description": "Describes plan's instance count"
-      }
+      },
+      "maxValue": 10
     },
     "administratorLogin": {
       "type": "string",
@@ -126,7 +127,9 @@
       "defaultValue": 0,
       "metadata": {
         "description": "The size of the new Azure Redis Cache instance. "
-      }
+      },
+      "minValue": 0,
+      "maxValue": 6
     },
     "location": {
       "type": "string",
@@ -150,7 +153,7 @@
       "tags": {
         "displayName": "SqlServer"
       },
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2020-08-01-preview",
       "properties": {
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
@@ -164,9 +167,9 @@
           "tags": {
             "displayName": "Database"
           },
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2020-02-02-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
           ],
           "properties": {
             "edition": "[parameters('edition')]",
@@ -179,7 +182,7 @@
           "type": "firewallrules",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
           ],
           "location": "[parameters('location')]",
           "name": "AllowAllWindowsAzureIps",
@@ -212,8 +215,8 @@
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverFarms/', variables('hostingPlanName'))]",
-        "[concat('Microsoft.Cache/Redis/', variables('cacheName'))]"
+        "[resourceId('Microsoft.Web/serverFarms/', variables('hostingPlanName'))]",
+        "[resourceId('Microsoft.Cache/Redis/', variables('cacheName'))]"
       ],
       "tags": {
         "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty",
@@ -229,12 +232,12 @@
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', variables('webSiteName'))]",
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Web/Sites/', variables('webSiteName'))]",
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
           ],
           "properties": {
             "TeamContext": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
               "type": "SQLServer"
             }
           }
@@ -244,11 +247,11 @@
           "type": "config",
           "name": "appsettings",
           "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', variables('webSiteName'))]",
-            "[concat('Microsoft.Cache/Redis/', variables('cacheName'))]"
+            "[resourceId('Microsoft.Web/Sites/', variables('webSiteName'))]",
+            "[resourceId('Microsoft.Cache/Redis/', variables('cacheName'))]"
           ],
           "properties": {
-            "CacheConnection": "[concat(variables('cacheName'),'.redis.cache.windows.net,abortConnect=false,ssl=true,password=', listKeys(resourceId('Microsoft.Cache/Redis', variables('cacheName')), '2015-08-01').primaryKey)]"
+            "CacheConnection": "[concat(variables('cacheName'),'.redis.cache.windows.net,abortConnect=false,ssl=true,password=', listKeys(resourceId('Microsoft.Cache/Redis', variables('cacheName')), '2020-12-01').primaryKey)]"
           }
         }
       ]
@@ -258,7 +261,6 @@
       "type": "Microsoft.Cache/Redis",
       "location": "[parameters('location')]",
       "apiVersion": "2015-08-01",
-      "dependsOn": [],
       "tags": {
         "displayName": "cache"
       },

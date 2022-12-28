@@ -1,0 +1,356 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "loadBalancerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the the load balancer"
+      }
+    },
+    "sapSystemCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of SAP systems for which the load balancer should be configured"
+      }
+    },
+    "stackType": {
+      "type": "string",
+      "defaultValue": "ABAP",
+      "metadata": {
+        "description": "The stack type of the SAP system."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "defaultValue": "Windows",
+      "metadata": {
+        "description": "The type of the Operating System"
+      }
+    },
+    "createXSCS": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Determines if the load balancer should be configured for one or more ASCS/SCS."
+      }
+    },
+    "createDB": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Determines if the load balancer should be configured for one or more databases."
+      }
+    },
+    "dbType": {
+      "type": "string",
+      "defaultValue": "SQL",
+      "metadata": {
+        "description": "The type of the database"
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The id of the subnet you want to use."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-file-server-md/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "ascsInstanceNumber": 0,
+    "scsInstanceNumber": 1,
+    "ersASCSInstanceNumber": 2,
+    "ersSCSInstanceNumber": 3,
+    "dbInstanceNumber": 3,
+    "nestedDeploymentNameLBSCS": "[concat(parameters('loadBalancerName'), 'LBSCS')]",
+    "nestedDeploymentNameLBERS": "[concat(parameters('loadBalancerName'), 'LBERS')]",
+    "nestedDeploymentNameLBDB": "[concat(parameters('loadBalancerName'), 'LBDB')]",
+    "scsTemplates": {
+      "true": "[concat('lb-SCS.json')]",
+      "false": "[concat('lb-SCS0.json')]"
+    },
+    "ersTemplates": {
+      "true": "[concat('lb-ERS-', parameters('osType'), '.json')]",
+      "false": "[concat('lb-ERS0.json')]"
+    },
+    "dbTemplates": {
+      "true": "[concat('lb-DB-', parameters('dbType'), '.json')]",
+      "false": "[concat('lb-DB0.json')]"
+    },
+    "scsTemplate": "[variables('scsTemplates')[string(parameters('createXSCS'))]]",
+    "ersTemplate": "[variables('ersTemplates')[string(parameters('createXSCS'))]]",
+    "dbTemplate": "[variables('dbTemplates')[string(parameters('createDB'))]]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[concat(variables('nestedDeploymentNameLBSCS'), '0')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/lb-SCS0.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "stackType": {
+            "value": "[parameters('stackType')]"
+          },
+          "osType": {
+            "value": "[parameters('osType')]"
+          },
+          "ascsInstanceNumber": {
+            "value": "[variables('ascsInstanceNumber')]"
+          },
+          "scsInstanceNumber": {
+            "value": "[variables('scsInstanceNumber')]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[concat(variables('nestedDeploymentNameLBSCS'), copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBSCS'), '0')]"
+      ],
+      "copy": {
+        "name": "scsLoop",
+        "count": "[parameters('sapSystemCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('scsTemplate'), parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "stackType": {
+            "value": "[parameters('stackType')]"
+          },
+          "osType": {
+            "value": "[parameters('osType')]"
+          },
+          "ascsInstanceNumber": {
+            "value": "[add(mul(copyIndex(), 10), variables('ascsInstanceNumber'))]"
+          },
+          "scsInstanceNumber": {
+            "value": "[add(mul(copyIndex(), 10), variables('scsInstanceNumber'))]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          },
+          "nicBackAddressPoolsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBSCS'), copyIndex())).outputs.nicBackAddressPools.value]"
+          },
+          "frontendIPConfigurationsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBSCS'), copyIndex())).outputs.frontendIPConfigurations.value]"
+          },
+          "backendAddressPoolsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBSCS'), copyIndex())).outputs.backendAddressPools.value]"
+          },
+          "loadBalancingRulesArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBSCS'), copyIndex())).outputs.loadBalancingRules.value]"
+          },
+          "probesArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBSCS'), copyIndex())).outputs.probes.value]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[concat(variables('nestedDeploymentNameLBERS'), '0')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/lb-ERS0.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "stackType": {
+            "value": "[parameters('stackType')]"
+          },
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[concat(variables('nestedDeploymentNameLBERS'), copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBERS'), '0')]"
+      ],
+      "copy": {
+        "name": "ersLoop",
+        "count": "[parameters('sapSystemCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('ersTemplate'), parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "stackType": {
+            "value": "[parameters('stackType')]"
+          },
+          "ersASCSInstanceNumber": {
+            "value": "[add(mul(copyIndex(), 10), variables('ersASCSInstanceNumber'))]"
+          },
+          "ersSCSInstanceNumber": {
+            "value": "[add(mul(copyIndex(), 10), variables('ersSCSInstanceNumber'))]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          },
+          "nicBackAddressPoolsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBERS'), copyIndex())).outputs.nicBackAddressPools.value]"
+          },
+          "frontendIPConfigurationsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBERS'), copyIndex())).outputs.frontendIPConfigurations.value]"
+          },
+          "backendAddressPoolsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBERS'), copyIndex())).outputs.backendAddressPools.value]"
+          },
+          "loadBalancingRulesArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBERS'), copyIndex())).outputs.loadBalancingRules.value]"
+          },
+          "probesArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBERS'), copyIndex())).outputs.probes.value]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[concat(variables('nestedDeploymentNameLBDB'), '0')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/lb-DB0.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[concat(variables('nestedDeploymentNameLBDB'), copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBDB'), '0')]"
+      ],
+      "copy": {
+        "name": "dbLoop",
+        "count": "[parameters('sapSystemCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('dbTemplate'), parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "dbInstanceNumber": {
+            "value": "[add(mul(copyIndex(), 10), variables('dbInstanceNumber'))]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          },
+          "nicBackAddressPoolsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBDB'), copyIndex())).outputs.nicBackAddressPools.value]"
+          },
+          "frontendIPConfigurationsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBDB'), copyIndex())).outputs.frontendIPConfigurations.value]"
+          },
+          "backendAddressPoolsArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBDB'), copyIndex())).outputs.backendAddressPools.value]"
+          },
+          "loadBalancingRulesArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBDB'), copyIndex())).outputs.loadBalancingRules.value]"
+          },
+          "probesArray": {
+            "value": "[reference(concat(variables('nestedDeploymentNameLBDB'), copyIndex())).outputs.probes.value]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[parameters('loadBalancerName')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "scsLoop",
+        "ersLoop",
+        "dbLoop"
+      ],
+      "location": "[parameters('location')]",
+      "properties": {
+        "frontendIPConfigurations": "[concat(reference(concat(variables('nestedDeploymentNameLBSCS'), parameters('sapSystemCount'))).outputs.frontendIPConfigurations.value, reference(concat(variables('nestedDeploymentNameLBERS'), parameters('sapSystemCount'))).outputs.frontendIPConfigurations.value, reference(concat(variables('nestedDeploymentNameLBDB'), parameters('sapSystemCount'))).outputs.frontendIPConfigurations.value)]",
+        "backendAddressPools": "[concat(reference(concat(variables('nestedDeploymentNameLBSCS'), parameters('sapSystemCount'))).outputs.backendAddressPools.value, reference(concat(variables('nestedDeploymentNameLBERS'), parameters('sapSystemCount'))).outputs.backendAddressPools.value, reference(concat(variables('nestedDeploymentNameLBDB'), parameters('sapSystemCount'))).outputs.backendAddressPools.value)]",
+        "loadBalancingRules": "[concat(reference(concat(variables('nestedDeploymentNameLBSCS'), parameters('sapSystemCount'))).outputs.loadBalancingRules.value, reference(concat(variables('nestedDeploymentNameLBERS'), parameters('sapSystemCount'))).outputs.loadBalancingRules.value, reference(concat(variables('nestedDeploymentNameLBDB'), parameters('sapSystemCount'))).outputs.loadBalancingRules.value)]",
+        "probes": "[concat(reference(concat(variables('nestedDeploymentNameLBSCS'), parameters('sapSystemCount'))).outputs.probes.value, reference(concat(variables('nestedDeploymentNameLBERS'), parameters('sapSystemCount'))).outputs.probes.value, reference(concat(variables('nestedDeploymentNameLBDB'), parameters('sapSystemCount'))).outputs.probes.value)]"
+      }
+    }
+  ],
+  "outputs": {
+    "nicBackAddressPools": {
+      "value": "[concat(reference(concat(variables('nestedDeploymentNameLBSCS'), parameters('sapSystemCount'))).outputs.nicBackAddressPools.value, reference(concat(variables('nestedDeploymentNameLBERS'), parameters('sapSystemCount'))).outputs.nicBackAddressPools.value, reference(concat(variables('nestedDeploymentNameLBDB'), parameters('sapSystemCount'))).outputs.nicBackAddressPools.value)]",
+      "type": "array"
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string"
+    },
+    "automationAccountName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "compileName": {
+      "type": "string",
+      "defaultValue": "[guid(resourceGroup().id, deployment().name)]"
+    }
+  },
+  "variables": {
+    "dscConfigurations": {
+      "WindowsIISServerConfig": {
+        "name": "WindowsIISServerConfig",
+        "description": "minimum viable configuration for a web server role",
+        "script": "dscConfigurations/WindowsIISServerConfig.ps1"
+      }
+    },
+    "dscResources": {
+      "xWebAdministration": {
+        "name": "xWebAdministration",
+        "url": "https://psg-prod-eastus.azureedge.net/packages/xwebadministration.2.4.0.nupkg"
+      }
+    },
+    "runbook": {
+      "Name": "TombstoneDSCNodes",
+      "Uri": "runbooks/TombstoneDSCNodes.ps1",
+      "Description": "This script provides an example for how to use a runbook in Azure Automation to tombstone stale DSC nodes from State Configuration.",
+      "Version": "1.0.0"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('automationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiversion": "2018-06-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "Basic"
+        }
+      },
+      "resources": [
+        {
+          "name": "[variables('dscResources').xWebAdministration.name]",
+          "type": "modules",
+          "apiVersion": "2018-06-30",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').xWebAdministration.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('dscConfigurations').WindowsIISServerConfig.name]",
+          "type": "configurations",
+          "apiVersion": "2018-06-30",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]",
+            "[variables('dscResources').xWebAdministration.name]"
+          ],
+          "properties": {
+            "state": "Published",
+            "overwrite": "true",
+            "source": {
+              "type": "uri",
+              "value": "[concat(parameters('_artifactsLocation'), variables('dscConfigurations').WindowsIISServerConfig.script, parameters('_artifactsLocationSasToken'))]"
+            }
+          }
+        },
+        {
+          "name": "[parameters('compileName')]",
+          "type": "compilationjobs",
+          "apiVersion": "2018-06-30",
+          "tags": {},
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]",
+            "[variables('dscConfigurations').WindowsIISServerConfig.name]"
+          ],
+          "properties": {
+            "configuration": {
+              "name": "[variables('dscConfigurations').WindowsIISServerConfig.name]"
+            },
+            "parameters": {}
+          }
+        },
+        {
+          "name": "[variables('runbook').Name]",
+          "type": "runbooks",
+          "apiversion": "2018-06-30",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]",
+          ],
+          "properties": {
+            "runbookType": "PowerShell",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": "[variables('runbook').Description]",
+            "publishContentLink": {
+              "uri": "[concat(parameters('_artifactsLocation'), variables('runbook').Uri, parameters('_artifactsLocationSasToken'))]",
+              "version": "[variables('runbook').Version]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "12241933307601502718"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the blob storage."
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": "\r\n$localFileName = \"${env:csvFileName}\"\r\n\r\nInvoke-WebRequest -Uri \"${env:contentUri}\" -OutFile $localFileName\r\n\r\n$ctx = New-AzStorageContext -StorageAccountName \"${Env:SAName}\" -StorageAccountKey \"${Env:storageKey}\"\r\n\r\nSet-AzStorageBlobContent -Container \"${Env:ContainerName}\" -Blob \"${env:csvInputFolder}/$localFileName\" -Context $ctx -StandardBlobTier 'Hot' -File $localFileName\r\n",
+    "contentUri": "[uri(format('https://azbotstorage.blob.{0}', environment().suffixes.storage), '/sample-artifacts/data-factory/moviesDB2.csv')]",
+    "csvFilename": "[last(split(variables('contentUri'), '/'))]",
+    "storageAccountName": "[format('storage{0}', uniqueString(resourceGroup().id))]",
+    "csvInputFolder": "input",
+    "blobContainerName": "datafactory"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-09-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2021-09-01",
+      "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "copyFile",
+      "location": "[parameters('location')]",
+      "kind": "AzurePowerShell",
+      "properties": {
+        "azPowerShellVersion": "8.0",
+        "environmentVariables": [
+          {
+            "name": "storageKey",
+            "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value]"
+          },
+          {
+            "name": "SAName",
+            "value": "[variables('storageAccountName')]"
+          },
+          {
+            "name": "ContainerName",
+            "value": "[variables('blobContainerName')]"
+          },
+          {
+            "name": "contentUri",
+            "value": "[variables('contentUri')]"
+          },
+          {
+            "name": "csvFileName",
+            "value": "[variables('csvFilename')]"
+          },
+          {
+            "name": "csvInputFolder",
+            "value": "[variables('csvInputFolder')]"
+          }
+        ],
+        "scriptContent": "[variables('$fxv#0')]",
+        "timeout": "PT1H",
+        "cleanupPreference": "OnSuccess",
+        "retentionInterval": "P1D"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', split(format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName')), '/')[0], split(format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName')), '/')[1], split(format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerName')), '/')[2])]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    }
+  ]
+}

@@ -41,7 +41,7 @@ Azure Blockchain Service resources are isolated in a private virtual network. Ea
 
 #### Encryption
 
-User data is stored in Azure storage. User data is encrypted in motion and at rest for security and confidentiality. For more information, see: [Azure Storage security guide.](https://docs.microsoft.com/en-gb/azure/storage/common/storage-security-guide)
+User data is stored in Azure storage. User data is encrypted in motion and at rest for security and confidentiality. For more information, see: [Azure Storage security guide.](https://docs.microsoft.com/azure/storage/common/storage-security-guide)
 
 #### Authentication
 
@@ -100,7 +100,7 @@ To create a Resource Group, you need a name and a location for your Resource Gro
 
 For a list of locations, type: **az account list-locations**
 
-The Blockchain Service isn't yet available for all locations. Check the availability of locations [here](https://azure.microsoft.com/en-gb/global-infrastructure/services/?products=).
+The Blockchain Service isn't yet available for all locations. Check the availability of locations [here](https://azure.microsoft.com/global-infrastructure/services/?products=).
 
 To create the Resource group, type the command:
 

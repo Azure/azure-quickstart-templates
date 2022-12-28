@@ -1,0 +1,319 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The administrative user on the Windows VM."
+      }
+    },
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The administrative user password."
+      }
+    },
+    "vNetName": {
+      "type": "string",
+      "defaultValue": "demo-vnet",
+      "minLength": 1,
+      "metadata": {
+        "description": "The name of the virtual network resource"
+      }
+    },
+    "vmPIPDnsName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The DNS prefix assigned to the public IP address resource."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D2s_v3"
+      ],
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM Size"
+      }
+    }
+  },
+  "variables": {
+    "vNetPrefix": "10.0.0.0/16",
+    "vNetSubnet1Name": "subnet-01",
+    "vNetSubnet1Prefix": "10.0.0.0/24",
+    "storageAccountType": [
+      "Premium_LRS",
+      "Standard_LRS"
+    ],
+    "storageAccountNamePrefix": [
+      "premium",
+      "standard"
+    ],
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vm1ImageOffer": "WindowsServer",
+    "vmName": "demo-01",
+    "vmWindowsOSVersion": "2019-Datacenter",
+    "vmNicName": "[concat(variables('vmName'),'-nic-','0')]",
+    "vmPIPName": "[concat(variables('vmName'),'-PIP')]",
+    "networkSecurityGroupName": "default-NSG",
+    "dscConfigureVM": {
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/vmDemo.zip', parameters('_artifactsLocationSasToken')))]",
+      "script": "vmDemo.ps1",
+      "function": "vmDemo"
+    }
+  },
+  "resources": [
+    {
+      "name": "[concat(variables('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-01-01",
+      "copy": {
+        "count": "[length(variables('storageAccountType'))]",
+        "name": "storageAccountCopy"
+      },
+      "tags": {
+        "displayName": "[concat(variables('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]"
+      },
+      "sku": {
+        "name": "[variables('storageAccountType')[copyIndex()]]"
+      }
+    },
+    {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('vNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "tags": {
+        "displayName": "[parameters('vNetName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vNetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vNetSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPIPName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('vmNicName')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vNetName'), variables('vNetSubnet1Name'))]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPIPName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "storageAccountCopy",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('vmName')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vm1ImageOffer')]",
+            "sku": "[variables('vmWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('vmName'),'_DataDisk1')]",
+              "lun": 0,
+              "diskSizeGB": 100,
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmName'),'_DataDisk2')]",
+              "lun": 1,
+              "diskSizeGB": 100,
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmName'),'_DataDisk3')]",
+              "lun": 2,
+              "diskSizeGB": 100,
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmName'),'_DataDisk4')]",
+              "lun": 3,
+              "diskSizeGB": 1023,
+              "caching": "None",
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            }
+          ]
+        }
+      },
+      
+      "resources": [
+        {
+          "name": "DSC",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "[concat(variables('vmName'),'/','DSC')]"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "configuration": {
+                "configuration": {
+                "url": "[variables('dscConfigureVM').scriptFileUri]",
+                "script": "[variables('dscConfigureVM').script]",
+                "function": "[variables('dscConfigureVM').function]"
+              },
+              "configurationArguments": {
+                "nodeName": "[variables('vmName')]"
+              }
+            }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('vmPIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-08-01",
+      "tags": {
+        "displayName": "[variables('vmPIPName')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmPIPDnsName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vmURI": {
+      "type": "string",
+      "value": "[reference(variables('vmPIPName')).dnsSettings.fqdn]"
+    }
+  }
+}
+

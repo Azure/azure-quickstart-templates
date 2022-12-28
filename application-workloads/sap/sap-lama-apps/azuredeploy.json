@@ -187,7 +187,7 @@
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sap/sap-lama-apps/"
+            "defaultValue": "[deployment().properties.templateLink.uri]"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -278,9 +278,7 @@
                 "Name": "CustomScript",
                 "Version": "2.0",
                 "script": "[uri(parameters('_artifactsLocation'), concat('scripts/diskConfig.sh', parameters('_artifactsLocationSasToken')))]",
-                "scriptCall": "sh diskConfig.sh",
-                "disks": [],
-                "scriptArguments": ""
+                "scriptCall": "sh diskConfig.sh"
             }
         },
         "cseExtPublisher": "[variables('osConfigs')[variables('internalOSType')].Publisher]",
@@ -430,7 +428,7 @@
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[concat(variables('nsgName'))]",
-            "apiVersion": "2018-04-01",
+            "apiVersion": "2020-07-01",
             "location": "[parameters('location')]",
             "condition": "[equals(length(parameters('subnetId')), 0)]",
             "properties": {
@@ -443,7 +441,7 @@
             "apiVersion": "2018-04-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
             ],
             "condition": "[equals(length(parameters('subnetId')), 0)]",
             "properties": {
@@ -471,7 +469,7 @@
             "apiVersion": "2017-06-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
             "properties": {
                 "ipConfigurations": "[variables('selectedIPConfig')]",
@@ -482,7 +480,7 @@
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('vmName'))]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
             ],
             "zones": "[variables('selectedZones')]",
             "apiVersion": "2017-12-01",
@@ -531,7 +529,7 @@
             "location": "[parameters('location')]",
             "condition": "[and( not(parameters('deployEmptyTarget')), equals(variables('internalOSType'), 'Windows'))]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
             ],
             "properties": {
                 "publisher": "[variables('cseExtPublisher')]",
@@ -554,7 +552,7 @@
             "type": "Microsoft.Resources/deployments",
             "condition": "[equals(parameters('dbType'), 'SQL')]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('cseExtName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), variables('cseExtName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -589,7 +587,7 @@
             "type": "Microsoft.Resources/deployments",
             "condition": "[greater(length(parameters('sapHostAgentArchiveFilename')), 0)]",
             "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/', concat(deployment().name, '-odbc'))]"
+                "[resourceId('Microsoft.Resources/deployments/', concat(deployment().name, '-odbc'))]"
             ],
             "properties": {
                 "mode": "Incremental",

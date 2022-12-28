@@ -1,0 +1,194 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "automationAccountName": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": ["Free", "Basic"]
+    },
+    "runbookName": {
+      "type": "string"
+    },
+    "credential1Name": {
+      "defaultValue": "Azure_RM_Account_Credentials",
+      "type": "string"
+    },
+    "cred1Username": {
+      "type": "string",
+      "defaultValue": "ash@sysgaininc.onmicrosoft.com"
+    },
+    "cred1Password": {
+      "type": "securestring"
+    },
+    "jobIdWorkflow": {
+      "type": "string",
+      "defaultValue": "24b18f62-aa2c-4528-ac10-1e3602eb4053",
+      "metadata": {
+        "description": "Generate a Job ID (GUID) from https://www.guidgenerator.com/ "
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "East US 2",
+      "allowedValues": [
+        "Japan East",
+        "North Europe",
+        "South Central US",
+        "West Europe",
+        "Southeast Asia",
+        "East US 2"
+      ],
+      "metadata": {
+        "description": "Automation Service Location"
+      }
+    },
+    "runbookUrl": {
+      "defaultValue": "https://raw.githubusercontent.com/sysgain/informatica-p2p/master/runbooks/info-restapi-workflow.ps1",
+      "type": "string"
+    },
+    "tag": {
+      "type": "object",
+      "defaultValue": {
+        "key1": "key",
+        "value1": "value"
+      },
+      "metadata": {
+        "description": "Tag Values"
+      }
+    },
+    "ip": {
+      "type": "string"
+    },
+    "sysgain_ms_email": {
+      "type": "string"
+    },
+    "sysgain_ms_password": {
+      "type": "securestring"
+    },
+    "informatica_user_name": {
+      "type": "string",
+      "metadata": {
+        "description": "The same email id used for user_email"
+      }
+    },
+    "informatica_user_password": {
+      "type": "securestring"
+    },
+    "informatica_csa_vmname": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "adfStorageAccName": {
+      "type": "string"
+    },
+    "adfStorageAccKey": {
+      "type": "string"
+    },
+    "informaticaTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('automationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2015-01-01-preview",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[parameters('tag').key1]": "[parameters('tag').value1]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('informaticaTags').provider]"
+      },
+      "properties": {
+        "sku": {
+          "name": "[parameters('sku')]"
+        }
+      },
+      "resources": [
+        {
+          "name": "[parameters('runbookName')]",
+          "type": "runbooks",
+          "apiVersion": "2015-01-01-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "tags": {
+            "[parameters('tag').key1]": "[parameters('tag').value1]",
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('informaticaTags').provider]"
+          },
+          "properties": {
+            "runbookType": "Script",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": null,
+            "publishContentLink": {
+              "uri": "[parameters('runbookUrl')]",
+              "version": "1.0.0.0"
+            }
+          }
+        },
+        {
+          "name": "[parameters('credential1Name')]",
+          "type": "credentials",
+          "apiVersion": "2015-01-01-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "tags": {
+            "[parameters('tag').key1]": "[parameters('tag').value1]",
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('informaticaTags').provider]"
+          },
+          "properties": {
+            "userName": "[parameters('cred1Username')]",
+            "password": "[parameters('cred1Password')]"
+          }
+        },
+        {
+          "name": "[concat(parameters('automationAccountName'), '/', parameters('jobIdWorkflow'))]",
+          "type": "Microsoft.Automation/automationAccounts/jobs",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('location')]",
+          "tags": {
+            "[parameters('tag').key1]": "[parameters('tag').value1]",
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('informaticaTags').provider]"
+          },
+          "properties": {
+            "runbook": {
+              "name": "[parameters('runbookName')]"
+            },
+            "parameters": {
+              "ip": "[parameters('ip')]",
+              "sysgain_ms_email": "[parameters('sysgain_ms_email')]",
+              "sysgain_ms_password": "[parameters('sysgain_ms_password')]",
+              "informatica_user_name": "[parameters('informatica_user_name')]",
+              "informatica_user_password": "[parameters('informatica_user_password')]",
+              "client_id": "[parameters('client_id')]",
+              "informatica_csa_vmname": "[parameters('informatica_csa_vmname')]",
+              "adfStorageAccName": "[parameters('adfstorageAccName')]",
+              "adfStorageAccKey": "[parameters('adfStorageAccKey')]"
+            }
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/runbooks', parameters('automationAccountName'), parameters('runbookName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/credentials', parameters('automationAccountName'), parameters('credential1Name'))]"
+          ]
+        }
+      ]
+    }
+  ]
+}

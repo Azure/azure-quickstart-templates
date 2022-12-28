@@ -1,3 +1,13 @@
+---
+description: This template creates a proof of concept environment for Azure Synapse, including SQL Pools and optional Apache Spark Pools
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: synapse-poc
+languages:
+- json
+---
 # Azure Synapse Proof-of-Concept
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.synapse/synapse-poc/PublicLastTestDate.svg)
@@ -78,4 +88,6 @@ You can also see that the Approval State is Pending. The owner of the target res
 
 Further information can be found:
 
-[Create a Managed private endpoint to your data source](https://docs.microsoft.com/en-us/azure/synapse-analytics/security/how-to-create-managed-private-endpoints)
+[Create a Managed private endpoint to your data source](https://docs.microsoft.com/azure/synapse-analytics/security/how-to-create-managed-private-endpoints)
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, blobServices/containers, Microsoft.Synapse/workspaces, SystemAssigned, firewallrules, managedIdentitySqlControlSettings, Microsoft.Synapse/workspaces/sqlPools, metadataSync, Microsoft.Synapse/workspaces/bigDataPools, Microsoft.Authorization/roleAssignments, Microsoft.Logic/workflows, InitializeVariable, Object, Integer, Http, ManagedServiceIdentity, ParseJson, , string, If, Until, SetVariable, Wait, Recurrence, `

@@ -1,0 +1,278 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "kibanaFunctionHost": {
+      "type": "String"
+    },
+    "kibanaFunctionPath": {
+      "type": "String"
+    },
+    "EsIP": {
+      "type": "String"
+    },
+    "serverfarms_name": {
+      "type": "String"
+    },
+    "sites_demotriggerapp1234_name": {
+      "type": "String"
+    },
+    "config_web_name_4": {
+      "type": "String"
+    },
+    "storage_name": {
+      "type": "string"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    }
+  },
+  "variables": {
+    "pythonExtension": "azureappservice-python2714x64",
+    "raweventGridSubscriptionName": "[toLower(uniqueString(resourceGroup().id, 'rawtopicsubscription1a'))]",
+    "eventgridEventHubNamespaceName": "[toLower(uniqueString(resourceGroup().id, 'datalakeNamespace1a'))]",
+    "eventHubResourceGroup": "[resourceGroup().name]",
+    "raweventhub": "[toLower(uniqueString(resourceGroup().id, 'datalakeeseventhub1'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "name": "[variables('eventgridEventHubNamespaceName')]",
+      "apiVersion": "2021-01-01-preview",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "apiVersion": "2021-01-01-preview",
+          "name": "[variables('raweventhub')]",
+          "type": "EventHubs",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces/', variables('eventgridEventHubNamespaceName'))]"
+          ],
+          "properties": {
+            "path": "[variables('raweventhub')]"
+          },
+          "resources": [
+            {
+              "apiVersion": "2021-01-01-preview",
+              "name": "[variables('eventHubResourceGroup')]",
+              "type": "ConsumerGroups",
+              "dependsOn": [
+                "[variables('raweventhub')]"
+              ],
+              "properties": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/providers/eventSubscriptions",
+      "name": "[concat(parameters('storage_name'), '/Microsoft.EventGrid/', variables('raweventGridSubscriptionName'))]",
+      "apiVersion": "2018-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/', variables('eventgridEventHubNamespaceName'))]",
+        "[variables('raweventhub')]"
+      ],
+      "properties": {
+        "destination": {
+          "endpointType": "EventHub",
+          "topicId": "[resourceId('Microsoft.Storage/storageAccounts',parameters('storage_name'))]",
+          "properties": {
+            "resourceId": "[resourceId(variables('eventHubResourceGroup'), 'Microsoft.EventHub/namespaces/eventhubs', variables('eventgridEventHubNamespaceName'), variables('raweventhub'))]"
+          }
+        },
+        "filter": {
+          "isSubjectCaseSensitive": false,
+          "includedEventTypes": [
+            "All"
+          ]
+        },
+        "eventDeliverySchema": "EventGridSchema"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[parameters('serverfarms_name')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      },
+      "kind": "functionapp",
+      "properties": {
+        "name": "[parameters('serverfarms_name')]",
+        "perSiteScaling": false,
+        "reserved": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "kind": "functionapp",
+      "name": "[parameters('sites_demotriggerapp1234_name')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_name'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/', variables('eventgridEventHubNamespaceName'))]",
+        "[variables('raweventhub')]"
+      ],
+      "resources": [
+        {
+          "name": "[variables('pythonExtension')]",
+          "type": "siteextensions",
+          "apiVersion": "2020-06-01",
+          "properties": {},
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites',parameters('sites_demotriggerapp1234_name'))]"
+          ]
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-06-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', parameters('sites_demotriggerapp1234_name'))]",
+            "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_name'))]",
+            "[resourceId('Microsoft.Web/sites/siteextensions', parameters('sites_demotriggerapp1234_name'), variables('pythonExtension'))]"
+          ],
+          "tags": {
+            "displayName": "pythonextension"
+          },
+          "properties": {
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('scripts/elasticsearchfunction.zip', parameters('_artifactsLocationSasToken')))]",
+            "dbType": "None"
+          }
+        }
+      ],
+      "properties": {
+        "enabled": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_name'))]",
+        "siteConfig": {
+          "handlerMappings": [
+            {
+              "arguments": "D:\\home\\Python27\\wfastcgi.py",
+              "extension": "fastCgi",
+              "scriptProcessor": "D:\\home\\Python27\\python.exe"
+            }
+          ],
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storage_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storage_name')),'2021-01-01').keys[0].value)]"
+            },
+            {
+              "name": "elasticclusterstorage_STORAGE",
+              "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storage_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storage_name')),'2021-01-01').keys[0].value)]"
+            },
+            {
+              "name": "esIp",
+              "value": "[parameters('EsIP')]"
+            },
+            {
+              "name": "kibanaFunctionHost",
+              "value": "[parameters('kibanaFunctionHost')]"
+            },
+            {
+              "name": "kibanaFunctionPath",
+              "value": "[parameters('kibanaFunctionPath')]"
+            },
+            {
+              "name": "raweventhubnamespace_RootManageSharedAccessKey_EVENTHUB",
+              "value": "[concat(listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventgridEventHubNamespaceName'), 'RootManageSharedAccessKey'), '2021-01-01-preview').primaryConnectionString,';EntityPath=',variables('raweventhub'))]"
+            },
+            {
+              "name": "raweventhub",
+              "value": "[variables('raweventhub')]"
+            }
+          ]
+        },
+        "reserved": false,
+        "scmSiteAlsoStopped": false,
+        "clientAffinityEnabled": false,
+        "clientCertEnabled": false,
+        "hostNamesDisabled": false,
+        "containerSize": 1536,
+        "dailyMemoryTimeQuota": 0
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "name": "[concat(parameters('sites_demotriggerapp1234_name'), '/', parameters('config_web_name_4'))]",
+      "apiVersion": "2018-11-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('sites_demotriggerapp1234_name'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_name'))]",
+        "[resourceId('Microsoft.Web/sites/Extensions',parameters('sites_demotriggerapp1234_name'),'MSDeploy')]"
+      ],
+      "properties": {
+        "numberOfWorkers": 1,
+        "defaultDocuments": [
+          "Default.htm",
+          "Default.html",
+          "Default.asp",
+          "index.htm",
+          "index.html",
+          "iisstart.htm",
+          "default.aspx",
+          "index.php"
+        ],
+        "netFrameworkVersion": "v4.0",
+        "phpVersion": "5.6",
+        "pythonVersion": "2.7",
+        "requestTracingEnabled": false,
+        "remoteDebuggingEnabled": false,
+        "httpLoggingEnabled": false,
+        "logsDirectorySizeLimit": 35,
+        "detailedErrorLoggingEnabled": false,
+        "publishingUsername": "$demotriggerapp1234",
+        "scmType": "None",
+        "use32BitWorkerProcess": true,
+        "webSocketsEnabled": false,
+        "alwaysOn": false,
+        "managedPipelineMode": "Integrated",
+        "virtualApplications": [
+          {
+            "virtualPath": "/",
+            "physicalPath": "site\\wwwroot",
+            "preloadEnabled": false
+          }
+        ],
+        "winAuthAdminState": 0,
+        "winAuthTenantState": 0,
+        "customAppPoolIdentityAdminState": false,
+        "customAppPoolIdentityTenantState": false,
+        "localMySqlEnabled": false,
+        "http20Enabled": false,
+        "minTlsVersion": "1.0",
+        "ftpsState": "AllAllowed"
+      }
+    }
+  ]
+}

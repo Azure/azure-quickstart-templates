@@ -1,3 +1,13 @@
+---
+description: Solution which shows how we can set up the Message Router pattern using a Logic App
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: integrationpatterns-messagerouter-logicapp
+languages:
+- json
+---
 # Integration Patterns - Message Router - Logic App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/integrationpatterns-messagerouter-logicapp/PublicLastTestDate.svg)
@@ -9,11 +19,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/integrationpatterns-messagerouter-logicapp/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/integrationpatterns-messagerouter-logicapp/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fintegrationpatterns-messagerouter-logicapp%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fintegrationpatterns-messagerouter-logicapp%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fintegrationpatterns-messagerouter-logicapp%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fintegrationpatterns-messagerouter-logicapp%2Fazuredeploy.json)
-
-
 
 ## Solution overview and deployed resources
 
@@ -33,6 +41,5 @@ To test the Logic App, grab the endpoint of the Request shape in the Logic App, 
 }
 ```
 
-`Tags: Logic Apps, Integration Patterns, Logic App, Message Router, LogicApps, IntegrationPatterns`
-
+`Tags: Logic Apps, Integration Patterns, Logic App, Message Router, LogicApps, IntegrationPatterns, Microsoft.Logic/workflows, Request, object, string, InitializeVariable, Response, Switch, Http, SetVariable`
 

@@ -1,0 +1,305 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.2.0.0",
+  "parameters": {
+    "dDisks": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Array of disks objects that can be added (see azuredeploy.json for the disk object content)"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
+    },
+    "availabilitySetName": {
+      "type": "string",
+      "defaultValue": "AVSet1",
+      "metadata": {
+        "description": "Availibility Set the VM will belong to"
+      }
+    },
+    "computerName": {
+      "type": "string",
+      "defaultValue": "mbmr",
+      "metadata": {
+        "description": "Computer Name"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "WindowsServer",
+      "metadata": {
+        "description": "Image Offer"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftWindowsServer",
+      "metadata": {
+        "description": "Image Publisher"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "metadata": {
+        "description": "Image SKU"
+      }
+    },
+    "imageVersion": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Image version, 'latest' by default (recommended)"
+      }
+    },
+    "indx": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "objects suffix to avoid name collisions"
+      }
+    },
+    "lbName": {
+      "type": "string",
+      "defaultValue": "lbn",
+      "metadata": {
+        "description": "Front End load Balancer Name'."
+      }
+    },
+    "natRulePrefix": {
+      "type": "string",
+      "defaultValue": "nr-",
+      "metadata": {
+        "description": "Prefix for Nat Rules."
+      }
+    },
+    "nicNamePrefix": {
+      "type": "string",
+      "defaultValue": "nic-",
+      "metadata": {
+        "description": "Prefix for NICs."
+      }
+    },
+    "publicStartRdpPort": {
+      "type": "int",
+      "defaultValue": 5500,
+      "metadata": {
+        "description": "Public port, for RDP remote connection. The value of indx parameter will be added"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage to put the disk image on"
+      }
+    },
+    "subnets": {
+      "type": "array",
+      "metadata": {
+        "description": "list of subnets where the VM will belong to"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "srv-"
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2",
+      "metadata": {
+        "description": "VM Size, from // Get-AzureRoleSize  | select instanceSize"
+      }
+    },
+    "bootDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Activate boot diagnostics. MUST be set to false is premium storage option is used"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',parameters('lbName'), 'loadBalancerFrontend')]",
+    "natRuleName": "[concat(parameters('natRulePrefix'), parameters('computerName'), parameters('indx'))]",
+    "inboundNatName": "[concat(parameters('lbName'), '/', variables('natRuleName'))]",
+    "subnetIndex": "[mod(parameters('indx'),length(parameters('subnets')))]",
+    "subnetRef": "[parameters('subnets')[variables('subnetIndex') ].id]",
+    "vmName": "[concat(parameters('vmNamePrefix'), parameters('computerName'), parameters('indx'))]",
+    "nicName": "[concat(parameters('nicNamePrefix'), parameters('computerName'), parameters('indx'))]",
+    "rdpPort": "[add(parameters('publicStartRdpPort'), parameters('indx'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "name": "[variables('inboundNatName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[variables('frontEndIPConfigID')]"
+        },
+        "protocol": "Tcp",
+        "frontendPort": "[variables('rdpPort')]",
+        "backendPort": 3389,
+        "enableFloatingIP": false
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('lbName'), variables('natRuleName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('lbName'), 'LoadBalancerBackend')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('lbName'), variables('natRuleName'))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('computerName'),parameters('indx'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "[parameters('imageVersion')]"
+          },
+          "osDisk": {
+            "name": "[concat('osdisk', variables('vmName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": "[parameters('dDisks')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "[parameters('bootDiagnostics')]",
+            "storageUri": "[concat('https://',parameters('storageAccountName'),'.blob.', environment().suffixes.storage)]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "name": "[concat(variables('vmName'),'/BgInfo')]",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "BGInfo",
+            "typeHandlerVersion": "2.1",
+            "settings": {
+              "properties": []
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmName'),'/MyCustomScriptExtension')]",
+          "apiVersion": "2020-12-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'),'BgInfo')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[uri(parameters('_artifactsLocation'), concat('start.ps1', parameters('_artifactsLocationSasToken')))]"
+              ],
+              "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File start.ps1"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "vmIPAddress": {
+      "type": "string",
+      "value": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
+    }
+  }
+}

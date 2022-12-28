@@ -1,0 +1,162 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webAppSvcPlanName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "AppSvcPlan",
+      "metadata": {
+        "description": "Name of AppSvc Plan."
+      }
+    },
+    "webAppSvcPlanSku": {
+      "type": "string",
+      "defaultValue": "S1",
+      "metadata": {
+        "description": "App Svc Plan SKU."
+      }
+    },
+    "webAppSvcPlanWorkerSize": {
+      "type": "string",
+      "allowedValues": [
+        "0",
+        "1",
+        "2"
+      ],
+      "defaultValue": "0",
+      "metadata": {
+        "description": "Size of AppSvc Worker."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of web site."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account to access blob storage."
+      }
+    },
+    "deployPackageUri": {
+      "type": "string",
+      "metadata": {
+        "description": "WebDeploy package location."
+      }
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Sas token to be appended to DeployPackageURI."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "packageURI": "[uri(parameters('DeployPackageURI'), concat(parameters('SasToken')))]",
+    "storageAccountId": "[concat(resourceGroup().id,'/providers/Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('WebAppSvcPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "tags": {
+        "displayName": "AppSvcPlan"
+      },
+      "sku": {
+        "name": "[parameters('webAppSvcPlanSku')]"
+      },
+      "properties": {
+        "name": "[parameters('WebAppSvcPlanName')]",
+        "workerSize": "[parameters('WebAppSvcPlanWorkerSize')]",
+        "numberOfWorkers": 1
+      }
+    },
+    {
+      "name": "[parameters('WebAppName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', parameters('WebAppSvcPlanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('WebAppSvcPlanName'))]": "Resource",
+        "displayName": "WebApp"
+      },
+      "properties": {
+        "name": "[parameters('WebAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', parameters('WebAppSvcPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-12-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', parameters('WebAppName'))]"
+          ],
+          "tags": {
+            "displayName": "WebAppConfig"
+          },
+          "properties": {
+            "phpVersion": "5.6",
+            "netFrameworkVersion": "v4.6",
+            "use32BitWorkerProcess": false,
+            "webSocketsEnabled": true,
+            "alwaysOn": false,
+            "remoteDebuggingEnabled": true,
+            "remoteDebuggingVersion": "VS2017"
+          }
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', parameters('WebAppName'))]",
+            "[resourceId('Microsoft.Web/sites/config',parameters('webAppName'), 'web')]"
+          ],
+          "tags": {
+            "displayName": "WebAppMSDeploy"
+          },
+          "properties": {
+            "packageUri": "[variables('packageURI')]"
+          }
+        },
+        {
+          "name": "connectionstrings",
+          "type": "config",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', parameters('WebAppName'))]",
+            "[resourceId('Microsoft.Web/sites/extensions', parameters('WebAppName'), 'MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "WebAppConnectionStrings"
+          },
+          "properties": {
+            "BlobConnection": {
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',concat(listKeys(variables('storageAccountId'),'2015-05-01-preview').key1))]",
+              "type": "Custom"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

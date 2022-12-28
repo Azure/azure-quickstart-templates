@@ -61,7 +61,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_DS2",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "The size of the VM Created"
       }
@@ -86,21 +86,18 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
-    }    
+    }       
   },
   "variables": {
     "sqlImagePublisher": "MicrosoftSQLServer",
     "sqlImageOffer": "[parameters('sqlImageVersion')]",
     "sqlImageSku": "[parameters('sqlImageSKU')]",
-    "OSDiskName": "osdiskforwindowssimple",
-    "dataDiskName": "dataDisk",
     "nicName": "SSRSNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "vhdStorageContainerName": "vhds",
     "vmNameRs": "[concat(parameters('vmPrefix'), '-RS')]",
     "vmSizeRs": "[parameters('vmSize')]",
     "vmImageOfferRs": "[variables('sqlImageOffer')]",
@@ -128,7 +125,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('vhdStorageNameRs')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -142,7 +139,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('vhdStorageNameCatalog')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -157,7 +154,7 @@
       "name": "[variables('diagnosticsStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-01-01",
       "sku": {
         "name": "Standard_LRS"
       },
@@ -224,7 +221,7 @@
       },
       "dependsOn": [
         "publicIpLoop",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -252,9 +249,9 @@
         "displayName": "RsMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageNameRs'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',concat(variables('nicName')))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('vhdStorageNameRs'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/',concat(variables('nicName')))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -306,9 +303,9 @@
           "name": "Microsoft.Insights.VMDiagnosticsSettings",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2021-07-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameRs'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmNameRs'))]"
           ],
           "tags": {
             "displayName": "Diagnostics"
@@ -325,7 +322,7 @@
             "protectedSettings": {
               "storageAccountName": "[variables('diagnosticsStorageAccountName')]",
               "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
-              "storageAccountEndPoint": "https://core.windows.net"
+              "storageAccountEndPoint": "[environment().suffixes.storage]"
             }
           }
         },
@@ -333,9 +330,9 @@
           "name": "SSRSConfiguration",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2021-07-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameRs'))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmNameRs'))]",
             "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmNameCatalog'), 'SQLConfigurationMixedAuth')]"
           ],
           "tags": {
@@ -375,9 +372,9 @@
         "displayName": "CatalogMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageNameCatalog'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',concat(variables('nicName'), 0))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('vhdStorageNameCatalog'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/',concat(variables('nicName'), 0))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -429,9 +426,9 @@
           "name": "SQLConfigurationMixedAuth",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2021-07-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameCatalog'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmNameCatalog'))]"
           ],
           "tags": {
             "displayName": "SQLConfigurationMixedAuth"
@@ -472,9 +469,9 @@
           "name": "Microsoft.Insights.VMDiagnosticsSettings",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2021-07-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameCatalog'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmNameCatalog'))]"
           ],
           "tags": {
             "displayName": "Diagnostics"
@@ -491,7 +488,7 @@
             "protectedSettings": {
               "storageAccountName": "[variables('diagnosticsStorageAccountName')]",
               "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
-              "storageAccountEndPoint": "https://core.windows.net"
+              "storageAccountEndPoint": "[environment().suffixes.storage]"
             }
           }
         }
@@ -503,8 +500,8 @@
       "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "tags": {
         "displayName": "RSNetworkInterface"
@@ -531,7 +528,6 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [],
       "tags": {
         "displayName": "PublicRSIPAddress"
       },
@@ -544,3 +540,4 @@
     }
   ]
 }
+

@@ -1,0 +1,260 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "18325264883808557142"
+    }
+  },
+  "parameters": {
+    "contGroupName": {
+      "type": "string",
+      "defaultValue": "msdyn365bc",
+      "metadata": {
+        "description": "Name for the container group"
+      }
+    },
+    "dnsPrefix": {
+      "type": "string",
+      "maxLength": 50,
+      "metadata": {
+        "description": "The DNS label for the public IP address. It must be lowercase. It should match the following regular expression, or it will raise an error: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$"
+      }
+    },
+    "letsEncryptMail": {
+      "type": "string",
+      "metadata": {
+        "description": "The eMail address to be used when requesting a Let's Encrypt certificate"
+      }
+    },
+    "bcRelease": {
+      "type": "string",
+      "defaultValue": "mcr.microsoft.com/businesscentral:10.0.19041.985",
+      "metadata": {
+        "description": "Dynamics 365 Business Central Generic image (10.0.19041.985 is the version of Windows Server). See https://mcr.microsoft.com/v2/businesscentral/tags/list"
+      }
+    },
+    "bcArtifactUrl": {
+      "type": "string",
+      "defaultValue": "https://bcartifacts.azureedge.net/onprem/19.2.32968.33504/w1",
+      "metadata": {
+        "description": "Dynamics 365 Business Central artifact URL. See https://freddysblog.com/2020/06/25/working-with-artifacts/ to understand how to find the right one."
+      }
+    },
+    "username": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for your BC super user"
+      }
+    },
+    "password": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Password for your BC super user and your sa user on the database"
+      }
+    },
+    "cpuCores": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of CPU cores to allocate to the container"
+      }
+    },
+    "memoryInGb": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "The amount of memory to allocate to the container in gigabytes. Provide a minimum of 3 as he container will include SQL Server and BCST"
+      }
+    },
+    "customNavSettings": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Custom settings for the BCST"
+      }
+    },
+    "customWebSettings": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Custom settings for the Web Client"
+      }
+    },
+    "acceptEula": {
+      "type": "string",
+      "defaultValue": "N",
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "metadata": {
+        "description": "Change to 'Y' to accept the end user license agreement available at https://go.microsoft.com/fwlink/?linkid=861843. This is necessary to successfully run the container"
+      }
+    },
+    "azurecontainerSuffix": {
+      "type": "string",
+      "defaultValue": ".azurecontainer.io",
+      "allowedValues": [
+        ".azurecontainer.io"
+      ],
+      "metadata": {
+        "description": "Please select the Azure container URL suffix for your current region. For the standard Azure cloud, this is azurecontainer.io"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Default location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
+    }
+  },
+  "variables": {
+    "image": "[parameters('bcRelease')]",
+    "publicdnsname": "[format('{0}.{1}{2}', parameters('dnsPrefix'), parameters('location'), parameters('azurecontainerSuffix'))]",
+    "foldersZipUri": "[uri(parameters('_artifactsLocation'), format('scripts/SetupCertificate.zip{0}', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2021-09-01",
+      "name": "[parameters('contGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('contGroupName')]",
+            "properties": {
+              "environmentVariables": [
+                {
+                  "name": "ACCEPT_EULA",
+                  "value": "[parameters('acceptEula')]"
+                },
+                {
+                  "name": "accept_outdated",
+                  "value": "y"
+                },
+                {
+                  "name": "username",
+                  "value": "[parameters('username')]"
+                },
+                {
+                  "name": "password",
+                  "value": "[parameters('password')]"
+                },
+                {
+                  "name": "customNavSettings",
+                  "value": "[parameters('customNavSettings')]"
+                },
+                {
+                  "name": "customWebSettings",
+                  "value": "[parameters('customWebSettings')]"
+                },
+                {
+                  "name": "PublicDnsName",
+                  "value": "[variables('publicdnsname')]"
+                },
+                {
+                  "name": "folders",
+                  "value": "[format('c:\\run\\my={0}', variables('foldersZipUri'))]"
+                },
+                {
+                  "name": "ContactEMailForLetsEncrypt",
+                  "value": "[parameters('letsEncryptMail')]"
+                },
+                {
+                  "name": "artifacturl",
+                  "value": "[parameters('bcArtifactUrl')]"
+                },
+                {
+                  "name": "certificatePfxPassword",
+                  "value": "[parameters('password')]"
+                }
+              ],
+              "image": "[variables('image')]",
+              "ports": [
+                {
+                  "protocol": "TCP",
+                  "port": 443
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 8080
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 7049
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 7048
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 80
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGB": "[parameters('memoryInGb')]"
+                }
+              }
+            }
+          }
+        ],
+        "restartPolicy": "Never",
+        "osType": "Windows",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": 443
+            },
+            {
+              "protocol": "TCP",
+              "port": 8080
+            },
+            {
+              "protocol": "TCP",
+              "port": 7049
+            },
+            {
+              "protocol": "TCP",
+              "port": 7048
+            },
+            {
+              "protocol": "TCP",
+              "port": 80
+            }
+          ],
+          "dnsNameLabel": "[parameters('dnsPrefix')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "containerIPAddressFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('contGroupName'))).ipAddress.fqdn]"
+    }
+  }
+}

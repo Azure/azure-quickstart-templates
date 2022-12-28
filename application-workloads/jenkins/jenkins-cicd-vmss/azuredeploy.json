@@ -1,0 +1,208 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "jenkinsVMAdminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the Jenkins Virtual Machine."
+      }
+    },
+    "jenkinsDnsPrefix": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Jenkins Virtual Machine."
+      }
+    },
+    "jenkinsReleaseType": {
+      "type": "string",
+      "allowedValues": [
+        "LTS",
+        "weekly",
+        "verified"
+      ],
+      "defaultValue": "LTS",
+      "metadata": {
+        "description": "The Jenkins release type."
+      }
+    },
+    "repositoryUrl": {
+      "type": "string",
+      "defaultValue": "https://github.com/Azure/azure-quickstart-templates",
+      "minLength": 1,
+      "metadata": {
+        "description": "GitHub repository URL for the source code."
+      }
+    },
+    "clientId": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Client id for Azure service principal."
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Client secret for Azure service principal."
+      }
+    },
+    "VMDnsPrefix": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Unique DNS Name for the new Tomcat Virtual Machine."
+      }
+    },
+    "VMAdminUsername": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Username for the new Tomcat Virtual Machine."
+      }
+    },
+    "VMAdminPassword": {
+      "type": "securestring",
+      "minLength": 6,
+      "metadata": {
+        "description": "Password for the new Tomcat Virtual Machine."
+      }
+    },
+    "OMSWorkspaceName": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "OMS workspace name."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/jenkins/jenkins-cicd-vmss/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "VMResourceGroup": "[concat(take(resourceGroup().name, 70), 'VMSS', uniqueString(resourceGroup().id))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-04-26-preview",
+      "name": "[parameters('OMSWorkspaceName')]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "location": "eastus",
+      "properties": {
+        "sku": {
+          "name": "pernode"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "jenkinsDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/jenkins.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('jenkinsVMAdminUsername')]"
+          },
+          "dnsPrefix": {
+            "value": "[parameters('jenkinsDnsPrefix')]"
+          },
+          "jenkinsReleaseType": {
+            "value": "[parameters('jenkinsReleaseType')]"
+          },
+          "repositoryUrl": {
+            "value": "[parameters('repositoryUrl')]"
+          },
+          "clientId": {
+            "value": "[parameters('clientId')]"
+          },
+          "clientSecret": {
+            "value": "[parameters('clientSecret')]"
+          },
+          "VMResourceGroup": {
+            "value": "[variables('VMResourceGroup')]"
+          },
+          "VMDnsPrefix": {
+            "value": "[parameters('VMDnsPrefix')]"
+          },
+          "VMAdminUsername": {
+            "value": "[parameters('VMAdminUsername')]"
+          },
+          "VMAdminPassword": {
+            "value": "[parameters('VMAdminPassword')]"
+          },
+          "OMSWorkspaceId": {
+            "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('OMSWorkspaceName')),'2017-04-26-preview').customerId]"
+          },
+          "OMSWorkspaceKey": {
+            "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('OMSWorkspaceName')), '2017-04-26-preview').primarySharedKey]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('OMSWorkspaceName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "jenkinsURL": {
+      "type": "string",
+      "value": "[reference('jenkinsDeployment').outputs.jenkinsURL.value]"
+    },
+    "jenkinsSSH": {
+      "type": "string",
+      "value": "[reference('jenkinsDeployment').outputs.jenkinsSSH.value]"
+    },
+    "VMSSResourceGroup": {
+      "type": "string",
+      "value": "[variables('VMResourceGroup')]"
+    }
+  }
+}
