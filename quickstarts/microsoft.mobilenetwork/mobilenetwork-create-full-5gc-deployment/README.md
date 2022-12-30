@@ -26,7 +26,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mobilenetwork%2Fmobilenetwork-create-full-5gc-deployment%2Fazuredeploy.json)
 
-This template deploys a Private 5G Core. The Private 5G Core is a deployed with a sample sim and default policy.
+This template deploys a Private 5G Core. The Private 5G Core is a deployed with a sample SIM and default policy.
 
 ## Prerequisites
 

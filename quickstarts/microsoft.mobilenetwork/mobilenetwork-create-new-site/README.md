@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: mobilenetwork-create-new-site
 languages:
-- json
 - bicep
+- json
 ---
 # Create a new mobile network site
 
