@@ -81,7 +81,7 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference(resourceId('Microsoft.Insights/components', functionAppName), '2022-03-01').InstrumentationKey
+          value: reference(resourceId('Microsoft.Insights/components', functionAppName), '2020-02-02').InstrumentationKey
         }
         {
           name: 'AzureWebJobsStorage'
