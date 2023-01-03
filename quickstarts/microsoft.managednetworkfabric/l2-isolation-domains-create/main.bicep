@@ -4,7 +4,9 @@ param l2DomainName string
 @description('Azure Region for deployment of the L2 Isolation Domain and associated resources')
 param location string = resourceGroup().location
 
-var networkFabricId = '/subscriptions/d854f6e5-7f11-4515-9d58-2ef770a77ee2/resourceGroups/rahul-rg/providers/Microsoft.ManagedNetworkFabric/networkFabrics/rahulnf1'
+@description('Resource Id of the Network Fabric, is should be in the format of /subscriptions/<Sub ID>/resourceGroups/<Resource group name>/providers/Microsoft.ManagedNetworkFabric/networkFabrics/<networkFabric name>')
+param networkFabricId string
+
 var vlanId = 678
 var mtu = 1654
 

@@ -4,8 +4,10 @@ param networkFabricName string
 @description('Azure Region for deployment of the Network Fabric and associated resources')
 param location string = resourceGroup().location
 
+@description('Resource Id of the Network Fabric Controller,  is should be in the format of /subscriptions/<Sub ID>/resourceGroups/<Resource group name>/providers/Microsoft.ManagedNetworkFabric/networkFabricControllers/<networkFabricController name>')
+param networkFabricControllerId string
+
 var networkFabricSku = 'fab1'
-var networkFabricControllerId = '/subscriptions/d854f6e5-7f11-4515-9d58-2ef770a77ee2/resourceGroups/rahul-rg/providers/Microsoft.ManagedNetworkFabric/networkFabricControllers/testmrgtest2'
 var vlanId = 123
 var fabricAsn = 65046
 var peerAsn = 65342
