@@ -54,7 +54,7 @@ var hostingPlanNameResource = '${siteName}serviceplan'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkNameResource, subnetName)
 var publicIPRef = publicIPAddressName.id
 
-resource publicIPAddressName 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
+resource publicIPAddressName 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: publicIPAddressNameResource
   location: location
   properties: {
@@ -65,7 +65,7 @@ resource publicIPAddressName 'Microsoft.Network/publicIPAddresses@2020-05-01' = 
   }
 }
 
-resource virtualNetworkName 'Microsoft.Network/virtualNetworks@2020-05-01' = {
+resource virtualNetworkName 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: virtualNetworkNameResource
   location: location
   properties: {
@@ -90,7 +90,7 @@ resource virtualNetworkName 'Microsoft.Network/virtualNetworks@2020-05-01' = {
   }
 }
 
-resource ApplicationGateway 'Microsoft.Network/applicationGateways@2020-05-01' = {
+resource ApplicationGateway 'Microsoft.Network/applicationGateways@2022-07-01' = {
   name: applicationGatewayNameResource
   location: location
   properties: {
@@ -206,7 +206,7 @@ resource ApplicationGateway 'Microsoft.Network/applicationGateways@2020-05-01' =
   ]
 }
 
-resource hostingPlanName 'Microsoft.Web/serverfarms@2019-08-01' = {
+resource hostingPlanName 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: hostingPlanNameResource
   location: location
   tags: {
@@ -218,7 +218,7 @@ resource hostingPlanName 'Microsoft.Web/serverfarms@2019-08-01' = {
   kind: 'app'
 }
 
-resource AppService 'Microsoft.Web/sites@2019-08-01' = {
+resource AppService 'Microsoft.Web/sites@2022-03-01' = {
   name: siteName
   location: location
   properties: {
@@ -227,7 +227,7 @@ resource AppService 'Microsoft.Web/sites@2019-08-01' = {
   }
 }
 
-resource PrivateEndpoint 'Microsoft.Network/privateEndpoints@2019-04-01' = {
+resource PrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-07-01' = {
   name: privateEndpoint_name
   location: location
   properties: {
@@ -248,7 +248,7 @@ resource PrivateEndpoint 'Microsoft.Network/privateEndpoints@2019-04-01' = {
   }
 }
 
-resource privateDNSZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDNSZone_name
   location: 'global'
   dependsOn: [
@@ -256,7 +256,7 @@ resource privateDNSZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
   ]
 }
 
-resource privateDNSZonePrivateDNSZonelink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource privateDNSZonePrivateDNSZonelink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDNSZone
   name: '${privateDNSZone_name}-link'
   location: 'global'
@@ -268,7 +268,7 @@ resource privateDNSZonePrivateDNSZonelink 'Microsoft.Network/privateDnsZones/vir
   }
 }
 
-resource privateEndpointDnsGroupname 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
+resource privateEndpointDnsGroupname 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-07-01' = {
   parent: PrivateEndpoint
   name: 'dnsgroupname'
   properties: {
