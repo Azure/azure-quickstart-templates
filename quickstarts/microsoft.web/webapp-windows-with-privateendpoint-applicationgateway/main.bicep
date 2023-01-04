@@ -172,6 +172,7 @@ resource ApplicationGateway 'Microsoft.Network/applicationGateways@2022-07-01' =
       {
         name: 'rule1'
         properties: {
+          priority: 100
           ruleType: 'Basic'
           httpListener: {
             id: resourceId('Microsoft.Network/applicationGateways/httpListeners/', applicationGatewayNameResource, 'appGatewayHttpListener')
