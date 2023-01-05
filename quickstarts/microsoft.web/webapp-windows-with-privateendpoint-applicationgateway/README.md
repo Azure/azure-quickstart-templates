@@ -1,4 +1,15 @@
-# Deploying App Service Multi-Tenant, Private Endpoint and internet facing App Gateway
+---
+description: This template creates an Azure Web App with Private endpoint in Azure Virtual Network Subnet , an Application Gateway v2. The Application Gateway is deployed in a vNet (subnet). The Web App restricts access to traffic from the subnet using private endpoint
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-windows-with-privateendpoint-applicationgateway
+languages:
+- bicep
+- json
+---
+# Create a Web App, PE and Application Gateway v2
 
 This template deploys an Application Gateway in Azure Virtual Network (subnet), a second subnet that containts a Private endpoint as an App Service interface, an App Service which is configured with a Private endpoint, everything is created with generated names, however, you can easily modify the template to use other default values or parameterize values. You can also 'bring your own' subnet, web app, application gateway or public ip, if you have any of the items already created.
 
