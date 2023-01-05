@@ -10,7 +10,6 @@ param vmSku string = 'Standard_D2s_v3'
 param sku string = '2022-datacenter-azure-edition'
 
 @description('String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended.')
-@minLength(3)
 @maxLength(61)
 param vmssName string
 
@@ -78,9 +77,6 @@ param maxBatchInstancePercent int = 20
 param maxUnhealthyInstancePercent int = 20
 param maxUnhealthyUpgradedInstancePercent int = 20
 param pauseTimeBetweenBatches string = 'PT5S'
-param autoRepairsPolicyEnabled bool = false
-param gracePeriod string = 'PT10M'
-param platformFaultDomainCount int = 1
 
 var namingInfix = toLower(substring('${vmssName}${uniqueString(resourceGroup().id)}', 0, 9))
 var addressPrefix = '10.0.0.0/16'
@@ -294,11 +290,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
         enableAutomaticOSUpgrade: true
       }
     }
-    automaticRepairsPolicy: {
-      enabled: autoRepairsPolicyEnabled
-      gracePeriod: gracePeriod
-    }
-    platformFaultDomainCount: platformFaultDomainCount
   }
   dependsOn: [
     loadBalancer
