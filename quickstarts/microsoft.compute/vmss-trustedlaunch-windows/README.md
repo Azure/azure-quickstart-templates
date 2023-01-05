@@ -1,15 +1,15 @@
 ---
-description: This template allows you to deploy a trusted launch capable VM Scale Set of Windows VMs using the latest patched version of Windows Server 2016, Windows Server 2019 or Windows Server 2022 Azure Edition. These VMs are behind a load balancer with NAT rules for RDP connections. If you enable Secureboot and vTPM, the Guest Attestation extension will be installed on your VMSS. This extension will perform remote [attestation](https://docs.microsoft.com/en-us/windows/security/information-protection/tpm/tpm-fundamentals#measured-boot-with-support-for-attestation) by the cloud.
+description: This template allows you to deploy a trusted launch capable VM Scale Set of Windows VMs using the latest patched version of Windows Server 2016, Windows Server 2019 or Windows Server 2022 Azure Edition. These VMs are behind a load balancer with NAT rules for RDP connections. If you enable Secureboot and vTPM, the Guest Attestation extension will be installed on your VMSS. This extension will perform remote [attestation](https&#58;//docs.microsoft.com/en-us/windows/security/information-protection/tpm/tpm-fundamentals#measured-boot-with-support-for-attestation) by the cloud.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: vmss-trustedlaunch-windows
 languages:
-- json
 - bicep
+- json
 ---
-# Deploy a trusted launch capable Windows virtual machine scale set
+# Deploy a trusted launch capable Windows VM Scale Set
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-trustedlaunch-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-trustedlaunch-windows/PublicDeployment.svg)
