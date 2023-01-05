@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: iothub-with-consumergroup-create
 languages:
+- bicep
 - json
 ---
 # Create an IoT Hub and a Device to Cloud Consumer Group
