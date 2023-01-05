@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: databricks-workspace-with-managed-disk-customer-managed-keys
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy an Azure Databricks Workspace with managed disk & CMK
 
