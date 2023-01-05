@@ -8,7 +8,7 @@ urlFragment: 2fe-lb80-rdp-1be-nsg-rdp
 languages:
 - json
 ---
-# Create 2 VMs in LB and a SQL Server VM with NSG.
+# Create 2 VMs in LB and a SQL Server VM with NSG
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/2fe-lb80-rdp-1be-nsg-rdp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/2fe-lb80-rdp-1be-nsg-rdp/PublicDeployment.svg)
