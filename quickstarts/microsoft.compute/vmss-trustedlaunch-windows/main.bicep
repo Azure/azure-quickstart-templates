@@ -57,6 +57,35 @@ param publicIpSku string = 'Standard'
 @description('Unique DNS Name for the Public IP used to access the virtual machine scale set.')
 param dnsLabelPrefix string = toLower('${vmssName}-${uniqueString(resourceGroup().id)}')
 
+@allowed([
+  'TCP'
+  'HTTP'
+  'HTTPS'
+])
+param healthExtensionProtocol string = 'TCP'
+param healthExtensionPort int = 80
+param healthExtensionRequestPath string = '/'
+param overprovision bool = false
+
+@allowed([
+  'Manual'
+  'Rolling'
+  'Automatic'
+])
+param upgradePolicy string = 'Rolling'
+param maxBatchInstancePercent int = 20
+param maxUnhealthyInstancePercent int = 20
+param maxUnhealthyUpgradedInstancePercent int = 20
+param pauseTimeBetweenBatches string = 'PT5S'
+param scaleInPolicy object = {
+  rules: [
+    'Default'
+  ]
+}
+param autoRepairsPolicyEnabled bool = false
+param gracePeriod string = 'PT10M'
+param platformFaultDomainCount int = 1
+
 var namingInfix = toLower(substring('${vmssName}${uniqueString(resourceGroup().id)}', 0, 9))
 var addressPrefix = '10.0.0.0/16'
 var subnetPrefix = '10.0.0.0/24'
@@ -96,6 +125,12 @@ var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
 var disableAlerts = 'false'
 var useAlternateToken = 'false'
+var rollingUpgradeJson = {
+  maxBatchInstancePercent: maxBatchInstancePercent
+  maxUnhealthyInstancePercent: maxUnhealthyInstancePercent
+  maxUnhealthyUpgradedInstancePercent: maxUnhealthyUpgradedInstancePercent
+  pauseTimeBetweenBatches: pauseTimeBetweenBatches
+}
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: virtualNetworkName
@@ -180,10 +215,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
     capacity: instanceCount
   }
   properties: {
-    overprovision: true
-    upgradePolicy: {
-      mode: 'Manual'
-    }
     virtualMachineProfile: {
       storageProfile: {
         osDisk: {
@@ -234,7 +265,45 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
           }
         ]
       }
+      extensionProfile: {
+        extensions: [
+          {
+            name: 'HealthExtension'
+            properties: {
+              publisher: 'Microsoft.ManagedServices'
+              type: 'ApplicationHealthWindows'
+              typeHandlerVersion: '1.0'
+              autoUpgradeMinorVersion: false
+              settings: {
+                protocol: healthExtensionProtocol
+                port: healthExtensionPort
+                requestPath: ((healthExtensionProtocol == 'TCP') ? json('null') : healthExtensionRequestPath)
+              }
+            }
+          }
+        ]
+      }
+      diagnosticsProfile: {
+        bootDiagnostics: {
+          enabled: true
+        }
+      }
     }
+    orchestrationMode: 'Uniform'
+    scaleInPolicy: scaleInPolicy
+    overprovision: overprovision
+    upgradePolicy: {
+      mode: upgradePolicy
+      rollingUpgradePolicy: ((upgradePolicy == 'Rolling') ? rollingUpgradeJson : json('null'))
+      automaticOSUpgradePolicy: {
+        enableAutomaticOSUpgrade: true
+      }
+    }
+    automaticRepairsPolicy: {
+      enabled: autoRepairsPolicyEnabled
+      gracePeriod: gracePeriod
+    }
+    platformFaultDomainCount: platformFaultDomainCount
   }
   dependsOn: [
     loadBalancer
@@ -300,7 +369,7 @@ resource cpuautoscale 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
   }
 }
 
-resource vmssExtension 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = if (vTPM && secureBoot) {
+resource vmssName_extension 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = if (vTPM && secureBoot) {
   parent: vmss
   name: extensionName
   location: location
