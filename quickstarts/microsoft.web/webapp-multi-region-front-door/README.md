@@ -6,10 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: webapp-multi-region-front-door
 languages:
-- json
 - bicep
+- json
 ---
-# Highly Available Web App Multi-region Web App with Azure Front Door
+# Highly Available Multi-region Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-multi-region-front-door/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-multi-region-front-door/PublicDeployment.svg)
