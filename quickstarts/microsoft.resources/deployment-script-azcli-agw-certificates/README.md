@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: deployment-script-azcli-agw-certificates
 languages:
-- json
 - bicep
+- json
 ---
 # Create Application Gateway with Certificates
 
