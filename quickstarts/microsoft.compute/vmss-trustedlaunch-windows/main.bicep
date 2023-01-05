@@ -63,7 +63,7 @@ param dnsLabelPrefix string = toLower('${vmssName}-${uniqueString(resourceGroup(
   'HTTPS'
 ])
 param healthExtensionProtocol string = 'TCP'
-param healthExtensionPort int = 80
+param healthExtensionPort int = 3389
 param healthExtensionRequestPath string = '/'
 param overprovision bool = false
 
