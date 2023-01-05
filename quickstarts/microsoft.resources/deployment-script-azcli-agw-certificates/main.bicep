@@ -1,7 +1,7 @@
 @description('The name of the Azure Application Gateway')
 param AgwName string = 'agw-${uniqueString(resourceGroup().id)}'
 
-@description('The name of the Azure Application Gateway')
+@description('The name of the Azure Key Vault')
 param AkvName string = 'akv-${uniqueString(resourceGroup().id)}'
 
 @description('The name of the certificate to generate for the frontend AGW. Name will be used as a ARecord in a Private DNS zone.')
