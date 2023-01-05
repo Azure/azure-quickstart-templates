@@ -10,6 +10,7 @@ param vmSku string = 'Standard_D2s_v3'
 param sku string = '2022-datacenter-azure-edition'
 
 @description('String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended.')
+@minLength(3)
 @maxLength(61)
 param vmssName string
 
@@ -72,16 +73,11 @@ param overprovision bool = false
   'Rolling'
   'Automatic'
 ])
-param upgradePolicy string = 'Rolling'
+param upgradePolicy string = 'Manual'
 param maxBatchInstancePercent int = 20
 param maxUnhealthyInstancePercent int = 20
 param maxUnhealthyUpgradedInstancePercent int = 20
 param pauseTimeBetweenBatches string = 'PT5S'
-param scaleInPolicy object = {
-  rules: [
-    'Default'
-  ]
-}
 param autoRepairsPolicyEnabled bool = false
 param gracePeriod string = 'PT10M'
 param platformFaultDomainCount int = 1
@@ -290,7 +286,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
       }
     }
     orchestrationMode: 'Uniform'
-    scaleInPolicy: scaleInPolicy
     overprovision: overprovision
     upgradePolicy: {
       mode: upgradePolicy
@@ -311,65 +306,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
   ]
 }
 
-resource cpuautoscale 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
-  name: 'cpuautoscale'
-  location: location
-  properties: {
-    name: 'cpuautoscale'
-    targetResourceUri: vmss.id
-    enabled: true
-    profiles: [
-      {
-        name: 'Profile1'
-        capacity: {
-          minimum: '1'
-          maximum: '10'
-          default: '1'
-        }
-        rules: [
-          {
-            metricTrigger: {
-              metricName: 'Percentage CPU'
-              metricResourceUri: vmss.id
-              timeGrain: 'PT1M'
-              timeWindow: 'PT5M'
-              timeAggregation: 'Average'
-              operator: 'GreaterThan'
-              threshold: 50
-              statistic: 'Average'
-            }
-            scaleAction: {
-              direction: 'Increase'
-              type: 'ChangeCount'
-              value: '1'
-              cooldown: 'PT5M'
-            }
-          }
-          {
-            metricTrigger: {
-              metricName: 'Percentage CPU'
-              metricResourceUri: vmss.id
-              timeGrain: 'PT1M'
-              timeWindow: 'PT5M'
-              timeAggregation: 'Average'
-              operator: 'LessThan'
-              threshold: 30
-              statistic: 'Average'
-            }
-            scaleAction: {
-              direction: 'Decrease'
-              type: 'ChangeCount'
-              value: '1'
-              cooldown: 'PT5M'
-            }
-          }
-        ]
-      }
-    ]
-  }
-}
-
-resource vmssName_extension 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = if (vTPM && secureBoot) {
+resource vmssExtension 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = if (vTPM && secureBoot) {
   parent: vmss
   name: extensionName
   location: location
