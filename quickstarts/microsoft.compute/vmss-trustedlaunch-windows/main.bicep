@@ -16,7 +16,7 @@ param vmssName string
 @description('Number of VM instances (100 or less).')
 @minValue(1)
 @maxValue(100)
-param instanceCount int
+param instanceCount int = 2
 
 @description('Admin username on all VMs.')
 param adminUsername string
