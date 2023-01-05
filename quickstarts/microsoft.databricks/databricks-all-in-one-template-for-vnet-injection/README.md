@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: databricks-all-in-one-template-for-vnet-injection
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Databricks All-in-one Template for VNet Injection
 
