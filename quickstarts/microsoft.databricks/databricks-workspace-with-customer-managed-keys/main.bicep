@@ -24,6 +24,8 @@ param pricingTier string = 'premium'
 param location string = resourceGroup().location
 
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var managedResourceGroupId = concat(subscription().id, '/resourceGroups/', trimmedMRGName)
 
 resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
   name: workspaceName
@@ -32,7 +34,7 @@ resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
     name: pricingTier
   }
   properties: {
-    managedResourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', managedResourceGroupName)
+    managedResourceGroupId: managedResourceGroupId
     parameters: {
       prepareEncryption: {
         value: true
@@ -54,7 +56,7 @@ module addAccessPolicy './nested_addAccessPolicy.bicep' = {
 module configureCMKOnWorkspace './nested_configureCMKOnWorkspace.bicep' = {
   name: 'configureCMKOnWorkspace'
   params: {
-    managedResourceGroupName: managedResourceGroupName
+    managedResourceGroupName: trimmedMRGName
     workspaceName: workspaceName
     location: location
     pricingTier: pricingTier
