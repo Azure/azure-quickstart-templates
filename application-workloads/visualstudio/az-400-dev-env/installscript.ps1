@@ -9,7 +9,10 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 New-LocalGroup -Name docker-users -Description "Users of Docker Desktop"
 Add-LocalGroupMember -Group 'docker-users' -Member $UserName
 
-choco install docker-desktop git vscode firefox azure-cli -y
+# removed packages VSCode and Git which were included in base-image !
+# Included a new tool "DBeaver" : A universal sql-client
+# Included a new tool "MobaXTerm" : A multi-tabbed SSH client with embedded X-Server
+choco install docker-desktop dbeaver mobaxterm azure-cli -y
 
 $trig = New-ScheduledTaskTrigger -AtLogOn 
 $task = New-ScheduledTaskAction -Execute "C:\Program Files\Docker\Docker\Docker Desktop.exe" 
