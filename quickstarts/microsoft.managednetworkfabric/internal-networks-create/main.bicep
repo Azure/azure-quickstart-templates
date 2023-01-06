@@ -7,20 +7,50 @@ param location string = resourceGroup().location
 @description('Name of the L3 Isolation Domain')
 param l3IsolationDomainName string
 
-var vlanId = 1234
-var mtu = 1564
-var ipv4prefix = '14.13.12.11/30'
-var ipv4gateway = '10.0.0.1'
-var ipv6prefix = '2fff::/64'
-var ipv6gateway = '10.0.0.1'
-var fabricASN = 65046
-var peerASN = 65500
-var ipv4Prefix = '14.13.12.11/30'
-var ipv6Prefix = '2fff::/64'
-var address = '10.0.0.11'
-var interval = 300
-var multiplier = 3
-var prefix = '10.0.0.11'
+@description('Vlan identifier value')
+param vlanId int
+
+@description('Maximum transmission unit')
+param mtu int
+
+@description('IPv4 Prefix of the subnet in the VLAN')
+param connectedIpv4Grefix string
+
+@description('Gateway of IPv4 Subnet')
+param connectedIpv4Gateway string
+
+@description('IPv6 Prefix of the subnet in the VLAN')
+param connectedIpv6Grefix string
+
+@description('Gateway of IPv6 Subnet')
+param connectedIpv6Gateway string
+
+@description('ASN number assigned on CE for BGP peering with PE')
+param fabricASN int
+
+@description('ASN number assigned on PE for BGP peering with CE')
+param peerASN int
+
+@description('Address')
+param address string
+
+@description('Interval value')
+param interval int
+
+@description('Multiplier value')
+param multiplier int
+
+@description('Prefix of Ipv4Routes')
+param ipv4RoutePrefix string
+
+@description('Prefix of Ipv6Routes')
+param ipv6RoutePrefix string
+
+@description('Ipv4 prefix of bgp configuration')
+param ipv4Prefix string
+
+@description('Ipv6 prefix of bgp configuration')
+param ipv6Prefix string
 
 @description('Name of existing l3 Isolation Domain Resource')
 resource l3IsolationDomains 'Microsoft.ManagedNetworkFabric/l3IsolationDomains@2022-01-15-privatepreview' existing = {
@@ -36,14 +66,14 @@ resource internalNetwork 'Microsoft.ManagedNetworkFabric/l3IsolationDomains/inte
     mtu: mtu
     connectedIPv4Subnets: [
       {
-        prefix: ipv4prefix
-        gateway: ipv4gateway
+        prefix: connectedIpv4Grefix
+        gateway: connectedIpv4Gateway
       }
     ]
     connectedIPv6Subnets: [
       {
-        prefix: ipv6prefix
-        gateway: ipv6gateway
+        prefix: connectedIpv6Grefix
+        gateway: connectedIpv6Gateway
       }
     ]
     staticRouteConfiguration: {
@@ -52,10 +82,10 @@ resource internalNetwork 'Microsoft.ManagedNetworkFabric/l3IsolationDomains/inte
         multiplier: multiplier
       }
       ipv4Routes: {
-        prefix: prefix
+        prefix: ipv4RoutePrefix
       }
       ipv6Routes: {
-        prefix: prefix
+        prefix: ipv6RoutePrefix
       }
     }
     bgpConfiguration: {
@@ -80,3 +110,5 @@ resource internalNetwork 'Microsoft.ManagedNetworkFabric/l3IsolationDomains/inte
     }
   }
 }
+
+output resourceID string = internalNetwork.id

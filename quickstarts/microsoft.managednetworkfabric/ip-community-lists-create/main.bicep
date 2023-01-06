@@ -4,15 +4,32 @@ param ipCommunityListName string
 @description('Azure Region for deployment of the Ip Community Lists and associated resources')
 param location string = resourceGroup().location
 
-var action = 'allow'
-var localAS = 'true'
-var gshut = 'true'
-var internet = 'true'
-var advertise = 'true'
-var export = 'true'
-var communityMember = '100'
-var annotation = 'asdf'
-var evpnEsImportRouteTarget = '201'
+@description('Action')
+param action string
+
+@description('Local Autonomous System')
+param localAS string
+
+@description('Graceful Shutdown ')
+param gshut string
+
+@description('Internet access')
+param internet string
+
+@description('Avertise')
+param advertise string
+
+@description('Export')
+param export string
+
+@description('CommunityMember of the Ip Community List')
+param communityMember string
+
+@description('Switch configuration description')
+param annotation string
+
+@description('evpnEsImportRouteTarget of the Ip Community List')
+param evpnEsImportRouteTarget string
 
 @description('Create Ip Community Lists Resource')
 resource ipCommunityLists 'Microsoft.ManagedNetworkFabric/ipCommunityLists@2022-01-15-privatepreview' = {
@@ -38,3 +55,5 @@ resource ipCommunityLists 'Microsoft.ManagedNetworkFabric/ipCommunityLists@2022-
     ]
   }
 }
+
+output resourceID string = ipCommunityLists.id

@@ -7,8 +7,11 @@ param location string = resourceGroup().location
 @description('Resource Id of the Network Fabric, is should be in the format of /subscriptions/<Sub ID>/resourceGroups/<Resource group name>/providers/Microsoft.ManagedNetworkFabric/networkFabrics/<networkFabric name>')
 param networkFabricId string
 
-var vlanId = 678
-var mtu = 1654
+@description('Vlan identifier value')
+param vlanId int
+
+@description('Maximum transmission unit')
+param mtu int
 
 @description('Create L2 Isolation Domain Resource')
 resource l2IsolationDomains 'Microsoft.ManagedNetworkFabric/l2IsolationDomains@2022-01-15-privatepreview' = {
@@ -20,3 +23,5 @@ resource l2IsolationDomains 'Microsoft.ManagedNetworkFabric/l2IsolationDomains@2
     mtu: mtu
   }
 }
+
+output id string = l2IsolationDomains.id

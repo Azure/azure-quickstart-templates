@@ -4,12 +4,23 @@ param networkFabricControllerName string
 @description('Azure Region for deployment of the Network Fabric Controller and associated resources')
 param location string = resourceGroup().location
 
-var infraExRCircuitId = 'aaaaaa'
-var infraExRAuthKey = 'abcdefgh'
-var workloadExRCircuitId = 'bbbb'
-var workloadExRAuthKey = 'abcdefgh'
-var managedResourceGroupName = 'managedResourceGroupName'
-var ipv4AddressSpace = '10.0.0.0/19'
+@description('Name of Express Route circuit')
+param infraExRCircuitId string
+
+@description('Authorization key for the circuit')
+param infraExRAuthKey string
+
+@description('Name of Express Route circuit')
+param workloadExRCircuitId string
+
+@description('Authorization key for the circuit')
+param workloadExRAuthKey string
+
+@description('Managed Resource Group name')
+param managedResourceGroupName string
+
+@description('Ipv4 address space used for NFC workload management')
+param ipv4AddressSpace string
 
 @description('Create Network Fabric Controller Resource')
 resource networkFabricController 'Microsoft.ManagedNetworkFabric/networkFabricControllers@2022-01-15-privatepreview' = {
@@ -35,3 +46,5 @@ resource networkFabricController 'Microsoft.ManagedNetworkFabric/networkFabricCo
     ipv4AddressSpace: ipv4AddressSpace
   }
 }
+
+output resourceID string = networkFabricController.id

@@ -4,9 +4,14 @@ param ipPrefixListName string
 @description('Azure Region for deployment of the Ip Prefix Lists and associated resources')
 param location string = resourceGroup().location
 
-var action = 'allow'
-var sequenceNumber = 1234
-var networkAddress = '1.1.1.0/24'
+@description('Action')
+param action string
+
+@description('Sequence Number')
+param sequenceNumber int
+
+@description('Network Address')
+param networkAddress string
 
 @description('Create Ip Prefix Lists Resource')
 resource ipPrefixLists 'Microsoft.ManagedNetworkFabric/ipPrefixLists@2022-01-15-privatepreview' = {
@@ -18,3 +23,5 @@ resource ipPrefixLists 'Microsoft.ManagedNetworkFabric/ipPrefixLists@2022-01-15-
     networkAddress: networkAddress
   }
 }
+
+output resourceID string = ipPrefixLists.id

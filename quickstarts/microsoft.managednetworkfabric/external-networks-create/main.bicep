@@ -7,16 +7,35 @@ param location string = resourceGroup().location
 @description('Name of the L3 Isolation Domain')
 param l3IsolationDomainName string
 
-var vlanId = 1234
-var mtu = 1564
-var fabricASN = 65046
-var peerASN = 65500
-var interval = 300
-var multiplier = 3
-var primaryIpv4Prefix = '172.31.0.0/30'
-var primaryIpv6Prefix = '3FFE:FFFF:0:CD30::a4/126'
-var secondaryIpv4Prefix = '172.31.0.4/30'
-var secondaryIpv6Prefix = '3FFE:FFFF:0:CD30::a4/126'
+@description('Vlan identifier value')
+param vlanId int
+
+@description('Maximum transmission unit')
+param mtu int
+
+@description('ASN of Network Fabric')
+param fabricASN int
+
+@description('ASN of Provider Edge')
+param peerASN int
+
+@description('Interval value')
+param interval int
+
+@description('Multiplier value')
+param multiplier int
+
+@description('IPv4 Address Prefix of CE1-PE1 interconnect links')
+param primaryIpv4Prefix string
+
+@description('IPv6 Address Prefix of CE1-PE1 interconnect links')
+param primaryIpv6Prefix string
+
+@description('IPv4 Address Prefix of CE2-PE2 interconnect links')
+param secondaryIpv4Prefix string
+
+@description('IPv4 Address Prefix of CE2-PE2 interconnect links')
+param secondaryIpv6Prefix string
 
 @description('Name of existing l3 Isolation Domain Resource')
 resource l3IsolationDomains 'Microsoft.ManagedNetworkFabric/l3IsolationDomains@2022-01-15-privatepreview' existing = {
@@ -42,3 +61,5 @@ resource externalNetwork 'Microsoft.ManagedNetworkFabric/l3IsolationDomains/exte
     secondaryIpv6Prefix: secondaryIpv6Prefix
   }
 }
+
+output resourceID string = externalNetwork.id

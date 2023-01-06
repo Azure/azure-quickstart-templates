@@ -4,14 +4,29 @@ param accessControlListName string
 @description('Azure Region for deployment of the Route Access Control Lists and associated resources')
 param location string = resourceGroup().location
 
-var addressFamily = 'ipv4'
-var sequenceNumber = 123445
-var action = 'allow'
-var destinationAddress = '1.1.10.10'
-var destinationPort = '1123'
-var sourceAddress = '1.1.1.0/24'
-var sourcePort = '1254'
-var protocol = 255
+@description('IP address family')
+param addressFamily string
+
+@description('Sequence Number')
+param sequenceNumber int
+
+@description('Action')
+param action string
+
+@description('Destination Address')
+param destinationAddress string
+
+@description('Destination Port')
+param destinationPort string
+
+@description('Source Address')
+param sourceAddress string
+
+@description('Source Port')
+param sourcePort string
+
+@description('Protocol')
+param protocol int
 
 @description('Create Route Access Control Lists Resource')
 resource accessControlLists 'Microsoft.ManagedNetworkFabric/accessControlLists@2022-01-15-privatepreview' = {
@@ -32,3 +47,5 @@ resource accessControlLists 'Microsoft.ManagedNetworkFabric/accessControlLists@2
     ]
   }
 }
+
+output resourceID string = accessControlLists.id

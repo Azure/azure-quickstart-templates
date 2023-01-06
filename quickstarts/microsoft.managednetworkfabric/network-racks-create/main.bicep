@@ -7,7 +7,8 @@ param location string = resourceGroup().location
 @description('Resource Id of the Network Fabric, is should be in the format of /subscriptions/<Sub ID>/resourceGroups/<Resource group name>/providers/Microsoft.ManagedNetworkFabric/networkFabrics/<networkFabric name>')
 param networkFabricId string
 
-var networkRackSku = 'fab1'
+@description('Name of the Network Rack SKU')
+param networkRackSku string
 
 @description('Create Network Rack Resource')
 resource networkRacks 'Microsoft.ManagedNetworkFabric/networkRacks@2022-01-15-privatepreview' = {
@@ -18,3 +19,5 @@ resource networkRacks 'Microsoft.ManagedNetworkFabric/networkRacks@2022-01-15-pr
     networkFabricId: networkFabricId
   }
 }
+
+output resourceID string = networkRacks.id

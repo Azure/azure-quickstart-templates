@@ -4,8 +4,20 @@ param routePolicyName string
 @description('Azure Region for deployment of the Route Policy and associated resources')
 param location string = resourceGroup().location
 
-var routeDescription = 'description of Route Policy'
-var sequenceNumber = 123456
+@description('Description of the Route Policy')
+param routeDescription string
+
+@description('Sequence Number of the Route Policy')
+param sequenceNumber int
+
+@description('Resource Ids of accessControlListIds')
+param accessControlListIds array
+
+@description('Resource Ids of ipCommunityListIds')
+param ipCommunityListIds array
+
+@description('Resource Ids of ipPrefixListIds')
+param ipPrefixListIds array
 
 @description('Create Route Policy')
 resource routePolicies 'Microsoft.ManagedNetworkFabric/routePolicies@2022-01-15-privatepreview' = {
@@ -17,11 +29,20 @@ resource routePolicies 'Microsoft.ManagedNetworkFabric/routePolicies@2022-01-15-
       {
         sequenceNumber: sequenceNumber
         match: {
-          accessControlListIds: [ 'asdfg123' ]
-          ipCommunityListIds: [ 'qwe432' ]
-          ipPrefixListIds: [ 'cdw243' ]
+          accessControlListIds: accessControlListIds
+          ipCommunityListIds: ipCommunityListIds
+          ipPrefixListIds: ipPrefixListIds
+        }
+        action: {
+          set: {
+            set: {
+              ipCommunityListIds: accessControlListIds
+            }
+          }
         }
       }
     ]
   }
 }
+
+output resourceID string = routePolicies.id
