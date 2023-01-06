@@ -31,6 +31,8 @@ param keyVaultResourceGroupName string
 param enableAutoRotation bool = false
 
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var managedResourceGroupId = concat(subscription().id, '/resourceGroups/', trimmedMRGName)
 
 resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
   name: workspaceName
@@ -39,7 +41,7 @@ resource workspace 'Microsoft.Databricks/workspaces@2022-04-01-preview' = {
     name: pricingTier
   }
   properties: {
-    managedResourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', managedResourceGroupName)
+    managedResourceGroupId: managedResourceGroupId
     encryption: {
       entities: {
         managedDisk: {
