@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: jboss-eap-clustered-multivm-rhel
 languages:
+- bicep
 - json
 ---
 # JBoss EAP on RHEL (clustered, multi-VM)
