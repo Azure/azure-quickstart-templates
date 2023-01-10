@@ -36,7 +36,7 @@ param newVersion string = ''
 param existingSliceName string
 
 #disable-next-line BCP081
-resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01' = { 
+resource existingSlice 'Microsoft.MobileNetwork/slices@2022-11-01' = { 
   name: existingSliceName
   location: location
   properties: {
