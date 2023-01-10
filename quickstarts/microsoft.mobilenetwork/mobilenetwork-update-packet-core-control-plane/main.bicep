@@ -33,7 +33,8 @@ param accessGateway string
 param newVersion string = ''
 
 @description('Name of the existing slice to use for the packetcorecontrolPlane')
-param existingSliceName string = 'mymobilenetwork/slice-1'
+param existingSliceName string = 'slice-1'
+
 
 #disable-next-line BCP081
 resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01' = { 
