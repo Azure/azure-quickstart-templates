@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: dokku-vm
 languages:
-- json
 - bicep
+- json
 ---
 # Dokku Instance
 
