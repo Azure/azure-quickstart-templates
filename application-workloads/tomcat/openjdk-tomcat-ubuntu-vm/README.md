@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create a Ubuntu VM with OpenJDK and Tomcat. Currently custom script file is pulled temporarily from https link on raw.githubusercontent.com/snallami/templates/master/ubuntu/java-tomcat-install.sh. Once the VM is successfully provisioned, tomcat installation can be verified by accessing the http link [FQDN name or public IP]&#58;8080/
+description: This template allows you to create a Ubuntu VM with OpenJDK and Tomcat. Currently custom script file is pulled temporarily from https link on raw.githubusercontent.com/snallami/templates/master/ubuntu/java-tomcat-install.sh. Once the VM is successfully provisioned, tomcat installation can be verified by accessing the http link [FQDN name or public IP]&#58;8080/ 
 page_type: sample
 products:
 - azure
