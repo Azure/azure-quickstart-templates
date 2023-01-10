@@ -1,11 +1,12 @@
 ---
-description: This template allows you to create a Ubuntu VM with OpenJDK and Tomcat. Currently custom script file is pulled temporarily from https link on raw.githubusercontent.com/snallami/templates/master/ubuntu/java-tomcat-install.sh. Once the VM is successfully provisioned, tomcat installation can be verified by accessing the http link [FQDN name or public IP]&#58;8080/ 
+description: This template allows you to create a Ubuntu VM with OpenJDK and Tomcat. Currently custom script file is pulled temporarily from https link on raw.githubusercontent.com/snallami/templates/master/ubuntu/java-tomcat-install.sh. Once the VM is successfully provisioned, tomcat installation can be verified by accessing the http link [FQDN name or public IP]&#58;8080/
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: openjdk-tomcat-ubuntu-vm
 languages:
+- bicep
 - json
 ---
 # Deploy Ubuntu VM with Open JDK and Tomcat
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/tomcat/openjdk-tomcat-ubuntu-vm/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/tomcat/openjdk-tomcat-ubuntu-vm/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/tomcat/openjdk-tomcat-ubuntu-vm/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftomcat%2Fopenjdk-tomcat-ubuntu-vm%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftomcat%2Fopenjdk-tomcat-ubuntu-vm%2Fazuredeploy.json)
