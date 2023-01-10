@@ -35,9 +35,31 @@ param newVersion string = ''
 @description('Name of the existing slice to use for the packetcorecontrolPlane')
 param existingSliceName string = 'slice-1'
 
+@description('The name for the private mobile network')
+param mobileNetworkName string
+
+@description('The mobile country code for the private mobile network')
+param mobileCountryCode string = '001'
+
+@description('The mobile network code for the private mobile network')
+param mobileNetworkCode string = '01'
+
 
 #disable-next-line BCP081
-resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01' = { 
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01' = {
+  name: mobileNetworkName
+  location: location
+  properties: {
+    publicLandMobileNetworkIdentifier: {
+      mcc: mobileCountryCode
+      mnc: mobileNetworkCode
+    }
+  }
+}
+
+#disable-next-line BCP081
+resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01' = {
+  parent: exampleMobileNetwork
   name: existingSliceName
   location: location
   properties: {
