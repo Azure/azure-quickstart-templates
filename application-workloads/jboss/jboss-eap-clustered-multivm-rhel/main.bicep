@@ -90,7 +90,7 @@ var vmNameMap = {
   PAYG: 'jbosseap-payg-server'
 }
 var vmName = vmNameMap[rhelOSLicenseType]
-var asName = 'jbosseap-as'
+var availabilitySetName = 'jbosseap-as'
 var skuName = 'Aligned'
 var nicName = 'jbosseap-server-nic'
 var addressPrefix = '10.0.0.0/16'
@@ -365,7 +365,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2022-07-01' = {
 }
 
 resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-08-01' = {
-  name: asName
+  name: availabilitySetName
   location: location
   sku: {
     name: skuName
