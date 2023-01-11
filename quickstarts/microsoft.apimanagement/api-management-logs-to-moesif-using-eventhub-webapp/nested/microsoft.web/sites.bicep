@@ -27,13 +27,12 @@ param apimEvtMoesifApiVersion string = 'v1'
 
 @description('DNS name to use for azure webapp such as .azurewebsites.net')
 param azureWebsitesDomain string
-param tags object = {
-}
+param tags object = {}
 
 @description('Location for all resources. eg \'westus2\'')
 param location string
 
-var appServiceHostName = concat(appServiceName, azureWebsitesDomain)
+var appServiceHostName = '${appServiceName}${azureWebsitesDomain}'
 
 resource appService 'Microsoft.Web/sites@2022-03-01' = {
   name: appServiceName
@@ -107,8 +106,6 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
 resource appServiceName_web 'Microsoft.Web/sites/config@2022-03-01' = {
   parent: appService
   name: 'web'
-  location: location
-  tags: tags
   properties: {
     netFrameworkVersion: 'v5.0'
     logsDirectorySizeLimit: 60
@@ -132,16 +129,13 @@ resource appServiceName_web 'Microsoft.Web/sites/config@2022-03-01' = {
     ]
   }
   dependsOn: [
-
     appServiceName_appServiceHost
   ]
 }
 
 resource appServiceName_appServiceHost 'Microsoft.Web/sites/hostNameBindings@2022-03-01' = {
   parent: appService
-  name: '${appServiceHostName}'
-  location: location
-  tags: tags
+  name: appServiceHostName
   properties: {
     siteName: appServiceName
     hostNameType: 'Verified'

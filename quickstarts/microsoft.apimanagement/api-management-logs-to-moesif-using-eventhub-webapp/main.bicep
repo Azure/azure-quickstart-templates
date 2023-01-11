@@ -101,7 +101,7 @@ module app_service_plan_deploy 'nested/microsoft.web/serverfarms.bicep' = {
   }
 }
 
-module app_service_deploy 'nested/microsoft.web/sites.json' = {
+module app_service_deploy 'nested/microsoft.web/sites.bicep' = {
   name: 'app-service-deploy'
   params: {
     appServiceName: dnsNamePrefix
