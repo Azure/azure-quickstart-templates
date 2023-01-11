@@ -46,7 +46,7 @@ resource fhir 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' = {
   identity: {
     type: 'SystemAssigned'
   }
-  properties: union((newOrExisting == 'existing') ? existingDeploy.outputs.properties.value : newDeploy.outputs.properties.value, {
+  properties: union((newOrExisting == 'existing') ? existingDeploy.outputs.properties : newDeploy.outputs.properties, {
       importConfiguration: (enableImport ? enableConfiguration : disableConfiguration)
     })
 }
