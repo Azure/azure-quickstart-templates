@@ -1,0 +1,530 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "147917349027744748"
+    }
+  },
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine"
+      }
+    },
+    "adminPasswordOrSSHKey": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Password or SSH key for the Virtual Machine"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "jbossEAPUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the JBoss EAP Manager"
+      }
+    },
+    "jbossEAPPassword": {
+      "type": "secureString",
+      "minLength": 12,
+      "metadata": {
+        "description": "Password for the JBoss EAP Manager"
+      }
+    },
+    "rhelOSLicenseType": {
+      "type": "string",
+      "defaultValue": "PAYG",
+      "allowedValues": [
+        "PAYG",
+        "BYOS"
+      ],
+      "metadata": {
+        "description": "Select the of RHEL OS License Type for deploying your Virtual Machine. Please read through the guide and make sure you follow the steps mentioned under section 'Licenses, Subscriptions and Costs' if you are selecting BYOS"
+      }
+    },
+    "rhsmUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for Red Hat subscription Manager"
+      }
+    },
+    "rhsmPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Password for Red Hat subscription Manager"
+      }
+    },
+    "rhsmPoolEAP": {
+      "type": "string",
+      "metadata": {
+        "description": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)"
+      }
+    },
+    "rhsmPoolRHEL": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Red Hat Subscription Manager Pool ID (Should have RHEL entitlement). Mandartory if you select the BYOS RHEL OS License Type"
+      }
+    },
+    "javaVersion": {
+      "type": "string",
+      "defaultValue": "JAVA_8",
+      "allowedValues": [
+        "JAVA_8",
+        "JAVA_11"
+      ],
+      "metadata": {
+        "description": "Select the Java version to be installed"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "storageReplication": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS"
+      ],
+      "metadata": {
+        "description": "Select the Replication Strategy for the Storage account"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "allowedValues": [
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_E2S_v3",
+        "Standard_E4S_v3",
+        "Standard_E8S_v3",
+        "Standard_F2S_v2",
+        "Standard_F4S_v2",
+        "Standard_F8S_v2"
+      ],
+      "metadata": {
+        "description": "The size of the Virtual Machine"
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    }
+  },
+  "variables": {
+    "containerName": "eapblobcontainer",
+    "loadBalancersName": "jbosseap-lb",
+    "vmNameMap": {
+      "BYOS": "jbosseap-byos-server",
+      "PAYG": "jbosseap-payg-server"
+    },
+    "vmName": "[variables('vmNameMap')[parameters('rhelOSLicenseType')]]",
+    "availabilitySetName": "jbosseap-as",
+    "skuName": "Aligned",
+    "nicName": "jbosseap-server-nic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "jbosseap-server-subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "virtualNetworkName": "jbosseap-vnet",
+    "backendPoolName": "jbosseap-server",
+    "frontendName": "LoadBalancerFrontEnd",
+    "healthProbeEAP": "eap-jboss-health",
+    "healthProbeAdmin": "eap-admin-health",
+    "bootStorageAccountName": "[format('bootstrg{0}', uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_LRS",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
+            "keyData": "[parameters('adminPasswordOrSSHKey')]"
+          }
+        ]
+      }
+    },
+    "imageSku": "[if(equals(parameters('rhelOSLicenseType'), 'PAYG'), '8_6', 'rhel-lvm86')]",
+    "offerMap": {
+      "BYOS": "rhel-byos",
+      "PAYG": "rhel"
+    },
+    "imageOffer": "[variables('offerMap')[parameters('rhelOSLicenseType')]]",
+    "imageReference": {
+      "publisher": "redhat",
+      "offer": "[variables('imageOffer')]",
+      "sku": "[variables('imageSku')]",
+      "version": "latest"
+    },
+    "plan": {
+      "name": "[variables('imageSku')]",
+      "publisher": "redhat",
+      "product": "rhel-byos"
+    },
+    "guidName": "pid-9c48eb09-c7f5-4cc1-9ee5-033abb031ff0",
+    "storageAccountName": "[format('jbosstrg{0}', uniqueString(resourceGroup().id))]",
+    "scriptFolder": "scripts",
+    "fileToBeDownloaded": "eap-session-replication.war",
+    "scriptArgs": "[format('-a {0} -t \"{1}\" -p {2} -f {3}', uri(parameters('_artifactsLocation'), '.'), parameters('_artifactsLocationSasToken'), variables('scriptFolder'), variables('fileToBeDownloaded'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('bootStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "copy": {
+        "name": "nic",
+        "count": "[length(range(0, parameters('numberOfInstances')))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}{1}', variables('nicName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '2022-07-01').subnets[0].id]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancersName')), '2022-07-01').backendAddressPools[0].id]"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancersName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "vm",
+        "count": "[length(range(0, parameters('numberOfInstances')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-08-01",
+      "name": "[format('{0}{1}', variables('vmName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "plan": "[if(equals(parameters('rhelOSLicenseType'), 'PAYG'), json('null'), variables('plan'))]",
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}', variables('nicName'), range(0, parameters('numberOfInstances'))[range(0, parameters('numberOfInstances'))[copyIndex()]]))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[format('{0}{1}', variables('vmName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrSSHKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "imageReference": "[variables('imageReference')]"
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('bootStorageAccountName')), '2022-09-01').primaryEndpoints.blob]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('bootStorageAccountName'))]",
+        "nic",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "setupJbossApp",
+        "count": "[length(range(0, parameters('numberOfInstances')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-08-01",
+      "name": "[format('{0}{1}/jbosseap-setup-extension-{2}', variables('vmName'), range(0, parameters('numberOfInstances'))[copyIndex()], range(0, parameters('numberOfInstances'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), format('scripts/jbosseap-setup-redhat.sh{0}', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} {1} ''{2}'' {3} {4} ''{5}'' {6} {7} {8} {9} {10} {11}', variables('scriptArgs'), parameters('jbossEAPUserName'), parameters('jbossEAPPassword'), parameters('rhelOSLicenseType'), parameters('rhsmUserName'), parameters('rhsmPassword'), parameters('rhsmPoolEAP'), variables('storageAccountName'), variables('containerName'), base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-02-01').keys[0].value), parameters('javaVersion'), parameters('rhsmPoolRHEL'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('loadBalancersName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('frontendName')]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAddressVersion": "IPv4",
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '2022-07-01').subnets[0].id]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('backendPoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "[format('{0}-rule1', variables('loadBalancersName'))]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancersName'), variables('frontendName'))]"
+              },
+              "frontendPort": 80,
+              "backendPort": 8080,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "protocol": "Tcp",
+              "enableTcpReset": false,
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancersName'), variables('backendPoolName'))]"
+              },
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancersName'), variables('healthProbeEAP'))]"
+              }
+            }
+          },
+          {
+            "name": "[format('{0}-rule2', variables('loadBalancersName'))]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancersName'), variables('frontendName'))]"
+              },
+              "frontendPort": 9990,
+              "backendPort": 9990,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "protocol": "Tcp",
+              "enableTcpReset": false,
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancersName'), variables('backendPoolName'))]"
+              },
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancersName'), variables('healthProbeAdmin'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('healthProbeEAP')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 8080,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          },
+          {
+            "name": "[variables('healthProbeAdmin')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 9990,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2022-08-01",
+      "name": "[variables('availabilitySetName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('skuName')]"
+      },
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 2,
+        "platformFaultDomainCount": 2
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageReplication')]"
+      },
+      "kind": "Storage",
+      "tags": {
+        "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('containerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[variables('guidName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {},
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.13.1.58284",
+              "templateHash": "3208761235556063943"
+            }
+          },
+          "resources": []
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "appURL": {
+      "type": "string",
+      "value": "[uri(format('http://{0}', reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancersName')), '2022-07-01').frontendIPConfigurations[0].properties.privateIPAddress), '/eap-session-replication/')]"
+    }
+  }
+}
