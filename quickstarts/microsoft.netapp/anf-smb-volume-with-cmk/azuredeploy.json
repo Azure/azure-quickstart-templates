@@ -1,0 +1,245 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"location": {
+			"defaultValue": "[resourceGroup().location]",
+			"type": "String",
+			"metadata": {
+				"description": "Same location of resource group for all resources"
+			}
+		},
+		"tenantId": {
+			"type": "string",
+			"defaultValue": "[subscription().tenantId]",
+			"metadata": {
+				"description": "The Tenant Id that should be used throughout the deployment."
+			}
+		},
+		"keyVaultName": {
+			"defaultValue": "[format('vault-{0}', uniqueString(resourceGroup().id))]",
+			"type": "String",
+			"metadata": {
+				"description": "The name of the Key Vault."
+			}
+		},
+		"keyVaultKeyName": {
+			"defaultValue": "cmkey",
+			"type": "String",
+			"metadata": {
+				"description": "Name of the key in the Key Vault"
+			}
+		},
+		"keyExpiration": {
+			"defaultValue": "[dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))]",
+			"type": "Int",
+			"metadata": {
+				"description": "Expiration time of the key"
+			}
+		},
+		"userAssignedIdentityResourceGroupName": {
+			"type": "String",
+			"metadata": {
+				"description": "The name of the resource group for the User Assigned Identity."
+			}
+		},
+		"userAssignedIdentityName": {
+			"type": "String",
+			"metadata": {
+				"description": "The name of the existing User Assigned Identity."
+			}
+		},
+		"netappAccountName": {
+			"defaultValue": "[concat('anfacc', uniqueString(resourceGroup().id))]",
+			"type": "String",
+			"metadata": {
+				"description": "Name for the Account. The account name must be unique within the subscription"
+			}
+		},
+		"keyVaultPrivateEndpointName": {
+			"defaultValue": "[concat('vault-{0}', uniqueString(resourceGroup().id))]",
+			"type": "String",
+			"metadata": {
+				"description": "The name of the key vault private endpoint"
+			}
+		},
+		"adUsername": {
+			"type": "String",
+			"metadata": {
+				"description": "The value of Active Directory username"
+			}
+		},
+		"adPassword": {
+			"type": "SecureString",
+			"metadata": {
+				"description": "The value of Active Directory password"
+			}
+		},
+		"domainName": {
+			"type": "String",
+			"metadata": {
+				"description": "Domain name for AD"
+			}
+		},
+		"dnsIpAddress": {
+			"type": "String",
+			"metadata": {
+				"description": "IP Address of the existing AD DNS Controller"
+			}
+		},
+		"smbServerName": {
+			"type": "String",
+			"metadata": {
+				"description": "SMB server name"
+			}
+		}
+	},
+	"variables": {
+		"keyVaultId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+		"keyVaultKeyId": "[resourceId('Microsoft.KeyVault/vaults/keys', parameters('keyVaultName'), parameters('keyVaultKeyName'))]",
+		"keyVaultPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('keyVaultPrivateEndpointName'))]",
+		"keyVaultPrivateEndpointGroupName": "vault"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.KeyVault/vaults",
+			"apiVersion": "2021-10-01",
+			"name": "[parameters('keyVaultName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"sku": {
+					"name": "standard",
+					"family": "A"
+				},
+				"enableSoftDelete": true,
+				"enablePurgeProtection": true,
+				"tenantId": "[parameters('tenantId')]",
+				"accessPolicies": [
+					{
+						"tenantId": "[parameters('tenantId')]",
+						"permissions": {
+							"keys": [
+								"encrypt",
+								"decrypt",
+								"get"
+							]
+						},
+						"objectId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('userAssignedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName')), '2018-11-30').principalId]"
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.KeyVault/vaults/keys",
+			"apiVersion": "2021-10-01",
+			"name": "[format('{0}/{1}', parameters('keyVaultName'), parameters('keyVaultKeyName'))]",
+			"dependsOn": [
+				"[variables('keyVaultId')]"
+			],
+			"properties": {
+				"attributes": {
+					"enabled": true,
+					"exp": "[parameters('keyExpiration')]"
+				},
+				"keySize": 4096,
+				"kty": "RSA"
+			}
+		},
+		{
+			"type": "Microsoft.NetApp/netAppAccounts",
+			"apiVersion": "2022-05-01",
+			"name": "[parameters('netAppAccountName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"activeDirectories": [
+					{
+						"username": "[parameters('adUsername')]",
+						"password": "[parameters('adPassword')]",
+						"domain": "[parameters('domainName')]",
+						"dns": "[parameters('dnsIpAddress')]",
+						"smbServerName": "[parameters('smbServerName')]"
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2020-06-01",
+			"name": "addAkvEncryptionToNetAppAccount",
+			"dependsOn": [
+				"[parameters('netAppAccountName')]",
+				"[variables('keyVaultKeyId')]"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"parameters": {},
+				"template": {
+					"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+					"contentVersion": "1.0.0.1",
+					"parameters": {},
+					"variables": {},
+					"resources": [
+						{
+							"apiVersion": "2022-05-01",
+							"name": "[parameters('netAppAccountName')]",
+							"location": "[resourceGroup().location]",
+							"type": "Microsoft.NetApp/netAppAccounts",
+							"identity": {
+								"type": "UserAssigned",
+								"userAssignedIdentities": {
+									"[format('{0}', extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('userAssignedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName')))]": {}
+								}
+							},
+							"properties": {
+								"encryption": {
+									"keySource": "Microsoft.KeyVault",
+									"keyVaultProperties": {
+										"keyVaultUri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))).vaultUri]",
+										"keyName": "[parameters('keyVaultKeyName')]",
+										"keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+									},
+									"identity": {
+										"userAssignedIdentity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('userAssignedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName'))]"
+									}
+								}
+							}
+						}
+					],
+					"outputs": {}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Network/privateEndpoints",
+			"apiVersion": "2020-04-01",
+			"name": "[parameters('keyVaultPrivateEndpointName')]",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[variables('vnetId')]",
+				"[variables('keyVaultPrivateEndpointId')]"
+			],
+			"properties": {
+				"privateLinkServiceConnections": [
+					{
+						"name": "[parameters('keyVaultPrivateEndpointName')]",
+						"properties": {
+							"privateLinkServiceId": "[variables('keyVaultId')]",
+							"groupIds": [
+								"[variables('keyVaultPrivateEndpointGroupName')]"
+							]
+						}
+					}
+				],
+				"subnet": {
+					"id": "[variables('subnetId')]"
+				},
+				"customDnsConfigs": [
+					{
+						"fqdn": "[concat(parameters('keyVaultName'), variables('keyVaultPublicDNSZoneForwarder'))]"
+					}
+				]
+			}
+		}
+	],
+	"outputs": {}
+}
