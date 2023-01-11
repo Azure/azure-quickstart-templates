@@ -1,15 +1,15 @@
 ---
-description: Creates an external Container App environment integrated with a virtual network.
+description: Creates an external Container App environment with a VNET.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: container-app-vnet-external-environment
 languages:
-- json
 - bicep
+- json
 ---
-# Creates an external Container App environment integrated with a virtual network
+# Creates an external Container App environment with a VNET
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-vnet-external-environment/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.app/container-app-vnet-external-environment/PublicDeployment.svg)
