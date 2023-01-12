@@ -178,12 +178,14 @@
     }
   },
   "variables": {
-    "vnetId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName')), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "keyVaultId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
     "keyVaultKeyId": "[resourceId('Microsoft.KeyVault/vaults/keys', parameters('keyVaultName'), parameters('keyVaultKeyName'))]",
     "keyVaultPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('keyVaultPrivateEndpointName'))]",
     "keyVaultPrivateEndpointGroupName": "vault",
-    "keyVaultPrivateEndpointSubnetId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName')), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('keyVaultPrivateEndpointSubnetName'))]"
+    "keyVaultPrivateEndpointSubnetId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName')), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('keyVaultPrivateEndpointSubnetName'))]",
+    "encryptionKeySource": "Microsoft.KeyVault",
+    "networkFeatures": "Standard",
+    "protocolTypes": ["CIFS"]
   },
   "resources": [
     {
@@ -228,6 +230,39 @@
         },
         "keySize": 4096,
         "kty": "RSA"
+      }
+    },
+    {
+      "subscriptionId": "[parameters('virtualNetworkSubscriptionId')]",
+      "resourceGroup": "[parameters('virtualNetworkResourceGroupName')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "AddSubnet",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2020-05-01",
+              "name": "[concat(parameters('virtualNetworkName'),'/',parameters('anfSubnetName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressPrefix": "[parameters('anfSubnetAddressPrefix')]",
+                "delegations": [
+                  {
+                    "name": "Microsoft.Netapp.volumes",
+                    "properties": {
+                      "serviceName": "Microsoft.Netapp/volumes"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
       }
     },
     {
@@ -318,6 +353,40 @@
             }
           }
         ]
+      }
+    },
+    {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(parameters('netAppAccountName'), '/', parameters('netAppPoolName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]"
+      ],
+      "properties": {
+        "serviceLevel": "[parameters('serviceLevel')]",
+        "size": "[parameters('poolSizeBytes')]"
+      }
+    },
+    {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+      "apiVersion": "2022-05-01",
+      "name": "[concat(parameters('netAppAccountName'), '/', parameters('netAppPoolName'), '/', parameters('netAppVolumeName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('netAppAccountName'), parameters('netAppPoolName'))]",
+        "AddSubnet",
+        "[variables('keyVaultPrivateEndpointId')]"
+      ],
+      "properties": {
+        "serviceLevel": "[parameters('serviceLevel')]",
+        "creationToken": "[parameters('netAppVolumeName')]",
+        "usageThreshold": "[parameters('volSizeBytes')]",
+        "subnetId": "[resourceId(parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('anfSubnetName'))]",
+        "encryptionKeySource": "[variables('encryptionKeySource')]",
+        "keyVaultPrivateEndpointResourceId": "[variables('keyVaultPrivateEndpointId')]",
+        "networkFeatures": "[variables('networkFeatures')]",
+        "protocolTypes": "[variables('protocolTypes')]"
       }
     }
   ],
