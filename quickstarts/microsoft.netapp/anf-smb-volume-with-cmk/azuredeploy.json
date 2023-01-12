@@ -57,7 +57,7 @@
       }
     },
     "keyVaultPrivateEndpointName": {
-      "defaultValue": "[concat('vault-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('keyVaultPrivateEndpoint-{0}', uniqueString(resourceGroup().id))]",
       "type": "String",
       "metadata": {
         "description": "The name of the key vault private endpoint"
@@ -92,13 +92,98 @@
       "metadata": {
         "description": "SMB server name"
       }
+    },
+    "netAppPoolName": {
+      "defaultValue": "[concat('pool', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Name for the capacity pool. The capacity pool name must be unique for each NetApp account."
+      }
+    },
+    "poolSizeBytes": {
+      "type": "int",
+      "defaultValue": 4398046511104,
+      "minValue": 4398046511104,
+      "maxValue": 549755813888000,
+      "metadata": {
+        "description": "Size of the capacity pool. The minimum  size is 4 TiB."
+      }
+    },
+    "netAppVolumeName": {
+      "defaultValue": "[concat('volume', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Name for the Volume. A volume name must be unique within each capacity pool. It must be at aleast three characters long and you can use any alphanumeric characters."
+      }
+    },
+    "volSizeBytes": {
+      "type": "int",
+      "defaultValue": 107374182400,
+      "minValue": 107374182400,
+      "maxValue": 109951162777600,
+      "metadata": {
+        "description": "Amount of logical storage that is allocated to the volume."
+      }
+    },
+    "anfSubnetName": {
+      "type": "string",
+      "defaultValue": "[concat('anfsubnet', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the subnet where the ANF volume will be created. This subnet will be delegated to Microsoft.NetApp/volumes."
+      }
+    },
+    "anfSubnetAddressPrefix": {
+      "type": "String",
+      "metadata": {
+        "description": "Subnet address range."
+      }
+    },
+    "serviceLevel": {
+      "type": "string",
+      "allowedValues": [
+        "Premium",
+        "Ultra",
+        "Standard"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Target performance for the capacity pool. Service level: Ultra, Premium, or Standard."
+      }
+    },
+    "virtualNetworkSubscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "SubscriptionId of the existing virtual network"
+      }
+    },
+    "virtualNetworkResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "ResourceGroup name of the existing virtual network"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing virtual network"
+      }
+    },
+    "keyVaultPrivateEndpointSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing subnet where the key vault private endpoint will be created."
+      }
     }
   },
   "variables": {
+    "vnetId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName')), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "keyVaultId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
     "keyVaultKeyId": "[resourceId('Microsoft.KeyVault/vaults/keys', parameters('keyVaultName'), parameters('keyVaultKeyName'))]",
     "keyVaultPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('keyVaultPrivateEndpointName'))]",
-    "keyVaultPrivateEndpointGroupName": "vault"
+    "keyVaultPrivateEndpointGroupName": "vault",
+    "keyVaultPrivateEndpointSubnetId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName')), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('keyVaultPrivateEndpointSubnetName'))]"
   },
   "resources": [
     {
@@ -211,14 +296,17 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2021-05-01",
       "name": "[parameters('keyVaultPrivateEndpointName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('vnetId')]",
-        "[variables('keyVaultPrivateEndpointId')]"
+        "[variables('keyVaultId')]"
       ],
       "properties": {
+        "subnet": {
+          "id": "[variables('keyVaultPrivateEndpointSubnetId')]"
+        },
+        "customNetworkInterfaceName": "[concat(parameters('keyVaultPrivateEndpointName'), '-nic')]",
         "privateLinkServiceConnections": [
           {
             "name": "[parameters('keyVaultPrivateEndpointName')]",
@@ -228,14 +316,6 @@
                 "[variables('keyVaultPrivateEndpointGroupName')]"
               ]
             }
-          }
-        ],
-        "subnet": {
-          "id": "[variables('subnetId')]"
-        },
-        "customDnsConfigs": [
-          {
-            "fqdn": "[concat(parameters('keyVaultName'), variables('keyVaultPublicDNSZoneForwarder'))]"
           }
         ]
       }
