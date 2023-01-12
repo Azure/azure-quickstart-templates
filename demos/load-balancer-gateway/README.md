@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Public Load Balancer chained to a Gateway Load Balancer
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/load-balancer-gateway/PublicLastTestDate.svg)
