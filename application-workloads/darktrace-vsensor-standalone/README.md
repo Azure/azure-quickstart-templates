@@ -31,8 +31,6 @@ vSensor introduction
 
 This document intends to describe how to use the provided ARM template to deploy one or more standalone Darktrace vSensors in Microsoft Azure.
 
-**Note**: A more advanced, autoscaling version of this template is also available [here](https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/darktrace/darktrace-vsensor-autoscaling)
-
 The Darktrace vSensor is a lightweight virtual probe intended for deployment in cloud-based networks or environments where it is not feasible to deploy a physical probe, such as virtualized networks. In an Azure public cloud environment, vSensors can be deployed as standalone virtual machines that collect packets from osSensor agents deployed on the VMs that are to be monitored.
 
 In addition to processing and transmitting network traffic, vSensors can ingest and forward syslog-format logs to the Darktrace master instance. VPN and DHCP logs can provide valuable device-tracking enrichment and custom event types derived from ingested log data can be used to integrate with a number of third-party tools.
