@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: bastion-hub-spoke-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy a Bastion host in a hub Virtual Network
 
