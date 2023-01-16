@@ -2,7 +2,7 @@ configuration ConfigureSQLVM
 {
     param
     (
-        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DNSServerIP,
         [Parameter(Mandatory)] [String]$DomainFQDN,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SqlSvcCreds,
@@ -37,25 +37,13 @@ configuration ConfigureSQLVM
         WindowsFeature AddADTools      { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
-        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
-        
-        SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; }
+        DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         Script EnableFileSharing
         {
-            TestScript = {
-                # Test if firewall rules for file sharing already exist
-                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
-                if ($null -eq $rulesSet) {
-                    return $false   # Run SetScript
-                } else {
-                    return $true    # Rules already set
-                }
-            }
-            SetScript = {
-                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
-            }
             GetScript = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}) }
+            SetScript = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false }
         }
 
         #**********************************************************
@@ -102,24 +90,14 @@ configuration ConfigureSQLVM
         # They need to be removed before they can be set on the SQL service account
         Script RemoveSQLSpnOnSQLMachine
         {
+            GetScript = { }
+            TestScript = { return $false }
             SetScript = 
             {
                 $hostname = $using:ComputerName
                 $domainFQDN = $using:DomainFQDN
-                $spn1 = "MSSQLSvc/$hostname.$($domainFQDN)"
-                $spn2 = "MSSQLSvc/$hostname.$($domainFQDN):1433"
-                setspn -D "$spn1" "$hostname"
-                setspn -D "$spn2" "$hostname"
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-				return $false
+                setspn -D "MSSQLSvc/$hostname.$($domainFQDN)" "$hostname"
+                setspn -D "MSSQLSvc/$hostname.$($domainFQDN):1433" "$hostname"
             }
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -138,34 +116,16 @@ configuration ConfigureSQLVM
             DependsOn            = "[Script]RemoveSQLSpnOnSQLMachine"
         }
 
-        # Tentative fix on random error on resources SqlServiceAccount/SqlLogin after computer joined domain (although SqlMaxDop Test succeeds):
-        # Error on SqlServiceAccount: System.InvalidOperationException: Unable to set the service account for SQL on MSSQLSERVER. Message  ---> System.Management.Automation.MethodInvocationException: Exception calling "SetServiceAccount" with "2" argument(s): "Set service account failed. "
-        # Error on SqlLogin: System.InvalidOperationException: Failed to connect to SQL instance 'SQL'. (SQLCOMMON0019) ---> System.Management.Automation.MethodInvocationException: Exception calling "Connect" with "0" argument(s): "Failed to connect to server SQL.
-        # It would imply that somehow, SQL Server does not start upon computer restart
         Script EnsureSQLServiceStarted
         {
-            SetScript = 
-            {
-                Start-Service -Name "MSSQLSERVER"
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-				$service = Get-Service -Name "MSSQLSERVER" | Select-Object Status
-                if ($service.Status -like 'Running') {
-                    $true
-                } else {
-                    $false
-                }
-            }
+            GetScript = { }
+            TestScript = { return (Get-Service -Name "MSSQLSERVER").Status -like 'Running' }
+            SetScript = { Start-Service -Name "MSSQLSERVER" }
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
+
+        SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; DependsOn = "[Script]EnsureSQLServiceStarted" }
 
         SqlServiceAccount SetSqlInstanceServiceAccount
         {
@@ -399,11 +359,11 @@ $password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -F
 $DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
 $SqlSvcCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "sqlsvc", $password
 $SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
-$DNSServer = "10.1.1.4"
+$DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
-ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSQLVM -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 #>
