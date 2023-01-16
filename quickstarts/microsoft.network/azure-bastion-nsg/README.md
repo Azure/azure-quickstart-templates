@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: azure-bastion-nsg
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Bastion as a Service with NSG
 
