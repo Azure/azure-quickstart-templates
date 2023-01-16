@@ -207,14 +207,6 @@
             RebootNodeIfNeeded = $true
         }
 
-        # Fix emerging issue "WinRM cannot process the request. The following error with errorcode 0x80090350" while Windows Azure Guest Agent service initiates using https://stackoverflow.com/a/74015954/8669078
-        Script SetWindowsAzureGuestAgentDepndencyOnDNS
-        {
-            GetScript = { }
-            TestScript = { return $false }
-            SetScript = { Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\WindowsAzureGuestAgent' -Name "DependOnService" -Type MultiString -Value "DNS" }
-        }
-
         #**********************************************************
         # Create AD domain
         #**********************************************************
