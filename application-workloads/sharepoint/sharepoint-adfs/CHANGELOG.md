@@ -1,5 +1,9 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in January 17, 2023
+
+* Fix the json parsing error when deploying the template from the portal
+
 ## Enhancements & bug-fixes - Published in January 10, 2023
 
 * Remove variable dnsLabelPrefix and use the resource group's name (formatted) instead in the DNS name of public IP resources.
