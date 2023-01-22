@@ -61,12 +61,9 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   }
 }
 
-resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-06-01-preview' = {
+resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-03-01' = {
   name: containerAppEnvName
   location: location
-  sku: {
-    name: 'Consumption'
-  }
   properties: {
     appLogsConfiguration: {
       destination: 'log-analytics'
@@ -78,7 +75,7 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-06-01-preview' 
   }
 }
 
-resource containerApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
+resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
   name: containerAppName
   location: location
   properties: {
@@ -113,6 +110,7 @@ resource containerApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
         maxReplicas: maxReplicas
         rules: [
           {
+            name: 'http-scale-rule'
             http: {
               metadata: {
                 concurrentRequests: '100'
