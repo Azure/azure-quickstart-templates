@@ -1,33 +1,35 @@
 ---
-description: This template allows you to deploy an Azure Function App that communicates with Azure Storage over private endpoints.
+description: This template provisions a function app on a Premium plan that has private endpoints and communicates with Azure Storage over private endpoints.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: function-app-storage-private-endpoints
+urlFragment: function-app-private-endpoints-storage-private-endpoints
 languages:
 - bicep
 - json
 ---
-# Create Function App and private endpoint-secured Storage
+# Azure Function App with private endpoint and Azure Storage with private endpoints
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/CredScanResult.svg)
 
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/BicepVersion.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/BicepVersion.svg)
 
 This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the AzureWebJobsStorage and WEBSITE_CONTENTAZUREFILECONNECTIONSTRING app settings, [via private endpoints](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#private-endpoint-connections).
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-storage-private-endpoints%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-storage-private-endpoints%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-private-endpoints-storage-private-endpoints%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-private-endpoints-storage-private-endpoints%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-private-endpoints-storage-private-endpoints%2Fazuredeploy.json)
 
-![Function App with Storage Private Endpoints](/quickstarts/microsoft.web/function-app-storage-private-endpoints/images/function-app-storage-private-endpoints.jpg)
+![Function App with Storage Private Endpoints](/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/images/function-app-private-endpoints-storage-private-endpoints.jpg)
+
 
 ### OS
 
@@ -64,6 +66,7 @@ The sample uses two subnets:
 
 [Azure Private Endpoints](https://docs.microsoft.com/azure/private-link/private-endpoint-overview) are used to connect to specific Azure resources using a private IP address  This ensures that network traffic remains within the designated virtual network, and access is available only for specific resources.  This sample configures private endpoints for the following Azure resources:
 
+- [Azure Funcion App](https://docs.microsoft.com/en-us/azure/app-service/networking/private-endpoint)
 - [Azure Storage](https://docs.microsoft.com/azure/storage/common/storage-private-endpoints)
   - Azure File storage
   - Azure Blob storage
@@ -78,6 +81,7 @@ A private DNS zone will be created for each Azure resource configured with a pri
 
 The following DNS zones are created in this sample:
 
+- privatelink.azurewebsites.net
 - privatelink.queue.core.windows.net
 - privatelink.blob.core.windows.net
 - privatelink.table.core.windows.net
@@ -91,6 +95,7 @@ The following DNS zones are created in this sample:
 
 ### NOTE:
 
++ This ARM template will secure your Function App by configuring the Private Endpoint, eliminating public exposure. You can connect to your App from on-premises networks that connects to the VNet using a VPN or ExpressRoute private peering.
 + This ARM template will allow access to the storage account through the private endpoints only. So, you will not be able to access the data storage in the storage account through the portal or otherwise.
 + You can give access to your secured IP address or virtual network for the data storage in the storage account, by [Managing the default network access rule](https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal#change-the-default-network-access-rule)
 
