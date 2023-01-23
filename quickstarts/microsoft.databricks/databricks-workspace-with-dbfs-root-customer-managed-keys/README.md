@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: databricks-workspace-with-customer-managed-keys
+urlFragment: databricks-workspace-with-dbfs-root-customer-managed-keys
 languages:
 - bicep
 - json
