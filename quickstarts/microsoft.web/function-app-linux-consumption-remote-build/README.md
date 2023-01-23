@@ -1,5 +1,5 @@
 ---
-description: This template provisions a function app on a Linux Consumption plan, which is a dynamic hosting plan. The app runs on demand and you're billed per execution, with no standing resource committment.
+description: This template provisions a function app on a Linux Consumption plan and perform remote build during code deployment. The app runs on demand and you're billed per execution, with no standing resource committment.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: function-app-linux-consumption-remote-build
 languages:
 - json
 ---
-# Azure Function App Hosted on Linux Consumption Plan
+# Function App on Linux Consumption Plan with Remote Build
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-linux-consumption-remote-build/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-linux-consumption-remote-build/PublicDeployment.svg)
