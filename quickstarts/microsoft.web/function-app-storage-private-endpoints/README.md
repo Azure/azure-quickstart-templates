@@ -1,5 +1,5 @@
 ---
-description: This template provisions a function app on a Premium plan that communicates with Azure Storage over private endpoints.
+description: This template allows you to deploy an Azure Function App that communicates with Azure Storage over private endpoints.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure Function App with Private Endpoint Secured Azure Storage
+# Create Function App and private endpoint-secured Storage
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/PublicDeployment.svg)
