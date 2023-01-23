@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure Function App with private endpoint and Azure Storage with private endpoints
+# Private Function App and private endpoint-secured Storage
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-private-endpoints-storage-private-endpoints/PublicDeployment.svg)
