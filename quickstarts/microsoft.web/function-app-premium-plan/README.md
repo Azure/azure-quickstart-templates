@@ -4,7 +4,6 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- bicep
 urlFragment: function-app-premium-plan
 languages:
 - json
