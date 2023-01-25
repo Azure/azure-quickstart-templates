@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vm-trustedlaunch-windows
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy a trusted launch capable Windows virtual machine
 
