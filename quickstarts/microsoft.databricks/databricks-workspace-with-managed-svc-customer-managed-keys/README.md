@@ -8,7 +8,7 @@ urlFragment: databricks-workspace-with-managed-svc-customer-managed-keys
 languages:
 - json
 ---
-# Deploy an Azure Databricks Workspace with managed services & CMK
+# Deploy an Azure Databricks Workspace with managed svc & CMK
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-managed-svc-customer-managed-keys/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-managed-svc-customer-managed-keys/PublicDeployment.svg)
