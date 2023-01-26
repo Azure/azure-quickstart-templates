@@ -71,7 +71,6 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
       scope: resourceId('Microsoft.DocumentDB/databaseAccounts', cosmosDbAccountName)
     }
   }
-
 }
 
 //  Kusto Cluster, DB, script and data connection
