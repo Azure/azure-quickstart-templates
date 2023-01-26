@@ -159,7 +159,7 @@ resource exampleNsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
         }
       }
       {
-        name: 'Depenedency_To_sync_RateLimit_Outbound'
+        name: 'Dependency_To_sync_RateLimit_Outbound'
         properties: {
           protocol: 'Tcp'
           sourcePortRange: '*'
