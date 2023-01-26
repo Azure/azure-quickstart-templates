@@ -75,7 +75,7 @@ var apiManagementName = 'apiservice${uniqueString(resourceGroup().id)}'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var nsgName = 'apimnsg${uniqueString(resourceGroup().id)}'
 
-resource exampleNsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource exampleNsg 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
   name: nsgName
   location: location
   properties: {
@@ -310,7 +310,7 @@ resource exampleNsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   }
 }
 
-resource exampePublicIp 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
+resource exampePublicIp 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -325,7 +325,7 @@ resource exampePublicIp 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
   }
 }
 
-resource exampleVirtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource exampleVirtualNetwork 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: virtualNetworkName
   location: location
   properties: {
