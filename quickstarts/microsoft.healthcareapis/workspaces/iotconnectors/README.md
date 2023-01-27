@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: iotconnectors
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy the MedTech service
 
