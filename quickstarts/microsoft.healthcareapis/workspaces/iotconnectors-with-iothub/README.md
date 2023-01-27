@@ -6,10 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: iotconnectors-with-iothub
 languages:
-- json
 - bicep
+- json
 ---
-# Deploy an AHDS MedTech service including an Azure IoT Hub
+# Deploy the MedTech service including an Azure IoT Hub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iothub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthcareapis/workspaces/iotconnectors-with-iothub/PublicDeployment.svg)
