@@ -62,33 +62,14 @@
       "type": "string",
       "defaultValue": "2022-datacenter-azure-edition-core",
       "allowedValues": [
-        "2008-R2-SP1",
-        "2008-R2-SP1-smalldisk",
-        "2012-Datacenter",
-        "2012-datacenter-gensecond",
-        "2012-Datacenter-smalldisk",
-        "2012-datacenter-smalldisk-g2",
-        "2012-Datacenter-zhcn",
-        "2012-datacenter-zhcn-g2",
-        "2012-R2-Datacenter",
         "2012-r2-datacenter-gensecond",
-        "2012-R2-Datacenter-smalldisk",
         "2012-r2-datacenter-smalldisk-g2",
-        "2012-R2-Datacenter-zhcn",
         "2012-r2-datacenter-zhcn-g2",
-        "2016-Datacenter",
         "2016-datacenter-gensecond",
-        "2016-datacenter-gs",
-        "2016-Datacenter-Server-Core",
         "2016-datacenter-server-core-g2",
-        "2016-Datacenter-Server-Core-smalldisk",
         "2016-datacenter-server-core-smalldisk-g2",
-        "2016-Datacenter-smalldisk",
         "2016-datacenter-smalldisk-g2",
-        "2016-Datacenter-with-Containers",
         "2016-datacenter-with-containers-g2",
-        "2016-datacenter-with-containers-gs",
-        "2016-Datacenter-zhcn",
         "2016-datacenter-zhcn-g2",
         "2019-Datacenter",
         "2019-Datacenter-Core",
@@ -147,6 +128,31 @@
       "metadata": {
         "description": "Name of the virtual machine."
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "secureBoot": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Secure Boot setting of the virtual machine. Applicable for securityType TrustedLaunch."
+      }
+    },
+    "maaEndpoint": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM."
+      }
     }
   },
   "variables": {
@@ -156,7 +162,20 @@
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "MyVNET",
-    "networkSecurityGroupName": "default-NSG"
+    "networkSecurityGroupName": "default-NSG",
+    "securityProfileJson": {
+	    "uefiSettings": {
+		    "secureBootEnabled": "[parameters('secureBoot')]",
+		    "vTpmEnabled": true
+	    },
+	    "securityType": "[parameters('securityType')]"
+	  },
+    "disableAlerts": "false",
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
+    "useAlternateToken": "false"
   },
   "resources": [
     {
@@ -307,11 +326,36 @@
             "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
           }
-        }
+        },
+        "securityProfile": "[if(equals(parameters('securityType'),'TrustedLaunch'), variables('securityProfileJson'), json('null'))]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('secureBoot')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), variables('extensionName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "[parameters('maaEndpoint')]",
+              "maaTenantName": "[variables('maaTenantName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
     }
   ],

@@ -28,66 +28,47 @@ param publicIpSku string = 'Basic'
 
 @description('The Windows version for the VM. This will pick a fully patched image of this given Windows version.')
 @allowed([
-'2008-R2-SP1'
-'2008-R2-SP1-smalldisk'
-'2012-Datacenter'
-'2012-datacenter-gensecond'
-'2012-Datacenter-smalldisk'
-'2012-datacenter-smalldisk-g2'
-'2012-Datacenter-zhcn'
-'2012-datacenter-zhcn-g2'
-'2012-R2-Datacenter'
-'2012-r2-datacenter-gensecond'
-'2012-R2-Datacenter-smalldisk'
-'2012-r2-datacenter-smalldisk-g2'
-'2012-R2-Datacenter-zhcn'
-'2012-r2-datacenter-zhcn-g2'
-'2016-Datacenter'
-'2016-datacenter-gensecond'
-'2016-datacenter-gs'
-'2016-Datacenter-Server-Core'
-'2016-datacenter-server-core-g2'
-'2016-Datacenter-Server-Core-smalldisk'
-'2016-datacenter-server-core-smalldisk-g2'
-'2016-Datacenter-smalldisk'
-'2016-datacenter-smalldisk-g2'
-'2016-Datacenter-with-Containers'
-'2016-datacenter-with-containers-g2'
-'2016-datacenter-with-containers-gs'
-'2016-Datacenter-zhcn'
-'2016-datacenter-zhcn-g2'
-'2019-Datacenter'
-'2019-Datacenter-Core'
-'2019-datacenter-core-g2'
-'2019-Datacenter-Core-smalldisk'
-'2019-datacenter-core-smalldisk-g2'
-'2019-Datacenter-Core-with-Containers'
-'2019-datacenter-core-with-containers-g2'
-'2019-Datacenter-Core-with-Containers-smalldisk'
-'2019-datacenter-core-with-containers-smalldisk-g2'
-'2019-datacenter-gensecond'
-'2019-datacenter-gs'
-'2019-Datacenter-smalldisk'
-'2019-datacenter-smalldisk-g2'
-'2019-Datacenter-with-Containers'
-'2019-datacenter-with-containers-g2'
-'2019-datacenter-with-containers-gs'
-'2019-Datacenter-with-Containers-smalldisk'
-'2019-datacenter-with-containers-smalldisk-g2'
-'2019-Datacenter-zhcn'
-'2019-datacenter-zhcn-g2'
-'2022-datacenter'
-'2022-datacenter-azure-edition'
-'2022-datacenter-azure-edition-core'
-'2022-datacenter-azure-edition-core-smalldisk'
-'2022-datacenter-azure-edition-smalldisk'
-'2022-datacenter-core'
-'2022-datacenter-core-g2'
-'2022-datacenter-core-smalldisk'
-'2022-datacenter-core-smalldisk-g2'
-'2022-datacenter-g2'
-'2022-datacenter-smalldisk'
-'2022-datacenter-smalldisk-g2'
+  '2012-r2-datacenter-gensecond'
+  '2012-r2-datacenter-smalldisk-g2'
+  '2012-r2-datacenter-zhcn-g2'
+  '2016-datacenter-gensecond'
+  '2016-datacenter-server-core-g2'
+  '2016-datacenter-server-core-smalldisk-g2'
+  '2016-datacenter-smalldisk-g2'
+  '2016-datacenter-with-containers-g2'
+  '2016-datacenter-zhcn-g2'
+  '2019-Datacenter'
+  '2019-Datacenter-Core'
+  '2019-datacenter-core-g2'
+  '2019-Datacenter-Core-smalldisk'
+  '2019-datacenter-core-smalldisk-g2'
+  '2019-Datacenter-Core-with-Containers'
+  '2019-datacenter-core-with-containers-g2'
+  '2019-Datacenter-Core-with-Containers-smalldisk'
+  '2019-datacenter-core-with-containers-smalldisk-g2'
+  '2019-datacenter-gensecond'
+  '2019-datacenter-gs'
+  '2019-Datacenter-smalldisk'
+  '2019-datacenter-smalldisk-g2'
+  '2019-Datacenter-with-Containers'
+  '2019-datacenter-with-containers-g2'
+  '2019-datacenter-with-containers-gs'
+  '2019-Datacenter-with-Containers-smalldisk'
+  '2019-datacenter-with-containers-smalldisk-g2'
+  '2019-Datacenter-zhcn'
+  '2019-datacenter-zhcn-g2'
+  '2022-datacenter'
+  '2022-datacenter-azure-edition'
+  '2022-datacenter-azure-edition-core'
+  '2022-datacenter-azure-edition-core-smalldisk'
+  '2022-datacenter-azure-edition-smalldisk'
+  '2022-datacenter-core'
+  '2022-datacenter-core-g2'
+  '2022-datacenter-core-smalldisk'
+  '2022-datacenter-core-smalldisk-g2'
+  '2022-datacenter-g2'
+  '2022-datacenter-smalldisk'
+  '2022-datacenter-smalldisk-g2'
 ])
 param OSVersion string = '2022-datacenter-azure-edition-core'
 
@@ -100,6 +81,19 @@ param location string = resourceGroup().location
 @description('Name of the virtual machine.')
 param vmName string = 'simple-vm'
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
+@description('Secure Boot setting of the virtual machine. Applicable for securityType TrustedLaunch.')
+param secureBoot bool = true
+
+@description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
+param maaEndpoint string = ''
+
 var storageAccountName = 'bootdiags${uniqueString(resourceGroup().id)}'
 var nicName = 'myVMNic'
 var addressPrefix = '10.0.0.0/16'
@@ -107,8 +101,21 @@ var subnetName = 'Subnet'
 var subnetPrefix = '10.0.0.0/24'
 var virtualNetworkName = 'MyVNET'
 var networkSecurityGroupName = 'default-NSG'
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: secureBoot
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
+var disableAlerts = 'false'
+var extensionName = 'GuestAttestation'
+var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
+var extensionVersion = '1.0'
+var maaTenantName = 'GuestAttestation'
+var useAlternateToken = 'false'
 
-resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -117,7 +124,7 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   kind: 'Storage'
 }
 
-resource pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -131,7 +138,7 @@ resource pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   }
 }
 
-resource securityGroup 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -153,7 +160,7 @@ resource securityGroup 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   }
 }
 
-resource vn 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -168,7 +175,7 @@ resource vn 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         properties: {
           addressPrefix: subnetPrefix
           networkSecurityGroup: {
-            id: securityGroup.id
+            id: networkSecurityGroup.id
           }
         }
       }
@@ -186,15 +193,19 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: pip.id
+            id: publicIp.id
           }
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vn.name, subnetName)
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
           }
         }
       }
     ]
   }
+  dependsOn: [
+
+    virtualNetwork
+  ]
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
@@ -240,10 +251,31 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: stg.properties.primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
+      }
+    }
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
+  }
+}
+
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (secureBoot) {
+  parent: vm
+  name: extensionName
+  location: location
+  properties: {
+    publisher: extensionPublisher
+    type: extensionName
+    typeHandlerVersion: extensionVersion
+    autoUpgradeMinorVersion: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
       }
     }
   }
 }
 
-output hostname string = pip.properties.dnsSettings.fqdn
+output hostname string = publicIp.properties.dnsSettings.fqdn
