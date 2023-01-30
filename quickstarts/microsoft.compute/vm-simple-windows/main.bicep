@@ -246,6 +246,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
     publisher: extensionPublisher
     type: extensionName
     typeHandlerVersion: extensionVersion
+    enableAutomaticUpgrade: true
     autoUpgradeMinorVersion: true
     settings: {
       AttestationConfig: {
