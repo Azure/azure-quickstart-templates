@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: api-management-create-with-internal-vnet-publicip
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy API Management in internal VNet with public IP
 
