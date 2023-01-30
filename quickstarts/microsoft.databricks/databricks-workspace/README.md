@@ -6,7 +6,6 @@ products:
 - azure-resource-manager
 urlFragment: databricks-workspace
 languages:
-- bicep
 - json
 ---
 # Deploy an Azure Databricks Workspace
