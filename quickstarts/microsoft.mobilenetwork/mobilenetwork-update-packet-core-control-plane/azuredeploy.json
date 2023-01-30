@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.13.1.58284",
-      "templateHash": "7887801139049409379"
+      "templateHash": "8080609369806653920"
     }
   },
   "parameters": {
@@ -78,9 +78,62 @@
       "metadata": {
         "description": "The version of packet core to use. Only set this field when instructed to by your support engineer."
       }
+    },
+    "existingSliceName": {
+      "type": "string",
+      "defaultValue": "slice-1",
+      "metadata": {
+        "description": "Name of the existing slice to use for the packetcorecontrolPlane"
+      }
+    },
+    "mobileNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the private mobile network"
+      }
+    },
+    "mobileCountryCode": {
+      "type": "string",
+      "defaultValue": "001",
+      "metadata": {
+        "description": "The mobile country code for the private mobile network"
+      }
+    },
+    "mobileNetworkCode": {
+      "type": "string",
+      "defaultValue": "01",
+      "metadata": {
+        "description": "The mobile network code for the private mobile network"
+      }
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks",
+      "apiVersion": "2022-11-01",
+      "name": "[parameters('mobileNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicLandMobileNetworkIdentifier": {
+          "mcc": "[parameters('mobileCountryCode')]",
+          "mnc": "[parameters('mobileNetworkCode')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/slices",
+      "apiVersion": "2022-11-01",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('existingSliceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "snssai": {
+          "sst": 1
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
+    },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes",
       "apiVersion": "2022-11-01",
@@ -108,7 +161,10 @@
           "ipv4Gateway": "[parameters('accessGateway')]"
         },
         "version": "[parameters('newVersion')]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('existingSliceName'))]"
+      ]
     }
   ]
 }

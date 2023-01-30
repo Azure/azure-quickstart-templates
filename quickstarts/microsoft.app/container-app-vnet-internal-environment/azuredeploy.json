@@ -1,0 +1,239 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "8441874850589808109"
+    }
+  },
+  "parameters": {
+    "containerAppName": {
+      "type": "string",
+      "defaultValue": "[format('app-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the container app."
+      }
+    },
+    "containerAppEnvName": {
+      "type": "string",
+      "defaultValue": "[format('env-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the container app environment."
+      }
+    },
+    "containerAppLogAnalyticsName": {
+      "type": "string",
+      "defaultValue": "[format('log-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the log analytics workspace."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the virtual network."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Address prefix"
+      }
+    },
+    "containerAppEnvSubnetName": {
+      "type": "string",
+      "defaultValue": "Subnet1",
+      "metadata": {
+        "description": "Container App environment subnet name"
+      }
+    },
+    "containerAppEnvSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/21",
+      "metadata": {
+        "description": "Container App environment subnet prefix"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    },
+    "containerImage": {
+      "type": "string",
+      "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+      "metadata": {
+        "description": "Specifies the docker container image to deploy."
+      }
+    },
+    "targetPort": {
+      "type": "int",
+      "defaultValue": 80,
+      "metadata": {
+        "description": "Specifies the container port."
+      }
+    },
+    "cpuCore": {
+      "type": "string",
+      "defaultValue": "0.5",
+      "allowedValues": [
+        "0.25",
+        "0.5",
+        "0.75",
+        "1",
+        "1.25",
+        "1.5",
+        "1.75",
+        "2"
+      ],
+      "metadata": {
+        "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals."
+      }
+    },
+    "memorySize": {
+      "type": "string",
+      "defaultValue": "1",
+      "allowedValues": [
+        "0.5",
+        "1",
+        "1.5",
+        "2",
+        "3",
+        "3.5",
+        "4"
+      ],
+      "metadata": {
+        "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+      }
+    },
+    "minReplicas": {
+      "type": "int",
+      "defaultValue": 1,
+      "maxValue": 25,
+      "minValue": 0,
+      "metadata": {
+        "description": "Minimum number of replicas that will be deployed"
+      }
+    },
+    "maxReplicas": {
+      "type": "int",
+      "defaultValue": 3,
+      "maxValue": 25,
+      "minValue": 0,
+      "metadata": {
+        "description": "Maximum number of replicas that will be deployed"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[parameters('containerAppLogAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-07-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('containerAppEnvSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('containerAppEnvSubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('containerAppEnvName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2022-10-01').customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2022-10-01').primarySharedKey]"
+          }
+        },
+        "vnetConfiguration": {
+          "infrastructureSubnetId": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), '2022-07-01').subnets[0].id]",
+          "internal": true
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('containerAppName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": "[parameters('targetPort')]",
+            "allowInsecure": false,
+            "traffic": [
+              {
+                "latestRevision": true,
+                "weight": 100
+              }
+            ]
+          }
+        },
+        "template": {
+          "revisionSuffix": "firstrevision",
+          "containers": [
+            {
+              "name": "[parameters('containerAppName')]",
+              "image": "[parameters('containerImage')]",
+              "resources": {
+                "cpu": "[json(parameters('cpuCore'))]",
+                "memory": "[format('{0}Gi', parameters('memorySize'))]"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": "[parameters('minReplicas')]",
+            "maxReplicas": "[parameters('maxReplicas')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "containerAppFQDN": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('containerAppName')), '2022-03-01').configuration.ingress.fqdn]"
+    }
+  }
+}

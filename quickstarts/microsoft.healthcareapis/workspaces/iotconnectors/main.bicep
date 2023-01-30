@@ -12,6 +12,7 @@ param basename string
   'eastus2'
   'koreacentral'
   'northeurope'
+  'qatarcentral'
   'southcentralus'
   'southeastasia'
   'swedencentral'

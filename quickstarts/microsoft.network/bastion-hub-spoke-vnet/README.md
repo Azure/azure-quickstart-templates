@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: bastion-hub-spoke-vnet
 languages:
+- bicep
 - json
 ---
 # Deploy a Bastion host in a hub Virtual Network
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/bastion-hub-spoke-vnet/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/bastion-hub-spoke-vnet/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/bastion-hub-spoke-vnet/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fbastion-hub-spoke-vnet%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fbastion-hub-spoke-vnet%2Fazuredeploy.json)
@@ -34,4 +37,4 @@ There are no prerequistes for this deployment
 
 You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: bastion, hubnspoke, vnet, peering, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/virtualNetworkPeerings, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/bastionHosts, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`
+`Tags: bastion, hubnspoke, vnet, peering, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/virtualNetworkPeerings, Microsoft.Network/publicIPAddresses, Microsoft.Network/bastionHosts, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`
