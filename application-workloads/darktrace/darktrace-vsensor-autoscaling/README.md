@@ -69,17 +69,6 @@ It is possible for VNets to be ‘peered’ and for data to be sent across VNets
 
 ## Considerations
 
-### Manual post-checks
-
-The template uses the process described in ‘Custom data and cloud-init on Azure Virtual Machines’ to automate the installation and configuration of the Darktrace vSensor on top of the base OS. This can be found for reference at https://docs.microsoft.com/en-us/azure/virtual-machines/custom-data.
-
-The documentation states the following limitation:  
-_‘if errors happen during execution of the configuration processing or scripts when cloud-init is processing the custom data, that's not a fatal provisioning failure’_
-
-Therefore, if a failure occurs during the automated vSensor installation or configuration, the deployment will NOT fail. The expected resources will be created but there remains a possibility the vSensor has not been installed and configured successfully. 
-
-Manual post-checks are currently recommended to mitigate this, read more below.
-
 ### Pre-deployment requirements
 #### Virtual Network
 
@@ -172,8 +161,9 @@ There is an example in **[Appendix A](#appendix-a-examples)**.
 
 In the case of deploying this template outside of the Portal (ie CLI), fill `adminPublicKey` with the contents of the **public** key file.
 
-Post deployment checks
--------------------
+### Post deployment checks
+
+If any configuration settings provided are invalid, the deployment will fail to deploy the Virtual Machine Scale Set. Azure may provide a short error log for this stage. You may find more complete logging in `/var/log/user-data.log` on the vSensor.
 
 As stated under the Considerations section – it is recommended to perform a health check on successful template deployment.
 Once the deployment has completed successfully, connect to a vSensor and verify the vSensor configuration and health check by running:
