@@ -30,6 +30,7 @@ param dnsResolverName string = 'dnsResolver'
   'japaneast'
   'koreacentral'
   'southafricanorth'
+  'centralindia'
 ])
 param location string
 
