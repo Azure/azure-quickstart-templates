@@ -28,9 +28,6 @@ param publicIpSku string = 'Basic'
 
 @description('The Windows version for the VM. This will pick a fully patched image of this given Windows version.')
 @allowed([
-  '2012-r2-datacenter-gensecond'
-  '2012-r2-datacenter-smalldisk-g2'
-  '2012-r2-datacenter-zhcn-g2'
   '2016-datacenter-gensecond'
   '2016-datacenter-server-core-g2'
   '2016-datacenter-server-core-smalldisk-g2'
