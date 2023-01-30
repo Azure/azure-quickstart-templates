@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: azure-dns-private-resolver
 languages:
-- json
 - bicep
+- json
 ---
 # Azure DNS Private Resolver
 

@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: mobilenetwork-update-packet-core-control-plane
 languages:
-- json
 - bicep
+- json
 ---
 # Update a packet core control plane
 
