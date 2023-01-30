@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fconcourse%2Fconcourse-ci%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fconcourse%2Fconcourse-ci%2Fazuredeploy.json)
 
->Significant updated on 2018-6-21, see [ChangeLog](.\CHANGELOG.md)
+>Significant updated on 2018-6-21, see [ChangeLog](CHANGELOG.md)
 
 [Concourse](http://concourse.ci/) is a CI system composed of simple tools and ideas. It can express entire pipelines, integrating with arbitrary resources, or it can be used to execute one-off tasks, either locally or in another CI system.
 
@@ -107,7 +107,7 @@ If you would like to deploy Concourse using a more customized `concourse.yml`,  
 
 ## 1.2 Advanced Configurations
 
-If you want to customize your `bosh-setup` template, you can modify the following variables in [azuredeploy.json](https://github.com/Azure/azure-quickstart-templates/blob/master/bosh-setup/azuredeploy.json).
+If you want to customize your `bosh-setup` template, you can modify the following variables in [azuredeploy.json](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/bosh/bosh-setup/azuredeploy.json).
 
 | Name | Default Value |
 |:----:|:-------------:|
