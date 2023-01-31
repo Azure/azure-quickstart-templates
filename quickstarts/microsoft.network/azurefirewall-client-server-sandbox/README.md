@@ -2,13 +2,12 @@
 description: This template creates a virtual network with 2 subnets (server subnet and AzureFirewall subnet), A server VM, a client VM, a public IP address for each VM, and a route table to route traffic between VMs through the firewall.
 page_type: sample
 products:
- - azure
- - azure-resource-manager
- urlFragment: azurefirewall-client-server-sandbox
- languages:
- - json
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-client-server-sandbox
+languages:
+- json
 ---
-
 # Create a sandbox of client to server traffic through Azure Firewall
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-client-server-sandbox/PublicLastTestDate.svg)
