@@ -14,7 +14,7 @@ param vlanId int
 param mtu int
 
 @description('IPv4 Prefix of the subnet in the VLAN')
-param connectedIpv4Grefix string
+param connectedIpv4Prefix string
 
 @description('Gateway of IPv4 Subnet')
 param connectedIpv4Gateway string
@@ -66,7 +66,7 @@ resource internalNetwork 'Microsoft.ManagedNetworkFabric/l3IsolationDomains/inte
     mtu: mtu
     connectedIPv4Subnets: [
       {
-        prefix: connectedIpv4Grefix
+        prefix: connectedIpv4Prefix
         gateway: connectedIpv4Gateway
       }
     ]
