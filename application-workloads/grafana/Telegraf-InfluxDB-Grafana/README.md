@@ -28,7 +28,7 @@ This template allows you to deploy an instance of Telegraf-InfluxDB-Grafana on a
 ## A. Deploy TIG VM
 
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
-1. Enter a valid name for the VM, as well as a user name and [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to the VM via SSH.
+1. Enter a valid name for the VM, as well as a user name and [ssh public key](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/mac-create-ssh-keys) that you will use to login remotely to the VM via SSH.
 
 ## B. Login remotely to the VM via SSH
 
