@@ -247,15 +247,6 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' =
     type: extensionName
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
-    enableAutomaticUpgrade: true
-    settings: {
-      AttestationConfig: {
-        MaaSettings: {
-          maaEndpoint: maaEndpoint
-          maaTenantName: maaTenantName
-        }
-      }
-    }
   }
 }
 
