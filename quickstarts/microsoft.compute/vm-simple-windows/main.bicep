@@ -238,7 +238,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = if (secureBoot) {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (secureBoot) {
   parent: vm
   name: extensionName
   location: location
@@ -247,6 +247,14 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' =
     type: extensionName
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
+      }
+    }
   }
 }
 
