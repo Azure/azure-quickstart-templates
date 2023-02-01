@@ -31,7 +31,7 @@ Customers benefit greatly from solution templates because of the ease with which
 
 **The Informatica HDInsight Azure Partner Quickstart Template** launches a big data solution stack that provides an automated provisioning, configuration, and integration of Informatica Cloud and [Informatica CSA](https://azure.microsoft.com/marketplace/partners/informatica-cloud/informatica-cloud/) products on Azure. The combination of Azure Data Factory, with on-demand HDInsight, and SQL Datawarehouse products makes this solution ready for pre-production environments. These are intended as pilot solutions and not production-ready.
 
-Please [contact us](azuremarketplace@sysgain.com) if you need further info or support on this solution.
+Please [contact us](mailto:azuremarketplace@sysgain.com) if you need further info or support on this solution.
 
 ## Licenses & Costs
 
