@@ -52,7 +52,7 @@ param publicIpSku string = 'Basic'
   '2022-datacenter-g2'
   '2022-datacenter-smalldisk-g2'
 ])
-param OSVersion string = '2022-datacenter-azure-edition-core'
+param OSVersion string = '2022-datacenter-azure-edition'
 
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_D2s_v5'
