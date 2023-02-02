@@ -70,10 +70,25 @@ param vmName string = 'simple-vm'
 ])
 param securityType string = 'TrustedLaunch'
 
-@description('Secure Boot setting of the virtual machine. Applicable for securityType TrustedLaunch.')
-param secureBoot bool = true
-
 @description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
+@allowed([
+  ''
+  'https://sharedcus.cus.attest.azure.net/'
+  'https://sharedcae.cae.attest.azure.net/'
+  'https://sharedeus2.eus2.attest.azure.net/'
+  'https://shareduks.uks.attest.azure.net/'
+  'https://sharedcac.cac.attest.azure.net/'
+  'https://sharedukw.ukw.attest.azure.net/'
+  'https://sharedneu.neu.attest.azure.net/'
+  'https://sharedeus.eus.attest.azure.net/'
+  'https://sharedeau.eau.attest.azure.net/'
+  'https://sharedncus.ncus.attest.azure.net/'
+  'https://sharedwus.wus.attest.azure.net/'
+  'https://sharedweu.weu.attest.azure.net/'
+  'https://sharedscus.scus.attest.azure.net/'
+  'https://sharedsasia.sasia.attest.azure.net/'
+  'https://sharedsau.sau.attest.azure.net/'
+])
 param maaEndpoint string = ''
 
 var storageAccountName = 'bootdiags${uniqueString(resourceGroup().id)}'
@@ -85,7 +100,7 @@ var virtualNetworkName = 'MyVNET'
 var networkSecurityGroupName = 'default-NSG'
 var securityProfileJson = {
   uefiSettings: {
-    secureBootEnabled: secureBoot
+    secureBootEnabled: true
     vTpmEnabled: true
   }
   securityType: securityType
@@ -238,7 +253,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (secureBoot) {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && (securityProfileJson.uefiSettings.secureBootEnabled == true && securityProfileJson.uefiSettings.vTpmEnabled == true)) {
   parent: vm
   name: extensionName
   location: location
