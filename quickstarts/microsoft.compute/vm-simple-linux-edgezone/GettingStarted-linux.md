@@ -1,6 +1,6 @@
 # Simple Linux Virtual Machine on Azure Edge Zones
 
-The purpose of this ARM Template is **simple Linux Virtual Machine on Edge ZOnes** inserting a few parameters.
+The purpose of this ARM Template is **simple Linux Virtual Machine on Edge Zones** inserting a few parameters.
 
 ## The Template
 
