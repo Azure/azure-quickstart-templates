@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create an Azure Databricks WS with CMK for DBFS encryption.
+description: This template allows you to create an Azure Databricks workspace with CMK for DBFS root encryption
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: databricks-workspace-with-dbfs-root-customer-managed-keys
 languages:
 - json
 ---
-# Deploy an Azure Databricks Workspace and configure CMK
+# Deploy an Azure Databricks WS with CMK for DBFS encryption
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-dbfs-root-customer-managed-keys/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-dbfs-root-customer-managed-keys/PublicDeployment.svg)
