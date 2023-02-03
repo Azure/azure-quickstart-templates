@@ -8,7 +8,7 @@ urlFragment: darktrace-vsensor-autoscaling
 languages:
 - json
 ---
-# Deploy Autoscaling Darktrace vSensors
+# Deploy Darktrace Autoscaling vSensors
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/darktrace/darktrace-vsensor-autoscaling/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/darktrace/darktrace-vsensor-autoscaling/PublicDeployment.svg)
