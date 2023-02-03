@@ -13,15 +13,16 @@ configuration ConfigureSQLVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
+    Import-DscResource -ModuleName SqlServer -ModuleVersion 21.1.18256
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [PSCredential] $SPSetupCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
-    $ComputerName = Get-Content env:computername
+    [String] $ComputerName = Get-Content env:computername
+    [String] $AdfsDnsEntryName = "adfs"
 
     Node localhost
     {
@@ -49,31 +50,59 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
-        WaitForADDomain WaitForDCReady
+        # DNS record for ADFS is created only after the ADFS farm was created and DC restarted (required by ADFS setup)
+        # This turns out to be a very reliable way to ensure that VM joins AD only when the DC is guaranteed to be ready
+        # This totally eliminates the random errors that occured in WaitForADDomain with the previous logic (and no more need of WaitForADDomain)
+        Script WaitForADFSFarmReady
         {
-            DomainName              = $DomainFQDN
-            WaitTimeout             = 1800
-            RestartCount            = 2
-            WaitForValidCredentials = $True
-            Credential              = $DomainAdminCredsQualified
-            DependsOn               = "[DnsServerAddress]SetDNS"
+            SetScript =
+            {
+                $dnsRecordFQDN = "$($using:AdfsDnsEntryName).$($using:DomainFQDN)"
+                $dnsRecordFound = $false
+                $sleepTime = 15
+                do {
+                    try {
+                        [Net.DNS]::GetHostEntry($dnsRecordFQDN)
+                        $dnsRecordFound = $true
+                    }
+                    catch [System.Net.Sockets.SocketException] {
+                        # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
+                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
+                        Start-Sleep -Seconds $sleepTime
+                    }
+                } while ($false -eq $dnsRecordFound)
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { try { [Net.DNS]::GetHostEntry("$($using:AdfsDnsEntryName).$($using:DomainFQDN)"); return $true } catch { return $false } }
+            DependsOn            = "[DnsServerAddress]SetDNS"
         }
 
-        # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        PendingReboot RebootOnSignalFromWaitForDCReady
-        {
-            Name             = "RebootOnSignalFromWaitForDCReady"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[WaitForADDomain]WaitForDCReady"
-        }
+        # # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
+        # WaitForADDomain WaitForDCReady
+        # {
+        #     DomainName              = $DomainFQDN
+        #     WaitTimeout             = 1800
+        #     RestartCount            = 2
+        #     WaitForValidCredentials = $True
+        #     Credential              = $DomainAdminCredsQualified
+        #     DependsOn               = "[Script]WaitForADFSFarmReady"
+        # }
+
+        # # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
+        # PendingReboot RebootOnSignalFromWaitForDCReady
+        # {
+        #     Name             = "RebootOnSignalFromWaitForDCReady"
+        #     SkipCcmClientSDK = $true
+        #     DependsOn        = "[WaitForADDomain]WaitForDCReady"
+        # }
 
         Computer JoinDomain
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
+            # DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
+            DependsOn  = "[Script]WaitForADFSFarmReady"
         }
 
         PendingReboot RebootOnSignalFromJoinDomain
@@ -127,6 +156,18 @@ configuration ConfigureSQLVM
 
         SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; DependsOn = "[Script]EnsureSQLServiceStarted" }
 
+        # Script WorkaroundErrorInSqlServiceAccountResource
+        # {
+        #     GetScript = { }
+        #     TestScript = { return $false }
+        #     SetScript = { 
+        #         [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+        #         $mc = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer
+        #     }
+        #     DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        # }
+
         SqlServiceAccount SetSqlInstanceServiceAccount
         {
             ServerName     = $ComputerName
@@ -135,6 +176,7 @@ configuration ConfigureSQLVM
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
             DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+            # DependsOn      = "[Script]WorkaroundErrorInSqlServiceAccountResource"
         }
 
         SqlLogin AddDomainAdminLogin
@@ -148,14 +190,14 @@ configuration ConfigureSQLVM
         }
 
         ADUser CreateSPSetupAccount
-        {
+        {   # Both SQL and SharePoint DSCs run this SPSetupAccount AD account creation
             DomainName           = $DomainFQDN
             UserName             = $SPSetupCreds.UserName
             UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
-            Password             = $SPSetupCredsQualified
+            Password             = $SPSetupCreds
             PasswordNeverExpires = $true
-            PsDscRunAsCredential = $DomainAdminCredsQualified
             Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
@@ -362,7 +404,7 @@ $SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -
 $DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
 ConfigureSQLVM -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
