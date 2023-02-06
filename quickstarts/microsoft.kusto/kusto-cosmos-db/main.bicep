@@ -33,6 +33,12 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
+    locations: [
+      {
+        locationName: location
+        failoverPriority: 0
+      }
+    ]
     databaseAccountOfferType: 'Standard'
   }
 
@@ -47,7 +53,9 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
     resource cosmosDbContainer 'containers' = {
       name: cosmosDbContainerName
       properties: {
-        throughput: 400
+        options:{
+          throughput: 400
+        }
         resource: {
           id: cosmosDbContainerName
           partitionKey: {
@@ -67,7 +75,8 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
 
     properties: {
       principalId: cluster.identity.principalId
-      roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosDbAccountName}/sqlRoleDefinitions/${cosmosDataReader}'
+      // roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosDbAccountName}/sqlRoleDefinitions/${cosmosDataReader}'
+      roleDefinitionId: resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', cosmosDbAccountName, cosmosDataReader)
       scope: resourceId('Microsoft.DocumentDB/databaseAccounts', cosmosDbAccountName)
     }
   }
@@ -78,9 +87,9 @@ resource cluster 'Microsoft.Kusto/clusters@2022-11-11' = {
   name: clusterName
   location: location
   sku: {
-    'name': skuName
-    'tier': 'Standard'
-    'capacity': skuCapacity
+    name: skuName
+    tier: 'Standard'
+    capacity: skuCapacity
   }
   identity: {
     type: 'SystemAssigned'
