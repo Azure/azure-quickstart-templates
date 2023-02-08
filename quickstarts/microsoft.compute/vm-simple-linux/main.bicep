@@ -49,7 +49,7 @@ param networkSecurityGroupName string = 'SecGroupNet'
 param securityType string = 'TrustedLaunch'
 
 @description('Secure boot setting for Virtual Machine.')
-param secureBoot bool = 'true'
+param secureBoot bool = true
 
 @description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
 @allowed([
