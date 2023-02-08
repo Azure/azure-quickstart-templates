@@ -70,27 +70,6 @@ param vmName string = 'simple-vm'
 ])
 param securityType string = 'TrustedLaunch'
 
-@description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
-@allowed([
-  ''
-  'https://sharedcus.cus.attest.azure.net/'
-  'https://sharedcae.cae.attest.azure.net/'
-  'https://sharedeus2.eus2.attest.azure.net/'
-  'https://shareduks.uks.attest.azure.net/'
-  'https://sharedcac.cac.attest.azure.net/'
-  'https://sharedukw.ukw.attest.azure.net/'
-  'https://sharedneu.neu.attest.azure.net/'
-  'https://sharedeus.eus.attest.azure.net/'
-  'https://sharedeau.eau.attest.azure.net/'
-  'https://sharedncus.ncus.attest.azure.net/'
-  'https://sharedwus.wus.attest.azure.net/'
-  'https://sharedweu.weu.attest.azure.net/'
-  'https://sharedscus.scus.attest.azure.net/'
-  'https://sharedsasia.sasia.attest.azure.net/'
-  'https://sharedsau.sau.attest.azure.net/'
-])
-param maaEndpoint string = ''
-
 var storageAccountName = 'bootdiags${uniqueString(resourceGroup().id)}'
 var nicName = 'myVMNic'
 var addressPrefix = '10.0.0.0/16'
@@ -109,6 +88,7 @@ var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
 var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
+var maaEndpoint = substring('emptyString', 0, 0)
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: storageAccountName
@@ -246,14 +226,14 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: storageAccount.properties.primaryEndpoints.blob
+        storageUri: reference(storageAccount.id, '2022-05-01').primaryEndpoints.blob
       }
     }
     securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && (securityProfileJson.uefiSettings.secureBootEnabled == true && securityProfileJson.uefiSettings.vTpmEnabled == true)) {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
   parent: vm
   name: extensionName
   location: location
@@ -273,4 +253,4 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
   }
 }
 
-output hostname string = publicIp.properties.dnsSettings.fqdn
+output hostname string = reference(publicIp.id, '2022-05-01').dnsSettings.fqdn
