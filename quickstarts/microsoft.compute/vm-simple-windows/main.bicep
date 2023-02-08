@@ -226,7 +226,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: reference(storageAccount.id, '2022-05-01').primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
     securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
@@ -253,4 +253,4 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
   }
 }
 
-output hostname string = reference(publicIp.id, '2022-05-01').dnsSettings.fqdn
+output hostname string = publicIp.properties.dnsSettings.fqdn
