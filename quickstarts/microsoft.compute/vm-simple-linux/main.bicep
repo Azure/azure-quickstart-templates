@@ -48,30 +48,6 @@ param networkSecurityGroupName string = 'SecGroupNet'
 ])
 param securityType string = 'TrustedLaunch'
 
-@description('Secure boot setting for Virtual Machine.')
-param secureBoot bool = true
-
-@description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
-@allowed([
-  ''
-  'https://sharedcus.cus.attest.azure.net/'
-  'https://sharedcae.cae.attest.azure.net/'
-  'https://sharedeus2.eus2.attest.azure.net/'
-  'https://shareduks.uks.attest.azure.net/'
-  'https://sharedcac.cac.attest.azure.net/'
-  'https://sharedukw.ukw.attest.azure.net/'
-  'https://sharedneu.neu.attest.azure.net/'
-  'https://sharedeus.eus.attest.azure.net/'
-  'https://sharedeau.eau.attest.azure.net/'
-  'https://sharedncus.ncus.attest.azure.net/'
-  'https://sharedwus.wus.attest.azure.net/'
-  'https://sharedweu.weu.attest.azure.net/'
-  'https://sharedscus.scus.attest.azure.net/'
-  'https://sharedsasia.sasia.attest.azure.net/'
-  'https://sharedsau.sau.attest.azure.net/'
-])
-param maaEndpoint string = ''
-
 var imageReference = {
   'Ubuntu-1804': {
     publisher: 'Canonical'
@@ -110,7 +86,7 @@ var linuxConfiguration = {
 }
 var securityProfileJson = {
   uefiSettings: {
-    secureBootEnabled: secureBoot
+    secureBootEnabled: true
     vTpmEnabled: true
   }
   securityType: securityType
@@ -119,6 +95,7 @@ var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.LinuxAttestation'
 var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
+var maaEndpoint = substring('emptystring', 0, 0)
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: networkInterfaceName
@@ -129,7 +106,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: virtualNetworkName_subnet.id
+            id: subnet.id
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
@@ -178,9 +155,9 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource virtualNetworkName_subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   parent: virtualNetwork
-  name: '${subnetName}'
+  name: subnetName
   properties: {
     addressPrefix: subnetAddressPrefix
     privateEndpointNetworkPolicies: 'Enabled'
@@ -239,7 +216,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
 
 resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
   parent: vm
-  name: '${extensionName}'
+  name: extensionName
   location: location
   properties: {
     publisher: extensionPublisher
