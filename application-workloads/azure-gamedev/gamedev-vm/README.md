@@ -1,15 +1,15 @@
 ---
-description: Azure Game Development Virtual Machine includes Licencsed Engines like Unreal.
+description: Azure Game Developer Virtual Machine includes Licencsed Engines like Unreal.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: gamedev-vm
 languages:
-- json
 - bicep
+- json
 ---
-# Azure Game Development Virtual Machine
+# Azure Game Developer Virtual Machine
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/azure-gamedev/gamedev-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/azure-gamedev/gamedev-vm/PublicDeployment.svg)
