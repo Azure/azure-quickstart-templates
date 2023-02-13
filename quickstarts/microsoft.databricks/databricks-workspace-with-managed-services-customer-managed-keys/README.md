@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: databricks-workspace-with-managed-svc-customer-managed-keys
+urlFragment: databricks-workspace-with-managed-services-customer-managed-keys
 languages:
 - json
 ---
