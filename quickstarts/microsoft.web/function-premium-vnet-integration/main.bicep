@@ -129,7 +129,7 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~3'
+          value: '~4'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -137,7 +137,7 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~12'
+          value: '~14'
         }
       ]
     }
