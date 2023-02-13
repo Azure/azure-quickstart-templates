@@ -20,18 +20,17 @@ param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().
 
 @description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
 @allowed([
-  '12.04.5-LTS'
-  '14.04.5-LTS'
-  '16.04.0-LTS'
-  '18.04-LTS'
+  'Ubuntu-1804'
+  'Ubuntu-2004'
+  'Ubuntu-2204'
 ])
-param ubuntuOSVersion string = '18.04-LTS'
+param ubuntuOSVersion string = 'Ubuntu-2004'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
 @description('The size of the VM')
-param vmSize string = 'Standard_B2s'
+param vmSize string = 'Standard_D2s_v3'
 
 @description('Name of the VNET')
 param virtualNetworkName string = 'vNet'
@@ -42,6 +41,33 @@ param subnetName string = 'Subnet'
 @description('Name of the Network Security Group')
 param networkSecurityGroupName string = 'SecGroupNet'
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
+var imageReference = {
+  'Ubuntu-1804': {
+    publisher: 'Canonical'
+    offer: 'UbuntuServer'
+    sku: '18_04-lts-gen2'
+    version: 'latest'
+  }
+  'Ubuntu-2004': {
+    publisher: 'Canonical'
+    offer: '0001-com-ubuntu-server-focal'
+    sku: '20_04-lts-gen2'
+    version: 'latest'
+  }
+  'Ubuntu-2204': {
+    publisher: 'Canonical'
+    offer: '0001-com-ubuntu-server-jammy'
+    sku: '22_04-lts-gen2'
+    version: 'latest'
+  }
+}
 var publicIPAddressName = '${vmName}PublicIP'
 var networkInterfaceName = '${vmName}NetInt'
 var osDiskType = 'Standard_LRS'
@@ -58,8 +84,20 @@ var linuxConfiguration = {
     ]
   }
 }
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
+var extensionName = 'GuestAttestation'
+var extensionPublisher = 'Microsoft.Azure.Security.LinuxAttestation'
+var extensionVersion = '1.0'
+var maaTenantName = 'GuestAttestation'
+var maaEndpoint = substring('emptystring', 0, 0)
 
-resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: networkInterfaceName
   location: location
   properties: {
@@ -72,18 +110,18 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIP.id
+            id: publicIPAddress.id
           }
         }
       }
     ]
     networkSecurityGroup: {
-      id: nsg.id
+      id: networkSecurityGroup.id
     }
   }
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -105,7 +143,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -118,7 +156,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 }
 
 resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
-  parent: vnet
+  parent: virtualNetwork
   name: subnetName
   properties: {
     addressPrefix: subnetAddressPrefix
@@ -127,7 +165,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   }
 }
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: publicIPAddressName
   location: location
   sku: {
@@ -157,17 +195,12 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
           storageAccountType: osDiskType
         }
       }
-      imageReference: {
-        publisher: 'Canonical'
-        offer: 'UbuntuServer'
-        sku: ubuntuOSVersion
-        version: 'latest'
-      }
+      imageReference: imageReference[ubuntuOSVersion]
     }
     networkProfile: {
       networkInterfaces: [
         {
-          id: nic.id
+          id: networkInterface.id
         }
       ]
     }
@@ -177,9 +210,30 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
+  }
+}
+
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+  parent: vm
+  name: extensionName
+  location: location
+  properties: {
+    publisher: extensionPublisher
+    type: extensionName
+    typeHandlerVersion: extensionVersion
+    autoUpgradeMinorVersion: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
+      }
+    }
   }
 }
 
 output adminUsername string = adminUsername
-output hostname string = publicIP.properties.dnsSettings.fqdn
-output sshCommand string = 'ssh ${adminUsername}@${publicIP.properties.dnsSettings.fqdn}'
+output hostname string = publicIPAddress.properties.dnsSettings.fqdn
+output sshCommand string = 'ssh ${adminUsername}@${publicIPAddress.properties.dnsSettings.fqdn}'
