@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vm-simple-linux
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy a simple Ubuntu Linux VM 18.04-LTS
 
