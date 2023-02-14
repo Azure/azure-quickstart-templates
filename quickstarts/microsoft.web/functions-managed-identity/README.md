@@ -8,7 +8,7 @@ urlFragment: functions-managed-identity
 languages:
 - json
 ---
-# Creates a function app with managed service identity.
+# Creates a function app with managed service identity
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/functions-managed-identity/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/functions-managed-identity/PublicDeployment.svg)
