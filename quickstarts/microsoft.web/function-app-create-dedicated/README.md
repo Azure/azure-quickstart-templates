@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: function-app-create-dedicated
 languages:
-- json
 - bicep
+- json
 ---
 # Provision a function app running on an App Service Plan
 
