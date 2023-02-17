@@ -1,15 +1,15 @@
 ---
-description: Deploy Azure Data Explorer db with Cosmos DB connection.
+description: Deploy Azure Data Explorer DB with Cosmos DB connection.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: cosmos-db
+urlFragment: kusto-cosmos-db
 languages:
-- json
 - bicep
+- json
 ---
-# Deploy Azure Data Explorer db with Cosmos DB connection.
+# Deploy Azure Data Explorer DB with Cosmos DB connection
 
 ![Fairfax Deployment](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-cosmos-db/FairfaxDeployment.svg)
 ![Fairfax Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-cosmos-db/FairfaxLastTestDate.svg)
