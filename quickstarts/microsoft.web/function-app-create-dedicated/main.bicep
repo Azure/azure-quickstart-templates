@@ -97,7 +97,7 @@ resource appsettings 'Microsoft.Web/sites/config@2022-03-01' = {
   properties: {
     AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, '2021-09-01').keys[0].value}'
     APPINSIGHTS_INSTRUMENTATIONKEY: reference(applicationInsights.id, '2020-02-02').InstrumentationKey
-    FUNCTIONS_EXTENSION_VERSION: '~3'
+    FUNCTIONS_EXTENSION_VERSION: '~4'
     ftpsState: 'Disabled'
     minTlsVersion: '1.2'
   }
