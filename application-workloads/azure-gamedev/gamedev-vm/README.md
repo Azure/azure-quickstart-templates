@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: gamedev-vm
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Game Developer Virtual Machine
 

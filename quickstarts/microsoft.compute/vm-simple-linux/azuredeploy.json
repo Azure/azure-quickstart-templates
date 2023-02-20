@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.8.9.13224",
-      "templateHash": "15559643551456468043"
+      "version": "0.14.46.61228",
+      "templateHash": "996952230762016909"
     }
   },
   "parameters": {
@@ -34,7 +34,7 @@
       }
     },
     "adminPasswordOrKey": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
@@ -48,12 +48,11 @@
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "18.04-LTS",
+      "defaultValue": "Ubuntu-2004",
       "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.5-LTS",
-        "16.04.0-LTS",
-        "18.04-LTS"
+        "Ubuntu-1804",
+        "Ubuntu-2004",
+        "Ubuntu-2204"
       ],
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
@@ -68,7 +67,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_B2s",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "The size of the VM"
       }
@@ -93,9 +92,40 @@
       "metadata": {
         "description": "Name of the Network Security Group"
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     }
   },
   "variables": {
+    "imageReference": {
+      "Ubuntu-1804": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "18_04-lts-gen2",
+        "version": "latest"
+      },
+      "Ubuntu-2004": {
+        "publisher": "Canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts-gen2",
+        "version": "latest"
+      },
+      "Ubuntu-2204": {
+        "publisher": "Canonical",
+        "offer": "0001-com-ubuntu-server-jammy",
+        "sku": "22_04-lts-gen2",
+        "version": "latest"
+      }
+    },
     "publicIPAddressName": "[format('{0}PublicIP', parameters('vmName'))]",
     "networkInterfaceName": "[format('{0}NetInt', parameters('vmName'))]",
     "osDiskType": "Standard_LRS",
@@ -111,7 +141,19 @@
           }
         ]
       }
-    }
+    },
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
+    "maaEndpoint": "[substring('emptystring', 0, 0)]"
   },
   "resources": [
     {
@@ -226,12 +268,7 @@
               "storageAccountType": "[variables('osDiskType')]"
             }
           },
-          "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "[parameters('ubuntuOSVersion')]",
-            "version": "latest"
-          }
+          "imageReference": "[variables('imageReference')[parameters('ubuntuOSVersion')]]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -245,10 +282,35 @@
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
-        }
+        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), json('null'))]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+      ]
+    },
+    {
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), variables('extensionName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "[variables('maaEndpoint')]",
+              "maaTenantName": "[variables('maaTenantName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
     }
   ],
@@ -259,11 +321,11 @@
     },
     "hostname": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2021-05-01').dnsSettings.fqdn]"
     },
     "sshCommand": {
       "type": "string",
-      "value": "[format('ssh {0}@{1}', parameters('adminUsername'), reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))).dnsSettings.fqdn)]"
+      "value": "[format('ssh {0}@{1}', parameters('adminUsername'), reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2021-05-01').dnsSettings.fqdn)]"
     }
   }
 }

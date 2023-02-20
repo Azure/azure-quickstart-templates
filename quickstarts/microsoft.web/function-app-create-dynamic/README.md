@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: function-app-create-dynamic
 languages:
-- json
 - bicep
+- json
 ---
 # Provision a function app on a Consumption plan
 
