@@ -59,7 +59,7 @@ The cluster consists of one jumpbox VM (master node) plus 1-100 (limit can be li
 ## Deploying
 
 > **WARNING!**
-> If you are deploying a cluster for a production environment it is recommended that you stage a copy of the script resources to avoid future updates to this repository causing issues with your deployment. See the [Uploading Artifacts](/README.MD#uploading-artifacts) guide to use Azure Storage or, alternatively, you can upload the resources to another location and set the `_artifact*` parameters manually to specify the url for the files.
+> If you are deploying a cluster for a production environment it is recommended that you stage a copy of the script resources to avoid future updates to this repository causing issues with your deployment. See the [Uploading Artifacts](https://github.com/Azure/azure-quickstart-templates/tree/master/1-CONTRIBUTION-GUIDE#uploading-artifacts) guide to use Azure Storage or, alternatively, you can upload the resources to another location and set the `_artifact*` parameters manually to specify the url for the files.
 
 ### GUI
 

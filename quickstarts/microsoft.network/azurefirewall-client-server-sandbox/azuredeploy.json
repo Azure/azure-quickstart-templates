@@ -1,0 +1,483 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for client and server Virtual Machines."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for client and server Virtual Machines."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources, the location must support Availability Zones if required."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "Size of client and server VMs."
+            }
+        },
+        "routeTableName": {
+            "defaultValue": "route-table",
+            "type": "String"
+        },
+        "virtualNetworkName": {
+            "defaultValue": "vnet",
+            "type": "String"
+        },
+        "clientVirtualMachineName": {
+            "defaultValue": "client-vm",
+            "type": "String"
+        },
+        "serverVirtualMachineName": {
+            "defaultValue": "server-vm",
+            "type": "String"
+        },
+        "firewallPublicIpName": {
+            "defaultValue": "fw-pip",
+            "type": "String"
+        },
+        "clientPublicIpName": {
+            "defaultValue": "client-pip",
+            "type": "String"
+        },
+        "serverPublicIpName": {
+            "defaultValue": "server-pip",
+            "type": "String"
+        },
+        "firewallName": {
+            "defaultValue": "firewall",
+            "type": "String"
+        },
+        "clientNetworkInterfaceName": {
+            "defaultValue": "client-nic",
+            "type": "String"
+        },
+        "serverNetworkInterfaceName": {
+            "defaultValue": "server-nic",
+            "type": "String"
+        },
+        "networkSecurityGroupName": {
+            "defaultValue": "vnet-nsg",
+            "type": "String"
+        }
+    },
+    "variables": {
+        "vnetAddressPrefix": "10.0.0.0/16",
+        "serversSubnetPrefix": "10.0.2.0/24",
+        "serverPrefix": "10.0.2.4/32",
+        "clientPrefix": "10.0.2.5/32",
+        "azureFirewallSubnetPrefix": "10.0.1.0/26",
+        "firewallPrivateIP": "10.0.1.4",
+        "serverPrivateIP": "10.0.2.4",
+        "clientPrivateIP": "10.0.2.5"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ssh-allow",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('clientPublicIpName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('firewallPublicIpName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('serverPublicIpName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('routeTableName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "to-server",
+                        "properties": {
+                            "addressPrefix": "[variables('serverPrefix')]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('firewallPrivateIP')]"
+                        }
+                    },
+                    {
+                        "name": "to-client",
+                        "properties": {
+                            "addressPrefix": "[variables('clientPrefix')]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('firewallPrivateIP')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2022-03-01",
+            "name": "[parameters('clientVirtualMachineName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('clientNetworkInterfaceName'))]"
+            ],
+            "zones": [
+                "1"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18_04-lts-gen2",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('clientVirtualMachineName'), '-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "deleteOption": "Delete",
+                        "diskSizeGB": 30
+                    }
+                },
+                "osProfile": {
+                    "computerName": "[parameters('clientVirtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('clientNetworkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2022-03-01",
+            "name": "[parameters('serverVirtualMachineName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('serverNetworkInterfaceName'))]"
+            ],
+            "zones": [
+                "1"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18_04-lts-gen2",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('serverVirtualMachineName'), '-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "deleteOption": "Delete",
+                        "diskSizeGB": 30
+                    }
+                },
+                "osProfile": {
+                    "computerName": "[parameters('serverVirtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('serverNetworkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables/routes",
+            "apiVersion": "2020-11-01",
+            "name": "[concat(parameters('routeTableName'), '/to-client')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[variables('clientPrefix')]",
+                "nextHopType": "VirtualAppliance",
+                "nextHopIpAddress": "[variables('firewallPrivateIP')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables/routes",
+            "apiVersion": "2020-11-01",
+            "name": "[concat(parameters('routeTableName'), '/to-server')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[variables('serverPrefix')]",
+                "nextHopType": "VirtualAppliance",
+                "nextHopIpAddress": "[variables('firewallPrivateIP')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/azureFirewalls",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('firewallName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('firewallPublicIpName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'AzureFirewallSubnet')]"
+            ],
+            "properties": {
+                "sku": {
+                    "name": "AZFW_VNet",
+                    "tier": "Standard"
+                },
+                "threatIntelMode": "Alert",
+                "ipConfigurations": [
+                    {
+                        "name": "fw-pip",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('firewallPublicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'AzureFirewallSubnet')]"
+                            }
+                        }
+                    }
+                ],
+                "networkRuleCollections": [
+                    {
+                        "name": "net-col",
+                        "properties": {
+                            "priority": 100,
+                            "action": {
+                                "type": "Allow"
+                            },
+                            "rules": [
+                                {
+                                    "name": "allow-all",
+                                    "protocols": [
+                                        "Any"
+                                    ],
+                                    "sourceAddresses": [
+                                        "*"
+                                    ],
+                                    "destinationAddresses": [
+                                        "*"
+                                    ],
+                                    "destinationPorts": [
+                                        "*"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('clientNetworkInterfaceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('clientPublicIpName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'ServerSubnet')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('clientPrivateIP')]",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('clientPublicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'ServerSubnet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "AzureFirewallSubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('azureFirewallSubnetPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "ServerSubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('serversSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+                            },
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-11-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/AzureFirewallSubnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"            ],
+            "properties": {
+                "addressPrefix": "[variables('azureFirewallSubnetPrefix')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('serverNetworkInterfaceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('serverPublicIpName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'ServerSubnet')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('serverPrivateIP')]",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('serverPublicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'ServerSubnet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-11-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/ServerSubnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[variables('serversSubnetPrefix')]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+                },
+                "routeTable": {
+                    "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+                }
+            }
+        }
+    ]
+}

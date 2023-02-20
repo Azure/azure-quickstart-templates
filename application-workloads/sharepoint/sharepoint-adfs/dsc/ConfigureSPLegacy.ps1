@@ -2,14 +2,16 @@ configuration ConfigureSPVM
 {
     param
     (
-        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DNSServerIP,
         [Parameter(Mandatory)] [String]$DomainFQDN,
-        [Parameter(Mandatory)] [String]$DCName,
-        [Parameter(Mandatory)] [String]$SQLName,
+        [Parameter(Mandatory)] [String]$DCServerName,
+        [Parameter(Mandatory)] [String]$SQLServerName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
+        [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
+        [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter()] $SharePointBits,
+        [Parameter()] [System.Object[]] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -25,33 +27,42 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
-    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
+    # Init
+    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
+    [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
-    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
-    $InterfaceAlias = $($Interface.Name)
-    [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
-    [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
-    [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
+    [String] $AdditionalUsersPath = "OU=AdditionalUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
+
+    # Format credentials to be qualified by domain name: "domain\username"
+    [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
+    [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
+    [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
+
+    # Setup settings
+    [String] $SetupPath = "C:\DSC Data"
+    [String] $DCSetupPath = "\\$DCServerName\C$\DSC Data"
+    [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
+    [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
+    [String] $AdfsDnsEntryName = "adfs"
+
+    # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "spsites"
-    [String] $ComputerName = Get-Content env:computername
-    [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
-    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
-    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $SetupPath = "C:\Setup"
-    [String] $DCSetupPath = "\\$DCName\C$\Setup"
+    [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
+    [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
     [String] $AddinsSiteDNSAlias = "addins"
@@ -70,6 +81,20 @@ configuration ConfigureSPVM
             RebootNodeIfNeeded = $true
         }
 
+        Script DscStatus_Start
+        {
+            SetScript =
+            {
+                $destinationFolder = $using:SetupPath
+                if (!(Test-Path $destinationFolder -PathType Container)) {
+                    New-Item -ItemType Directory -Force -Path $destinationFolder
+                }
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration starting..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
@@ -78,7 +103,7 @@ configuration ConfigureSPVM
         WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
-        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
@@ -87,7 +112,7 @@ configuration ConfigureSPVM
         # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
         Registry DisableLoopBackCheck { Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
 
-        # Enable TLS 1.2 - https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application#tls-requirements
+        # Enable TLS 1.2 - https://learn.microsoft.com/en-us/azure/active-directory/app-proxy/application-proxy-add-on-premises-application#tls-requirements
         # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
         Registry EnableTLS12RegKey1 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
         Registry EnableTLS12RegKey2 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
@@ -100,46 +125,29 @@ configuration ConfigureSPVM
         Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
 
+        Registry DisableIESecurityRegKey1 { Key = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'; ValueName = 'IsInstalled'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey2 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\Main'; ValueName = 'DisableFirstRunCustomize'; ValueType = 'Dword'; ValueData = '1'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey3 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing'; ValueName = 'NewTabPageShow'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
+
+        # From https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell :
+        # Starting in Windows 10, version 1607, MAX_PATH limitations have been removed from common Win32 file and directory functions. However, you must opt-in to the new behavior.
+        Registry SetLongPathsEnabled { Key = "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem"; ValueName = "LongPathsEnabled"; ValueType = "DWORD"; ValueData = "1"; Force = $true; Ensure = "Present" }
+        
+        Registry ShowWindowsExplorerRibbon { Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" }
+
+        if ($SharePointVersion -eq "2019") {
+            # Allow OneDrive NGSC to connect to SharePoint Subscription / 2019 - https://learn.microsoft.com/en-us/sharepoint/install/configure-syncing-with-the-onedrive-sync-app
+            Registry SetOneDriveUrl { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Ensure = "Present" }
+            Registry SetOneDriveName { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "{0} - {1}" -f $DomainNetbiosName, $MySiteHostAlias; Ensure = "Present" }
+        }
+
         if ($SharePointVersion -eq "2013") {
             # Those 2 registry keys are required in SPS 2013 image to fix the psconfigui timeout error - https://support.microsoft.com/en-us/topic/some-document-conversion-services-in-sharepoint-server-are-not-secure-when-they-run-in-a-particular-environment-c39cd633-1e6a-18b1-9f2f-d0e7073a26bd
             Registry FixDocumentConversionKeyMissing  { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LauncherSettings";     ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
             Registry FixDocumentConversionKeyMissing2 { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LoadBalancerSettings"; ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
         }
 
-        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
-
-        Script DisableIESecurity
-        {
-            TestScript = {
-                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            }
-            SetScript = {
-                # Source: https://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
-                $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-                #$UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
-                Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
-                #Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
-
-                if ($false -eq (Test-Path -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer")) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft" -Name "Internet Explorer"
-                }
-
-                # Disable the first run wizard of IE
-                $ieFirstRunKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main"
-                if ($false -eq (Test-Path -Path $ieFirstRunKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "Main"
-                }
-                Set-ItemProperty -Path $ieFirstRunKey -Name "DisableFirstRunCustomize" -Value 1
-                
-                # Set new tabs to open "about:blank" in IE
-                $ieNewTabKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing"
-                if ($false -eq (Test-Path -Path $ieNewTabKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "TabbedBrowsing"
-                }
-                Set-ItemProperty -Path $ieNewTabKey -Name "NewTabPageShow" -Value 0
-            }
-            GetScript = { }
-        }
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
         Script EnableFileSharing
         {
@@ -158,7 +166,7 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
-        # Create the rules in the firewall required for the distributed cache
+        # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
         Script CreateFirewallRulesForDistributedCache
         {
             TestScript = {
@@ -201,43 +209,29 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
-        Script DownloadLDAPCP
+        xRemoteFile DownloadLDAPCP
         {
-            SetScript = {
-                $ldapcpLink = $using:LdapcpLink
-                $setupPath = $using:SetupPath
-                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
-                New-Item -Path $setupPath -ItemType directory -ErrorAction SilentlyContinue
-                $count = 0
-                $maxCount = 10                
-                while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
-                {
-                    try {
-                        Start-BitsTransfer -Source $ldapcpLink -Destination $setupFile
-                    }
-                    catch {
-                        $count++
-                    }
-                }
-
-                if (-not(Test-Path $setupFile)) {
-                    Write-Error -Message "Failed to download '$ldapcpLink' after $count attempts"
-                }
-            }
-            TestScript = {
-                $setupPath = $using:SetupPath
-                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
-                return Test-Path $setupFile
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            DestinationPath = $LDAPCPFileFullPath
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp"
+            MatchSource     = $false
         }
 
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
+        Script DscStatus_InstallApps
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tInstall applications..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         cChocoInstaller InstallChoco
         {
-            InstallDir = "C:\Choco"
+            InstallDir = "C:\Chocolatey"
         }
 
         cChocoPackageInstaller InstallEdge
@@ -262,14 +256,21 @@ configuration ConfigureSPVM
         }
 
         cChocoPackageInstaller InstallVscode
-        {
-            Name                 = "vscode.portable"
+        {   # Install takes about 30 secs
+            Name                 = "vscode"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallAzureDataStudio
+        {   # Install takes about 40 secs
+            Name                 = "azure-data-studio"
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
+        #     # This resource is only for analyzing dsc logs using a custom Python script
         #     cChocoPackageInstaller InstallPython
         #     {
         #         Name                 = "python"
@@ -278,7 +279,6 @@ configuration ConfigureSPVM
         #     }
         # }
 
-        # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
         WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
         WebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
         WebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
@@ -290,31 +290,58 @@ configuration ConfigureSPVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
-        WaitForADDomain WaitForDCReady
+        # DNS record for ADFS is created only after the ADFS farm was created and DC restarted (required by ADFS setup)
+        # This turns out to be a very reliable way to ensure that VM joins AD only when the DC is guaranteed to be ready
+        # This totally eliminates the random errors that occured in WaitForADDomain with the previous logic (and no more need of WaitForADDomain)
+        Script WaitForADFSFarmReady
         {
-            DomainName              = $DomainFQDN
-            WaitTimeout             = 1800
-            RestartCount            = 2
-            WaitForValidCredentials = $True
-            Credential              = $DomainAdminCredsQualified
-            DependsOn               = "[DnsServerAddress]SetDNS"
+            SetScript =
+            {
+                $dnsRecordFQDN = "$($using:AdfsDnsEntryName).$($using:DomainFQDN)"
+                $dnsRecordFound = $false
+                $sleepTime = 15
+                do {
+                    try {
+                        [Net.DNS]::GetHostEntry($dnsRecordFQDN)
+                        $dnsRecordFound = $true
+                    }
+                    catch [System.Net.Sockets.SocketException] {
+                        # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
+                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
+                        Start-Sleep -Seconds $sleepTime
+                    }
+                } while ($false -eq $dnsRecordFound)
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { try { [Net.DNS]::GetHostEntry("$($using:AdfsDnsEntryName).$($using:DomainFQDN)"); return $true } catch { return $false } }
+            DependsOn            = "[DnsServerAddress]SetDNS"
         }
 
-        # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        PendingReboot RebootOnSignalFromWaitForDCReady
-        {
-            Name             = "RebootOnSignalFromWaitForDCReady"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[WaitForADDomain]WaitForDCReady"
-        }
+        # # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
+        # WaitForADDomain WaitForDCReady
+        # {
+        #     DomainName              = $DomainFQDN
+        #     WaitTimeout             = 1800
+        #     RestartCount            = 2
+        #     WaitForValidCredentials = $True
+        #     Credential              = $DomainAdminCredsQualified
+        #     DependsOn               = "[DnsServerAddress]SetDNS"
+        # }
+
+        # # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
+        # PendingReboot RebootOnSignalFromWaitForDCReady
+        # {
+        #     Name             = "RebootOnSignalFromWaitForDCReady"
+        #     SkipCcmClientSDK = $true
+        #     DependsOn        = "[WaitForADDomain]WaitForDCReady"
+        # }
 
         Computer JoinDomain
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
+            DependsOn  = "[Script]WaitForADFSFarmReady"
         }
 
         PendingReboot RebootOnSignalFromJoinDomain
@@ -323,6 +350,8 @@ configuration ConfigureSPVM
             SkipCcmClientSDK = $true
             DependsOn        = "[Computer]JoinDomain"
         }
+
+        Registry ShowFileExtensions { Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "HideFileExt"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present"; PsDscRunAsCredential = $DomainAdminCredsQualified }
 
         # This script is still needed
         Script CreateWSManSPNsIfNeeded
@@ -339,7 +368,7 @@ configuration ConfigureSPVM
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
                 $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
-                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                Write-Host "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
@@ -367,9 +396,9 @@ configuration ConfigureSPVM
         # Create DNS entries used by SharePoint
         DnsRecordCname AddTrustedSiteDNS
         {
-            Name                 = $SPTrustedSitesName
+            Name                 = $SharePointSitesAuthority
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -380,7 +409,7 @@ configuration ConfigureSPVM
         {
             Name                 = $MySiteHostAlias
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -391,7 +420,7 @@ configuration ConfigureSPVM
         {
             Name                 = $HNSC1Alias
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -403,7 +432,7 @@ configuration ConfigureSPVM
             Name                 = "*"
             ZoneName             = $AppDomainFQDN
             HostNameAlias        = "$ComputerName.$DomainFQDN"
-            DnsServer            = "$DCName.$DomainFQDN"
+            DnsServer            = "$DCServerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -414,7 +443,7 @@ configuration ConfigureSPVM
             Name                 = "*"
             ZoneName             = $AppDomainIntranetFQDN
             HostNameAlias        = "$ComputerName.$DomainFQDN"
-            DnsServer            = "$DCName.$DomainFQDN"
+            DnsServer            = "$DCServerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -425,7 +454,7 @@ configuration ConfigureSPVM
             Name                 = $AddinsSiteDNSAlias
             ZoneName             = $DomainFQDN
             HostNameAlias        = "$ComputerName.$DomainFQDN"
-            DnsServer            = "$DCName.$DomainFQDN"
+            DnsServer            = "$DCServerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -435,16 +464,16 @@ configuration ConfigureSPVM
         # Provision required accounts for SharePoint
         #**********************************************************
         ADUser CreateSPSetupAccount
-        {
-            DomainName                    = $DomainFQDN
-            UserName                      = $SPSetupCreds.UserName
-            Password                      = $SPSetupCreds
-            UserPrincipalName             = "$($SPSetupCreds.UserName)@$DomainFQDN"
-            PasswordNeverExpires          = $true
-            Ensure                        = "Present"
+        {   # Both SQL and SharePoint DSCs run this SPSetupAccount AD account creation
+            DomainName           = $DomainFQDN
+            UserName             = $SPSetupCreds.UserName
+            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
+            Password             = $SPSetupCreds
+            PasswordNeverExpires = $true
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }        
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
 
         ADUser CreateSParmAccount
         {
@@ -488,7 +517,7 @@ configuration ConfigureSPVM
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            ServicePrincipalNames         = @("HTTP/$SPTrustedSitesName.$($DomainFQDN)", "HTTP/$MySiteHostAlias.$($DomainFQDN)", "HTTP/$HNSC1Alias.$($DomainFQDN)", "HTTP/$SPTrustedSitesName", "HTTP/$MySiteHostAlias", "HTTP/$HNSC1Alias")
+            ServicePrincipalNames         = @("HTTP/$SharePointSitesAuthority.$($DomainFQDN)", "HTTP/$MySiteHostAlias.$($DomainFQDN)", "HTTP/$HNSC1Alias.$($DomainFQDN)", "HTTP/$SharePointSitesAuthority", "HTTP/$MySiteHostAlias", "HTTP/$HNSC1Alias")
             PsDscRunAsCredential          = $DomainAdminCredsQualified
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
@@ -543,21 +572,10 @@ configuration ConfigureSPVM
             DependsOn                          = "[ADUser]CreateSPADDirSyncAccount"
         }
 
-        File AccountsProvisioned
-        {
-            DestinationPath      = "C:\Logs\DSC1.txt"
-            Contents             = "AccountsProvisioned"
-            Type                 = "File"
-            Force                = $true
-            PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[ADObjectPermissionEntry]GrantReplicatingDirectoryChanges", "[Script]CreateWSManSPNsIfNeeded"
-        }
-        
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
-            Version              =  5.0.20204.45441
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -584,12 +602,12 @@ configuration ConfigureSPVM
                     $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
                     try {
                         $sqlConnection.Open()
-                        Write-Verbose "Connection to SQL Server $server succeeded"
+                        Write-Host "Connection to SQL Server $server succeeded"
                         $sqlConnection.Close()
                         $retry = $false
                     }
                     catch {
-                        Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
+                        Write-Host "SQL connection to $server failed, retry in $retrySleep secs..."
                         Start-Sleep -s $retrySleep
                     }
                 }
@@ -597,7 +615,7 @@ configuration ConfigureSPVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SqlAlias]AddSqlAlias", "[File]AccountsProvisioned"
+            DependsOn            = "[SqlAlias]AddSqlAlias", "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[ADObjectPermissionEntry]GrantReplicatingDirectoryChanges", "[Script]CreateWSManSPNsIfNeeded"
         }
 
         #**********************************************************
@@ -611,7 +629,7 @@ configuration ConfigureSPVM
             FarmAccount               = $SPFarmCredsQualified
             PsDscRunAsCredential      = $SPSetupCredsQualified
             AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-            CentralAdministrationPort = 5000
+            CentralAdministrationPort = $SharePointCentralAdminPort
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $true
             IsSingleInstance          = "Yes"
@@ -659,7 +677,7 @@ configuration ConfigureSPVM
 
         SPFarmSolution InstallLdapcp
         {
-            LiteralPath          = "$SetupPath\LDAPCP.wsp"
+            LiteralPath          = $LDAPCPFileFullPath
             Name                 = "LDAPCP.wsp"
             Deployed             = $true
             Ensure               = "Present"
@@ -746,7 +764,7 @@ configuration ConfigureSPVM
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             DatabaseName           = $SPDBPrefix + "Content_80"
-            WebAppUrl              = "http://$SPTrustedSitesName/"
+            WebAppUrl              = "http://$SharePointSitesAuthority/"
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
@@ -764,7 +782,7 @@ configuration ConfigureSPVM
             TestScript           = 
             {
                 $domainNetbiosName = $using:DomainNetbiosName
-                $dcName = $using:DCName
+                $dcName = $using:DCServerName
                 $rootCAName = "$domainNetbiosName-$dcName-CA"
                 $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
                 
@@ -809,7 +827,7 @@ configuration ConfigureSPVM
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "urn:sharepoint:$($SPTrustedSitesName)"
+            Realm                        = "urn:sharepoint:$($SharePointSitesAuthority)"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings               = @(
@@ -835,10 +853,10 @@ configuration ConfigureSPVM
         # So I added resources between it and CreateMainWebApp to avoid it
         SPWebApplicationExtension ExtendMainWebApp
         {
-            WebAppUrl              = "http://$SPTrustedSitesName/"
+            WebAppUrl              = "http://$SharePointSitesAuthority/"
             Name                   = "SharePoint - 443"
             AllowAnonymous         = $false
-            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
+            Url                    = "https://$SharePointSitesAuthority.$DomainFQDN"
             Zone                   = "Intranet"
             Port                   = 443
             Ensure                 = "Present"
@@ -893,7 +911,7 @@ configuration ConfigureSPVM
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
         {
-            WebAppUrl = "http://$SPTrustedSitesName/"
+            WebAppUrl = "http://$SharePointSitesAuthority/"
             Default = @(
                 MSFT_SPWebAppAuthenticationMode {
                     AuthenticationMethod = "WindowsAuthentication"
@@ -909,100 +927,44 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp", "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
+        
+        CertReq GenerateMainWebAppCertificate
+        {
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
+            Subject                = "$SharePointSitesAuthority.$DomainFQDN"
+            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+        }
 
-        if ($SharePointVersion -eq "SE") {
-            # Use SharePoint SE to generate the CSR and give the private key so it can manage it
-            Script GenerateMainWebAppCertificate
-            {
-                SetScript =
+        WebSite SetHTTPSCertificate
+        {
+            Name                 = "SharePoint - 443"
+            BindingInfo          = @(
+                DSC_WebBindingInformation
                 {
-                    $dcName = $using:DCName
-                    $dcSetupPath = $using:DCSetupPath
-                    $domainFQDN = $using:DomainFQDN
-                    $domainNetbiosName = $using:DomainNetbiosName
-                    $spTrustedSitesName = $using:SPTrustedSitesName
-                    $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
-
-                    # Generate CSR
-                    New-SPCertificate -FriendlyName "$spTrustedSitesName Certificate" -KeySize 2048 -CommonName "$spTrustedSitesName.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$dcSetupPath\$spTrustedSitesName.csr"
-
-                    # Submit CSR to CA
-                    & certreq.exe -submit -config "$dcName.$domainFQDN\$domainNetbiosName-$dcName-CA" -attrib "CertificateTemplate:Webserver" "$dcSetupPath\$spTrustedSitesName.csr" "$dcSetupPath\$spTrustedSitesName.cer" "$dcSetupPath\$spTrustedSitesName.p7b" "$dcSetupPath\$spTrustedSitesName.ful"
-
-                    # Install certificate with its private key to certificate store
-                    # certreq -accept –machine "$dcSetupPath\$spTrustedSitesName.cer"
-
-                    # Find the certificate
-                    # Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" } | Select-Object Thumbprint
-
-                    # # Export private key of the certificate
-                    # certutil -f -p "superpasse" -exportpfx A74D118AABD5B42F23BCD9083D3F6A3EF3BFD904 "$dcSetupPath\$spTrustedSitesName.pfx"
-
-                    # # Import private key of the certificate into SharePoint
-                    # $password = ConvertTo-SecureString -AsPlainText -Force "<superpasse>"
-                    # Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.pfx" -Password $password -Exportable
-                    $spCert = Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.cer" -Exportable -Store EndEntity
-
-                    Set-SPWebApplication -Identity "http://$spTrustedSitesName" -Zone Intranet -Port 443 -Certificate $spCert `
-                        -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$spTrustedSitesName.$domainFQDN"
+                    Protocol             = "HTTPS"
+                    Port                 = 443
+                    CertificateStoreName = "My"
+                    CertificateSubject   = "$SharePointSitesAuthority.$DomainFQDN"
                 }
-                GetScript            = { }
-                TestScript           = 
-                {
-                    $domainFQDN = $using:DomainFQDN
-                    $domainNetbiosName = $using:DomainNetbiosName
-                    $spTrustedSitesName = $using:SPTrustedSitesName
-                    
-                    # $cert = Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" }
-                    $cert = Get-SPCertificate -Identity "$spTrustedSitesName Certificate" -ErrorAction SilentlyContinue
-                    if ($null -eq $cert) {
-                        return $false   # Run SetScript
-                    } else {
-                        return $true    # Certificate is already created
-                    }
-                }
-                DependsOn            = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-            }
-        } else {
-            CertReq GenerateMainWebAppCertificate
-            {
-                CARootName             = "$DomainNetbiosName-$DCName-CA"
-                CAServerFQDN           = "$DCName.$DomainFQDN"
-                Subject                = "$SPTrustedSitesName.$DomainFQDN"
-                SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-                KeyLength              = '2048'
-                Exportable             = $true
-                ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-                OID                    = '1.3.6.1.5.5.7.3.1'
-                KeyUsage               = '0xa0'
-                CertificateTemplate    = 'WebServer'
-                AutoRenew              = $true
-                Credential             = $DomainAdminCredsQualified
-                DependsOn              = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
-            }
-
-            WebSite SetHTTPSCertificate
-            {
-                Name                 = "SharePoint - 443"
-                BindingInfo          = @(
-                    DSC_WebBindingInformation
-                    {
-                        Protocol             = "HTTPS"
-                        Port                 = 443
-                        CertificateStoreName = "My"
-                        CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
-                    }
-                )
-                Ensure               = "Present"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn            = "[CertReq]GenerateMainWebAppCertificate"
-            }
+            )
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[CertReq]GenerateMainWebAppCertificate"
         }
 
         SPCacheAccounts SetCacheAccounts
         {
-            WebAppUrl            = "http://$SPTrustedSitesName/"
+            WebAppUrl            = "http://$SharePointSitesAuthority/"
             SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
             SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -1011,7 +973,7 @@ configuration ConfigureSPVM
 
         SPSite CreateRootSite
         {
-            Url                  = "http://$SPTrustedSitesName/"
+            Url                  = "http://$SharePointSitesAuthority/"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
@@ -1024,7 +986,7 @@ configuration ConfigureSPVM
         # Create this site early, otherwise [SPAppCatalog]SetAppCatalogUrl may throw error "Cannot find an SPSite object with Id or Url: http://SPSites/sites/AppCatalog"
         SPSite CreateAppCatalog
         {
-            Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
+            Url                  = "http://$SharePointSitesAuthority/sites/AppCatalog"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "AppCatalog"
@@ -1039,7 +1001,7 @@ configuration ConfigureSPVM
         SPSite CreateMySiteHost
         {
             Url                      = "http://$MySiteHostAlias/"
-            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
@@ -1058,7 +1020,7 @@ configuration ConfigureSPVM
 
         SPManagedPath CreateMySiteManagedPath
         {
-            WebAppUrl            = "http://$SPTrustedSitesName/"
+            WebAppUrl            = "http://$SharePointSitesAuthority/"
             RelativeUrl          = "personal"
             Explicit             = $false
             HostHeader           = $true
@@ -1082,7 +1044,7 @@ configuration ConfigureSPVM
         # Creating this site takes about 1 min but it is not so useful, skip it
         # SPSite CreateDevSite
         # {
-        #     Url                  = "http://$SPTrustedSitesName/sites/dev"
+        #     Url                  = "http://$SharePointSitesAuthority/sites/dev"
         #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
         #     SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
         #     Name                 = "Developer site"
@@ -1094,7 +1056,7 @@ configuration ConfigureSPVM
         SPSite CreateHNSC1
         {
             Url                      = "http://$HNSC1Alias/"
-            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
@@ -1117,7 +1079,7 @@ configuration ConfigureSPVM
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            PsDscRunAsCredential       = $SPSetupCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance", "[Script]ConfigureLDAPCP"
         }
 
@@ -1126,7 +1088,7 @@ configuration ConfigureSPVM
             Name                 = "App Management Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
-            PsDscRunAsCredential       = $SPSetupCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
@@ -1139,7 +1101,12 @@ configuration ConfigureSPVM
                 MSFT_SPServiceAppSecurityEntry {
                     Username     = $SPSvcCredsQualified.UserName
                     AccessLevels = @("Full Control")
-            })
+                };
+                MSFT_SPServiceAppSecurityEntry {
+                    Username     = $DomainAdminCredsQualified.UserName
+                    AccessLevels = @("Full Control")
+                }
+            )
             PsDscRunAsCredential = $SPSetupCredsQualified
             #DependsOn           = "[Script]RefreshLocalConfigCache"
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
@@ -1156,7 +1123,7 @@ configuration ConfigureSPVM
                 Server                = $DomainLDAPPath
                 UseSSL                = $true
                 Port                  = 636
-                IncludedOUs           = @("CN=Users,$DomainLDAPPath")
+                IncludedOUs           = @("CN=Users,$DomainLDAPPath", $AdditionalUsersPath)
                 Force                 = $false
                 ConnectionType        = "ActiveDirectory"
                 UseDisabledFilter     = $true
@@ -1187,7 +1154,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationAppDomain ConfigureAppDomainDefaultZone
         {
-            WebAppUrl            = "http://$SPTrustedSitesName"
+            WebAppUrl            = "http://$SharePointSitesAuthority"
             AppDomain            = $AppDomainFQDN
             Zone                 = "Default"
             Port                 = 80
@@ -1198,7 +1165,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationAppDomain ConfigureAppDomainIntranetZone
         {
-            WebAppUrl            = "http://$SPTrustedSitesName"
+            WebAppUrl            = "http://$SharePointSitesAuthority"
             AppDomain            = $AppDomainIntranetFQDN
             Zone                 = "Intranet"
             Port                 = 443
@@ -1209,7 +1176,7 @@ configuration ConfigureSPVM
 
         SPAppCatalog SetAppCatalogUrl
         {
-            SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
+            SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog","[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
@@ -1218,7 +1185,7 @@ configuration ConfigureSPVM
         # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
         SPSite CreateTeamSite
         {
-            Url                  = "http://$SPTrustedSitesName/sites/team"
+            Url                  = "http://$SharePointSitesAuthority/sites/team"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
@@ -1230,8 +1197,8 @@ configuration ConfigureSPVM
 
         CertReq GenerateAddinsSiteCertificate
         {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "$AddinsSiteDNSAlias.$($DomainFQDN)"
             FriendlyName           = "Provider-hosted addins site certificate"
             SubjectAltName         = "dns=$AddinsSiteDNSAlias.$($DomainFQDN)"
@@ -1311,12 +1278,9 @@ configuration ConfigureSPVM
             }
             TestScript = 
             {
-                if ( (Get-ChildItem -Path "C:\inetpub\wwwroot\addins" -Name "iisstart*") -eq $null)
-                {
+                if ( (Get-ChildItem -Path "C:\inetpub\wwwroot\addins" -Name "iisstart*") -eq $null) {
                     return $false
-                }
-                else
-                {
+                } else  {
                     return $true
                 }
             }
@@ -1326,8 +1290,8 @@ configuration ConfigureSPVM
 
         CertReq GenerateHighTrustAddinsCert
         {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "HighTrustAddins"
             FriendlyName           = "Sign OAuth tokens of high-trust add-ins"
             KeyLength              = '2048'
@@ -1349,11 +1313,11 @@ configuration ConfigureSPVM
                 $certSubject = "HighTrustAddins"
                 $certName = "HighTrustAddins.cer"
                 $certFullPath = [System.IO.Path]::Combine($destinationPath, $certName)
-                Write-Verbose -Message "Exporting public key of certificate with subject $certSubject to $certFullPath..."
+                Write-Host "Exporting public key of certificate with subject $certSubject to $certFullPath..."
                 New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$certSubject"
                 $signingCert | Export-Certificate -FilePath $certFullPath
-                Write-Verbose -Message "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
+                Write-Host "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
             }
             GetScript =  
             {
@@ -1384,29 +1348,34 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $warmupJobBlock = {
+                $jobBlock = {
                     $uri = $args[0]
                     try {
-                        Write-Verbose "Connecting to $uri..."
+                        Write-Host "Connecting to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
-                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
-                        Write-Verbose "Connected successfully to $uri"
+                        Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Write-Host "Connected successfully to $uri"
+                    }
+                    catch [System.Exception] {
+                        Write-Host "Unexpected error while connecting to '$uri': $_"
                     }
                     catch {
+                        # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
+                        Write-Host "Unexpected error while connecting to '$uri'"
                     }
                 }
-                $spsite = "http://$($using:ComputerName):5000/"
-                Write-Verbose "Warming up '$spsite'..."
-                $job1 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
-                $spsite = "http://$($using:SPTrustedSitesName)/"
-                Write-Verbose "Warming up '$spsite'..."
-                $job2 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
-                
+                [System.Management.Automation.Job[]] $jobs = @()
+                $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
+                Write-Host "Warming up '$spsite'..."
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+                $spsite = "http://$($using:SharePointSitesAuthority)/"
+                Write-Host "Warming up '$spsite'..."
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+
                 # Must wait for the jobs to complete, otherwise they do not actually run
-                Receive-Job -Job $job1 -AutoRemoveJob -Wait
-                Receive-Job -Job $job2 -AutoRemoveJob -Wait
+                Receive-Job -Job $jobs -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
@@ -1414,29 +1383,129 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]CreateRootSite"
         }
 
-        # DSC resource File throws an access denied when accessing a remote location, so use Script instead
-        Script CreateDSCCompletionFile
+        Script CreatePersonalSites
         {
             SetScript =
             {
-                $SetupPath = $using:SetupPath
-                $ComputerName = $using:ComputerName
-                $DestinationPath = "$SetupPath\SPDSCFinished.txt"
-                $Contents = "DSC Configuration on $ComputerName finished successfully."
-                # Do not overwrite and do not throw an exception if file already exists
-                New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
+                # Need to wrap the creation of personal sites in a job to avoid the error below when calling CreatePersonalSiteEnque($false):
+                # Could not enqueue creation of personal site for 'i:0#.w|contoso\yvand': Exception calling "CreatePersonalSiteEnque" with "1" argument(s): "Attempted to perform an unauthorized operation."
+                $jobBlock = {
+                    $uri = $args[0]
+                    $accountPattern_WinClaims = $args[1]
+                    $accountPattern_Trusted = $args[2]
+                    $AdditionalUsersPath = $args[3]
+
+                    try {
+                        $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
+                        $ctx = Get-SPServiceContext $site -ErrorAction SilentlyContinue
+                        $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
+                        Write-Host "Got UserProfileManager"
+                    }
+                    catch {
+                        Write-Host "Unable to get UserProfileManager: $_"
+                        # If Write-Error is called, then the Script resource is going to failed state
+                        # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$accountName'"
+                        return
+                    }
+
+                    # Accessing $using:DomainAdminCredsQualified here somehow causes a deserialization error, so use $env:UserName instead
+                    [string[]] $accounts = @()
+                    $accounts += $accountPattern_WinClaims -f $env:UserName
+                    $accounts += $accountPattern_Trusted -f $env:UserName
+                    $AdditionalUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $AdditionalUsersPath #-ResultSetSize 5
+                    foreach ($AdditionalUser in $AdditionalUsers) {
+                        $accounts += $accountPattern_WinClaims -f $AdditionalUser.SamAccountName
+                        $accounts += $accountPattern_Trusted -f $AdditionalUser.SamAccountName
+                    }
+
+                    foreach ($accountName in $accounts) {
+                        $profile = $null
+                        try {
+                            $profile = $upm.GetUserProfile($accountName)
+                            Write-Host "Got existing user profile for '$accountName'"
+                        }
+                        catch {
+                            $profile = $upm.CreateUserProfile($accountName);
+                            Write-Host "Successfully created user profile for '$accountName'"
+                        }
+                    
+                        if ($null -eq $profile) {
+                            Write-Host "Unable to get/create the profile for '$accountName', give up"
+                            continue
+                        }
+                        
+                        if ($null -eq $profile.PersonalSite) {
+                            Write-Host "Adding creation of personal site for '$accountName' to the queue..."
+                            try {
+                                $profile.CreatePersonalSiteEnque($false)
+                                Write-Host "Successfully enqueued the creation of personal site for '$accountName'"
+                            }
+                            catch {
+                                Write-Host "Could not enqueue creation of personal site for '$accountName': $_"
+                            }
+                        } else 
+                        {
+                            Write-Host "Personal site for '$accountName' already exists, nothing to do"
+                        }
+                    }
+                }
+                
+                $initializationScript = { & "C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\16\CONFIG\POWERSHELL\Registration\SharePoint.ps1" }
+                if ($using:SharePointVersion -eq "2013") {
+                    $initializationScript = { & "C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\15\CONFIG\POWERSHELL\Registration\SharePoint.ps1" }
+                }
+                
+                $uri = "http://$($using:SharePointSitesAuthority)/"
+                $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
+                $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
+                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath) -InitializationScript $initializationScript
+                Receive-Job -Job $job -AutoRemoveJob -Wait
             }
-            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
+        }
+
+        Script CreateShortcuts
+        {
+            SetScript =
+            {
+                $sharePointVersion = $using:SharePointVersion
+                $directoryVersion = "16"
+                if ($sharePointVersion -eq "2013") { $directoryVersion = "15" }
+                $WshShell = New-Object -comObject WScript.Shell
+                # Shortcut to the setup folder
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Setup data.lnk")
+                $Shortcut.TargetPath = $using:SetupPath
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Central Administration
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Central Administration.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
+                $Shortcut.Arguments = "-cmd showcentraladmin"
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Products Configuration Wizard
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Products Configuration Wizard.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Management Shell
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Management Shell.lnk")
+                $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\PowerShell.exe"
+                $Shortcut.Arguments = " -NoExit -Command ""& 'C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\$directoryVersion\CONFIG\POWERSHELL\Registration\SharePoint.ps1'"""
+                $Shortcut.Save()
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal
         #     Script parseDscLogs
         #     {
-        #         TestScript = { return $false }
+        #         TestScript = { return (Test-Path "$setupPath\parse-dsc-logs.py" -PathType Leaf) }
         #         SetScript = {
         #             $setupPath = $using:SetupPath
         #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
@@ -1450,13 +1519,38 @@ configuration ConfigureSPVM
         #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
         #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             python $localScriptPath "$fullPathToDscLogs"
+        #             # Start python script
+        #             Write-Host "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+        #             #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
+        #             #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
+        #             python "$localScriptPath" "$fullPathToDscLogs"
+
+        #             # Create a shortcut to the DSC logs folder
+        #             $WshShell = New-Object -comObject WScript.Shell
+        #             $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\DSC logs.lnk")
+        #             $Shortcut.TargetPath = $fullPathToDscLogs
+        #             $Shortcut.Save()
+
+        #             # Create shortcut to DSC configuration folder
+        #             $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\DSC config.lnk")
+        #             $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureSPLegacy.0" -f $folderWithMaxVersionNumber
+        #             $Shortcut.Save()
         #         }
         #         GetScript = { }
         #         DependsOn            = "[cChocoPackageInstaller]InstallPython"
         #         PsDscRunAsCredential = $DomainAdminCredsQualified
         #     }
         # }
+
+        Script DscStatus_Finished
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration on finished." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
     }
 }
 
@@ -1501,24 +1595,6 @@ function Get-NetBIOSName
     }
 }
 
-function Get-AppDomain
-{
-    [OutputType([string])]
-    param(
-        [string]$DomainFQDN,
-        [string]$Suffix
-    )
-
-    $appDomain = [String]::Empty
-    if ($DomainFQDN.Contains('.')) {
-        $domainParts = $DomainFQDN.Split('.')
-        $appDomain = $domainParts[0]
-        $appDomain += "$Suffix."
-        $appDomain += $domainParts[1]
-    }
-    return $appDomain
-}
-
 function Get-SPDSCInstalledProductVersion
 {
     $pathToSearch = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\*\ISAPI\Microsoft.SharePoint.dll"
@@ -1539,18 +1615,20 @@ $SPADDirSyncCreds = New-Object -TypeName System.Management.Automation.PSCredenti
 $SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
 $SPSuperUserCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperUser", $password
 $SPSuperReaderCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperReader", $password
-$DNSServer = "10.1.1.4"
+$DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
-$DCName = "DC"
-$SQLName = "SQL"
+$DCServerName = "DC"
+$SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = "2019"
+$SharePointSitesAuthority = "spsites"
+$SharePointCentralAdminPort = 5000
 $EnableAnalysis = $true
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPSE.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSPLegacy.0\ConfigureSPVM"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
-C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.2.0
+C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.5
 #>
