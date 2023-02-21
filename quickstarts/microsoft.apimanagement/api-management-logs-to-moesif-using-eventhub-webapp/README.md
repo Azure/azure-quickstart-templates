@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Moesif API Analytics and Monetization
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-logs-to-moesif-using-eventhub-webapp/PublicLastTestDate.svg)
