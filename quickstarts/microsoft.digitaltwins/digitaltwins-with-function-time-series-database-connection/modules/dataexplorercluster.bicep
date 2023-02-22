@@ -23,7 +23,7 @@ param softDeletePeriod string
 param location string
 
 // Creates Azure Data Explorer cluster
-resource adxCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
+resource adxCluster 'Microsoft.Kusto/Clusters@2022-11-11' = {
   name: adxClusterName
   location: location
   sku: {
