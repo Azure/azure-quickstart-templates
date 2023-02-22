@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: managed-mariadb-with-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy Azure Database for MariaDB with VNet
 
