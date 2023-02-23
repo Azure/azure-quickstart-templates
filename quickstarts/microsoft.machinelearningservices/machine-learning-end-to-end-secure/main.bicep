@@ -114,6 +114,7 @@ module applicationInsights 'modules/applicationinsights.bicep' = {
   params: {
     location: location
     applicationInsightsName: 'appi-${name}-${uniqueSuffix}'
+    logAnalyticsWorkspaceName: 'ws-${name}-${uniqueSuffix}'
     tags: tags
   }
 }

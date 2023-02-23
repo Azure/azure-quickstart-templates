@@ -1167,6 +1167,9 @@
           "applicationInsightsName": {
             "value": "[format('appi-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
           },
+          "logAnalyticsWorkspaceName": {
+            "value": "[format('ws-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+          },
           "tags": {
             "value": "[parameters('tags')]"
           }
@@ -1203,33 +1206,49 @@
               }
             }
           },
-          "resources": [
-            {
-              "type": "Microsoft.Insights/components",
-              "apiVersion": "2020-02-02",
-              "name": "[parameters('applicationInsightsName')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "kind": "web",
-              "properties": {
-                "Application_Type": "web",
-                "DisableIpMasking": false,
-                "DisableLocalAuth": false,
-                "Flow_Type": "Bluefield",
-                "ForceCustomerStorageForProfiler": false,
-                "ImmediatePurgeDataOn30Days": true,
-                "IngestionMode": "ApplicationInsights",
-                "publicNetworkAccessForIngestion": "Enabled",
-                "publicNetworkAccessForQuery": "Disabled",
-                "Request_Source": "rest"
-              }
+          "logAnalyticsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+              "description": "Log Analytics resource name"
             }
-          ],
-          "outputs": {
-            "applicationInsightsId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2021-06-01",
+            "name": "[parameters('logAnalyticsWorkspaceName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+              "sku": {
+                "name": "PerGB2018"
+              },
+              "retentionInDays": 30,
+              "publicNetworkAccessForIngestion": "Enabled",
+              "publicNetworkAccessForQuery": "Disabled"
             }
+          },
+          {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[parameters('applicationInsightsName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "kind": "web",
+            "properties": {
+              "Application_Type": "web",
+              "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+              "Flow_Type": "Bluefield"
+            },
+            "dependsOn": [
+              "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+            ]
+          }
+        ],
+        "outputs": {
+          "applicationInsightsId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
           }
         }
       }
@@ -1891,7 +1910,7 @@
                                 "type": "SystemAssigned"
                               },
                               "properties": {
-                                "kubernetesVersion": "1.24.0",
+                                "kubernetesVersion": "1.25.5",
                                 "dnsPrefix": "[format('{0}-dns', parameters('aksClusterName'))]",
                                 "agentPoolProfiles": [
                                   {
@@ -2067,7 +2086,7 @@
           "resources": [
             {
               "type": "Microsoft.Network/networkInterfaces",
-              "apiVersion": "2020-06-01",
+              "apiVersion": "2022-07-01",
               "name": "[format('{0}-nic', parameters('virtualMachineName'))]",
               "location": "[parameters('location')]",
               "properties": {
