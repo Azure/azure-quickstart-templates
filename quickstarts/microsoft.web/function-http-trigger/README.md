@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: function-http-trigger
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Function app and an HTTP-triggered function
 

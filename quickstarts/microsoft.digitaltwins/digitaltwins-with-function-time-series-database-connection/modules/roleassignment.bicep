@@ -31,7 +31,7 @@ var azureRbacAzureEventHubsDataOwner = 'f526a384-b230-433a-b45c-95f59c4a2dec'
 var azureRbacAzureDigitalTwinsDataOwner = 'bcd981a7-7f74-457b-83e1-cceb9e632ffe'
 
 // Gets Digital Twins resource
-resource digitalTwins 'Microsoft.DigitalTwins/digitalTwinsInstances@2022-05-31' existing = {
+resource digitalTwins 'Microsoft.DigitalTwins/digitalTwinsInstances@2022-10-31' existing = {
   name: digitalTwinsName
 }
 
@@ -41,12 +41,12 @@ resource eventhub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' existing 
 }
 
 // Gets database under the Azure Data Explorer cluster
-resource database 'Microsoft.Kusto/clusters/databases@2022-02-01' existing = {
+resource database 'Microsoft.Kusto/clusters/databases@2022-11-11' existing = {
   name: '${adxClusterName}/${databaseName}'
 }
 
 // Assigns the given principal id input data owner of Digital Twins resource
-resource givenIdToDigitalTwinsRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource givenIdToDigitalTwinsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(digitalTwins.id, principalId, azureRbacAzureDigitalTwinsDataOwner)
   scope: digitalTwins
   properties: {
@@ -57,7 +57,7 @@ resource givenIdToDigitalTwinsRoleAssignment 'Microsoft.Authorization/roleAssign
 }
 
 // Assigns Digital Twins resource data owner of event hub
-resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(eventhub.id, principalId, azureRbacAzureEventHubsDataOwner)
   scope: eventhub
   properties: {
@@ -68,8 +68,9 @@ resource digitalTwinsToEventHubRoleAssignment 'Microsoft.Authorization/roleAssig
 }
 
 // Assigns Digital Twins resource admin assignment to database
-resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/databases/principalAssignments@2022-02-01' = {
-  name: '${adxClusterName}/${databaseName}/${guid(database.id, principalId, 'Admin')}'
+resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/databases/principalAssignments@2022-11-11' = {
+  parent: database
+  name: guid(database.id, principalId, 'Admin')
   properties: {
     principalId: digitalTwinsIdentityPrincipalId
     role: 'Admin'
@@ -79,7 +80,7 @@ resource digitalTwinsToDatabasePrincipalAssignment 'Microsoft.Kusto/clusters/dat
 }
 
 // Assigns Digital Twins resource contributor assignment to database
-resource digitalTwinsToDatabaseRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource digitalTwinsToDatabaseRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(database.id, principalId, azureRbacContributor)
   scope: database
   properties: {
