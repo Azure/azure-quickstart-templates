@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: vm-push-certificate-windows
 languages:
+- bicep
 - json
 ---
 # Push a certificate onto a Windows VM
