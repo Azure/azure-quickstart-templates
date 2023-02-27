@@ -127,7 +127,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2019-06-01' = {
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2019-07-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   name: vmName
   location: location
   properties: {
