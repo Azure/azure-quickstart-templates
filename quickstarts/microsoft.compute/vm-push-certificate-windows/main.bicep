@@ -35,6 +35,7 @@ var virtualNetworkName = 'certVNET'
 var addressPrefix = '10.0.0.0/16'
 var publicIPName = 'certPublicIP'
 var networkSecurityGroupName = '${subnet1Name}-nsg'
+// Trusted Launch settings
 var securityProfileJson = {
   uefiSettings: {
     secureBootEnabled: true
