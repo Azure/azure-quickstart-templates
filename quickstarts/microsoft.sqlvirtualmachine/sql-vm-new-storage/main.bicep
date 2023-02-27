@@ -1,6 +1,13 @@
 @description('The name of the VM')
 param virtualMachineName string = 'myVM'
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
 @description('The virtual machine size.')
 param virtualMachineSize string = 'Standard_D8s_v3'
 
@@ -15,13 +22,10 @@ param existingSubnetName string
 
 @description('Windows Server and SQL Offer')
 @allowed([
+  'sql2022-ws2022'
+  'sql2019-ws2022'
   'sql2019-ws2019'
   'sql2017-ws2019'
-  'SQL2017-WS2016'
-  'SQL2016SP1-WS2016'
-  'SQL2016SP2-WS2016'
-  'SQL2014SP3-WS2012R2'
-  'SQL2014SP2-WS2012R2'
 ])
 param imageOffer string = 'sql2019-ws2019'
 
@@ -102,6 +106,18 @@ var dataDisks = {
   diskSizeGB: 1023
 }
 var tempDbPath = 'D:\\SQLTemp'
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
+var extensionName = 'GuestAttestation'
+var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
+var extensionVersion = '1.0'
+var maaTenantName = 'GuestAttestation'
+var maaEndpoint = substring('emptyString', 0, 0)
 
 resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   name: publicIpAddressName
@@ -194,6 +210,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         provisionVMAgent: true
       }
     }
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
   }
 }
 
@@ -217,6 +234,26 @@ resource sqlVirtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2022-
       }
       sqlTempDbSettings: {
         defaultFilePath: tempDbPath
+      }
+    }
+  }
+}
+
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+  parent: virtualMachine
+  name: extensionName
+  location: location
+  properties: {
+    publisher: extensionPublisher
+    type: extensionName
+    typeHandlerVersion: extensionVersion
+    autoUpgradeMinorVersion: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
       }
     }
   }

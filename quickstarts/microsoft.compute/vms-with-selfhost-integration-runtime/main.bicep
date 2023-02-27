@@ -12,6 +12,13 @@ param IntegrationRuntimeName string = 'ir-${uniqueString(resourceGroup().id)}'
 @maxValue(4)
 param NodeCount int = 1
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
 @description('SKU Size for the VMs')
 param vmSize string = 'Standard_A4_v2'
 
@@ -85,6 +92,7 @@ module VMtemplate 'nested/VMtemplate.bicep' = [for i in range(0, NodeCount): {
   name: 'vmCopy-${i}'
   params: {
     virtualMachineName: take('vm${i}-${prefix}', 15)
+    securityType: securityType
     vmSize: vmSize
     adminUserName: adminUserName
     adminPassword: adminPassword

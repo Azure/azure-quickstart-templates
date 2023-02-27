@@ -4,6 +4,13 @@ param projectName string
 @description('Specifies the location for all of the resources created by this template.')
 param location string = resourceGroup().location
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
 @description('Specifies the virtual machine administrator username.')
 param adminUsername string
 
@@ -33,8 +40,20 @@ var bastionSubnetName = 'AzureBastionSubnet'
 var vNetBastionSubnetAddressPrefix = '10.0.1.0/24'
 var bastionPublicIPAddressName = '${projectName}-bastionPublicIP'
 var vmStorageAccountType = 'Premium_LRS'
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
+var extensionName = 'GuestAttestation'
+var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
+var extensionVersion = '1.0'
+var maaTenantName = 'GuestAttestation'
+var maaEndpoint = substring('emptyString', 0, 0)
 
-resource project_vm_1_networkInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i in range(0, 3): {
+resource projectVmNetworkInterface 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i in range(0, 3): {
   name: '${projectName}-vm${(i + 1)}-networkInterface'
   location: location
   properties: {
@@ -44,7 +63,7 @@ resource project_vm_1_networkInterface 'Microsoft.Network/networkInterfaces@2021
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: vNetName_vNetSubnetName.id
+            id: vNetNameVNetSubnetName.id
           }
           loadBalancerBackendAddressPools: [
             {
@@ -67,7 +86,7 @@ resource project_vm_1_networkInterface 'Microsoft.Network/networkInterfaces@2021
   ]
 }]
 
-resource project_vm_1_InstallWebServer 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = [for i in range(0, 3): {
+resource projectVmInstallWebServer 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = [for i in range(0, 3): {
   name: '${projectName}-vm${(i + 1)}/InstallWebServer'
   location: location
   properties: {
@@ -80,11 +99,33 @@ resource project_vm_1_InstallWebServer 'Microsoft.Compute/virtualMachines/extens
     }
   }
   dependsOn: [
-    project_vm_1
+    projectVm
   ]
 }]
 
-resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(1, 3): {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+  name: extensionName
+  location: location
+  properties: {
+    publisher: extensionPublisher
+    type: extensionName
+    typeHandlerVersion: extensionVersion
+    autoUpgradeMinorVersion: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: maaEndpoint
+          maaTenantName: maaTenantName
+        }
+      }
+    }
+  }
+  dependsOn: [
+    projectVm
+  ]
+}
+
+resource projectVm 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(1, 3): {
   name: '${projectName}-vm${i}'
   location: location
   zones: [
@@ -124,24 +165,25 @@ resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in
         provisionVMAgent: true
       }
     }
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
   }
   dependsOn: [
-    project_vm_1_networkInterface
+    projectVmNetworkInterface
   ]
 }]
 
-resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource vNetNameBastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
   parent: vNet
   name: bastionSubnetName
   properties: {
     addressPrefix: vNetBastionSubnetAddressPrefix
   }
   dependsOn: [
-    vNetName_vNetSubnetName
+    vNetNameVNetSubnetName
   ]
 }
 
-resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource vNetNameVNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
   parent: vNet
   name: vNetSubnetName
   properties: {
@@ -162,7 +204,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
             id: bastionPublicIPAddress.id
           }
           subnet: {
-            id: vNetName_bastionSubnet.id
+            id: vNetNameBastionSubnet.id
           }
         }
       }
