@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: managed-mariadb-with-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy Azure Database for MariaDB with VNet
 
@@ -26,6 +26,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.dbformariadb%2Fmanaged-mariadb-with-vnet%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.dbformariadb%2Fmanaged-mariadb-with-vnet%2Fazuredeploy.json)
 
-This template provides a way to deploy an Azure database for MariaDB with VNet Integration. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/mariadb/quickstart-create-mariadb-server-database-arm-template) article.
+This template provides a way to deploy an Azure Database for MariaDB with VNet Integration. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/mariadb/quickstart-create-mariadb-server-database-arm-template) article.
 
 `Tags: Microsoft.DBforMariaDB/servers/virtualNetworkRules, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.DBforMariaDB/servers, Microsoft.DBforMariaDB/servers/firewallRules`
