@@ -1,4 +1,14 @@
-# Azure OMS Log Analytics Solution for Cloud Foundry
+---
+description: This template deploys default views, alerts and saved searches to your Log Analytics workspace.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: oms-cloudfoundry-solution
+languages:
+- json
+---
+# OMS - Cloud Foundry Solution
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-cloudfoundry-solution/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-cloudfoundry-solution/PublicDeployment.svg)
@@ -57,7 +67,7 @@ Follow these instructions to deploy the template:
     1. `OMS Workspace Sku`: Select the pricing tier of the workspace. _Note that `PerGB2018` would be the only valid Sku if your subscription has enabled April 2018 pricing model. Thus, this parameter would be ignored if `April 2018` is selected for `Azure Monitor Pricing Model`_
     1. `System Metrics Provider`: Select provider for your system metrics, could be `Microsoft Azure OMS Agent`, `BOSH Health Metrics Forwarder` or both.
 
-        _*Please refer to document [here](https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-usage-and-estimated-costs#new-pricing-model-and-operations-management-suite-subscription-entitlements) for more detail about Azure Monitor April 2018 pricing model._
+        _*Please refer to document [here](https://docs.microsoft.com/azure/monitoring-and-diagnostics/monitoring-usage-and-estimated-costs#new-pricing-model-and-operations-management-suite-subscription-entitlements) for more detail about Azure Monitor April 2018 pricing model._
 
 1. Once you have customized all the parameters, click *Purchase*.
 
@@ -79,21 +89,21 @@ Also notice that `OMS Log Analytics workspace` itself will not be modified durin
 
 ### Customize and Upgrade Views
 
-To Customize view, you can refer to instructions [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-view-designer#import-an-existing-view).
+To Customize view, you can refer to instructions [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-view-designer#import-an-existing-view).
 
 To upgrade views, you can delete corresponding solutions from azure portal and then click [here](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-cloudfoundry-solution%2Fnested%2FomsCustomViews.json) to redeploy nested view templates. __Make sure you know this will overwrite your customization made to corresponding views.__
 
-You can also import new views manually. Views included in this template are located in repository `Microsoft Azure Log Analytics Nozzle` [here](https://github.com/Azure/oms-log-analytics-firehose-nozzle/tree/master/docs/omsview). Please download views you wish to add and refer to document [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-view-designer#import-an-existing-view) on how to import them.
+You can also import new views manually. Views included in this template are located in repository `Microsoft Azure Log Analytics Nozzle` [here](https://github.com/Azure/oms-log-analytics-firehose-nozzle/tree/master/docs/omsview). Please download views you wish to add and refer to document [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-view-designer#import-an-existing-view) on how to import them.
 
-As you may noticed, you may export an existing view if you wish to preserve your customization. Please refer to document [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-view-designer#export-an-existing-view) on how to do that.
+As you may noticed, you may export an existing view if you wish to preserve your customization. Please refer to document [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-view-designer#export-an-existing-view) on how to do that.
 
 ### Customize and Upgrade Alerts
 
 To upgrade alerts, you can click [here](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-cloudfoundry-solution%2Fnested%2FomsAlerts.json) to redeploy nested view templates. __Make sure you know this will overwrite your customization made to alerts and corresponding saved searches EVEN you changed its original display name.__
 
-To add or customize alerts, please refer to document [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-alerts-creating) for instruction.
+To add or customize alerts, please refer to document [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-alerts-creating) for instruction.
 
-_Reference document for query language in OMS Log Analytics can be found [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-search-reference). You may also consult our template of alerts [here](./nested/omsAlerts.json)._
+_Reference document for query language in OMS Log Analytics can be found [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-search-reference). You may also consult our template of alerts [here](./nested/omsAlerts.json)._
 
 ### Customize and Upgrade Saved Searches
 
@@ -145,10 +155,10 @@ Go to `Saved Searches` in your workspace (or `Log Search` -> `Favorites` in OMS 
 
 ### Monitor your environment Everywhere
 
-OMS also provides mobile apps available on [Windows (Mobile devices)](https://www.microsoft.com/en-us/store/p/microsoft-operations-management-suite/9wzdncrfjz2r), [Android](https://play.google.com/store/apps/details?id=com.microsoft.operations.AndroidPhone) and [iOS](https://itunes.apple.com/us/app/microsoft-operations-management-suite/id1042424859), for users to view OMS views, receiving alerts and searching for logs from your mobile devices.
+OMS also provides mobile apps available on [Windows (Mobile devices)](https://www.microsoft.com/store/p/microsoft-operations-management-suite/9wzdncrfjz2r), [Android](https://play.google.com/store/apps/details?id=com.microsoft.operations.AndroidPhone) and [iOS](https://itunes.apple.com/us/app/microsoft-operations-management-suite/id1042424859), for users to view OMS views, receiving alerts and searching for logs from your mobile devices.
 
 Simply download App from your app store and login with your account, you can have experience just the same as on your workplace everywhere.
 
 ## [Change Logs](./changelog.md "See change logs")
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.OperationalInsights/workspaces/savedSearches, Microsoft.OperationalInsights/workspaces/savedSearches/schedules, Microsoft.OperationalInsights/workspaces/savedSearches/schedules/actions, Alert, Microsoft.OperationsManagement/solutions, Microsoft.OperationalInsights/workspaces`

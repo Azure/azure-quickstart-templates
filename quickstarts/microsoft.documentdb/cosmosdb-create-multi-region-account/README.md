@@ -1,4 +1,15 @@
-# Create a Multi-Region Azure Cosmos DB account for any API Type
+---
+description: This template creates an Azure Cosmos DB account for any database API type with a primary and secondary region with choice of consistency level and failover type.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-create-multi-region-account
+languages:
+- json
+- bicep
+---
+# Create an Azure Cosmos DB account in multiple regions
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-create-multi-region-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-create-multi-region-account/PublicDeployment.svg)
@@ -17,8 +28,9 @@
 
 This template will create an Azure Cosmos DB account and provides multiple different configurations including:
 
-- **API Type:** Select from any of the supported API types including: SQL, Cassandra, Gremlin, MongoDB, or Table.
+- **Database API:** Select from any of the supported API types including: SQL, Cassandra, Gremlin, MongoDB, or Table.
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Multi-Region:** Select locations for primary and secondary regions.
-- **Multi-Master:** Select whether to enable multi-master support. Primary and Secondary regions, fully writable.
-- **Automatic Failover:** Select whether to enable automatic failover on the account (Ignored when Multi-Master is enabled).
+- **System Managed Failover:** Select whether to enable system managed failover on the account.
+
+`Tags: Microsoft.DocumentDB/databaseAccounts`

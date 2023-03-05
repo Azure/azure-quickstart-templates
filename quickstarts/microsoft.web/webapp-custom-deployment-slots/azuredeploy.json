@@ -9,6 +9,13 @@
       },
       "maxLength": 15
     },
+    "appSettingName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the app setting"
+      },
+      "maxLength": 24
+    },
     "environments": {
       "defaultValue": [
         "Dev",
@@ -33,7 +40,8 @@
   "variables": {
     "standardPlanMaxAdditionalSlots": 4,
     "webAppPortalName": "[concat(parameters('baseResourceName'), 'Portal')]",
-    "appServicePlanName": "[concat('AppServicePlan-', parameters('baseResourceName'))]"
+    "appServicePlanName": "[concat('AppServicePlan-', parameters('baseResourceName'))]",
+    "stickyAppSettingName": "[concat(parameters('appSettingName'), '-sticky')]"
   },
   "resources": [
     {
@@ -62,7 +70,19 @@
         "displayName": "WebApp"
       },
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "[parameters('appSettingName')]",
+              "value": "value"
+            },
+            {
+              "name": "[variables('stickyAppSettingName')]",
+              "value": "value"
+            }
+          ]
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
@@ -87,6 +107,20 @@
       "copy": {
         "name": "webPortalSlot",
         "count": "[length(parameters('environments'))]"
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('webAppPortalName'), '/slotconfignames')]",
+      "type": "Microsoft.Web/sites/config",
+      "comments": "This specifies the sticky (slot setting) application settings.",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('webAppPortalName'))]"
+      ],
+      "properties": {
+        "appSettingNames": [
+          "[variables('stickyAppSettingName')]"
+        ]
       }
     }
   ]

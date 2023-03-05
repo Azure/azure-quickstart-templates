@@ -10,7 +10,6 @@ param primaryRegion string
 @description('The secondary replica region for the Cosmos DB account.')
 param secondaryRegion string
 
-@description('The default consistency level of the Cosmos DB account.')
 @allowed([
   'Eventual'
   'ConsistentPrefix'
@@ -18,33 +17,35 @@ param secondaryRegion string
   'BoundedStaleness'
   'Strong'
 ])
-param defaultConsistencyLevel string = 'Session'
+@description('The default consistency level of the Cosmos DB account.')
+param defaultConsistencyLevel string = 'Eventual'
 
-@description('Specifies the MongoDB server version to use.')
 @allowed([
   '3.2'
   '3.6'
   '4.0'
+  '4.2'
 ])
-param serverVersion string = '4.0'
+@description('Specifies the MongoDB server version to use.')
+param serverVersion string = '4.2'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
 @minValue(10)
 @maxValue(2147483647)
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647.')
 param maxStalenessPrefix int = 100000
 
-@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
 @minValue(5)
 @maxValue(86400)
+@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
 param maxIntervalInSeconds int = 300
 
 @description('The name for the Mongo DB database')
 param databaseName string
 
-@description('The shared throughput for the Mongo DB database')
 @minValue(400)
 @maxValue(1000000)
-param throughput int = 400
+@description('The shared throughput for the Mongo DB database, up to 25 collections')
+param sharedThroughput int = 400
 
 @description('The name for the first Mongo DB collection')
 param collection1Name string
@@ -52,7 +53,11 @@ param collection1Name string
 @description('The name for the second Mongo DB collection')
 param collection2Name string
 
-var accountName_var = toLower(accountName)
+@minValue(400)
+@maxValue(1000000)
+@description('The dedicated throughput for the orders collection')
+param dedicatedThroughput int = 400
+
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -85,34 +90,42 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'MongoDB'
   properties: {
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
+    enableAutomaticFailover: true
     apiProperties: {
       serverVersion: serverVersion
     }
+    capabilities: [
+      {
+        name: 'DisableRateLimitingResponses'
+      }
+    ]
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2021-04-15' = {
-  name: '${accountName_resource.name}/${databaseName}'
+resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
+  parent: account
+  name: databaseName
   properties: {
     resource: {
       id: databaseName
     }
     options: {
-      throughput: throughput
+      throughput: sharedThroughput
     }
   }
 }
 
-resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  name: '${accountName_databaseName.name}/${collection1Name}'
+resource collection1 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
+  parent: database
+  name: collection1Name
   properties: {
     resource: {
       id: collection1Name
@@ -137,34 +150,19 @@ resource accountName_databaseName_collection1Name 'Microsoft.DocumentDb/database
         {
           key: {
             keys: [
-              'user_id'
-              'user_address'
+              'product_name'
+              'product_category_name'
             ]
-          }
-          options: {
-            unique: true
-          }
-        }
-        {
-          key: {
-            keys: [
-              '_ts'
-            ]
-          }
-          options: {
-            expireAfterSeconds: 2629746
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
-      }
     }
   }
 }
 
-resource accountName_databaseName_collection2Name 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2021-04-15' = {
-  name: '${accountName_databaseName.name}/${collection2Name}'
+resource collection2 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
+  parent: database
+  name: collection2Name
   properties: {
     resource: {
       id: collection2Name
@@ -189,28 +187,15 @@ resource accountName_databaseName_collection2Name 'Microsoft.DocumentDb/database
         {
           key: {
             keys: [
-              'company_id'
-              'company_address'
+              'customer_id'
+              'order_id'
             ]
-          }
-          options: {
-            unique: true
-          }
-        }
-        {
-          key: {
-            keys: [
-              '_ts'
-            ]
-          }
-          options: {
-            expireAfterSeconds: 2629746
           }
         }
       ]
-      options: {
-        'If-Match': '<ETag>'
-      }
+    }
+    options: {
+      throughput: dedicatedThroughput
     }
   }
 }

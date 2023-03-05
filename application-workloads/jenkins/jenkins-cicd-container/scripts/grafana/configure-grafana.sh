@@ -92,16 +92,19 @@ function post_json() {
 }
 
 #install azure-cli
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
-     sudo tee /etc/apt/sources.list.d/azure-cli.list
-sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 52E16F86FEE04B979B07E28DB02C46DF417A0893
+echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EB3E94ADBE1229CF
 sudo apt-get install apt-transport-https
-sudo apt-get update && sudo apt-get install azure-cli
+sudo apt-get update --yes && sudo apt-get install azure-cli --yes
 
 #get vitrual machines
 az login --service-principal -u $CLIENT_ID --password $CLIENT_SECRET --tenant $TENANT_ID
 location=$(az group show --name $RESOURCE_GROUP --query location --out tsv)
 aks_resource_group="MC_${RESOURCE_GROUP}_${CLUSTER_NAME}_${location}"
+
+az aks wait --n ${CLUSTER_NAME} -g ${aks_resource_group} --interval 30 --custom "agentPoolProfiles[].provisioningState == ['Succeeded']"
+
 virtual_machines=$(az resource list --resource-group ${aks_resource_group} --resource-type Microsoft.Compute/virtualMachines --query [*].name --out tsv)
 
 #wait until Grafana gets started
@@ -138,6 +141,7 @@ for virtual_machine in $virtual_machines
 do
   target=${dashboard_aks_target//'{RESOURCE-GROUP-PLACEHOLDER}'/${aks_resource_group}}
   target=${target//'{VM-NAME-PLACEHOLDER}'/${virtual_machine}}
+  target=${target//'{SUBSCRIPTION-ID-PLACEHOLDER}'/${SUBSCRIPTION_ID}}
   targets=${targets},${target}
 done
 targets=${targets:1:${#targets}}
@@ -146,6 +150,6 @@ dashboard_aks=$(curl -s ${ARTIFACTS_LOCATION}scripts/grafana/dashboard-aks.json$
 dashboard_aks=${dashboard_aks//'"targets": []'/"\"targets\"": [${targets}]}
 
 dashboard=$(curl -s ${ARTIFACTS_LOCATION}scripts/grafana/dashboard.json${ARTIFACTS_LOCATION_SAS_TOKEN})
-dashboard=${dashboard//'"rows": []'/"\"rows\"": [${dashboard_db}, ${dashboard_aks}]}
+dashboard=${dashboard//'"panels": []'/"\"panels\"": [${dashboard_db}, ${dashboard_aks}]}
 
 post_json "/api/dashboards/db" "${dashboard}"

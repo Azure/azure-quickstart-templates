@@ -1,4 +1,14 @@
-﻿# Setup Concourse CI with Bosh
+---
+description: Concourse is a CI system composed of simple tools and ideas. It can express entire pipelines, integrating with arbitrary resources, or it can be used to execute one-off tasks, either locally or in another CI system. This template can help to prepare neccessary Azure resources to setup such a CI system, and make the setup more simple.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: concourse-ci
+languages:
+- json
+---
+# Concourse CI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/concourse/concourse-ci/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/concourse/concourse-ci/PublicDeployment.svg)
@@ -9,11 +19,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/concourse/concourse-ci/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/concourse/concourse-ci/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fconcourse%2Fconcourse-ci%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fconcourse%2Fconcourse-ci%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fconcourse%2Fconcourse-ci%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fconcourse%2Fconcourse-ci%2Fazuredeploy.json)
 
->Significant updated on 2018-6-21, see [ChangeLog](.\CHANGELOG.md)
+>Significant updated on 2018-6-21, see [ChangeLog](CHANGELOG.md)
 
 [Concourse](http://concourse.ci/) is a CI system composed of simple tools and ideas. It can express entire pipelines, integrating with arbitrary resources, or it can be used to execute one-off tasks, either locally or in another CI system.
 
@@ -68,7 +78,7 @@ The parameter `sshKeyData` should be a string which starts with `ssh-rsa`.
 
   Then you can find your public key in `~/.ssh/id_rsa.pub`, and your private key in `~/.ssh/id_rsa`. Copy and paste the contents of `~/.ssh/id_rsa.pub` as `sshKeyData`.
 
-  Reference: [How to Use SSH with Linux and Mac on Azure](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-use-ssh-key/)
+  Reference: [How to Use SSH with Linux and Mac on Azure](https://azure.microsoft.com/documentation/articles/virtual-machines-linux-use-ssh-key/)
 
 * For Windows Users
 
@@ -77,7 +87,7 @@ The parameter `sshKeyData` should be a string which starts with `ssh-rsa`.
   3. Save the private key as a .ppk file.
   4. When you login the dev-box, use the .ppk file as the private key file for authentication.
 
-  Reference: [How to Use SSH with Windows on Azure](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-use-ssh-key/)
+  Reference: [How to Use SSH with Windows on Azure](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-use-ssh-key/)
 
 ### 1.1.2 Specify your Service Principal
 
@@ -97,7 +107,7 @@ If you would like to deploy Concourse using a more customized `concourse.yml`,  
 
 ## 1.2 Advanced Configurations
 
-If you want to customize your `bosh-setup` template, you can modify the following variables in [azuredeploy.json](https://github.com/Azure/azure-quickstart-templates/blob/master/bosh-setup/azuredeploy.json).
+If you want to customize your `bosh-setup` template, you can modify the following variables in [azuredeploy.json](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/bosh/bosh-setup/azuredeploy.json).
 
 | Name | Default Value |
 |:----:|:-------------:|
@@ -119,8 +129,8 @@ If you want to customize your `bosh-setup` template, you can modify the followin
 | keepUnreachableVMs | false |
 
 >**NOTE:**
-> * The default type of Azue storage account is "Standard_RAGRS" (Read access geo-redundant storage). For a list of available Azure storage accounts, their capacities and prices, check [**HERE**](http://azure.microsoft.com/en-us/pricing/details/storage/). Please note Standard_ZRS account cannot be changed to another account type later, and the other account types cannot be changed to Standard_ZRS. The same goes for Premium_LRS accounts.
-> * `vmSize` is the instance type of the dev-box. For a list of available instance types, please check [**HERE**](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-size-specs/).
+> * The default type of Azue storage account is "Standard_RAGRS" (Read access geo-redundant storage). For a list of available Azure storage accounts, their capacities and prices, check [**HERE**](http://azure.microsoft.com/pricing/details/storage/). Please note Standard_ZRS account cannot be changed to another account type later, and the other account types cannot be changed to Standard_ZRS. The same goes for Premium_LRS accounts.
+> * `vmSize` is the instance type of the dev-box. For a list of available instance types, please check [**HERE**](https://azure.microsoft.com/documentation/articles/virtual-machines-size-specs/).
 > * If you change `subnetAddressRangeForBosh` and/or `subnetAddressRangeForConcourse`, you should change `subnetGatewayForBosh` and/or `subnetGatewayForConcourse` correspondingly. To get a subnet's gateway address, convert the subnet range's prefix to binary presentation, add `1` to it, then convert back. For example, the default  `subnetAddressRangeForBosh` is `10.0.0.0/16`, its prefix is `10.0.0.0`, the binary presentation of `10.0.0.0` is `0000 1010 0000 0000 0000 0000 0000 0000`, add `1` to it: `0000 1010 0000 0000 0000 0000 0000 0001`, then convert back: `10.0.0.1`, which is the gateway address.
 > * Set `keepUnreachableVMs` as true when you want to keep unreachable VMs when the deployment fails.
 
@@ -192,4 +202,4 @@ After Concourse had been successfully deployed, you can find the output `CONCOUR
 
 ![Deployment Result 2](https://raw.githubusercontent.com/CloudFoundryOnAzure/pictures/master/concourse-ci-template/concourse_template_2.PNG)
 
-
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

@@ -1,3 +1,14 @@
+---
+description: This template creates an Azure Media Services Account with its Storage account.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: media-services-create
+languages:
+- json
+- bicep
+---
 # Create a Media Services Account using a template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.media/media-services-create/PublicLastTestDate.svg)
@@ -18,3 +29,5 @@
 This template creates a Media Services account with its Storage account on Azure.
 
 For more information about Azure Media Services, see [Media Services Documentation](https://docs.microsoft.com/azure/media-services/).
+
+`Tags: Microsoft.Media/mediaservices, Primary, Microsoft.Storage/storageAccounts`

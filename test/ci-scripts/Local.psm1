@@ -65,13 +65,49 @@ function Remove-GeneratorMetadata(
     # Remove the top-level metadata the generator information is there, including the bicep version, and this would
     # affect file comparisons where only the bicep version differs
     $json = ConvertFrom-Json $jsonContent
-    if ($json) {
+    $json = Remove-GeneratorMetadataFromJson $json
+
+    return ConvertTo-JSON $json -Depth 100
+}
+
+function Remove-GeneratorMetadataFromJson(
+    [PSCustomObject]$json
+) {
+    if (!($json -is [object])) {
+        return $json
+    }
+
+    # Remove the top-level metadata the generator information is there, including the bicep version, and this would
+    # affect file comparisons where only the bicep version differs
+    if ($json.metadata -and $json.metadata._generator) {
         $json.PSObject.properties.remove('metadata')
     }
-    else {
-        Write-Error "Template is empty"
+
+    if ($json -is [array]) {
+        $newArray = @()
+        for ($i = 0; $i -lt $json.Count; $i++) {
+            $child = $json[$i]
+            $child2 = Remove-GeneratorMetadataFromJson $child
+            $newArray += $child2
+        }
+
+        return $newArray
     }
-    return ConvertTo-JSON $json -Depth 100
+    else {
+        foreach ($child in  ($json | Get-Member -Type NoteProperty)) {
+            $childValue = $json.($child.Name)
+            if ($childValue) {
+                $child2 = Remove-GeneratorMetadataFromJson $childValue
+                if ($childValue -is [array] -and !($child2 -is [array])) {
+                    # PowerShell likes to unroll arrays of size 1
+                    $child2 = [array]$child2
+                }
+                $json | Add-Member -Type NoteProperty -Force -Name $child.Name -Value $child2
+            }
+        }
+    }
+
+    return $json
 }
 
 function Convert-StringToLines(

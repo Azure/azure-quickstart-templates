@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1.14562",
-      "templateHash": "1915532474745147129"
+      "version": "0.13.1.58284",
+      "templateHash": "15596621307698865807"
     }
   },
   "parameters": {
@@ -130,7 +130,6 @@
       }
     }
   },
-  "functions": [],
   "variables": {
     "webapp_dns_name": ".azurewebsites.net",
     "privateDNSZoneName": "privatelink.azurewebsites.net",
@@ -147,41 +146,32 @@
           "addressPrefixes": [
             "[parameters('virtualNetwork_CIDR')]"
           ]
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnet1Name'))]",
-      "properties": {
-        "addressPrefix": "[parameters('subnet1_CIDR')]",
-        "privateEndpointNetworkPolicies": "Disabled"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnet2Name'))]",
-      "properties": {
-        "addressPrefix": "[parameters('subnet2_CIDR')]",
-        "delegations": [
+        },
+        "subnets": [
           {
-            "name": "delegation",
+            "name": "[parameters('subnet1Name')]",
             "properties": {
-              "serviceName": "Microsoft.Web/serverfarms"
+              "addressPrefix": "[parameters('subnet1_CIDR')]",
+              "privateEndpointNetworkPolicies": "Disabled"
+            }
+          },
+          {
+            "name": "[parameters('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnet2_CIDR')]",
+              "delegations": [
+                {
+                  "name": "delegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverfarms"
+                  }
+                }
+              ],
+              "privateEndpointNetworkPolicies": "Enabled"
             }
           }
-        ],
-        "privateEndpointNetworkPolicies": "Enabled"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnet1Name'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ]
+        ]
+      }
     },
     {
       "type": "Microsoft.Web/serverfarms",
@@ -199,7 +189,7 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-03-01",
       "name": "[parameters('site1_Name')]",
       "location": "[parameters('location')]",
       "kind": "app",
@@ -212,27 +202,18 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-03-01",
       "name": "[parameters('site2_Name')]",
       "location": "[parameters('location')]",
       "kind": "app",
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]"
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]",
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnet2Name'))]",
+        "vnetRouteAllEnabled": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('site2_Name'), 'appsettings')]",
-      "properties": {
-        "WEBSITE_DNS_SERVER": "168.63.129.16",
-        "WEBSITE_VNET_ROUTE_ALL": "1"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('site2_Name'))]"
+        "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ]
     },
     {
@@ -282,18 +263,6 @@
       ]
     },
     {
-      "type": "Microsoft.Web/sites/networkConfig",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('site2_Name'), 'virtualNetwork')]",
-      "properties": {
-        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnet2Name'))]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnet2Name'))]",
-        "[resourceId('Microsoft.Web/sites', parameters('site2_Name'))]"
-      ]
-    },
-    {
       "type": "Microsoft.Network/privateEndpoints",
       "apiVersion": "2020-06-01",
       "name": "[parameters('privateEndpointName')]",
@@ -315,7 +284,7 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnet1Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
         "[resourceId('Microsoft.Web/sites', parameters('site1_Name'))]"
       ]
     },

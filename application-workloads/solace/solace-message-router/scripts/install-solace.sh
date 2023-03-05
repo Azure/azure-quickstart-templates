@@ -84,7 +84,7 @@ echo "###############################################################"
 # Determine first if solace_uri is a valid docker registry uri
 ## First make sure Docker is actually up
 docker_running=""
-loop_guard=10
+loop_guard=20
 loop_count=0
 while [ ${loop_count} != ${loop_guard} ]; do
   docker_running=`service docker status | grep -o running`
@@ -92,11 +92,20 @@ while [ ${loop_count} != ${loop_guard} ]; do
     ((loop_count++))
     echo "`date` WARN: Tried to launch Solace but Docker in state ${docker_running}"
     sleep 5
+  elif ! docker ps | grep IMAGE; then
+    ((loop_count++))
+    echo "`date` WARN: Docker is not ready yet - trial count: ${loop_count}"
+    sleep 5
   else
     echo "`date` INFO: Docker in state ${docker_running}"
     break
   fi
 done
+if [ ${loop_count} == ${loop_guard} ]; then
+  echo "`date` ERROR: Docker failed to start on VM, exiting" | tee /dev/stderr
+  exit 1
+fi
+
 ## Remove any existing solace image
 if [ "`docker images | grep solace-`" ] ; then
   echo "`date` INFO: Removing existing Solace images from local docker repo"
@@ -326,27 +335,27 @@ fi
 tee /root/docker-create <<-EOF
 #!/bin/bash
 docker create \
- --privileged=false \
- --net=host \
- --uts=host \
- --shm-size=${shmsize} \
- --ulimit core=-1 \
- --ulimit memlock=-1 \
- --ulimit nofile=${ulimit_nofile} \
- ${LOG_OPT} \
- -v $(dirname ${admin_password_file}):/run/secrets \
- ${SPOOL_MOUNT} \
- --env username_admin_globalaccesslevel=admin \
- --env username_admin_passwordfilepath=$(basename ${admin_password_file}) \
- --env "service_ssh_port=2222" \
- --env "service_webtransport_port=8008" \
- --env "service_webtransport_tlsport=1443" \
- --env "service_semp_tlsport=1943" \
- --env "system_scaling_maxconnectioncount=${max_connections}" \
- --env "system_scaling_maxqueuemessagecount=${max_queue_messages}" \
- ${logging_config} \
- ${redundancy_config} \
- --name=solace ${SOLACE_IMAGE_ID}
+  --privileged=false \
+  --net=host \
+  --uts=host \
+  --shm-size=${shmsize} \
+  --ulimit core=-1 \
+  --ulimit memlock=-1 \
+  --ulimit nofile=${ulimit_nofile} \
+  ${LOG_OPT} \
+  -v $(dirname ${admin_password_file}):/run/secrets \
+  ${SPOOL_MOUNT} \
+  --env username_admin_globalaccesslevel=admin \
+  --env username_admin_passwordfilepath=$(basename ${admin_password_file}) \
+  --env "service_ssh_port=2222" \
+  --env "service_webtransport_port=8008" \
+  --env "service_webtransport_tlsport=1443" \
+  --env "service_semp_tlsport=1943" \
+  --env "system_scaling_maxconnectioncount=${max_connections}" \
+  --env "system_scaling_maxqueuemessagecount=${max_queue_messages}" \
+  ${logging_config} \
+  ${redundancy_config} \
+  --name=solace ${SOLACE_IMAGE_ID}
 EOF
 
 #Make the file executable
@@ -410,8 +419,8 @@ if [ "${is_primary}" = "true" ]; then
   echo "`date` INFO: Wait for Primary to be 'Local Active' or 'Mate Active'"
   while [ ${count} -lt ${loop_guard} ]; do
     online_results=`./semp_query.sh -n admin -p ${admin_password} -u http://localhost:8080/SEMP \
-         -q "<rpc><show><redundancy><detail/></redundancy></show></rpc>" \
-         -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/activity[text()]"`
+        -q "<rpc><show><redundancy><detail/></redundancy></show></rpc>" \
+        -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/activity[text()]"`
 
     local_activity=`echo ${online_results} | jq '.valueSearchResult' -`
     echo "`date` INFO: Local activity state is: ${local_activity}"
@@ -447,8 +456,8 @@ if [ "${is_primary}" = "true" ]; then
   echo "`date` INFO: Wait for Backup to be 'Active' or 'Standby'"
   while [ ${count} -lt ${loop_guard} ]; do
     online_results=`./semp_query.sh -n admin -p ${admin_password} -u http://localhost:8080/SEMP \
-         -q "<rpc><show><redundancy><detail/></redundancy></show></rpc>" \
-         -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/detail/priority-reported-by-mate/summary[text()]"`
+        -q "<rpc><show><redundancy><detail/></redundancy></show></rpc>" \
+        -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/detail/priority-reported-by-mate/summary[text()]"`
 
     mate_activity=`echo ${online_results} | jq '.valueSearchResult' -`
     echo "`date` INFO: Mate activity state is: ${mate_activity}"
@@ -480,9 +489,10 @@ if [ "${is_primary}" = "true" ]; then
 
   echo "`date` INFO: Initiating config-sync for router"
   ./semp_query.sh -n admin -p ${admin_password} -u http://localhost:8080/SEMP \
-          -q "<rpc><admin><config-sync><assert-master><router/></assert-master></config-sync></admin></rpc>"
+    -q "<rpc semp-version=\"soltr/9_8VMR\"><admin><config-sync><assert-master><router/></assert-master></config-sync></admin></rpc>"
+  echo "`date` INFO: Initiating config-sync for default vpn"
   ./semp_query.sh -n admin -p ${admin_password} -u http://localhost:8080/SEMP \
-          -q "<rpc><admin><config-sync><assert-master><vpn-name>default</vpn-name></assert-master></config-sync></admin></rpc>"
+    -q "<rpc semp-version=\"soltr/9_8VMR\"><admin><config-sync><assert-master><vpn-name>*</vpn-name></assert-master></config-sync></admin></rpc>"
   
   # Wait for config-sync results
   count=0
@@ -504,6 +514,15 @@ if [ "${is_primary}" = "true" ]; then
     esac
     ((count++))
     echo "`date` INFO: Waited ${run_time} seconds, Config-sync is not yet Up"
+
+    if (( $count % 18 == 0 )) ; then
+      echo "`date` INFO: Re-trying initiate config-sync for router"
+      ./semp_query.sh -n admin -p ${admin_password} -u http://localhost:8080/SEMP \
+              -q "<rpc semp-version=\"soltr/9_8VMR\"><admin><config-sync><assert-master><router/></assert-master></config-sync></admin></rpc>"
+      ./semp_query.sh -n admin -p ${admin_password} -u http://localhost:8080/SEMP \
+              -q "<rpc semp-version=\"soltr/9_8VMR\"><admin><config-sync><assert-master><vpn-name>default</vpn-name></assert-master></config-sync></admin></rpc>"
+    fi
+
     sleep ${pause}
   done
   
@@ -512,25 +531,6 @@ if [ "${is_primary}" = "true" ]; then
     exit 1
   fi
   
-  # Poll the broker Message-Spool
-  count=0
-  echo "`date` INFO: Wait for the broker message-spool service to be guaranteed-active"
-  while [ ${count} -lt ${loop_guard} ]; do
-    health_result=`curl -s -o /dev/null -w "%{http_code}"  http://localhost:5550/health-check/guaranteed-active`
-    run_time=$((${count} * ${pause}))
-    if [ "${health_result}" = "200" ]; then
-        echo "`date` INFO: broker message-spool is guaranteed-active, after ${run_time} seconds"
-        break
-    fi
-    ((count++))
-    echo "`date` INFO: Waited ${run_time} seconds, broker message-spool not yet guaranteed-active. State: ${health_result}"
-    sleep ${pause}
-  done
-  if [ ${count} -eq ${loop_guard} ]; then
-    echo "`date` ERROR: broker message-spool never came guaranteed-active" | tee /dev/stderr
-    exit 1
-  fi
-
 fi
 
 if [ ${count} -eq ${loop_guard} ]; then

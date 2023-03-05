@@ -1,4 +1,15 @@
-# Azure Functions Premium plan with Virtual Network Integration
+---
+description: This template allows you to deploy an Azure Function Premium plan with regional virtual network integration enabled to a newly created virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: function-premium-vnet-integration
+languages:
+- bicep
+- json
+---
+# Deploy an Azure Function Premium plan with vnet integration
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-vnet-integration/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-premium-vnet-integration/PublicDeployment.svg)
@@ -19,7 +30,7 @@ This template deploys an Azure Function Premium plan with [regional virtual netw
 
 ## Overview and deployed resources
 
-An Azure Function Premium plan with virtual network integration enabled allows the Azure Function to utilizes resources within the virtual network.
+An Azure Function Premium plan with virtual network integration enabled allows the Azure Function to utilize resources within the virtual network.
 
 The following resources are deployed as part of the solution:
 
@@ -41,11 +52,12 @@ The function app to be deployed as part of the Azure Functions Premium plan.
 
 + **Microsoft.Web/sites**: The function app instance.
 
-### Application Insights
+### Application Insights with Log Analytics Workspace
 
 Application Insights is used to provide [monitoring for the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
 
 + **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
++ **Microsoft.OperationalInsights/workspaces**: The Log Analytics Workspace used with Application Insights.
 
 ### Azure Storage
 
@@ -56,3 +68,5 @@ The Azure Storage account used by the Azure Function.
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Insights/components, Microsoft.OperationalInsights/workspaces, Microsoft.Web/serverfarms, Microsoft.Web/sites`

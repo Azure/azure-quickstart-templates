@@ -1,4 +1,14 @@
-# Deploy an Azure Databricks workspace
+---
+description: This template allows you to create an Azure Databricks workspace.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: databricks-workspace
+languages:
+- json
+---
+# Deploy an Azure Databricks Workspace
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace/PublicDeployment.svg)
@@ -19,3 +29,5 @@ This template allows you to create a Azure Databricks workspace. For more inform
 
 - [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/)
 - [Quickstart: Create an Azure Databricks workspace by using an ARM template](https://docs.microsoft.com/azure/databricks/scenarios/quickstart-create-databricks-workspace-resource-manager-template)
+
+`Tags: Microsoft.Databricks/workspaces`
