@@ -34,6 +34,6 @@ For information about using this template, see [Create Azure Resource Manager te
 
 - [Azure Logic Apps](https://azure.microsoft.com/services/logic-apps/)
 - [Azure Logic Apps documentation](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview)
-- [Azure Logic Apps Learn modules](https://docs.microsoft.com/learn/browse/?term=logic%20app)
+- [Azure Logic Apps Learn modules](https://learn.microsoft.com/learn/browse/?term=logic%20app)
 
 `Tags: recurrence, Microsoft.Logic/workflows, [variables('type')], [variables('actionType')]`
