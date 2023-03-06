@@ -33,7 +33,7 @@ This quickstart template creates a basic [Consumption logic app workflow](https:
 For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://learn.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template). To learn more about how to deploy the template, see the [quickstart article](https://learn.microsoft.com/azure/logic-apps/quickstart-create-deploy-azure-resource-manager-template).
 
 - [Azure Logic Apps](https://azure.microsoft.com/services/logic-apps/)
-- [Azure Logic Apps documentation](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)
+- [Azure Logic Apps documentation](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview)
 - [Azure Logic Apps Learn modules](https://docs.microsoft.com/learn/browse/?term=logic%20app)
 
 `Tags: recurrence, Microsoft.Logic/workflows, [variables('type')], [variables('actionType')]`
