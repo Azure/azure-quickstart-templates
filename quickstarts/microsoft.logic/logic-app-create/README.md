@@ -30,7 +30,7 @@ Azure Logic Apps is a cloud service that automates the execution of your busines
 
 This quickstart template creates a basic [Consumption logic app workflow](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview#resource-environment-differences) that runs in multi-tenant Azure Logic Apps and connects to the status update feed for Azure services at https://azure.status.microsoft/status/feed, which is displayed at https://azure.status.microsoft/status.
 
-For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/logic-apps/quickstart-create-deploy-azure-resource-manager-template) article.
+For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://learn.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template). To learn more about how to deploy the template, see the [quickstart article](https://learn.microsoft.com/azure/logic-apps/quickstart-create-deploy-azure-resource-manager-template).
 
 - [Azure Logic Apps](https://azure.microsoft.com/services/logic-apps/)
 - [Azure Logic Apps documentation](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)
