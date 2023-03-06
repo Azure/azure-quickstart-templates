@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: logic-app-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Consumption logic app using an Azure Resource Manager template
 
