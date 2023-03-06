@@ -28,7 +28,7 @@ languages:
 
 Azure Logic Apps is a cloud service that automates the execution of your business processes. You can create a workflow by using a visual designer to arrange prebuilt components into the sequence that you need. When you save your workflow, the designer sends the workflow's definition to the Azure Logic Apps execution engine. When the conditions for the workflow's trigger are met, the engine launches the workflow and manages the compute resources that the workflow needs to run. If you're new to Azure Logic Apps, see [What is Azure Logic Apps?](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview).
 
-This quickstart template creates a basic [Consumption logic app workflow](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview#resource-type-differences) that runs in multi-tenant Azure Logic Apps and connects to the status update feed for Azure services at https://azure.status.microsoft/status/feed, which is displayed at https://azure.status.microsoft/status.
+This quickstart template creates a basic [Consumption logic app workflow](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview#resource-environment-differences) that runs in multi-tenant Azure Logic Apps and connects to the status update feed for Azure services at https://azure.status.microsoft/status/feed, which is displayed at https://azure.status.microsoft/status.
 
 For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/logic-apps/quickstart-create-deploy-azure-resource-manager-template) article.
 
