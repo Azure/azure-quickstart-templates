@@ -206,7 +206,7 @@ resource confidentialVm 'Microsoft.Compute/virtualMachines@2022-11-01' = {
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       customData: customData
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : {
+      linuxConfiguration: ((authenticationType == 'password') ? null : {
         disablePasswordAuthentication: 'true'
         ssh: {
           publicKeys: [
