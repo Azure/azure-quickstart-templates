@@ -4,7 +4,6 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-api-management
 urlFragment: api-management-create-with-external-redis-cache
 languages:
 - json
