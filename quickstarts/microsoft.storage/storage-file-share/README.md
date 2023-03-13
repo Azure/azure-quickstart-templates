@@ -1,13 +1,13 @@
 ---
-description: Creates an Azure storage account and file share.
+description: This template creates an Azure storage account and file share.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: storage-file-share
 languages:
-- json
 - bicep
+- json
 ---
 # Create a storage account with file share
 
