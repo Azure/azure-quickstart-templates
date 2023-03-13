@@ -1,5 +1,5 @@
 ---
-description: The MedTech service is an optional service of the Azure Health Data Services.
+description: The MedTech service is one of the Azure Health Data Services designed to ingest device message data from multiple devices, transform that data into FHIR Observations, which are then persisted in the Azure Health Data Services FHIR service.
 page_type: sample
 products:
 - azure
@@ -28,19 +28,26 @@ languages:
 
 ## Overview
 
-This template deploys the MedTech service with the required resources and access permissions and includes an Azure IoT Hub. Conforming and valid device and Fast Healthcare Interoperability Resources (FHIR®) destination mappings are also included.
+> [!NOTE]
+> [Fast Healthcare Interoperability Resources (FHIR®)](https://www.hl7.org/fhir/) is an open healthcare specification.
 
-* To learn about this Azure Resource Manager (ARM) template, the resources deployed, and the configured access permissions, see [Receive device messages through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-messages-through-iot-hub)
+This template deploys the MedTech service with the required resources and access permissions and includes an Azure IoT Hub. Conforming and valid device and FHIR destination mappings are also included.
+
+* To learn about this Azure Resource Manager (ARM) template, the resources deployed, and the configured access permissions, see [Receive device messages through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-messages-through-iot-hub).
 
 * To learn about the MedTech service, see [What is MedTech service?](https://learn.microsoft.com/azure/healthcare-apis/iot/overview)
 
-* To learn about device mappings, see [How to configure device mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-device-mappings)
+* To learn about the MedTech service device message data transformation, see [Understand the MedTech service device message data transformation](https://learn.microsoft.com/azure/healthcare-apis/iot/understand-service).
 
-* To learn about IotJsonPathContentTemplate mappings, see [How to use IotJsonPathContentTemplate mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-use-iot-jsonpath-content-mappings)
+* To learn how to use the MedTech service Mapping debugger, see [How to use the MedTech service Mapping debugger](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-use-mapping-debugger).
 
-* To learn about FHIR destination mappings, see [How to configure FHIR destination mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-fhir-mappings)
+* To learn how to configure the MedTech service device mapping, see [How to configure the MedTech service device mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-device-mappings).
 
-* To learn about the Azure IoT Hub, see [IoT concepts and Azure IoT Hub](https://learn.microsoft.com/azure/iot-hub/iot-concepts-and-iot-hub)
+* To learn about IotJsonPathContentTemplate mappings, see [How to use IotJsonPathContentTemplate mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-use-iot-jsonpath-content-mappings).
+
+* To learn about FHIR destination mappings, see [How to configure FHIR destination mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-fhir-mappings).
+
+* To learn about the Azure IoT Hub, see [IoT concepts and Azure IoT Hub](https://learn.microsoft.com/azure/iot-hub/iot-concepts-and-iot-hub).
 
 FHIR® is a registered trademark of Health Level Seven International, registered in the U.S. Trademark Office and is used with their permission.
 
