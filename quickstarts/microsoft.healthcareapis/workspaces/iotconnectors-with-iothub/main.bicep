@@ -27,7 +27,7 @@ param location string
 @description('OPTIONAL - A Principal ID for a user that will be granted FHIR Data Contributor access to the FHIR service. If you do not choose to use the **fhirContributorPrincipalId** option, clear the field of any entries. To learn more about how to acquire an Azure AD user object ID, see [Find the user object ID](https://learn.microsoft.com/partner-center/find-ids-and-domain-names#find-the-user-object-id)')
 param fhirContributorPrincipalId string = ''
 
-@description('The mapping JSON that determines how incoming device data is normalized.')
+@description('The mapping JSON that determines how incoming device message data is normalized.')
 param deviceMapping object = {
   templateType: 'CollectionContent'
   template: [
@@ -114,7 +114,7 @@ param deviceMapping object = {
   ]
 }
 
-@description('The mapping JSON that determines how normalized data is converted to FHIR Observations.')
+@description('The mapping JSON that determines how normalized message data is converted into FHIR Observations.')
 param destinationMapping object = {
   templateType: 'CollectionFhir'
   template: [
