@@ -37,7 +37,7 @@ module cvm 'modules/confidential-virtual-machine.bicep' = {
     location: location
     vmName: cvmName
     osImageName: 'Windows Server 2022 Gen 2'
-    cvmSize: 'Standard_DC2as_v5'
+    cvmSize: 'Standard_EC2as_v5'
     securityType: 'DiskWithVMGuestState'
     bootDiagnostics: false
     osDiskType: 'Standard_LRS'
