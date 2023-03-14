@@ -1,6 +1,9 @@
 @description('Name of the Network Fabric Controller')
 param networkFabricControllerName string
 
+@description('Name of the Network Fabric Controller Resource Group')
+param nfcResourceGroupName string
+
 @description('Azure Region for deployment of the Network Fabric Controller and associated resources')
 param location string = resourceGroup().location
 
@@ -16,9 +19,6 @@ param nfcWorkloadExRCircuitId string
 @description('Authorization key for the circuit')
 param nfcWorkloadExRAuthKey string
 
-@description('Managed Resource Group name')
-param nfcManagedResourceGroupName string
-
 @description('Ipv4 address space used for NFC workload management')
 param nfcIpv4AddressSpace string
 
@@ -28,11 +28,26 @@ param networkFabricName string
 @description('Name of the Network Fabric SKU')
 param networkFabricSku string
 
-@description('Layer2 Configuration of Network to Network Inter-connectivity configuration between CEs and PEs')
-param nfNniLayer2conf object
+@minValue(2)
+@maxValue(8)
+@description('Number of racks associated to Network Fabric')
+param rackCount int
 
-@description('Layer3 Configuration of Network to Network Inter-connectivity configuration between CEs and PEs')
-param nfNniLayer3conf object
+@minValue(1)
+@maxValue(16)
+@description('Number of servers per Rack')
+param serverCountPerRack int
+
+@description('IPv4 Prefix for Management Network')
+param ipv4Prefix string
+
+@description('IPv6 Prefix for Management Network')
+param ipv6Prefix string
+
+@minValue(1)
+@maxValue(65535)
+@description('ASN of CE devices for CE/PE connectivity')
+param fabricASN int
 
 @description('Username of terminal server')
 param nfTSconfUsername string
@@ -41,29 +56,35 @@ param nfTSconfUsername string
 @description('Password of terminal server')
 param nfTSconfPassword string
 
-@description('IPv4 Prefix for connectivity between TS and PE1')
+@description('Serial Number of Terminal server')
+param nfTSconfSerialNumber string
+
+@description('IPv4 Address Prefix of CE-PE interconnect links')
 param nfTSconfPrimaryIpv4Prefix string
 
-@description('IPv4 Prefix for connectivity between TS and PE12')
+@description('IPv6 Address Prefix of CE-PE interconnect links')
+param nfTSconfPrimaryIpv6Prefix string
+
+@description('Secondary IPv6 Address Prefix of CE-PE interconnect links')
 param nfTSconfSecondaryIpv4Prefix string
 
-@description('IPv4 Prefix of the management network')
-param nfMNconfIpv4Prefix string
+@description('Secondary IPv6 Address Prefix of CE-PE interconnect links')
+param nfTSconfSecondaryIpv6Prefix string
 
 @description('Manage the management VPN connection between Network Fabric and infrastructure services in Network Fabric Controller')
-param nfMNconfManVpn object
+param nfMNconfInfraVpn object
 
 @description('Manage the management VPN connection between Network Fabric and workload services in Network Fabric Controller')
 param nfMNconfWorkloadVpn object
 
-@description('List of Racks to be created')
-param racks object
+@description('List of Device to be updated ie., deviceName:serialNumber')
+param nniMap object
 
-var racksName = [for item in items(racks): item.key]
+var nniNameList = [for item in items(nniMap): item.key]
 
-var racksProperties = [for item in items(racks): item.value]
+var nniPropertiesList = [for item in items(nniMap): item.value]
 
-var rackCount = length(racksName)
+var nniCount = length(nniNameList)
 
 @description('List of Device to be updated ie., deviceName:serialNumber')
 param deviceMap object
@@ -77,14 +98,8 @@ var deviceCount = length(deviceNameList)
 @description('Name of the Managed Identity')
 param userIdentityName string
 
-@description('Id of the Role')
-param roleId string
-
-@description('Role Definition ID')
-param roleDefinitionId string = resourceId('microsoft.authorization/roleDefinitions', roleId) // 21d96096-b162-414a-8302-d8354f9d91b2        94ddc4bc-25f5-4f3e-b527-c587da93cfe4        b24988ac-6180-42a0-ab88-20f7382dd24c        8e3af657-a8ff-443c-a75c-2fe8c4bcb635
-
 @description('Role Assignment Name')
-param roleAssignmentName string = guid(userIdentityName, roleDefinitionId, resourceGroup().id)
+param roleAssignmentName string
 
 @description('URL of the globally available wheel file')
 param wheelFileURL string
@@ -108,88 +123,75 @@ var l3DomainsName = [for item in items(ISD): item.key]
 
 var l3DomainCount = length(l3DomainsName)
 
-@description('Create Network Fabric Controller Resource')
-resource networkFabricController 'Microsoft.ManagedNetworkFabric/networkFabricControllers@2022-01-15-privatepreview' = {
-  name: networkFabricControllerName
-  location: location
-  properties: {
-    infrastructureExpressRouteConnections: [
-      {
-        expressRouteCircuitId: nfcInfraExRCircuitId
-        expressRouteAuthorizationKey: nfcInfraExRAuthKey
-      }
-    ]
-    workloadExpressRouteConnections: [
-      {
-        expressRouteCircuitId: nfcWorkloadExRCircuitId
-        expressRouteAuthorizationKey: nfcWorkloadExRAuthKey
-      }
-    ]
-    managedResourceGroupConfiguration: {
-      name: nfcManagedResourceGroupName
-      location: location
-    }
-    ipv4AddressSpace: nfcIpv4AddressSpace
+module nfc './modules/NFC.bicep' = {
+  name: 'nfc'
+  scope: resourceGroup(nfcResourceGroupName)
+  params: {
+    location: location
+    networkFabricControllerName: networkFabricControllerName
+    nfcInfraExRAuthKey: nfcInfraExRAuthKey
+    nfcInfraExRCircuitId: nfcInfraExRCircuitId
+    nfcIpv4AddressSpace: nfcIpv4AddressSpace
+    nfcWorkloadExRAuthKey: nfcWorkloadExRAuthKey
+    nfcWorkloadExRCircuitId: nfcWorkloadExRCircuitId
   }
 }
 
 @description('Create Network Fabric Resource')
-resource networkFabrics 'Microsoft.ManagedNetworkFabric/networkFabrics@2022-01-15-privatepreview' = {
+resource networkFabrics 'Microsoft.ManagedNetworkFabric/networkFabrics@2023-02-01-preview' = {
   name: networkFabricName
   location: location
   properties: {
     networkFabricSku: networkFabricSku
-    networkFabricControllerId: networkFabricController.id
-    networkToNetworkInterconnect: {
-      layer2Configuration: nfNniLayer2conf
-      layer3Configuration: nfNniLayer3conf
-    }
+    rackCount: rackCount
+    serverCountPerRack: serverCountPerRack
+    ipv4Prefix: ipv4Prefix != '' ? ipv4Prefix : null
+    ipv6Prefix: ipv6Prefix != '' ? ipv6Prefix : null
+    fabricASN: fabricASN
+    networkFabricControllerId: nfc.outputs.resourceID
     terminalServerConfiguration: {
       username: nfTSconfUsername
       password: nfTSconfPassword
-      primaryIpv4Prefix: nfTSconfPrimaryIpv4Prefix
-      secondaryIpv4Prefix: nfTSconfSecondaryIpv4Prefix
+      serialNumber: nfTSconfSerialNumber
+      primaryIpv4Prefix: nfTSconfPrimaryIpv4Prefix != '' ? nfTSconfPrimaryIpv4Prefix : null
+      primaryIpv6Prefix: nfTSconfPrimaryIpv6Prefix != '' ? nfTSconfPrimaryIpv6Prefix : null
+      secondaryIpv4Prefix: nfTSconfSecondaryIpv4Prefix != '' ? nfTSconfSecondaryIpv4Prefix : null
+      secondaryIpv6Prefix: nfTSconfSecondaryIpv6Prefix != '' ? nfTSconfSecondaryIpv6Prefix : null
     }
     managementNetworkConfiguration: {
-      ipv4Prefix: nfMNconfIpv4Prefix
-      managementVpnConfiguration: nfMNconfManVpn
+      infrastructureVpnConfiguration: nfMNconfInfraVpn
       workloadVpnConfiguration: nfMNconfWorkloadVpn
     }
   }
+  resource networkToNetworkInterconnect 'networkToNetworkInterconnects' = [for i in range(0, nniCount): {
+    name: nniNameList[i]
+    properties: {
+      isManagementType: nniPropertiesList[i].properties.isManagementType
+      useOptionB: nniPropertiesList[i].properties.useOptionB
+      layer2Configuration: nniPropertiesList[i].properties.layer2Configuration
+      layer3Configuration: nniPropertiesList[i].properties.layer3Configuration
+    }
+  }]
 }
-
-@description('Create Network Rack Resource')
-resource networkRacks 'Microsoft.ManagedNetworkFabric/networkRacks@2022-01-15-privatepreview' = [for i in range(0, rackCount): {
-  name: racksName[i]
-  location: location
-  properties: {
-    networkRackSku: racksProperties[i].properties.networkRackSku
-    networkFabricId: networkFabrics.id
-  }
-}]
 
 resource userIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: userIdentityName
   location: location
   dependsOn: [
-    networkRacks // once fabric is created, we need to create the managed identity to make POST action
+    networkFabrics
   ]
 }
 
-resource roleAssign 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource roleAssign 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' existing = {
+  scope: subscription()
   name: roleAssignmentName
-  properties: {
-    roleDefinitionId: roleDefinitionId // once managed identity is created, assign the 'Owner' permission to it.
-    principalId: userIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
 }
 
-resource deploymentScripts 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for i in range(0, deviceCount): {
-  name: '${deploymentScriptsName}-${i}'
+resource updateSerialNumber 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for i in range(0, deviceCount): {
+  name: '${deploymentScriptsName}-USN-${i}'
   location: location
   dependsOn: [
-    roleAssign
+    userIdentity
   ]
   kind: 'AzureCLI'
   identity: {
@@ -199,18 +201,74 @@ resource deploymentScripts 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
     }
   }
   properties: {
-    scriptContent: 'az extension add --source ${wheelFileURL} -y; response=$(az nf device show -g ${resourceGroup().name} --resource-name "${deviceNameList[i]}"); role=$(echo "$response" | grep networkDeviceRole | cut -b 24- | head --bytes -2); sku=$(echo "$response" | grep networkDeviceSku | cut -b 23- | head --bytes -2);  az nf device update --resource-group ${resourceGroup().name}  --location ${location}  --resource-name "${deviceNameList[i]}" --serial-number "${serialNumberList[i]}" --network-device-sku "$sku" --network-device-role "$role"; if [ $((${deviceCount}-1)) -eq ${i} ]; then result=$(az nf fabric provision -g ${resourceGroup().name} --resource-name ${networkFabrics.name}); fi'
+    scriptContent: loadTextContent('scripts/deviceUpdate.sh')
     azCliVersion: '2.42.0'
     retentionInterval: 'PT4H'
+    environmentVariables: [
+      {
+        name: 'WHEEL_FILE_URL'
+        value: wheelFileURL
+      }
+      {
+        name: 'RESOURCEGROUP'
+        value: resourceGroup().name
+      }
+      {
+        name: 'DEVICENAME'
+        value: deviceNameList[i]
+      }
+      {
+        name: 'LOCATION'
+        value: location
+      }
+      {
+        name: 'SERIALNUMBER'
+        value: serialNumberList[i]
+      }
+    ]
   }
 }]
 
+resource networkFabricProvision 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'networkFabricProvision'
+  location: location
+  dependsOn: [
+    updateSerialNumber
+  ]
+  kind: 'AzureCLI'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userIdentity.id}': {}
+    }
+  }
+  properties: {
+    scriptContent: loadTextContent('scripts/provision.sh')
+    azCliVersion: '2.42.0'
+    retentionInterval: 'PT4H'
+    environmentVariables: [
+      {
+        name: 'WHEEL_FILE_URL'
+        value: wheelFileURL
+      }
+      {
+        name: 'RESOURCEGROUP'
+        value: resourceGroup().name
+      }
+      {
+        name: 'FABRICNAME'
+        value: networkFabrics.name
+      }
+    ]
+  }
+}
+
 @description('Create L2 Isolation Domain Resource')
-resource l2IsolationDomains 'Microsoft.ManagedNetworkFabric/l2IsolationDomains@2022-01-15-privatepreview' = [for i in range(0, l2DomainCount): {
+resource l2IsolationDomains 'Microsoft.ManagedNetworkFabric/l2IsolationDomains@2023-02-01-preview' = [for i in range(0, l2DomainCount): {
   name: l2DomainsName[i]
   location: location
   dependsOn: [
-    deploymentScripts
+    networkFabricProvision
   ]
   properties: {
     networkFabricId: networkFabrics.id
@@ -219,15 +277,56 @@ resource l2IsolationDomains 'Microsoft.ManagedNetworkFabric/l2IsolationDomains@2
   }
 }]
 
-module isd './ISD.bicep' = [for i in range(0, l3DomainCount): {
+resource l2DomainUpdateAdminState 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for i in range(0, l2DomainCount): {
+  name: '${deploymentScriptsName}-L2UAS-${i}'
+  location: location
+  dependsOn: [
+    l2IsolationDomains
+  ]
+  kind: 'AzureCLI'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userIdentity.id}': {}
+    }
+  }
+  properties: {
+    scriptContent: 'az extension add --source ${wheelFileURL} -y; az nf l2domain update-admin-state --resource-name "${l2DomainsName[i]}" --resource-group ${resourceGroup().name} --state "Enable"'
+    azCliVersion: '2.42.0'
+    retentionInterval: 'PT4H'
+  }
+}]
+
+module isd './modules/ISD.bicep' = [for i in range(0, l3DomainCount): {
   name: 'isd-${i}'
   dependsOn: [
-    deploymentScripts
+    l2DomainUpdateAdminState
   ]
   params: {
+    location: location
     l3DomainName: l3DomainsName[i]
     ISDList: ISD
     index: i
     fabricId: networkFabrics.id
+  }
+}]
+
+resource l3DomainUpdateAdminState 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for i in range(0, l3DomainCount): {
+  name: '${deploymentScriptsName}-L3UAS-${i}'
+  location: location
+  dependsOn: [
+    isd
+  ]
+  kind: 'AzureCLI'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userIdentity.id}': {}
+    }
+  }
+  properties: {
+    scriptContent: 'az extension add --source ${wheelFileURL} -y; az nf l3domain update-admin-state --resource-name "${l3DomainsName[i]}" --resource-group ${resourceGroup().name} --state "Enable"'
+    azCliVersion: '2.42.0'
+    retentionInterval: 'PT4H'
   }
 }]
