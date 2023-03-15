@@ -247,15 +247,6 @@ resource myAppGateway 'Microsoft.Network/applicationGateways@2021-08-01' = {
       }
     ]
     enableHttp2: false
-    webApplicationFirewallConfiguration: {
-      enabled: true
-      firewallMode: 'Prevention'
-      ruleSetType: 'OWASP'
-      ruleSetVersion: '3.1'
-      requestBodyCheck: true
-      maxRequestBodySizeInKb: 128
-      fileUploadLimitInMb: 100
-    }
     firewallPolicy: {
       id: AppGW_AppFW_Pol.id
     }
