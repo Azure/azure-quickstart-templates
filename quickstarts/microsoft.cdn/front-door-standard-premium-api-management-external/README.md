@@ -4,6 +4,8 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- azure-api-management
+- azure-front-door
 urlFragment: front-door-standard-premium-api-management-external
 languages:
 - json
