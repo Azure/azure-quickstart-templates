@@ -1,9 +1,10 @@
 ---
-description: This template creates a developer instance of Azure API Management having an MSI Identity
+description: This template creates a developer instance of Azure API Management having an Azure managed identity
 page_type: sample
 products:
 - azure
 - azure-resource-manager
+- azure-api-management
 urlFragment: api-management-create-with-msi
 languages:
 - json
