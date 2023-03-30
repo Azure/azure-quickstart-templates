@@ -4,6 +4,8 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- azure-api-management
+- azure-key-vault
 urlFragment: api-management-key-vault-create
 languages:
 - json
