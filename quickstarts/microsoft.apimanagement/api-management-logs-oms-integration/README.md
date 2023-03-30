@@ -4,6 +4,8 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- azure-api-management
+- azure-log-analytics
 urlFragment: api-management-logs-oms-integration
 languages:
 - json
