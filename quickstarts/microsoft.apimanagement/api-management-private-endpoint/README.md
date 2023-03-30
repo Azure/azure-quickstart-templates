@@ -4,6 +4,8 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- azure-api-management
+- azure-private-link
 urlFragment: api-management-private-endpoint
 languages:
 - json
