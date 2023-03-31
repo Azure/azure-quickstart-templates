@@ -14,7 +14,7 @@ param SKU string = 'S1'
 @description('Location for the account')
 param translateLocation string
 
-resource account 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
+resource account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
   name: accountName
   location: translateLocation
   kind: 'TextTranslation'
