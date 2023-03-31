@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: ubuntu-mate-desktop-vscode
 languages:
+- bicep
 - json
 ---
 # Ubuntu Mate Desktop VM with VSCode
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/BicepVersion.svg)
 
 This template creates a Linux developer workstation as follows:
 
