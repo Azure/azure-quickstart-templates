@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: databricks-workspace-with-dbfs-root-customer-managed-keys
 languages:
+- bicep
 - json
 ---
 # Deploy an Azure Databricks WS with CMK for DBFS encryption
@@ -20,6 +21,9 @@ languages:
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-dbfs-root-customer-managed-keys/CredScanResult.svg)
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-dbfs-root-customer-managed-keys/BicepVersion.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-dbfs-root-customer-managed-keys/BicepVersion.svg)
+
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-workspace-with-dbfs-root-customer-managed-keys%2Fazuredeploy.json)
 
