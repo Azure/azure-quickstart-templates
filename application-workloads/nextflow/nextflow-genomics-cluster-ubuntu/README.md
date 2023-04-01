@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: nextflow-genomics-cluster-ubuntu
 languages:
+- bicep
 - json
 ---
 # Deploy a Nextflow genomics cluster
@@ -18,6 +19,7 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nextflow/nextflow-genomics-cluster-ubuntu/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nextflow/nextflow-genomics-cluster-ubuntu/CredScanResult.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nextflow/nextflow-genomics-cluster-ubuntu/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fnextflow%2Fnextflow-genomics-cluster-ubuntu%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fnextflow%2Fnextflow-genomics-cluster-ubuntu%2Fazuredeploy.json)
