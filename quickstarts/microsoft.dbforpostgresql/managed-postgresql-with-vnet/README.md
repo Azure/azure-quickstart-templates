@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: managed-postgresql-with-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy Azure Database for PostgreSQL with VNet
 
