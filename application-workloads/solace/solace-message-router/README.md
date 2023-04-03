@@ -181,8 +181,8 @@ For more information about writing Azure Resource Manager(ARM) templates and Azu
 
 For more information about Solace PubSub+ technology in general please visit these resources:
 
-- The Solace Developer Portal website at: [solace.dev](//solace.dev/)
-- Understanding [Solace technology](//solace.com/products/platform/)
-- Ask the [Solace community](//dev.solace.com/community/).
+- The Solace Developer Portal website at: [solace.dev](https://www.solace.dev/)
+- Understanding [Solace technology](https://solace.com/products/platform/)
+- Ask the [Solace community](https://solace.community/).
 
 `Tags: Microsoft.Resources/deployments, Microsoft.OperationalInsights/workspaces, Microsoft.OperationalInsights/workspaces/datasources, Microsoft.OperationsManagement/solutions, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/availabilitySets, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DockerExtension, OmsAgentForLinux, CustomScript, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks/subnets`
