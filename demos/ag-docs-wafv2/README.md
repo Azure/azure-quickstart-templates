@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: ag-docs-wafv2
 languages:
-- json
 - bicep
+- json
 ---
 # Create an Azure WAF v2 on Azure Application Gateway
 
