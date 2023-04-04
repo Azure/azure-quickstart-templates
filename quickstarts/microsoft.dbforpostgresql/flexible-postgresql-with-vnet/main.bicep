@@ -32,12 +32,12 @@ param SkuTier string = 'GeneralPurpose'
 
 @description('PostgreSQL version')
 @allowed([
-  11
-  12
-  13
-  14
+  '11'
+  '12'
+  '13'
+  '14'
 ])
-param postgresqlVersion int = 14
+param postgresqlVersion string = '14'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -109,7 +109,7 @@ resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06
   }
 }
 
-resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
+resource postgresqlDbServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
   name: serverName
   location: location
   sku: {
