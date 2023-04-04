@@ -20,7 +20,7 @@ param administratorLoginPassword string
 param skuName string = 'Standard_D2ds_v4'
 
 @description('Azure database for PostgreSQL storage Size ')
-param StorageSizeGB int = 20
+param StorageSizeGB int = 32
 
 @description('Azure database for PostgreSQL pricing tier')
 @allowed([
