@@ -32,12 +32,12 @@ param SkuTier string = 'GeneralPurpose'
 
 @description('PostgreSQL version')
 @allowed([
-  '11'
-  '12'
-  '13'
-  '14'
+  11
+  12
+  13
+  14
 ])
-param postgresqlVersion string = '14'
+param postgresqlVersion int = 14
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
