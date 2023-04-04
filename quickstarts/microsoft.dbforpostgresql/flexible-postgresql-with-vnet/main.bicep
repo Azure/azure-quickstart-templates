@@ -49,16 +49,16 @@ param backupRetentionDays int = 7
 param geoRedundantBackup string = 'Disabled'
 
 @description('Virtual Network Name')
-param virtualNetworkName string = 'azure_mysql_vnet'
+param virtualNetworkName string = 'azure_postgresql_vnet'
 
 @description('Subnet Name')
-param subnetName string = 'azure_mysql_subnet'
+param subnetName string = 'azure_postgresql_subnet'
 
 @description('Virtual Network Address Prefix')
 param vnetAddressPrefix string = '10.0.0.0/24'
 
 @description('Subnet Address Prefix')
-param mySqlSubnetPrefix string = '10.0.0.0/28'
+param postgresqlSubnetPrefix string = '10.0.0.0/28'
 
 @description('Composing the subnetId')
 var postgresqlSubnetId =  '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
@@ -77,7 +77,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 resource subnet 'subnets@2021-05-01' = {
     name: subnetName
     properties: {
-      addressPrefix: mySqlSubnetPrefix
+      addressPrefix: postgresqlSubnetPrefix
       delegations: [
         {
           name: 'dlg-Microsoft.DBforPostgreSQL-flexibleServers'
@@ -133,7 +133,7 @@ resource postgresqlDbServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-0
     }
     network: {
       delegatedSubnetResourceId: postgresqlSubnetId
-      privateDnsZoneResourceId: dnszone.id
+      privateDnsZoneArmResourceId: dnszone.id
     }
   }
 }
