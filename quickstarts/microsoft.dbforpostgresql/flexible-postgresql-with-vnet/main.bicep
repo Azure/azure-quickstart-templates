@@ -5,7 +5,7 @@ param serverName string
 param dnsZoneName string 
 
 @description('Fully Qualified DNS Private Zone')
-param dnsZoneFqdn string = '${dnsZoneName}.private.postgresql.database.azure.com'
+param dnsZoneFqdn string = '${dnsZoneName}.postgres.database.azure.com'
 
 @description('Database administrator login name')
 @minLength(1)
