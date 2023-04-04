@@ -17,7 +17,7 @@ param administratorLogin string
 param administratorLoginPassword string
 
 @description('Azure database for PostgreSQL sku name ')
-param skuName string = 'Standard_D2s_v4'
+param skuName string = 'Standard_D2ds_v4'
 
 @description('Azure database for PostgreSQL storage Size ')
 param StorageSizeGB int = 20
