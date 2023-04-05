@@ -94,32 +94,30 @@ resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
     version: postgresqlVersion
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
-	authConfig: {
-		activeDirectoryAuth: isActiveDirectoryAuthEnabled
-		passwordAuth: isPostgreSQLAuthEnabled
-		tenantId: subscription().tenantId
-	}
-    storage: {
-      storageSizeGB: storageSize
+    authConfig: {
+      activeDirectoryAuth: isActiveDirectoryAuthEnabled
+      passwordAuth: isPostgreSQLAuthEnabled
+      tenantId: subscription().tenantId
     }
-	backup: {
-		backupRetentionDays: backupRetentionDays
-		geoRedundantBackup: geoRedundantBackup
-	}
-	highAvailability: {
-		mode: haMode
-	}
+      storage: {
+        storageSizeGB: storageSize
+      }
+    backup: {
+      backupRetentionDays: backupRetentionDays
+      geoRedundantBackup: geoRedundantBackup
+    }
+    highAvailability: {
+      mode: haMode
+    }
   }
 }
 
 resource addAddUser 'Microsoft.DBforPostgreSQL/flexibleServers/administrators@2022-12-01' = {
   name: '${serverName}/${aadAdminObjectid}'
-  dependsOn: [
-    server
-  ]
+  parent: server
   properties: {
     tenantId: subscription().tenantId
-	principalType: aadAdminType
-	principalName: aadAdminName
+	  principalType: aadAdminType
+	  principalName: aadAdminName
   }
 }
