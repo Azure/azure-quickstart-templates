@@ -185,11 +185,31 @@
             "metadata": {
                 "description": "Specifies the location for the regional load balancer."
             }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the virtual machine administrator username."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Specifies the virtual machine administrator password."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "Size of the virtual machine"
+            }
         }
     },
     "variables": {
         "publicIPAddressType": "Static",
         "lbSkuName": "Standard",
+        "vmStorageAccountType": "Premium_LRS",
         "lbName-r1": "[concat(parameters('projectName'),'-lb-r1')]",
         "lbPublicIpAddressName-r1": "[concat(parameters('projectName'),'-lbPublicIP-r1')]",
         "lbPublicIPAddressNameOutbound-r1": "[concat(parameters('projectName'),'-lbPublicIPOutbound-r1')]",
@@ -270,6 +290,79 @@
                 ],
                 "networkSecurityGroup": {
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName-r1'))]"
+                }
+            }
+        },
+                {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2020-06-01",
+            "name": "[concat('vm-r1','-',copyIndex(1),'/','InstallWebServer')]",
+            "location": "[parameters('location-r1')]",
+            "copy": {
+                "name": "extensionCopy",
+                "count": 3
+            },
+            "dependsOn": [
+                "vmCopy"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.7",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "commandToExecute": "powershell.exe Install-WindowsFeature -name Web-Server -IncludeManagementTools && powershell.exe remove-item 'C:\\inetpub\\wwwroot\\iisstart.htm' && powershell.exe Add-Content -Path 'C:\\inetpub\\wwwroot\\iisstart.htm' -Value $('Hello World from ' + $env:computername)"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-06-01",
+            "name": "[concat('vm-r1','-',copyIndex(1))]",
+            "location": "[parameters('location-r1')]",
+            "zones": [
+                "[copyIndex(1)]"
+            ],
+            "copy": {
+                "name": "vmCopy",
+                "count": 3
+            },
+            "dependsOn": [
+                "networkInterfaceCopy"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2019-Datacenter",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[variables('vmStorageAccountType')]"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('vm-r1','-', copyIndex(1), '-networkInterface'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[concat('vm-r1','-',copyIndex(1))]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "provisionVmAgent": true
+                    }
                 }
             }
         },
@@ -533,6 +626,79 @@
                 ],
                 "networkSecurityGroup": {
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName-r2'))]"
+                }
+            }
+        },
+         {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2020-06-01",
+            "name": "[concat('vm-r2','-',copyIndex(1),'/','InstallWebServer')]",
+            "location": "[parameters('location-r2')]",
+            "copy": {
+                "name": "extensionCopy",
+                "count": 3
+            },
+            "dependsOn": [
+                "vmCopy"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.7",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "commandToExecute": "powershell.exe Install-WindowsFeature -name Web-Server -IncludeManagementTools && powershell.exe remove-item 'C:\\inetpub\\wwwroot\\iisstart.htm' && powershell.exe Add-Content -Path 'C:\\inetpub\\wwwroot\\iisstart.htm' -Value $('Hello World from ' + $env:computername)"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-06-01",
+            "name": "[concat('vm-r2','-',copyIndex(1))]",
+            "location": "[parameters('location-r2')]",
+            "zones": [
+                "[copyIndex(1)]"
+            ],
+            "copy": {
+                "name": "vmCopy",
+                "count": 3
+            },
+            "dependsOn": [
+                "networkInterfaceCopy"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2019-Datacenter",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[variables('vmStorageAccountType')]"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('vm-r2','-', copyIndex(1), '-networkInterface'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[concat('vm-r2','-',copyIndex(1))]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "provisionVmAgent": true
+                    }
                 }
             }
         },
