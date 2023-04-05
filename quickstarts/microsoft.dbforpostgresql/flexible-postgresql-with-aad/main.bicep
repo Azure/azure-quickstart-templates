@@ -78,9 +78,9 @@ param aadAdminName string
 @allowed([
   'User'
   'Group'
-  'Application'
+  'ServicePrincipal'
 ])
-param aadAdminType string = 'User'
+param aadAdminType string = 'ServicePrincipal'
 
 resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
   name: serverName
