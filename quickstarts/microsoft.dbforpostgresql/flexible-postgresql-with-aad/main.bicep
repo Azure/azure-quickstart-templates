@@ -59,14 +59,14 @@ param haMode string = 'Disabled'
   'Disabled'
   'Enabled'
 ])
-param activeDirectoryAuth string = 'Enabled'
+param isActiveDirectoryAuthEnabled string = 'Enabled'
 
 @description('Password Authetication')
 @allowed([
   'Disabled'
   'Enabled'
 ])
-param passwordAuth string = 'Enabled'
+param isPasswordAuthEnabled string = 'Enabled'
 
 @description('The Object ID of the Azure AD admin.')
 param aadAdminObjectid string
@@ -95,8 +95,8 @@ resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
 	authConfig: {
-		activeDirectoryAuth: activeDirectoryAuth
-		passwordAuth: passwordAuth
+		activeDirectoryAuth: isActiveDirectoryAuthEnabled
+		passwordAuth: isPasswordAuthEnabled
 		tenantId: subscription().tenantId
 	}
     storage: {
