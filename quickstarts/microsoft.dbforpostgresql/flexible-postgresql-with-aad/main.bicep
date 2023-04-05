@@ -113,7 +113,7 @@ resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
 }
 
 resource addAddUser 'Microsoft.DBforPostgreSQL/flexibleServers/administrators@2022-12-01' = {
-  name: '${serverName}/${aadAdminObjectid}'
+  name: '${serverName}_${aadAdminObjectid}'
   parent: server
   properties: {
     tenantId: subscription().tenantId
