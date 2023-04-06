@@ -28,7 +28,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
@@ -899,6 +899,20 @@ configuration ConfigureSPVM
             DependsOn              = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
+        SPShellAdmins AddShellAdmins
+        {
+            IsSingleInstance = "Yes"
+            Members          = @($DomainAdminCredsQualified.UserName)
+            Databases        = @(
+                @(MSFT_SPDatabasePermissions {
+                    Name    = $SPDBPrefix + "Content_80"
+                    Members = @($DomainAdminCredsQualified.UserName)
+                })
+            )
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]CreateMainWebApp"
+        }
+
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         Script UpdateGPOToTrustRootCACert
         {
@@ -968,9 +982,9 @@ configuration ConfigureSPVM
                 
                 # Setup farm properties to work with OIDC
                 # Create a self-signed certificate in 1st SharePoint Server of the farm
-                $cookieCertificateName = "SharePoint Cookie Cert"
+                $cookieCertificateName = "SharePoint OIDC nonce cert"
                 $cookieCertificateFilePath = Join-Path -Path $setupPath -ChildPath "$cookieCertificateName"
-                $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
+                $cert = New-SelfSignedCertificate -KeyUsage None -KeyUsageProperty None -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
                 Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
                 Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$domainAdminUserName"
                 Export-PfxCertificate -Cert $cert -FilePath "$DCSetupPath\$cookieCertificateName.pfx" -ProtectTo "$domainAdminUserName"
@@ -987,7 +1001,7 @@ configuration ConfigureSPVM
                 # Set farm properties
                 $f = Get-SPFarm
                 $f.Farm.Properties['SP-NonceCookieCertificateThumbprint'] = $cert.Thumbprint
-                $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = 'seed'
+                $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = "randomString$domainAdminUserName"
                 $f.Farm.Update()
             }
             GetScript =  
@@ -1841,6 +1855,12 @@ $SharePointBits = @(
         Packages = @(
             @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC" },
             @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636" }
+        )
+    },
+    {
+        Label = "23H1",
+        Packages = @(
+            @{ DownloadUrl = "https://download.microsoft.com/download/c/6/a/c6a17105-3d86-42ad-888d-49b22383bfa1/uber-subscription-kb5002355-fullfile-x64-glb.exe" }
         )
     },
     @{

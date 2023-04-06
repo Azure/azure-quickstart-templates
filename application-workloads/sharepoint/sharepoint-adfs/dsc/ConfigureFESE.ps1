@@ -21,7 +21,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
@@ -724,7 +724,7 @@ configuration ConfigureFEVM
                 $DCSetupPath = Join-Path -Path $using:DCSetupPath -ChildPath "Certificates"
                 
                 # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
-                $cookieCertificateFileName = "SharePoint Cookie Cert.pfx"
+                $cookieCertificateFileName = "SharePoint OIDC nonce cert.pfx"
                 $cookieCertificateFilePath = Join-Path -Path $DCSetupPath -ChildPath $cookieCertificateFileName
                 $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
 
