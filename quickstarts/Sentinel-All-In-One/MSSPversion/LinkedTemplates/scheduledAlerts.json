@@ -1,0 +1,90 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Log Analytics workspace"
+            }
+        },
+        "dataConnectorsList": {
+            "type": "string",
+            "metadata": {
+                "description": "Comma separated enabled connectors: AzureActivityLog,SecurityEvents,WindowsFirewall,DnsAnalytics. Reference: https://docs.microsoft.com/azure/templates/microsoft.operationalinsights/2020-03-01-preview/workspaces/datasources#microsoftoperationalinsightsworkspacesdatasources-object"
+            }
+        },
+        "roleGuid": {
+            "type": "string",
+            "defaultValue": "[newGuid()]"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "identityName": "[concat('userIdentity',uniqueString(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('identityName')]",
+            "apiVersion": "2018-11-30",
+            "location": "[resourceGroup().location]"
+        },
+        {
+            "dependsOn": ["[concat('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('identityName'))]"],
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "sleep",
+            "location": "[resourceGroup().location]",
+            "kind": "AzurePowerShell",
+            "properties": {
+                "forceUpdateTag": "1",
+                "azPowerShellVersion": "3.0",
+                "arguments": "",
+                "scriptContent": "Start-Sleep -Seconds 120",
+                "supportingScriptUris": [],
+                "timeout": "PT30M",
+                "cleanupPreference": "Always",
+                "retentionInterval": "P1D"
+            }
+        },
+        {
+            "apiVersion": "2017-09-01",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "name": "[parameters('roleGuid')]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')), '2018-11-30', 'Full').properties.principalId]",
+                "scope": "[resourceGroup().id]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deploymentScripts/', 'sleep')]"
+            ]
+        },
+        {
+            "dependsOn": ["[concat('Microsoft.Authorization/roleAssignments/', parameters('roleGuid'))]"],
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "runPowerShellInline",
+            "location": "[resourceGroup().location]",
+            "kind": "AzurePowerShell",
+            "identity": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/',variables('identityName'))]": {}
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "1",
+                "azPowerShellVersion": "3.0",
+                "arguments": "[concat('-Workspace ', parameters('workspaceName'), ' -ResourceGroup ', resourceGroup().name, ' -Connectors ', parameters('dataConnectorsList'))]",
+                "primaryScriptUri": "https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Tools/Sentinel-All-In-One/ARMTemplates/Scripts/EnableRules.ps1",
+                "supportingScriptUris": [],
+                "timeout": "PT30M",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        }
+    ],
+    "outputs": {}
+}

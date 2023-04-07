@@ -1,0 +1,257 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "config": {
+            "isWizard": true,
+            "basics": {
+                "description": "**Azure Sentinel All-In-One** deployment, see more information about this project [here](https://github.com/Azure/Azure-Sentinel/Tools/Sentinel-All-In-One/).",
+                "location": {
+                    "label": "Location",
+                    "toolTip": "Location for all resources",
+                    "resourceTypes": [
+                        "Microsoft.OperationalInsights"
+                    ]
+                }
+            }
+        },
+        "basics": [
+            {
+                "name": "rgName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Resource Group Name",
+                "placeholder": "",
+                "defaultValue": "",
+                "toolTip": "Enter a resource group name.",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[A-Za-z0-9][A-Za-z0-9-]+[A-Za-z0-9]$",
+                    "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+                },
+                "visible": true  
+            },
+            {
+                "name": "workspaceName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Workspace Name",
+                "placeholder": "",
+                "defaultValue": "",
+                "toolTip": "The Workspace name should include 4-63 letters, digits or '-'. The '-' shouldn't be the first or the last symbol.",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[A-Za-z0-9][A-Za-z0-9-]+[A-Za-z0-9]$",
+                    "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+                },
+                "visible": true
+            },
+            {
+                "name": "dailyQuota",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Daily ingestion limit in GBs. Enter 0 for no limit.",
+                "placeholder": "",
+                "defaultValue": "0",
+                "toolTip": "This limit doesn't apply to the following tables: SecurityAlert, SecurityBaseline, SecurityBaselineSummary, SecurityDetection, SecurityEvent, WindowsFirewall, MaliciousIPCommunication, LinuxAuditLog, SysmonEvent, ProtectionStatus, WindowsEvent",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[0-9]{1,4}$",
+                    "validationMessage": "Only numbers allowed, and the value must be 1-4 characters long."
+                },
+                "visible": true
+            },
+            {
+                "name": "dataRetention",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Number of days of retention",
+                "placeholder": "",
+                "defaultValue": "90",
+                "toolTip": "Only numbers allowed",
+                "constraints": {
+                    "required": true,
+                    "regex": "([3-8][0-9]|9[0-9]|[1-6][0-9]{2}|7[0-2][0-9]|730)",
+                    "validationMessage": "Retention must be between 30 and 730 days."
+                },
+                "visible": true
+            }
+        ],
+        "steps": [
+            {
+                "name": "dataConnectors",
+                "label": "Data connectors",
+                "elements": [
+                    {
+                        "name": "textBlock1",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Please select which connectors you want to onboard into your Azure Sentinel environment",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://www.microsoft.com"
+                            }
+                        }
+                    },
+                    {
+                        "name": "enableDataConnectorsKind",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Select data connectors to onboard",
+                        "placeholder": "",
+                        "multiselect": true,
+                        "defaultValue": "o365",
+                        "toolTip": "Select the data connectors that you would like to enable",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Office365",
+                                    "value": "Office365"
+                                },
+                                {
+                                    "label": "Azure ATP",
+                                    "value": "AzureAdvancedThreatProtection"
+                                },
+                                {
+                                    "label": "Azure AD Identity Protection",
+                                    "value": "AzureActiveDirectory"
+                                },
+                                {
+                                    "label": "Microsoft Defender ATP",
+                                    "value": "MicrosoftDefenderAdvancedThreatProtection"
+                                },
+                                {
+                                    "label": "Azure Security Center",
+                                    "value": "AzureSecurityCenter"
+                                },
+                                {
+                                    "label": "Microsoft Cloud App Security",
+                                    "value": "MicrosoftCloudAppSecurity"
+                                },
+                                {
+                                    "label": "Azure Activity",
+                                    "value": "AzureActivity"
+                                },
+                                {
+                                    "label": "Security Events",
+                                    "value": "SecurityEvents"
+                                },
+                                {
+                                    "label": "Windows Firewall",
+                                    "value": "WindowsFirewall"
+                                },
+                                {
+                                    "label": "DNS Analytics",
+                                    "value": "DNS"
+                                },
+                                {
+                                    "label": "Linux Syslog",
+                                    "value": "Syslog"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "mcasDiscoveryLogs",
+                        "type": "Microsoft.Common.CheckBox",
+                        "label": "Enable MCAS Discovery Logs?",
+                        "toolTip": "Select to bring MCAS discovery logs into Sentinel. These logs are billed.",
+                        "constraints": {
+                            "required": false,
+                            "validationMessage": "Please select"
+                        },
+                        "visible": "[if(contains(steps('dataConnectors').enableDataConnectorsKind,'MicrosoftCloudAppSecurity'), true, false)]"
+                    },
+                    {
+                        "name": "securityCollectionTier",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Security Events to stream into Sentinel ",
+                        "defaultValue": "Recommended",
+                        "toolTip": "",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "All",
+                                    "value": "All"
+                                },
+                                {
+                                    "label": "Common",
+                                    "value": "Recommended"
+                                },
+                                {
+                                    "label": "Minimal",
+                                    "value": "Minimal"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[if(contains(steps('dataConnectors').enableDataConnectorsKind,'SecurityEvents'), true, false)]"
+                    }
+                ]
+            },
+            {
+                "name": "analyticsRules",
+                "label": "Analytics Rules",
+                "elements": [
+                    {
+                        "name": "enableFusionAlert",
+                        "type": "Microsoft.Common.CheckBox",
+                        "label": "Enable Fusion alert rule?",
+                        "toolTip": "Select to enable Fusion analyttic rule. Details here: https://docs.microsoft.com/azure/sentinel/fusion",
+                        "constraints": {
+                            "required": false,
+                            "validationMessage": "Please select"
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "enableMicrosoftAlerts",
+                        "type": "Microsoft.Common.CheckBox",
+                        "label": "Enable Microsoft alert rules for selected connectors?",
+                        "toolTip": "Select to enable Microsoft rules for the connectors you selected in the previous step.",
+                        "constraints": {
+                            "required": false,
+                            "validationMessage": "Enables rules coming from selected Microsoft security products"
+                        },
+                        "visible": "[if(or(contains(steps('dataConnectors').enableDataConnectorsKind,'AzureAdvancedThreatProtection'),contains(steps('dataConnectors').enableDataConnectorsKind,'AzureActiveDirectoryIdentityProtection'),contains(steps('dataConnectors').enableDataConnectorsKind,'MicrosoftDefenderAdvancedThreatProtection'),contains(steps('dataConnectors').enableDataConnectorsKind,'AzureSecurityCenter'),contains(steps('dataConnectors').enableDataConnectorsKind,'MicrosoftCloudAppSecurity')), true, false)]"
+                    },
+                    {
+                        "name": "enableMLAlerts",
+                        "type": "Microsoft.Common.CheckBox",
+                        "label": "Enable ML Behavior Analytics alert rules?",
+                        "toolTip": "Select to enable ML Behavior Analytics rules for selected connectors (SecurityEvents and/or Syslog)",
+                        "constraints": {
+                            "required": false,
+                            "validationMessage": "Enables SSH and/or RDP anomalous login alerts"
+                        },
+                        "visible": "[if(or(contains(steps('dataConnectors').enableDataConnectorsKind,'Syslog'),contains(steps('dataConnectors').enableDataConnectorsKind,'SecurityEvents')), true, false)]"
+                    },
+                    {
+                        "name": "enableScheduledAlerts",
+                        "type": "Microsoft.Common.CheckBox",
+                        "label": "Enable Scheduled alert rules for selected connectors?",
+                        "toolTip": "Select to enable scheduled analytics rules for selected connectors",
+                        "constraints": {
+                            "required": false,
+                            "validationMessage": "Enables Scheduled rules matching any of the selected connectors"
+                        },
+                        "visible": true
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "workspaceName": "[basics('workspaceName')]",
+            "dailyQuota": "[basics('dailyQuota')]",
+            "dataRetention": "[basics('dataRetention')]",
+            "enableDataConnectorsKind": "[steps('dataConnectors').enableDataConnectorsKind]",
+            "securityCollectionTier": "[steps('dataConnectors').securityCollectionTier]",
+            "mcasDiscoveryLogs": "[steps('dataConnectors').mcasDiscoveryLogs]",
+            "location": "[location()]",
+            "enableFusionAlert": "[steps('analyticsRules').enableFusionAlert]",
+            "enableMicrosoftAlerts": "[steps('analyticsRules').enableMicrosoftAlerts]",
+            "enableMLAlerts": "[steps('analyticsRules').enableMLAlerts]",
+            "enableScheduledAlerts": "[steps('analyticsRules').enableScheduledAlerts]",
+            "rgName": "[basics('rgName')]"
+        }
+    }
+}

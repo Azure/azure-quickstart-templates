@@ -1,0 +1,362 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "mspOfferName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify a unique name for your offer"
+            },
+            "defaultValue": "<enter the MSSP offer name>"
+        },
+        "mspOfferDescription": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Managed Service Provider offering"
+            },
+            "defaultValue": "<enter the MSSP offer description>"
+        },
+        "managedByTenantId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the tenant id of the Managed Service Provider"
+            },
+            "defaultValue": "<enter the MSSP Tenant ID (where your identities reside)>"
+        },
+        "authorizations": {
+            "type": "array",
+            "metadata": {
+                "description": "Specify an array of objects, containing tuples of Azure Active Directory principalId, a Azure roleDefinitionId, and an optional principalIdDisplayName. The roleDefinition specified is granted to the principalId in the provider's Active Directory and the principalIdDisplayName is visible to customers."
+            },
+            "defaultValue": [
+                {
+                    "principalId": "917ba8d6-5c07-4d11-ae26-dccba5df6405",
+                    "roleDefinitionId": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+                    "principalIdDisplayName": "SOC users"
+                }
+            ]
+        },
+        "rgName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Log Analytics workspace"
+            }
+        },
+        "pricingTier": {
+            "type": "string",
+            "metadata": {
+                "description": "Pricing tier: pergb2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers."
+            },
+            "allowedValues": [
+                "PerGB2018",
+                "Free",
+                "Standalone",
+                "PerNode",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "PerGB2018"
+        },
+        "dailyQuota": {
+            "type": "int",
+            "metadata": {
+                "description": "Daily ingestion limit in GBs. This limit doesn't apply to the following tables: SecurityAlert, SecurityBaseline, SecurityBaselineSummary, SecurityDetection, SecurityEvent, WindowsFirewall, MaliciousIPCommunication, LinuxAuditLog, SysmonEvent, ProtectionStatus, WindowsEvent"
+            }
+        },
+        "dataRetention": {
+            "type": "int",
+            "minValue": 7,
+            "maxValue": 730,
+            "metadata": {
+                "description": "Number of days of retention. Workspaces in the legacy Free pricing tier can only have 7 days."
+            },
+            "defaultValue": 30
+        },
+        "immediatePurgeDataOn30Days": {
+            "type": "bool",
+            "metadata": {
+                "description": "If set to true when changing retention to 30 days, older data will be immediately deleted. Use this with extreme caution. This only applies when retention is being set to 30 days."
+            },
+            "defaultValue": true
+        },
+        "securityCollectionTier": {
+            "type": "string",
+            "defaultValue": "Recommended",
+            "allowedValues": [
+                "All",
+                "Recommended",
+                "Minimal",
+                "None"
+            ],
+            "metadata": {
+                "description": "Tier for gathering Windows Security Events."
+            }
+        },
+        "enableDataConnectorsKind": {
+            "type": "array",
+            "metadata": {
+                "description": "The kind of data connectors that can be deployed via ARM templates are the following: [\"AzureActivityLog\",\"SecurityInsightsSecurityEventCollectionConfiguration\",\"WindowsFirewall\",\"DnsAnalytics\"], Reference: https://docs.microsoft.com/azure/templates/microsoft.operationalinsights/2020-03-01-preview/workspaces/datasources#microsoftoperationalinsightsworkspacesdatasources-object"
+            },
+            "defaultValue": []
+        },
+        "enableFusionAlert": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable Fusion analytics rules"
+            },
+            "defaultValue": false
+        },
+        "enableMicrosoftAlerts": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable Microsoft analytics rules"
+            },
+            "defaultValue": false
+        },
+        "enableMLAlerts": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable ML Behavior Analytics rules"
+            },
+            "defaultValue": false
+        },
+        "enableScheduledAlerts": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable Scheduled analytics rules"
+            },
+            "defaultValue": false
+        },
+        "mcasDiscoveryLogs": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable MCAS Discovery Logs"
+            },
+            "defaultValue": false
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of resources"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Tools/"
+        }
+    },
+    "variables": {
+        "mspRegistrationName": "[guid(parameters('mspOfferName'))]",
+        "mspAssignmentName": "[guid(parameters('mspOfferName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('rgName')]",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "name": "workspaceCreation",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('rgName'))]"
+            ],
+            "resourceGroup": "[parameters('rgName')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), 'Sentinel-All-In-One/MSSPversion/LinkedTemplates/workspace.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "pricingTier": {
+                        "value": "[parameters('pricingTier')]"
+                    },
+                    "dailyQuota": {
+                        "value": "[parameters('dailyQuota')]"
+                    },
+                    "dataRetention": {
+                        "value": "[parameters('dataRetention')]"
+                    },
+                    "immediatePurgeDataOn30Days": {
+                        "value": "[parameters('immediatePurgeDataOn30Days')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[not(empty(parameters('enableDataConnectorsKind')))]",
+            "name": "enableDataConnectorsKind",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "resourceGroup": "[parameters('rgName')]",
+            "dependsOn": [
+                "workspaceCreation",
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('rgName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), 'Sentinel-All-In-One/MSSPversion/LinkedTemplates/dataConnectors.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "dataConnectorsKind": {
+                        "value": "[parameters('enableDataConnectorsKind')]"
+                    },
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "tenantId": {
+                        "value": "[subscription().tenantId]"
+                    },
+                    "subscriptionId": {
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    "securityCollectionTier": {
+                        "value": "[parameters('securityCollectionTier')]"
+                    },
+                    "mcasDiscoveryLogs": {
+                        "value": "[parameters('mcasDiscoveryLogs')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[or(parameters('enableFusionAlert'),parameters('enableMicrosoftAlerts'),parameters('enableMLAlerts'))]",
+            "name": "enableAlerts",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "resourceGroup": "[parameters('rgName')]",
+            "dependsOn": [
+                "workspaceCreation",
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('rgName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), 'Sentinel-All-In-One/MSSPversion/LinkedTemplates/alertRules.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "dataConnectorsKind": {
+                        "value": "[parameters('enableDataConnectorsKind')]"
+                    },
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "enableFusionAlert":{
+                        "value": "[parameters('enableFusionAlert')]"
+                    },
+                    "enableMicrosoftAlerts":{
+                        "value": "[parameters('enableMicrosoftAlerts')]"
+                    },
+                    "enableMLAlerts":{
+                        "value": "[parameters('enableMLAlerts')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[parameters('enableScheduledAlerts')]",
+            "name": "enableScheduledAlerts",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "resourceGroup": "[parameters('rgName')]",
+            "dependsOn": [
+                "enableAlerts",
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('rgName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), 'Sentinel-All-In-One/MSSPversion/LinkedTemplates/scheduledAlerts.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "dataConnectorsList":{
+                        "value": "[replace(replace(string(parameters('enableDataConnectorsKind')),'\"',''),'[','')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ManagedServices/registrationDefinitions",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('mspRegistrationName')]",
+            "properties": {
+                "registrationDefinitionName": "[parameters('mspOfferName')]",
+                "description": "[parameters('mspOfferDescription')]",
+                "managedByTenantId": "[parameters('managedByTenantId')]",
+                "authorizations": "[parameters('authorizations')]"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "rgAssignment",
+            "resourceGroup": "[parameters('rgName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]",
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('rgName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.ManagedServices/registrationAssignments",
+                            "apiVersion": "2019-06-01",
+                            "name": "[variables('mspAssignmentName')]",
+                            "properties": {
+                                "registrationDefinitionId": "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "mspOfferName": {
+            "type": "string",
+            "value": "[concat('Managed by', ' ', parameters('mspOfferName'))]"
+        },
+        "authorizations": {
+            "type": "array",
+            "value": "[parameters('authorizations')]"
+        },
+        "workspaceName": {
+            "type": "string",
+            "value": "[parameters('workspaceName')]"
+        },
+        "dataConnectorsList": {
+            "type": "string",
+            "value": "[replace(replace(string(parameters('enableDataConnectorsKind')),'\"',''),'[','')]"
+        }
+    }
+}

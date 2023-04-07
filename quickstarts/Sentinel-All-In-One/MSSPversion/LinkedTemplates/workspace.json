@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Log Analytics workspace"
+            }
+        },
+        "pricingTier": {
+            "type": "string",
+            "metadata": {
+                "description": "Pricing tier: pergb2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers."
+            },
+            "allowedValues": [
+                "PerGB2018",
+                "Free",
+                "Standalone",
+                "PerNode",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "PerGB2018"
+        },
+        "dailyQuota": {
+            "type": "int",
+            "metadata": {
+                "description": "Daily ingestion limit in GBs. This limit doesn't apply to the following tables: SecurityAlert, SecurityBaseline, SecurityBaselineSummary, SecurityDetection, SecurityEvent, WindowsFirewall, MaliciousIPCommunication, LinuxAuditLog, SysmonEvent, ProtectionStatus, WindowsEvent"
+            }
+        },
+        "dataRetention": {
+            "type": "int",
+            "minValue": 7,
+            "maxValue": 730,
+            "metadata": {
+                "description": "Number of days of retention. Workspaces in the legacy Free pricing tier can only have 7 days."
+            },
+            "defaultValue": 30
+        },
+        "immediatePurgeDataOn30Days": {
+            "type": "bool",
+            "metadata": {
+                "description": "If set to true when changing retention to 30 days, older data will be immediately deleted. Use this with extreme caution. This only applies when retention is being set to 30 days."
+            },
+            "defaultValue": true
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            },
+            "defaultValue": "[resourceGroup().location]"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "quotaSetting": {
+            "dailyQuotaGb": "[parameters('dailyQuota')]"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('workspaceName')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2015-11-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "retentionInDays": "[parameters('dataRetention')]",
+                "workspaceCapping": "[if(equals(parameters('dailyQuota'),0), json('null'), variables('quotaSetting'))]",
+                "features": {
+                    "immediatePurgeDataOn30Days": "[parameters('immediatePurgeDataOn30Days')]"
+                },
+                "sku": {
+                    "name": "[parameters('pricingTier')]"
+                }
+            }
+        },
+        {
+            "name": "[concat('SecurityInsights','(', parameters('workspaceName'),')')]",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "apiVersion": "2015-11-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+            ],
+            "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+            },
+            "plan": {
+                "name": "[concat('SecurityInsights','(', parameters('workspaceName'),')')]",
+                "product": "OMSGallery/SecurityInsights",
+                "publisher": "Microsoft",
+                "promotionCode": ""
+            }
+        }
+    ],
+    "outputs": {}
+}

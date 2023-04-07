@@ -1,0 +1,275 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Log Analytics workspace"
+            }
+        },
+        "pricingTier": {
+            "defaultValue": "PerGB2018",
+            "allowedValues": [
+                "PerGB2018",
+                "Free",
+                "Standalone",
+                "PerNode",
+                "Standard",
+                "Premium"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Pricing tier: pergb2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers."
+            }
+        },
+        "dailyQuota": {
+            "type": "Int",
+            "metadata": {
+                "description": "Daily ingestion limit in GBs. This limit doesn't apply to the following tables: SecurityAlert, SecurityBaseline, SecurityBaselineSummary, SecurityDetection, SecurityEvent, WindowsFirewall, MaliciousIPCommunication, LinuxAuditLog, SysmonEvent, ProtectionStatus, WindowsEvent"
+            }
+        },
+        "dataRetention": {
+            "defaultValue": 30,
+            "minValue": 7,
+            "maxValue": 730,
+            "type": "Int",
+            "metadata": {
+                "description": "Number of days of retention. Workspaces in the legacy Free pricing tier can only have 7 days."
+            }
+        },
+        "immediatePurgeDataOn30Days": {
+            "defaultValue": true,
+            "type": "Bool",
+            "metadata": {
+                "description": "If set to true when changing retention to 30 days, older data will be immediately deleted. Use this with extreme caution. This only applies when retention is being set to 30 days."
+            }
+        },
+        "securityCollectionTier": {
+            "defaultValue": "Recommended",
+            "allowedValues": [
+                "All",
+                "Recommended",
+                "Minimal",
+                "None"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Tier for gathering Windows Security Events."
+            }
+        },
+        "enableDataConnectorsKind": {
+            "defaultValue": [],
+            "type": "Array",
+            "metadata": {
+                "description": "The kind of data connectors that can be deployed via ARM templates are the following: [\"AzureActivityLog\",\"SecurityInsightsSecurityEventCollectionConfiguration\",\"WindowsFirewall\",\"DnsAnalytics\"], Reference: https://docs.microsoft.com/azure/templates/microsoft.operationalinsights/2020-03-01-preview/workspaces/datasources#microsoftoperationalinsightsworkspacesdatasources-object"
+            }
+        },
+        "enableFusionAlert": {
+            "defaultValue": false,
+            "type": "Bool",
+            "metadata": {
+                "description": "Enable Fusion analytics rules"
+            }
+        },
+        "enableMicrosoftAlerts": {
+            "defaultValue": false,
+            "type": "Bool",
+            "metadata": {
+                "description": "Enable Microsoft analytics rules"
+            }
+        },
+        "enableMLAlerts": {
+            "defaultValue": false,
+            "type": "Bool",
+            "metadata": {
+                "description": "Enable ML Behavior Analytics rules"
+            }
+        },
+        "enableScheduledAlerts": {
+            "defaultValue": false,
+            "type": "Bool",
+            "metadata": {
+                "description": "Enable Scheduled analytics rules"
+            }
+        },
+        "mcasDiscoveryLogs": {
+            "defaultValue": false,
+            "type": "Bool",
+            "metadata": {
+                "description": "Enable MCAS Discovery Logs"
+            }
+        },
+        "_artifactsLocation": {
+            "defaultValue": "https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Tools/Sentinel-All-In-One/",
+            "type": "String",
+            "metadata": {
+                "description": "The location of resources"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "defaultValue": "",
+            "type": "SecureString",
+            "metadata": {
+                "description": "Auto-generated token to access _artifactsLocation. Leave it blank unless you need to provide your own value."
+            }
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "String",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "quotaSetting": {
+            "dailyQuotaGb": "[parameters('dailyQuota')]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2015-11-01-preview",
+            "name": "[parameters('workspaceName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "retentionInDays": "[parameters('dataRetention')]",
+                "workspaceCapping": "[if(equals(parameters('dailyQuota'),0), json('null'), variables('quotaSetting'))]",
+                "features": {
+                    "immediatePurgeDataOn30Days": "[parameters('immediatePurgeDataOn30Days')]"
+                },
+                "sku": {
+                    "name": "[parameters('pricingTier')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.SecurityInsights/onboardingStates",
+            "apiVersion": "2021-03-01-preview",
+            "name": "default",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+            ],
+            "properties": {},
+            "scope": "[concat('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-05-01",
+            "name": "enableDataConnectorsKind",
+            "dependsOn": [
+                "default"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('ARMTemplates/LinkedTemplates/dataConnectors.json', parameters('_artifactsLocationSasToken')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "dataConnectorsKind": {
+                        "value": "[parameters('enableDataConnectorsKind')]"
+                    },
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "tenantId": {
+                        "value": "[subscription().tenantId]"
+                    },
+                    "subscriptionId": {
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    "securityCollectionTier": {
+                        "value": "[parameters('securityCollectionTier')]"
+                    },
+                    "mcasDiscoveryLogs": {
+                        "value": "[parameters('mcasDiscoveryLogs')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            },
+            "condition": "[not(empty(parameters('enableDataConnectorsKind')))]"
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-05-01",
+            "name": "enableAlerts",
+            "dependsOn": [
+                "default"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('ARMTemplates/LinkedTemplates/alertRules.json', parameters('_artifactsLocationSasToken')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "dataConnectorsKind": {
+                        "value": "[parameters('enableDataConnectorsKind')]"
+                    },
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "enableFusionAlert": {
+                        "value": "[parameters('enableFusionAlert')]"
+                    },
+                    "enableMicrosoftAlerts": {
+                        "value": "[parameters('enableMicrosoftAlerts')]"
+                    },
+                    "enableMLAlerts": {
+                        "value": "[parameters('enableMLAlerts')]"
+                    }
+                }
+            },
+            "condition": "[or(parameters('enableFusionAlert'),parameters('enableMicrosoftAlerts'),parameters('enableMLAlerts'))]"
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-05-01",
+            "name": "enableScheduledAlerts",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments/', 'enableAlerts')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('ARMTemplates/LinkedTemplates/scheduledAlerts.json', parameters('_artifactsLocationSasToken')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "dataConnectorsList": {
+                        "value": "[replace(replace(string(parameters('enableDataConnectorsKind')),'\"',''),'[','')]"
+                    }
+                }
+            },
+            "condition": "[parameters('enableScheduledAlerts')]"
+        }
+    ],
+    "outputs": {
+        "workspaceName": {
+            "type": "String",
+            "value": "[parameters('workspaceName')]"
+        },
+        "workspaceIdOutput": {
+            "type": "String",
+            "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2015-11-01-preview').customerId]"
+        },
+        "workspaceKeyOutput": {
+            "type": "String",
+            "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2015-11-01-preview').primarySharedKey]"
+        },
+        "dataConnectorsList": {
+            "type": "String",
+            "value": "[replace(replace(string(parameters('enableDataConnectorsKind')),'\"',''),'[','')]"
+        }
+    }
+}
