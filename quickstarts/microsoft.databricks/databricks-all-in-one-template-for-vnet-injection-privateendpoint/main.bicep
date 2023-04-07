@@ -63,7 +63,7 @@ var privateEndpointName = '${workspaceName}-pvtEndpoint'
 var privateDnsZoneName = 'privatelink.azuredatabricks.net'
 var pvtEndpointDnsGroupName = '${privateEndpointName}/mydnsgroupname'
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2022-09-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   name: nsgName
   location: location
   properties: {
@@ -156,7 +156,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2022-09-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: vnetName
   location: location
   properties: {
@@ -238,7 +238,7 @@ resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
   }
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-09-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-08-01' = {
   name: privateEndpointName
   location: location
   properties: {
@@ -279,7 +279,7 @@ resource privateDnsZoneName_privateDnsZoneName_link 'Microsoft.Network/privateDn
   }
 }
 
-resource pvtEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-09-01' = {
+resource pvtEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-12-01' = {
   name: pvtEndpointDnsGroupName
   properties: {
     privateDnsZoneConfigs: [
