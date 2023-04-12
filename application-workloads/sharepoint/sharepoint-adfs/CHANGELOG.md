@@ -5,7 +5,7 @@
 ### Fixed
 
 - Template
-  - SharePoint virtual machines no longer hardcode the size of the OS disk, so now SharePoint Subscription and Subscription 2019 are both really created with a 32 GB disk
+  - The size of the OS disk is no longer hardcoded on SharePoint virtual machines, so now VMs for SharePoint Subscription and 2019 are really created with a 32 GB disk
 
 ### Changed
 
