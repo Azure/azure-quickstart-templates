@@ -10,7 +10,7 @@
 ### Changed
 
 - Template
-  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2123 CU for SharePoint Subscription
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2023 CU for SharePoint Subscription
 
 ## Enhancements & bug-fixes - Published in April 06, 2023
 
