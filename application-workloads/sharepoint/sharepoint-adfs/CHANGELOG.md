@@ -1,5 +1,17 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in April 12, 2023
+
+### Fixed
+
+- Template
+  - SharePoint virtual machines no longer hardcode the size of the OS disk, so now SharePoint Subscription and Subscription 2019 are both really created with a 32 GB disk
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2123 CU for SharePoint Subscription
+
 ## Enhancements & bug-fixes - Published in April 06, 2023
 
 ### Added
