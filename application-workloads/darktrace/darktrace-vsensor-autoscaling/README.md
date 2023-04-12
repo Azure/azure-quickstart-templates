@@ -125,7 +125,7 @@ The vSensors created will not have public IPs associated. Exposing a vSensor via
 
 It is expected that there is already a solution in place to access the VMs in the VNet via their private IP. If one is not present, the template can install a Azure Bastion Host and subnet to the existing VNet using the 'Bastion Enable' parameter. Don't select this option if you already have a Azure Bastion in your VNet.
 
-If there is a virtual firewall on your network, please ensure access is granted to the vSensor to the Darktrace instance FQDN/port or IP/port, as well as to packages.darktrace.com and packages-cdn.darktrace.com on port `80/TCP` and `443/TCP`. The deployed NSG will attempt to configure this access.
+If there is a virtual firewall on your network, please ensure access is granted to the vSensor to the Darktrace instance FQDN/port or IP/port, as well as to *ubuntu.com, packages.darktrace.com and packages-cdn.darktrace.com on port `80/TCP` and `443/TCP`. The deployed NSG will attempt to configure this access.
 
 ### Deployment Parameters
 
@@ -141,8 +141,11 @@ The template should appear as a form that expects values for input parameters (w
 | Resource Group | Choose a pre-existing RG or create a new RG; resources created as part of this deployment will be stored in this RG (excluding VNet/Subnets). |
 | existingVirtualNetworkName | Name of the existing Virtual Network to be monitored, should be in the same **location** as this deployment/resource group. |
 | existingVirtualNetworkResourceGroup | The Resource Group the VNet is deployed in.|
+| natGatewayEnable | Deploy a NAT Gateway in the Virtual Network. If using an existing VNet and are using other firewall configurations, False may be required. |
+| existingRouteTable | If not deploying a NAT Gateway, you may need to provide an existing route table to attach to the new deployed vSensor subnet to allow internet routing. |
+| existingRouteTableResourceGroup | The Resource Group the existing Route Table (if provided) is deployed in. Default is same RG. |
 | bastionEnable | Whether to deploy a Azure Bastion and associated Subnet in. See above. |
-| bastionSubnetCIDR | CIDR IP range of the private subnet the Azure Bastion will be deployed in (if deployed). This must be an unused range within the supplied vNet. E.g. 10.0.1.0/24. If Bastion Enable is false, this value may be set to an arbitrary CIDR and will be ignored. |
+| bastionSubnetCIDR | CIDR IP range of the private subnet the Azure Bastion will be deployed in (if deployed). This must be an unused range within the supplied vNet. E.g. 10.0.1.0/24. If Bastion Enable is false, this value will be ignored. |
 | VMSSSubnetCIDR | CIDR IP range of the private subnet the vSensors will be deployed in. This must be an unused range within the supplied vNet. E.g. 10.0.2.0/24. |
 | MgmtSourceAddressOrRange | Provide a private address range using CIDR notation (e.g. 10.1.0.0/24), or an IP address (e.g. 192.168.99.21) for Management access via ssh (port 22/TCP). Set to 'VMSS Subnet CIDR' to not use this access. You can also provide a comma-separated list of IP addresses and/or address ranges (a valid comma-separated list is 10.1.0.4,10.2.1.0/24). |
 | VMSSInstanceSize | vSensor VM Size. For more information regarding the Virtual Hardware Requirements please visit https://customerportal.darktrace.com/product-guides/main/vsensor-requirements <br><br> _Default value_: **Standard_D2s_v3** |
