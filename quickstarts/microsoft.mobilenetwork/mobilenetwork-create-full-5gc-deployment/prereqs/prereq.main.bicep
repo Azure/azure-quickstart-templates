@@ -4,7 +4,7 @@ param azureStackEdgeName string
 @description('Region where the AzureStackEdgeName will be deployed (must match the resource group region)')
 param location string = resourceGroup().location
 
-resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2020-01-01' = {
+resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2022-03-01' = {
   name: azureStackEdgeName
   location: location
 }
