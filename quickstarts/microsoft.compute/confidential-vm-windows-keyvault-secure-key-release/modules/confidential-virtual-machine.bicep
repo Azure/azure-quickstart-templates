@@ -267,7 +267,7 @@ resource vmCustomScriptExtension 'Microsoft.Compute/virtualMachines/extensions@2
     }
     protectedSettings: {
       fileUris: [
-        uri(_artifactsLocation, '${setupScriptFileName}${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'assets/${setupScriptFileName}${_artifactsLocationSasToken}')
       ]
     }
   }
