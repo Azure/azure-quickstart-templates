@@ -94,7 +94,7 @@ var csExtensionName = 'CustomScriptExtension'
 var csExtensionPublisher = 'Microsoft.Compute'
 var csExtensionVersion = '1.10'
 var setupScriptFileName = 'Install-AccGuestAttestation.ps1'
-var setupCommand = 'powershell.exe -ExecutionPolicy Bypass -File .\assets\${setupScriptFileName}"'
+var setupCommand = 'powershell.exe -ExecutionPolicy Bypass -File .\\assets\\${setupScriptFileName}"'
 
 resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: '${vmName}-ip'
