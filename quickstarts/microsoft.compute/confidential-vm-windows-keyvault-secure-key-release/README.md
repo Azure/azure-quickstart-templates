@@ -46,7 +46,7 @@ This template performs the following tasks:
 
 ## Performing the key release operation
 
-To perform the release, send an HTTP request to the Key Vault from the confidential virtual machine. This request must include the Confidential VM's attested platform report in the request body. The attested platform report is used to verify the trustworthiness of the state of the Trusted Execution Environment-enabled platform, such as the Confidential VM. The [Microsoft Azure Attestation service](https://learn.microsoft.com/en-us/azure/attestation/overview) can be used to create the attested platform report and include it in the request.
+To perform the release, send an HTTP request to the Key Vault from the confidential virtual machine. This request must include the Confidential VM's attested platform report in the request body. The attested platform report is used to verify the trustworthiness of the state of the Trusted Execution Environment-enabled platform such as the Confidential VM. The [Microsoft Azure Attestation service](https://learn.microsoft.com/en-us/azure/attestation/overview) can be used to create the attested platform report and include it in the request.
 
 To receive an attested platform report, you can use any scripting or programming language to call the `AttestationClientApp` binary. Since the virtual machine we deployed has managed identity enabled, we can get an Azure Active Directory (AAD) issued access token for Key Vault from the [instance metadata service](https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service?tabs=windows) (IMDS). The deployment template will ensure that the virtual machine's managed identity has been given the `release` permission in Azure Key Vault.
 
