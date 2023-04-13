@@ -7,6 +7,10 @@ param location string = resourceGroup().location
 resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2022-03-01' = {
   name: azureStackEdgeName
   location: location
+  sku: {
+    name: 'EdgeP_Base'
+    tier: 'Standard'
+  }
 }
 
 output aseID string = exampleAzureStackEdge.id
