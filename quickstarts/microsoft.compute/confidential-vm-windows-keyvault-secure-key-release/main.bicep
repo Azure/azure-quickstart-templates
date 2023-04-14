@@ -60,7 +60,7 @@ module akv 'modules/key-vault.bicep' = {
     keyName: 'myskrkey'
     keyType: 'RSA-HSM'
     keySize: 4096
-    keyExportable: true // Required for key release
+    keyExportable: true
     keyEnabled: true
     keyOps: ['encrypt','decrypt']
     keyNotBefore:keyNotBefore
