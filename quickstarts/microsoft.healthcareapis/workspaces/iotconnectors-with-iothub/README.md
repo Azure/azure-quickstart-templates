@@ -1,5 +1,5 @@
 ---
-description: The MedTech service is one of the Azure Health Data Services designed to ingest device message data from multiple devices, transform that data into FHIR Observations, which are then persisted in the Azure Health Data Services FHIR service.
+description: The MedTech service is one of the Azure Health Data Services designed to ingest device data from multiple devices, transform that device data into FHIR Observations, which are then persisted in the Azure Health Data Services FHIR service.
 page_type: sample
 products:
 - azure
@@ -31,7 +31,7 @@ languages:
 > [!NOTE]
 > [Fast Healthcare Interoperability Resources (FHIR®)](https://www.hl7.org/fhir/) is an open healthcare specification.
 
-This template deploys the MedTech service with the required resources and access permissions and includes an Azure IoT Hub. Conforming and valid device and FHIR destination mappings are also included.
+This template deploys the MedTech service with the required resources and access permissions and includes an Azure IoT Hub for device creation/management and device message sending/routing. Conforming and valid device and FHIR destination mappings are also included.
 
 * To learn about this Azure Resource Manager (ARM) template, the resources deployed, and the configured access permissions, see [Receive device messages through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-messages-through-iot-hub).
 
