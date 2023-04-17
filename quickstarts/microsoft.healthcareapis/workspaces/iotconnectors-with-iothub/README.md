@@ -37,15 +37,15 @@ This template deploys the MedTech service with the required resources and access
 
 * To learn about the MedTech service, see [What is MedTech service?](https://learn.microsoft.com/azure/healthcare-apis/iot/overview)
 
-* To learn about the MedTech service device message data transformation, see [Understand the MedTech service device message data transformation](https://learn.microsoft.com/azure/healthcare-apis/iot/understand-service).
+* To learn about the MedTech service device data processing stages, see [Overview of the MedTech service device data processing stages](https://learn.microsoft.com/azure/healthcare-apis/iot/overview-of-device-data-processing-stages).
 
 * To learn how to use the MedTech service Mapping debugger, see [How to use the MedTech service Mapping debugger](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-use-mapping-debugger).
 
-* To learn how to configure the MedTech service device mapping, see [How to configure the MedTech service device mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-device-mappings).
+* For an overview of the MedTech service device mapping, see [Overview of the MedTech service device mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/overview-of-device-mapping).
 
-* To learn about IotJsonPathContentTemplate mappings, see [How to use IotJsonPathContentTemplate mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-use-iot-jsonpath-content-mappings).
+* To learn about IotJsonPathContent mappings, see [How to use IotJsonPathContent mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-use-iotjsonpathcontent-mappings).
 
-* To learn about FHIR destination mappings, see [How to configure FHIR destination mappings](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-fhir-mappings).
+* For an overview of the MedTech service FHIR destination mapping, see [Overview of the MedTech service FHIR destination mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/overview-of-fhir-destination-mapping).
 
 * To learn about the Azure IoT Hub, see [IoT concepts and Azure IoT Hub](https://learn.microsoft.com/azure/iot-hub/iot-concepts-and-iot-hub).
 
