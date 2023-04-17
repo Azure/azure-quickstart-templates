@@ -54,6 +54,7 @@ resource eventhubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
     isAutoInflateEnabled: true
     maximumThroughputUnits: 8
     kafkaEnabled: false
+    disableLocalAuth: true
   }
 }
 
