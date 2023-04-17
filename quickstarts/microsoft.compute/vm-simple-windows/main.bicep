@@ -242,6 +242,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
     type: extensionName
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
     settings: {
       AttestationConfig: {
         MaaSettings: {
