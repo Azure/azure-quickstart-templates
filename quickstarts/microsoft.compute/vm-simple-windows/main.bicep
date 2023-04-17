@@ -229,7 +229,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
-    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
   }
 }
 
