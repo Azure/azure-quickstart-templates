@@ -11,6 +11,7 @@ param basename string
   'eastus'
   'eastus2'
   'francecentral'
+  'japaneast'
   'koreacentral'
   'northcentralus'
   'northeurope'
