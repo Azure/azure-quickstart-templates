@@ -19,7 +19,7 @@ param privateLinkServiceResourceId string
 @description('Group Id of the service PrivateLink is connecting to')
 param groupId string
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-03-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-09-01' existing = {
   name: virtualNetworkResourceName
 }
 
@@ -40,7 +40,7 @@ resource dnszonelink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020
   }
 }
 
-resource privatelink 'Microsoft.Network/privateEndpoints@2021-03-01' = {
+resource privatelink 'Microsoft.Network/privateEndpoints@2022-09-01' = {
   name: privateLinkName
   location: location
   properties: {
