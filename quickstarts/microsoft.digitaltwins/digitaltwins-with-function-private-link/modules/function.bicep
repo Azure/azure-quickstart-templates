@@ -32,7 +32,7 @@ param applicationInsightsName string
 param functionAppPlanSku string = 'EP1'
 
 
-resource storageaccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
+resource storageaccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageAccountName
   location: location
   kind: 'StorageV2'
@@ -41,7 +41,7 @@ resource storageaccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-resource serverfarm 'Microsoft.Web/serverfarms@2021-02-01' = {
+resource serverfarm 'Microsoft.Web/serverfarms@2022-03-01' = {
   location: location
   name: serverFarmName
   kind: 'elastic'
@@ -66,7 +66,7 @@ resource appinsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource function 'Microsoft.Web/sites@2021-02-01' = {
+resource function 'Microsoft.Web/sites@2022-03-01' = {
   name: functionAppName
   location: location
   kind: 'functionapp'
@@ -103,10 +103,11 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
         }
       ]
     }
+    vnetRouteAllEnabled: true
   }
 }
 
-resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-02-01' = {
+resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2022-03-01' = {
   parent: function
   name: 'virtualNetwork'
   properties: {
