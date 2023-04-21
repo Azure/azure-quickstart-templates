@@ -154,12 +154,28 @@ resource resolverVnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         name: inboundSubnet
         properties: {
           addressPrefix: inboundAddressPrefix
+          delegations:[
+            {
+              name:'Microsoft.Network.dnsResolvers'
+              properties:{
+                serviceName:'Microsoft.Network/dnsResolvers'
+              }
+            }
+          ]
         }
       }
       {
         name: outboundSubnet
         properties: {
           addressPrefix: outboundAddressPrefix
+          delegations:[
+            {
+              name:'Microsoft.Network.dnsResolvers'
+              properties:{
+                serviceName:'Microsoft.Network/dnsResolvers'
+              }
+            }
+          ]
         }
       }
     ]
