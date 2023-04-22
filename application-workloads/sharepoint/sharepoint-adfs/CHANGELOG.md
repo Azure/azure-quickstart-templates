@@ -1,5 +1,36 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in April 12, 2023
+
+### Fixed
+
+- Template
+  - The size of the OS disk is no longer hardcoded on SharePoint virtual machines, so now VMs for SharePoint Subscription and 2019 are really created with a 32 GB disk
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2023 CU for SharePoint Subscription
+
+## Enhancements & bug-fixes - Published in April 06, 2023
+
+### Added
+
+- Template
+  - Added value `Subscription-23H1` to parameter `sharePointVersion`, to install SharePoint Subscription with 23H1 update
+
+### Changed
+
+- Configuration for SQL
+  - Update SQL module `SqlServer` and DSC module `SqlServerDsc`
+- Configuration for DC
+  - Update DSC module `AdfsDsc`
+- Configuration for all SharePoint versions
+  - Update DSC module `SharePointDsc`
+- Configuration for SharePoint Subscription
+  - Add domain administrator as a SharePoint shell admin (done by cmdlet `Add-SPShellAdmin`)
+  - For OIDC: Change the nonce secret key to a more unique value and rename the certificate used to sign the nonce
+
 ## Enhancements & bug-fixes - Published in February 07, 2023
 
 ### Added
