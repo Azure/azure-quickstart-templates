@@ -12,11 +12,11 @@ param roleId string
 @description('The name of the Azure Digital Twins instance.')
 param digitalTwinsInstanceName string
 
-resource digitalTwinsInstance 'Microsoft.DigitalTwins/digitalTwinsInstances@2020-12-01' existing = {
+resource digitalTwinsInstance 'Microsoft.DigitalTwins/digitalTwinsInstances@2023-01-31' existing = {
   name: digitalTwinsInstanceName
 }
 
-resource roleassignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+resource roleassignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(uniqueString(principalId, roleId, digitalTwinsInstance.id))
   scope: digitalTwinsInstance
   properties: {

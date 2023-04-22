@@ -12,8 +12,8 @@ configuration ConfigureSQLVM
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
-    Import-DscResource -ModuleName SqlServer -ModuleVersion 21.1.18256
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.1.0
+    Import-DscResource -ModuleName SqlServer -ModuleVersion 22.0.59
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
