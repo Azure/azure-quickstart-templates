@@ -10,7 +10,10 @@ param basename string
   'centralindia'
   'eastus'
   'eastus2'
+  'francecentral'
+  'japaneast'
   'koreacentral'
+  'northcentralus'
   'northeurope'
   'qatarcentral'
   'southcentralus'
@@ -27,12 +30,12 @@ param location string
 @description('OPTIONAL - A Principal ID for a user that will be granted FHIR Data Contributor access to the FHIR service. If you do not choose to use the **fhirContributorPrincipalId** option, clear the field of any entries. To learn more about how to acquire an Azure AD user object ID, see [Find the user object ID](https://learn.microsoft.com/partner-center/find-ids-and-domain-names#find-the-user-object-id)')
 param fhirContributorPrincipalId string = ''
 
-@description('The mapping JSON that determines how incoming device message data is normalized.')
+@description('The mapping JSON that determines how incoming device data is normalized.')
 param deviceMapping object = {
   templateType: 'CollectionContent'
   template: [
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'HeartRate'
         typeMatchExpression: '$..[?(@Body.HeartRate)]'
@@ -47,7 +50,7 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'HeartRateVariability'
         typeMatchExpression: '$..[?(@Body.HeartRateVariability)]'
@@ -62,7 +65,7 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'RespiratoryRate'
         typeMatchExpression: '$..[?(@Body.RespiratoryRate)]'
@@ -77,7 +80,7 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'BodyTemperature'
         typeMatchExpression: '$..[?(@Body.BodyTemperature)]'
@@ -92,7 +95,7 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'BloodPressure'
         typeMatchExpression: '$..[?(@Body.BloodPressure.Systolic && @Body.BloodPressure.Diastolic)]'
@@ -114,7 +117,7 @@ param deviceMapping object = {
   ]
 }
 
-@description('The mapping JSON that determines how normalized message data is converted into FHIR Observations.')
+@description('The mapping JSON that determines how normalized data is converted into FHIR Observations.')
 param destinationMapping object = {
   templateType: 'CollectionFhir'
   template: [
