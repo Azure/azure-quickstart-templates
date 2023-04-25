@@ -1,399 +1,390 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "location": {
-        "type": "string",
-        "defaultValue": "[resourceGroup().location]",
-        "metadata": {
-          "description": "Location for all resources."
-        }
-      },
-    "workspaceName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the Azure Databricks workspace to create."
-      }
-    },
-    "pricingTier": {
-      "defaultValue": "premium",
-      "allowedValues": [
-        "premium"
-      ],
-      "type": "string",
-      "metadata": {
-        "description": "The pricing tier of workspace."
-      }
-    },
-    "azureDatabricksAppObjectId": {
-      "type": "string",
-      "metadata": {
-        "description": "The object id of AzureDatabricks application in your tenant. Application ID: 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d"
-      }
-    },
-    "requireInfrastructureEncryption": {
-      "defaultValue": false,
-      "type": "bool"
-    },
-    "msCmkKeyVaultResourceGroup": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Resource Group of the Key Vault that contains the CMK for managed services encryption"
-      }
-    },
-    "msCmkKeyVaultName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Name of the Key Vault that contains the CMK for managed services encryption "
-      }
-    },
-    "msCmkKeyName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Name of the Customer Managed Key used to encrypt managed services data"
-      }
-    },
-    "msCmkKeyVersion": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Version of the Customer Managed Key used to encrypt managed services data"
-      }
-    },
-    "msCmkKeyVaultUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "The key vault URI used for customer-managed key for managed services"
-      }
-    },
-    "dbfsCmkKeyVaultResourceGroup": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Resource Group of the Key Vault that contains the CMK for managed disks encryption"
-      }
-    },
-    "dbfsCmkKeyVaultName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Name of the Key Vault that contains the CMK used for DBFS encryption"
-      }
-    },
-    "dbfsCmkKeyName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Name of the Customer Managed Key used to encrypt DBFS data"
-      }
-    },
-    "dbfsCmkKeyVersion": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Version of the Customer Managed Key used to encrypt DBFS data"
-      }
-    },
-    "dbfsCmkKeyVaultUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "The key vault URI used for customer-managed key for managed services"
-      }
-    },
-    "diskCmkKeyVaultResourceGroup": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Resource Group of the Key Vault that contains the CMK for managed disks encryption"
-      }
-    },
-    "diskCmkKeyVaultName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Name of the Key Vault that contains the CMK used for managed disks encryption"
-      }
-    },
-    "diskCmkKeyName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Name of the Customer Managed Key used to encrypt managed disks data"
-      }
-    },
-    "diskCmkKeyVersion": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Version of the Customer Managed Key used to encrypt managed disks data"
-      }
-    },
-    "diskCmkKeyVaultUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "The key vault URI used for customer-managed key for managed services"
-      }
-    },
-    "diskCmkEnableAutoRotation": {
-      "type": "string",
-      "defaultValue": "false",
-      "allowedValues": [
-        "true",
-        "false"
-      ]
-    }
-  },
-  "variables": {
-    "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
-    "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]",
-    "trimmedDiskCmkKeyVaultUrl": "[replace(parameters('DiskCmkKeyVaultUrl'), '.net/', '.net')]"
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
-      "name": "DatabricksManagedServicesCMKAccessPolicy",
-      "resourceGroup": "[parameters('msCmkKeyVaultResourceGroup')]",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "0.9.0.0",
-          "resources": [
-            {
-              "type": "Microsoft.KeyVault/vaults/accessPolicies",
-              "apiVersion": "2022-02-01-preview",
-              "name": "[concat(parameters('msCmkKeyVaultName'), '/add')]",
-              "properties": {
-                "accessPolicies": [
-                  {
-                    "objectId": "[parameters('azureDatabricksAppObjectId')]",
-                    "tenantId": "[subscription().tenantId]",
-                    "permissions": {
-                      "keys": [
-                        "get",
-                        "wrapKey",
-                        "unwrapKey"
-                      ]
-                    }
-                  }
-                ]
-              }
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "String",
+            "metadata": {
+                "description": "Location for all resources."
             }
-          ]
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Databricks/workspaces",
-      "apiVersion": "2023-02-01",
-      "location": "[resourceGroup().location]",
-      "name": "[parameters('workspaceName')]",
-      "dependsOn": [
-        "[resourceId(parameters('msCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksManagedServicesCMKAccessPolicy')]"
-      ],
-      "sku": {
-        "name": "[parameters('pricingTier')]"
-      },
-      "properties": {
-        "managedResourceGroupId": "[variables('managedResourceGroupId')]",
-        "parameters": {
-          "enableNoPublicIp": {
-            "value": true
-          },
-          "prepareEncryption": {
-            "value": true
-          },
-          "requireInfrastructureEncryption": {
-            "value": "[parameters('requireInfrastructureEncryption')]"
-          }
         },
-        "encryption": {
-          "entities": {
-            "managedDisk": {
-              "keySource": "Microsoft.Keyvault",
-              "keyVaultProperties": {
-                "keyVaultUri": "[variables('trimmedDiskCmkKeyVaultUrl')]",
-                "keyName": "[parameters('diskCmkKeyName')]",
-                "keyVersion": "[parameters('diskCmkKeyVersion')]"
-              },
-              "rotationToLatestKeyVersionEnabled": "[parameters('diskCmkEnableAutoRotation')]"
-            },
-            "managedServices": {
-              "keySource": "Microsoft.Keyvault",
-              "keyVaultProperties": {
-                "keyVaultUri": "[parameters('msCmkKeyVaultUrl')]",
-                "keyName": "[parameters('msCmkKeyName')]",
-                "keyVersion": "[parameters('msCmkKeyVersion')]"
-              }
+        "workspaceName": {
+            "type": "String",
+            "metadata": {
+                "description": "The name of the Azure Databricks workspace to create."
             }
-          }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "DatabricksDbfsCMKAccessPolicy",
-      "resourceGroup": "[parameters('dbfsCmkKeyVaultResourceGroup')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "0.9.0.0",
-          "resources": [
-            {
-              "type": "Microsoft.KeyVault/vaults/accessPolicies",
-              "apiVersion": "2022-02-01-preview",
-              "name": "[concat(parameters('dbfsCmkKeyVaultName'), '/add')]",
-              "properties": {
-                "accessPolicies": [
-                  {
-                    "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').storageAccountIdentity.principalId]",
-                    "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').storageAccountIdentity.tenantId]",
-                    "permissions": {
-                      "keys": [
-                        "get",
-                        "wrapKey",
-                        "unwrapKey"
-                      ]
-                    }
-                  }
-                ]
-              }
+        },
+        "pricingTier": {
+            "defaultValue": "premium",
+            "allowedValues": [
+                "premium"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "The pricing tier of workspace."
             }
-          ]
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
-      "name": "DatabricksManagedDiskCMKAccessPolicy",
-      "resourceGroup": "[parameters('diskCmkKeyVaultResourceGroup')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]",
-        "[resourceId(parameters('dbfsCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksDbfsCMKAccessPolicy')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "0.9.0.0",
-          "resources": [
-            {
-              "type": "Microsoft.KeyVault/vaults/accessPolicies",
-              "apiVersion": "2019-09-01",
-              "name": "[concat(parameters('diskCmkKeyVaultName'), '/add')]",
-              "properties": {
-                "accessPolicies": [
-                  {
-                    "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').managedDiskIdentity.principalId]",
-                    "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').managedDiskIdentity.tenantId]",
-                    "permissions": {
-                      "keys": [
-                        "get",
-                        "wrapKey",
-                        "unwrapKey"
-                      ]
-                    }
-                  }
-                ]
-              }
+        },
+        "azureDatabricksAppObjectId": {
+            "type": "String",
+            "metadata": {
+                "description": "The object id of AzureDatabricks application in your tenant. Application ID: 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d"
             }
-          ]
+        },
+        "requireInfrastructureEncryption": {
+            "defaultValue": false,
+            "type": "Bool"
+        },
+        "msCmkKeyVaultResourceGroup": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Resource Group of the Key Vault that contains the CMK for managed services encryption"
+            }
+        },
+        "msCmkKeyVaultName": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Key Vault that contains the CMK for managed services encryption "
+            }
+        },
+        "msCmkKeyName": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Customer Managed Key used to encrypt managed services data"
+            }
+        },
+        "msCmkKeyVersion": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Version of the Customer Managed Key used to encrypt managed services data"
+            }
+        },
+        "dbfsCmkKeyVaultResourceGroup": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Resource Group of the Key Vault that contains the CMK for managed disks encryption"
+            }
+        },
+        "dbfsCmkKeyVaultName": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Key Vault that contains the CMK used for DBFS encryption"
+            }
+        },
+        "dbfsCmkKeyName": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Customer Managed Key used to encrypt DBFS data"
+            }
+        },
+        "dbfsCmkKeyVersion": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Version of the Customer Managed Key used to encrypt DBFS data"
+            }
+        },
+        "diskCmkKeyVaultResourceGroup": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Resource Group of the Key Vault that contains the CMK for managed disks encryption"
+            }
+        },
+        "diskCmkKeyVaultName": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Key Vault that contains the CMK used for managed disks encryption"
+            }
+        },
+        "diskCmkKeyName": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Customer Managed Key used to encrypt managed disks data"
+            }
+        },
+        "diskCmkKeyVersion": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Version of the Customer Managed Key used to encrypt managed disks data"
+            }
+        },
+        "DiskCmkKeyVaultUrl": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "uri"
+            }
+        },
+        "diskCmkEnableAutoRotation": {
+            "defaultValue": "false",
+            "allowedValues": [
+                "true",
+                "false"
+            ],
+            "type": "String"
         }
-      }
     },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
-      "name": "DatabricksDbfsCMKEnable",
-      "dependsOn": [
-        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]",
-        "[resourceId(parameters('dbfsCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksDbfsCMKAccessPolicy')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "0.9.0.0",
-          "resources": [
-            {
-              "type": "Microsoft.Databricks/workspaces",
-              "apiVersion": "2023-02-01",
-              "name": "[parameters('workspaceName')]",
-              "location": "[resourceGroup().location]",
-              "sku": {
-                "name": "[parameters('pricingTier')]"
-              },
-              "properties": {
-                "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
-                "encryption": {
-                  "entities": {
-                    "managedDisk": {
-                      "keySource": "Microsoft.Keyvault",
-                      "keyVaultProperties": {
-                        "keyVaultUri": "[variables('trimmedDiskCmkKeyVaultUrl')]",
-                        "keyName": "[parameters('diskCmkKeyName')]",
-                        "keyVersion": "[parameters('diskCmkKeyVersion')]"
-                      },
-                      "rotationToLatestKeyVersionEnabled": "[parameters('diskCmkEnableAutoRotation')]"
-                    },
-                    "managedServices": {
-                      "keySource": "Microsoft.Keyvault",
-                      "keyVaultProperties": {
-                        "keyVaultUri": "[parameters('msCmkKeyVaultUrl')]",
-                        "keyName": "[parameters('msCmkKeyName')]",
-                        "keyVersion": "[parameters('msCmkKeyVersion')]"
-                      }
-                    }
-                  }
-                },
-                "parameters": {
-                  "prepareEncryption": {
-                    "value": true
-                  },
-                  "encryption": {
-                    "value": {
-                      "keySource": "Microsoft.Keyvault",
-                      "keyvaulturi": "[parameters('dbfsCmkKeyVaultUrl')]",
-                      "KeyName": "[parameters('dbfsCmkKeyName')]",
-                      "keyversion": "[parameters('dbfsCmkKeyVersion')]"
-                    }
-                  },
-                  "enableNoPublicIp": {
-                    "value": true
-                  },
-                  "requireInfrastructureEncryption": {
-                    "value": "[parameters('requireInfrastructureEncryption')]"
-                  }
+    "variables": {
+        "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
+        "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+        "cmkKeyVaultUrl": "[concat('https://', parameters('msCmkKeyVaultName'), environment().suffixes.keyvaultDns)]",
+        "dbfsCmkKeyVaultUrl": "[concat('https://', parameters('dbfsCmkKeyVaultName'), environment().suffixes.keyvaultDns)]",
+        "trimmedDiskCmkKeyVaultUrl": "[replace(parameters('DiskCmkKeyVaultUrl'), '.net/', '.net')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "DatabricksManagedServicesCMKAccessPolicy",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "0.9.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+                            "apiVersion": "2019-09-01",
+                            "name": "[concat(parameters('msCmkKeyVaultName'), '/add')]",
+                            "properties": {
+                                "accessPolicies": [
+                                    {
+                                        "objectId": "[parameters('azureDatabricksAppObjectId')]",
+                                        "tenantId": "[subscription().tenantId]",
+                                        "permissions": {
+                                            "keys": [
+                                                "get",
+                                                "wrapKey",
+                                                "unwrapKey"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
                 }
-              }
+            },
+            "resourceGroup": "[parameters('msCmkKeyVaultResourceGroup')]"
+        },
+        {
+            "type": "Microsoft.Databricks/workspaces",
+            "apiVersion": "2023-02-01",
+            "name": "[parameters('workspaceName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId(parameters('msCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksManagedServicesCMKAccessPolicy')]"
+            ],
+            "sku": {
+                "name": "[parameters('pricingTier')]"
+            },
+            "properties": {
+                "managedResourceGroupId": "[variables('managedResourceGroupId')]",
+                "parameters": {
+                    "enableNoPublicIp": {
+                        "value": true
+                    },
+                    "prepareEncryption": {
+                        "value": true
+                    },
+                    "requireInfrastructureEncryption": {
+                        "value": "[parameters('requireInfrastructureEncryption')]"
+                    }
+                },
+                "encryption": {
+                    "entities": {
+                        "managedDisk": {
+                            "keySource": "Microsoft.Keyvault",
+                            "keyVaultProperties": {
+                                "keyVaultUri": "[variables('trimmedDiskCmkKeyVaultUrl')]",
+                                "keyName": "[parameters('diskCmkKeyName')]",
+                                "keyVersion": "[parameters('diskCmkKeyVersion')]"
+                            },
+                            "rotationToLatestKeyVersionEnabled": "[parameters('diskCmkEnableAutoRotation')]"
+                        },
+                        "managedServices": {
+                            "keySource": "Microsoft.Keyvault",
+                            "keyVaultProperties": {
+                                "keyVaultUri": "[variables('cmkKeyVaultUrl')]",
+                                "keyName": "[parameters('msCmkKeyName')]",
+                                "keyVersion": "[parameters('msCmkKeyVersion')]"
+                            }
+                        }
+                    }
+                }
             }
-          ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "DatabricksDbfsCMKAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "0.9.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+                            "apiVersion": "2019-09-01",
+                            "name": "[concat(parameters('dbfsCmkKeyVaultName'), '/add')]",
+                            "properties": {
+                                "accessPolicies": [
+                                    {
+                                        "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').storageAccountIdentity.principalId]",
+                                        "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').storageAccountIdentity.tenantId]",
+                                        "permissions": {
+                                            "keys": [
+                                                "get",
+                                                "wrapKey",
+                                                "unwrapKey"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "[parameters('dbfsCmkKeyVaultResourceGroup')]"
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "name": "DatabricksManagedDiskCMKAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]",
+                "[resourceId(parameters('dbfsCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksDbfsCMKAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "0.9.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+                            "apiVersion": "2019-09-01",
+                            "name": "[concat(parameters('diskCmkKeyVaultName'), '/add')]",
+                            "properties": {
+                                "accessPolicies": [
+                                    {
+                                        "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').managedDiskIdentity.principalId]",
+                                        "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2023-02-01').managedDiskIdentity.tenantId]",
+                                        "permissions": {
+                                            "keys": [
+                                                "get",
+                                                "wrapKey",
+                                                "unwrapKey"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "[parameters('diskCmkKeyVaultResourceGroup')]"
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-05-01",
+            "name": "DatabricksDbfsCMKEnable",
+            "dependsOn": [
+                "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]",
+                "[resourceId(parameters('dbfsCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksDbfsCMKAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "0.9.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Databricks/workspaces",
+                            "apiVersion": "2023-02-01",
+                            "name": "[parameters('workspaceName')]",
+                            "location": "[resourceGroup().location]",
+                            "sku": {
+                                "name": "[parameters('pricingTier')]"
+                            },
+                            "properties": {
+                                "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
+                                "encryption": {
+                                    "entities": {
+                                        "managedDisk": {
+                                            "keySource": "Microsoft.Keyvault",
+                                            "keyVaultProperties": {
+                                                "keyVaultUri": "[variables('trimmedDiskCmkKeyVaultUrl')]",
+                                                "keyName": "[parameters('diskCmkKeyName')]",
+                                                "keyVersion": "[parameters('diskCmkKeyVersion')]"
+                                            },
+                                            "rotationToLatestKeyVersionEnabled": "[parameters('diskCmkEnableAutoRotation')]"
+                                        },
+                                        "managedServices": {
+                                            "keySource": "Microsoft.Keyvault",
+                                            "keyVaultProperties": {
+                                                "keyVaultUri": "[variables('cmkKeyVaultUrl')]",
+                                                "keyName": "[parameters('msCmkKeyName')]",
+                                                "keyVersion": "[parameters('msCmkKeyVersion')]"
+                                            }
+                                        }
+                                    }
+                                },
+                                "parameters": {
+                                    "prepareEncryption": {
+                                        "value": true
+                                    },
+                                    "encryption": {
+                                        "value": {
+                                            "keySource": "Microsoft.Keyvault",
+                                            "keyvaulturi": "[variables('dbfsCmkKeyVaultUrl')]",
+                                            "KeyName": "[parameters('dbfsCmkKeyName')]",
+                                            "keyversion": "[parameters('dbfsCmkKeyVersion')]"
+                                        }
+                                    },
+                                    "enableNoPublicIp": {
+                                        "value": true
+                                    },
+                                    "requireInfrastructureEncryption": {
+                                        "value": "[parameters('requireInfrastructureEncryption')]"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
         }
-      }
+    ],
+    "outputs": {
+        "workspaceId": {
+            "type": "String",
+            "value": "[reference(parameters('workspaceName')).workspaceId]"
+        },
+        "workspaceURL": {
+            "type": "String",
+            "value": "[reference(parameters('workspaceName')).workspaceUrl]"
+        },
+        "workspaceResourceId": {
+            "type": "String",
+            "value": "[resourceID('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
+        }
     }
-  ],
-  "outputs": {
-    "workspaceId": {
-      "type": "string",
-      "value": "[reference(parameters('workspaceName')).workspaceId]"
-    },
-    "workspaceURL": {
-      "type": "string",
-      "value": "[reference(parameters('workspaceName')).workspaceUrl]"
-    },
-    "workspaceResourceId": {
-      "type": "string",
-      "value": "[resourceID('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
-    }
-  }
 }
