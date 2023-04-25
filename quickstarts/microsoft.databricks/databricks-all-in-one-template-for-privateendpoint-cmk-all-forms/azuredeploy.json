@@ -84,6 +84,13 @@
                 "description": "Version of the Customer Managed Key used to encrypt managed disks data"
             }
         },
+        "diskCmkKeyVaultUrl": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "uri"
+            }
+        },
         "diskCmkEnableAutoRotation": {
             "type": "string",
             "defaultValue": "false",
@@ -218,9 +225,9 @@
         "privateEndpointName": "[concat(parameters('workspaceName'), '-', 'pvtEndpoint')]",
         "privateDnsZoneName": "privatelink.azuredatabricks.net",
         "pvtEndpointDnsGroupName": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]",
-        "msCmkKeyVaultUrl": "[concat('https://', parameters('msCmkKeyVaultName'), environment().suffixes.keyvaultDns)]",
-        "dbfsCmkKeyVaultUrl": "[concat('https://', parameters('dbfsCmkKeyVaultName'), environment().suffixes.keyvaultDns)]",
-        "diskCmkKeyVaultUrl": "[concat('https://', parameters('diskCmkKeyVaultName'), environment().suffixes.keyvaultDns)]"
+        "msCmkKeyVaultUrl": "[uri(format('https://{0}{1}', parameters('msCmkKeyVaultName'), environment().suffixes.keyvaultDns), '/')]",
+	    "dbfsCmkKeyVaultUrl": "[uri(format('https://{0}{1}', parameters('dbfsCmkKeyVaultName'), environment().suffixes.keyvaultDns), '/')]",
+        "trimmedDiskCmkKeyVaultUrl": "[replace(parameters('diskCmkKeyVaultUrl'), '.net/', '.net')]"
     },
     "functions": [],
     "resources": [
@@ -355,7 +362,7 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2021-08-01",
+            "apiVersion": "2022-09-01",
             "name": "[parameters('vnetName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -451,7 +458,7 @@
                         "managedDisk": {
                             "keySource": "Microsoft.Keyvault",
                             "keyVaultProperties": {
-                                "keyVaultUri": "[variables('diskCmkKeyVaultUrl')]",
+                                "keyVaultUri": "[variables('trimmedDiskCmkKeyVaultUrl')]",
                                 "keyName": "[parameters('diskCmkKeyName')]",
                                 "keyVersion": "[parameters('diskCmkKeyVersion')]"
                             },
@@ -487,7 +494,7 @@
                     "resources": [
                         {
                             "type": "Microsoft.KeyVault/vaults/accessPolicies",
-                            "apiVersion": "2022-09-01",
+                            "apiVersion": "2022-11-01",
                             "name": "[concat(parameters('dbfsCmkKeyVaultName'), '/add')]",
                             "properties": {
                                 "accessPolicies": [
@@ -578,7 +585,7 @@
                                         "managedDisk": {
                                             "keySource": "Microsoft.Keyvault",
                                             "keyVaultProperties": {
-                                                "keyVaultUri": "[variables('diskCmkKeyVaultUrl')]",
+                                                "keyVaultUri": "[variables('trimmedDiskCmkKeyVaultUrl')]",
                                                 "keyName": "[parameters('diskCmkKeyName')]",
                                                 "keyVersion": "[parameters('diskCmkKeyVersion')]"
                                             },
