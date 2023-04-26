@@ -8,7 +8,7 @@ resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2022-03
   name: azureStackEdgeName
   location: location
   sku: {
-    name: 'management'
+    name: 'Management'
     tier: 'Standard'
   }
 }
