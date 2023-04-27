@@ -28,15 +28,6 @@ param adminPassword string
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-@description('Secure Boot setting of the virtual machine.')
-param secureBoot bool = true
-
-@description('vTPM setting of the virtual machine.')
-param vTPM bool = true
-
-@description('Custom Attestation Endpoint to attest to. By default, MAA and ASC endpoints are empty and Azure values are populated based on the location of the VM.')
-param maaEndpoint string = ''
-
 @description('Name for the Public IP used to access the virtual machine scale set.')
 param publicIpName string = 'myPublicIP'
 
@@ -78,6 +69,13 @@ param maxUnhealthyInstancePercent int = 20
 param maxUnhealthyUpgradedInstancePercent int = 20
 param pauseTimeBetweenBatches string = 'PT5S'
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
 var namingInfix = toLower(substring('${vmssName}${uniqueString(resourceGroup().id)}', 0, 9))
 var addressPrefix = '10.0.0.0/16'
 var subnetPrefix = '10.0.0.0/24'
@@ -115,8 +113,14 @@ var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
 var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
-var disableAlerts = 'false'
-var useAlternateToken = 'false'
+var maaEndpoint = substring('emptyString', 0, 0)
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
 var rollingUpgradeJson = {
   maxBatchInstancePercent: maxBatchInstancePercent
   maxUnhealthyInstancePercent: maxUnhealthyInstancePercent
@@ -220,13 +224,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
         adminUsername: adminUsername
         adminPassword: adminPassword
       }
-      securityProfile: {
-        securityType: 'TrustedLaunch'
-        uefiSettings: {
-          secureBootEnabled: secureBoot
-          vTpmEnabled: vTPM
-        }
-      }
+      securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
       networkProfile: {
         networkInterfaceConfigurations: [
           {
@@ -269,7 +267,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
               settings: {
                 protocol: healthExtensionProtocol
                 port: healthExtensionPort
-                requestPath: ((healthExtensionProtocol == 'TCP') ? json('null') : healthExtensionRequestPath)
+                requestPath: ((healthExtensionProtocol == 'TCP') ? null : healthExtensionRequestPath)
               }
             }
           }
@@ -285,7 +283,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
     overprovision: overprovision
     upgradePolicy: {
       mode: upgradePolicy
-      rollingUpgradePolicy: ((upgradePolicy == 'Rolling') ? rollingUpgradeJson : json('null'))
+      rollingUpgradePolicy: ((upgradePolicy == 'Rolling') ? rollingUpgradeJson : null)
       automaticOSUpgradePolicy: {
         enableAutomaticOSUpgrade: true
       }
@@ -297,7 +295,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
   ]
 }
 
-resource vmssExtension 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = if (vTPM && secureBoot) {
+resource vmssExtension 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
   parent: vmss
   name: extensionName
   location: location
@@ -306,18 +304,13 @@ resource vmssExtension 'Microsoft.Compute/virtualMachineScaleSets/extensions@202
     type: extensionName
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
     settings: {
       AttestationConfig: {
         MaaSettings: {
           maaEndpoint: maaEndpoint
           maaTenantName: maaTenantName
         }
-        AscSettings: {
-          ascReportingEndpoint: substring(maaEndpoint, 0, 0)
-          ascReportingFrequency: substring(maaEndpoint, 0, 0)
-        }
-        useCustomToken: useAlternateToken
-        disableAlerts: disableAlerts
       }
     }
   }
