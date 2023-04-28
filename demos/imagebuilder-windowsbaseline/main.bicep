@@ -28,6 +28,8 @@ param imageDefinitionProperties object = {
   sku: '2022-Datacenter'
 }
 
+param vmSize string = 'Standard_D2_v3'
+
 @description('Name of the template to create in Azure Image Builder.')
 param imageTemplateName string = 'Win2022_AzureWindowsBaseline_Template'
 
@@ -141,7 +143,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
   properties: {
     buildTimeoutInMinutes: 60
     vmProfile: {
-      vmSize: 'Standard_D2_v3'
+      vmSize: vmSize
       osDiskSizeGB: 127
     }
     source: {
