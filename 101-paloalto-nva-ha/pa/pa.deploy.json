@@ -1,0 +1,543 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2"
+            ],
+            "defaultValue": "Standard_DS3_v2",
+            "metadata": {
+                "description": "Azure VM size for VM-Series"
+            }
+        },
+        "PAVersion": {
+            "type": "string",
+            "allowedValues": [
+                "7.1.1",
+                "8.0.0",
+                "8.1.15",
+                "9.0.1",
+                "9.1.0",
+                "latest"
+            ],
+            "defaultValue": "latest",
+            "metadata": {
+                "description": "Version of PanOS to use."
+            }
+        },
+        "PACount": {
+            "type": "int",
+            "minValue": 1,
+            "defaultValue": 2,
+            "metadata": {
+                "description": "Number of virtual Palo Alto appliances you wish to deploy."
+            }
+        },
+        "VNetName": {
+            "type": "string",
+            "defaultValue": "HubVNET",
+            "metadata": {
+                "description": "The name of the virtual network the Palo Alto devices should be deployed to."
+            }
+        },
+        "VNetRG": {
+            "type": "string",
+            "defaultValue": "azpa-rg",
+            "metadata": {
+                "description": "The name of the resource group your virtual network is in."
+            }
+        },
+        "envPrefix": {
+            "type": "string",
+            "defaultValue": "Contoso-FW"
+        },
+        "manPrivateIPPrefix": {
+            "type": "string",
+            "defaultValue": "10.4.255."
+        },
+        "manPrivateIPFirst": {
+            "type": "int",
+            "defaultValue": 4
+        },
+        "trustPrivateIPPrefix": {
+            "type": "string",
+            "defaultValue": "10.4.254."
+        },
+        "trustPrivateIPFirst": {
+            "type": "int",
+            "defaultValue": 4
+        },
+        "untrustPrivateIPPrefix": {
+            "type": "string",
+            "defaultValue": "10.4.251."
+        },
+        "untrustPrivateIPFirst": {
+            "type": "int",
+            "defaultValue": 4
+        },
+        "managementSubnetName": {
+            "type": "string",
+            "defaultValue": "Management"
+        },
+        "trustSubnetName": {
+            "type": "string",
+            "defaultValue": "Trust"
+        },
+        "untrustSubnetName": {
+            "type": "string",
+            "defaultValue": "Untrust"
+        },
+        "Username": {
+            "type": "string",
+            "defaultValue": "paloalto",
+            "metadata": {
+                "description": "The name of the pivileged account that should be used to ssh and login to the PanOS web portal."
+            }
+        },
+        "Password": {
+            "type": "securestring",
+            "defaultValue": "P@l0@lt0!dem0$",
+            "maxLength": 31,
+            "metadata": {
+                "description": "Password to the privileged account used to ssh and login to the PanOS web portal."
+            }
+        }
+    },
+    "variables": {
+        "imagePublisher": "paloaltonetworks",
+        "imageSku": "byol",
+        "imageOffer": "vmseries-flex",
+        "uniqueId": "[uniqueString(resourceGroup().id)]",
+        "availabilitySetName": "[concat(parameters('envPrefix'),'-AS')]",
+        "managementNSGName": "[concat(parameters('envPrefix'),'-Management-NSG')]",
+        "untrustLBName": "[concat(parameters('envPrefix'),'-Untrust-LB')]",
+        "trustLBName": "[concat(parameters('envPrefix'),'-Trust-LB')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-03-01",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('availabilitySetName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "properties": {
+                "platformUpdateDomainCount": 20,
+                "platformFaultDomainCount": 2
+            },
+            "sku": {
+                "name": "Aligned"
+            }
+        },
+        {
+            "apiVersion": "2020-11-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('managementNSGName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow-SSH",
+                        "properties": {
+                            "description": "Allow SSH access to Palo Management Interface",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Allow-HTTPS",
+                        "properties": {
+                            "description": "Allow HTTPS access to Palo Management Interface",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Management-PIP')]",
+            "apiVersion": "2020-11-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "[concat('fw',copyIndex(1),'management', variables('uniqueId'))]"
+                }
+            },
+            "copy": {
+                "name": "managementPIPCopy",
+                "count": "[parameters('PACount')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Untrust-PIP')]",
+            "apiVersion": "2020-11-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "[concat('fw',copyIndex(1),'untrust', variables('uniqueId'))]"
+                }
+            },
+            "copy": {
+                "name": "UntrustPIPCopy",
+                "count": "[parameters('PACount')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(variables('untrustLBName'),'-PIP')]",
+            "apiVersion": "2020-11-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "[concat('lbfw', variables('uniqueId'))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-11-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Management-NIC')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('envPrefix'),'-',copyIndex(1),'-Management-PIP'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('managementNSGName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Management')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIpAddress": "[concat(parameters('manPrivateIPPrefix'),copyIndex(parameters('manPrivateIPFirst')))]",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('envPrefix'),'-',copyIndex(1),'-Management-PIP'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId(parameters('VNetRG'), 'Microsoft.Network/virtualNetworks', parameters('VNetName')), '/subnets/', parameters('managementSubnetName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('managementNSGName'))]"
+                }
+            },
+            "copy": {
+                "name": "managementNICCopy",
+                "count": "[parameters('PACount')]"
+            }
+        },
+        {
+            "apiVersion": "2020-11-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Untrust-NIC')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('untrustLBName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('envPrefix'),'-',copyIndex(1),'-Untrust-PIP'))]"
+            ],
+            "properties": {
+                "enableIPForwarding": true,
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Untrust')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIpAddress": "[concat(parameters('untrustPrivateIPPrefix'),copyIndex(add(parameters('untrustPrivateIPFirst'),1)))]",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('envPrefix'),'-',copyIndex(1),'-Untrust-PIP'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId(parameters('VNetRG'), 'Microsoft.Network/virtualNetworks', parameters('VNetName')), '/subnets/', parameters('untrustSubnetName'))]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('untrustLBName')), '/backendAddressPools/', variables('availabilitySetName'))]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "copy": {
+                "name": "UntrustNICCopy",
+                "count": "[parameters('PACount')]"
+            }
+        },
+        {
+            "apiVersion": "2020-11-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Trust-NIC')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('trustLBName'))]"
+            ],
+            "properties": {
+                "enableIPForwarding": true,
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('envPrefix'),'-',copyIndex(1),'-Trust')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIpAddress": "[concat(parameters('trustPrivateIPPrefix'),copyIndex(add(parameters('trustPrivateIPFirst'),1)))]",
+                            "subnet": {
+                                "id": "[concat(resourceId(parameters('VNetRG'), 'Microsoft.Network/virtualNetworks', parameters('VNetName')), '/subnets/', parameters('trustSubnetName'))]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('trustLBName')), '/backendAddressPools/', variables('availabilitySetName'))]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "copy": {
+                "name": "TrustNICCopy",
+                "count": "[parameters('PACount')]"
+            }
+        },
+        {
+            "apiVersion": "2021-03-01",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('envPrefix'),'-',copyIndex(1))]",
+            "location": "[resourceGroup().location]",
+            "plan": {
+                "name": "[variables('imageSku')]",
+                "product": "[variables('imageOffer')]",
+                "publisher": "[variables('imagePublisher')]"
+            },
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('envPrefix'),copyIndex(1))]",
+                    "adminUsername": "[parameters('Username')]",
+                    "adminPassword": "[parameters('Password')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('imageSku')]",
+                        "version": "[parameters('PAVersion')]"
+                    },
+                    "osDisk": {
+                        "name": "[concat(parameters('envPrefix'),copyIndex(1),'_OSDisk')]",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('envPrefix'),'-',copyIndex(1),'-Management-NIC'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        },
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('envPrefix'),'-',copyIndex(1),'-Untrust-NIC'))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        },
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('envPrefix'),'-',copyIndex(1),'-Trust-NIC'))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('envPrefix'),'-',copyIndex(1),'-Management-NIC'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('envPrefix'),'-',copyIndex(1),'-Untrust-NIC'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('envPrefix'),'-',copyIndex(1),'-Trust-NIC'))]",
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+            ],
+            "copy": {
+                "name": "PAVMCopy",
+                "count": "[parameters('PACount')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[variables('untrustLBName')]",
+            "apiVersion": "2020-11-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[concat(variables('untrustLBName'),'-FrontEnd')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('untrustLBName'),'-PIP'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('availabilitySetName')]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "LB-Public-HTTP",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('untrustLBName')), '/frontendIPConfigurations/', variables('untrustLBName'),'-FrontEnd')]"
+                            },
+                            "frontendPort": 80,
+                            "backendPort": 80,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "loadDistribution": "Default",
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('untrustLBName')), '/backendAddressPools/',variables('availabilitySetName'))]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('untrustLBName')), '/probes/TCP-22')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "TCP-22",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 22,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "inboundNatRules": [],
+                "outboundNatRules": [],
+                "inboundNatPools": []
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('untrustLBName'),'-PIP'))]",
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[variables('trustLBName')]",
+            "apiVersion": "2020-11-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[concat(variables('trustLBName'),'-FrontEnd')]",
+                        "properties": {
+                            "privateIPAddress": "[concat(parameters('trustPrivateIPPrefix'),parameters('trustPrivateIPFirst'))]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[concat(resourceId(parameters('VNetRG'), 'Microsoft.Network/virtualNetworks', parameters('VNetName')), '/subnets/', parameters('trustSubnetName'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('availabilitySetName')]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "Allow-All-Out",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('trustLBName')), '/frontendIPConfigurations/', variables('trustLBName'),'-FrontEnd')]"
+                            },
+                            "frontendPort": 0,
+                            "backendPort": 0,
+                            "enableFloatingIP": true,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "All",
+                            "loadDistribution": "Default",
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('trustLBName')), '/backendAddressPools/', variables('availabilitySetName'))]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('trustLBName')), '/probes/TCP-22')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "TCP-22",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 22,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "inboundNatRules": [],
+                "outboundNatRules": [],
+                "inboundNatPools": []
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+            ]
+        }
+    ],
+    "outputs": {}
+}
