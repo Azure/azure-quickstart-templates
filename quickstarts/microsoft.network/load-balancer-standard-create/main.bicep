@@ -149,12 +149,12 @@ resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${projectName}-vm${range(1, 3)[i]}-networkInterface')
+          id: resourceId('Microsoft.Network/networkInterfaces', '${projectName}-vm${i}-networkInterface')
         }
       ]
     }
     osProfile: {
-      computerName: '${projectName}-vm${range(1, 3)[i]}'
+      computerName: '${projectName}-vm${i}'
       adminUsername: adminUsername
       adminPassword: adminPassword
       windowsConfiguration: {
@@ -175,8 +175,8 @@ resource project_vm_1 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in
   ]
 }]
 
-resource projectName_vm_1_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = [for i in range(0, length(range(1, 3))): if (vTPM && secureBoot) {
-  name: '${projectName}-vm${range(1, 3)[i]}/GuestAttestation'
+resource projectName_vm_1_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = [for i in range(1, 3): if (vTPM && secureBoot) {
+  name: '${projectName}-vm${i}/GuestAttestation'
   location: location
   properties: {
     publisher: extensionPublisher
