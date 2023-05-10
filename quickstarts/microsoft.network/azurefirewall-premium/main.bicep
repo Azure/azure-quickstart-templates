@@ -93,8 +93,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
     tenantId: subscription().tenantId
     accessPolicies: [
       {
-        objectId: reference(DemoIdentity.id, '2018-11-30').principalId
-        tenantId: reference(DemoIdentity.id, '2018-11-30').tenantId
+        objectId: DemoIdentity.properties.principalId
+        tenantId: DemoIdentity.properties.tenantId
         permissions: {
           secrets: [
             'get'
@@ -112,7 +112,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 
 resource keyVaultName_keyVaultCASecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   parent: keyVault
-  name: '${keyVaultCASecretName}'
+  name: keyVaultCASecretName
   location: location
   properties: {
     value: CreateAndDeployCertificates.properties.outputs.interca
@@ -338,7 +338,7 @@ resource DemoFirewallPolicy 'Microsoft.Network/firewallPolicies@2020-07-01' = {
     transportSecurity: {
       certificateAuthority: {
         name: keyVaultCASecretName
-        keyVaultSecretId: '${reference(keyVault.id, '2019-09-01').vaultUri}secrets/${keyVaultCASecretName}/'
+        keyVaultSecretId: '${keyVault.properties.vaultUri}secrets/${keyVaultCASecretName}/'
       }
     }
     intrusionDetection: {
