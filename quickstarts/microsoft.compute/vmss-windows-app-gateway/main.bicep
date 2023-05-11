@@ -116,7 +116,7 @@ resource appGw 'Microsoft.Network/applicationGateways@2020-05-01' = {
     sku: {
       name: 'Standard_Large'
       tier: 'Standard'
-      capacity: '10'
+      capacity: 10
     }
     gatewayIPConfigurations: [
       {
