@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create an Azure Databricks workspace with managed services and CMK.
+description: This template allows you to create an Azure Databricks workspace with managed services and CMK with DBFS encryption.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: databricks-workspace-with-customer-managed-keys-all-forms
 languages:
 - json
 ---
-# Deploy an Azure Databricks Workspace with customer managed keys all forms.
+# Deploy an Azure Databricks Workspace with all 3 forms of CMK
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-customer-managed-keys-all-forms/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-workspace-with-customer-managed-keys-all-forms/PublicDeployment.svg)
