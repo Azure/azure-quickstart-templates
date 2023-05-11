@@ -149,7 +149,6 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2020-05-01' = {
   }
   sku: {
     name: 'Basic'
-    tier: 'Regional'
   }
 }
 
