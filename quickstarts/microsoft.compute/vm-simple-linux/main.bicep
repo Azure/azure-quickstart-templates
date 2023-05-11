@@ -210,7 +210,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
-    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
   }
 }
 
@@ -223,6 +223,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
     type: extensionName
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
     settings: {
       AttestationConfig: {
         MaaSettings: {

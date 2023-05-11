@@ -32,6 +32,7 @@ param skuName string = 'GP_Gen5'
 
 @description('Enter number of vCores.')
 @allowed([
+  4
   8
   16
   24
