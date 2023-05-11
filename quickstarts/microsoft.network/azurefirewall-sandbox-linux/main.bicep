@@ -81,9 +81,9 @@ var networkSecurityGroupName = '${serversSubnetName}-nsg'
 var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPAddresses): {
   name: 'IpConf${i}'
   properties: {
-    subnet: ((i == 0) ? azureFirewallSubnetJSON : json('null'))
+    subnet: ((i == 0) ? azureFirewallSubnetJSON : null)
     publicIPAddress: {
-      id: resourceId('Microsoft.Network/publicIPAddresses', concat(publicIPNamePrefix, (i + 1)))
+      id: resourceId('Microsoft.Network/publicIPAddresses', '${publicIPNamePrefix}${(i + 1)}')
     }
   }
 }]
@@ -164,7 +164,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
 }
 
 resource publicIPNamePrefix_1 'Microsoft.Network/publicIPAddresses@2019-04-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
-  name: concat(publicIPNamePrefix, (i + 1))
+  name: '${publicIPNamePrefix}${(i + 1)}'
   location: location
   sku: {
     name: 'Standard'
@@ -277,7 +277,7 @@ resource JumpBox 'Microsoft.Compute/virtualMachines@2020-12-01' = {
       computerName: 'JumpBox'
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     networkProfile: {
       networkInterfaces: [
@@ -351,7 +351,7 @@ resource Server 'Microsoft.Compute/virtualMachines@2020-12-01' = {
       computerName: 'Server'
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     networkProfile: {
       networkInterfaces: [
@@ -406,7 +406,7 @@ resource Server_extension 'Microsoft.Compute/virtualMachines/extensions@2022-03-
 resource firewall 'Microsoft.Network/azureFirewalls@2020-07-01' = {
   name: firewallName
   location: location
-  zones: ((length(availabilityZones) == 0) ? json('null') : availabilityZones)
+  zones: ((length(availabilityZones) == 0) ? null : availabilityZones)
   properties: {
     ipConfigurations: azureFirewallIpConfigurations
     applicationRuleCollections: [
@@ -422,11 +422,11 @@ resource firewall 'Microsoft.Network/azureFirewalls@2020-07-01' = {
               name: 'appRule1'
               protocols: [
                 {
-                  port: '80'
+                  port: 80
                   protocolType: 'http'
                 }
                 {
-                  port: '443'
+                  port: 443
                   protocolType: 'https'
                 }
               ]
