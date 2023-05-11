@@ -117,7 +117,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
 
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
   name: networkSecurityGroupName
-  location: location
+  location: location   
   properties: {
     securityRules: [
       {
@@ -162,7 +162,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = {
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(0, numberOfVms): {
-  name: concat(nicName, i)
+  name: '${nicName}${i}'
   location: location
   properties: {
     ipConfigurations: [
@@ -180,7 +180,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-05-01' = [for i in range(
           ]
           loadBalancerInboundNatRules: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/inboundNatRules', lbName, concat(inboundNatRuleName, i))
+              id: resourceId('Microsoft.Network/loadBalancers/inboundNatRules', lbName, '${inboundNatRuleName}${i}')
             }
           ]
         }
@@ -250,8 +250,8 @@ resource lb 'Microsoft.Network/loadBalancers@2020-05-01' = {
 }
 
 resource lbName_inboundNatRule 'Microsoft.Network/loadBalancers/inboundNatRules@2020-05-01' = [for i in range(0, numberOfVms): {
-  name: '${lbName}/${inboundNatRuleName}${i}'
-  location: location
+  parent: lb
+  name: '${inboundNatRuleName}${i}'
   properties: {
     frontendIPConfiguration: {
       id: frontEndIPConfigID
@@ -261,13 +261,10 @@ resource lbName_inboundNatRule 'Microsoft.Network/loadBalancers/inboundNatRules@
     backendPort: ((windowsOrUbuntu == 'Windows') ? 3389 : 22)
     enableFloatingIP: false
   }
-  dependsOn: [
-    lb
-  ]
 }]
 
 resource dns 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0, numberOfVms): {
-  name: concat(dnsName, i)
+  name: '${dnsName}${i}'
   location: location
   zones: split(string(((i % 3) + 1)), ',')
   properties: {
@@ -275,10 +272,10 @@ resource dns 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0,
       vmSize: vmSize
     }
     osProfile: {
-      computerName: concat(dnsName, i)
+      computerName: '${dnsName}${i}'
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     storageProfile: {
       imageReference: ((windowsOrUbuntu == 'Windows') ? windowsImage : linuxImage)
@@ -289,7 +286,7 @@ resource dns 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0,
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', concat(nicName, i))
+          id: resourceId('Microsoft.Network/networkInterfaces', '${nicName}${i}')
         }
       ]
     }
