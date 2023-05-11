@@ -20,6 +20,7 @@ param basename string
   'southeastasia'
   'swedencentral'
   'switzerlandnorth'
+  'westcentralus'
   'westeurope'
   'westus2'
   'westus3'
