@@ -62,14 +62,14 @@ var imagePublisher = 'MicrosoftWindowsServer'
 var imageSKU = OSVersion
 var lbName = 'myLB'
 var networkSecurityGroupName = '${subnetName}-nsg'
-var nic1NamePrefix_var = 'nic1'
-var nic2NamePrefix_var = 'nic2'
+var nic1NamePrefix_Name = 'nic1'
+var nic2NamePrefix_Name = 'nic2'
 var publicIPAddressName = 'myPublicIP'
 var publicIPAddressType = 'Dynamic'
 var storageAccountType = 'Standard_LRS'
 var subnetName = 'Subnet-1'
 var subnetPrefix = '10.0.0.0/24'
-var vmNamePrefix_var = 'myVM'
+var vmNamePrefix_Name = 'myVM'
 var vnetName = 'myVNET'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
@@ -124,7 +124,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-05-0
 }
 
 resource nic1NamePrefix 'Microsoft.Network/networkInterfaces@2020-05-01' = {
-  name: nic1NamePrefix_var
+  name: nic1NamePrefix_Name
   location: location
   properties: {
     ipConfigurations: [
@@ -156,7 +156,7 @@ resource nic1NamePrefix 'Microsoft.Network/networkInterfaces@2020-05-01' = {
 }
 
 resource nic2NamePrefix 'Microsoft.Network/networkInterfaces@2020-05-01' = {
-  name: nic2NamePrefix_var
+  name: nic2NamePrefix_Name
   location: location
   properties: {
     ipConfigurations: [
@@ -188,14 +188,14 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
 }
 
 resource vmNamePrefix 'Microsoft.Compute/virtualMachines@2021-03-01' = {
-  name: vmNamePrefix_var
+  name: vmNamePrefix_Name
   location: location
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     osProfile: {
-      computerName: vmNamePrefix_var
+      computerName: vmNamePrefix_Name
       adminUsername: adminUsername
       adminPassword: adminPassword
     }
