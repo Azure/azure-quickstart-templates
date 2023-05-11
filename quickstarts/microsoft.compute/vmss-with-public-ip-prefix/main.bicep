@@ -217,7 +217,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-11-01' = {
         computerNamePrefix: vmssName
         adminUsername: adminUsername
         adminPassword: adminPasswordOrKey
-        linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+        linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
       }
       securityProfile: {
         uefiSettings: {
