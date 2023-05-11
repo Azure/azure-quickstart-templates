@@ -41,7 +41,7 @@ A single resource group that contains the following resources:
 
 ## Prerequisites
 
-No prerequistes neede for the deployment, if you want a Resource Group to host the resources can be created, otherwise a new resource group can be created at the moment of the deployment.
+No prerequisites needed for the deployment, if you want an existing Resource Group to host the resources can be used, otherwise a new resource group can be created at the moment of the deployment.
 
 ## Deployment steps
 
