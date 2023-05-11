@@ -229,7 +229,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
-    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
   }
 }
 
@@ -242,6 +242,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
     type: extensionName
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
     settings: {
       AttestationConfig: {
         MaaSettings: {

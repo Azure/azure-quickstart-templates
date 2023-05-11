@@ -4,13 +4,13 @@
     "parameters": {
         "location": {
             "defaultValue": "[resourceGroup().location]",
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "Location for all resources. The default is the Resource Group location."
             }
         },
         "existingVirtualNetworkName": {
-            "type": "String",
+            "type": "string",
             "minLength": 2,
             "maxLength": 80,
             "metadata": {
@@ -26,30 +26,54 @@
                 "description": "The Resource Group the existing Virtual Network is deployed in. Default is same RG."
             }
         },
-        "bastionEnable": {
+        "natGatewayEnable": {
             "type": "bool",
             "defaultValue": true,
+            "metadata": {
+                "description": "Deploy a NAT Gateway in the Virtual Network. If using an existing VNet and are using other firewall configurations, False may be required."
+            }
+        },
+        "existingRouteTable": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "If not deploying a NAT Gateway, you may need to provide an existing route table to attach to the new deployed vSensor subnet to allow internet routing."
+            }
+        },
+        "existingRouteTableResourceGroup": {
+            "type": "string",
+            "defaultValue": "same_RG",
+            "minLength": 1,
+            "maxLength": 64,
+            "metadata": {
+                "description": "The Resource Group the existing Route Table (if provided) is deployed in. Default is same RG."
+            }
+        },
+        "bastionEnable": {
+            "type": "bool",
+            "defaultValue": false,
             "metadata": {
                 "description": "Deploy a Azure Bastion host to access your vSensor deployment. If 'False' is selected, configure your ssh access manually after deployment."
             }
         },
         "bastionSubnetCIDR": {
-            "type": "String",
-            "minLength": 9,
+            "type": "string",
+            "defaultValue": "",
+            "minLength": 0,
             "maxLength": 18,
             "metadata": {
-                "description": "CIDR IP range of the private subnet the Azure Bastion will be deployed in (if deployed). This must be an unused range within the supplied vNet. E.g. 10.0.1.0/24. If Bastion Enable is false, this value may be set to an arbitrary CIDR and will be ignored."
+                "description": "CIDR IP range of the private subnet the Azure Bastion will be deployed in (if deployed). This must be an unused range within the supplied vNet. E.g. 10.0.1.0/24. If Bastion Enable is false, this value will be ignored."
             }
         },
         "MgmtSourceAddressOrRange": {
-            "type": "String",
+            "type": "string",
             "minLength": 7,
             "metadata": {
                 "description": "Provide a private address range using CIDR notation (e.g. 10.1.0.0/24), or an IP address (e.g. 192.168.99.21) for Management access via ssh (port 22/TCP). Set to 'VMSS Subnet CIDR' to not use this access. You can also provide a comma-separated list of IP addresses and/or address ranges (a valid comma-separated list is 10.1.0.4,10.2.1.0/24)."
             }
         },
         "VMSSSubnetCIDR": {
-            "type": "String",
+            "type": "string",
             "minLength": 9,
             "maxLength": 18,
             "metadata": {
@@ -61,10 +85,10 @@
             "metadata": {
                 "description": "The VM size. Check the Darktrace customer portal for more information about the vSensor Virtual Hardware requirements."
             },
-            "type": "String"
+            "type": "string"
         },
         "VMSSMinSize": {
-            "type": "Int",
+            "type": "int",
             "defaultValue": 1,
             "minValue": 1,
             "maxValue": 100,
@@ -73,7 +97,7 @@
             }
         },
         "VMSSMaxSize": {
-            "type": "Int",
+            "type": "int",
             "defaultValue": 5,
             "minValue": 1,
             "maxValue": 100,
@@ -82,7 +106,7 @@
             }
         },
         "adminUsername": {
-            "type": "String",
+            "type": "string",
             "minLength": 1,
             "maxLength": 32,
             "metadata": {
@@ -90,26 +114,27 @@
             }
         },
         "adminPublicKey": {
-            "type": "String",
+            "type": "string",
+            "defaultValue": "",
             "metadata": {
                 "description": "Public key for the admin username to ssh to the vSensors. Note that password authentication over ssh for newly created VMs is disabled."
             }
         },
         "VSensorUpdateKey": {
-            "type": "SecureString",
+            "type": "securestring",
             "metadata": {
                 "description": "Darktrace Update Key needed to install the vSensor package. Contact your Darktrace representative for more information."
             }
         },
         "applianceHostName": {
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "The FQDN or the IP of the Darktrace master instance (virtual/physical)."
             }
         },
         "appliancePort": {
             "defaultValue": 443,
-            "type": "Int",
+            "type": "int",
             "minValue": 1,
             "maxValue": 65535,
             "metadata": {
@@ -117,14 +142,14 @@
             }
         },
         "appliancePushToken": {
-            "type": "SecureString",
+            "type": "securestring",
             "maxLength": 128,
             "metadata": {
                 "description": "Push token to authenticate with the appliance. Should be generated on the Darktrace master instance."
             }
         },
         "OSSensorHMACToken": {
-            "type": "SecureString",
+            "type": "securestring",
             "minLength": 6,
             "maxLength": 62,
             "metadata": {
@@ -161,7 +186,7 @@
         "subnetTemplateName": "[concat(variables('prefix'), '-subnets-template')]",
         "subnetResourceGroup": "[if(equals(parameters('existingVirtualNetworkResourceGroup'),'same_RG'), resourceGroup().name, parameters('existingVirtualNetworkResourceGroup'))]",
         "subnetsTemplateRef": "[resourceId(variables('subnetResourceGroup'), 'Microsoft.Resources/deployments', variables('subnetTemplateName'))]",
-        
+        "existingRouteTableResourceGroup": "[if(equals(parameters('existingRouteTableResourceGroup'),'same_RG'), resourceGroup().name, parameters('existingRouteTableResourceGroup'))]",
         "MgmtSourceAddressOrRange": "[replace(parameters('MgmtSourceAddressOrRange'), ' ', '')]",
         "nsgSourceAddressPrefix": "[split(variables('MgmtSourceAddressOrRange'), ',')]",
         "nicName": "[concat(variables('prefix'), '-nic')]",
@@ -180,12 +205,13 @@
             "sku": "20_04-lts",
             "version": "latest"
         },
-        "resgpguid": "[replace(concat(substring(variables('prefix'),0, min(20, length(variables('prefix')))), substring(guid(resourceGroup().id), 0, 4)), '-', '')]",
+        "resgpguid": "[toLower(replace(concat(substring(variables('prefix'),0, min(16, length(variables('prefix')))), substring(guid(resourceGroup().id), 0, 8)), '-', ''))]",
         "blobStorageAccountName": "[variables('resgpguid')]",
         "blobStorageContainerName": "darktrace-vsensor-quickstart-pcaps",
         "blobStorageAccountRef": "[resourceId('Microsoft.Storage/storageAccounts/', variables('blobStorageAccountName'))]",
         "blobStorageLifecycleName": "[concat(variables('resgpguid'),'-lifecycle-policy')]",
         "serviceEndPointPolicyName": "[concat(variables('prefix'),'-pcaps')]",
+        "serviceEndPointPolicyDefinitionName": "Microsoft.Storage",
         "asgName": "[concat(variables('prefix'),'-asg')]",
         "logWorkspaceName": "[concat(variables('prefix'),'-workspace')]",
         "dataCollectionName": "[concat('MSVMI-', split(resourceId('Microsoft.OperationalInsights/workspaces', variables('logWorkspaceName')),'/')[8])]"
@@ -261,7 +287,7 @@
                     {
                         "name": "AllowOutboundHTTPS",
                         "properties": {
-                            "description": "Allow HTTPS traffic from vSensor to updates CDN/Master Appliance",
+                            "description": "Allow HTTPS traffic from vSensor to packages{-cdn}.darktrace.com/*ubuntu.com / Master Appliance",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "443",
@@ -275,7 +301,7 @@
                     {
                         "name": "AllowOutboundHTTP",
                         "properties": {
-                            "description": "Allow HTTP traffic from vSensor to updates CDN",
+                            "description": "Allow HTTP traffic from vSensor to packages{-cdn}.darktrace.com/*ubuntu.com",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "80",
@@ -362,6 +388,7 @@
             "apiVersion": "2022-05-01",
             "name": "[variables('natGatewayIPName')]",
             "location": "[variables('location')]",
+            "condition": "[parameters('natGatewayEnable')]",
             "sku": {
                 "name": "Standard"
             },
@@ -377,6 +404,7 @@
             "apiVersion": "2022-05-01",
             "name": "[variables('natGatewayName')]",
             "location": "[variables('location')]",
+            "condition": "[parameters('natGatewayEnable')]",
             "sku": {
                 "name": "Standard"
             },
@@ -399,7 +427,8 @@
             "resourceGroup": "[variables('subnetResourceGroup')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
-                "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]"
+                "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]",
+                "[resourceId('Microsoft.Network/serviceEndpointPolicies', variables('serviceEndpointPolicyName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -412,14 +441,12 @@
                         {
                             "type": "Microsoft.Network/virtualNetworks/subnets",
                             "name": "[concat(parameters('existingVirtualNetworkName'), '/', variables('subnetName'))]",
-
                             "location": "[variables('location')]",
                             "apiVersion": "2022-05-01",
                             "properties": {
                                 "addressPrefix": "[parameters('VMSSSubnetCIDR')]",
-                                "natGateway": {
-                                    "id": "[resourceId(variables('resourceGroup'), 'Microsoft.Network/natGateways',  variables('natGatewayName'))]"
-                                },
+                                "natGateway": "[if(parameters('natGatewayEnable'), json(concat('{\"id\": \"', resourceId(variables('resourceGroup'), 'Microsoft.Network/natGateways', variables('natGatewayName')),  '\"}')),  json('null') )]",
+                                "routeTable": "[if(not(empty(parameters('existingRouteTable'))), json(concat('{\"id\": \"', resourceId(variables('existingRouteTableResourceGroup'), 'Microsoft.Network/routeTables', parameters('existingRouteTable')),  '\"}')),  json('null') )]",
                                 "networkSecurityGroup": {
                                     "id": "[resourceId(variables('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
                                 },
@@ -427,6 +454,11 @@
                                     {
                                         "service": "Microsoft.Storage",
                                         "locations": "[variables('location')]"
+                                    }
+                                ],
+                                "serviceEndpointPolicies": [
+                                    {
+                                        "id": "[resourceId(variables('resourceGroup'), 'Microsoft.Network/serviceEndpointPolicies', variables('serviceEndpointPolicyName'))]"
                                     }
                                 ]
                             }
@@ -520,7 +552,8 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
                 "[variables('subnetsTemplateRef')]",
-                "[variables('blobStorageAccountRef')]"
+                "[variables('blobStorageAccountRef')]",
+                "[resourceId('Microsoft.Network/serviceEndpointPolicies/serviceEndpointPolicyDefinitions/', variables('serviceEndPointPolicyName'), variables('serviceEndPointPolicyDefinitionName'))]"
             ],
             "sku": {
                 "name": "[parameters('VMSSInstanceSize')]",
@@ -648,7 +681,7 @@
                                     "timestamp":123456789          
                                   },
                                   "protectedSettings": {
-                                     "script": "[base64(concat('#! /bin/bash -e\n\nwait_for_apt() {\n    echo \"Waiting for apt/dpkg lock.\"\n    tries=0\n    maxtries=10\n    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1 && [ $tries -le $maxtries ]; do\n       sleep 20\n       ((tries=tries+1))\n    done\n    if [ $tries -ge $maxtries ]; then\n        echo \"ERROR: Failed to get apt / dpkg lock before timeout. Please wait and try again, or fix dpkg lock manually.\"\n        exit 1\n    fi\n}\nexec > >(tee -a /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\nif [ \"', parameters('VSensorUpdateKey'), '\" = \"updateKey-example\" ]; then\n    echo \"Skipping install in azure CI due to dummy key.\"\n    exit 0\nfi\nwait_for_apt\nsleep 10\nwait_for_apt\nbash <(wget https://packages.darktrace.com/install -O -) --updateKey \"', parameters('VSensorUpdateKey'), '\"\n/usr/sbin/set_pushtoken.sh \"', parameters('appliancePushtoken'), '\" \"', parameters('applianceHostName'), ':', parameters('appliancePort'), '\"\nset_ossensor_hmac.sh \"', parameters('OSSensorHMACToken'), '\"\nset_pcap_azure_container.sh \"', variables('blobStorageAccountName'), '\" \"', variables('blobStorageContainerName'), '\"\nset_ossensor_loadbalancer_direct.sh 1\nset_ephemeral.sh 1\necho \"Configuration complete, vSensor is ready for use.\"\n'))]"
+                                     "script": "[base64(concat('#! /bin/bash -xe\n\nwait_for_apt() {\n    echo \"Waiting for apt/dpkg lock.\"\n    tries=0\n    maxtries=10\n    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1 && [ $tries -le $maxtries ]; do\n       sleep 20\n       ((tries=tries+1))\n    done\n    if [ $tries -ge $maxtries ]; then\n        echo \"ERROR: Failed to get apt / dpkg lock before timeout. Please wait and try again, or fix dpkg lock manually.\"\n        exit 1\n    fi\n}\nif [ -f \"/etc/darktrace/.user-data-success\" ]; then\n    echo \"Not re-running user-data, already succeeded\"\n    exit 0\nfi\nexec > >(tee -a /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\nif [ \"', parameters('VSensorUpdateKey'), '\" = \"updateKey-example\" ]; then\n    echo \"Skipping install in azure CI due to dummy key.\"\n    exit 0\nfi\nwait_for_apt\nsleep 10\nwait_for_apt\nbash <(wget https://packages.darktrace.com/install -O -) --updateKey \"', parameters('VSensorUpdateKey'), '\"\n/usr/sbin/set_pushtoken.sh \"', parameters('appliancePushtoken'), '\" \"', parameters('applianceHostName'), ':', parameters('appliancePort'), '\"\nset_ossensor_hmac.sh \"', parameters('OSSensorHMACToken'), '\"\nset_pcap_azure_container.sh \"', variables('blobStorageAccountName'), '\" \"', variables('blobStorageContainerName'), '\"\nset_ossensor_loadbalancer_direct.sh 1\nset_ephemeral.sh 1\necho \"Configuration complete, vSensor is ready for use.\"\ntouch /etc/darktrace/.user-data-success\n'))]"
                                   }
                                 }
                             }
@@ -822,7 +855,7 @@
                         "properties": {
                             "protocol": "Http",
                             "port": 80,
-                            "requestPath": "/ossensor",
+                            "requestPath": "/healthcheck",
                             "intervalInSeconds": 60,
                             "numberOfProbes": 1,
                             "probeThreshold": 1
@@ -1062,21 +1095,19 @@
             "type": "Microsoft.Network/serviceEndpointPolicies",
             "apiVersion": "2022-05-01",
             "name": "[variables('serviceEndPointPolicyName')]",
-            "location": "[variables('location')]",
+            "location": "[variables('location')]"
+        },
+        {
+            "type": "Microsoft.Network/serviceEndpointPolicies/serviceEndpointPolicyDefinitions",
+            "apiVersion": "2022-05-01",
+            "name": "[concat(variables('serviceEndPointPolicyName'), '/', variables('serviceEndPointPolicyDefinitionName'))]",
             "dependsOn": [
                 "[variables('blobStorageAccountRef')]"
             ],
             "properties": {
-                "serviceEndpointPolicyDefinitions": [
-                    {
-                        "name": "[concat(variables('serviceEndPointPolicyName'), '_Microsoft.Storage')]",
-                        "properties": {
-                            "service": "Microsoft.Storage",
-                            "serviceResources": [
-                                "[variables('blobStorageAccountRef')]"
-                            ]
-                        }
-                    }
+                "service": "Microsoft.Storage",
+                "serviceResources": [
+                    "[variables('blobStorageAccountRef')]"
                 ]
             }
         },
@@ -1113,6 +1144,7 @@
             "value": "[parameters('existingVirtualNetworkName')]"
         },
         "natExternalIP": {
+            "condition": "[parameters('natGatewayEnable')]",
             "type": "string",
             "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('natGatewayIPName'))).ipAddress]"
         },
