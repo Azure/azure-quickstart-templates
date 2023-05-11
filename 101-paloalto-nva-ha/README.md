@@ -28,7 +28,7 @@ The following resources are deployed as part of the solution
 
 A single resource group that contains the following resources:
 
-- **Virtual Networks**: 3 Virtual Network, HubVNET, ProdSpokevnet and Devspokevnet
+- **Virtual Networks**: 3 Virtual Networks, HubVNET, ProdSpokevnet and Devspokevnet
 - **Hub Subnets**: Within the HubVNET 3 subnest are created followign the best practices from Aplo Alto (Trust, Untrust and Management Subnet)
 - **Availability Set**: One Availability Set where both Network Virtual Appliances are deployed to ensure High Availability
 - **Virtual Machines**: 2 Virtual machines that use the latest Palo Alto BYOL image available from the standard Azure gallery
