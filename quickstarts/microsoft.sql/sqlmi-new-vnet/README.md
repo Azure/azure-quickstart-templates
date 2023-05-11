@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: sqlmi-new-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # Create SQL MI inside the new virtual network
 
