@@ -1,0 +1,109 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "vCPUCount": {
+            "defaultValue": 2,
+            "type": "int"
+        },
+        "memoryGB": {
+            "defaultValue": 4,
+            "type": "int"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "imageName": {
+            "type": "string"
+        },
+        "hciVirtualNetworkName": {
+            "type": "string"
+        },
+        "customLocationName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "nicName": "[concat('nic-',parameters('name'))]",
+        "customLocationId": "[resourceId('Microsoft.ExtendedLocation/customLocations',parameters('customLocationName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-09-01-preview",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.AzureStackHCI/virtualmachines",
+            "properties": {
+                "resourceName": "[parameters('name')]",
+                "hardwareProfile": {
+                    "processors": "[parameters('vCPUCount')]",
+                    "memoryGB": "[parameters('memoryGB')]"
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "osType": "windows",
+                    "computerName": "[parameters('name')]",
+                    "windowsConfiguration": {
+                        "provisionVMAgent": true
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "name": "[resourceId('microsoft.azurestackhci/marketplaceGalleryImages',parameters('imageName'))]"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceid('Microsoft.AzureStackHCI/networkinterfaces',variables('nicName'))]"
+                        }
+                    ]
+                }
+            },
+            "extendedLocation": {
+                "type": "CustomLocation",
+                "name": "[variables('customLocationId')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.AzureStackHCI/networkinterfaces/',variables('nicName'))]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            }
+        },
+        {
+            "apiVersion": "2021-09-01-preview",
+            "name": "[variables('nicName')]",
+            "type": "Microsoft.AzureStackHCI/networkinterfaces",
+            "location": "[parameters('location')]",
+            "extendedLocation": {
+                "type": "CustomLocation",
+                "name": "[variables('customLocationId')]"
+            },
+            "properties": {
+                "resourceName": "[variables('nicName')]",
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('microsoft.azurestackhci/virtualnetworks',parameters('hciVirtualNetworkName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
