@@ -216,7 +216,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
 
 resource virtualMachineName_extension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (vTPM && secureBoot) {
   parent: virtualMachine
-  name: '${extensionName}'
+  name: extensionName
   location: location
   properties: {
     publisher: extensionPublisher
