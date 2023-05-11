@@ -122,7 +122,6 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2019-02-01' = {
   }
   sku: {
     name: 'Basic'
-    tier: 'Regional'
   }
 }
 
@@ -191,7 +190,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
       computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     storageProfile: {
       osDisk: {
@@ -250,11 +249,11 @@ resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2
     }
   }
 }
+
 module assignRole './nested_assignRole.bicep' = {
   name: 'assignRole'
   scope: resourceGroup(storageAccountResourceGroupName)
   params: {
-    storageAccountResourceGroupName: storageAccountResourceGroupName
     storageAccountName: storageAccountName
     assignedRoleDefinitionId: roleDefinitionId[msiRole]
     principalId: reference(vmName, '2019-07-01', 'Full').identity.principalId
