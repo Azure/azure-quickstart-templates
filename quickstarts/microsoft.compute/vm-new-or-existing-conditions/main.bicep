@@ -192,7 +192,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2017-09-01' = {
           subnet: {
             id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
           }
-          publicIPAddress: ((publicIpNewOrExisting != 'none') ? publicIpAddressId : json('null'))
+          publicIPAddress: ((publicIpNewOrExisting != 'none') ? publicIpAddressId : null)
         }
       }
     ]
@@ -214,7 +214,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
       computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     storageProfile: {
       imageReference: {
