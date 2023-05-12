@@ -16,11 +16,12 @@ ARM Template to deploy Palo Alto VM-Series in High Availability using Hub and Sp
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-paloalto-nva-ha%2Fazuredeploy.json)
 
 
-This template deploys Palo Alto Vm-Series Network Virtual Appliances in High Availability, following the Hub-Spoke topology. 
+This template deploys Palo Alto VM-Series Network Virtual Appliances in High Availability, following the Hub-Spoke topology. 
 
 ## Deploying Palo Alto VM-Series Network Virtual Appliances in High Availability
 
-This solution deploys a Hub and Spoke Topology. In the Hub virtual network 2 VM-Series appliances are deployed within an Availability Set to ensure High Availability.
+This solution deploys a Hub and Spoke Topology with 2 spokes.
+In the Hub virtual network 2 VM-Series appliances are deployed within an Availability Set to ensure High Availability. You can customize how many instances you would like to deploy.
 
 The following resources are deployed as part of the solution
 
