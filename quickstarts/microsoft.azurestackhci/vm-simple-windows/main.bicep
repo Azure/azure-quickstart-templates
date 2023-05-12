@@ -3,12 +3,11 @@ param location string
 param vCPUCount int = 2
 param memoryGB int = 4
 param adminUsername string
-
-@secure()
-param adminPassword string
 param imageName string
 param hciVirtualNetworkName string
 param customLocationName string
+@secure()
+param adminPassword string
 
 var nicName = 'nic-${name}'
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName)
