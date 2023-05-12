@@ -12,7 +12,7 @@ param adminPassword string
 var nicName = 'nic-${name}'
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName)
 
-resource name_resource 'Microsoft.AzureStackHCI/virtualmachines@2021-09-01-preview' = {
+resource virtualMachine 'Microsoft.AzureStackHCI/virtualmachines@2021-09-01-preview' = {
   name: name
   location: location
   properties: {
