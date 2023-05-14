@@ -2,24 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the new storage account created to store the VMs disks"
-      }
-    },
-    "storageType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_ZRS"
-      ],
-      "metadata": {
-        "description": "The storage type created to store the VMs disks"
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -34,18 +16,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
-      "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4"
-      ],
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "The machine type for the server vm."
       }
@@ -62,12 +33,19 @@
         "description": "The name of the public ip address"
       }
     },
-    "assetLocation": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dsc-pullserver-to-win-server/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     },
     "location": {
       "type": "string",
@@ -83,12 +61,10 @@
     "VirtualNetworkSubnet1Prefix": "10.0.0.0/24",
     "VirtualNetworkSubnet2Name": "Subnet-2",
     "VirtualNetworkSubnet2Prefix": "10.0.1.0/24",
-    "dscPullSrvOSDiskName": "osdisk",
     "dscPullSrvSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'dscVirtualNetwork', variables('VirtualNetworkSubnet1Name'))]",
-    "dscPullSrvStorageAccountContainerName": "vhds",
     "dscPullSrvNicName": "dscNetworkInterface",
     "dscPullIPName": "dscPublicIPAddress",
-    "deployDSCPullServerConfigurationFile": "[concat(parameters('assetLocation'), 'ConfigurePullServer.ps1.zip')]",
+    "deployDSCPullServerConfigurationFile": "[uri(parameters('_artifactsLocation'), concat('ConfigurePullServer.ps1.zip', parameters('_artifactsLocationSasToken')))]",
     "deployDSCPullServerConfigurationFunction": "ConfigurePullServer.ps1\\ConfigurePullServer",
     "windowsOSVersion": "2012-R2-Datacenter",
     "imagePublisher": "MicrosoftWindowsServer",
@@ -97,22 +73,9 @@
   },
   "resources": [
     {
-      "name": "[parameters('newStorageAccount')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-05-01-preview",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "Storage"
-      },
-      "properties": {
-        "accountType": "[parameters('storageType')]"
-      }
-    },
-    {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -150,7 +113,7 @@
       "name": "dscVirtualNetwork",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
@@ -186,9 +149,9 @@
       "name": "[variables('dscPullSrvNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', 'dscVirtualNetwork')]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', 'dscVirtualNetwork')]"
       ],
       "tags": {
         "displayName": "dscPullSrvNic"
@@ -215,10 +178,9 @@
       "name": "[parameters('dscPullSrvName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccount'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('dscPullSrvNicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('dscPullSrvNicName'))]"
       ],
       "tags": {
         "displayName": "dscPullSrv"
@@ -258,9 +220,9 @@
           "name": "deployDSCPullServer",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2020-12-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('dscPullSrvName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('dscPullSrvName'))]"
           ],
           "tags": {
             "displayName": "deployDSCPullServer"
@@ -272,10 +234,8 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "modulesUrl": "[variables('deployDSCPullServerConfigurationFile')]",
-              "configurationFunction": "[variables('deployDSCPullServerConfigurationFunction')]",
-              "properties": {}
-            },
-            "protectedSettings": {}
+              "configurationFunction": "[variables('deployDSCPullServerConfigurationFunction')]"
+            }
           }
         }
       ]
@@ -284,8 +244,7 @@
       "name": "[variables('dscPullIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-05-01-preview",
-      "dependsOn": [],
+      "apiVersion": "2020-11-01",
       "tags": {
         "displayName": "dscPullIP"
       },
@@ -296,6 +255,6 @@
         }
       }
     }
-  ],
-  "outputs": {}
+  ]
 }
+

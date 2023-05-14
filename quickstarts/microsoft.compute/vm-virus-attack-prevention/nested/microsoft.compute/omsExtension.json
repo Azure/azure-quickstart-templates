@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmNames": {
+            "type": "array",
+            "metadata": {
+                "description": "Names of the virtual machines"
+            }
+        },
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the OMS workspace"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location of the resources"
+            }
+        },
+        "resourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the resource group for the resources"
+            }
+        }
+    },
+    "resources": [
+      {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(concat(parameters('vmNames')[copyIndex()]),'/OMSExtension')]",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('location')]",
+            "copy": {
+              "name": "copy-monitoring-agent",
+              "count": 2
+            },
+            "properties": {
+              "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+              "type": "MicrosoftMonitoringAgent",
+              "typeHandlerVersion": "1.0",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "workspaceId": "[reference(resourceId(parameters('resourceGroupName'),'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2021-06-01').customerId]"
+              },
+              "protectedSettings": {
+                "workspaceKey": "[listKeys(resourceId(parameters('resourceGroupName'),'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2021-06-01').primarySharedKey]"
+              }
+            }
+        }
+    ]
+}

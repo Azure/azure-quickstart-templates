@@ -1,0 +1,499 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "3193177813993285250"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource."
+      }
+    },
+    "secondaryLocation": {
+      "type": "string",
+      "defaultValue": "eastus",
+      "metadata": {
+        "description": "The location into which regionally scoped resources for the secondary should be deployed."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "defaultValue": "[format('myApp-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the App Service application to create. This must be globally unique."
+      }
+    },
+    "secondaryWebAppName": {
+      "type": "string",
+      "defaultValue": "[format('mySecondaryApp-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the secondary App Service application to create. This must be globally unique."
+      }
+    },
+    "appServicePlanSkuName": {
+      "type": "string",
+      "defaultValue": "P1V2",
+      "metadata": {
+        "description": "The name of the SKU to use when creating the App Service plan."
+      }
+    },
+    "appServicePlanCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of worker instances of your App Service plan that should be provisioned."
+      }
+    },
+    "frontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    },
+    "frontDoorSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_AzureFrontDoor",
+      "allowedValues": [
+        "Standard_AzureFrontDoor",
+        "Premium_AzureFrontDoor"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Front Door profile."
+      }
+    }
+  },
+  "variables": {
+    "appServicePlanName": "AppServicePlan",
+    "secondaryAppServicePlanName": "SecondaryAppServicePlan",
+    "frontDoorProfileName": "MyFrontDoor",
+    "frontDoorOriginGroupName": "MyOriginGroup",
+    "frontDoorOriginName": "MyAppServiceOrigin",
+    "secondaryFrontDoorOriginName": "MySecondaryAppServiceOrigin",
+    "frontDoorRouteName": "MyRoute"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2021-06-01",
+      "name": "[variables('frontDoorProfileName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('frontDoorSkuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('appServicePlanSkuName')]",
+        "capacity": "[parameters('appServicePlanCapacity')]"
+      },
+      "kind": "app",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('secondaryAppServicePlanName')]",
+      "location": "[parameters('secondaryLocation')]",
+      "sku": {
+        "name": "[parameters('appServicePlanSkuName')]",
+        "capacity": "[parameters('appServicePlanCapacity')]"
+      },
+      "kind": "app",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('webAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "app",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "detailedErrorLoggingEnabled": true,
+          "httpLoggingEnabled": true,
+          "requestTracingEnabled": true,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "ipSecurityRestrictions": [
+            {
+              "tag": "ServiceTag",
+              "ipAddress": "AzureFrontDoor.Backend",
+              "action": "Allow",
+              "priority": 100,
+              "headers": {
+                "x-azure-fdid": [
+                  "[reference(resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName')), '2021-06-01').frontDoorId]"
+                ]
+              },
+              "name": "Allow traffic from Front Door"
+            }
+          ],
+          "scmIpSecurityRestrictionsDefaultAction": "Deny"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('webAppName'), 'ftp')]",
+      "location": "[parameters('location')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('webAppName'), 'scm')]",
+      "location": "[parameters('location')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/slots",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/stage', parameters('webAppName'))]",
+      "location": "[parameters('location')]",
+      "kind": "app",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "detailedErrorLoggingEnabled": true,
+          "httpLoggingEnabled": true,
+          "requestTracingEnabled": true,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "ipSecurityRestrictions": [
+            {
+              "tag": "ServiceTag",
+              "ipAddress": "AzureFrontDoor.Backend",
+              "action": "Allow",
+              "priority": 100,
+              "headers": {
+                "x-azure-fdid": [
+                  "[reference(resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName')), '2021-06-01').frontDoorId]"
+                ]
+              },
+              "name": "Allow traffic from Front Door"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}/{2}', split(format('{0}/stage', parameters('webAppName')), '/')[0], split(format('{0}/stage', parameters('webAppName')), '/')[1], 'ftp')]",
+      "location": "[parameters('location')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/slots', split(format('{0}/stage', parameters('webAppName')), '/')[0], split(format('{0}/stage', parameters('webAppName')), '/')[1])]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}/{2}', split(format('{0}/stage', parameters('webAppName')), '/')[0], split(format('{0}/stage', parameters('webAppName')), '/')[1], 'scm')]",
+      "location": "[parameters('location')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/slots', split(format('{0}/stage', parameters('webAppName')), '/')[0], split(format('{0}/stage', parameters('webAppName')), '/')[1])]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('secondaryWebAppName')]",
+      "location": "[parameters('secondaryLocation')]",
+      "kind": "app",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('secondaryAppServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "detailedErrorLoggingEnabled": true,
+          "httpLoggingEnabled": true,
+          "requestTracingEnabled": true,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "ipSecurityRestrictions": [
+            {
+              "tag": "ServiceTag",
+              "ipAddress": "AzureFrontDoor.Backend",
+              "action": "Allow",
+              "priority": 100,
+              "headers": {
+                "x-azure-fdid": [
+                  "[reference(resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName')), '2021-06-01').frontDoorId]"
+                ]
+              },
+              "name": "Allow traffic from Front Door"
+            }
+          ],
+          "scmIpSecurityRestrictionsDefaultAction": "Deny"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('secondaryAppServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('secondaryWebAppName'), 'ftp')]",
+      "location": "[parameters('secondaryLocation')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('secondaryWebAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('secondaryWebAppName'), 'scm')]",
+      "location": "[parameters('secondaryLocation')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('secondaryWebAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/slots",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/stage', parameters('secondaryWebAppName'))]",
+      "location": "[parameters('secondaryLocation')]",
+      "kind": "app",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('secondaryAppServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "detailedErrorLoggingEnabled": true,
+          "httpLoggingEnabled": true,
+          "requestTracingEnabled": true,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "ipSecurityRestrictions": [
+            {
+              "tag": "ServiceTag",
+              "ipAddress": "AzureFrontDoor.Backend",
+              "action": "Allow",
+              "priority": 100,
+              "headers": {
+                "x-azure-fdid": [
+                  "[reference(resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName')), '2021-06-01').frontDoorId]"
+                ]
+              },
+              "name": "Allow traffic from Front Door"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('secondaryWebAppName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('secondaryAppServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}/{2}', split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[0], split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[1], 'ftp')]",
+      "location": "[parameters('secondaryLocation')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/slots', split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[0], split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[1])]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}/{2}', split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[0], split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[1], 'scm')]",
+      "location": "[parameters('secondaryLocation')]",
+      "kind": "string",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/slots', split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[0], split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[1])]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+      "location": "global",
+      "properties": {
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+      "properties": {
+        "loadBalancingSettings": {
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "healthProbeSettings": {
+          "probePath": "/",
+          "probeRequestType": "HEAD",
+          "probeProtocol": "Http",
+          "probeIntervalInSeconds": 100
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('frontDoorOriginName'))]",
+      "properties": {
+        "hostName": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2020-06-01').defaultHostName]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2020-06-01').defaultHostName]",
+        "priority": 1,
+        "weight": 1000
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('secondaryFrontDoorOriginName'))]",
+      "properties": {
+        "hostName": "[reference(resourceId('Microsoft.Web/sites', parameters('secondaryWebAppName')), '2020-06-01').defaultHostName]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2020-06-01').defaultHostName]",
+        "priority": 2,
+        "weight": 1000
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('secondaryWebAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'), variables('frontDoorRouteName'))]",
+      "properties": {
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternsToMatch": [
+          "/*"
+        ],
+        "forwardingProtocol": "HttpsOnly",
+        "linkToDefaultDomain": "Enabled",
+        "httpsRedirect": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('frontDoorOriginName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "appServiceHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2020-06-01').defaultHostName]"
+    },
+    "secondaryAppServiceHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('secondaryWebAppName')), '2020-06-01').defaultHostName]"
+    },
+    "appServiceSlotHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites/slots', split(format('{0}/stage', parameters('webAppName')), '/')[0], split(format('{0}/stage', parameters('webAppName')), '/')[1]), '2020-06-01').defaultHostName]"
+    },
+    "secondaryAppServiceSlotHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites/slots', split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[0], split(format('{0}/stage', parameters('secondaryWebAppName')), '/')[1]), '2020-06-01').defaultHostName]"
+    },
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName')), '2021-06-01').hostName]"
+    }
+  }
+}

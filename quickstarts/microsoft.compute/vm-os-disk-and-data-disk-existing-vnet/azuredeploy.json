@@ -72,18 +72,18 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_GRS"
       },
-      "kind": "Storage",
+      "kind": "StorageV2",
       "properties": {}
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -95,12 +95,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "tags": {
         "displayName": "NetworkInterface"
@@ -130,7 +130,7 @@
       "properties": {
         "creationData": {
           "createOption": "Import",
-          "sourceUri": "[parameters('osDiskVhdUri')]"
+          "sourceUri":"[parameters('osDiskVhdUri')]"
         },
         "osType": "[parameters('osType')]"
       }
@@ -139,16 +139,16 @@
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2017-03-30",
       "name": "[concat(parameters('vmName'), '_Datadisk')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('location')]",         
       "properties": {
         "creationData": {
           "createOption": "Import",
-          "sourceUri": "[parameters('dataDisk0VhdUri')]"
+          "sourceUri":"[parameters('dataDisk0VhdUri')]"
         }
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -156,9 +156,9 @@
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat(parameters('vmName'), '_OSdisk')]",
-        "[concat(parameters('vmName'), '_Datadisk')]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '_OSdisk'))]",
+        "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '_Datadisk'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -194,7 +194,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled":  true ,
-            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
+            "storageUri": "[reference(variables('diagStorageAccountName'), '2021-02-01').primaryEndpoints['blob']]"
           }
         }
       }

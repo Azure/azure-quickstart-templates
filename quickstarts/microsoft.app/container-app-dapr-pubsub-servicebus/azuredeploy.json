@@ -1,0 +1,3203 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "10570258221041945495"
+    }
+  },
+  "parameters": {
+    "nameseed": {
+      "type": "string",
+      "defaultValue": "pubsubsb",
+      "metadata": {
+        "description": "Used for the naming of all the Azure resources"
+      }
+    },
+    "containerRegistryName": {
+      "type": "string",
+      "defaultValue": "[format('cr{0}{1}', parameters('nameseed'), uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Overrides the name of the container registry."
+      }
+    },
+    "keyvaultName": {
+      "type": "string",
+      "defaultValue": "[format('kv-{0}{1}', parameters('nameseed'), uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Overrides the name of the keyvault."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2022-02-01-preview",
+      "name": "[parameters('containerRegistryName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "adminUserEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2022-07-01",
+      "name": "[parameters('keyvaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [],
+        "enableRbacAuthorization": true
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "buildAcrImage-linux-dapr-node-pub",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "AcrName": {
+            "value": "[parameters('containerRegistryName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "gitRepositoryUrl": {
+            "value": "https://github.com/Azure-Samples/pubsub-dapr-nodejs-servicebus.git"
+          },
+          "gitRepoDirectory": {
+            "value": "checkout"
+          },
+          "imageName": {
+            "value": "checkout"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.11.1.770",
+              "templateHash": "13642411578150246430"
+            }
+          },
+          "parameters": {
+            "AcrName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Container Registry"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location of the ACR and where to deploy the module resources to"
+              }
+            },
+            "forceUpdateTag": {
+              "type": "string",
+              "defaultValue": "[utcNow()]",
+              "metadata": {
+                "description": "How the deployment script should be forced to execute"
+              }
+            },
+            "rbacRoleNeeded": {
+              "type": "string",
+              "defaultValue": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+              "metadata": {
+                "description": "Azure RoleId that are required for the DeploymentScript resource to import images"
+              }
+            },
+            "useExistingManagedIdentity": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Does the Managed Identity already exists, or should be created"
+              }
+            },
+            "managedIdentityName": {
+              "type": "string",
+              "defaultValue": "id-ContainerRegistryBuild",
+              "metadata": {
+                "description": "Name of the Managed Identity resource"
+              }
+            },
+            "existingManagedIdentitySubId": {
+              "type": "string",
+              "defaultValue": "[subscription().subscriptionId]",
+              "metadata": {
+                "description": "For an existing Managed Identity, the Subscription Id it is located in"
+              }
+            },
+            "existingManagedIdentityResourceGroupName": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().name]",
+              "metadata": {
+                "description": "For an existing Managed Identity, the Resource Group it is located in"
+              }
+            },
+            "initialScriptDelay": {
+              "type": "string",
+              "defaultValue": "30s",
+              "metadata": {
+                "description": "A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate"
+              }
+            },
+            "cleanupPreference": {
+              "type": "string",
+              "defaultValue": "OnSuccess",
+              "metadata": {
+                "description": "When the script resource is cleaned up"
+              },
+              "allowedValues": [
+                "OnSuccess",
+                "OnExpiration",
+                "Always"
+              ]
+            },
+            "gitRepositoryUrl": {
+              "type": "string",
+              "metadata": {
+                "description": "The Git Repository URL, eg. https://github.com/YOURORG/YOURREPO.git"
+              }
+            },
+            "gitBranch": {
+              "type": "string",
+              "defaultValue": "main",
+              "metadata": {
+                "description": "The name of the repository branch to use"
+              }
+            },
+            "gitRepoDirectory": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The directory in the repo that contains the dockerfile"
+              }
+            },
+            "imageName": {
+              "type": "string",
+              "metadata": {
+                "description": "The image name/path you want to create in ACR"
+              }
+            },
+            "imageTag": {
+              "type": "string",
+              "defaultValue": "[string(dateTimeToEpoch(utcNow()))]",
+              "metadata": {
+                "description": "The image tag you want to create"
+              }
+            },
+            "acrBuildPlatform": {
+              "type": "string",
+              "defaultValue": "linux",
+              "metadata": {
+                "description": "The ACR compute platform needed to build the image"
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": "#!/bin/bash\nset -e\n\necho \"Waiting on RBAC replication ($initialDelay)\"\nsleep $initialDelay\n\naz acr build --resource-group $acrResourceGroup \\\n  --registry $acrName \\\n  --image $taggedImageName $repo \\\n  --platform $platform",
+            "repo": "[format('{0}#{1}:{2}', parameters('gitRepositoryUrl'), parameters('gitBranch'), parameters('gitRepoDirectory'))]",
+            "cleanRepoName": "[last(split(parameters('gitRepositoryUrl'), '/'))]",
+            "taggedImageName": "[format('{0}:{1}', parameters('imageName'), parameters('imageTag'))]"
+          },
+          "resources": [
+            {
+              "condition": "[not(parameters('useExistingManagedIdentity'))]",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[parameters('managedIdentityName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "condition": "[not(empty(parameters('rbacRoleNeeded')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('AcrName'))]",
+              "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), parameters('rbacRoleNeeded'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('rbacRoleNeeded'))]",
+                "principalId": "[if(parameters('useExistingManagedIdentity'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId, reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId)]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2020-10-01",
+              "name": "[format('ACR-Build-{0}', variables('cleanRepoName'))]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]": {}
+                }
+              },
+              "kind": "AzureCLI",
+              "properties": {
+                "forceUpdateTag": "[parameters('forceUpdateTag')]",
+                "azCliVersion": "2.30.0",
+                "timeout": "PT45M",
+                "retentionInterval": "P1D",
+                "environmentVariables": [
+                  {
+                    "name": "acrName",
+                    "value": "[parameters('AcrName')]"
+                  },
+                  {
+                    "name": "acrResourceGroup",
+                    "value": "[resourceGroup().name]"
+                  },
+                  {
+                    "name": "taggedImageName",
+                    "value": "[variables('taggedImageName')]"
+                  },
+                  {
+                    "name": "repo",
+                    "value": "[variables('repo')]"
+                  },
+                  {
+                    "name": "platform",
+                    "value": "[parameters('acrBuildPlatform')]"
+                  },
+                  {
+                    "name": "initialDelay",
+                    "value": "[parameters('initialScriptDelay')]"
+                  }
+                ],
+                "scriptContent": "[variables('$fxv#0')]",
+                "cleanupPreference": "[parameters('cleanupPreference')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]",
+                "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), parameters('rbacRoleNeeded'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "acrImage": {
+              "type": "string",
+              "value": "[format('{0}/{1}', reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), '2021-12-01-preview').loginServer, variables('taggedImageName'))]",
+              "metadata": {
+                "description": "The ACR uri the image can be accessed on if building was successful"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "buildAcrImage-linux-dapr-node-sub",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "AcrName": {
+            "value": "[parameters('containerRegistryName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "gitRepositoryUrl": {
+            "value": "https://github.com/Azure-Samples/pubsub-dapr-nodejs-servicebus.git"
+          },
+          "gitRepoDirectory": {
+            "value": "order-processor"
+          },
+          "imageName": {
+            "value": "order-processor"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.11.1.770",
+              "templateHash": "13642411578150246430"
+            }
+          },
+          "parameters": {
+            "AcrName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Container Registry"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location of the ACR and where to deploy the module resources to"
+              }
+            },
+            "forceUpdateTag": {
+              "type": "string",
+              "defaultValue": "[utcNow()]",
+              "metadata": {
+                "description": "How the deployment script should be forced to execute"
+              }
+            },
+            "rbacRoleNeeded": {
+              "type": "string",
+              "defaultValue": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+              "metadata": {
+                "description": "Azure RoleId that are required for the DeploymentScript resource to import images"
+              }
+            },
+            "useExistingManagedIdentity": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Does the Managed Identity already exists, or should be created"
+              }
+            },
+            "managedIdentityName": {
+              "type": "string",
+              "defaultValue": "id-ContainerRegistryBuild",
+              "metadata": {
+                "description": "Name of the Managed Identity resource"
+              }
+            },
+            "existingManagedIdentitySubId": {
+              "type": "string",
+              "defaultValue": "[subscription().subscriptionId]",
+              "metadata": {
+                "description": "For an existing Managed Identity, the Subscription Id it is located in"
+              }
+            },
+            "existingManagedIdentityResourceGroupName": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().name]",
+              "metadata": {
+                "description": "For an existing Managed Identity, the Resource Group it is located in"
+              }
+            },
+            "initialScriptDelay": {
+              "type": "string",
+              "defaultValue": "30s",
+              "metadata": {
+                "description": "A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate"
+              }
+            },
+            "cleanupPreference": {
+              "type": "string",
+              "defaultValue": "OnSuccess",
+              "metadata": {
+                "description": "When the script resource is cleaned up"
+              },
+              "allowedValues": [
+                "OnSuccess",
+                "OnExpiration",
+                "Always"
+              ]
+            },
+            "gitRepositoryUrl": {
+              "type": "string",
+              "metadata": {
+                "description": "The Git Repository URL, eg. https://github.com/YOURORG/YOURREPO.git"
+              }
+            },
+            "gitBranch": {
+              "type": "string",
+              "defaultValue": "main",
+              "metadata": {
+                "description": "The name of the repository branch to use"
+              }
+            },
+            "gitRepoDirectory": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The directory in the repo that contains the dockerfile"
+              }
+            },
+            "imageName": {
+              "type": "string",
+              "metadata": {
+                "description": "The image name/path you want to create in ACR"
+              }
+            },
+            "imageTag": {
+              "type": "string",
+              "defaultValue": "[string(dateTimeToEpoch(utcNow()))]",
+              "metadata": {
+                "description": "The image tag you want to create"
+              }
+            },
+            "acrBuildPlatform": {
+              "type": "string",
+              "defaultValue": "linux",
+              "metadata": {
+                "description": "The ACR compute platform needed to build the image"
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": "#!/bin/bash\nset -e\n\necho \"Waiting on RBAC replication ($initialDelay)\"\nsleep $initialDelay\n\naz acr build --resource-group $acrResourceGroup \\\n  --registry $acrName \\\n  --image $taggedImageName $repo \\\n  --platform $platform",
+            "repo": "[format('{0}#{1}:{2}', parameters('gitRepositoryUrl'), parameters('gitBranch'), parameters('gitRepoDirectory'))]",
+            "cleanRepoName": "[last(split(parameters('gitRepositoryUrl'), '/'))]",
+            "taggedImageName": "[format('{0}:{1}', parameters('imageName'), parameters('imageTag'))]"
+          },
+          "resources": [
+            {
+              "condition": "[not(parameters('useExistingManagedIdentity'))]",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[parameters('managedIdentityName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "condition": "[not(empty(parameters('rbacRoleNeeded')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('AcrName'))]",
+              "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), parameters('rbacRoleNeeded'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('rbacRoleNeeded'))]",
+                "principalId": "[if(parameters('useExistingManagedIdentity'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId, reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId)]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2020-10-01",
+              "name": "[format('ACR-Build-{0}', variables('cleanRepoName'))]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]": {}
+                }
+              },
+              "kind": "AzureCLI",
+              "properties": {
+                "forceUpdateTag": "[parameters('forceUpdateTag')]",
+                "azCliVersion": "2.30.0",
+                "timeout": "PT45M",
+                "retentionInterval": "P1D",
+                "environmentVariables": [
+                  {
+                    "name": "acrName",
+                    "value": "[parameters('AcrName')]"
+                  },
+                  {
+                    "name": "acrResourceGroup",
+                    "value": "[resourceGroup().name]"
+                  },
+                  {
+                    "name": "taggedImageName",
+                    "value": "[variables('taggedImageName')]"
+                  },
+                  {
+                    "name": "repo",
+                    "value": "[variables('repo')]"
+                  },
+                  {
+                    "name": "platform",
+                    "value": "[parameters('acrBuildPlatform')]"
+                  },
+                  {
+                    "name": "initialDelay",
+                    "value": "[parameters('initialScriptDelay')]"
+                  }
+                ],
+                "scriptContent": "[variables('$fxv#0')]",
+                "cleanupPreference": "[parameters('cleanupPreference')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]",
+                "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), parameters('rbacRoleNeeded'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "acrImage": {
+              "type": "string",
+              "value": "[format('{0}/{1}', reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), '2021-12-01-preview').loginServer, variables('taggedImageName'))]",
+              "metadata": {
+                "description": "The ACR uri the image can be accessed on if building was successful"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'buildAcrImage-linux-dapr-node-pub')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "pubsub",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "nameseed": {
+            "value": "pubsub-sb"
+          },
+          "applicationEntityName": {
+            "value": "orders"
+          },
+          "daprComponentType": {
+            "value": "pubsub.azure.servicebus"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.11.1.770",
+              "templateHash": "17061185190568727130"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the location for all resources."
+              }
+            },
+            "nameseed": {
+              "type": "string",
+              "metadata": {
+                "description": "Used to name the Azure resources that are created"
+              }
+            },
+            "environmentAlreadyExists": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Indicates if we should deploy the Dapr components to an existing environment"
+              }
+            },
+            "containerAppEnvName": {
+              "type": "string",
+              "defaultValue": "[format('env-{0}', parameters('nameseed'))]",
+              "metadata": {
+                "description": "Specifies the name of the container app environment."
+              }
+            },
+            "applicationEntityName": {
+              "type": "string",
+              "defaultValue": "[parameters('nameseed')]",
+              "metadata": {
+                "description": "The application relevant name for the dapr component you are implementing"
+              },
+              "maxLength": 8
+            },
+            "daprComponentType": {
+              "type": "string",
+              "metadata": {
+                "description": "The dapr application component type to configure in the Environment"
+              },
+              "allowedValues": [
+                "pubsub.azure.servicebus",
+                "state.azure.blobstorage",
+                "state.azure.cosmosdb"
+              ]
+            },
+            "daprComponentName": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The name of the dapr component, this will be autogenerated if not provided"
+              }
+            },
+            "daprComponentScopes": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Names of container apps that can use this dapr component"
+              }
+            },
+            "infrastructureSubnetId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "For deploying in your own Virtual Network, provide the Infrastructure Subnet Id"
+              }
+            },
+            "zoneRedundant": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Zone Redundant (needs infrastructureSubnetId)"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Any tags that are to be applied to the Environment Components"
+              }
+            }
+          },
+          "variables": {
+            "autoDaprComponentNameMap": {
+              "pubsub.azure.servicebus": "[format('{0}pubsub', toLower(parameters('applicationEntityName')))]",
+              "state.azure.blobstorage": "[format('{0}statestore', toLower(parameters('applicationEntityName')))]",
+              "state.azure.cosmosdb": "[format('{0}statestore', toLower(parameters('applicationEntityName')))]"
+            },
+            "autoDaprComponentName": "[if(empty(parameters('daprComponentName')), variables('autoDaprComponentNameMap')[parameters('daprComponentType')], parameters('daprComponentName'))]"
+          },
+          "resources": [
+            {
+              "condition": "[not(parameters('environmentAlreadyExists'))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('containerAppEnv-{0}', parameters('nameseed'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "nameseed": {
+                    "value": "[parameters('nameseed')]"
+                  },
+                  "infraSubnetId": {
+                    "value": "[parameters('infrastructureSubnetId')]"
+                  },
+                  "zoneRedundant": {
+                    "value": "[parameters('zoneRedundant')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "15032274980026305573"
+                    }
+                  },
+                  "parameters": {
+                    "nameseed": {
+                      "type": "string"
+                    },
+                    "containerAppEnvName": {
+                      "type": "string",
+                      "defaultValue": "[format('env-{0}', parameters('nameseed'))]",
+                      "metadata": {
+                        "description": "Specifies the name of the container app environment."
+                      }
+                    },
+                    "containerAppLogAnalyticsName": {
+                      "type": "string",
+                      "defaultValue": "[format('log-{0}', parameters('nameseed'))]",
+                      "metadata": {
+                        "description": "Specifies the name of the log analytics workspace."
+                      }
+                    },
+                    "sku": {
+                      "type": "string",
+                      "defaultValue": "Consumption",
+                      "allowedValues": [
+                        "Consumption",
+                        "Premium"
+                      ]
+                    },
+                    "zoneRedundant": {
+                      "type": "bool",
+                      "defaultValue": false
+                    },
+                    "logRetentionDays": {
+                      "type": "int",
+                      "defaultValue": 30
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the location for all resources."
+                      }
+                    },
+                    "infraSubnetId": {
+                      "type": "string",
+                      "defaultValue": ""
+                    },
+                    "runtimeSubnetId": {
+                      "type": "string",
+                      "defaultValue": ""
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {}
+                    },
+                    "internalVirtualIp": {
+                      "type": "bool",
+                      "defaultValue": false,
+                      "metadata": {
+                        "description": "Sets the environment to only have a internal load balancer"
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.App/managedEnvironments",
+                      "apiVersion": "2022-06-01-preview",
+                      "name": "[parameters('containerAppEnvName')]",
+                      "location": "[parameters('location')]",
+                      "sku": {
+                        "name": "[parameters('sku')]"
+                      },
+                      "properties": {
+                        "zoneRedundant": "[parameters('zoneRedundant')]",
+                        "appLogsConfiguration": {
+                          "destination": "log-analytics",
+                          "logAnalyticsConfiguration": {
+                            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))).customerId]",
+                            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2022-10-01').primarySharedKey]"
+                          }
+                        },
+                        "vnetConfiguration": {
+                          "infrastructureSubnetId": "[parameters('infraSubnetId')]",
+                          "runtimeSubnetId": "[parameters('runtimeSubnetId')]",
+                          "internal": "[parameters('internalVirtualIp')]"
+                        },
+                        "daprAIInstrumentationKey": "[reference(resourceId('Microsoft.Resources/deployments', format('appInsights-{0}', parameters('nameseed')))).outputs.instrumentationKey.value]"
+                      },
+                      "tags": "[parameters('tags')]",
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Resources/deployments', format('appInsights-{0}', parameters('nameseed')))]",
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.OperationalInsights/workspaces",
+                      "apiVersion": "2022-10-01",
+                      "name": "[parameters('containerAppLogAnalyticsName')]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "sku": {
+                          "name": "PerGB2018"
+                        },
+                        "retentionInDays": "[parameters('logRetentionDays')]"
+                      }
+                    },
+                    {
+                      "type": "Microsoft.Resources/deployments",
+                      "apiVersion": "2020-10-01",
+                      "name": "[format('appInsights-{0}', parameters('nameseed'))]",
+                      "properties": {
+                        "expressionEvaluationOptions": {
+                          "scope": "inner"
+                        },
+                        "mode": "Incremental",
+                        "parameters": {
+                          "location": {
+                            "value": "[parameters('location')]"
+                          },
+                          "logAnalyticsId": {
+                            "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))]"
+                          },
+                          "nameseed": {
+                            "value": "[parameters('nameseed')]"
+                          }
+                        },
+                        "template": {
+                          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                          "contentVersion": "1.0.0.0",
+                          "metadata": {
+                            "_generator": {
+                              "name": "bicep",
+                              "version": "0.11.1.770",
+                              "templateHash": "12893374766320771628"
+                            }
+                          },
+                          "parameters": {
+                            "nameseed": {
+                              "type": "string"
+                            },
+                            "logAnalyticsId": {
+                              "type": "string"
+                            },
+                            "location": {
+                              "type": "string",
+                              "defaultValue": "[resourceGroup().location]"
+                            }
+                          },
+                          "resources": [
+                            {
+                              "type": "Microsoft.Insights/components",
+                              "apiVersion": "2020-02-02",
+                              "name": "[format('ai-{0}', parameters('nameseed'))]",
+                              "location": "[parameters('location')]",
+                              "kind": "web",
+                              "properties": {
+                                "Application_Type": "web",
+                                "WorkspaceResourceId": "[parameters('logAnalyticsId')]",
+                                "IngestionMode": "LogAnalytics"
+                              }
+                            }
+                          ],
+                          "outputs": {
+                            "id": {
+                              "type": "string",
+                              "value": "[resourceId('Microsoft.Insights/components', format('ai-{0}', parameters('nameseed')))]"
+                            },
+                            "name": {
+                              "type": "string",
+                              "value": "[format('ai-{0}', parameters('nameseed'))]"
+                            },
+                            "instrumentationKey": {
+                              "type": "string",
+                              "value": "[reference(resourceId('Microsoft.Insights/components', format('ai-{0}', parameters('nameseed')))).InstrumentationKey]"
+                            }
+                          }
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "containerAppEnvironmentName": {
+                      "type": "string",
+                      "value": "[parameters('containerAppEnvName')]"
+                    },
+                    "logAnalyticsName": {
+                      "type": "string",
+                      "value": "[parameters('containerAppLogAnalyticsName')]"
+                    },
+                    "logAnalyticsId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))]"
+                    },
+                    "appInsightsInstrumentationKey": {
+                      "type": "string",
+                      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('appInsights-{0}', parameters('nameseed')))).outputs.instrumentationKey.value]"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition": "[equals(parameters('daprComponentType'), 'pubsub.azure.servicebus')]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('dapr-sb-{0}', parameters('nameseed'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "componentName": {
+                    "value": "[variables('autoDaprComponentName')]"
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "containerAppEnvName": {
+                    "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]"
+                  },
+                  "entityName": {
+                    "value": "[parameters('applicationEntityName')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "1490041037123059482"
+                    }
+                  },
+                  "parameters": {
+                    "componentName": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "entityName": {
+                      "type": "string"
+                    },
+                    "containerAppEnvName": {
+                      "type": "string"
+                    },
+                    "createAzureServiceForComponent": {
+                      "type": "bool",
+                      "defaultValue": true
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "defaultValue": []
+                    }
+                  },
+                  "variables": {
+                    "daprComponent": "pubsub.azure.servicebus",
+                    "serviceBusConnectionStringName": "sb-root-connectionstring"
+                  },
+                  "resources": [
+                    {
+                      "condition": "[parameters('createAzureServiceForComponent')]",
+                      "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+                      "apiVersion": "2021-11-01",
+                      "name": "[format('{0}/{1}/{2}', format('sb-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))), parameters('entityName'), parameters('entityName'))]",
+                      "properties": {
+                        "deadLetteringOnFilterEvaluationExceptions": true,
+                        "deadLetteringOnMessageExpiration": true,
+                        "maxDeliveryCount": 10
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces/topics', format('sb-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))), parameters('entityName'))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createAzureServiceForComponent')]",
+                      "type": "Microsoft.ServiceBus/namespaces/topics",
+                      "apiVersion": "2021-11-01",
+                      "name": "[format('{0}/{1}', format('sb-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))), parameters('entityName'))]",
+                      "properties": {
+                        "supportOrdering": true
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces', format('sb-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.App/managedEnvironments/daprComponents",
+                      "apiVersion": "2022-03-01",
+                      "name": "[format('{0}/{1}', parameters('containerAppEnvName'), parameters('componentName'))]",
+                      "properties": {
+                        "componentType": "[variables('daprComponent')]",
+                        "version": "v1",
+                        "secrets": [
+                          {
+                            "name": "[variables('serviceBusConnectionStringName')]",
+                            "value": "[format('{0};EntityPath={1}', listKeys(resourceId('Microsoft.ServiceBus/namespaces/AuthorizationRules', format('sb-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))), 'RootManageSharedAccessKey'), '2021-11-01').primaryConnectionString, parameters('entityName'))]"
+                          }
+                        ],
+                        "metadata": [
+                          {
+                            "name": "connectionString",
+                            "secretRef": "[variables('serviceBusConnectionStringName')]"
+                          },
+                          {
+                            "name": "consumerID",
+                            "value": "[parameters('entityName')]"
+                          }
+                        ],
+                        "scopes": "[parameters('scopes')]"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces', format('sb-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createAzureServiceForComponent')]",
+                      "type": "Microsoft.ServiceBus/namespaces",
+                      "apiVersion": "2021-11-01",
+                      "name": "[format('sb-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location')))]",
+                      "location": "[parameters('location')]",
+                      "sku": {
+                        "name": "Standard",
+                        "tier": "Standard"
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))]"
+              ]
+            },
+            {
+              "condition": "[equals(parameters('daprComponentType'), 'state.azure.blobstorage')]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('dapr-state-stor-{0}', parameters('nameseed'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "name": {
+                    "value": "[variables('autoDaprComponentName')]"
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "containerAppEnvName": {
+                    "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]"
+                  },
+                  "entityName": {
+                    "value": "[parameters('applicationEntityName')]"
+                  },
+                  "scopes": {
+                    "value": "[parameters('daprComponentScopes')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "5324293688587926095"
+                    }
+                  },
+                  "parameters": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "entityName": {
+                      "type": "string"
+                    },
+                    "containerAppEnvName": {
+                      "type": "string"
+                    },
+                    "createAzureServiceForComponent": {
+                      "type": "bool",
+                      "defaultValue": true
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "defaultValue": []
+                    }
+                  },
+                  "variables": {
+                    "daprComponent": "state.azure.blobstorage",
+                    "rawStorageAccountName": "[format('st{0}{1}', parameters('name'), uniqueString(resourceGroup().id, parameters('name')))]",
+                    "storageAccountName": "[if(greater(length(variables('rawStorageAccountName')), 24), substring(toLower(variables('rawStorageAccountName')), 0, 24), variables('rawStorageAccountName'))]"
+                  },
+                  "resources": [
+                    {
+                      "condition": "[and(parameters('createAzureServiceForComponent'), equals(variables('daprComponent'), 'state.azure.blobstorage'))]",
+                      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+                      "apiVersion": "2021-09-01",
+                      "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', toLower(parameters('entityName')))]",
+                      "properties": {
+                        "publicAccess": "None"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]"
+                      ]
+                    },
+                    {
+                      "condition": "[and(parameters('createAzureServiceForComponent'), equals(variables('daprComponent'), 'state.azure.blobstorage'))]",
+                      "type": "Microsoft.Storage/storageAccounts/blobServices",
+                      "apiVersion": "2021-09-01",
+                      "name": "[format('{0}/{1}', variables('storageAccountName'), 'default')]",
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                      ]
+                    },
+                    {
+                      "condition": "[equals(variables('daprComponent'), 'state.azure.blobstorage')]",
+                      "type": "Microsoft.App/managedEnvironments/daprComponents",
+                      "apiVersion": "2022-03-01",
+                      "name": "[format('{0}/{1}', parameters('containerAppEnvName'), format('{0}-state', parameters('name')))]",
+                      "properties": {
+                        "componentType": "[variables('daprComponent')]",
+                        "version": "v1",
+                        "secrets": [
+                          {
+                            "name": "storageaccountkey",
+                            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value]"
+                          }
+                        ],
+                        "metadata": [
+                          {
+                            "name": "accountKey",
+                            "secretRef": "storageaccountkey"
+                          },
+                          {
+                            "name": "accountName",
+                            "value": "[variables('storageAccountName')]"
+                          },
+                          {
+                            "name": "containerName",
+                            "value": "[parameters('entityName')]"
+                          }
+                        ],
+                        "scopes": "[parameters('scopes')]"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                      ]
+                    },
+                    {
+                      "condition": "[and(parameters('createAzureServiceForComponent'), equals(variables('daprComponent'), 'state.azure.blobstorage'))]",
+                      "type": "Microsoft.Storage/storageAccounts",
+                      "apiVersion": "2021-09-01",
+                      "name": "[variables('storageAccountName')]",
+                      "kind": "StorageV2",
+                      "location": "[parameters('location')]",
+                      "sku": {
+                        "name": "Standard_LRS"
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))]"
+              ]
+            },
+            {
+              "condition": "[equals(parameters('daprComponentType'), 'state.azure.cosmosdb')]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('dapr-state-cosmos-{0}', parameters('nameseed'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "containerAppEnvName": {
+                    "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]"
+                  },
+                  "componentName": {
+                    "value": "[variables('autoDaprComponentName')]"
+                  },
+                  "entityName": {
+                    "value": "[parameters('applicationEntityName')]"
+                  },
+                  "scopes": {
+                    "value": "[parameters('daprComponentScopes')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "997573331547175945"
+                    }
+                  },
+                  "parameters": {
+                    "componentName": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "entityName": {
+                      "type": "string"
+                    },
+                    "containerAppEnvName": {
+                      "type": "string"
+                    },
+                    "createAzureServiceForComponent": {
+                      "type": "bool",
+                      "defaultValue": true
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "defaultValue": []
+                    }
+                  },
+                  "variables": {
+                    "daprComponent": "state.azure.cosmosdb",
+                    "databaseKeyName": "masterkey",
+                    "databaseName": "[format('{0}Db', parameters('entityName'))]",
+                    "databaseLocations": [
+                      {
+                        "locationName": "[parameters('location')]",
+                        "failoverPriority": 0,
+                        "isZoneRedundant": false
+                      }
+                    ]
+                  },
+                  "resources": [
+                    {
+                      "condition": "[parameters('createAzureServiceForComponent')]",
+                      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+                      "apiVersion": "2022-05-15",
+                      "name": "[format('{0}/{1}/{2}', format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))), variables('databaseName'), parameters('entityName'))]",
+                      "properties": {
+                        "resource": {
+                          "id": "[parameters('entityName')]",
+                          "partitionKey": {
+                            "paths": [
+                              "/partitionKey"
+                            ],
+                            "kind": "Hash"
+                          }
+                        },
+                        "options": {
+                          "autoscaleSettings": {
+                            "maxThroughput": 4000
+                          }
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))), variables('databaseName'))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createAzureServiceForComponent')]",
+                      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+                      "apiVersion": "2022-05-15",
+                      "name": "[format('{0}/{1}', format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))), variables('databaseName'))]",
+                      "properties": {
+                        "resource": {
+                          "id": "[variables('databaseName')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.App/managedEnvironments/daprComponents",
+                      "apiVersion": "2022-03-01",
+                      "name": "[format('{0}/{1}', parameters('containerAppEnvName'), parameters('componentName'))]",
+                      "properties": {
+                        "componentType": "[variables('daprComponent')]",
+                        "version": "v1",
+                        "secrets": [
+                          {
+                            "name": "[variables('databaseKeyName')]",
+                            "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location')))), '2022-05-15').primaryMasterKey]"
+                          }
+                        ],
+                        "metadata": [
+                          {
+                            "name": "url",
+                            "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location')))), '2022-05-15').documentEndpoint]"
+                          },
+                          {
+                            "name": "database",
+                            "value": "[variables('databaseName')]"
+                          },
+                          {
+                            "name": "collection",
+                            "value": "[parameters('entityName')]"
+                          },
+                          {
+                            "name": "[variables('databaseKeyName')]",
+                            "secretRef": "[variables('databaseKeyName')]"
+                          }
+                        ],
+                        "scopes": "[parameters('scopes')]"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location'))))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createAzureServiceForComponent')]",
+                      "type": "Microsoft.DocumentDB/databaseAccounts",
+                      "apiVersion": "2022-05-15",
+                      "name": "[format('cosmos-{0}-{1}', parameters('componentName'), uniqueString(resourceGroup().id, parameters('location')))]",
+                      "kind": "GlobalDocumentDB",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "consistencyPolicy": {
+                          "defaultConsistencyLevel": "Session"
+                        },
+                        "locations": "[variables('databaseLocations')]",
+                        "databaseAccountOfferType": "Standard"
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "containerAppEnvironmentName": {
+              "type": "string",
+              "value": "[if(parameters('environmentAlreadyExists'), parameters('containerAppEnvName'), reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.containerAppEnvironmentName.value)]",
+              "metadata": {
+                "description": "The name of the created Azure Container Apps Environment"
+              }
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[if(parameters('environmentAlreadyExists'), '', reference(resourceId('Microsoft.Resources/deployments', format('containerAppEnv-{0}', parameters('nameseed'))), '2020-10-01').outputs.appInsightsInstrumentationKey.value)]",
+              "metadata": {
+                "description": "The Azure Applications Insights (telemetry) instrumentation key"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "subscriber",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "containerAppEnvName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'pubsub')).outputs.containerAppEnvironmentName.value]"
+          },
+          "containerAppName": {
+            "value": "subscriber-orders"
+          },
+          "containerImage": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'buildAcrImage-linux-dapr-node-sub')).outputs.acrImage.value]"
+          },
+          "azureContainerRegistry": {
+            "value": "[parameters('containerRegistryName')]"
+          },
+          "environmentVariables": {
+            "value": [
+              {
+                "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'pubsub')).outputs.appInsightsInstrumentationKey.value]"
+              },
+              {
+                "name": "AZURE_KEY_VAULT_ENDPOINT",
+                "value": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))).vaultUri]"
+              }
+            ]
+          },
+          "targetPort": {
+            "value": 5001
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.9.1.41621",
+              "templateHash": "7966047607025495492"
+            }
+          },
+          "parameters": {
+            "containerAppName": {
+              "type": "string",
+              "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+              "metadata": {
+                "description": "Specifies the name of the container app."
+              }
+            },
+            "containerAppEnvName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the container app environment to target, must be in the same resourceGroup."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Specifies the location for all resources."
+              }
+            },
+            "containerImage": {
+              "type": "string",
+              "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+              "metadata": {
+                "description": "Specifies the docker container image to deploy."
+              }
+            },
+            "targetPort": {
+              "type": "int",
+              "defaultValue": 80,
+              "metadata": {
+                "description": "Specifies the container port."
+              }
+            },
+            "daprAppPort": {
+              "type": "int",
+              "defaultValue": "[parameters('targetPort')]",
+              "metadata": {
+                "description": "Specifies the dapr app port."
+              }
+            },
+            "daprAppProtocol": {
+              "type": "string",
+              "defaultValue": "http",
+              "metadata": {
+                "description": "Tells Dapr which protocol your application is using. Valid options are http and grpc. Default is http"
+              },
+              "allowedValues": [
+                "http",
+                "grpc",
+                ""
+              ]
+            },
+            "revisionMode": {
+              "type": "string",
+              "defaultValue": "Single",
+              "metadata": {
+                "description": "Controls how active revisions are handled for the Container app"
+              },
+              "allowedValues": [
+                "Single",
+                "Multiple"
+              ]
+            },
+            "cpuCore": {
+              "type": "string",
+              "defaultValue": "0.5",
+              "metadata": {
+                "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals places. Max of 2.0. Valid values include, 0.5 1.25 1.4"
+              }
+            },
+            "memorySize": {
+              "type": "string",
+              "defaultValue": "1",
+              "metadata": {
+                "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+              }
+            },
+            "minReplicas": {
+              "type": "int",
+              "defaultValue": 1,
+              "maxValue": 25,
+              "minValue": 0,
+              "metadata": {
+                "description": "Minimum number of replicas that will be deployed"
+              }
+            },
+            "maxReplicas": {
+              "type": "int",
+              "defaultValue": 3,
+              "maxValue": 25,
+              "minValue": 0,
+              "metadata": {
+                "description": "Maximum number of replicas that will be deployed"
+              }
+            },
+            "externalIngress": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Should the app be exposed on an external endpoint"
+              }
+            },
+            "enableIngress": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Does the app expect traffic, or should it operate headless"
+              }
+            },
+            "revisionSuffix": {
+              "type": "string",
+              "defaultValue": "[uniqueString(utcNow())]",
+              "metadata": {
+                "description": "Revisions to the container app need to be unique"
+              }
+            },
+            "environmentVariables": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Any environment variables that your container needs"
+              }
+            },
+            "azureContainerRegistry": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "An ACR name can be optionally passed if thats where the container app image is homed"
+              }
+            },
+            "createUserManagedId": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Will create a user managed identity for the application to access other Azure resoruces as"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Any tags that are to be applied to the Container App"
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[empty(parameters('azureContainerRegistry'))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[parameters('containerAppName')]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "containerAppEnvName": {
+                    "value": "[parameters('containerAppEnvName')]"
+                  },
+                  "containerAppName": {
+                    "value": "[parameters('containerAppName')]"
+                  },
+                  "containerImage": {
+                    "value": "[parameters('containerImage')]"
+                  },
+                  "cpuCore": {
+                    "value": "[parameters('cpuCore')]"
+                  },
+                  "createUserManagedId": {
+                    "value": "[parameters('createUserManagedId')]"
+                  },
+                  "daprAppPort": {
+                    "value": "[parameters('daprAppPort')]"
+                  },
+                  "daprAppProtocol": {
+                    "value": "[parameters('daprAppProtocol')]"
+                  },
+                  "enableIngress": {
+                    "value": "[parameters('enableIngress')]"
+                  },
+                  "environmentVariables": {
+                    "value": "[parameters('environmentVariables')]"
+                  },
+                  "externalIngress": {
+                    "value": "[parameters('externalIngress')]"
+                  },
+                  "maxReplicas": {
+                    "value": "[parameters('maxReplicas')]"
+                  },
+                  "memorySize": {
+                    "value": "[parameters('memorySize')]"
+                  },
+                  "minReplicas": {
+                    "value": "[parameters('minReplicas')]"
+                  },
+                  "revisionMode": {
+                    "value": "[parameters('revisionMode')]"
+                  },
+                  "revisionSuffix": {
+                    "value": "[parameters('revisionSuffix')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  },
+                  "targetPort": {
+                    "value": "[parameters('targetPort')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.9.1.41621",
+                      "templateHash": "13090141787330058627"
+                    }
+                  },
+                  "parameters": {
+                    "containerAppName": {
+                      "type": "string",
+                      "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+                      "metadata": {
+                        "description": "Specifies the name of the container app."
+                      }
+                    },
+                    "containerAppEnvName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the name of the container app environment to target, must be in the same resourceGroup."
+                      }
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the location for all resources."
+                      }
+                    },
+                    "containerImage": {
+                      "type": "string",
+                      "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+                      "metadata": {
+                        "description": "Specifies the docker container image to deploy."
+                      }
+                    },
+                    "targetPort": {
+                      "type": "int",
+                      "defaultValue": 80,
+                      "metadata": {
+                        "description": "Specifies the container port."
+                      }
+                    },
+                    "daprAppPort": {
+                      "type": "int",
+                      "defaultValue": "[parameters('targetPort')]",
+                      "metadata": {
+                        "description": "Specifies the dapr app port."
+                      }
+                    },
+                    "daprAppProtocol": {
+                      "type": "string",
+                      "defaultValue": "http",
+                      "metadata": {
+                        "description": "Tells Dapr which protocol your application is using. Valid options are http and grpc. Default is http"
+                      },
+                      "allowedValues": [
+                        "http",
+                        "grpc",
+                        ""
+                      ]
+                    },
+                    "revisionMode": {
+                      "type": "string",
+                      "defaultValue": "Single",
+                      "metadata": {
+                        "description": "Controls how active revisions are handled for the Container app"
+                      },
+                      "allowedValues": [
+                        "Single",
+                        "Multiple"
+                      ]
+                    },
+                    "cpuCore": {
+                      "type": "string",
+                      "defaultValue": "0.5",
+                      "metadata": {
+                        "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals places. Max of 2.0. Valid values include, 0.5 1.25 1.4"
+                      }
+                    },
+                    "memorySize": {
+                      "type": "string",
+                      "defaultValue": "1",
+                      "metadata": {
+                        "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+                      }
+                    },
+                    "minReplicas": {
+                      "type": "int",
+                      "defaultValue": 1,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Minimum number of replicas that will be deployed"
+                      }
+                    },
+                    "maxReplicas": {
+                      "type": "int",
+                      "defaultValue": 3,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Maximum number of replicas that will be deployed"
+                      }
+                    },
+                    "externalIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Should the app be exposed on an external endpoint"
+                      }
+                    },
+                    "enableIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Does the app expect traffic, or should it operate headless"
+                      }
+                    },
+                    "revisionSuffix": {
+                      "type": "string",
+                      "defaultValue": "[uniqueString(utcNow())]",
+                      "metadata": {
+                        "description": "Revisions to the container app need to be unique"
+                      }
+                    },
+                    "environmentVariables": {
+                      "type": "array",
+                      "defaultValue": [],
+                      "metadata": {
+                        "description": "Any environment variables that your container needs"
+                      }
+                    },
+                    "createUserManagedId": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Will create a user managed identity for the application to access other Azure resoruces as"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {},
+                      "metadata": {
+                        "description": "Any tags that are to be applied to the Container App"
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.App/containerApps",
+                      "apiVersion": "2022-03-01",
+                      "name": "[parameters('containerAppName')]",
+                      "location": "[parameters('location')]",
+                      "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
+                      "properties": {
+                        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
+                        "configuration": {
+                          "ingress": "[if(parameters('enableIngress'), createObject('external', parameters('externalIngress'), 'targetPort', parameters('targetPort'), 'allowInsecure', false(), 'traffic', createArray(createObject('latestRevision', true(), 'weight', 100))), null())]",
+                          "dapr": {
+                            "appId": "[parameters('containerAppName')]",
+                            "appProtocol": "[if(not(empty(parameters('daprAppProtocol'))), parameters('daprAppProtocol'), null())]",
+                            "appPort": "[if(equals(parameters('enableIngress'), true()), parameters('daprAppPort'), null())]",
+                            "enabled": true
+                          },
+                          "activeRevisionsMode": "[parameters('revisionMode')]",
+                          "registries": []
+                        },
+                        "template": {
+                          "revisionSuffix": "[parameters('revisionSuffix')]",
+                          "containers": [
+                            {
+                              "name": "[parameters('containerAppName')]",
+                              "image": "[parameters('containerImage')]",
+                              "resources": {
+                                "cpu": "[json(parameters('cpuCore'))]",
+                                "memory": "[format('{0}Gi', parameters('memorySize'))]"
+                              },
+                              "env": "[parameters('environmentVariables')]"
+                            }
+                          ],
+                          "scale": {
+                            "minReplicas": "[parameters('minReplicas')]",
+                            "maxReplicas": "[parameters('maxReplicas')]"
+                          }
+                        }
+                      },
+                      "tags": "[parameters('tags')]",
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createUserManagedId')]",
+                      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                      "apiVersion": "2022-01-31-preview",
+                      "name": "[format('id-{0}', parameters('containerAppName'))]",
+                      "location": "[parameters('location')]"
+                    }
+                  ],
+                  "outputs": {
+                    "containerAppFQDN": {
+                      "type": "string",
+                      "value": "[if(parameters('enableIngress'), reference(resourceId('Microsoft.App/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn, '')]",
+                      "metadata": {
+                        "description": "If ingress is enabled, this is the FQDN that the Container App is exposed on"
+                      }
+                    },
+                    "userAssignedIdPrincipalId": {
+                      "type": "string",
+                      "value": "[if(parameters('createUserManagedId'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), '2022-01-31-preview').principalId, '')]",
+                      "metadata": {
+                        "description": "The Principal Id of the Container Apps Managed Identity"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('azureContainerRegistry')))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('{0}-acr', parameters('containerAppName'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "containerAppEnvName": {
+                    "value": "[parameters('containerAppEnvName')]"
+                  },
+                  "azureContainerRegistry": {
+                    "value": "[parameters('azureContainerRegistry')]"
+                  },
+                  "containerAppName": {
+                    "value": "[parameters('containerAppName')]"
+                  },
+                  "containerImage": {
+                    "value": "[parameters('containerImage')]"
+                  },
+                  "cpuCore": {
+                    "value": "[parameters('cpuCore')]"
+                  },
+                  "createUserManagedId": {
+                    "value": "[parameters('createUserManagedId')]"
+                  },
+                  "daprAppPort": {
+                    "value": "[parameters('daprAppPort')]"
+                  },
+                  "daprAppProtocol": {
+                    "value": "[parameters('daprAppProtocol')]"
+                  },
+                  "enableIngress": {
+                    "value": "[parameters('enableIngress')]"
+                  },
+                  "environmentVariables": {
+                    "value": "[parameters('environmentVariables')]"
+                  },
+                  "externalIngress": {
+                    "value": "[parameters('externalIngress')]"
+                  },
+                  "maxReplicas": {
+                    "value": "[parameters('maxReplicas')]"
+                  },
+                  "memorySize": {
+                    "value": "[parameters('memorySize')]"
+                  },
+                  "minReplicas": {
+                    "value": "[parameters('minReplicas')]"
+                  },
+                  "revisionMode": {
+                    "value": "[parameters('revisionMode')]"
+                  },
+                  "revisionSuffix": {
+                    "value": "[parameters('revisionSuffix')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  },
+                  "targetPort": {
+                    "value": "[parameters('targetPort')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.9.1.41621",
+                      "templateHash": "3502482138940038235"
+                    }
+                  },
+                  "parameters": {
+                    "containerAppName": {
+                      "type": "string",
+                      "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+                      "metadata": {
+                        "description": "Specifies the name of the container app."
+                      }
+                    },
+                    "containerAppEnvName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the name of the container app environment to target, must be in the same resourceGroup."
+                      }
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the location for all resources."
+                      }
+                    },
+                    "containerImage": {
+                      "type": "string",
+                      "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+                      "metadata": {
+                        "description": "Specifies the docker container image to deploy."
+                      }
+                    },
+                    "targetPort": {
+                      "type": "int",
+                      "defaultValue": 80,
+                      "metadata": {
+                        "description": "Specifies the container port."
+                      }
+                    },
+                    "daprAppPort": {
+                      "type": "int",
+                      "defaultValue": "[parameters('targetPort')]",
+                      "metadata": {
+                        "description": "Specifies the dapr app port."
+                      }
+                    },
+                    "daprAppProtocol": {
+                      "type": "string",
+                      "defaultValue": "http",
+                      "metadata": {
+                        "description": "Tells Dapr which protocol your application is using. Valid options are http and grpc. Default is http"
+                      },
+                      "allowedValues": [
+                        "http",
+                        "grpc",
+                        ""
+                      ]
+                    },
+                    "revisionMode": {
+                      "type": "string",
+                      "defaultValue": "Single",
+                      "metadata": {
+                        "description": "Controls how active revisions are handled for the Container app"
+                      },
+                      "allowedValues": [
+                        "Single",
+                        "Multiple"
+                      ]
+                    },
+                    "cpuCore": {
+                      "type": "string",
+                      "defaultValue": "0.5",
+                      "metadata": {
+                        "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals places. Max of 2.0. Valid values include, 0.5 1.25 1.4"
+                      }
+                    },
+                    "memorySize": {
+                      "type": "string",
+                      "defaultValue": "1",
+                      "metadata": {
+                        "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+                      }
+                    },
+                    "minReplicas": {
+                      "type": "int",
+                      "defaultValue": 1,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Minimum number of replicas that will be deployed"
+                      }
+                    },
+                    "maxReplicas": {
+                      "type": "int",
+                      "defaultValue": 3,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Maximum number of replicas that will be deployed"
+                      }
+                    },
+                    "externalIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Should the app be exposed on an external endpoint"
+                      }
+                    },
+                    "enableIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Does the app expect traffic, or should it operate headless"
+                      }
+                    },
+                    "revisionSuffix": {
+                      "type": "string",
+                      "defaultValue": "[uniqueString(utcNow())]",
+                      "metadata": {
+                        "description": "Revisions to the container app need to be unique"
+                      }
+                    },
+                    "environmentVariables": {
+                      "type": "array",
+                      "defaultValue": [],
+                      "metadata": {
+                        "description": "Any environment variables that your container needs"
+                      }
+                    },
+                    "azureContainerRegistry": {
+                      "type": "string",
+                      "defaultValue": "",
+                      "metadata": {
+                        "description": "An ACR name can be optionally passed if thats where the container app image is homed"
+                      }
+                    },
+                    "createUserManagedId": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Will create a user managed identity for the application to access other Azure resoruces as"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {},
+                      "metadata": {
+                        "description": "Any tags that are to be applied to the Container App"
+                      }
+                    }
+                  },
+                  "variables": {
+                    "acrPullRole": "[resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.App/containerApps",
+                      "apiVersion": "2022-03-01",
+                      "name": "[parameters('containerAppName')]",
+                      "location": "[parameters('location')]",
+                      "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
+                      "properties": {
+                        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
+                        "configuration": {
+                          "ingress": "[if(parameters('enableIngress'), createObject('external', parameters('externalIngress'), 'targetPort', parameters('targetPort'), 'allowInsecure', false(), 'traffic', createArray(createObject('latestRevision', true(), 'weight', 100))), null())]",
+                          "dapr": {
+                            "appId": "[parameters('containerAppName')]",
+                            "appProtocol": "[if(not(empty(parameters('daprAppProtocol'))), parameters('daprAppProtocol'), null())]",
+                            "appPort": "[if(equals(parameters('enableIngress'), true()), parameters('daprAppPort'), null())]",
+                            "enabled": true
+                          },
+                          "activeRevisionsMode": "[parameters('revisionMode')]",
+                          "registries": [
+                            {
+                              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]",
+                              "server": "[reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), '2022-02-01-preview').loginServer]"
+                            }
+                          ]
+                        },
+                        "template": {
+                          "revisionSuffix": "[parameters('revisionSuffix')]",
+                          "containers": [
+                            {
+                              "name": "[parameters('containerAppName')]",
+                              "image": "[parameters('containerImage')]",
+                              "resources": {
+                                "cpu": "[json(parameters('cpuCore'))]",
+                                "memory": "[format('{0}Gi', parameters('memorySize'))]"
+                              },
+                              "env": "[parameters('environmentVariables')]"
+                            }
+                          ],
+                          "scale": {
+                            "minReplicas": "[parameters('minReplicas')]",
+                            "maxReplicas": "[parameters('maxReplicas')]"
+                          }
+                        }
+                      },
+                      "tags": "[parameters('tags')]",
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Resources/deployments', format('wait-{0}', parameters('containerAppName')))]",
+                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createUserManagedId')]",
+                      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                      "apiVersion": "2022-01-31-preview",
+                      "name": "[format('id-{0}', parameters('containerAppName'))]",
+                      "location": "[parameters('location')]"
+                    },
+                    {
+                      "condition": "[and(parameters('createUserManagedId'), not(empty(parameters('azureContainerRegistry'))))]",
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2020-10-01-preview",
+                      "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('azureContainerRegistry'))]",
+                      "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), variables('acrPullRole'))]",
+                      "properties": {
+                        "roleDefinitionId": "[variables('acrPullRole')]",
+                        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), '2022-01-31-preview').principalId]",
+                        "principalType": "ServicePrincipal"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]"
+                      ],
+                      "metadata": {
+                        "description": "This allows the managed identity of the container app to access the registry"
+                      }
+                    },
+                    {
+                      "condition": "[and(parameters('createUserManagedId'), not(empty(parameters('azureContainerRegistry'))))]",
+                      "type": "Microsoft.Resources/deployments",
+                      "apiVersion": "2020-10-01",
+                      "name": "[format('wait-{0}', parameters('containerAppName'))]",
+                      "properties": {
+                        "expressionEvaluationOptions": {
+                          "scope": "inner"
+                        },
+                        "mode": "Incremental",
+                        "parameters": {
+                          "waitSeconds": {
+                            "value": 30
+                          },
+                          "location": {
+                            "value": "[parameters('location')]"
+                          }
+                        },
+                        "template": {
+                          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                          "contentVersion": "1.0.0.0",
+                          "metadata": {
+                            "_generator": {
+                              "name": "bicep",
+                              "version": "0.8.9.13224",
+                              "templateHash": "2218759242619531802"
+                            }
+                          },
+                          "parameters": {
+                            "waitSeconds": {
+                              "type": "int",
+                              "metadata": {
+                                "description": "The number of seconds to wait for"
+                              },
+                              "maxValue": 180,
+                              "minValue": 1
+                            },
+                            "location": {
+                              "type": "string",
+                              "defaultValue": "[resourceGroup().location]",
+                              "metadata": {
+                                "description": "The location to deploy the resources to"
+                              }
+                            }
+                          },
+                          "resources": [
+                            {
+                              "type": "Microsoft.Resources/deploymentScripts",
+                              "apiVersion": "2020-10-01",
+                              "name": "DeployDelay",
+                              "location": "[parameters('location')]",
+                              "kind": "AzurePowerShell",
+                              "properties": {
+                                "retentionInterval": "PT1H",
+                                "azPowerShellVersion": "6.4",
+                                "cleanupPreference": "OnSuccess",
+                                "environmentVariables": [
+                                  {
+                                    "name": "waitSeconds",
+                                    "value": "[format('{0}', parameters('waitSeconds'))]"
+                                  }
+                                ],
+                                "scriptContent": "write-output \"Sleeping for $Env:waitSeconds\"; start-sleep -Seconds $Env:waitSeconds"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "dependsOn": [
+                        "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), variables('acrPullRole')))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "containerAppFQDN": {
+                      "type": "string",
+                      "value": "[if(parameters('enableIngress'), reference(resourceId('Microsoft.App/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn, '')]",
+                      "metadata": {
+                        "description": "If ingress is enabled, this is the FQDN that the Container App is exposed on"
+                      }
+                    },
+                    "userAssignedIdPrincipalId": {
+                      "type": "string",
+                      "value": "[if(parameters('createUserManagedId'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), '2022-01-31-preview').principalId, '')]",
+                      "metadata": {
+                        "description": "The Principal Id of the Container Apps Managed Identity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "containerAppFQDN": {
+              "type": "string",
+              "value": "[if(parameters('enableIngress'), if(empty(parameters('azureContainerRegistry')), reference(resourceId('Microsoft.Resources/deployments', parameters('containerAppName')), '2020-10-01').outputs.containerAppFQDN.value, reference(resourceId('Microsoft.Resources/deployments', format('{0}-acr', parameters('containerAppName'))), '2020-10-01').outputs.containerAppFQDN.value), '')]",
+              "metadata": {
+                "description": "If ingress is enabled, this is the FQDN that the Container App is exposed on"
+              }
+            },
+            "userAssignedIdPrincipalId": {
+              "type": "string",
+              "value": "[if(empty(parameters('azureContainerRegistry')), reference(resourceId('Microsoft.Resources/deployments', parameters('containerAppName')), '2020-10-01').outputs.userAssignedIdPrincipalId.value, reference(resourceId('Microsoft.Resources/deployments', format('{0}-acr', parameters('containerAppName'))), '2020-10-01').outputs.userAssignedIdPrincipalId.value)]",
+              "metadata": {
+                "description": "The PrinicpalId of the Container Apps Managed Identity"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'pubsub')]",
+        "[resourceId('Microsoft.Resources/deployments', 'buildAcrImage-linux-dapr-node-sub')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "publisher",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "containerAppEnvName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'pubsub')).outputs.containerAppEnvironmentName.value]"
+          },
+          "containerAppName": {
+            "value": "publisher-checkout"
+          },
+          "containerImage": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'buildAcrImage-linux-dapr-node-pub')).outputs.acrImage.value]"
+          },
+          "azureContainerRegistry": {
+            "value": "[parameters('containerRegistryName')]"
+          },
+          "environmentVariables": {
+            "value": [
+              {
+                "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'pubsub')).outputs.appInsightsInstrumentationKey.value]"
+              },
+              {
+                "name": "AZURE_KEY_VAULT_ENDPOINT",
+                "value": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))).vaultUri]"
+              }
+            ]
+          },
+          "enableIngress": {
+            "value": false
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.9.1.41621",
+              "templateHash": "7966047607025495492"
+            }
+          },
+          "parameters": {
+            "containerAppName": {
+              "type": "string",
+              "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+              "metadata": {
+                "description": "Specifies the name of the container app."
+              }
+            },
+            "containerAppEnvName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the container app environment to target, must be in the same resourceGroup."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Specifies the location for all resources."
+              }
+            },
+            "containerImage": {
+              "type": "string",
+              "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+              "metadata": {
+                "description": "Specifies the docker container image to deploy."
+              }
+            },
+            "targetPort": {
+              "type": "int",
+              "defaultValue": 80,
+              "metadata": {
+                "description": "Specifies the container port."
+              }
+            },
+            "daprAppPort": {
+              "type": "int",
+              "defaultValue": "[parameters('targetPort')]",
+              "metadata": {
+                "description": "Specifies the dapr app port."
+              }
+            },
+            "daprAppProtocol": {
+              "type": "string",
+              "defaultValue": "http",
+              "metadata": {
+                "description": "Tells Dapr which protocol your application is using. Valid options are http and grpc. Default is http"
+              },
+              "allowedValues": [
+                "http",
+                "grpc",
+                ""
+              ]
+            },
+            "revisionMode": {
+              "type": "string",
+              "defaultValue": "Single",
+              "metadata": {
+                "description": "Controls how active revisions are handled for the Container app"
+              },
+              "allowedValues": [
+                "Single",
+                "Multiple"
+              ]
+            },
+            "cpuCore": {
+              "type": "string",
+              "defaultValue": "0.5",
+              "metadata": {
+                "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals places. Max of 2.0. Valid values include, 0.5 1.25 1.4"
+              }
+            },
+            "memorySize": {
+              "type": "string",
+              "defaultValue": "1",
+              "metadata": {
+                "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+              }
+            },
+            "minReplicas": {
+              "type": "int",
+              "defaultValue": 1,
+              "maxValue": 25,
+              "minValue": 0,
+              "metadata": {
+                "description": "Minimum number of replicas that will be deployed"
+              }
+            },
+            "maxReplicas": {
+              "type": "int",
+              "defaultValue": 3,
+              "maxValue": 25,
+              "minValue": 0,
+              "metadata": {
+                "description": "Maximum number of replicas that will be deployed"
+              }
+            },
+            "externalIngress": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Should the app be exposed on an external endpoint"
+              }
+            },
+            "enableIngress": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Does the app expect traffic, or should it operate headless"
+              }
+            },
+            "revisionSuffix": {
+              "type": "string",
+              "defaultValue": "[uniqueString(utcNow())]",
+              "metadata": {
+                "description": "Revisions to the container app need to be unique"
+              }
+            },
+            "environmentVariables": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Any environment variables that your container needs"
+              }
+            },
+            "azureContainerRegistry": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "An ACR name can be optionally passed if thats where the container app image is homed"
+              }
+            },
+            "createUserManagedId": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Will create a user managed identity for the application to access other Azure resoruces as"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Any tags that are to be applied to the Container App"
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[empty(parameters('azureContainerRegistry'))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[parameters('containerAppName')]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "containerAppEnvName": {
+                    "value": "[parameters('containerAppEnvName')]"
+                  },
+                  "containerAppName": {
+                    "value": "[parameters('containerAppName')]"
+                  },
+                  "containerImage": {
+                    "value": "[parameters('containerImage')]"
+                  },
+                  "cpuCore": {
+                    "value": "[parameters('cpuCore')]"
+                  },
+                  "createUserManagedId": {
+                    "value": "[parameters('createUserManagedId')]"
+                  },
+                  "daprAppPort": {
+                    "value": "[parameters('daprAppPort')]"
+                  },
+                  "daprAppProtocol": {
+                    "value": "[parameters('daprAppProtocol')]"
+                  },
+                  "enableIngress": {
+                    "value": "[parameters('enableIngress')]"
+                  },
+                  "environmentVariables": {
+                    "value": "[parameters('environmentVariables')]"
+                  },
+                  "externalIngress": {
+                    "value": "[parameters('externalIngress')]"
+                  },
+                  "maxReplicas": {
+                    "value": "[parameters('maxReplicas')]"
+                  },
+                  "memorySize": {
+                    "value": "[parameters('memorySize')]"
+                  },
+                  "minReplicas": {
+                    "value": "[parameters('minReplicas')]"
+                  },
+                  "revisionMode": {
+                    "value": "[parameters('revisionMode')]"
+                  },
+                  "revisionSuffix": {
+                    "value": "[parameters('revisionSuffix')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  },
+                  "targetPort": {
+                    "value": "[parameters('targetPort')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.9.1.41621",
+                      "templateHash": "13090141787330058627"
+                    }
+                  },
+                  "parameters": {
+                    "containerAppName": {
+                      "type": "string",
+                      "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+                      "metadata": {
+                        "description": "Specifies the name of the container app."
+                      }
+                    },
+                    "containerAppEnvName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the name of the container app environment to target, must be in the same resourceGroup."
+                      }
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the location for all resources."
+                      }
+                    },
+                    "containerImage": {
+                      "type": "string",
+                      "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+                      "metadata": {
+                        "description": "Specifies the docker container image to deploy."
+                      }
+                    },
+                    "targetPort": {
+                      "type": "int",
+                      "defaultValue": 80,
+                      "metadata": {
+                        "description": "Specifies the container port."
+                      }
+                    },
+                    "daprAppPort": {
+                      "type": "int",
+                      "defaultValue": "[parameters('targetPort')]",
+                      "metadata": {
+                        "description": "Specifies the dapr app port."
+                      }
+                    },
+                    "daprAppProtocol": {
+                      "type": "string",
+                      "defaultValue": "http",
+                      "metadata": {
+                        "description": "Tells Dapr which protocol your application is using. Valid options are http and grpc. Default is http"
+                      },
+                      "allowedValues": [
+                        "http",
+                        "grpc",
+                        ""
+                      ]
+                    },
+                    "revisionMode": {
+                      "type": "string",
+                      "defaultValue": "Single",
+                      "metadata": {
+                        "description": "Controls how active revisions are handled for the Container app"
+                      },
+                      "allowedValues": [
+                        "Single",
+                        "Multiple"
+                      ]
+                    },
+                    "cpuCore": {
+                      "type": "string",
+                      "defaultValue": "0.5",
+                      "metadata": {
+                        "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals places. Max of 2.0. Valid values include, 0.5 1.25 1.4"
+                      }
+                    },
+                    "memorySize": {
+                      "type": "string",
+                      "defaultValue": "1",
+                      "metadata": {
+                        "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+                      }
+                    },
+                    "minReplicas": {
+                      "type": "int",
+                      "defaultValue": 1,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Minimum number of replicas that will be deployed"
+                      }
+                    },
+                    "maxReplicas": {
+                      "type": "int",
+                      "defaultValue": 3,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Maximum number of replicas that will be deployed"
+                      }
+                    },
+                    "externalIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Should the app be exposed on an external endpoint"
+                      }
+                    },
+                    "enableIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Does the app expect traffic, or should it operate headless"
+                      }
+                    },
+                    "revisionSuffix": {
+                      "type": "string",
+                      "defaultValue": "[uniqueString(utcNow())]",
+                      "metadata": {
+                        "description": "Revisions to the container app need to be unique"
+                      }
+                    },
+                    "environmentVariables": {
+                      "type": "array",
+                      "defaultValue": [],
+                      "metadata": {
+                        "description": "Any environment variables that your container needs"
+                      }
+                    },
+                    "createUserManagedId": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Will create a user managed identity for the application to access other Azure resoruces as"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {},
+                      "metadata": {
+                        "description": "Any tags that are to be applied to the Container App"
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.App/containerApps",
+                      "apiVersion": "2022-03-01",
+                      "name": "[parameters('containerAppName')]",
+                      "location": "[parameters('location')]",
+                      "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
+                      "properties": {
+                        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
+                        "configuration": {
+                          "ingress": "[if(parameters('enableIngress'), createObject('external', parameters('externalIngress'), 'targetPort', parameters('targetPort'), 'allowInsecure', false(), 'traffic', createArray(createObject('latestRevision', true(), 'weight', 100))), null())]",
+                          "dapr": {
+                            "appId": "[parameters('containerAppName')]",
+                            "appProtocol": "[if(not(empty(parameters('daprAppProtocol'))), parameters('daprAppProtocol'), null())]",
+                            "appPort": "[if(equals(parameters('enableIngress'), true()), parameters('daprAppPort'), null())]",
+                            "enabled": true
+                          },
+                          "activeRevisionsMode": "[parameters('revisionMode')]",
+                          "registries": []
+                        },
+                        "template": {
+                          "revisionSuffix": "[parameters('revisionSuffix')]",
+                          "containers": [
+                            {
+                              "name": "[parameters('containerAppName')]",
+                              "image": "[parameters('containerImage')]",
+                              "resources": {
+                                "cpu": "[json(parameters('cpuCore'))]",
+                                "memory": "[format('{0}Gi', parameters('memorySize'))]"
+                              },
+                              "env": "[parameters('environmentVariables')]"
+                            }
+                          ],
+                          "scale": {
+                            "minReplicas": "[parameters('minReplicas')]",
+                            "maxReplicas": "[parameters('maxReplicas')]"
+                          }
+                        }
+                      },
+                      "tags": "[parameters('tags')]",
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createUserManagedId')]",
+                      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                      "apiVersion": "2022-01-31-preview",
+                      "name": "[format('id-{0}', parameters('containerAppName'))]",
+                      "location": "[parameters('location')]"
+                    }
+                  ],
+                  "outputs": {
+                    "containerAppFQDN": {
+                      "type": "string",
+                      "value": "[if(parameters('enableIngress'), reference(resourceId('Microsoft.App/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn, '')]",
+                      "metadata": {
+                        "description": "If ingress is enabled, this is the FQDN that the Container App is exposed on"
+                      }
+                    },
+                    "userAssignedIdPrincipalId": {
+                      "type": "string",
+                      "value": "[if(parameters('createUserManagedId'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), '2022-01-31-preview').principalId, '')]",
+                      "metadata": {
+                        "description": "The Principal Id of the Container Apps Managed Identity"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('azureContainerRegistry')))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[format('{0}-acr', parameters('containerAppName'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "containerAppEnvName": {
+                    "value": "[parameters('containerAppEnvName')]"
+                  },
+                  "azureContainerRegistry": {
+                    "value": "[parameters('azureContainerRegistry')]"
+                  },
+                  "containerAppName": {
+                    "value": "[parameters('containerAppName')]"
+                  },
+                  "containerImage": {
+                    "value": "[parameters('containerImage')]"
+                  },
+                  "cpuCore": {
+                    "value": "[parameters('cpuCore')]"
+                  },
+                  "createUserManagedId": {
+                    "value": "[parameters('createUserManagedId')]"
+                  },
+                  "daprAppPort": {
+                    "value": "[parameters('daprAppPort')]"
+                  },
+                  "daprAppProtocol": {
+                    "value": "[parameters('daprAppProtocol')]"
+                  },
+                  "enableIngress": {
+                    "value": "[parameters('enableIngress')]"
+                  },
+                  "environmentVariables": {
+                    "value": "[parameters('environmentVariables')]"
+                  },
+                  "externalIngress": {
+                    "value": "[parameters('externalIngress')]"
+                  },
+                  "maxReplicas": {
+                    "value": "[parameters('maxReplicas')]"
+                  },
+                  "memorySize": {
+                    "value": "[parameters('memorySize')]"
+                  },
+                  "minReplicas": {
+                    "value": "[parameters('minReplicas')]"
+                  },
+                  "revisionMode": {
+                    "value": "[parameters('revisionMode')]"
+                  },
+                  "revisionSuffix": {
+                    "value": "[parameters('revisionSuffix')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  },
+                  "targetPort": {
+                    "value": "[parameters('targetPort')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.9.1.41621",
+                      "templateHash": "3502482138940038235"
+                    }
+                  },
+                  "parameters": {
+                    "containerAppName": {
+                      "type": "string",
+                      "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+                      "metadata": {
+                        "description": "Specifies the name of the container app."
+                      }
+                    },
+                    "containerAppEnvName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the name of the container app environment to target, must be in the same resourceGroup."
+                      }
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Specifies the location for all resources."
+                      }
+                    },
+                    "containerImage": {
+                      "type": "string",
+                      "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+                      "metadata": {
+                        "description": "Specifies the docker container image to deploy."
+                      }
+                    },
+                    "targetPort": {
+                      "type": "int",
+                      "defaultValue": 80,
+                      "metadata": {
+                        "description": "Specifies the container port."
+                      }
+                    },
+                    "daprAppPort": {
+                      "type": "int",
+                      "defaultValue": "[parameters('targetPort')]",
+                      "metadata": {
+                        "description": "Specifies the dapr app port."
+                      }
+                    },
+                    "daprAppProtocol": {
+                      "type": "string",
+                      "defaultValue": "http",
+                      "metadata": {
+                        "description": "Tells Dapr which protocol your application is using. Valid options are http and grpc. Default is http"
+                      },
+                      "allowedValues": [
+                        "http",
+                        "grpc",
+                        ""
+                      ]
+                    },
+                    "revisionMode": {
+                      "type": "string",
+                      "defaultValue": "Single",
+                      "metadata": {
+                        "description": "Controls how active revisions are handled for the Container app"
+                      },
+                      "allowedValues": [
+                        "Single",
+                        "Multiple"
+                      ]
+                    },
+                    "cpuCore": {
+                      "type": "string",
+                      "defaultValue": "0.5",
+                      "metadata": {
+                        "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals places. Max of 2.0. Valid values include, 0.5 1.25 1.4"
+                      }
+                    },
+                    "memorySize": {
+                      "type": "string",
+                      "defaultValue": "1",
+                      "metadata": {
+                        "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+                      }
+                    },
+                    "minReplicas": {
+                      "type": "int",
+                      "defaultValue": 1,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Minimum number of replicas that will be deployed"
+                      }
+                    },
+                    "maxReplicas": {
+                      "type": "int",
+                      "defaultValue": 3,
+                      "maxValue": 25,
+                      "minValue": 0,
+                      "metadata": {
+                        "description": "Maximum number of replicas that will be deployed"
+                      }
+                    },
+                    "externalIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Should the app be exposed on an external endpoint"
+                      }
+                    },
+                    "enableIngress": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Does the app expect traffic, or should it operate headless"
+                      }
+                    },
+                    "revisionSuffix": {
+                      "type": "string",
+                      "defaultValue": "[uniqueString(utcNow())]",
+                      "metadata": {
+                        "description": "Revisions to the container app need to be unique"
+                      }
+                    },
+                    "environmentVariables": {
+                      "type": "array",
+                      "defaultValue": [],
+                      "metadata": {
+                        "description": "Any environment variables that your container needs"
+                      }
+                    },
+                    "azureContainerRegistry": {
+                      "type": "string",
+                      "defaultValue": "",
+                      "metadata": {
+                        "description": "An ACR name can be optionally passed if thats where the container app image is homed"
+                      }
+                    },
+                    "createUserManagedId": {
+                      "type": "bool",
+                      "defaultValue": true,
+                      "metadata": {
+                        "description": "Will create a user managed identity for the application to access other Azure resoruces as"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {},
+                      "metadata": {
+                        "description": "Any tags that are to be applied to the Container App"
+                      }
+                    }
+                  },
+                  "variables": {
+                    "acrPullRole": "[resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.App/containerApps",
+                      "apiVersion": "2022-03-01",
+                      "name": "[parameters('containerAppName')]",
+                      "location": "[parameters('location')]",
+                      "identity": "[if(parameters('createUserManagedId'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))), createObject())), createObject('type', 'None'))]",
+                      "properties": {
+                        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
+                        "configuration": {
+                          "ingress": "[if(parameters('enableIngress'), createObject('external', parameters('externalIngress'), 'targetPort', parameters('targetPort'), 'allowInsecure', false(), 'traffic', createArray(createObject('latestRevision', true(), 'weight', 100))), null())]",
+                          "dapr": {
+                            "appId": "[parameters('containerAppName')]",
+                            "appProtocol": "[if(not(empty(parameters('daprAppProtocol'))), parameters('daprAppProtocol'), null())]",
+                            "appPort": "[if(equals(parameters('enableIngress'), true()), parameters('daprAppPort'), null())]",
+                            "enabled": true
+                          },
+                          "activeRevisionsMode": "[parameters('revisionMode')]",
+                          "registries": [
+                            {
+                              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]",
+                              "server": "[reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), '2022-02-01-preview').loginServer]"
+                            }
+                          ]
+                        },
+                        "template": {
+                          "revisionSuffix": "[parameters('revisionSuffix')]",
+                          "containers": [
+                            {
+                              "name": "[parameters('containerAppName')]",
+                              "image": "[parameters('containerImage')]",
+                              "resources": {
+                                "cpu": "[json(parameters('cpuCore'))]",
+                                "memory": "[format('{0}Gi', parameters('memorySize'))]"
+                              },
+                              "env": "[parameters('environmentVariables')]"
+                            }
+                          ],
+                          "scale": {
+                            "minReplicas": "[parameters('minReplicas')]",
+                            "maxReplicas": "[parameters('maxReplicas')]"
+                          }
+                        }
+                      },
+                      "tags": "[parameters('tags')]",
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Resources/deployments', format('wait-{0}', parameters('containerAppName')))]",
+                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]"
+                      ]
+                    },
+                    {
+                      "condition": "[parameters('createUserManagedId')]",
+                      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                      "apiVersion": "2022-01-31-preview",
+                      "name": "[format('id-{0}', parameters('containerAppName'))]",
+                      "location": "[parameters('location')]"
+                    },
+                    {
+                      "condition": "[and(parameters('createUserManagedId'), not(empty(parameters('azureContainerRegistry'))))]",
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2020-10-01-preview",
+                      "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('azureContainerRegistry'))]",
+                      "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), variables('acrPullRole'))]",
+                      "properties": {
+                        "roleDefinitionId": "[variables('acrPullRole')]",
+                        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), '2022-01-31-preview').principalId]",
+                        "principalType": "ServicePrincipal"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName')))]"
+                      ],
+                      "metadata": {
+                        "description": "This allows the managed identity of the container app to access the registry"
+                      }
+                    },
+                    {
+                      "condition": "[and(parameters('createUserManagedId'), not(empty(parameters('azureContainerRegistry'))))]",
+                      "type": "Microsoft.Resources/deployments",
+                      "apiVersion": "2020-10-01",
+                      "name": "[format('wait-{0}', parameters('containerAppName'))]",
+                      "properties": {
+                        "expressionEvaluationOptions": {
+                          "scope": "inner"
+                        },
+                        "mode": "Incremental",
+                        "parameters": {
+                          "waitSeconds": {
+                            "value": 30
+                          },
+                          "location": {
+                            "value": "[parameters('location')]"
+                          }
+                        },
+                        "template": {
+                          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                          "contentVersion": "1.0.0.0",
+                          "metadata": {
+                            "_generator": {
+                              "name": "bicep",
+                              "version": "0.8.9.13224",
+                              "templateHash": "2218759242619531802"
+                            }
+                          },
+                          "parameters": {
+                            "waitSeconds": {
+                              "type": "int",
+                              "metadata": {
+                                "description": "The number of seconds to wait for"
+                              },
+                              "maxValue": 180,
+                              "minValue": 1
+                            },
+                            "location": {
+                              "type": "string",
+                              "defaultValue": "[resourceGroup().location]",
+                              "metadata": {
+                                "description": "The location to deploy the resources to"
+                              }
+                            }
+                          },
+                          "resources": [
+                            {
+                              "type": "Microsoft.Resources/deploymentScripts",
+                              "apiVersion": "2020-10-01",
+                              "name": "DeployDelay",
+                              "location": "[parameters('location')]",
+                              "kind": "AzurePowerShell",
+                              "properties": {
+                                "retentionInterval": "PT1H",
+                                "azPowerShellVersion": "6.4",
+                                "cleanupPreference": "OnSuccess",
+                                "environmentVariables": [
+                                  {
+                                    "name": "waitSeconds",
+                                    "value": "[format('{0}', parameters('waitSeconds'))]"
+                                  }
+                                ],
+                                "scriptContent": "write-output \"Sleeping for $Env:waitSeconds\"; start-sleep -Seconds $Env:waitSeconds"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "dependsOn": [
+                        "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('azureContainerRegistry')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), variables('acrPullRole')))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "containerAppFQDN": {
+                      "type": "string",
+                      "value": "[if(parameters('enableIngress'), reference(resourceId('Microsoft.App/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn, '')]",
+                      "metadata": {
+                        "description": "If ingress is enabled, this is the FQDN that the Container App is exposed on"
+                      }
+                    },
+                    "userAssignedIdPrincipalId": {
+                      "type": "string",
+                      "value": "[if(parameters('createUserManagedId'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('containerAppName'))), '2022-01-31-preview').principalId, '')]",
+                      "metadata": {
+                        "description": "The Principal Id of the Container Apps Managed Identity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "containerAppFQDN": {
+              "type": "string",
+              "value": "[if(parameters('enableIngress'), if(empty(parameters('azureContainerRegistry')), reference(resourceId('Microsoft.Resources/deployments', parameters('containerAppName')), '2020-10-01').outputs.containerAppFQDN.value, reference(resourceId('Microsoft.Resources/deployments', format('{0}-acr', parameters('containerAppName'))), '2020-10-01').outputs.containerAppFQDN.value), '')]",
+              "metadata": {
+                "description": "If ingress is enabled, this is the FQDN that the Container App is exposed on"
+              }
+            },
+            "userAssignedIdPrincipalId": {
+              "type": "string",
+              "value": "[if(empty(parameters('azureContainerRegistry')), reference(resourceId('Microsoft.Resources/deployments', parameters('containerAppName')), '2020-10-01').outputs.userAssignedIdPrincipalId.value, reference(resourceId('Microsoft.Resources/deployments', format('{0}-acr', parameters('containerAppName'))), '2020-10-01').outputs.userAssignedIdPrincipalId.value)]",
+              "metadata": {
+                "description": "The PrinicpalId of the Container Apps Managed Identity"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'pubsub')]",
+        "[resourceId('Microsoft.Resources/deployments', 'buildAcrImage-linux-dapr-node-pub')]"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.9.1.41621",
+      "templateHash": "15145127378107609749"
+    }
+  },
+  "parameters": {
+    "emailAddress": {
+      "type": "array",
+      "metadata": {
+        "description": "Email addresses to which the notifications should be sent. Should be specified as an array of strings, for example, [\"user1@contoso.com\", \"user2@contoso.com\"]."
+      }
+    },
+    "actionGroupName": {
+      "type": "string",
+      "defaultValue": "[format('ActionGroup-{0}', resourceGroup().name)]",
+      "metadata": {
+        "description": "An action group is the channel to which a notification is sent, for example, email. Edit this field if you wish to use a custom name for the action group, otherwise, you can leave this unchanged. An action group name can have a length of 1-260 characters. You cannot use :,<,>,+,/,&,%,\\,? or control characters. The name cannot end with a space or period."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "defaultValue": "[format('ag-{0}', if(greaterOrEquals(length(resourceGroup().name), 9), substring(resourceGroup().name, 0, 9), resourceGroup().name))]",
+      "maxLength": 12,
+      "metadata": {
+        "description": "Short name of the action group used for display purposes. Can be 1-12 characters in length."
+      }
+    },
+    "alertProcessingRuleName": {
+      "type": "string",
+      "defaultValue": "[format('AlertProcessingRule-{0}', resourceGroup().name)]",
+      "metadata": {
+        "description": "An alert processing rule lets you associate alerts to action groups. Edit this field if you wish to use a custom name for the alert processing rule, otherwise, you can leave this unchanged. An alert processing rule name can have a length of 1-260 characters. You cannot use <,>,*,%,&,:,\\,?,+,/,#,@,{,}."
+      }
+    },
+    "alertProcessingRuleDescription": {
+      "type": "string",
+      "defaultValue": "Sample alert processing rule",
+      "metadata": {
+        "description": "Description of the alert processing rule."
+      }
+    },
+    "alertProcessingRuleScope": {
+      "type": "array",
+      "defaultValue": [
+        "[subscription().id]"
+      ],
+      "metadata": {
+        "description": "The scope of resources for which the alert processing rule will apply. You can leave this field unchanged if you wish to apply the rule for all Recovery Services vault within the subscription. If you wish to apply the rule on smaller scopes, you can specify an array of ARM URLs representing the scopes, eg. ['/subscriptions/<sub-id>/resourceGroups/RG1', '/subscriptions/<sub-id>/resourceGroups/RG2']"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2021-09-01",
+      "name": "[parameters('actionGroupName')]",
+      "location": "Global",
+      "properties": {
+        "copy": [
+          {
+            "name": "emailReceivers",
+            "count": "[length(parameters('emailAddress'))]",
+            "input": {
+              "name": "[format('emailReceivers-{0}', uniqueString(parameters('emailAddress')[copyIndex('emailReceivers')]))]",
+              "emailAddress": "[parameters('emailAddress')[copyIndex('emailReceivers')]]",
+              "useCommonAlertSchema": true
+            }
+          }
+        ],
+        "groupShortName": "[parameters('actionGroupShortName')]",
+        "enabled": true
+      }
+    },
+    {
+      "type": "Microsoft.AlertsManagement/actionRules",
+      "apiVersion": "2021-08-08",
+      "name": "[parameters('alertProcessingRuleName')]",
+      "location": "Global",
+      "properties": {
+        "scopes": "[parameters('alertProcessingRuleScope')]",
+        "conditions": [
+          {
+            "field": "TargetResourceType",
+            "operator": "Equals",
+            "values": [
+              "microsoft.recoveryservices/vaults"
+            ]
+          }
+        ],
+        "description": "[parameters('alertProcessingRuleDescription')]",
+        "enabled": true,
+        "actions": [
+          {
+            "actionGroupIds": [
+              "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+            ],
+            "actionType": "AddActionGroups"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "actionGroupId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+    },
+    "alertProcessingRuleId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.AlertsManagement/actionRules', parameters('alertProcessingRuleName'))]"
+    }
+  }
+}

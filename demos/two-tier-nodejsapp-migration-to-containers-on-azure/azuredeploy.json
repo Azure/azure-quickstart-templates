@@ -26,7 +26,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/two-tier-nodejsapp-migration-to-containers-on-azure/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -58,15 +58,20 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
-    }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_F1",
+      "metadata": {
+        "description":"Default VM Size"
+      }
+    }     
   },
   "variables": {
-    "OSDiskName": "osdiskfordockersimple",
     "nicName": "nicCard",
     "publicIPAddressName": "publicIP",
     "publicIPAddressType": "Dynamic",
     "nsgName": "nsg",
-    "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "vnet",
     "newStorageAccountName": "[concat('storage',uniqueString(resourceGroup().id))]",
     "dnsNameForPublicIP": "[concat('pip',uniqueString(resourceGroup().id))]",
@@ -93,7 +98,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "Storage Account",
@@ -106,7 +111,7 @@
       }
     },
     {
-      "apiVersion": "2017-04-01",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -125,7 +130,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "comments": "NSG for Subnet",
       "tags": {
@@ -165,12 +170,12 @@
       }
     },
     {
-      "apiVersion": "2017-04-01",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "tags": {
         "displayName": "Virtual Network",
@@ -197,13 +202,13 @@
       }
     },
     {
-      "apiVersion": "2017-04-01",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "tags": {
         "displayName": "Network Interface Card",
@@ -228,13 +233,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('virtualMachineName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "tags": {
         "displayName": "Virtual Machine",
@@ -243,7 +248,7 @@
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_F1"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[parameters('virtualMachineName')]",
@@ -277,7 +282,7 @@
           "name": "customExtension",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2017-03-30",
+          "apiVersion": "2020-12-01",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
           ],
@@ -291,7 +296,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'),'scripts/',variables('customExtensionScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'),concat('scripts/',variables('customExtensionScriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('sh ', variables('customExtensionScriptFileName'), ' ', parameters('appGitLocation'))]"
             }

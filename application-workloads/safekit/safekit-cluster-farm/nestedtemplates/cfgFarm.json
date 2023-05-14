@@ -1,0 +1,88 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"vmname": {
+			"type": "string",
+			"metadata": {
+				"description": "vm name"
+			}
+		},
+		"ostype": {
+			"type": "string",
+			"metadata": {
+				"description": "OS type (windows, linux)"
+			},
+			"defaultValue": "windows"
+		},
+		"moduleName": {
+			"type": "string",
+			"defaultValue": "",
+			"metadata": {
+				"description": "url of the application module to install on all nodes"
+			}
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "resources location"
+			}
+		},
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "base URL of deployment resources (template,subtemplates,scripts)"
+			}
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+			}
+		}
+	},
+	"variables": {
+		"cfgModuleuri": "[uri(parameters('_artifactsLocation'),concat('scripts/cfgFarm.ps1' ,parameters('_artifactsLocationSasToken')))]",
+		"properties": {
+			"windows": {
+				"publisher": "Microsoft.Compute",
+				"type": "CustomScriptExtension",
+				"typeHandlerVersion": "1.9",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": [
+						"[variables('cfgModuleuri')]"
+					]
+				},
+				"protectedSettings":{
+					"commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File  .\\Scripts\\cfgFarm.ps1 -safekitcmd C:/safekit/safekit -safekitmod C:/safekit/modules -MName \"',parameters('moduleName'),'\"')]"
+				}
+			},
+			"linux": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"skipDos2Unix": false,
+					"timestamp": 1,
+					"fileUris": [
+						"[variables('cfgModuleuri')]"
+					]
+				},
+				"protectedSettings":{
+					"commandToExecute": "[concat('pwsh ./cfgFarm.ps1 -safekitcmd /opt/safekit/safekit -safekitmod /opt/safekit/modules -MName \"',parameters('moduleName'),'\"')]"
+				}
+			}
+		}
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('vmname'),'/safekit')]",
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion": "2020-12-01",
+			"location": "[parameters('location')]",
+			"properties": "[variables('properties')[parameters('ostype')]]"
+		}
+	]
+}

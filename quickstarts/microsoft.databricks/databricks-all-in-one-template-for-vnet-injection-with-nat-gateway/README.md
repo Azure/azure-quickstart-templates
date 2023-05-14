@@ -1,4 +1,14 @@
-# Deploy a NAT Gateway, Network Security Group, a Virtual Network and an Azure Databricks Workspace with the Virtual Network
+---
+description: This template allows you to create a NAT gateway, network security group, a virtual network and an Azure Databricks workspace with the virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: databricks-all-in-one-template-for-vnet-injection-with-nat-gateway
+languages:
+- json
+---
+# AzureDatabricks Template for VNet Injection with NAT Gateway
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-with-nat-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-with-nat-gateway/PublicDeployment.svg)
@@ -14,7 +24,7 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-with-nat-gateway%2Fazuredeploy.json)
 
 This template allows you to create a nat gateway, network security group, a virtual network and an Azure Databricks workspace with the virtual network.
-For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/en-us/azure/azure-databricks/).
+For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/).
 
 ### What is Azure Databricks?
 
@@ -30,12 +40,12 @@ This template allows you to install the following options
 
 ### DataBricks Resources
 
-[Getting Started with DataBricks](https://docs.microsoft.com/en-us/azure/databricks/getting-started/index)
+[Getting Started with DataBricks](https://docs.microsoft.com/azure/databricks/getting-started/index)
 [Data Bricks Admin Guide](https://docs.azuredatabricks.net/administration-guide/index.html)
 
 ### Microsoft Learn Modules
 
-[Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?term=Databricks)
+[Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?term=Databricks)
 
 ## The Template
 
@@ -47,7 +57,7 @@ Parameter         | Suggested value     | Description
 :--------------- | :-------------      |:---------------------
 **WorkspaceName** |  | The name of your DataBricks Workspace.
 **Pricing Tier** | 14 Day Trial, Standard or Premium
-**Resource Group** The Resource Group which you wish to deploy your DataBricks Environment. 
+**Resource Group** The Resource Group which you wish to deploy your DataBricks Environment.
 **Disable Public Ip** | Default is false | Set this to true to disable Public IP creation.
 
 All the other parameters can be left as default.
@@ -62,3 +72,5 @@ All the other parameters can be left as default.
 + **Public Subnet Cidr** Cidr Range of the Public Subnet
 + **NAT Gateway Name** Name of the NAT Gateway
 + **NAT Gateway Public IP Name** Name of the NAT Gateway Public IP
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/natGateways, Microsoft.Network/virtualNetworks, Microsoft.Databricks/workspaces`

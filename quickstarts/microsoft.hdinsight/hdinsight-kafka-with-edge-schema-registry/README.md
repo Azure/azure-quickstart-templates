@@ -1,4 +1,14 @@
-# Deploy a Linux-based HDInsight Kafka cluster with Confluent Schema Registry as edge node
+---
+description: This template allows you to create an HDInsight cluster running Linux with a schema registry edge node. For more information, see https&#58;//docs.microsoft.com/en-us/azure/hdinsight/hdinsight-apps-use-edge-node
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-kafka-with-edge-schema-registry
+languages:
+- json
+---
+# Deploy HDInsight cluster + Confluent Schema Registry node
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-kafka-with-edge-schema-registry/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-kafka-with-edge-schema-registry/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.hdinsight%2Fhdinsight-kafka-with-edge-schema-registry%2Fazuredeploy.json)
 
 This template allows you to create a Linux-based HDInsight Kafka cluster with a Schema Registry edge node. The Schema Registry edge node is a Linux virtual machine with the Confluent Schema Registry package available. You can use the edge node for registering a schema, validating schema and managing your message schema versions.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters, Microsoft.HDInsight/clusters/applications`

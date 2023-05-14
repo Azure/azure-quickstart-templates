@@ -1,3 +1,14 @@
+---
+description: This template deploys an Azure Resource Graph shared query. The shared query counts all virtual machine resources and summarizes by the OS type. A shared query can be pinned to a dashboard or converted to a supported visualization such as a bar or pie chart.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: resourcegraph-sharedquery-countos
+languages:
+- json
+- bicep
+---
 # Resource Graph Shared Query - Count OS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/resourcegraph-sharedquery-countos/PublicLastTestDate.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/resourcegraph-sharedquery-countos/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/resourcegraph-sharedquery-countos/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/resourcegraph-sharedquery-countos/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fresourcegraph-sharedquery-countos%2Fazuredeploy.json)  [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fresourcegraph-sharedquery-countos%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fresourcegraph-sharedquery-countos%2Fazuredeploy.json)
 
@@ -68,11 +81,11 @@ If you are new to Azure Resource Graph, see:
 - [Azure Resource Graph - Understand the query language](https://docs.microsoft.com/azure/governance/resource-graph/concepts/query-language)
 - [Azure Resource Graph - Starter queries](https://docs.microsoft.com/azure/governance/resource-graph/samples/starter?tabs=azure-portal)
 - [Azure Resource Graph - Advanced queries](https://docs.microsoft.com/azure/governance/resource-graph/samples/advanced?tabs=azure-portal)
-- [Azure Resource Graph - Get resource changes](https://docs.microsoft.com/en-us/azure/governance/resource-graph/how-to/get-resource-changes)
+- [Azure Resource Graph - Get resource changes](https://docs.microsoft.com/azure/governance/resource-graph/how-to/get-resource-changes)
 
 If you are new to template deployment, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create a shared query by using an ARM template](https://docs.microsoft.com/azure/governance/resource-graph/shared-query-template)
 
-`Tags: Resource Graph, KQL, query`
+`Tags: Resource Graph, KQL, query, Microsoft.ResourceGraph/queries`

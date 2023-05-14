@@ -1,6 +1,16 @@
-# Azure Dedicated Hosts sample template
+---
+description: This will deploy an isolated environment using Azure Dedicated Hosts for you to provision VMs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-dedicated-hosts
+languages:
+- json
+---
+# Azure Dedicated Hosts
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-dedicated-hosts/PublicLastTestDate.svg)
-                        
+
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-dedicated-hosts/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-dedicated-hosts/FairfaxLastTestDate.svg)
@@ -9,11 +19,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-dedicated-hosts/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-dedicated-hosts/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-dedicated-hosts%2Fazuredeploy.json) 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-dedicated-hosts%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-dedicated-hosts%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-dedicated-hosts%2Fazuredeploy.json)
-
-
 
 #<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-dedicated-hosts/PublicLastTestDate.svg?" />&nbsp;
 #<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-dedicated-hosts/PublicDeployment.svg?" />
@@ -23,7 +31,6 @@
 
 #<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-dedicated-hosts/BestPracticeResult.svg?" />&nbsp;
 #<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-dedicated-hosts/CredScanResult.svg?" />&nbsp;
-
 
 ## Overview
 
@@ -48,7 +55,6 @@ Note that Azure will block an attempt to delete a dedicated host which has virtu
 
 ### Reference
 
-References to Azure Dedicated Hosts documentation will be added once publicly available  
+References to Azure Dedicated Hosts documentation will be added once publicly available
 
-
-
+`Tags: Microsoft.Compute/HostGroups, Microsoft.Compute/Hostgroups/hosts`

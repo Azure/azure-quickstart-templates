@@ -1,4 +1,14 @@
-# Create Azure Firewall with Availability Zones
+---
+description: This template creates an Azure Firewall with Availability Zones and any number of Public IPs in a virtual network and sets up 1 sample application rule and 1 sample network rule
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-create-with-zones
+languages:
+- json
+---
+# Create an Azure Firewall with Availability Zones
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-zones/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-zones/PublicDeployment.svg)
@@ -17,6 +27,6 @@ Azure Firewall is a managed cloud-based network security service that protects y
 
 The service is fully integrated with Azure Monitor for logging and analytics.
 
-Azure Firewall is currently a managed public preview that you need to explicitly enable using the Register-AzureRmProviderFeature PowerShell command. Learn more at https://docs.microsoft.com/en-us/azure/firewall.
+Azure Firewall is currently a managed public preview that you need to explicitly enable using the Register-AzureRmProviderFeature PowerShell command. Learn more at https://docs.microsoft.com/azure/firewall.
 
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/azureFirewalls, Allow`

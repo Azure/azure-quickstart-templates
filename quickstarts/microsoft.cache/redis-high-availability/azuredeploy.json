@@ -71,6 +71,13 @@
         "description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Redis nodes"
       }
     },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1_V2",
+      "metadata": {
+        "description": "Size of the VM."
+      }
+    },
     "tshirtSize": {
       "type": "string",
       "defaultValue": "Small",
@@ -105,59 +112,58 @@
       }
     },
      "_artifactsLocation": {
-          "type": "string",
-          "metadata": {
-              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-          },
-          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.cache/redis-high-availability/"
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
-      "_artifactsLocationSasToken": {
-          "type": "securestring",
-          "metadata": {
-              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-          },
-          "defaultValue": ""
-      }
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
   },
   "variables": {
-    "_comment0": "/* T-shirt sizes may vary for different reasons, and some customers may want to modify these - so feel free to go ahead and define your favorite t-shirts */",
-    "tshirtSizeSmall": {
-      "vmSizeMember": "Standard_A1",
-      "numberOfMasters": 3,
-      "numberOfSlaves": 0,
-      "totalMemberCount": 3,
-      "totalMemberCountExcludingLast": 2,
-      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
-    },
-    "tshirtSizeMedium": {
-      "vmSizeMember": "Standard_A2",
-      "numberOfMasters": 3,
-      "numberOfSlaves": 3,
-      "totalMemberCount": 6,
-      "totalMemberCountExcludingLast": 5,
-      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
-    },
-    "tshirtSizeLarge": {
-      "vmSizeMember": "Standard_A5",
-      "numberOfMasters": 3,
-      "numberOfSlaves": 6,
-      "totalMemberCount": 9,
-      "totalMemberCountExcludingLast": 8,
-      "arbiter": "Enabled",
-      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
+    "deploymentSize": {
+       "Small": {
+         "vmSizeMember": "Standard_A1",
+         "numberOfMasters": 3,
+         "numberOfSlaves": 0,
+         "totalMemberCount": 3,
+         "totalMemberCountExcludingLast": 2,
+         "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
+       },
+       "Medium": {
+         "vmSizeMember": "Standard_A2",
+         "numberOfMasters": 3,
+         "numberOfSlaves": 3,
+         "totalMemberCount": 6,
+         "totalMemberCountExcludingLast": 5,
+         "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
+       },
+       "Large": {
+         "vmSizeMember": "Standard_A5",
+         "numberOfMasters": 3,
+         "numberOfSlaves": 6,
+         "totalMemberCount": 9,
+         "totalMemberCountExcludingLast": 8,
+         "arbiter": "Enabled",
+         "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
+       }
     },
     "osFamilyUbuntu": {
       "imagePublisher": "Canonical",
       "imageOffer": "UbuntuServer",
       "imageSKU": "14.04.5-LTS"
     },
-    "jumpboxTemplateEnabled": "jumpbox-resources.json",
-    "jumpboxTemplateDisabled": "empty-resources.json",
-    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
-    "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables(concat('jumpboxTemplate', parameters('jumpbox'))), parameters('_artifactsLocationSasToken')))]",
     "commonSettings": {
       "availabilitySetName": "redisAvailSet"
     },
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('jumpbox-resources.json', parameters('_artifactsLocationSasToken')))]",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "[parameters('addressPrefix')]",
@@ -176,7 +182,7 @@
         "version": "latest"
       }
     },
-    "clusterSpec": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
+    "clusterSpec": "[variables('deploymentSize')[parameters('tshirtSize')]]",
     "installCommand": "[concat('redis-cluster-install.sh -n ', parameters('redisClusterName'), ' -v ', parameters('redisVersion'), ' -c ', variables('clusterSpec').totalMemberCount, ' -m ', variables('clusterSpec').numberOfMasters, ' -s ', variables('clusterSpec').numberOfSlaves, ' -p ', variables('networkSettings').machineIpPrefix)]",
     "vmScripts": {
       "scriptsToDownload": [
@@ -192,7 +198,7 @@
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -205,16 +211,20 @@
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
     },
     {
+      "condition": "[equals('Enabled', parameters('jumpbox'))]",
       "name": "jumpbox-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -223,9 +233,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "commonSettings": {
-            "value": "[variables('commonSettings')]"
-          },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
           },
@@ -237,6 +244,12 @@
           },
           "authenticationType": {
             "value": "[parameters('authenticationType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmSize": {
+              "value": "[parameters('vmSize')]"
           }
         }
       }
@@ -244,9 +257,9 @@
     {
       "type": "Microsoft.Resources/deployments",
       "name": "[concat('node-resources', copyindex())]",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "copy": {
         "name": "memberNodesLoop",
@@ -281,6 +294,9 @@
           },
           "authenticationType": {
             "value": "[parameters('authenticationType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -288,7 +304,7 @@
     {
       "name": "lastnode-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "memberNodesLoop"
       ],
@@ -321,6 +337,9 @@
           },
           "authenticationType": {
             "value": "[parameters('authenticationType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }

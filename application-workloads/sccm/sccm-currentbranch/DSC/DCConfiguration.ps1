@@ -1,4 +1,4 @@
-configuration Configuration
+﻿configuration Configuration
 {
    param
    (
@@ -13,7 +13,7 @@ configuration Configuration
         [Parameter(Mandatory)]
         [String]$PSName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [System.Array]$ClientName,
         [Parameter(Mandatory)]
         [String]$Configuration,
         [Parameter(Mandatory)]
@@ -34,7 +34,8 @@ configuration Configuration
     }
     $PSComputerAccount = "$DName\$PSName$"
     $DPMPComputerAccount = "$DName\$DPMPName$"
-    $ClientComputerAccount = "$DName\$ClientName$"
+    $Clients = [system.String]::Join(",", $ClientName)
+    $ClientComputerAccount = "$DName\$Clients$"
 
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
@@ -89,7 +90,7 @@ configuration Configuration
 
         VerifyComputerJoinDomain WaitForClient
         {
-            ComputerName = $ClientName
+            ComputerName = $Clients
             Ensure = "Present"
             DependsOn = "[InstallCA]InstallCA"
         }
@@ -105,8 +106,8 @@ configuration Configuration
 
             FileReadAccessShare DomainSMBShare
             {
-                Name   = $LogFolder
-                Path =  $LogPath
+                Name = $LogFolder
+                Path = $LogPath
                 Account = $PSComputerAccount,$DPMPComputerAccount,$ClientComputerAccount
                 DependsOn = "[File]ShareFolder"
             }
@@ -147,8 +148,8 @@ configuration Configuration
 
             FileReadAccessShare DomainSMBShare
             {
-                Name   = $LogFolder
-                Path =  $LogPath
+                Name = $LogFolder
+                Path = $LogPath
                 Account = $CSComputerAccount,$PSComputerAccount,$DPMPComputerAccount,$ClientComputerAccount
                 DependsOn = "[File]ShareFolder"
             }

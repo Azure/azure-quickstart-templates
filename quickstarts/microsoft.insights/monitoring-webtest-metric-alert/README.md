@@ -1,3 +1,13 @@
+---
+description: This template creates an Application Insights availability test along with a metric alert rule that monitors it.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: monitoring-webtest-metric-alert
+languages:
+- json
+---
 # Metric alert rule for an availability test
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-webtest-metric-alert/PublicLastTestDate.svg)
@@ -5,7 +15,7 @@
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-webtest-metric-alert/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-webtest-metric-alert/FairfaxDeployment.svg)
-    
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-webtest-metric-alert/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-webtest-metric-alert/CredScanResult.svg)
 
@@ -18,5 +28,7 @@ This template creates an [Application Insights availability test](https://docs.m
 
 For more information on **metric alert rules** see:
 
-- [Metric alert rules overview](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-metric-overview)
-- [Create a metric alert with a resource manager template](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-metric-create-templates)
+- [Metric alert rules overview](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-overview)
+- [Create a metric alert with a resource manager template](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-create-templates)
+
+`Tags: Microsoft.Insights/webtests, Microsoft.Insights/metricAlerts, microsoft.insights/components`

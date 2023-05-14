@@ -2,18 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "probeVmSize": {
+    "VmSize": {
       "type": "string",
       "defaultValue": "Standard_A8m_v2",
       "metadata": {
-        "description": "Size of the VM that runs the test"
-      }
-    },
-    "targetVmSize": {
-      "type": "string",
-      "defaultValue": "Standard_A8m_v2",
-      "metadata": {
-        "description": "Size of the target VM."
+        "description": "Size of the VM."
       }
     },
     "testDataTransferMode": {
@@ -113,7 +106,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/vm-to-vm-throughput-meter-multithreaded/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -131,15 +124,14 @@
     }
   },
   "variables": {
-    "OSDiskName": "osdiskforwindowssimple",
     "nicName": "myVMNic",
+    "nicName2": "[concat(variables('nicName'), '2')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "publicIP",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "testVNET",
     "vhdStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
     "osVersion": "2012-R2-Datacenter",
@@ -165,10 +157,6 @@
       "[parameters('testSenderThreadNumber')]",
       "[parameters('testReceiverThreadNumber')]"
     ],
-    "vmSize": [
-      "[parameters('probeVmSize')]",
-      "[parameters('targetVmSize')]"
-    ],
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "networkSecurityGroupName": "default-NSG"
   },
@@ -176,7 +164,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('vhdStorageAccountName'),copyIndex(1))]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "storageCopy",
@@ -296,7 +284,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')[copyIndex(0)]]"
+          "vmSize": "[parameters('VmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')[copyIndex(0)]]",
@@ -342,7 +330,7 @@
               "fileUris": [
                 "[uri(parameters('_artifactsLocation'), concat('scripts/tptest.ps1', parameters('_artifactsLocationSasToken')))]"
               ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File scripts/tptest.ps1 -ReceiverIP ', reference(concat(variables('nicName'), '2')).ipConfigurations[0].properties.privateIPAddress, ' -Mode ', variables('testMode')[copyIndex(0)], ' -BufferSize ', variables('testBufferSize')[copyIndex(0)], ' -OverlappedBuffers ', variables('testOverlappedBuffers')[copyIndex(0)], ' -DataTransferMode ', parameters('testDataTransferMode'), ' -ThreadNumber ', variables('testThreadNumber')[copyIndex(0)], ' -Duration ', parameters('testDurationSeconds'))]"
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File scripts/tptest.ps1 -ReceiverIP ', reference(variables('nicName2')).ipConfigurations[0].properties.privateIPAddress, ' -Mode ', variables('testMode')[copyIndex(0)], ' -BufferSize ', variables('testBufferSize')[copyIndex(0)], ' -OverlappedBuffers ', variables('testOverlappedBuffers')[copyIndex(0)], ' -DataTransferMode ', parameters('testDataTransferMode'), ' -ThreadNumber ', variables('testThreadNumber')[copyIndex(0)], ' -Duration ', parameters('testDurationSeconds'))]"
             }
           }
         }

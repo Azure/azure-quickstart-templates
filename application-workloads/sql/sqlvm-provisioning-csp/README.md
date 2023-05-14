@@ -1,4 +1,14 @@
-# Create a SQL Server Virtual Machine on Azure CSP Subscription
+---
+description: Microsoft Azure has a new subscription offering, CSP Subscriptions. Some aspects of SQL VM deployment are not yet supported in CSP subscriptions. This includes the SQL IaaS Agent Extension, which is required for features such as SQL Automated Backup and SQL Automated Patching.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sqlvm-provisioning-csp
+languages:
+- json
+---
+# SQL Provisioning CSP
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-provisioning-csp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-provisioning-csp/PublicDeployment.svg)
@@ -14,11 +24,11 @@ Microsoft Azure has a new subscription offering, CSP Subscriptions. Some aspects
 # Solution Overview
 
 Deploying via powershell or portal ui
-Requires the latest Azure PowerShell SDK http://azure.microsoft.com/en-us/downloads/
+Requires the latest Azure PowerShell SDK http://azure.microsoft.com/downloads/
 
 Click the button below to deploy from the portal
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-provisioning-csp%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-provisioning-csp%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-provisioning-csp%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-provisioning-csp%2Fazuredeploy.json)
 
@@ -36,7 +46,7 @@ This solution includes 3 files required for deployment and 1 example powershell 
 
 ## Deploying from PowerShell
 
-For details on how to install and configure Azure Powershell see [here].(https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)
+For details on how to install and configure Azure Powershell see [here].(https://azure.microsoft.com/documentation/articles/powershell-install-configure/)
 
 Before deploying via PowerShell there are a few steps you should follow:
 +   Download the above files to the same location on your local machine
@@ -135,4 +145,4 @@ If you have updated the CreateSQLVMExample.ps1 file, run that file to deploy the
     +   Virtual Machine using Platform image
     +   Public DNS Entry
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

@@ -1,4 +1,14 @@
-# # Create an Always On Availability Group with SQL Server 2014 replica virtual machines
+---
+description: This template creates 5 new Azure VMs, each group load balancer and a VNet. It configures a primary and backup AD Domain Controller for a new Forest and Domain, two SQL Servers and witness in AlwaysOn configuration
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sqlvm-alwayson-cluster
+languages:
+- json
+---
+# Create a SQL Server AlwaysOn Cluster Deployment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-alwayson-cluster/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-alwayson-cluster/PublicDeployment.svg)
@@ -9,11 +19,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-alwayson-cluster/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-alwayson-cluster/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-alwayson-cluster%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-alwayson-cluster%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-alwayson-cluster%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fsqlvm-alwayson-cluster%2Fazuredeploy.json)
-
-
 
 ## Solution overview
 
@@ -38,7 +46,7 @@ This template creates the following resources:
     +     1 for SQL Server and Witness virtual machines
 +   1 public IP addresses for RDP access
 
-`Tags: SQL Server, AlwaysOn, High Availability, Cluster `
+`Tags: SQL Server, AlwaysOn, High Availability, Cluster, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Network/networkInterfaces, SqlIaaSAgent, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, Microsoft.Compute/virtualMachines, extensions`
 
 ## Notes
 
@@ -54,5 +62,4 @@ This template creates the following resources:
 	+ 	Witness - Latest Windows Server 2012 R2 Image
 
 + 	Once deployed access can be gained by the public IP address of Primary Domain Controller
-
 

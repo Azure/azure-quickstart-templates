@@ -60,28 +60,26 @@
     "subnetName": "appGatewaySubnet",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]",
     "backendDnsPrefix": "backend-",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/28",
-    "webServerTemplateLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-apache-test-page/",
-    "webServerTemplateName": "azuredeploy.json",
+    "webServerTemplateName": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/apache/ubuntu-apache-test-page/azuredeploy.json",
     "server1TestPage": "<h1 style=\"color:red;font-size:300%;\">This is Server 1</h1>",
     "server2TestPage": "<h1 style=\"color:blue;font-size:300%;\">This is Server 2</h1>",
     "serverTestPageInfo": "<p>Send next request. If Cookie-based affinity is enabled, clear the cookies to change the backend server.</p><p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>"
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-08-01",
       "name": "webServer1",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('webServerTemplateLocation'), '/', variables('webServerTemplateName'))]",
+          "uri": "[variables('webServerTemplateName')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -95,7 +93,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-1')]"
+            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-1')]"
           },
           "testPageBody": {
             "value": "[concat(variables('server1TestPage'), variables('serverTestPageInfo'))]"
@@ -113,16 +111,16 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-08-01",
       "name": "webServer2",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('webServerTemplateLocation'), '/', variables('webServerTemplateName'))]",
+          "uri": "[variables('webServerTemplateName')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -136,7 +134,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-2')]"
+            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-2')]"
           },
           "testPageBody": {
             "value": "[concat(variables('server2TestPage'), variables('serverTestPageInfo'))]"
@@ -189,8 +187,8 @@
       "type": "Microsoft.Network/applicationGateways",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "webServer1",
         "webServer2"
       ],
@@ -253,7 +251,7 @@
               "requestTimeout": 30,
               "requestRoutingRules": [
                 {
-                  "id": "[concat(variables('applicationGatewayID'), '/requestRoutingRules/rule1')]"
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/requestRoutingRules/',variables('applicationGatewayName'), 'rule1')]"
                 }
               ]
             }
@@ -264,13 +262,12 @@
             "name": "appGatewayHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations/',variables('applicationGatewayName'), 'appGatewayFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts/',variables('applicationGatewayName'), 'appGatewayFrontendPort')]"
               },
-              "Protocol": "Http",
-              "SslCertificate": null
+              "Protocol": "Http"
             }
           }
         ],
@@ -280,13 +277,13 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners/',variables('applicationGatewayName'), 'appGatewayHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/',variables('applicationGatewayName'), 'appGatewayBackendPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/',variables('applicationGatewayName'), 'appGatewayBackendHttpSettings')]"
               }
             }
           }

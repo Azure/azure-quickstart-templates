@@ -26,7 +26,10 @@ param(
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
     [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
-    [string]$BicepVersion = $ENV:BICEP_VERSION # empty if bicep not supported by the sample
+    [string]$BicepVersion = $ENV:BICEP_VERSION, # empty if bicep not supported by the sample
+    [string]$TemplateAnalyzerResult = "$ENV:TEMPLATE_ANALYZER_RESULT",
+    [string]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATE_ANALYZER_OUTPUT_FILEPATH",
+    [string]$TemplateAnalyzerLogsContainerName = "$ENV:TEMPLATE_ANALYZER_LOGS_CONTAINER_NAME"
 )
 
 function Get-Regression(
@@ -82,7 +85,7 @@ if (($BicepVersion -ne "") -and !($BicepVersion -match "^[0-9]+\.[-0-9a-z.]+$"))
     Write-Error "Unexpected bicep version format: $BicepVersion.  This may be caused by a previous error in the pipeline"
 }
 
-$cloudTable = (Get-AzStorageTable –Name $t –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $t -Context $ctx).CloudTable
 
 #Get the type of Sample from metadata.json, needed for the partition key lookup
 $PathToMetadata = "$SampleFolder\metadata.json"
@@ -98,18 +101,45 @@ $PartitionKey = $Metadata.Type # if the type changes we'll have an orphaned row,
 $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowKey
 
 #Get the row to compare for regressions (always from the main table)
-$comparisonCloudTable = (Get-AzStorageTable –Name $TableName –Context $ctx).CloudTable
+$comparisonCloudTable = (Get-AzStorageTable -Name $TableName -Context $ctx).CloudTable
 $comparisonResults = Get-AzTableRow -table $comparisonCloudTable -PartitionKey $PartitionKey -RowKey $RowKey
 Write-Host "Comparison table for previous results: $TableName"
 Write-Host "Comparison table current results: $comparisonResults"
 
 if ($isPullRequest) {
-    # For pull requests, we want to check for regressions against the main table, not the PR table
+    # Check for a duplicate itemDisplayName in metadata
+    # we need to check both tables - merged and PRs in case a dupe is in a PR
+    $t1 = (Get-AzStorageTable -Name $TableName -Context $ctx).CloudTable
+    $t2 = (Get-AzStorageTable -Name $TableNamePRs -Context $ctx).CloudTable
+    $itemDisplayName = $Metadata.itemDisplayName
+    $r1 = Get-AzTableRow -Table $t1 -ColumnName itemDisplayName -Value $itemDisplayName -Operator Equal
+    $r2 = Get-AzTableRow -Table $t2 -ColumnName itemDisplayName -Value $itemDisplayName -Operator Equal
+    if ($r1.Count -gt 0) {
+        # make sure rowkey and partition key don't match - or there's more than one row returned flag it
+        $sameRow = ($r1.PartitionKey -eq $PartitionKey -and $r1.RowKey -eq $RowKey)
+        if ($r1.count -ge 2 -or !$sameRow) {
+            Write-Host "Duplicate sample name found in $TableName for: $itemDisplayName"
+            Write-Host "##vso[task.setvariable variable=duplicate.metadata]$true"
+            foreach ($_ in $r1) {
+                Write-Host "RowKey: $($_.RowKey)"
+            }
+        }
+    }
+    if ($r2.Count -gt 0) {
+        $sameRow = ($r2.PartitionKey -eq $PartitionKey -and $r2.RowKey -eq $RowKey)
+        if ($r2.count -ge 2 -or !$sameRow) {
+            Write-Host "Duplicate sample name found in $TableNamePRs for: $itemDisplayName"
+            Write-Host "##vso[task.setvariable variable=duplicate.metadata]$true"
+            foreach ($_ in $r2) {
+                Write-Host "RowKey: $($_.RowKey)"
+            }
+        }
+    }
 }
 
 # if the build was cancelled and this was a scheduled build, we need to set the metadata status back to "Live"
-if ($r -ne $null -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullRequest") {
-    if ($r.status -eq $null) {
+if ($null -ne $r -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullRequest") {
+    if ($null -eq $r.status) {
         Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
     }
     else {
@@ -128,6 +158,8 @@ $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("true"), "PASS
 $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAIL"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
+$TemplateAnalyzerResult = $TemplateAnalyzerResult -ireplace [regex]::Escape("true"), "PASS"
+$TemplateAnalyzerResult = $TemplateAnalyzerResult -ireplace [regex]::Escape("false"), "FAIL"
 
 Write-Host "Supported Environments Found: $supportedEnvironmentsJson"
 $supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashTable)
@@ -143,7 +175,7 @@ if ($ValidationType -eq "Manual") {
 }
 
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
-if ($r -eq $null) {
+if ($null -eq $r) {
 
     Write-Host "No record found, adding a new one..."
     $results = New-Object -TypeName hashtable
@@ -157,6 +189,10 @@ if ($r -eq $null) {
     Write-Host "CredScan Result: $CredScanResult"
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
         $results.Add("CredScanResult", $CredScanResult)
+    }
+    Write-Host "TemplateAnalyzer result: $TemplateAnalyzerResult"
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
+        $results.Add("TemplateAnalyzerResult", $TemplateAnalyzerResult)
     }
     # set the values for Fairfax only if a result was passed
     Write-Host "FF Result"
@@ -186,7 +222,7 @@ if ($r -eq $null) {
 
     Write-Host "New Record: Dump results variable"
 
-    $results | fl *
+    $results | Format-List *
     $newResults = $results.PSObject.copy()
     Write-Host "New Record: Add-AzTableRow"
 
@@ -199,18 +235,26 @@ if ($r -eq $null) {
 else {
     # Update the existing row - need to check to make sure the columns exist
     Write-Host "Updating the existing record from:"
-    $r | fl *
+    $r | Format-List *
 
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
-        if ($r.BestPracticeResult -eq $null) {
+        if ($null -eq $r.BestPracticeResult) {
             Add-Member -InputObject $r -NotePropertyName 'BestPracticeResult' -NotePropertyValue $BestPracticeResult
         }
         else {
             $r.BestPracticeResult = $BestPracticeResult
         }
     }
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
+        if ($null -eq $r.TemplateAnalyzerResult) {
+            Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerResult' -NotePropertyValue $TemplateAnalyzerResult
+        }
+        else {
+            $r.TemplateAnalyzerResult = $TemplateAnalyzerResult
+        }
+    }
     if (![string]::IsNullOrWhiteSpace($BicepVersion)) {
-        if ($r.BicepVersion -eq $null) {
+        if ($null -eq $r.BicepVersion) {
             Add-Member -InputObject $r -NotePropertyName 'BicepVersion' -NotePropertyValue $BicepVersion
         }
         else {
@@ -218,7 +262,7 @@ else {
         }
     }
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
-        if ($r.CredScanResult -eq $null) {
+        if ($null -eq $r.CredScanResult) {
             Add-Member -InputObject $r -NotePropertyName "CredScanResult" -NotePropertyValue $CredScanResult
         }
         else {
@@ -227,7 +271,7 @@ else {
     }
     # set the values for FF only if a result was passed
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
-        if ($r.FairfaxDeployment -eq $null) {
+        if ($null -eq $r.FairfaxDeployment) {
             Add-Member -InputObject $r -NotePropertyName "FairfaxDeployment" -NotePropertyValue $FairfaxDeployment
             Add-Member -InputObject $r -NotePropertyName "FairfaxLastTestDate" -NotePropertyValue $FairfaxLastTestDate -Force
         }
@@ -238,7 +282,7 @@ else {
     }
     # set the values for MAC only if a result was passed
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
-        if ($r.PublicDeployment -eq $null) {
+        if ($null -eq $r.PublicDeployment) {
             Add-Member -InputObject $r -NotePropertyName "PublicDeployment" -NotePropertyValue $PublicDeployment
             Add-Member -InputObject $r -NotePropertyName "PublicLastTestDate" -NotePropertyValue $PublicLastTestDate -Force
         }
@@ -249,25 +293,25 @@ else {
     }
 
     if ($BuildReason -eq "PullRequest") {
-        if ($r.status -eq $null) {
+        if ($null -eq $r.status) {
             Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue $BuildReason            
         }
         else {
             $r.status = $BuildReason
         }
         # set the pr number only if the column isn't present (should be true only for older prs before this column was added)
-        if ($r.pr -eq $null) {
+        if ($null -eq $r.pr) {
             Add-Member -InputObject $r -NotePropertyName "pr" -NotePropertyValue $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER            
         }
         
         # if it's a PR, set the build number, since it's not set before this outside of a scheduled build
-        if ($r.($ResultDeploymentParameter + "BuildNumber") -eq $null) {
+        if ($null -eq $r.($ResultDeploymentParameter + "BuildNumber")) {
             Add-Member -InputObject $r -NotePropertyName ($ResultDeploymentParameter + "BuildNumber") -NotePropertyValue $ENV:BUILD_BUILDNUMBER           
         }
         else {
             $r.($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
         }
-        if ($r.pr -eq $null) {
+        if ($null -eq $r.pr) {
             Add-Member -InputObject $r -NotePropertyName "pr" -NotePropertyValue $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
         }
         else {
@@ -277,7 +321,7 @@ else {
     }
     else {
         # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
-        if ($r.status -eq $null) {
+        if ($null -eq $r.status) {
             Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
         }
         else {
@@ -286,35 +330,35 @@ else {
     }
 
     # update metadata columns
-    if ($r.itemDisplayName -eq $null) { 
+    if ($null -eq $r.itemDisplayName) { 
         Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
     }
     else {
         $r.itemDisplayName = $Metadata.itemDisplayName
     }
 
-    if ($r.description -eq $null) {
+    if ($null -eq $r.description) {
         Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
     }
     else {
         $r.description = $Metadata.description
     }
 
-    if ($r.summary -eq $null) {
+    if ($null -eq $r.summary) {
         Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
     }
     else {
         $r.summary = $Metadata.summary
     }
 
-    if ($r.githubUsername -eq $null) {
+    if ($null -eq $r.githubUsername) {
         Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
     }
     else {
         $r.githubUsername = $Metadata.githubUsername
     }   
     
-    if ($r.dateUpdated -eq $null) {
+    if ($null -eq $r.dateUpdated) {
         Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
     }
     else {
@@ -322,7 +366,7 @@ else {
     }
 
     Write-Host "Updating to new results:"
-    $r | fl *
+    $r | Format-List *
     $r | Update-AzTableRow -table $cloudTable
 
     $newResults = $r.PSObject.copy()
@@ -332,11 +376,13 @@ else {
 $BPRegressed = Get-Regression $comparisonResults $newResults "BestPracticeResult"
 $FairfaxRegressed = Get-Regression $comparisonResults $newResults "FairfaxDeployment"
 $PublicRegressed = Get-Regression $comparisonResults $newResults "PublicDeployment"
+$TemplateAnalyzerRegressed = Get-Regression $comparisonResults $newResults "TemplateAnalyzerResult"
+
 $AnyRegressed = $BPRegressed -or $FairfaxRegressed -or $PublicRegresse
 
 if (!$isPullRequest) {
     Write-Host "Writing regression info to table '$RegressionsTableName'"
-    $regressionsTable = (Get-AzStorageTable –Name $RegressionsTableName –Context $ctx).CloudTable
+    $regressionsTable = (Get-AzStorageTable -Name $RegressionsTableName -Context $ctx).CloudTable
     $regressionsKey = Get-Date -Format "o"
     $regressionsRow = $newResults.PSObject.copy()
     $regressionsRow | Add-Member "Sample" $RowKey
@@ -344,7 +390,10 @@ if (!$isPullRequest) {
     $regressionsRow | Add-Member "BPRegressed" $BPRegressed
     $regressionsRow | Add-Member "FairfaxRegressed" $FairfaxRegressed
     $regressionsRow | Add-Member "PublicRegressed" $PublicRegressed
+    $regressionsRow | Add-Member "TemplateAnalyzerRegressed" $TemplateAnalyzerRegressed
     $regressionsRow | Add-Member "BuildNumber" $ENV:BUILD_BUILDNUMBER
+    $regressionsRow | Add-Member "BuildId" $ENV:BUILD_BUILDID
+    $regressionsRow | Add-Member "Build" "https://dev.azure.com/azurequickstarts/azure-quickstart-templates/_build/results?buildId=$($ENV:BUILD_BUILDID)"
     Add-AzTableRow -table $regressionsTable `
         -partitionKey $PartitionKey `
         -rowKey $regressionsKey `
@@ -363,9 +412,9 @@ $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowK
 $Badges = @{ }
 
 $na = "Not%20Tested"
-$naColor = "black"
+#$naColor = "black"
 
-if ($r.PublicLastTestDate -ne $null) {
+if ($null -ne $r.PublicLastTestDate) {
     $PublicLastTestDate = $r.PublicLastTestDate.Replace("-", ".")
     $PublicLastTestDateColor = "black"
 }
@@ -374,7 +423,7 @@ else {
     $PublicLastTestDateColor = "inactive"
 }
 
-if ($r.FairfaxLastTestDate -ne $null) {
+if ($null -ne $r.FairfaxLastTestDate) {
     $FairfaxLastTestDate = $r.FairfaxLastTestDate.Replace("-", ".")
     $FairfaxLastTestDateColor = "black"
 }
@@ -383,7 +432,7 @@ else {
     $FairfaxLastTestDateColor = "inactive"
 }
 
-if ($r.FairfaxDeployment -ne $null) {
+if ($null -ne $r.FairfaxDeployment) {
     # TODO can be removed when table is updated to string
     $FairfaxDeployment = ($r.FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -398,7 +447,7 @@ switch ($FairfaxDeployment) {
     }
 }
 
-if ($r.PublicDeployment -ne $null) {
+if ($null -ne $r.PublicDeployment) {
     # TODO can be removed when table is updated to string
     $PublicDeployment = ($r.PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -413,7 +462,7 @@ switch ($PublicDeployment) {
     }
 }
 
-if ($r.BestPracticeResult -ne $null) {
+if ($null -ne $r.BestPracticeResult) {
     # TODO can be removed when table is updated to string
     $BestPracticeResult = ($r.BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -422,11 +471,11 @@ switch ($BestPracticeResult) {
     "FAIL" { $BestPracticeResultColor = "red" }
     default {
         $BestPracticeResult = $na
-        $BestPracticeResult = "inactive"    
+        $BestPracticeResultColor = "inactive"    
     }
 }
 
-if ($r.CredScanResult -ne $null) {
+if ($null -ne $r.CredScanResult) {
     # TODO can be removed when table is updated to string
     $CredScanResult = ($r.CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
@@ -439,7 +488,17 @@ switch ($CredScanResult) {
     }
 }
 
+switch ($TemplateAnalyzerResult) {
+    "PASS" { $TemplateAnalyzerResultColor = "brightgreen" }
+    "FAIL" { $TemplateAnalyzerResultColor = "red" }
+    default {
+        $TemplateAnalyzerResult = $na
+        $TemplateAnalyzerResultColor = "inactive"    
+    }
+}
+
 $BicepVersionColor = "brightgreen";
+if ($BicepVersion -eq "") { $BicepVersion = "n/a" } # make sure the badge value is not empty
 
 $badges = @(
     @{
@@ -470,6 +529,10 @@ $badges = @(
     @{
         "url"      = "https://img.shields.io/badge/Bicep%20Version-$BicepVersion-/?color=$BicepVersionColor";
         "filename" = "BicepVersion.svg"
+    },
+    @{
+        "url"      = "https://img.shields.io/badge/Template%20Analyzer%20Check-$TemplateAnalyzerResult-/?color=$TemplateAnalyzerResultColor";
+        "filename" = "TemplateAnalyzerResult.svg"
     }
 )
 
@@ -494,13 +557,30 @@ foreach ($badge in $badges) {
 
     $blobName = "$badgePath/$($badge.filename)"
     Write-Output "Uploading badge to storage account '$($StorageAccountName)', container '$($containerName)', name '$($blobName)':"
-    $badge | fl | Write-Output
+    $badge | Format-List | Write-Output
     Set-AzStorageBlobContent -Container $containerName `
         -File $badgeTempPath `
         -Blob $blobName `
         -Context $ctx `
         -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" } `
         -Force -Verbose
+}
+
+# Upload BPA results file:
+$templateAnalyzerLogFileName = "$($ENV:BUILD_BUILDNUMBER)_$RowKey.txt"
+Write-Host "Uploading TemplateAnalyzer log file: $templateAnalyzerLogFileName"
+try {
+    Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
+        -File $TemplateAnalyzerOutputFilePath `
+        -Blob $templateAnalyzerLogFileName `
+        -Context $ctx `
+        -Properties @{ "ContentType" = "text/plain" } `
+        -Force -Verbose
+}
+catch {
+    Write-Host "===================================================="
+    Write-Host " Failed to upload $TemplateAnalyzerOutputFilePath   "
+    Write-Host "===================================================="
 }
 
 <#Debugging only

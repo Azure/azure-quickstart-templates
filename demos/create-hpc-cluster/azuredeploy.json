@@ -1,0 +1,226 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
+      "metadata": {
+        "description": "The HPC Pack cluster name. It must be unique in the location because it is also used as the public DNS name prefix for the cluster. For example, the public DNS name is '&lt;clustername&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+      }
+    },
+    "privateDomainName": {
+      "type": "string",
+      "defaultValue": "hpc.local",
+      "metadata": {
+        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
+      }
+    },
+    "headNodeVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D8s_v3",
+      "metadata": {
+        "description": "The VM size of the head node. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/en-us/pricing/details/virtual-machines before deployment."
+      }
+    },
+    "computeNodeImage": {
+      "type": "string",
+      "defaultValue": "ComputeNode",
+      "allowedValues": [
+        "ComputeNode",
+        "ComputeNodeWithExcel"
+      ],
+      "metadata": {
+        "description": "The VM image of  the compute nodes"
+      }
+    },
+    "computeNodeNamePrefix": {
+      "type": "string",
+      "defaultValue": "IaaSCN-",
+      "minLength": 1,
+      "maxLength": 12,
+      "metadata": {
+        "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
+      }
+    },
+    "computeNodeNumber": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 1,
+      "maxValue": 500,
+      "metadata": {
+        "description": "The number of the compute nodes"
+      }
+    },
+    "computeNodeVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "The VM size of the compute nodes. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/en-us/pricing/details/virtual-machines before deployment."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name for the virtual machines and the Active Directory domain."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password for the virtual machines and the Active Directory domain"
+      }
+    },
+    "headNodePostConfigScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/myhnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+      }
+    },
+    "computeNodePostConfigScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/mycnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+    "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+            "description": "Auto-generated token to access _artifactsLocation"
+        },
+        "defaultValue": ""
+    }
+  },
+  "variables": {
+    "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
+    "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-HN')]",
+    "computeNodeImageOsPlatform": "Windows",
+    "computeNodeImages": {
+      "ComputeNode": {
+        "publisher": "MicrosoftWindowsServerHPCPack",
+        "offer": "WindowsServerHPCPack",
+        "sku": "2012R2CN",
+        "version": "latest"
+      },
+      "ComputeNodeWithExcel": {
+        "publisher": "MicrosoftWindowsServerHPCPack",
+        "offer": "WindowsServerHPCPack",
+        "sku": "2012R2CNExcel",
+        "version": "latest"
+      }
+    },
+    "currentComputeNodeImage": "[variables('computeNodeImages')[parameters('computeNodeImage')]]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "mainTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('mainTemplate.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "clusterName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "privateDomainName": {
+            "value": "[parameters('privateDomainName')]"
+          },
+          "headNodeVMSize": {
+            "value": "[parameters('headNodeVMSize')]"
+          },
+          "headNodeDiskType": {
+            "value": "HDD"
+          },
+          "computeNodeImageOsPlatform": {
+            "value": "[variables('computeNodeImageOsPlatform')]"
+          },
+          "computeNodeImagePublisher": {
+            "value": "[variables('currentComputeNodeImage').publisher]"
+          },
+          "computeNodeImageOffer": {
+            "value": "[variables('currentComputeNodeImage').offer]"
+          },
+          "computeNodeImageSku": {
+            "value": "[variables('currentComputeNodeImage').sku]"
+          },
+          "computeNodeNamePrefix": {
+            "value": "[parameters('computeNodeNamePrefix')]"
+          },
+          "computeNodeNumber": {
+            "value": "[parameters('computeNodeNumber')]"
+          },
+          "computeNodeDiskType": {
+            "value": "HDD"
+          },
+          "computeNodeVMSize": {
+            "value": "[parameters('computeNodeVMSize')]"
+          },
+          "publicIPName": {
+            "value": "[variables('publicIPAddressName')]"
+          },
+          "publicIPRGName": {
+            "value": "[resourceGroup().name]"
+          },
+          "publicIPNewOrExisting": {
+            "value": "new"
+          },
+          "publicIPDNSNameLabel": {
+            "value": "[parameters('clusterName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "headNodePostConfigScript": {
+            "value": "[trim(parameters('headNodePostConfigScript'))]"
+          },
+          "computeNodePostConfigScript": {
+            "value": "[trim(parameters('computeNodePostConfigScript'))]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "clusterDnsName": {
+      "type": "string",
+      "value": "[reference('mainTemplate').outputs.clusterDNSName.value]"
+    }
+  }
+}
+

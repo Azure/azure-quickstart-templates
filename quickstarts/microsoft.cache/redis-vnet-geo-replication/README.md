@@ -1,4 +1,14 @@
-# Create two Premium tier Azure Cache for Redis instances with Virtual Networks and Geo-Replication
+---
+description: This template shows how to deploy two Premium tier Azure Cache for Redis instances into separate Virtual Networks and link them with geo-replication.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: redis-vnet-geo-replication
+languages:
+- json
+---
+# Create two geo-replicated caches in a Virtual Network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-vnet-geo-replication/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-vnet-geo-replication/PublicDeployment.svg)
@@ -15,6 +25,6 @@
 
 Create two Premium tier Azure Cache for Redis instances inside separate Virtual Networks and linked with Geo-Replication by using a template. Virtual Network deployments provide enhanced security and isolation for your Cache instances, as well as isolation using subnets, access control policies, and other features to further restrict access to Azure Cache for Redis with a Virtual Network. Geo-replication provides additional availability to the application by linking two Premium tier Cache instances and replicating data from the primary cache to the secondary cache.
 
-For information about using this template, see [How to configure Virtual Network Support for a Premium Azure Cache for Redis](https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet) and [How to configure Geo-replication for Azure Cache for Redis](https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-geo-replication).
+For information about using this template, see [How to configure Virtual Network Support for a Premium Azure Cache for Redis](https://docs.microsoft.com/azure/azure-cache-for-redis/cache-how-to-premium-vnet) and [How to configure Geo-replication for Azure Cache for Redis](https://docs.microsoft.com/azure/azure-cache-for-redis/cache-how-to-geo-replication).
 
-
+`Tags: Microsoft.Cache/Redis, Microsoft.Cache/Redis/linkedServers, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/connections`

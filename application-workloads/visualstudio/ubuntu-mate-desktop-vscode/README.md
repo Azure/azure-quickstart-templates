@@ -1,4 +1,15 @@
-# Deploy an Ubuntu Mate Desktop VM with VSCode
+---
+description: This template allows you to deploy a simple Linux VM using a few different options for the Ubuntu version, using the latest patched version. This will deploy a A1 size VM in the resource group location and return the FQDN of the VM.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: ubuntu-mate-desktop-vscode
+languages:
+- bicep
+- json
+---
+# Ubuntu Mate Desktop VM with VSCode
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/BicepVersion.svg)
 
 This template creates a Linux developer workstation as follows:
 
@@ -19,12 +32,12 @@ This template creates a Linux developer workstation as follows:
 This template creates a new Ubuntu VM with Mate desktop enabled. Mate desktop is light weight and has a simple UI. In addition to a nice GUI, this template also installs developer tools like Azure CLI and Visual Studio Code for editing files. Users can connect to the Desktop UI using remote destop.
 
 To connect, run "mstsc" from windows desktop and connect to the fqdn/public ip of the VM.
- 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fvisualstudio%2Fubuntu-mate-desktop-vscode%2Fazuredeploy.json)  
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fvisualstudio%2Fubuntu-mate-desktop-vscode%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fvisualstudio%2Fubuntu-mate-desktop-vscode%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fvisualstudio%2Fubuntu-mate-desktop-vscode%2Fazuredeploy.json)
 
-# Running at terminal 
+# Running at terminal
 
 To open a terminal with Ctrl + Alt + t
 
@@ -47,7 +60,7 @@ code --list-extensions
 
 ### Getting Started with VS Code
 
-Visual Studio Code is a lightweight but powerful source code editor which runs on your desktop and is available for Windows, macOS and Linux. It comes with built-in support for JavaScript, TypeScript and Node.js and has a rich ecosystem of extensions for other languages (such as C++, C#, Java, Python, PHP, Go) and runtimes (such as .NET and Unity). 
+Visual Studio Code is a lightweight but powerful source code editor which runs on your desktop and is available for Windows, macOS and Linux. It comes with built-in support for JavaScript, TypeScript and Node.js and has a rich ecosystem of extensions for other languages (such as C++, C#, Java, Python, PHP, Go) and runtimes (such as .NET and Unity).
 
 Begin your journey with VS Code with these [introductory videos](https://code.visualstudio.com/docs/introvideos/overview)
 
@@ -55,8 +68,8 @@ Begin your journey with VS Code with these [introductory videos](https://code.vi
 
 ### Microsoft Learn - Learning Modules
 
-[Visual Studio Code](https://docs.microsoft.com/en-us/learn/browse/?term=Visual%20Studio%20Code)
-[Linux Virtual Machines on Azure](https://docs.microsoft.com/en-us/learn/browse/?term=Linux%20Virtual%20Machine)
-[Azure CLI](https://docs.microsoft.com/en-us/learn/browse/?term=Azure%20CLI)
+[Visual Studio Code](https://docs.microsoft.com/learn/browse/?term=Visual%20Studio%20Code)
+[Linux Virtual Machines on Azure](https://docs.microsoft.com/learn/browse/?term=Linux%20Virtual%20Machine)
+[Azure CLI](https://docs.microsoft.com/learn/browse/?term=Azure%20CLI)
 
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
