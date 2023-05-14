@@ -8,6 +8,7 @@ param existingVnetLocation string
 param subnetId string
 param nsgId string
 
+var maaTenantName = 'GuestAttestation'
 var nicName = '${virtualMachineName}Nic'
 var publicIPAddressName = '${virtualMachineName}-ip'
 
@@ -59,7 +60,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-08-01' = {
       imageReference: {
         publisher: 'MicrosoftWindowsServer'
         offer: 'WindowsServer'
-        sku: '2022-Datacenter'
+        sku: '2022-datacenter-azure-edition'
         version: 'latest'
       }
       osDisk: {
@@ -68,12 +69,46 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-08-01' = {
         createOption: 'FromImage'
       }
     }
+    securityProfile: {
+      uefiSettings: {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      }
+      securityType: 'TrustedLaunch'
+    }
     networkProfile: {
       networkInterfaces: [
         {
           id: nic.id
         }
       ]
+    }
+  }
+}
+
+resource virtualMachineName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = {
+  parent: virtualMachine
+  name: 'GuestAttestation'
+  location: existingVnetLocation
+  properties: {
+    publisher: 'Microsoft.Azure.Security.WindowsAttestation'
+    type: 'GuestAttestation'
+    typeHandlerVersion: '1.0'
+    autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: ''
+          maaTenantName: maaTenantName
+        }
+        AscSettings: {
+          ascReportingEndpoint: ''
+          ascReportingFrequency: ''
+        }
+        useCustomToken: 'false'
+        disableAlerts: 'false'
+      }
     }
   }
 }

@@ -13,7 +13,7 @@ param IntegrationRuntimeName string = 'ir-${uniqueString(resourceGroup().id)}'
 param NodeCount int = 1
 
 @description('SKU Size for the VMs')
-param vmSize string = 'Standard_A4_v2'
+param vmSize string = 'Standard_D2s_v3'
 
 @description('User name for the virtual machine')
 param adminUserName string
