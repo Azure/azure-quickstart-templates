@@ -111,7 +111,7 @@ resource project_vm_1_InstallWebServer 'Microsoft.Compute/virtualMachines/extens
   properties: {
     publisher: 'Microsoft.Compute'
     type: 'CustomScriptExtension'
-    typeHandlerVersion: '1.7'
+    typeHandlerVersion: '1.10'
     autoUpgradeMinorVersion: true
     settings: {
       commandToExecute: 'powershell.exe Install-WindowsFeature -name Web-Server -IncludeManagementTools && powershell.exe remove-item \'C:\\inetpub\\wwwroot\\iisstart.htm\' && powershell.exe Add-Content -Path \'C:\\inetpub\\wwwroot\\iisstart.htm\' -Value $(\'Hello World from \' + $env:computername)'
