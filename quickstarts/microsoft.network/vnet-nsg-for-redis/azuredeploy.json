@@ -1,0 +1,258 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location of the existing Virtual Network and new Network Security Group."
+            }
+        },
+        "existingVirtualNetworkResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "The resource group of the existing Virtual Network."
+            }
+        },
+        "existingVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the existing Virtual Network."
+            }
+        },
+        "existingSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the existing subnet."
+            }
+        },
+        "newNsgName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new Network Security Group."
+            }
+        }
+    },
+    "variables": {
+        "subnetId": "[resourceId(parameters('existingVirtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('newNsgName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow_Outbound_Storage_PKI",
+                        "properties": {
+                            "description": "Redis dependencies on Azure Storage/PKI (Internet)",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": [
+                                "80",
+                                "443"
+                            ],
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Outbound_DNS",
+                        "properties": {
+                            "description": "Redis dependencies on DNS (Internet/VNet)",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 201,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Outbound_RedisPortsWithinSubnet",
+                        "properties": {
+                            "description": "Internal communications for Redis",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": [
+                                "6379",
+                                "6380",
+                                "8443",
+                                "10221-10231",
+                                "20226",
+                                "13000-13999",
+                                "15000-15999"
+                            ],
+                            "sourceAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 202,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Inbound_ClientEndpoints",
+                        "properties": {
+                            "description": "Client communication to Redis, Azure load balancing",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": [
+                                "6379",
+                                "6380"
+                            ],
+                            "sourceAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Inbound_ClientCommunicationWithinVNET",
+                        "properties": {
+                            "description": "Client communication to Redis, Azure load balancing",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": [
+                                "6379",
+                                "6380",
+                                "13000-13999",
+                                "15000-15999"
+                            ],
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 201,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Inbound_LoadBalancingWithinVNET",
+                        "properties": {
+                            "description": "Client communication to Redis, Azure load balancing",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": [
+                                "6379",
+                                "6380",
+                                "13000-13999",
+                                "15000-15999"
+                            ],
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 202,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Inbound_InternalRedisCommunication",
+                        "properties": {
+                            "description": "Internal communications for Redis",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": [
+                                "8443",
+                                "10221-10231",
+                                "20226"
+                            ],
+                            "sourceAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 203,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Inbound_LoadBalancerToRedisInternalAddresses",
+                        "properties": {
+                            "description": "Internal communications for Redis",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "10221-10231",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 204,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_Inbound_LoadBalancing",
+                        "properties": {
+                            "description": "Azure load balancing",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": [
+                                "8500",
+                                "16001"
+                            ],
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]",
+                            "access": "Allow",
+                            "priority": 205,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "type": "Microsoft.Resources/deployments",
+            "name": "associateNsg",
+            "resourceGroup": "[parameters('existingVirtualNetworkResourceGroupName')]",
+            "dependsOn": [
+                "[parameters('newNsgName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "apiVersion": "2020-05-01",
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "name": "[concat(parameters('existingVirtualNetworkName'), '/', parameters('existingSubnetName'))]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "addressPrefix": "[reference(variables('subnetId'), '2020-05-01').addressPrefix]",
+                                "networkSecurityGroup": {
+                                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('newNsgName'))]"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "existingVirtualNetworkName": {
+            "type": "string",
+            "value": "[parameters('existingVirtualNetworkName')]"
+        },
+        "existingSubnetName": {
+            "type": "string",
+            "value": "[parameters('existingSubnetName')]"
+        },
+        "subnetAddressPrefix": {
+            "type": "string",
+            "value": "[reference(variables('subnetId'), '2018-04-01').addressPrefix]"
+        },
+        "newNsgName": {
+            "type": "string",
+            "value": "[parameters('newNsgName')]"
+        }
+    }
+}

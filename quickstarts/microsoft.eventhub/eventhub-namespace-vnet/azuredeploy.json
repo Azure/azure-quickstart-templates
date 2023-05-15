@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "eventhubNamespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Event Hubs namespace"
+      }
+    },
+    "vnetRuleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Virtual Network Rule"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Virtual Network Sub Net"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for Namespace"
+      }
+    }
+  },
+  "variables": {
+    "namespaceVirtualNetworkRuleName": "[concat(parameters('eventhubNamespaceName'), concat('/', parameters('vnetRuleName')))]",
+    "subNetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vnetRuleName'), parameters('subnetName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[parameters('eventhubNamespaceName')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "properties": { }
+    },
+    {
+      "apiVersion": "2017-09-01",
+      "name": "[parameters('vnetRuleName')]",
+      "location": "[parameters('location')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/23"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/23",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.EventHub"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[variables('namespaceVirtualNetworkRuleName')]",
+      "type": "Microsoft.EventHub/namespaces/VirtualNetworkRules",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/', parameters('eventhubNamespaceName'))]"
+      ],
+      "properties": {
+        "virtualNetworkSubnetId": "[variables('subNetId')]"
+      }
+    }
+  ],
+  "outputs": { }
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmList": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "List of virtual machines to be configured.  If using multiple VMs, make their names comma separate, e.g. VM01,VM02,VM03."
+      }
+    },
+    "dnsZone": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the dnsZone to use as the suffix on the clients and to register records in"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources, such as templates and scripts, that this script depends on"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "vmListArray": "[split(replace(parameters('vmList'),' ',''),',')]"
+  },
+  "resources": [
+    {
+      "comments": "DNS client setup - set suffix and enable DDNS",
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmListArray')[copyIndex()],'/SetupDnsClient')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "setupDNSCopy",
+        "count": "[length(variables('vmListArray'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('nested/linux-client/setuplinuxclient.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('nested/linux-client/ddns-dhcphook', parameters('_artifactsLocationSasToken')))]"
+          ],
+          "commandToExecute": "[concat('sh setuplinuxclient.sh', ' ', parameters('dnsZone'))]"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "suffix": {
+            "type": "string",
+            "metadata": {
+                "description": "naming suffix based on resource group name hash"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "location to deploy the storage account"
+            }
+        },
+        "storageSku": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "storage account SKU"
+            }
+        },
+        "storageKind": {
+            "type": "string",
+            "defaultValue": "StorageV2",
+            "metadata": {
+                "description": "storage account kind"
+            }
+        },
+        "containerName": {
+            "type": "string",
+            "metadata": {
+                "description": "storage account container name"
+            }
+        },
+        "defaultNetworkAccessAction": {
+            "type": "string",
+            "defaultValue": "Allow",
+            "allowedValues": [
+                "Allow",
+                "Deny"
+            ],
+            "metadata": {
+                "description": "allor or deny internet access to storage account"
+            }
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat('stor', parameters('suffix'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2021-02-01",
+            "sku": {
+                "name": "[parameters('storageSku')]"
+            },
+            "kind": "[parameters('storageKind')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "[parameters('defaultNetworkAccessAction')]"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            },
+            "resources": [
+                {
+                    "name": "[concat('default/', parameters('containerName'))]",
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-06-01",
+                    "dependsOn": [
+                        "[variables('storageAccountName')]"
+                    ]
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "storageAccountName": {
+            "type": "string",
+            "value": "[variables('storageAccountName')]"
+        },
+        "storageContainerUri": {
+            "type": "string",
+            "value": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob, parameters('containerName'))]"
+        },
+        "containerName": {
+            "type": "string",
+            "value": "[parameters('containerName')]"
+        }
+    }
+}

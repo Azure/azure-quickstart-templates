@@ -1,0 +1,284 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation."
+      },
+      "type": "securestring"
+    },
+    "adminPasswordOrKey": {
+      "metadata": {
+        "description": "OS Admin password or SSH Key depending on value of authentication type"
+      },
+      "type": "securestring"
+    },
+    "adminUsername": {
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      },
+      "type": "string"
+    },
+    "authenticationType": {
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "defaultValue": "password",
+      "metadata": {
+        "description": "Authentication type"
+      },
+      "type": "string"
+    },
+    "azureCLI2DockerImage": {
+      "defaultValue": "azuresdk/azure-cli-python:latest",
+      "metadata": {
+        "description": "The Docker image to rin the azure CLI from"
+      },
+      "type": "string"
+    },
+    "containerName": {
+      "type": "string"
+    },
+    "location": {
+      "metadata": {
+        "description": "The Location For the resources"
+      },
+      "type": "string"
+    },
+    "nsgId": {
+      "metadata": {
+        "description": "The nsg id for the VM"
+      },
+      "type": "string"
+    },
+    "operatingSystem": {
+      "type": "string",
+      "metadata": {
+        "description": "OS for the VM, this is the offer and SKU concatenated with underscores and then mapped to a variable"
+      }
+    },
+    "provisionExtensions": {
+      "metadata": {
+        "description": "determines whether to provision the extensions"
+      },
+      "type": "bool"
+    },
+    "storageAccountId": {
+      "metadata": {
+        "description": "The storage account Id for boot diagnostics for the VMs"
+      },
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the storage account for the blob copy"
+      }
+    },
+    "subnetRef": {
+      "type": "string"
+    },
+    "vmSize": {
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "The size of the VM to create"
+      },
+      "type": "string"
+    },
+    "vmName": {
+      "metadata": {
+        "description": "The name of the vm"
+      },
+      "type": "string"
+    }
+  },
+  "variables": {
+    "isWindowsOS": "[bool(contains(toLower(variables('imageReference')[parameters('operatingSystem')].offer), 'windows'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "imageReference": {
+      "UbuntuServer_16.04-LTS": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "16.04-LTS",
+        "version": "latest"
+      },
+      "UbuntuServer_18.04-LTS": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "18.04-LTS",
+        "version": "latest"
+      },
+      "WindowsServer_2016-DataCenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2016-Datacenter",
+        "version": "latest"
+      }
+    },
+    "windowsConfiguration": {
+      "provisionVmAgent": "true"
+    },
+    "publicIPAddressName": "publicIp",
+    "nicName": "nic"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('Location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('Location')]",
+      "dependsOn": [
+        "[variables('publicIPAddressName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnetRef')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[parameters('nsgId')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('nicName')]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]",
+          "windowsConfiguration": "[if(variables('isWindowsOS'), variables('windowsConfiguration'), json('null'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')[parameters('operatingSystem')]]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(parameters('storageAccountId'), '2018-02-01').primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[and(variables('isWindowsOS'), parameters('provisionExtensions'))]",
+      "name": "[concat(parameters('vmName'),'/cse-windows')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('vmName')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('writeblob.ps1', parameters('_artifactsLocationSasToken')))]"
+          ],
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File  .\\writeblob.ps1  -SubscriptionId ', subscription().subscriptionId, ' -TenantId ', subscription().tenantId,' -ResourceGroupName ', resourceGroup().Name, ' -StorageAccountName ', parameters('storageAccountName'), ' -ContainerName ', parameters('containerName'),' -Verbose')]"
+        }
+      }
+    },
+    {
+      "condition": "[and(not(variables('isWindowsOS')), parameters('provisionExtensions'))]",
+      "name": "[concat(parameters('vmName'),'/cse-linux')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('vmName')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('scripts/writeblob.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install-and-run-cli-2.sh', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('./install-and-run-cli-2.sh -i \"', parameters('azureCLI2DockerImage'),'\" -a \"', parameters('storageAccountName'), '\" -c \"', parameters('containerName'), '\" -r \"', resourceGroup().Name, '\"')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "principalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Compute/virtualMachines', parameters('vmName')), '2019-12-01', 'Full').identity.principalId]"
+    },
+    "linuxTest": {
+      "type": "bool",
+      "value": "[and(not(variables('isWindowsOS')), parameters('provisionExtensions'))]"
+    },
+    "windowsTest": {
+      "type": "bool",
+      "value": "[and(variables('isWindowsOS'), parameters('provisionExtensions'))]"
+    }
+  }
+}
+

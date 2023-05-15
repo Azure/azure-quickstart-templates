@@ -1,0 +1,81 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "metadata": {
+        "description": "The Location For the resources"
+      },
+      "type": "string"
+    },
+    "extensionName": {
+      "type": "string",
+      "metadata": {
+        "description": "name of the extension"
+      }
+    },
+    "vmName": {
+      "metadata": {
+        "description": "The name of the vm"
+      },
+      "type": "string"
+    },
+    "fileUris": {
+      "type": "array"
+    },
+    "commandToExecute": {
+      "type": "string"
+    },
+    "isWindowsOS": {
+      "type": "bool"
+    }
+  },
+  "variables": {
+    "extensionNameWindows": "[concat(parameters('extensionName'), '-windows')]",
+    "extensionNameLinux": "[concat(parameters('extensionName'), '-linux')]"
+  },
+  "resources": [
+    {
+      "condition": "[parameters('isWindowsOS')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(parameters('vmName'), '/', variables('extensionNameWindows'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('fileUris')]",
+          "commandToExecute": "[parameters('commandToExecute')]"
+        }
+      }
+    },
+    {
+      "condition": "[not(parameters('isWindowsOS'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(parameters('vmName'), '/', variables('extensionNameLinux'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('fileUris')]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[parameters('commandToExecute')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "instanceView": {
+      "value": "[reference(if(parameters('isWindowsOS'), resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), variables('extensionNameWindows')), resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), variables('extensionNameLinux')))).instanceView]",
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "containergroupname": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the container group"
+            }
+        },
+        "containername": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the container"
+            },
+            "defaultValue": "container1"
+        },
+        "imagename": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the image"
+            },
+            "defaultValue": "nginx"
+        },
+        "port": {
+            "type": "string",
+            "metadata": {
+                "description": "Port to open on the container and the public IP address."
+            },
+            "defaultValue": "443"
+        },
+        "cpuCores": {
+            "type": "string",
+            "metadata": {
+                "description": "The number of CPU cores to allocate to the container."
+            },
+            "defaultValue": "1.0"
+        },
+        "memoryInGB": {
+            "type": "string",
+            "metadata": {
+                "description": "The amount of memory to allocate to the container in gigabytes."
+            },
+            "defaultValue": "1.5"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location in which the resources will be created."
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "name": "[parameters('containergroupname')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "containers": [
+                    {
+                        "name": "[parameters('containername')]",
+                        "properties": {
+                            "command": [
+                                "/bin/sh",
+                                "-c",
+                                "touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600"
+                            ],
+                            "image": "[parameters('imagename')]",
+                            "ports": [
+                                {
+                                    "port": "[parameters('port')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGB')]"
+                                }
+                            },
+                            "livenessProbe": {
+                                "exec": {
+                                    "command": [
+                                        "cat",
+                                        "/tmp/healthy"
+                                    ]
+                                },
+                                "periodSeconds": 5
+                            }
+                        }
+                    }
+                ],
+                "osType": "Linux",
+                "ipAddress": {
+                    "type": "Public",
+                    "ports": [
+                        {
+                            "protocol": "Tcp",
+                            "port": "[parameters('port')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "containerIPv4Address": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containergroupname'))).ipAddress.ip]"
+        }
+    }
+}

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the Cosmos DB account."
+      }
+    },
+    "accountName": {
+      "type": "string",
+      "defaultValue": "[concat('sql-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Cosmos Account Name"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "myDatabase",
+      "metadata": {
+        "description": "Database name"
+      }
+    },
+    "containers": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of Container Object with name and partition key"
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('accountName')]",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2019-12-12",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Eventual",
+          "maxStalenessPrefix": 1,
+          "maxIntervalInSeconds": 5
+        },
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0
+          }
+        ],
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
+      "name": "[concat( parameters('accountName'), '/sql/', parameters('databaseName'))]",
+      "apiVersion": "2016-03-31",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/', parameters('accountName'))]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "[parameters('databaseName')]"
+        },
+        "options": {
+          "throughput": 400
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/containers",
+      "name": "[concat(parameters('accountName'), '/sql/', parameters('databaseName'), '/', parameters('containers')[copyIndex()].name)]",
+      "copy": {
+        "name": "ContainerCopy",
+        "count": "[length(parameters('containers'))]"
+      },
+      "apiVersion": "2016-03-31",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', parameters('accountName'), 'sql', parameters('databaseName'))]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "[parameters('containers')[copyIndex()].name]",
+          "partitionKey": {
+            "paths": ["[parameters('containers')[copyIndex()].partitionKey]"],
+            "kind": "hash"
+          },
+          "indexingPolicy": {
+            "indexingMode": "consistent"
+          }
+        }
+      }
+    }
+  ]
+}

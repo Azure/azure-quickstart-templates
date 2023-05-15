@@ -1,0 +1,672 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "applyScriptsSwitch": {
+      "defaultValue": true,
+      "metadata": {
+        "description": "Switch to process or bypass all scripts/extensions"
+      },
+      "type": "bool"
+    },
+    "azureBackupSwitch": {
+      "defaultValue": false,
+      "metadata": {
+        "description": "Switch to configure AzureBackup and enlist VM's"
+      },
+      "type": "bool"
+    },
+    "vnetGwDeploySwitch": {
+      "defaultValue": false,
+      "metadata": {
+        "description": "Switch to deploy a virtual network gateway or not"
+      },
+      "type": "bool"
+    },
+    "installO365pluginsSwitch": {
+      "defaultValue": false,
+      "metadata": {
+        "description": "Switch to install Moodle Office 365 plugins"
+      },
+      "type": "bool"
+    },
+    "installElasticSearchSwitch": {
+      "defaultValue": false,
+      "metadata": {
+        "description": "Switch to install Moodle ElasticSearch plugins & VMs"
+      },
+      "type": "bool"
+    },
+    "storageAccountType": {
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      },
+      "type": "string"
+    },
+    "dbServerType": {
+      "defaultValue": "mysql",
+      "allowedValues": [
+        "mysql",
+        "postgres"
+      ],
+      "metadata": {
+        "description": "Database type"
+      },
+      "type": "string"
+    },
+    "fileServerType": {
+      "defaultValue": "gluster",
+      "allowedValues": [
+        "gluster",
+        "nfs"
+      ],
+      "metadata": {
+        "description": "File server type: GlusterFS, Azure Files (CIFS)--disabled due to too slow perf, NFS--not highly available"
+      },
+      "type": "string"
+    },
+    "webServerType": {
+      "defaultValue": "apache",
+      "allowedValues": [
+        "apache",
+        "nginx"
+      ],
+      "metadata": {
+        "description": "Web server type"
+      },
+      "type": "string"
+    },
+    "controllerVmSku": {
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM size for the controller node"
+      },
+      "type": "string"
+    },
+    "autoscaleVmSku": {
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM size for autoscaled nodes"
+      },
+      "type": "string"
+    },
+    "autoscaleVmCount": {
+      "defaultValue": 10,
+      "metadata": {
+        "description": "Maximum number of autoscaled nodes"
+      },
+      "type": "int"
+    },
+    "elasticVmSku": {
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM size for the elastic search nodes"
+      },
+      "type": "string"
+    },
+    "firewallRuleName": {
+      "defaultValue": "open-to-the-world",
+      "metadata": {
+        "description": "Database firewall rule name"
+      },
+      "type": "string"
+    },
+    "gatewaySubnet": {
+      "allowedValues": [
+        "GatewaySubnet"
+      ],
+      "defaultValue": "GatewaySubnet",
+      "metadata": {
+        "description": "name for Virtual network gateway subnet"
+      },
+      "type": "string"
+    },
+    "gatewayType": {
+      "allowedValues": [
+        "Vpn",
+        "ER"
+      ],
+      "defaultValue": "Vpn",
+      "metadata": {
+        "description": "Virtual network gateway type"
+      },
+      "type": "string"
+    },
+    "glusterVmSku": {
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM size for the gluster nodes"
+      },
+      "type": "string"
+    },
+    "fileServerDiskSize": {
+      "defaultValue": 127,
+      "metadata": {
+        "description": "Size per disk for gluster nodes or nfs server"
+      },
+      "type": "int"
+    },
+    "fileServerDiskCount": {
+      "defaultValue": 4,
+      "minValue": 2,
+      "maxValue": 8,
+      "metadata": {
+        "description": "Number of disks in raid0 per gluster node or nfs server"
+      },
+      "type": "int"
+    },
+    "moodleVersion": {
+      "allowedValues": [
+        "MOODLE_34_STABLE",
+        "MOODLE_33_STABLE",
+        "MOODLE_32_STABLE",
+        "MOODLE_31_STABLE",
+        "MOODLE_30_STABLE",
+        "MOODLE_29_STABLE"
+      ],
+      "defaultValue": "MOODLE_34_STABLE",
+      "metadata": {
+        "description": "The Moodle version you want to install."
+      },
+      "type": "string"
+    },
+    "dbLogin": {
+      "defaultValue": "dbadmin",
+      "metadata": {
+        "description": "Database admin username"
+      },
+      "type": "string"
+    },
+    "siteURL": {
+      "defaultValue": "www.example.org",
+      "metadata": {
+        "description": "URL for Moodle site"
+      },
+      "type": "string"
+    },
+    "skuCapacityDTU": {
+      "metadata": {
+        "description": "MySql/Postgresql database trasaction units"
+      },
+      "type": "int"
+    },
+    "skuFamily": {
+      "defaultValue": "SkuFamily",
+      "metadata": {
+        "description": "MySql/Postgresql sku family"
+      },
+      "type": "string"
+    },
+    "skuName": {
+      "metadata": {
+        "description": "MySql/Postgresql sku name"
+      },
+      "type": "string"
+    },
+    "skuSizeMB": {
+      "defaultValue": 51200,
+      "metadata": {
+        "description": "MySql/Postgresql sku size in MB. For Basic tier, minimum 50GB, increased by 125GB up to 1TB. For Standard tier, minimum 125GB, increase by 125GB up to 1TB"
+      },
+      "type": "int"
+    },
+    "skuTier": {
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "defaultValue": "Basic",
+      "metadata": {
+        "description": "MySql/Postgresql sku tier"
+      },
+      "type": "string"
+    },
+    "sshPublicKey": {
+      "metadata": {
+        "description": "ssh public key"
+      },
+      "type": "string"
+    },
+    "sshUsername": {
+      "defaultValue": "azureadmin",
+      "metadata": {
+        "description": "ssh user name"
+      },
+      "type": "string"
+    },
+    "sslEnforcement": {
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "defaultValue": "Disabled",
+      "metadata": {
+        "description": "MySql/Postgresql SSL connection"
+      },
+      "type": "string"
+    },
+    "postgresVersion": {
+      "allowedValues": [
+        "9.5",
+        "9.6"
+      ],
+      "defaultValue": "9.6",
+      "metadata": {
+        "description": "Postgresql version"
+      },
+      "type": "string"
+    },
+    "mysqlVersion": {
+      "allowedValues": [
+        "5.6",
+        "5.7"
+      ],
+      "defaultValue": "5.7",
+      "metadata": {
+        "description": "Mysql version"
+      },
+      "type": "string"
+    },
+    "vNetAddressSpace": {
+      "defaultValue": "172.31.0.0",
+      "metadata": {
+        "description": "Address range for the Moodle virtual network - presumed /16 - further subneting during vnet creation"
+      },
+      "type": "string"
+    },
+    "vpnType": {
+      "allowedValues": [
+        "RouteBased",
+        "PolicyBased"
+      ],
+      "defaultValue": "RouteBased",
+      "metadata": {
+        "description": "Virtual network gateway vpn type"
+      },
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "pid-738e3eec-68d4-4667-8377-c05c77c21f1b",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "dbTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl, parameters('dbServerType'), '.json', parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('azureBackupSwitch')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "recoveryTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'recoveryservices.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "redisTemplate",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/networkTemplate"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'redis.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "networkTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'network.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('installElasticSearchSwitch')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/networkTemplate",
+        "Microsoft.Resources/deployments/recoveryTemplate"
+      ],
+      "name": "elasticTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'elastic.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('fileServerType'),'gluster')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/networkTemplate",
+        "Microsoft.Resources/deployments/recoveryTemplate"
+      ],
+      "name": "glusterTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'gluster.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/elasticTemplate",
+        "Microsoft.Resources/deployments/glusterTemplate",
+        "Microsoft.Resources/deployments/recoveryTemplate",
+        "Microsoft.Resources/deployments/redisTemplate",
+        "Microsoft.Resources/deployments/storageAccountTemplate"
+      ],
+      "name": "controllerTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'controller.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/controllerTemplate",
+        "Microsoft.Resources/deployments/redisTemplate",
+        "Microsoft.Resources/deployments/dbTemplate"
+      ],
+      "name": "scaleSetTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'webvmss.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "storageAccountTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[variables('moodleCommon')]"
+          },
+          "location": {
+          "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(variables('moodleCommon').baseTemplateUrl,'storageAccount.json',parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "siteURL": {
+      "type": "string",
+      "value": "[variables('moodleCommon').siteURL]"
+    },
+    "controllerInstanceIP": {
+      "type": "string",
+      "value": "[reference('controllerTemplate').outputs.controllerIP.value]"
+    },
+    "databaseDNS": {
+      "type": "string",
+      "value": "[concat(variables('moodleCommon').dbServerType, '-', variables('moodleCommon').resourcesPrefix, '.', variables('moodleCommon').dbServerType, '.database.azure.com')]"
+    },
+    "databaseAdminUsername": {
+      "type": "string",
+      "value": "[variables('moodleCommon').dbUsername]"
+    },
+    "firstFrontendVmIP": {
+      "type": "string",
+      "value": "[reference('scaleSetTemplate').outputs.webvm1IP.value]"
+    },
+    "moodleDbUsername": {
+      "type": "string",
+      "value": "[variables('moodleCommon').moodleDbUserAzure]"
+    },
+    "loadBalancerDNS": {
+      "type": "string",
+      "value": "[variables('moodleCommon').lbDns]"
+    }
+  },
+  "variables": {
+    "moodleCommon": {
+      "baseTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/'))]",
+      "scriptLocation": "[uri(parameters('_artifactsLocation'), concat('scripts/'))]",
+      "applyScriptsSwitch": "[parameters('applyScriptsSwitch')]",
+      "autoscaleVmCount": "[parameters('autoscaleVmCount')]",
+      "autoscaleVmSku": "[parameters('autoscaleVmSku')]",
+      "azureBackupSwitch": "[parameters( 'azureBackupSwitch')]",
+      "artifactsSasToken": "[parameters('_artifactsLocationSasToken')]",
+      "commonFunctionsScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/helper_functions.sh',parameters('_artifactsLocationSasToken')))]",
+      "controllerVmSku": "[parameters('controllerVmSku')]",
+      "dbLogin": "[parameters('dbLogin')]",
+      "dbLoginPassword": "[concat(substring(uniqueString(resourceGroup().id, deployment().name), 2, 11), '*7', toUpper('pfiwb'))]",
+      "dbServerType": "[parameters('dbServerType')]",
+      "dbUsername": "[concat(parameters('dbLogin'), '@', parameters('dbServerType'), '-', variables('resourceprefix'))]",
+      "elasticVmSku": "[parameters('elasticVmSku')]",
+      "elasticAvailabilitySetName": "[concat('elastic-avset-',variables('resourceprefix'))]",
+      "elasticClusterName": "[concat('es-cluster-',variables('resourceprefix'))]",
+      "elasticNicName1": "[concat('elastic-vm-nic-01-',variables('resourceprefix'))]",
+      "elasticNicName2": "[concat('elastic-vm-nic-02-',variables('resourceprefix'))]",
+      "elasticNicName3": "[concat('elastic-vm-nic-03-',variables('resourceprefix'))]",
+      "elasticScriptFilename": "install_elastic.sh",
+      "elasticVm1IP": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.20')]",
+      "elasticVm2IP": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.21')]",
+      "elasticVm3IP": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.22')]",
+      "elasticVmName": "[concat('elastic-vm-',variables('resourceprefix'))]",
+      "elasticVmName1": "[concat('elastic-vm-01-',variables('resourceprefix'))]",
+      "elasticVmName2": "[concat('elastic-vm-02-',variables('resourceprefix'))]",
+      "elasticVmName3": "[concat('elastic-vm-03-',variables('resourceprefix'))]",
+      "extBeName": "[concat('lb-backend-',variables('resourceprefix'))]",
+      "extFeName": "[concat('lb-frontend-',variables('resourceprefix'))]",
+      "extNatPool": "[concat('lb-natpool-',variables('resourceprefix'))]",
+      "extProbe": "[concat('lb-probe-',variables('resourceprefix'))]",
+      "fileServerDiskCount": "[parameters('fileServerDiskCount')]",
+      "fileServerDiskSize": "[parameters('fileServerDiskSize')]",
+      "fileServerType": "[parameters('fileServerType')]",
+      "firewallRuleName": "[parameters('firewallRuleName')]",
+      "gatewayName": "[concat('vnet-gateway-',variables('resourceprefix'))]",
+      "gatewayPublicIPName": "[concat('vnet-gw-ip-',variables('resourceprefix'))]",
+      "gatewaySubnet": "[parameters('gatewaySubnet')]",
+      "gatewaySubnetPrefix": "[concat(variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),2)))]",
+      "gatewaySubnetRange": "[concat(variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),2)), '.0/24')]",
+      "gatewayType": "[parameters('gatewayType')]",
+      "gfsNameRoot": "[concat('gluster-vm-',variables('resourceprefix'))]",
+      "gfxAvailabilitySetName": "[concat('gluster-avset-',variables('resourceprefix'))]",
+      "glusterScriptFilename": "install_gluster.sh",
+      "glusterVmCount": 2,
+      "glusterVmSku": "[parameters('glusterVmSku')]",
+      "installO365pluginsSwitch": "[parameters('installO365pluginsSwitch')]",
+      "installElasticSearchSwitch": "[parameters('installElasticSearchSwitch')]",
+      "jboxNicName": "[concat('jumpbox-vm-nic-',variables('resourceprefix'))]",
+      "jboxNsgName": "[concat('jumpbox-nsg-',variables('resourceprefix'))]",
+      "jboxPipName": "[concat('jumpbox-pubip-',variables('resourceprefix'))]",
+      "jboxVmName": "[concat('jumpbox-vm-',variables('resourceprefix'))]",
+      "lbDns": "[concat('lb-',variables('resourceprefix'),'.',parameters('location'),'.cloudapp.azure.com')]",
+      "lbName": "[concat('lb-',variables('resourceprefix'))]",
+      "lbPipName": "[concat('lb-pubip-',variables('resourceprefix'))]",
+      "moodleAdminPass": "[concat(toUpper('xl'), substring(uniqueString(resourceGroup().id, deployment().name), 6, 7),',1*8')]",
+      "moodleDbName": "moodle",
+      "moodleDbPass": "[concat('9#36^', substring(uniqueString(resourceGroup().id, deployment().name), 5, 8), toUpper('ercq'))]",
+      "moodleDbUser": "moodle",
+      "moodleDbUserAzure": "[concat('moodle', '@', parameters('dbServerType'), '-', variables('resourceprefix'))]",
+      "moodleInstallScriptFilename": "install_moodle.sh",
+      "moodleVersion": "[parameters('moodleVersion')]",
+      "mysqlVersion": "[parameters('mysqlVersion')]",
+      "osType": {
+        "offer": "UbuntuServer",
+        "publisher": "Canonical",
+        "sku": "16.04-LTS",
+        "version": "latest"
+      },
+      "policyName": "[concat('policy-',variables('resourceprefix'))]",
+      "postgresVersion": "[parameters('postgresVersion')]",
+      "redisCacheName": "[concat('redis-',variables('resourceprefix'))]",
+      "redisDns": "[concat('redis-',variables('resourceprefix'),'.redis.cache.windows.net')]",
+      "resourcesPrefix": "[variables('resourceprefix')]",
+      "serverName": "[concat(parameters('dbServerType'), '-',variables('resourceprefix'))]",
+      "siteURL": "[if(or(empty(parameters('siteURL')), equals(parameters('siteURL'), 'www.example.org')), concat('lb-',variables('resourceprefix'),'.',parameters('location'),'.cloudapp.azure.com'), parameters('siteURL'))]",
+      "skuCapacityDTU": "[parameters('skuCapacityDTU')]",
+      "skuFamily": "[parameters('skuFamily')]",
+      "skuName": "[parameters('skuName')]",
+      "skuSizeMB": "[parameters('skuSizeMB')]",
+      "skuTier": "[parameters('skuTier')]",
+      "sshPublicKey": "[parameters('sshPublicKey')]",
+      "sshUsername": "[parameters('sshUsername')]",
+      "sslEnforcement": "[parameters('sslEnforcement')]",
+      "storageAccountName": "[tolower(concat('abs',variables('resourceprefix')))]",
+      "storageAccountType": "[parameters('storageAccountType')]",
+      "subnetElastic": "[concat('elastic-subnet-',variables('resourceprefix'))]",
+      "subnetElasticPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)))]",
+      "subnetElasticRange": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.0/24')]",
+      "subnetRedis": "[concat('redis-subnet-',variables('resourceprefix'))]",
+      "subnetRedisPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),3)))]",
+      "subnetRedisRange": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),3)), '.0/24')]",
+      "subnetSan": "[concat('san-subnet-',variables('resourceprefix'))]",
+      "subnetSanPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),1)))]",
+      "subnetSanRange": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),1)), '.0/24')]",
+      "subnetWeb": "[concat('web-subnet-',variables('resourceprefix'))]",
+      "subnetWebPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),0)))]",
+      "subnetWebRange": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),0)), '.0/24')]",
+      "vNetAddressSpace": "[parameters('vNetAddressSpace')]",
+      "vaultName": "[concat('vault-',variables('resourceprefix'))]",
+      "vmssName": "[concat('vmss-',variables('resourceprefix'))]",
+      "vmssdStorageAccounttName": "[concat('vmss',uniqueString(resourceGroup().id))]",
+      "vnetGwDeploySwitch": "[parameters('vnetGwDeploySwitch')]",
+      "vnetName": "[concat('vnet-',variables('resourceprefix'))]",
+      "vpnType": "[parameters('vpnType')]",
+      "webServerSetupScriptFilename": "setup_webserver.sh",
+      "webServerType": "[parameters('webServerType')]"
+    },
+    "octets": "[split(parameters('vNetAddressSpace'), '.')]",
+    "resourceprefix": "[substring(uniqueString(resourceGroup().id, deployment().name), 3, 6)]"
+  }
+}
+

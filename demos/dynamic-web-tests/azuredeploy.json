@@ -1,0 +1,134 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the underlying Application Insights resource."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "actionGroupName": {
+      "type": "string",
+      "defaultValue": "newActionGroup",
+      "metadata": {
+        "description": "The name of the action group."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "defaultValue": "newAcg",
+      "metadata": {
+        "description": "The short name of the action group."
+      }
+    },
+    "pingText": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The text you would like to find."
+      }
+    },
+    "appInsightsResource": {
+      "type": "string",
+      "metadata": {
+        "description": "The id of the underlying Application Insights resource."
+      }
+    },
+    "tests": {
+      "type": "array",
+      "metadata": {
+        "description": "The list of web tests to run. See the README for the schema of test descriptor object."
+      }
+    },
+    "emails": {
+      "type": "array",
+      "metadata": {
+        "description": "A list of strings representing the email addresses to send alerts to."
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('tests')[0].name]",
+      "type": "Microsoft.Insights/webtests",
+      "apiVersion": "2015-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-link:', parameters('appInsightsResource'))]": "Resource"
+      },
+      "properties": {
+        "Name": "[parameters('tests')[0].name]",
+        "Description": "[parameters('tests')[0].description]",
+        "Enabled": true,
+        "Frequency": "[parameters('tests')[0].frequency_secs]",
+        "Timeout": "[parameters('tests')[0].timeout_secs]",
+        "Kind": "ping",
+        "Locations": "[parameters('tests')[0].locations]",
+        "Configuration": {
+          "WebTest": "[concat('<WebTest   Name=\"', parameters('tests')[0].name, '\"   Enabled=\"True\"         CssProjectStructure=\"\"    CssIteration=\"\"  Timeout=\"120\"  WorkItemIds=\"\"         xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\"         Description=\"\"  CredentialUserName=\"\"  CredentialPassword=\"\"         PreAuthenticate=\"True\"  Proxy=\"default\"  StopOnError=\"False\"         RecordedResultFile=\"\"  ResultsLocale=\"\">  <Items>  <Request Method=\"GET\"    Version=\"1.1\"  Url=\"', parameters('tests')[0].url,   '\" ThinkTime=\"0\"  Timeout=\"300\" ParseDependentRequests=\"True\"         FollowRedirects=\"True\" RecordResult=\"True\" Cache=\"False\"         ResponseTimeGoal=\"0\"  Encoding=\"utf-8\"  ExpectedHttpStatusCode=\"', parameters('tests')[0].expected, '\"         ExpectedResponseUrl=\"\" ReportingName=\"\" IgnoreHttpStatusCode=\"False\" />        </Items>  <ValidationRules> <ValidationRule  Classname=\"Microsoft.VisualStudio.TestTools.WebTesting.Rules.ValidationRuleFindText, Microsoft.VisualStudio.QualityTools.WebTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a\" DisplayName=\"Find Text\"         Description=\"Verifies the existence of the specified text in the response.\"         Level=\"High\"  ExecutionOrder=\"BeforeDependents\">  <RuleParameters>        <RuleParameter Name=\"FindText\" Value=\"',   parameters('pingText'), '\" />  <RuleParameter Name=\"IgnoreCase\" Value=\"False\" />  <RuleParameter Name=\"UseRegularExpression\" Value=\"False\" />  <RuleParameter Name=\"PassIfTextFound\" Value=\"True\" />  </RuleParameters> </ValidationRule>  </ValidationRules>  </WebTest>')]"
+        },
+        "SyntheticMonitorId": "[parameters('tests')[0].name]"
+      }
+    },
+    {
+      "name": "[parameters('actionGroupName')]",
+      "type": "microsoft.insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "global",
+      "properties": {
+        "groupShortName": "[parameters('actionGroupShortName')]",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "testName",
+            "emailAddress": "[parameters('emails')[0]]",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+      },
+    {
+      "name": "[concat(parameters('tests')[0].name, 'alert')]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('microsoft.insights/webtests/', parameters('tests')[0].name)]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceId('microsoft.insights/components/', parameters('appName')))]": "Resource",
+        "[concat('hidden-link:', resourceId('microsoft.insights/webtests/', parameters('tests')[0].name))]": "Resource"
+      },
+      "properties": {
+        "description": "[parameters('tests')[0].description]",
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Insights/webtests',parameters('tests')[0].name)]",
+          "[parameters('appInsightsResource')]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria",
+          "webTestId": "[resourceId('Microsoft.Insights/webtests', parameters('tests')[0].name)]",
+          "componentId": "[parameters('appInsightsResource')]",
+          "failedLocationCount": "[parameters('tests')[0].failedLocationCount]"
+        },
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "9933229425431379390"
+    }
+  },
+  "parameters": {
+    "managedHSMName": {
+      "type": "string",
+      "metadata": {
+        "description": "String specifying the name of the managed HSM."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "String specifying the Azure location where the managed HSM should be created."
+      }
+    },
+    "initialAdminObjectIds": {
+      "type": "array",
+      "metadata": {
+        "description": "Array specifying the objectIDs associated with a list of initial administrators."
+      }
+    },
+    "tenantId": {
+      "type": "string",
+      "defaultValue": "[subscription().tenantId]",
+      "metadata": {
+        "description": "String specifying the Azure Active Directory tenant ID that should be used for authenticating requests to the managed HSM."
+      }
+    },
+    "softRetentionInDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "maxValue": 90,
+      "minValue": 7,
+      "metadata": {
+        "description": "Specifies the number of days that managed Key Vault will be kept recoverable if deleted. If you do not want to have soft delete enabled, set value to 0."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/managedHSMs",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[parameters('managedHSMName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_B1",
+        "family": "B"
+      },
+      "properties": {
+        "enableSoftDelete": "[greater(parameters('softRetentionInDays'), 0)]",
+        "softDeleteRetentionInDays": "[if(equals(parameters('softRetentionInDays'), 0), null(), parameters('softRetentionInDays'))]",
+        "enablePurgeProtection": false,
+        "tenantId": "[parameters('tenantId')]",
+        "initialAdminObjectIds": "[parameters('initialAdminObjectIds')]",
+        "publicNetworkAccess": "Enabled",
+        "networkAcls": {
+          "bypass": "None",
+          "defaultAction": "Allow"
+        }
+      }
+    }
+  ]
+}

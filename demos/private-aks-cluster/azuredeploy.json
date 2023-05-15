@@ -1,0 +1,1983 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "17330504823766843545"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location of AKS cluster."
+      }
+    },
+    "aksClusterName": {
+      "type": "string",
+      "defaultValue": "[format('aks-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the AKS cluster."
+      }
+    },
+    "aksClusterDnsPrefix": {
+      "type": "string",
+      "defaultValue": "[parameters('aksClusterName')]",
+      "metadata": {
+        "description": "Specifies the DNS prefix specified when creating the managed cluster."
+      }
+    },
+    "aksClusterTags": {
+      "type": "object",
+      "defaultValue": {
+        "resourceType": "AKS Cluster",
+        "createdBy": "ARM Template"
+      },
+      "metadata": {
+        "description": "Specifies the tags of the AKS cluster."
+      }
+    },
+    "aksClusterNetworkPlugin": {
+      "type": "string",
+      "defaultValue": "azure",
+      "allowedValues": [
+        "azure",
+        "kubenet"
+      ],
+      "metadata": {
+        "description": "Specifies the network plugin used for building Kubernetes network. - azure or kubenet."
+      }
+    },
+    "aksClusterNetworkPolicy": {
+      "type": "string",
+      "defaultValue": "azure",
+      "allowedValues": [
+        "azure",
+        "calico"
+      ],
+      "metadata": {
+        "description": "Specifies the network policy used for building Kubernetes network. - calico or azure"
+      }
+    },
+    "aksClusterPodCidr": {
+      "type": "string",
+      "defaultValue": "10.244.0.0/16",
+      "metadata": {
+        "description": "Specifies the CIDR notation IP range from which to assign pod IPs when kubenet is used."
+      }
+    },
+    "aksClusterServiceCidr": {
+      "type": "string",
+      "defaultValue": "10.2.0.0/16",
+      "metadata": {
+        "description": "A CIDR notation IP range from which to assign service cluster IPs. It must not overlap with any Subnet IP ranges."
+      }
+    },
+    "aksClusterDnsServiceIP": {
+      "type": "string",
+      "defaultValue": "10.2.0.10",
+      "metadata": {
+        "description": "Specifies the IP address assigned to the Kubernetes DNS service. It must be within the Kubernetes service address range specified in serviceCidr."
+      }
+    },
+    "aksClusterDockerBridgeCidr": {
+      "type": "string",
+      "defaultValue": "172.17.0.1/16",
+      "metadata": {
+        "description": "Specifies the CIDR notation IP range assigned to the Docker bridge network. It must not overlap with any Subnet IP ranges or the Kubernetes service address range."
+      }
+    },
+    "aksClusterLoadBalancerSku": {
+      "type": "string",
+      "defaultValue": "standard",
+      "allowedValues": [
+        "basic",
+        "standard"
+      ],
+      "metadata": {
+        "description": "Specifies the sku of the load balancer used by the virtual machine scale sets used by nodepools."
+      }
+    },
+    "aksClusterSkuTier": {
+      "type": "string",
+      "defaultValue": "Paid",
+      "allowedValues": [
+        "Paid",
+        "Free"
+      ],
+      "metadata": {
+        "description": "Specifies the tier of a managed cluster SKU: Paid or Free"
+      }
+    },
+    "aksClusterKubernetesVersion": {
+      "type": "string",
+      "defaultValue": "1.21.1",
+      "metadata": {
+        "description": "Specifies the version of Kubernetes specified when creating the managed cluster."
+      }
+    },
+    "aksClusterAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the administrator username of Linux virtual machines."
+      }
+    },
+    "aksClusterSshPublicKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the SSH RSA public key string for the Linux nodes."
+      }
+    },
+    "aadEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specifies whether enabling AAD integration."
+      }
+    },
+    "aadProfileTenantId": {
+      "type": "string",
+      "defaultValue": "[subscription().tenantId]",
+      "metadata": {
+        "description": "Specifies the tenant id of the Azure Active Directory used by the AKS cluster for authentication."
+      }
+    },
+    "aadProfileAdminGroupObjectIDs": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Specifies the AAD group object IDs that will have admin role of the cluster."
+      }
+    },
+    "aksClusterEnablePrivateCluster": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether to create the cluster as a private cluster or not."
+      }
+    },
+    "aadProfileManaged": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specifies whether to enable managed AAD integration."
+      }
+    },
+    "aadProfileEnableAzureRBAC": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specifies whether to  to enable Azure RBAC for Kubernetes authorization."
+      }
+    },
+    "nodePoolName": {
+      "type": "string",
+      "defaultValue": "nodepool1",
+      "metadata": {
+        "description": "Specifies the unique name of the node pool profile in the context of the subscription and resource group."
+      }
+    },
+    "nodePoolVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "Specifies the vm size of nodes in the node pool."
+      }
+    },
+    "nodePoolOsDiskSizeGB": {
+      "type": "int",
+      "defaultValue": 100,
+      "metadata": {
+        "description": "Specifies the OS Disk Size in GB to be used to specify the disk size for every machine in this master/agent pool. If you specify 0, it will apply the default osDisk size according to the vmSize specified.."
+      }
+    },
+    "nodePoolCount": {
+      "type": "int",
+      "defaultValue": 5,
+      "metadata": {
+        "description": "Specifies the number of agents (VMs) to host docker containers. Allowed values must be in the range of 1 to 100 (inclusive). The default value is 1."
+      }
+    },
+    "nodePoolOsType": {
+      "type": "string",
+      "defaultValue": "Linux",
+      "allowedValues": [
+        "Linux",
+        "Windows"
+      ],
+      "metadata": {
+        "description": "Specifies the OS type for the vms in the node pool. Choose from Linux and Windows. Default to Linux."
+      }
+    },
+    "nodePoolMaxPods": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Specifies the maximum number of pods that can run on a node. The maximum number of pods per node in an AKS cluster is 250. The default maximum number of pods per node varies between kubenet and Azure CNI networking, and the method of cluster deployment."
+      }
+    },
+    "nodePoolMaxCount": {
+      "type": "int",
+      "defaultValue": 5,
+      "metadata": {
+        "description": "Specifies the maximum number of nodes for auto-scaling for the node pool."
+      }
+    },
+    "nodePoolMinCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Specifies the minimum number of nodes for auto-scaling for the node pool."
+      }
+    },
+    "nodePoolEnableAutoScaling": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether to enable auto-scaling for the node pool."
+      }
+    },
+    "nodePoolScaleSetPriority": {
+      "type": "string",
+      "defaultValue": "Regular",
+      "allowedValues": [
+        "Spot",
+        "Regular"
+      ],
+      "metadata": {
+        "description": "Specifies the virtual machine scale set priority: Spot or Regular."
+      }
+    },
+    "nodePoolNodeLabels": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Specifies the Agent pool node labels to be persisted across all nodes in agent pool."
+      }
+    },
+    "nodePoolNodeTaints": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Specifies the taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule. - string"
+      }
+    },
+    "nodePoolMode": {
+      "type": "string",
+      "defaultValue": "System",
+      "allowedValues": [
+        "System",
+        "User"
+      ],
+      "metadata": {
+        "description": "Specifies the mode of an agent pool: System or User"
+      }
+    },
+    "nodePoolType": {
+      "type": "string",
+      "defaultValue": "VirtualMachineScaleSets",
+      "allowedValues": [
+        "VirtualMachineScaleSets",
+        "AvailabilitySet"
+      ],
+      "metadata": {
+        "description": "Specifies the type of a node pool: VirtualMachineScaleSets or AvailabilitySet"
+      }
+    },
+    "nodePoolAvailabilityZones": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Specifies the availability zones for nodes. Requirese the use of VirtualMachineScaleSets as node pool type."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "[format('{0}Vnet', parameters('aksClusterName'))]",
+      "metadata": {
+        "description": "Specifies the name of the virtual network."
+      }
+    },
+    "virtualNetworkAddressPrefixes": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/8",
+      "metadata": {
+        "description": "Specifies the address prefixes of the virtual network."
+      }
+    },
+    "aksSubnetName": {
+      "type": "string",
+      "defaultValue": "AksSubnet",
+      "metadata": {
+        "description": "Specifies the name of the default subnet hosting the AKS cluster."
+      }
+    },
+    "aksSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Specifies the address prefix of the subnet hosting the AKS cluster."
+      }
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the Log Analytics Workspace."
+      }
+    },
+    "logAnalyticsSku": {
+      "type": "string",
+      "defaultValue": "PerGB2018",
+      "allowedValues": [
+        "Free",
+        "Standalone",
+        "PerNode",
+        "PerGB2018"
+      ],
+      "metadata": {
+        "description": "Specifies the service tier of the workspace: Free, Standalone, PerNode, Per-GB."
+      }
+    },
+    "logAnalyticsRetentionInDays": {
+      "type": "int",
+      "defaultValue": 60,
+      "metadata": {
+        "description": "Specifies the workspace data retention in days. -1 means Unlimited retention for the Unlimited Sku. 730 days is the maximum allowed for all other Skus."
+      }
+    },
+    "vmSubnetName": {
+      "type": "string",
+      "defaultValue": "VmSubnet",
+      "metadata": {
+        "description": "Specifies the name of the subnet which contains the virtual machine."
+      }
+    },
+    "vmSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "Specifies the address prefix of the subnet which contains the virtual machine."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "TestVm",
+      "metadata": {
+        "description": "Specifies the name of the virtual machine."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "Specifies the size of the virtual machine."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "metadata": {
+        "description": "Specifies the image publisher of the disk image used to create the virtual machine."
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "metadata": {
+        "description": "Specifies the offer of the platform image or marketplace image used to create the virtual machine."
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "metadata": {
+        "description": "Specifies the Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Specifies the type of authentication when accessing the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "vmAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the administrator account of the virtual machine."
+      }
+    },
+    "vmAdminPasswordOrKey": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Specifies the SSH Key or password for the virtual machine. SSH key is recommended."
+      }
+    },
+    "diskStorageAccounType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "StandardSSD_LRS",
+        "Standard_LRS",
+        "UltraSSD_LRS"
+      ],
+      "metadata": {
+        "description": "Specifies the storage account type for OS and data disk."
+      }
+    },
+    "numDataDisks": {
+      "type": "int",
+      "defaultValue": 1,
+      "maxValue": 64,
+      "minValue": 0,
+      "metadata": {
+        "description": "Specifies the number of data disks of the virtual machine."
+      }
+    },
+    "osDiskSize": {
+      "type": "int",
+      "defaultValue": 50,
+      "metadata": {
+        "description": "Specifies the size in GB of the OS disk of the VM."
+      }
+    },
+    "dataDiskSize": {
+      "type": "int",
+      "defaultValue": 50,
+      "metadata": {
+        "description": "Specifies the size in GB of the OS disk of the virtual machine."
+      }
+    },
+    "dataDiskCaching": {
+      "type": "string",
+      "defaultValue": "ReadWrite",
+      "metadata": {
+        "description": "Specifies the caching requirements for the data disks."
+      }
+    },
+    "blobStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('blob{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the globally unique name for the storage account used to store the boot diagnostics logs of the virtual machine."
+      }
+    },
+    "blobStorageAccountPrivateEndpointName": {
+      "type": "string",
+      "defaultValue": "BlobStorageAccountPrivateEndpoint",
+      "metadata": {
+        "description": "Specifies the name of the private link to the boot diagnostics storage account."
+      }
+    },
+    "bastionSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.1.0/26",
+      "metadata": {
+        "description": "Specifies the Bastion subnet IP prefix. This prefix must be within vnet IP prefix address space."
+      }
+    },
+    "bastionName": {
+      "type": "string",
+      "defaultValue": "[format('{0}Bastion', parameters('aksClusterName'))]",
+      "metadata": {
+        "description": "Specifies the name of the Azure Bastion resource."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "vnet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressPrefixes": {
+            "value": "[parameters('virtualNetworkAddressPrefixes')]"
+          },
+          "aksSubnetName": {
+            "value": "[parameters('aksSubnetName')]"
+          },
+          "aksSubnetAddressPrefix": {
+            "value": "[parameters('aksSubnetAddressPrefix')]"
+          },
+          "bastionSubnetAddressPrefix": {
+            "value": "[parameters('bastionSubnetAddressPrefix')]"
+          },
+          "vmSubnetName": {
+            "value": "[parameters('vmSubnetName')]"
+          },
+          "vmSubnetAddressPrefix": {
+            "value": "[parameters('vmSubnetAddressPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.5.6.12127",
+              "templateHash": "16709100410790237275"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Specifies the location of AKS cluster."
+              }
+            },
+            "bastionSubnetAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.1.1.0/26",
+              "metadata": {
+                "description": "Specifies the Bastion subnet IP prefix. This prefix must be within vnet IP prefix address space."
+              }
+            },
+            "vmSubnetName": {
+              "type": "string",
+              "defaultValue": "VmSubnet",
+              "metadata": {
+                "description": "Specifies the name of the subnet which contains the virtual machine."
+              }
+            },
+            "vmSubnetAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/24",
+              "metadata": {
+                "description": "Specifies the address prefix of the subnet which contains the virtual machine."
+              }
+            },
+            "aksSubnetName": {
+              "type": "string",
+              "defaultValue": "AksSubnet",
+              "metadata": {
+                "description": "Specifies the name of the default subnet hosting the AKS cluster."
+              }
+            },
+            "aksSubnetAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.0.0/16",
+              "metadata": {
+                "description": "Specifies the address prefix of the subnet hosting the AKS cluster."
+              }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the virtual network."
+              }
+            },
+            "virtualNetworkAddressPrefixes": {
+              "type": "string",
+              "defaultValue": "10.0.0.0/8",
+              "metadata": {
+                "description": "Specifies the address prefixes of the virtual network."
+              }
+            }
+          },
+          "variables": {
+            "bastionSubnetName": "AzureBastionSubnet",
+            "bastionSubnetNsgName": "[format('{0}Nsg', variables('bastionSubnetName'))]",
+            "vmSubnetNsgName": "[format('{0}Nsg', parameters('vmSubnetName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2020-08-01",
+              "name": "[variables('vmSubnetNsgName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowSshInbound",
+                    "properties": {
+                      "priority": 100,
+                      "access": "Allow",
+                      "direction": "Inbound",
+                      "destinationPortRange": "22",
+                      "protocol": "Tcp",
+                      "sourceAddressPrefix": "*",
+                      "sourcePortRange": "*",
+                      "destinationAddressPrefix": "*"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2020-08-01",
+              "name": "[variables('bastionSubnetNsgName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "bastionInAllow",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "sourceAddressPrefix": "Internet",
+                      "destinationPortRange": "443",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "bastionControlInAllow",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "sourceAddressPrefix": "GatewayManager",
+                      "destinationPortRanges": [
+                        "443",
+                        "4443"
+                      ],
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowLoadBalancerInBound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationPortRange": "443",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 130,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowBastionHostCommunicationInBound",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationPortRanges": [
+                        "8080",
+                        "5701"
+                      ],
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 140,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "bastionInDeny",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 900,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "bastionVnetOutAllow",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationPortRanges": [
+                        "22",
+                        "3389"
+                      ],
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "bastionAzureOutAllow",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationPortRange": "443",
+                      "destinationAddressPrefix": "AzureCloud",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-08-01",
+              "name": "[parameters('virtualNetworkName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('virtualNetworkAddressPrefixes')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[parameters('aksSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('aksSubnetAddressPrefix')]",
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  },
+                  {
+                    "name": "[parameters('vmSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('vmSubnetAddressPrefix')]",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmSubnetNsgName'))]"
+                      },
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  },
+                  {
+                    "name": "[variables('bastionSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('bastionSubnetAddressPrefix')]",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('bastionSubnetNsgName'))]"
+                      }
+                    }
+                  }
+                ],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('bastionSubnetNsgName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmSubnetNsgName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "virtualNetworkResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+            },
+            "bastionSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('bastionSubnetName'))]"
+            },
+            "aksSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('aksSubnetName'))]"
+            },
+            "vmSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('vmSubnetName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "bastion",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "bastionHostName": {
+            "value": "[parameters('bastionName')]"
+          },
+          "bastionSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet')).outputs.bastionSubnetId.value]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.5.6.12127",
+              "templateHash": "12764875124720449759"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Specifies the location of AKS cluster."
+              }
+            },
+            "bastionHostName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the Azure Bastion resource."
+              }
+            },
+            "bastionSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the id of the Azure Bastion subnet resource id."
+              }
+            }
+          },
+          "variables": {
+            "bastionPublicIpAddressName": "[format('{0}PublicIp', parameters('bastionHostName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2020-08-01",
+              "name": "[variables('bastionPublicIpAddressName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Network/bastionHosts",
+              "apiVersion": "2020-08-01",
+              "name": "[parameters('bastionHostName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "IpConf",
+                    "properties": {
+                      "subnet": {
+                        "id": "[parameters('bastionSubnetId')]"
+                      },
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpAddressName'))]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpAddressName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'vnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "log-analytics.bicep",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "logAnalyticsWorkspaceName": {
+            "value": "[parameters('logAnalyticsWorkspaceName')]"
+          },
+          "logAnalyticsSku": {
+            "value": "[parameters('logAnalyticsSku')]"
+          },
+          "logAnalyticsRetentionInDays": {
+            "value": "[parameters('logAnalyticsRetentionInDays')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.5.6.12127",
+              "templateHash": "10978591333652294115"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Specifies the location of AKS cluster."
+              }
+            },
+            "logAnalyticsWorkspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the Log Analytics Workspace."
+              }
+            },
+            "logAnalyticsSku": {
+              "type": "string",
+              "defaultValue": "PerGB2018",
+              "metadata": {
+                "description": "Specifies the service tier of the workspace: Free, Standalone, PerNode, Per-GB."
+              },
+              "allowedValues": [
+                "Free",
+                "Standalone",
+                "PerNode",
+                "PerGB2018"
+              ]
+            },
+            "logAnalyticsRetentionInDays": {
+              "type": "int",
+              "defaultValue": 60,
+              "metadata": {
+                "description": "Specifies the workspace data retention in days. -1 means Unlimited retention for the Unlimited Sku. 730 days is the maximum allowed for all other Skus."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2020-10-01",
+              "name": "[parameters('logAnalyticsWorkspaceName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "name": "[parameters('logAnalyticsSku')]"
+                },
+                "retentionInDays": "[parameters('logAnalyticsRetentionInDays')]"
+              }
+            }
+          ],
+          "outputs": {
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "jumpbox",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "vmAdminUsername": {
+            "value": "[parameters('vmAdminUsername')]"
+          },
+          "vmAdminPasswordOrKey": {
+            "value": "[parameters('vmAdminPasswordOrKey')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "diskStorageAccounType": {
+            "value": "[parameters('diskStorageAccounType')]"
+          },
+          "osDiskSize": {
+            "value": "[parameters('osDiskSize')]"
+          },
+          "dataDiskCaching": {
+            "value": "[parameters('dataDiskCaching')]"
+          },
+          "dataDiskSize": {
+            "value": "[parameters('dataDiskSize')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "imageOffer": {
+            "value": "[parameters('imageOffer')]"
+          },
+          "imagePublisher": {
+            "value": "[parameters('imagePublisher')]"
+          },
+          "imageSku": {
+            "value": "[parameters('imageSku')]"
+          },
+          "blobStorageAccountName": {
+            "value": "[parameters('blobStorageAccountName')]"
+          },
+          "blobStorageAccountPrivateEndpointName": {
+            "value": "[parameters('blobStorageAccountPrivateEndpointName')]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'log-analytics.bicep')).outputs.logAnalyticsWorkspaceId.value]"
+          },
+          "virtualNetworkId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet')).outputs.virtualNetworkResourceId.value]"
+          },
+          "vmSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet')).outputs.vmSubnetId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.5.6.12127",
+              "templateHash": "7396609537564318479"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Specifies the location of AKS cluster."
+              }
+            },
+            "virtualNetworkId": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the id of the virtual network."
+              }
+            },
+            "vmSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the idof the subnet which contains the virtual machine."
+              }
+            },
+            "vmName": {
+              "type": "string",
+              "defaultValue": "TestVm",
+              "metadata": {
+                "description": "Specifies the name of the virtual machine."
+              }
+            },
+            "vmSize": {
+              "type": "string",
+              "defaultValue": "Standard_DS3_v2",
+              "metadata": {
+                "description": "Specifies the size of the virtual machine."
+              }
+            },
+            "imagePublisher": {
+              "type": "string",
+              "defaultValue": "Canonical",
+              "metadata": {
+                "description": "Specifies the image publisher of the disk image used to create the virtual machine."
+              }
+            },
+            "imageOffer": {
+              "type": "string",
+              "defaultValue": "UbuntuServer",
+              "metadata": {
+                "description": "Specifies the offer of the platform image or marketplace image used to create the virtual machine."
+              }
+            },
+            "imageSku": {
+              "type": "string",
+              "defaultValue": "18.04-LTS",
+              "metadata": {
+                "description": "Specifies the Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+              }
+            },
+            "authenticationType": {
+              "type": "string",
+              "defaultValue": "password",
+              "metadata": {
+                "description": "Specifies the type of authentication when accessing the Virtual Machine. SSH key is recommended."
+              },
+              "allowedValues": [
+                "sshPublicKey",
+                "password"
+              ]
+            },
+            "vmAdminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the administrator account of the virtual machine."
+              }
+            },
+            "vmAdminPasswordOrKey": {
+              "type": "secureString",
+              "metadata": {
+                "description": "Specifies the SSH Key or password for the virtual machine. SSH key is recommended."
+              }
+            },
+            "diskStorageAccounType": {
+              "type": "string",
+              "defaultValue": "Premium_LRS",
+              "metadata": {
+                "description": "Specifies the storage account type for OS and data disk."
+              },
+              "allowedValues": [
+                "Premium_LRS",
+                "StandardSSD_LRS",
+                "Standard_LRS",
+                "UltraSSD_LRS"
+              ]
+            },
+            "numDataDisks": {
+              "type": "int",
+              "defaultValue": 1,
+              "metadata": {
+                "description": "Specifies the number of data disks of the virtual machine."
+              },
+              "maxValue": 64,
+              "minValue": 0
+            },
+            "osDiskSize": {
+              "type": "int",
+              "defaultValue": 50,
+              "metadata": {
+                "description": "Specifies the size in GB of the OS disk of the VM."
+              }
+            },
+            "dataDiskSize": {
+              "type": "int",
+              "defaultValue": 50,
+              "metadata": {
+                "description": "Specifies the size in GB of the OS disk of the virtual machine."
+              }
+            },
+            "dataDiskCaching": {
+              "type": "string",
+              "defaultValue": "ReadWrite",
+              "metadata": {
+                "description": "Specifies the caching requirements for the data disks."
+              }
+            },
+            "blobStorageAccountName": {
+              "type": "string",
+              "defaultValue": "[format('blob{0}', uniqueString(resourceGroup().id))]",
+              "metadata": {
+                "description": "Specifies the globally unique name for the storage account used to store the boot diagnostics logs of the virtual machine."
+              }
+            },
+            "blobStorageAccountPrivateEndpointName": {
+              "type": "string",
+              "defaultValue": "BlobStorageAccountPrivateEndpoint",
+              "metadata": {
+                "description": "Specifies the name of the private link to the boot diagnostics storage account."
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the id of the Log Analytics Workspace."
+              }
+            }
+          },
+          "variables": {
+            "vmNicName": "[format('{0}Nic', parameters('vmName'))]",
+            "blobPublicDNSZoneForwarder": "[format('.blob.{0}', environment().suffixes.storage)]",
+            "blobPrivateDnsZoneName": "[format('privatelink{0}', variables('blobPublicDNSZoneForwarder'))]",
+            "blobStorageAccountPrivateEndpointGroupName": "blob",
+            "omsAgentForLinuxName": "LogAnalytics",
+            "omsDependencyAgentForLinuxName": "DependencyAgent",
+            "linuxConfiguration": {
+              "disablePasswordAuthentication": true,
+              "ssh": {
+                "publicKeys": [
+                  {
+                    "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('vmAdminUsername'))]",
+                    "keyData": "[parameters('vmAdminPasswordOrKey')]"
+                  }
+                ]
+              },
+              "provisionVMAgent": true
+            },
+            "virtualNetworkName": "[last(split(parameters('virtualNetworkId'), '/'))]",
+            "logAnalyticsWorkspaceName": "[last(split(parameters('logAnalyticsWorkspaceId'), '/'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2021-01-01",
+              "name": "[parameters('blobStorageAccountName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2"
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2020-08-01",
+              "name": "[variables('vmNicName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('vmSubnetId')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2020-12-01",
+              "name": "[parameters('vmName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[parameters('vmName')]",
+                  "adminUsername": "[parameters('vmAdminUsername')]",
+                  "adminPassword": "[parameters('vmAdminPasswordOrKey')]",
+                  "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
+                },
+                "storageProfile": {
+                  "copy": [
+                    {
+                      "name": "dataDisks",
+                      "count": "[length(range(0, parameters('numDataDisks')))]",
+                      "input": {
+                        "caching": "[parameters('dataDiskCaching')]",
+                        "diskSizeGB": "[parameters('dataDiskSize')]",
+                        "lun": "[range(0, parameters('numDataDisks'))[copyIndex('dataDisks')]]",
+                        "name": "[format('{0}-DataDisk{1}', parameters('vmName'), range(0, parameters('numDataDisks'))[copyIndex('dataDisks')])]",
+                        "createOption": "Empty",
+                        "managedDisk": {
+                          "storageAccountType": "[parameters('diskStorageAccounType')]"
+                        }
+                      }
+                    }
+                  ],
+                  "imageReference": {
+                    "publisher": "[parameters('imagePublisher')]",
+                    "offer": "[parameters('imageOffer')]",
+                    "sku": "[parameters('imageSku')]",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "name": "[format('{0}_OSDisk', parameters('vmName'))]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "diskSizeGB": "[parameters('osDiskSize')]",
+                    "managedDisk": {
+                      "storageAccountType": "[parameters('diskStorageAccounType')]"
+                    }
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+                    }
+                  ]
+                },
+                "diagnosticsProfile": {
+                  "bootDiagnostics": {
+                    "enabled": true,
+                    "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('blobStorageAccountName'))).primaryEndpoints.blob]"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('blobStorageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2020-12-01",
+              "name": "[format('{0}/{1}', parameters('vmName'), variables('omsAgentForLinuxName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "OmsAgentForLinux",
+                "typeHandlerVersion": "1.13",
+                "settings": {
+                  "workspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName')), '2020-10-01').customerId]",
+                  "stopOnMultipleConnections": false
+                },
+                "protectedSettings": {
+                  "workspaceKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2020-12-01",
+              "name": "[format('{0}/{1}', parameters('vmName'), variables('omsDependencyAgentForLinuxName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+                "type": "DependencyAgentLinux",
+                "typeHandlerVersion": "9.10",
+                "autoUpgradeMinorVersion": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('blobPrivateDnsZoneName')]",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', variables('blobPrivateDnsZoneName'), format('link_to_{0}', toLower(variables('virtualNetworkName'))))]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[parameters('virtualNetworkId')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2020-08-01",
+              "name": "[parameters('blobStorageAccountPrivateEndpointName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "[parameters('blobStorageAccountPrivateEndpointName')]",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('blobStorageAccountName'))]",
+                      "groupIds": [
+                        "[variables('blobStorageAccountPrivateEndpointGroupName')]"
+                      ]
+                    }
+                  }
+                ],
+                "subnet": {
+                  "id": "[parameters('vmSubnetId')]"
+                },
+                "customDnsConfigs": [
+                  {
+                    "fqdn": "[format('{0}{1}', parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('blobStorageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('blobStorageAccountPrivateEndpointName'), format('{0}PrivateDnsZoneGroup', variables('blobStorageAccountPrivateEndpointGroupName')))]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "dnsConfig",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('blobStorageAccountPrivateEndpointName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'log-analytics.bicep')]",
+        "[resourceId('Microsoft.Resources/deployments', 'vnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "aks",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "aadEnabled": {
+            "value": "[parameters('aadEnabled')]"
+          },
+          "aadProfileAdminGroupObjectIDs": {
+            "value": "[parameters('aadProfileAdminGroupObjectIDs')]"
+          },
+          "aadProfileEnableAzureRBAC": {
+            "value": "[parameters('aadProfileEnableAzureRBAC')]"
+          },
+          "aadProfileManaged": {
+            "value": "[parameters('aadProfileManaged')]"
+          },
+          "aadProfileTenantId": {
+            "value": "[parameters('aadProfileTenantId')]"
+          },
+          "aksClusterAdminUsername": {
+            "value": "[parameters('aksClusterAdminUsername')]"
+          },
+          "aksClusterDnsPrefix": {
+            "value": "[parameters('aksClusterDnsPrefix')]"
+          },
+          "aksClusterDnsServiceIP": {
+            "value": "[parameters('aksClusterDnsServiceIP')]"
+          },
+          "aksClusterDockerBridgeCidr": {
+            "value": "[parameters('aksClusterDockerBridgeCidr')]"
+          },
+          "aksClusterEnablePrivateCluster": {
+            "value": "[parameters('aksClusterEnablePrivateCluster')]"
+          },
+          "aksClusterKubernetesVersion": {
+            "value": "[parameters('aksClusterKubernetesVersion')]"
+          },
+          "aksClusterLoadBalancerSku": {
+            "value": "[parameters('aksClusterLoadBalancerSku')]"
+          },
+          "aksClusterName": {
+            "value": "[parameters('aksClusterName')]"
+          },
+          "aksClusterNetworkPlugin": {
+            "value": "[parameters('aksClusterNetworkPlugin')]"
+          },
+          "aksClusterNetworkPolicy": {
+            "value": "[parameters('aksClusterNetworkPolicy')]"
+          },
+          "aksClusterPodCidr": {
+            "value": "[parameters('aksClusterPodCidr')]"
+          },
+          "aksClusterServiceCidr": {
+            "value": "[parameters('aksClusterServiceCidr')]"
+          },
+          "aksClusterSkuTier": {
+            "value": "[parameters('aksClusterSkuTier')]"
+          },
+          "aksClusterSshPublicKey": {
+            "value": "[parameters('aksClusterSshPublicKey')]"
+          },
+          "aksClusterTags": {
+            "value": "[parameters('aksClusterTags')]"
+          },
+          "aksSubnetName": {
+            "value": "[parameters('aksSubnetName')]"
+          },
+          "nodePoolAvailabilityZones": {
+            "value": "[parameters('nodePoolAvailabilityZones')]"
+          },
+          "nodePoolCount": {
+            "value": "[parameters('nodePoolCount')]"
+          },
+          "nodePoolEnableAutoScaling": {
+            "value": "[parameters('nodePoolEnableAutoScaling')]"
+          },
+          "nodePoolMaxCount": {
+            "value": "[parameters('nodePoolMaxCount')]"
+          },
+          "nodePoolMaxPods": {
+            "value": "[parameters('nodePoolMaxPods')]"
+          },
+          "nodePoolMinCount": {
+            "value": "[parameters('nodePoolMinCount')]"
+          },
+          "nodePoolMode": {
+            "value": "[parameters('nodePoolMode')]"
+          },
+          "nodePoolName": {
+            "value": "[parameters('nodePoolName')]"
+          },
+          "nodePoolNodeLabels": {
+            "value": "[parameters('nodePoolNodeLabels')]"
+          },
+          "nodePoolNodeTaints": {
+            "value": "[parameters('nodePoolNodeTaints')]"
+          },
+          "nodePoolOsDiskSizeGB": {
+            "value": "[parameters('nodePoolOsDiskSizeGB')]"
+          },
+          "nodePoolOsType": {
+            "value": "[parameters('nodePoolOsType')]"
+          },
+          "nodePoolScaleSetPriority": {
+            "value": "[parameters('nodePoolScaleSetPriority')]"
+          },
+          "nodePoolType": {
+            "value": "[parameters('nodePoolType')]"
+          },
+          "nodePoolVmSize": {
+            "value": "[parameters('nodePoolVmSize')]"
+          },
+          "virtualNetworkId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet')).outputs.virtualNetworkResourceId.value]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'log-analytics.bicep')).outputs.logAnalyticsWorkspaceId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.5.6.12127",
+              "templateHash": "4794668392529650459"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Specifies the location of AKS cluster."
+              }
+            },
+            "aksClusterName": {
+              "type": "string",
+              "defaultValue": "[format('aks-{0}', uniqueString(resourceGroup().id))]",
+              "metadata": {
+                "description": "Specifies the name of the AKS cluster."
+              }
+            },
+            "aksClusterDnsPrefix": {
+              "type": "string",
+              "defaultValue": "[parameters('aksClusterName')]",
+              "metadata": {
+                "description": "Specifies the DNS prefix specified when creating the managed cluster."
+              }
+            },
+            "aksClusterTags": {
+              "type": "object",
+              "defaultValue": {
+                "resourceType": "AKS Cluster",
+                "createdBy": "ARM Template"
+              },
+              "metadata": {
+                "description": "Specifies the tags of the AKS cluster."
+              }
+            },
+            "aksClusterNetworkPlugin": {
+              "type": "string",
+              "defaultValue": "azure",
+              "metadata": {
+                "description": "Specifies the network plugin used for building Kubernetes network. - azure or kubenet."
+              },
+              "allowedValues": [
+                "azure",
+                "kubenet"
+              ]
+            },
+            "aksClusterNetworkPolicy": {
+              "type": "string",
+              "defaultValue": "azure",
+              "metadata": {
+                "description": "Specifies the network policy used for building Kubernetes network. - calico or azure"
+              },
+              "allowedValues": [
+                "azure",
+                "calico"
+              ]
+            },
+            "aksClusterPodCidr": {
+              "type": "string",
+              "defaultValue": "10.244.0.0/16",
+              "metadata": {
+                "description": "Specifies the CIDR notation IP range from which to assign pod IPs when kubenet is used."
+              }
+            },
+            "aksClusterServiceCidr": {
+              "type": "string",
+              "defaultValue": "10.2.0.0/16",
+              "metadata": {
+                "description": "A CIDR notation IP range from which to assign service cluster IPs. It must not overlap with any Subnet IP ranges."
+              }
+            },
+            "aksClusterDnsServiceIP": {
+              "type": "string",
+              "defaultValue": "10.2.0.10",
+              "metadata": {
+                "description": "Specifies the IP address assigned to the Kubernetes DNS service. It must be within the Kubernetes service address range specified in serviceCidr."
+              }
+            },
+            "aksClusterDockerBridgeCidr": {
+              "type": "string",
+              "defaultValue": "172.17.0.1/16",
+              "metadata": {
+                "description": "Specifies the CIDR notation IP range assigned to the Docker bridge network. It must not overlap with any Subnet IP ranges or the Kubernetes service address range."
+              }
+            },
+            "aksClusterLoadBalancerSku": {
+              "type": "string",
+              "defaultValue": "standard",
+              "metadata": {
+                "description": "Specifies the sku of the load balancer used by the virtual machine scale sets used by nodepools."
+              },
+              "allowedValues": [
+                "basic",
+                "standard"
+              ]
+            },
+            "aksClusterSkuTier": {
+              "type": "string",
+              "defaultValue": "Paid",
+              "metadata": {
+                "description": "Specifies the tier of a managed cluster SKU: Paid or Free"
+              },
+              "allowedValues": [
+                "Paid",
+                "Free"
+              ]
+            },
+            "aksClusterKubernetesVersion": {
+              "type": "string",
+              "defaultValue": "1.19.7",
+              "metadata": {
+                "description": "Specifies the version of Kubernetes specified when creating the managed cluster."
+              }
+            },
+            "aksClusterAdminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the administrator username of Linux virtual machines."
+              }
+            },
+            "aksClusterSshPublicKey": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the SSH RSA public key string for the Linux nodes."
+              }
+            },
+            "aadEnabled": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Specifies whether enabling AAD integration."
+              }
+            },
+            "aadProfileTenantId": {
+              "type": "string",
+              "defaultValue": "[subscription().tenantId]",
+              "metadata": {
+                "description": "Specifies the tenant id of the Azure Active Directory used by the AKS cluster for authentication."
+              }
+            },
+            "aadProfileAdminGroupObjectIDs": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Specifies the AAD group object IDs that will have admin role of the cluster."
+              }
+            },
+            "aksClusterEnablePrivateCluster": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Specifies whether to create the cluster as a private cluster or not."
+              }
+            },
+            "aadProfileManaged": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Specifies whether to enable managed AAD integration."
+              }
+            },
+            "aadProfileEnableAzureRBAC": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Specifies whether to  to enable Azure RBAC for Kubernetes authorization."
+              }
+            },
+            "nodePoolName": {
+              "type": "string",
+              "defaultValue": "nodepool1",
+              "metadata": {
+                "description": "Specifies the unique name of the node pool profile in the context of the subscription and resource group."
+              }
+            },
+            "nodePoolVmSize": {
+              "type": "string",
+              "defaultValue": "Standard_DS3_v2",
+              "metadata": {
+                "description": "Specifies the vm size of nodes in the node pool."
+              }
+            },
+            "nodePoolOsDiskSizeGB": {
+              "type": "int",
+              "defaultValue": 100,
+              "metadata": {
+                "description": "Specifies the OS Disk Size in GB to be used to specify the disk size for every machine in this master/agent pool. If you specify 0, it will apply the default osDisk size according to the vmSize specified.."
+              }
+            },
+            "nodePoolCount": {
+              "type": "int",
+              "defaultValue": 3,
+              "metadata": {
+                "description": "Specifies the number of agents (VMs) to host docker containers. Allowed values must be in the range of 1 to 100 (inclusive). The default value is 1."
+              }
+            },
+            "nodePoolOsType": {
+              "type": "string",
+              "defaultValue": "Linux",
+              "metadata": {
+                "description": "Specifies the OS type for the vms in the node pool. Choose from Linux and Windows. Default to Linux."
+              },
+              "allowedValues": [
+                "Linux",
+                "Windows"
+              ]
+            },
+            "nodePoolMaxPods": {
+              "type": "int",
+              "defaultValue": 30,
+              "metadata": {
+                "description": "Specifies the maximum number of pods that can run on a node. The maximum number of pods per node in an AKS cluster is 250. The default maximum number of pods per node varies between kubenet and Azure CNI networking, and the method of cluster deployment."
+              }
+            },
+            "nodePoolMaxCount": {
+              "type": "int",
+              "defaultValue": 5,
+              "metadata": {
+                "description": "Specifies the maximum number of nodes for auto-scaling for the node pool."
+              }
+            },
+            "nodePoolMinCount": {
+              "type": "int",
+              "defaultValue": 3,
+              "metadata": {
+                "description": "Specifies the minimum number of nodes for auto-scaling for the node pool."
+              }
+            },
+            "nodePoolEnableAutoScaling": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Specifies whether to enable auto-scaling for the node pool."
+              }
+            },
+            "nodePoolScaleSetPriority": {
+              "type": "string",
+              "defaultValue": "Regular",
+              "metadata": {
+                "description": "Specifies the virtual machine scale set priority: Spot or Regular."
+              },
+              "allowedValues": [
+                "Spot",
+                "Regular"
+              ]
+            },
+            "nodePoolNodeLabels": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Specifies the Agent pool node labels to be persisted across all nodes in agent pool."
+              }
+            },
+            "nodePoolNodeTaints": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Specifies the taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule. - string"
+              }
+            },
+            "nodePoolMode": {
+              "type": "string",
+              "defaultValue": "System",
+              "metadata": {
+                "description": "Specifies the mode of an agent pool: System or User"
+              },
+              "allowedValues": [
+                "System",
+                "User"
+              ]
+            },
+            "nodePoolType": {
+              "type": "string",
+              "defaultValue": "VirtualMachineScaleSets",
+              "metadata": {
+                "description": "Specifies the type of a node pool: VirtualMachineScaleSets or AvailabilitySet"
+              },
+              "allowedValues": [
+                "VirtualMachineScaleSets",
+                "AvailabilitySet"
+              ]
+            },
+            "nodePoolAvailabilityZones": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Specifies the availability zones for nodes. Requirese the use of VirtualMachineScaleSets as node pool type."
+              }
+            },
+            "virtualNetworkId": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the id of the virtual network."
+              }
+            },
+            "aksSubnetName": {
+              "type": "string",
+              "defaultValue": "AksSubnet",
+              "metadata": {
+                "description": "Specifies the name of the default subnet hosting the AKS cluster."
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the name of the Log Analytics Workspace."
+              }
+            }
+          },
+          "variables": {
+            "aadProfileConfiguration": {
+              "managed": "[parameters('aadProfileManaged')]",
+              "enableAzureRBAC": "[parameters('aadProfileEnableAzureRBAC')]",
+              "adminGroupObjectIDs": "[parameters('aadProfileAdminGroupObjectIDs')]",
+              "tenantID": "[parameters('aadProfileTenantId')]"
+            },
+            "virtualNetworkName": "[last(split(parameters('virtualNetworkId'), '/'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerService/managedClusters",
+              "apiVersion": "2021-02-01",
+              "name": "[parameters('aksClusterName')]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "tags": "[parameters('aksClusterTags')]",
+              "sku": {
+                "name": "Basic",
+                "tier": "[parameters('aksClusterSkuTier')]"
+              },
+              "properties": {
+                "kubernetesVersion": "[parameters('aksClusterKubernetesVersion')]",
+                "dnsPrefix": "[parameters('aksClusterDnsPrefix')]",
+                "agentPoolProfiles": [
+                  {
+                    "name": "[toLower(parameters('nodePoolName'))]",
+                    "count": "[parameters('nodePoolCount')]",
+                    "vmSize": "[parameters('nodePoolVmSize')]",
+                    "osDiskSizeGB": "[parameters('nodePoolOsDiskSizeGB')]",
+                    "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), parameters('aksSubnetName'))]",
+                    "maxPods": "[parameters('nodePoolMaxPods')]",
+                    "osType": "[parameters('nodePoolOsType')]",
+                    "maxCount": "[parameters('nodePoolMaxCount')]",
+                    "minCount": "[parameters('nodePoolMinCount')]",
+                    "scaleSetPriority": "[parameters('nodePoolScaleSetPriority')]",
+                    "enableAutoScaling": "[parameters('nodePoolEnableAutoScaling')]",
+                    "mode": "[parameters('nodePoolMode')]",
+                    "type": "[parameters('nodePoolType')]",
+                    "availabilityZones": "[if(empty(parameters('nodePoolAvailabilityZones')), null(), parameters('nodePoolAvailabilityZones'))]",
+                    "nodeLabels": "[parameters('nodePoolNodeLabels')]",
+                    "nodeTaints": "[parameters('nodePoolNodeTaints')]"
+                  }
+                ],
+                "linuxProfile": {
+                  "adminUsername": "[parameters('aksClusterAdminUsername')]",
+                  "ssh": {
+                    "publicKeys": [
+                      {
+                        "keyData": "[parameters('aksClusterSshPublicKey')]"
+                      }
+                    ]
+                  }
+                },
+                "addonProfiles": {
+                  "omsagent": {
+                    "enabled": true,
+                    "config": {
+                      "logAnalyticsWorkspaceResourceID": "[parameters('logAnalyticsWorkspaceId')]"
+                    }
+                  }
+                },
+                "enableRBAC": true,
+                "networkProfile": {
+                  "networkPlugin": "[parameters('aksClusterNetworkPlugin')]",
+                  "networkPolicy": "[parameters('aksClusterNetworkPolicy')]",
+                  "podCidr": "[parameters('aksClusterPodCidr')]",
+                  "serviceCidr": "[parameters('aksClusterServiceCidr')]",
+                  "dnsServiceIP": "[parameters('aksClusterDnsServiceIP')]",
+                  "dockerBridgeCidr": "[parameters('aksClusterDockerBridgeCidr')]",
+                  "loadBalancerSku": "[parameters('aksClusterLoadBalancerSku')]"
+                },
+                "aadProfile": "[if(parameters('aadEnabled'), variables('aadProfileConfiguration'), null())]",
+                "apiServerAccessProfile": {
+                  "enablePrivateCluster": "[parameters('aksClusterEnablePrivateCluster')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'log-analytics.bicep')]",
+        "[resourceId('Microsoft.Resources/deployments', 'vnet')]"
+      ]
+    }
+  ]
+}

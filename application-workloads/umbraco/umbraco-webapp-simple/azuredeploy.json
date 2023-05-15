@@ -1,0 +1,343 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "defaultValue": "[concat('umbraco', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of azure web app"
+      }
+    },
+    "servicePlanTier": {
+      "type": "string",
+      "allowedValues": [
+        "Standard",
+        "Premium",
+        "PremiumV2"
+      ],
+      "defaultValue": "PremiumV2",
+      "metadata": {
+        "description": "Tier for Service Plan"
+      }
+    },
+    "servicePlanSku": {
+      "type": "string",
+      "allowedValues": [
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P1V2",
+        "P2V2",
+        "P3V3"
+      ],
+      "defaultValue": "P1V2",
+      "metadata": {
+        "description": "Size for Service Plan"
+      }
+    },
+    "dbServerName": {
+      "type": "string",
+      "defaultValue": "[concat('umbraco', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "SQL Azure DB Server name"
+      }
+    },
+    "dbAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Azure DB administrator  user login"
+      }
+    },
+    "dbAdministratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Database admin user password"
+      }
+    },
+    "dbName": {
+      "type": "string",
+      "defaultValue": "umbraco-db",
+      "metadata": {
+        "description": "Database Name"
+      }
+    },
+    "nonAdminDatabaseUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Non-admin Database User. Must be Unique"
+      }
+    },
+    "nonAdminDatabasePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Non-admin Database User password"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS"
+      ],
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Storage Account Type : Standard-LRS, Standard-GRS,Standard-RAGRS,Standard-ZRS"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+    "appServicePlanName": "[concat(parameters('appName'), 'serviceplan')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('dbServerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('dbAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "apiVersion": "2020-02-02-preview",
+          "name": "[parameters('dbName')]",
+          "location": "[parameters('location')]",
+          "sku": {
+            "name": "S0",
+            "tier": "Standard"
+          },
+          "kind": "v12.0,user",
+          "dependsOn": [
+            "[resourceId('Microsoft.SQL/Servers', parameters('dbServerName'))]"
+          ],
+          "properties": {
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
+          }
+        },
+        {
+          "apiVersion": "2020-02-02-preview",
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.SQL/Servers', parameters('dbServerName'))]"
+          ],
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Web/serverFarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "Tier": "[parameters('servicePlanTier')]",
+        "Name": "[parameters('servicePlanSku')]"
+      },
+      "kind": "linux",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/Sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('appName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "empty"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('appName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      },
+      "resources": [
+        {
+          "type": "Extensions",
+          "apiVersion": "2020-06-01",
+          "name": "MSDeploy",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+            "[resourceId('Microsoft.Web/Sites/config', parameters('appName'), 'web')]",
+            "[resourceId('Microsoft.SQL/Servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[variables('storageAccountName')]"
+          ],
+          "properties": {
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('UmbracoCms.WebPI.7.4.3.zip', parameters('_artifactsLocationSasToken')))]",
+            "dbType": "SQL",
+            "connectionString": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.SQL/servers', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+            "setParameters": {
+              "Application Path": "[parameters('appName')]",
+              "Database Server": "[reference(resourceId('Microsoft.SQL/servers', parameters('dbServerName'))).fullyQualifiedDomainName]",
+              "Database Name": "[parameters('dbName')]",
+              "Database Username": "[parameters('nonAdminDatabaseUserName')]",
+              "Database Password": "[parameters('nonAdminDatabasePassword')]",
+              "Database Administrator": "[parameters('dbAdministratorLogin')]",
+              "Database Administrator Password": "[parameters('dbAdministratorLoginPassword')]"
+            }
+          }
+        },
+        {
+          "type": "config",
+          "apiVersion": "2020-06-01",
+          "name": "connectionstrings",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+            "[resourceId('Microsoft.SQL/Servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[resourceId('Microsoft.Web/Sites/extensions', parameters('appName'), 'MSDeploy')]"
+          ],
+          "properties": {
+            "defaultConnection": {
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.SQL/servers', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            }
+          }
+        },
+        {
+          "apiVersion": "2020-06-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+          ],
+          "properties": {
+            "phpVersion": "off",
+            "netFrameworkVersion": "v4.5",
+            "use32BitWorkerProcess": "true",
+            "webSocketsEnabled": true,
+            "alwaysOn": "true",
+            "httpLoggingEnabled": true,
+            "logsDirectorySizeLimit": 40
+          }
+        }
+      ]
+    },
+    {
+      "type": "microsoft.insights/autoscalesettings",
+      "apiVersion": "2015-04-01",
+      "name": "[concat(variables('appServicePlanName'), '-scaleset')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource"
+      },
+      "dependsOn": [
+        "[variables('appServicePlanName')]"
+      ],
+      "properties": {
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": "1",
+              "maximum": "2",
+              "default": "1"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 80
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT1H",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1H"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": false,
+        "name": "[concat(variables('appServicePlanName'), '-scaleset')]",
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      }
+    },
+    {
+      "type": "microsoft.insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[concat(parameters('appName'),'-appin')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', parameters('appName')))]": "Resource"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+      ],
+      "properties": {
+        "applicationId": "[parameters('appName')]",
+        "Application_Type": "web"
+      }
+    }
+  ]
+}

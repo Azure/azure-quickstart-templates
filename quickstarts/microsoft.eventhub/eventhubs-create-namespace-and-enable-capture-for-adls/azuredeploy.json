@@ -1,0 +1,150 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "eventHubNamespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the EventHub namespace"
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Event Hub"
+      }
+    },
+    "messageRetentionInDays": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 7,
+      "metadata": {
+        "description": "How long to retain the data in Event Hub"
+      }
+    },
+    "partitionCount": {
+      "type": "int",
+      "defaultValue": 4,
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of partitions chosen"
+      }
+    },
+    "captureEnabled": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [ "false", "true" ],
+      "metadata": {
+        "description": "Enable or disable the Capture feature for your Event Hub"
+      }
+    },
+    "captureEncodingFormat": {
+      "type": "string",
+      "defaultValue": "Avro",
+      "allowedValues": [ "Avro" ],
+      "metadata": {
+        "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
+      }
+    },
+    "captureTime": {
+      "type": "int",
+      "defaultValue": 300,
+      "minValue": 60,
+      "maxValue": 900,
+      "metadata": {
+        "description": "the time window in seconds for the archival"
+      }
+    },
+    "captureSize": {
+      "type": "int",
+      "defaultValue": 314572800,
+      "minValue": 10485760,
+      "maxValue": 524288000,
+      "metadata": {
+        "description": "the size window in bytes for evetn hub capture"
+      }
+    },
+    "captureNameFormat": {
+      "type": "string",
+      "defaultValue": "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}",
+      "metadata": {
+        "description": "A Capture Name Format must contain {Namespace}, {EventHub}, {PartitionId}, {Year}, {Month}, {Day}, {Hour}, {Minute} and {Second} fields. These can be arranged in any order with or without delimeters. E.g.  Prod_{EventHub}/{Namespace}\\{PartitionId}_{Year}_{Month}/{Day}/{Hour}/{Minute}/{Second}"
+      }
+    },
+    "subscriptionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscription Id of both Data Lake Store and Event Hub namespace"
+      }
+    },
+    "dataLakeAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Data Lake Store name"
+      }
+    },
+    "dataLakeFolderPath": {
+      "type": "string",
+      "metadata": {
+        "description": "Destination archive folder path"
+      }
+    }
+  },
+  "variables": {
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('eventHubNamespaceName')]",
+      "type": "Microsoft.EventHub/Namespaces",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "resources": [
+        {
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('eventHubName')]",
+          "type": "eventhubs",
+          "dependsOn": [
+            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+          ],
+          "properties": {
+            "path": "[parameters('eventHubName')]",
+            "captureDescription": {
+              "enabled": true,
+              "skipEmptyArchives": false,
+              "encoding": "[parameters('captureEncodingFormat')]",
+              "intervalInSeconds": "[parameters('captureTime')]",
+              "sizeLimitInBytes": "[parameters('captureSize')]",
+              "destination": {
+                "name": "EventHubArchive.AzureDataLake",
+                "properties": {
+                  "DataLakeSubscriptionId": "[parameters('subscriptionId')]",
+                  "DataLakeAccountName": "[parameters('dataLakeAccountName')]",
+                  "DataLakeFolderPath": "[parameters('dataLakeFolderPath')]",
+                  "ArchiveNameFormat": "[parameters('captureNameFormat')]"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "NamespaceConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
+    },
+    "SharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
+    }
+  }
+}

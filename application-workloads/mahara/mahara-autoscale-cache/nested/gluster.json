@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').gfxAvailabilitySetName]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 5
+            },
+            "sku": {
+                "name": "Aligned"
+            },
+            "tags": {
+                "displayName": "Gluster Availability Set"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "copy": {
+                "count": "[parameters('maharaCommon').glusterVmCount]",
+                "name": "vmloop"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets/',parameters('maharaCommon').gfxAvailabilitySetName)]"
+            ],
+            "name": "[concat('glustervm',copyindex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "counter": {
+                        "value": "[copyindex()]"
+                    },
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'glustervm.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        }
+    ]
+}

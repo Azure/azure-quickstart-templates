@@ -1,0 +1,151 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "defaultValue": "[concat('kusto', uniqueString(resourceGroup().id))]"
+    },
+    "dataManagementPublicIpName": {
+      "type": "string",
+      "defaultValue": "dm-pip"
+    },
+    "enginePublicIpName": {
+      "type": "string",
+      "defaultValue": "engine-pip"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_D8_v3"
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": "Standard"
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "subnet"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet"
+    }
+  },
+  "variables": {
+    "dataManagementPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dataManagementPublicIpName'))]",
+    "enginePublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('enginePublicIpName'))]",
+    "nsgName": "azureDataExplorerNsg",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
+    "routeTableName": "azureDataExplorerRt",
+    "routeTableId": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]",
+    "publicIpAllocationMethod": "Static",
+    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('subnetName'))]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Kusto/Clusters",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('skuTier')]"
+      },
+      "name": "[parameters('clusterName')]",
+      "apiVersion": "2020-06-14",
+      "dependsOn": [
+        "[variables('enginePublicIpId')]",
+        "[variables('dataManagementPublicIpId')]",
+        "[variables('vnetId')]"
+      ],
+      "location": "[parameters('location')]",
+      "properties": {
+        "virtualNetworkConfiguration": {
+          "subnetId": "[variables('subnetId')]",
+          "enginePublicIpId": "[variables('enginePublicIpId')]",
+          "dataManagementPublicIpId": "[variables('dataManagementPublicIpId')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('routeTableName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('dataManagementPublicIpName')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('enginePublicIpName')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [ "[variables('nsgName')]", "[variables('routeTableName')]"],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/20",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              },
+              "routeTable" :{
+                  "id": "[variables('routeTableId')]"
+              },
+              "delegations": [
+                  {
+                      "name": "AzureDataExplorer",
+                      "properties": {
+                          "serviceName" : "Microsoft.Kusto/clusters"
+                      }
+                  }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+

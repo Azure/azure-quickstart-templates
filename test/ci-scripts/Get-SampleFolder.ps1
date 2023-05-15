@@ -1,9 +1,11 @@
 <#
-This script will find the sample folder for the PR - Test are run on that folder only
+This script will find the sample folder for the PR - Tests are run on that folder only
 If the PR contains more than one sample the build must fail
 If the PR does not contain changes to a sample folder, it will currently fail but we'll TODO this to
 pass the build in order to trigger a manual review
 #>
+
+# TODO - merge this script with Get-SampleFolder-CI.ps1, if possible
 
 # Get-ChildItem env: # debugging
 
@@ -18,6 +20,8 @@ elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualC
         When a CI trigger is running, we get no information in the environment about what changed in the incoming PUSH (i.e. PR# or files changed) except...
         In the source version message - so even though this fragile, we can extract from there - the expected format is:
         BUILD_SOURCEVERSIONMESSAGE = "Merge pull request #9 from bmoore-msft/bmoore-msft-patch-2…"
+        2021-04-18 - they changed the format of the message again, now its:
+        BUILD_SOURCEVERSIONMESSAGE = 101 event grid - Add bicep badge (#8997)
     #>
     try {
         $pr = $ENV:BUILD_SOURCEVERSIONMESSAGE # TODO: sometimes AzDO is not setting the message, not clear why...
@@ -26,7 +30,10 @@ elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualC
     }
     catch { }
     if ($begin -ge 0) {
-        $end = $pr.IndexOf(" ", $begin) # look for the trailing space
+        $end = $pr.IndexOf(")", $begin) # look for the trailing space
+        if($end -eq -1){
+            $end = $pr.IndexOf(" ", $begin) # look for the trailing space
+        }
         $GitHubPRNumber = $pr.Substring($begin + 1, $end - $begin - 1)
     }
     else {
@@ -44,6 +51,7 @@ $ChangedFile = Invoke-Restmethod "$PRUri"
 
 # Now check to make sure there is exactly one sample in this PR per repo guidelines
 $FolderArray = @()
+
 $ChangedFile | ForEach-Object {
     Write-Output $_.blob_url
     if ($_.status -ne "removed") {
@@ -77,11 +85,26 @@ If ($FolderArray.count -gt 1) {
     Write-Error "### Error ### The Pull request contains file changes from $($FolderArray.count) scenario folders. A pull request can only contain changes to files from a single scenario folder."
 }
 
-# Update pipeline variable with the sample folder
+# Update pipeline variable with the sample folder and name
 $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 
-$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
+# if this is a bicep sample, is the json file in the list of changed files?  if so, flag it
+if(Test-Path -Path "$FolderString\main.bicep"){
+    $ChangedFile | ForEach-Object {
+        # Write-Output "File in PR: $f"
+        if ($_.filename.EndsWith("azuredeploy.json") -and ($_.status -ne "removed")) {
+            Write-Warning "$($_.filename) is included in the PR for a bicep sample"
+            Write-Host "##vso[task.setvariable variable=json.with.bicep]$true"
+        }
+    }
+}
+
+
+$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "").Replace("$ENV:BUILD_SOURCESDIRECTORY/", "")
 Write-Output "Using sample name: $sampleName"
 Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"
+
+Write-Output "Using github PR#: $GitHubPRNumber"
+Write-Host "##vso[task.setvariable variable=github.pr.number]$GitHubPRNumber"

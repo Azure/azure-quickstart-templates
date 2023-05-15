@@ -1,0 +1,74 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+         "appServiceEnvironmentName": {
+            "type": "string",
+            "metadata": {
+                "description": "The default SSL certificate will be configured for this App Service Environment."
+            }
+        },
+        "existingAseLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Set this to the same location as the App Service Environment defined in appServiceEnvironmentName."
+            }
+        },
+        "pfxBlobString": {
+            "type": "string",
+            "metadata": {
+                "description": "A pfx file encoded as a base-64 string.  The pfx contains the SSL certificate that will be configured as the default SSL certificate for the ASE."
+            }
+        },
+        "password": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password for the pfx filed contained in pfxBlobString."
+            }
+        },
+        "certificateThumbprint": {
+            "type": "string",
+            "metadata": {
+                "description": "The hexadecimal certificate thumbprint of the certificate contained in pfxBlobString.  All spaces need to be removed from the hex string."
+            }
+        },
+        "certificateName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the certificate.  This can be any name you want to use to identify the certificate."
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-08-01",
+            "type": "Microsoft.Web/certificates",
+            "name": "[parameters('certificateName')]",
+            "location": "[parameters('existingAseLocation')]",
+            "properties": {
+                "pfxBlob": "[parameters('pfxBlobString')]",
+                "password": "[parameters('password')]",
+                "hostingEnvironmentProfile": {
+                     "id": "[resourceId('Microsoft.Web/hostingEnvironments',parameters('appServiceEnvironmentName'))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "type": "Microsoft.Web/hostingEnvironments",
+            "name": "[parameters('appServiceEnvironmentName')]",
+            "location": "[parameters('existingAseLocation')]",
+            "properties": {
+                 "clusterSettings": [
+                      {
+                            "name": "DefaultSslCertificateThumbprint",
+                            "value": "[parameters('certificateThumbprint')]"
+                      }
+                 ]
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/certificates/',parameters('certificateName'))]"
+            ]
+        }
+    ]
+}

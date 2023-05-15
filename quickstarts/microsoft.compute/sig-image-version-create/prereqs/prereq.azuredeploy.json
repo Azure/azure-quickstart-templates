@@ -1,0 +1,132 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "galleryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Shared Image Gallery."
+      }
+    },
+    "galleryImageDefinitionName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Image Definition."
+      }
+    },
+    "description": {
+      "type": "string",
+      "defaultValue": "Sample Description",
+      "metadata": {
+        "description": "The description of this Shared Image Gallery resource."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the Shared Image Gallery."
+      }
+    }
+  },
+  "variables": {
+    "managedDiskName":"[concat('manageddisk',uniqueString(resourceGroup().id))]",
+    "managedImageName":"[concat('managedimage',uniqueString(resourceGroup().id))]"
+
+
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/galleries",
+      "name": "[parameters('galleryName')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "description": "[parameters('description')]"
+      },
+      "resources":[
+        {
+          "type": "images",
+          "name": "[parameters('galleryImageDefinitionName')]",
+          "apiVersion": "2019-12-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/galleries', parameters('galleryName'))]"
+          ],
+          "properties": {
+            "description": "Sample Gallery Image Description",
+            "osType": "Windows",
+            "osState": "Generalized",
+            "endOfLifeDate": "2030-01-01",
+            "identifier": {
+              "publisher": "myPublisher",
+              "offer": "myOffer",
+              "sku": "mySku"
+            },
+            "recommended": {
+              "vCPUs": {
+                "min": "1",
+                "max": "64"
+              },
+              "memory": {
+                "min": "2048",
+                "max": "307720"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('managedDiskName')]",
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "osType": "Windows",
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": 127
+      }
+    },
+    {
+      "name": "[variables('managedImageName')]",
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/disks',variables('managedDiskName'))]"
+      ],
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "managedDisk": {
+              "id": "[resourceId('Microsoft.Compute/disks/',variables('managedDiskName'))]"
+            },
+            "osType": "Windows",
+            "osState": "Generalized"
+          }
+        },
+        "hyperVGeneration": "V1"
+      }
+    }
+  ],
+  "outputs": {
+    "galleryName": {
+      "type": "string",
+      "value": "[parameters('galleryName')]"
+    },
+    "galleryImageDefinitionName": {
+      "type": "string",
+      "value": "[parameters('galleryImageDefinitionName')]"
+    },
+    "managedImageID": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Compute/images/',variables('managedImageName'))]"
+    }
+  }
+}

@@ -1,7 +1,6 @@
 param(
-    $BuildSourcesDirectory = "$ENV:BUILD_SOURCESDIRECTORY",
-    $StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
-    $StorageAccountName = "azurequickstartsservice",
+    $BuildSourcesDirectory = "$ENV:BUILD_SOURCESDIRECTORY", # absolute path to the clone
+    [string]$StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     $TableName = "QuickStartsMetadataService",
     [Parameter(mandatory = $true)]$StorageAccountKey
 )
@@ -14,13 +13,22 @@ Remove old row and create new table row (i.e. update if exists)
 
 #>
 
+# trim the trailing slashes otherwise the replace statement below won't work correctly
+while($BuildSourcesDirectory.EndsWith("/")){
+    $BuildSourcesDirectory = $BuildSourcesDirectory.TrimEnd("/")
+}
+while($BuildSourcesDirectory.EndsWith("\")){
+    $BuildSourcesDirectory = $BuildSourcesDirectory.TrimEnd("\")
+}
+
 $badges = @{
-    PublicLastTestDate  = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/PublicLastTestDate.svg";
-    PublicDeployment    = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/PublicDeployment.svg";
-    FairfaxLastTestDate = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/FairfaxLastTestDate.svg";
-    FairfaxDeployment   = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/FairfaxDeployment.svg";
-    BestPracticeResult  = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/BestPracticeResult.svg";
-    CredScanResult      = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/CredScanResult.svg";
+    PublicLastTestDate  = "https://$StorageAccountName.blob.core.windows.net/badges/%sample.folder%/PublicLastTestDate.svg";
+    PublicDeployment    = "https://$StorageAccountName.blob.core.windows.net/badges/%sample.folder%/PublicDeployment.svg";
+    FairfaxLastTestDate = "https://$StorageAccountName.blob.core.windows.net/badges/%sample.folder%/FairfaxLastTestDate.svg";
+    FairfaxDeployment   = "https://$StorageAccountName.blob.core.windows.net/badges/%sample.folder%/FairfaxDeployment.svg";
+    BestPracticeResult  = "https://$StorageAccountName.blob.core.windows.net/badges/%sample.folder%/BestPracticeResult.svg";
+    CredScanResult      = "https://$StorageAccountName.blob.core.windows.net/badges/%sample.folder%/CredScanResult.svg";
+    BicepVersion        = "https://$StorageAccountName.blob.core.windows.net/badges/%sample.folder%/BicepVersion.svg"
 }
 
 # Get all the samples
@@ -33,7 +41,7 @@ if ($ArtifactFilePaths.Count -eq 0) {
 
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 
 # Dump table rows before the update
 $t = Get-AzTableRow -table $cloudTable
@@ -58,24 +66,24 @@ foreach ($SourcePath in $ArtifactFilePaths) {
 
     $r = Get-AzTableRow -table $cloudTable -ColumnName "RowKey" -Value $RowKey -Operator Equal
 
-    #update the row if it's live or no status
-    if ($r.status -eq "Live" -or $r.status -eq $null) {
+    $p = @{ }
 
-        Write-Host "Status: $($r.status)"
+    Write-Host "Status: $($r.status)"
 
-        # if the row isn't found in the table, it could be a new sample, add it with the data found in metadata.json
-        Write-Host "Updating: $Rowkey"
-
-        $p = @{ }
+    # if the row isn't found in the table, it could be a new sample, add it with the data found in metadata.json
+    Write-Host "Updating: $Rowkey"
         
-        $p.Add("itemDisplayName", $MetadataJson.itemDisplayName)
-        $p.Add("description", $MetadataJson.description)
-        $p.Add("summary", $MetadataJson.summary)
-        $p.Add("githubUsername", $MetadataJson.githubUsername)
-        $p.Add("dateUpdated", $MetadataJson.dateUpdated)
+    $p.Add("itemDisplayName", $MetadataJson.itemDisplayName)
+    $p.Add("description", $MetadataJson.description)
+    $p.Add("summary", $MetadataJson.summary)
+    $p.Add("githubUsername", $MetadataJson.githubUsername)
+    $p.Add("dateUpdated", $MetadataJson.dateUpdated)
 
-        $p.Add("status", "Live") # if it's in master, it's live
-        # $p.Add($($ResultDeploymentParameter + "BuildNumber"), "0)
+    $p.Add("status", "Live") # if it's in master, it's live
+    # $p.Add($($ResultDeploymentParameter + "BuildNumber"), "0)
+
+    #update the row if it's live or no status
+    #if ($r.status -eq "Live" -or $r.status -eq $null) {
 
         #add status from badges
 
@@ -86,13 +94,14 @@ foreach ($SourcePath in $ArtifactFilePaths) {
             try { $svg = (Invoke-WebRequest -Uri $uri -ErrorAction SilentlyContinue) } catch { }
             if ($svg) {
                 $xml = $svg.content.replace('xmlns="http://www.w3.org/2000/svg"', '')
-                # Write-Host $xml
+                #Write-Host $xml
                 $t = Select-XML -Content $xml -XPath "//text"
-                $v = $($t[$t.length - 1])
-                Write-Host "$($_.Key) = $v"
+                #$t | Out-string                
+                #$v = $($t[$t.length - 1])
+                #Write-Host "$($_.Key) = $v"
             
                 $v = $($t[$t.length - 1]).ToString()
-            
+
                 # set the value in the table based on the value in the badge
                 switch ($v) {
                     "PASS" {
@@ -105,24 +114,31 @@ foreach ($SourcePath in $ArtifactFilePaths) {
                         $v = "Not Supported"
                     }
                     "Not Tested" {
-                        $v = $null
+                        $v = "Not Tested"
+                    }
+                    "Bicep Version" {
+                        $v = "n/a" # this is a temp hack as bicep badges were created with no value
                     }
                     default {
-                        # must be a date
-                        $v = $v.Replace(".", "-")
+                        # must be a date or bicep version, fix that below
+                        #$v = $v.Replace(".", "-")
                     }
                 }
                 if ($_.Key -like "*Date") { 
                     # $v = $MetadataJson.dateUpdated
+                    $v = $v.Replace(".", "-")
                 }
                 if ($v -ne $null) {
-                    Write-Host "$($_.Key) = $v"
                     $p.Add($_.Key, $v)
                 }
+                Write-Host "$($_.Key) = $v"
             }
         }
-    }
+    #}
 
+    #$p | out-string
+    #Read-Host "Cont?"
+    
     # if we didn't get the date from the badge, then add it from metadata.json
     if ([string]::IsNullOrWhiteSpace($p.FairfaxLastTestDate)) { 
         $p.Add("FairfaxLastTestDate", $MetadataJson.dateUpdated) 
@@ -144,7 +160,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
     else {
         $p.Add("PublicDeploymentBuildNumber", $r.PublicDeploymentBuildNumber) 
     }
-    
+
     Write-Host "Removing... $($r.RowKey)"
     $r | Remove-AzTableRow -Table $cloudTable
     Write-Host "Adding... $RowKey"

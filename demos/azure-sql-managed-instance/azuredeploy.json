@@ -1,0 +1,409 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources"
+            }
+        },
+        "vnetResourceName": {
+            "type": "string",
+            "defaultValue": "virtualNetwork",
+            "metadata": {
+                "description": "The name of the vnet"
+            }
+        },
+        "managedInstanceSubnetName": {
+            "type": "string",
+            "defaultValue": "mi-subnet",
+            "metadata": {
+                "description": "Managed Instance Subnet name"
+            }
+        },
+        "sqlManagedInstanceName": {
+            "type": "string",
+            "defaultValue": "[concat('managedInstance-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Azure SQL Managed Instance - must be globally unique, contain only lowercase letters, numbers and '-'"
+            }
+        },
+        "sqlManagedInstanceAdminLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin user for Managed Instance"
+            }
+        },
+        "sqlManagedInstancePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Admin user password - must be 16-128 characters, must contain 3 of uppercase, lowercase, numbers and non-alphanumeric characters, and cannot contain all or part of the login name"
+            }
+        },
+        "sqlManagedInstance-storageSizeInGB": {
+            "type": "string",
+            "defaultValue": "256",
+            "metadata": {
+                "description": "Amount of Storage in GB for this instance"
+            }
+        },
+        "sqlManagedInstance-vCores": {
+            "type": "string",
+            "defaultValue": "8",
+            "metadata": {
+                "description": "Number of vCores for this instance"
+            }
+        },
+        "sqlManagedInstance-licenseType": {
+            "type": "string",
+            "defaultValue": "BasePrice",
+            "metadata": {
+                "description": "Type of license: BasePrice (BYOL) or LicenceIncluded"
+            },
+            "allowedValues": [
+                "BasePrice",
+                "LicenseIncluded"
+            ]
+        },
+        "sqlManagedInstance-skuName": {
+            "type": "string",
+            "defaultValue": "GP_Gen5",
+            "metadata": {
+                "description": "SKU NAME (GP_Gen4, GP_Gen5, BC_GEN5)"
+            },
+            "allowedValues": [
+                "GP_Gen4",
+                "GP_Gen5",
+                "BC_Gen4",
+                "BC_Gen5"
+            ]
+        },
+        "sqlManagedInstance-skuEdition": {
+            "type": "string",
+            "defaultValue": "GeneralPurpose",
+            "metadata": {
+                "description": "SKU Edition (GeneralPurpose, BusinessCritical) "
+            },
+            "allowedValues": [
+                "GeneralPurpose",
+                "BusinessCritical"
+            ]
+        },
+        "sqlManagedInstance-hardwareFamily": {
+            "type": "string",
+            "defaultValue": "Gen5",
+            "metadata": {
+                "description": "Hardware family (Gen4, Gen5)"
+            },
+            "allowedValues": [
+                "Gen4",
+                "Gen5"
+            ]
+        },
+        "sqlManagedInstance-collation": {
+            "type": "string",
+            "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+            "metadata": {
+                "description": "SQL Collation"
+            }
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {
+            },
+            "metadata": {
+                "description": "Tags for the Managed Instance SQL resource."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+            },
+            "defaultValue": "[deployment().properties.templatelink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access _artifactsLocation"
+            },
+            "defaultValue": ""
+        },
+        "vnetAddressRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "Address range for the virtual network in CIDR notation"
+            }
+        },
+        "managedInstanceNSGName": {
+            "type": "string",
+            "defaultValue": "mi-NSG",
+            "metadata": {
+                "description": "Name of the Managed Instance NSG"
+            }
+        },
+        "managedInstanceRouteTableName": {
+            "type": "string",
+            "defaultValue": "mi-RouteTable",
+            "metadata": {
+                "description": "Name of the Managed Instance Route Table"
+            }
+        },
+        "managedInstanceSubnetAddressRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Managed Instance Subnet range"
+            }
+        },
+        "miManagementIps": {
+            "type": "array",
+            "defaultValue": [
+                "vnetLocalRoute",
+                "13.64.0.0/11",
+                "13.104.0.0/14",
+                "20.33.0.0/16",
+                "20.34.0.0/15",
+                "20.36.0.0/14",
+                "20.40.0.0/13",
+                "20.48.0.0/12",
+                "20.64.0.0/10",
+                "20.128.0.0/16",
+                "20.135.0.0/16",
+                "20.136.0.0/16",
+                "20.140.0.0/15",
+                "20.143.0.0/16",
+                "20.144.0.0/14",
+                "20.150.0.0/15",
+                "20.160.0.0/12",
+                "20.176.0.0/14",
+                "20.180.0.0/14",
+                "20.184.0.0/13",
+                "20.192.0.0/10",
+                "40.64.0.0/10",
+                "51.4.0.0/15",
+                "51.8.0.0/16",
+                "51.10.0.0/15",
+                "51.18.0.0/16",
+                "51.51.0.0/16",
+                "51.53.0.0/16",
+                "51.103.0.0/16",
+                "51.104.0.0/15",
+                "51.132.0.0/16",
+                "51.136.0.0/15",
+                "51.138.0.0/16",
+                "51.140.0.0/14",
+                "51.144.0.0/15",
+                "52.96.0.0/12",
+                "52.112.0.0/14",
+                "52.125.0.0/16",
+                "52.126.0.0/15",
+                "52.130.0.0/15",
+                "52.132.0.0/14",
+                "52.136.0.0/13",
+                "52.145.0.0/16",
+                "52.146.0.0/15",
+                "52.148.0.0/14",
+                "52.152.0.0/13",
+                "52.160.0.0/11",
+                "52.224.0.0/11",
+                "64.4.0.0/18",
+                "65.52.0.0/14",
+                "66.119.144.0/20",
+                "70.37.0.0/17",
+                "70.37.128.0/18",
+                "91.190.216.0/21",
+                "94.245.64.0/18",
+                "103.9.8.0/22",
+                "103.25.156.0/24",
+                "103.25.157.0/24",
+                "103.25.158.0/23",
+                "103.36.96.0/22",
+                "103.255.140.0/22",
+                "104.40.0.0/13",
+                "104.146.0.0/15",
+                "104.208.0.0/13",
+                "111.221.16.0/20",
+                "111.221.64.0/18",
+                "129.75.0.0/16",
+                "131.107.0.0/16",
+                "131.253.1.0/24",
+                "131.253.3.0/24",
+                "131.253.5.0/24",
+                "131.253.6.0/24",
+                "131.253.8.0/24",
+                "131.253.12.0/22",
+                "131.253.16.0/23",
+                "131.253.18.0/24",
+                "131.253.21.0/24",
+                "131.253.22.0/23",
+                "131.253.24.0/21",
+                "131.253.32.0/20",
+                "131.253.61.0/24",
+                "131.253.62.0/23",
+                "131.253.64.0/18",
+                "131.253.128.0/17",
+                "132.245.0.0/16",
+                "134.170.0.0/16",
+                "134.177.0.0/16",
+                "137.116.0.0/15",
+                "137.135.0.0/16",
+                "138.91.0.0/16",
+                "138.196.0.0/16",
+                "139.217.0.0/16",
+                "139.219.0.0/16",
+                "141.251.0.0/16",
+                "146.147.0.0/16",
+                "147.243.0.0/16",
+                "150.171.0.0/16",
+                "150.242.48.0/22",
+                "157.54.0.0/15",
+                "157.56.0.0/14",
+                "157.60.0.0/16",
+                "167.105.0.0/16",
+                "167.220.0.0/16",
+                "168.61.0.0/16",
+                "168.62.0.0/15",
+                "191.232.0.0/13",
+                "192.32.0.0/16",
+                "192.48.225.0/24",
+                "192.84.159.0/24",
+                "192.84.160.0/23",
+                "192.197.157.0/24",
+                "193.149.64.0/19",
+                "193.221.113.0/24",
+                "194.69.96.0/19",
+                "194.110.197.0/24",
+                "198.105.232.0/22",
+                "198.200.130.0/24",
+                "198.206.164.0/24",
+                "199.60.28.0/24",
+                "199.74.210.0/24",
+                "199.103.90.0/23",
+                "199.103.122.0/24",
+                "199.242.32.0/20",
+                "199.242.48.0/21",
+                "202.89.224.0/20",
+                "204.13.120.0/21",
+                "204.14.180.0/22",
+                "204.79.135.0/24",
+                "204.79.179.0/24",
+                "204.79.181.0/24",
+                "204.79.188.0/24",
+                "204.79.195.0/24",
+                "204.79.196.0/23",
+                "204.79.252.0/24",
+                "204.152.18.0/23",
+                "204.152.140.0/23",
+                "204.231.192.0/24",
+                "204.231.194.0/23",
+                "204.231.197.0/24",
+                "204.231.198.0/23",
+                "204.231.200.0/21",
+                "204.231.208.0/20",
+                "204.231.236.0/24",
+                "205.174.224.0/20",
+                "206.138.168.0/21",
+                "206.191.224.0/19",
+                "207.46.0.0/16",
+                "207.68.128.0/18",
+                "208.68.136.0/21",
+                "208.76.44.0/22",
+                "208.84.0.0/21",
+                "209.240.192.0/19",
+                "213.199.128.0/18",
+                "216.32.180.0/22",
+                "216.220.208.0/20",
+                "23.96.0.0/13",
+                "42.159.0.0/16",
+                "51.13.0.0/17",
+                "51.107.0.0/16",
+                "51.116.0.0/16",
+                "51.120.0.0/16",
+                "51.120.128.0/17",
+                "51.124.0.0/16",
+                "102.37.0.0/18",
+                "102.133.0.0/16",
+                "199.30.16.0/20",
+                "204.79.180.0/24"
+            ],
+            "metadata": {
+                "description": "List of MI management IP ranges"
+            }
+        }
+    },
+    "variables": {
+        "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "BuildMINetworking",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vnetResourceName": {
+                        "value": "[parameters('vnetResourceName')]"
+                    },
+                    "vnetAddressRange": {
+                        "value": "[parameters('vnetAddressRange')]"
+                    },
+                    "managedInstanceSubnetName": {
+                        "value": "[parameters('managedInstanceSubnetName')]"
+                    },
+                    "managedInstanceSubnetAddressRange": {
+                        "value": "[parameters('managedInstanceSubnetAddressRange')]"
+                    },
+                    "managedInstanceNSGName": {
+                        "value": "[parameters('managedInstanceNSGName')]"
+                    },
+                    "managedInstanceRouteTableName": {
+                        "value": "[parameters('managedInstanceRouteTableName')]"
+                    },
+                    "miManagementIps": {
+                        "value": "[parameters('miManagementIps')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Sql/managedInstances",
+            "apiVersion": "2019-06-01-preview",
+            "name": "[parameters('sqlManagedInstanceName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('sqlManagedInstance-skuName')]",
+                "tier": "[parameters('sqlManagedInstance-skuEdition')]"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/BuildMINetworking"
+            ],
+            "properties": {
+                "administratorLogin": "[parameters('sqlManagedInstanceAdminLogin')]",
+                "administratorLoginPassword": "[parameters('sqlManagedInstancePassword')]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vnetResourceName'),parameters('managedInstanceSubnetName'))]",
+                "storageSizeInGB": "[parameters('sqlManagedInstance-storageSizeInGB')]",
+                "vCores": "[parameters('sqlManagedInstance-vCores')]",
+                "licenseType": "[parameters('sqlManagedInstance-licenseType')]",
+                "hardwareFamily": "[parameters('sqlManagedInstance-hardwareFamily')]",
+                "collation": "[parameters('sqlManagedInstance-collation')]",
+                "publicDataEndpointEnabled": "false"
+            }
+        }
+    ]
+}

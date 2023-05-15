@@ -1,0 +1,294 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmSku": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical"
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer"
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "18.04-LTS"
+    },
+    "imageOSVersion": {
+      "type": "string",
+      "defaultValue": "latest"
+    },
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+      },
+      "maxLength": 61
+    },
+    "instanceCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VM instances (100 or less)."
+      },
+      "maxValue": 100,
+      "minValue": 2
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username on all VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password on all VMs."
+      }
+    },
+    "healthProbePort": {
+      "type": "int",
+      "defaultValue": 80,
+      "metadata": {
+        "description": "Local http port on VM at which health extension to probe"
+      }
+    },
+    "healthProbeProtocol": {
+      "type": "string",
+      "defaultValue": "http",
+      "metadata": {
+        "description": "Protocol used by health extension to probe app health"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the VM scale set"
+      }
+    },
+    "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "[deployment().properties.templateLink.uri]"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      }
+  },
+  "variables": {
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+
+    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
+
+    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+    "lbName": "[concat(variables('namingInfix'), 'lb')]",
+    "bepoolName": "[concat(variables('lbName'), 'bepool')]",
+    "fepoolName": "[concat(variables('lbName'), 'fepool')]",
+    "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
+    "probeName": "[concat(variables('lbName'), 'probe')]",
+    "bepoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/', variables('lbName'), variables('bepoolName'))]",
+    "feIpConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('feIpConfigName'))]",
+
+    "platformImageReference": {
+      "publisher": "[parameters('imagePublisher')]",
+      "offer": "[parameters('imageOffer')]",
+      "sku": "[parameters('imageSku')]",
+      "version": "[parameters('imageOSVersion')]"
+    },
+    "imageReference": "[variables('platformImageReference')]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('lbName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "apiVersion": "2019-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('feIpConfigName')]",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('bepoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "ProbeRule",
+            "properties": {
+              "loadDistribution": "Default",
+              "frontendIPConfiguration": {
+                "id": "[variables('feIpConfigId')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('bepoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes/', variables('lbName'), variables('probeName'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('probeName')]",
+            "properties": {
+              "protocol": "[parameters('healthProbeProtocol')]",
+              "port": "[parameters('healthProbePort')]",
+              "requestPath": "/",
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2019-03-01",
+      "name": "[parameters('vmssName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "vmsstag": "automaticrepairs"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('vmSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "automaticRepairsPolicy": {
+          "enabled": true,
+          "gracePeriod": "PT30M"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "imageReference": "[variables('imageReference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "vmss",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "CustomScriptToInstallApache",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[uri(parameters('_artifactsLocation'), concat('install_apache.sh', parameters('_artifactsLocationSasToken')))]"
+                    ],
+                    "commandToExecute": "sh install_apache.sh"
+                  }
+                }
+              }
+            ]
+          },
+          "networkProfile": {
+            "healthProbe": {
+              "id": "[resourceId('Microsoft.Network/loadBalancers/probes/', variables('lbName'), variables('probeName'))]"
+            },
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic1",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ip1",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[variables('bepoolID')]"
+                          }
+                        ],
+                        "publicipaddressconfiguration": {
+                          "name": "pub1",
+                          "properties": {
+                            "idleTimeoutInMinutes": 15
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,286 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create. This must be unique, less than 59 characters, can contain letters, numbers, and hyphens (the first and last characters must be a letter or number).  The name cannot contain a reserved keyword."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "defaultValue": "admin",
+      "minLength": 2,
+      "maxLength": 20,
+	    "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards. The cluster login username must be 2-20 characters and consist of digits, lowercase letters, and/or the following special characters: (!#$%&'()-^_`{}~).  The name cannot contain a reserved keyword."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "minLength": 10,
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character.  The following characters are not allowed (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
+      }
+    },
+    "sshUserName": {
+      "type": "string",
+      "defaultValue": "sshuser",
+      "minLength":2,
+      "metadata": {
+      "description": "These credentials can be used to remotely access the cluster. The SSH username can only consist of digits, upper or lowercase letters, and/or the following special characters (%&'^_`{}~). Also, it cannot be the same as the cluster login username or a reserved word."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "minLength": 6,
+      "maxLength": 72,
+      "metadata": {
+        "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the SSH username."
+      }
+    },
+      "HeadNodeVirtualMachineSize": {
+         "type": "string",
+         "defaultValue": "Standard_E4_v3",
+         "allowedValues": [
+            "Standard_A4_v2",
+            "Standard_A8_v2",
+            "Standard_E2_v3",
+            "Standard_E4_v3",
+            "Standard_E8_v3",
+            "Standard_E16_v3",
+            "Standard_E20_v3",
+            "Standard_E32_v3",
+            "Standard_E48_v3"
+         ],
+         "metadata": {
+            "description": "This is the headnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+         }
+      },
+      "WorkerNodeVirtualMachineSize": {
+         "type": "string",
+         "defaultValue": "Standard_E8_v3",
+         "allowedValues": [
+           "Standard_A4_v2",
+           "Standard_A8_v2",
+           "Standard_E2_v3",
+           "Standard_E4_v3",
+           "Standard_E8_v3",
+           "Standard_E16_v3",
+           "Standard_E20_v3",
+           "Standard_E32_v3",
+           "Standard_E48_v3"
+         ],
+         "metadata": {
+            "description": "This is the worerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+         }
+      },    
+    "sqlAdminLogin": {
+      "type": "string",
+      "defaultValue": "sqluser",
+      "metadata": {
+        "description": "These credentials can be used to access the Azure SQL database."
+      }
+    },
+    "sqlAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password can be used to access the SQL database."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "bacpacFileName": {
+      "type": "string",
+      "defaultValue": "SqoopTutorial-2016-2-23-11-2.bacpac",
+      "metadata": {
+        "description": "The backpac for configure the database and tables for the Use Sqoop in HDInsight tutorial."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "defaultStorageAccount": {
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    },
+    "sqlDatabase": {
+      "serverName": "[concat(parameters('clusterName'),'dbserver')]",
+      "databaseName": "[concat(parameters('clusterName'),'db')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('defaultStorageAccount').name]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-04-01",
+      "sku": {
+        "name": "[variables('defaultStorageAccount').type]"
+      },
+      "kind": "StorageV2",
+      "properties": {}
+    },
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name)]"
+      ],
+      "properties": {
+        "clusterVersion": "4.0",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "hadoop",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2021-04-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2021-04-01').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "name": "[variables('sqlDatabase').serverName]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "apiVersion": "2020-11-01-preview",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "name": "[variables('sqlDatabase').databaseName]",
+          "location": "[parameters('location')]",
+          "tags": {
+            "displayName": "Database"
+          },
+          "apiVersion": "2020-11-01-preview",
+          "dependsOn": [
+            "[variables('sqlDatabase').serverName]"
+          ],
+          "properties": {
+            "edition": "Basic",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": 1073741824,
+            "requestedServiceObjectiveName": "Basic"
+          },
+          "resources": [
+            {
+              "name": "Import",
+              "type": "extensions",
+              "apiVersion": "2014-04-01",
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlDatabase').serverName, variables('sqlDatabase').databaseName)]"
+              ],
+              "properties": {
+                "operationMode": "Import",
+                "storageKey": "[parameters('_artifactsLocationSasToken')]",
+                "storageKeyType": "SharedAccessKey",
+                "administratorLogin": "[parameters('sqlAdminLogin')]",
+                "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
+                "storageUri": "[uri(parameters('_artifactsLocation'), concat('Bacpac/', parameters('bacpacFileName')))]"
+              }
+            }
+          ]
+        },
+        {
+          "type": "firewallrules",
+          "name": "AllowAllAzureIps",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-02-02-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "storage": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
+    },
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+    },
+    "sqlSvrFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)).fullyQualifiedDomainName]"
+    }
+  }
+}

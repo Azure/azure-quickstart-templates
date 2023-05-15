@@ -1,0 +1,179 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "vmName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Virtual machine name",
+        "toolTip": "The name of the virtual machine",
+        "defaultValue": "myTVM",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-z0-9A-Z-]{3,15}$",
+          "validationMessage": "The virtual machine Name must be between 3 and 15 characters long and contain letters, numbers and hyphens only."
+        },
+        "visible": true
+      },
+      {
+        "name": "adminUsername",
+        "type": "Microsoft.Compute.UserNameTextBox",
+        "label": "Username",
+        "toolTip": "Admin username for the virtual machine",
+        "osPlatform": "Linux",
+        "constraints": {
+          "required": true
+        },
+        "visible": true
+      },
+      {
+        "name": "credentials",
+        "type": "Microsoft.Compute.CredentialsCombo",
+        "label": {
+          "authenticationType": "Authentication type",
+          "password": "Password",
+          "confirmPassword": "Confirm password",
+          "sshPublicKey": "SSH public key"
+        },
+        "toolTip": {
+          "authenticationType": "Type of authentication to use on the virtual machine. SSH Public Key is recommended",
+          "password": "Admin password for the virtual machine",
+          "sshPublicKey": "SSH Public Key for the virtual machine"
+        },
+        "constraints": {
+          "required": true,
+          "customPasswordRegex": "^(?=.*[A-Z])(?=.*[.!@#$%^&*()-_=+])(?=.*[0-9])(?=.*[a-z]).{12,40}$",
+          "customValidationMessage": "Password must be at least 12 characters long, and contain upper case, lower case, number and symbol"
+        },
+        "options": {
+          "hideConfirmation": false,
+          "hidePassword": false
+        },
+        "osPlatform": "Linux",
+        "visible": true
+      }
+    ],
+    "steps": [
+      {
+        "name": "VirtualMachineConfig",
+        "label": "Virtual Machine Settings",
+        "subLabel": {
+            "preValidation": "Configure the virtual machine's resources and settings",
+            "postValidation": "Done"
+        },
+        "bladeTitle": "Virtual Machine Settings",
+        "elements": [
+            {
+                "name": "OSVersion",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Linux OS Version",
+                "defaultValue": "Ubuntu-2004",
+                "toolTip": "The OS Version for the VM Image",
+                "constraints": {
+                    "allowedValues": [
+                      {
+                        "value": "Ubuntu-1804",
+                        "label": "Ubuntu-1804"
+                      },
+                      {
+                        "value": "Ubuntu-2004",
+                        "label": "Ubuntu-2004"
+                      },
+                      {
+                        "value": "Ubuntu-2204",
+                        "label": "Ubuntu-2204"
+                      },
+                      {
+                        "value": "RHEL-83",
+                        "label": "RHEL-83"
+                      },
+                      {
+                        "value": "SUSE-15-SP2",
+                        "label": "SUSE-15-SP2"
+                      }
+                    ],
+                    "required": true
+                },
+                "visible": true
+            },
+            {
+              "name": "secureBoot",
+              "type": "Microsoft.Common.CheckBox",
+              "label": "Secure Boot setting",
+              "toolTip": "The Secure Boot setting of the virtual machine",
+              "constraints": {
+                "required": false
+              },
+              "visible": true
+            },
+            {
+              "name": "vTPM",
+              "type": "Microsoft.Common.CheckBox",
+              "label": "vTPM setting",
+              "toolTip": "The vTPM setting of the virtual machine",
+              "constraints": {
+                "required": false
+              },
+              "visible": true
+            },
+            {
+                "name": "vmSize",
+                "type": "Microsoft.Compute.SizeSelector",
+                "label": "Virtual machine size",
+                "toolTip": "The size of virtual machine to provision.",
+                "recommendedSizes": [
+                    "Standard_D2s_v3"
+                ],
+                "osPlatform": "Linux",
+                "count": "1"
+            },
+            {
+                "name": "publicIpAddress",
+                "type": "Microsoft.Network.PublicIpAddressCombo",
+                "label": {
+                    "publicIpAddress": "Public IP Address for the VM",
+                    "domainNameLabel": "DNS Prefix for the public IP Address"
+                },
+                "toolTip": {
+                    "publicIpAddress": "Public IP Address for the VM",
+                    "domainNameLabel": "DNS Prefix for the public IP Address, must be globally unique"
+                },
+                "defaultValue": {
+                  "publicIpAddressName": "[toLower(concat(basics('vmName'), '-ip-', take(replace(guid(), '-', ''), 6)))]",
+                  "domainNameLabel": "[toLower(concat(basics('vmName'), '-dn-', take(replace(guid(), '-', ''), 6)))]"
+                },
+                "options": {
+                    "hideExisting": true,
+                    "hideNone": true
+                },
+                "constraints": {
+                    "required": {
+                        "domainNameLabel": true
+                    }
+                }
+            }
+        ]
+      }
+    ],
+    "outputs": {
+      "vmName": "[basics('vmName')]",
+      "sku": "[steps('VirtualMachineConfig').OSVersion]",
+      "vmSize": "[steps('VirtualMachineConfig').vmSize]",
+      "adminUsername": "[basics('adminUsername')]",
+      "authenticationType": "[basics('credentials').authenticationType]",
+      "adminPasswordOrKey": "[if(equals(basics('credentials').authenticationType, 'password'), basics('credentials').password, basics('credentials').sshPublicKey)]",
+      "secureBoot": "[if(equals(steps('VirtualMachineConfig').secureBoot, true), 'true', 'false')]",
+      "vTPM": "[if(equals(steps('VirtualMachineConfig').vTPM, true), 'true', 'false')]",
+      "location": "[location()]",
+      "dnsLabelPrefix": "[steps('VirtualMachineConfig').publicIpAddress.domainNameLabel]",
+      "publicIpName": "[steps('VirtualMachineConfig').publicIpAddress.name]",
+      "publicIPAllocationMethod": "[steps('VirtualMachineConfig').publicIpAddress.publicIPAllocationMethod]",
+      "publicIpSku": "[steps('VirtualMachineConfig').publicIpAddress.sku]",
+      "nicName": "[toLower(concat(basics('vmName'), '-nic-', take(replace(guid(), '-', ''), 6)))]",
+      "virtualNetworkName": "[toLower(concat(basics('vmName'), '-vnet-', take(replace(guid(), '-', ''), 6)))]",
+      "networkSecurityGroupName": "[toLower(concat(basics('vmName'), '-nsg-', take(replace(guid(), '-', ''), 6)))]"
+    }
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "containergroupname": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container group"
+      }
+    },
+    "containername1": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container 1"
+      }
+    },
+    "containername2": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container 2"
+      }
+    },
+    "volumename": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the emptyDir volume"
+      }
+    },
+    "image": {
+      "type": "string",
+      "metadata": {
+        "description": "Container image to deploy. Should be of the form accountName/imagename[:tag] for images stored in Docker Hub or a fully qualified URI for a private registry like the Azure Container Registry."
+      },
+      "defaultValue": "centos:latest"
+    },
+    "port": {
+      "type": "string",
+      "metadata": {
+        "description": "Port to open on the container and the public IP address."
+      },
+      "defaultValue": "80"
+    },
+    "cpuCores": {
+      "type": "string",
+      "metadata": {
+        "description": "The number of CPU cores to allocate to the container."
+      },
+      "defaultValue": "1.0"
+    },
+    "memoryInGb": {
+      "type": "string",
+      "metadata": {
+        "description": "The amount of memory to allocate to the container in gigabytes."
+      },
+      "defaultValue": "1.5"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('containergroupname')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('containername1')]",
+            "properties": {
+              "image": "nginx",
+              "ports": [
+                {
+                  "port": "[parameters('port')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGb": "[parameters('memoryInGb')]"
+                }
+              },
+              "volumeMounts": [
+                {
+                  "name": "[parameters('volumename')]",
+                  "mountPath": "/var/log/nginx",
+                  "readOnly": false
+                }
+              ]
+            }
+          },
+          {
+            "name": "[parameters('containername2')]",
+            "properties": {
+              "command": [
+                "bin/bash",
+                "-c",
+                "while sleep 5; do cat /mnt/input/access.log; done"
+              ],
+              "image": "[parameters('image')]",
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGb": "[parameters('memoryInGb')]"
+                }
+              },
+              "volumeMounts": [
+                {
+                  "name": "[parameters('volumename')]",
+                  "mountPath": "/mnt/input",
+                  "readOnly": true
+                }
+              ]
+            }
+          }
+        ],
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "Tcp",
+              "port": "[parameters('port')]"
+            }
+          ]
+        },
+        "volumes": [
+          {
+            "name": "[parameters('volumename')]",
+            "emptyDir": {}
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "containerIPv4Address": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containergroupname'))).ipAddress.ip]"
+    }
+  }
+}

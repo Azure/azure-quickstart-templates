@@ -1,0 +1,332 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Virtual machine name."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Virtual machine size. Make sure VM size supports disk type."
+      }
+    },
+    "vmUbuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "allowedValues": [
+        "18.04-LTS"
+      ],
+      "metadata": {
+        "description": "Ubuntu OS image version."
+      }
+    },
+    "vmAdminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the virtual machine."
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
+    "neo4jEdition": {
+      "type": "string",
+      "defaultValue": "neo4j",
+      "allowedValues": [
+        "neo4j",
+        "neo4j-enterprise",
+        "neo4j=3.2.1",
+        "neo4j-enterprise=3.2.1",
+        "neo4j=3.2.5",
+        "neo4j-enterprise=3.2.5",
+        "neo4j=3.3.0",
+        "neo4j-enterprise=3.3.0"
+      ],
+      "metadata": {
+        "description": "Neo4J edition and version to install."
+      }
+    },
+    "publicIPAddressDns": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Unique DNS name for public IP Address. As in: publicIPAddressDns.location.cloudapp.azure.com"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templatelink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "sshKeyPath": "[concat('/home/',parameters('vmAdminUsername'),'/.ssh/authorized_keys')]",
+    "scriptsFolder": "scripts/",
+    "virtualNetworkName": "[concat(parameters('vmName'), '-vnet')]",
+    "networkSecurityGroupName": "[concat(parameters('vmName'), '-nsg')]",
+    "networkInterfaceName": "[concat(parameters('vmName'), '-nic')]",
+    "publicIPAddressName": "[concat(parameters('vmName'), '-ip')]",
+    "virtualNetworkPrefix": "10.0.0.0/16",
+    "virtualNetworkSubnetName": "default",
+    "virtualNetworkSubnetPrefix": "10.0.0.0/24",
+    "networkInterfaceSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualNetworkSubnetName'))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('virtualNetworkName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('virtualNetworkPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('virtualNetworkSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('virtualNetworkSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSecurityGroupName')]",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "description": "Allow secure shell connections",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "neo4j-allow-bolt",
+            "properties": {
+              "description": "Allow Bolt protocol connections",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "7687",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1010,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "neo4j-allow-http",
+            "properties": {
+              "description": "Allow HTTP connections",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "7474",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1020,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "neo4j-allow-https",
+            "properties": {
+              "description": "Allow HTTPS connections",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "7473",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1030,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('networkInterfaceName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('networkInterfaceName')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('networkInterfaceSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('publicIPAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "tags": {
+        "displayName": "[variables('publicIPAddressName')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicIPAddressDns')]"
+        }
+      }
+    },
+       {
+      "name": "[parameters('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+      ],
+      "tags": {
+        "displayName": "[parameters('vmName')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "[parameters('vmUbuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name":  "[concat(parameters('vmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+            "StorageAccountType": "Premium_LRS"
+          }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "installneo4j",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "installneo4j"
+          },
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[uri(parameters('_artifactsLocation'), concat(variables('scriptsFolder'), 'install-neo4j.sh', parameters('_artifactsLocationSasToken')))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('sh install-neo4j.sh ', parameters('neo4jEdition'))]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "hostname": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    }
+  }
+}
+

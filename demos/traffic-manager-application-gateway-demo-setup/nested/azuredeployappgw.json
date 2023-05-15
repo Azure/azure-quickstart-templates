@@ -1,0 +1,295 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "size": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_Small",
+        "Standard_Medium",
+        "Standard_Large"
+      ],
+      "defaultValue": "Standard_Medium",
+      "metadata": {
+        "description": "Application Gateway size/SKU"
+      }
+    },
+    "capacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Application Gateway instance number"
+      }
+    },
+    "cookieBasedAffinity": {
+      "type": "string",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "defaultValue": "Disabled",
+      "metadata": {
+        "description": "If cookie-based affinity is enabled the requests from the same client are hitting the same Web server"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the backend Web servers"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the backend Web servers"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of resources"
+      }
+    },
+    "appGwName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name for Application Gateway"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      }
+    },
+    "_artifactsLocationSasToken": {
+       "type": "securestring",
+       "metadata": {
+           "description": "Auto-generated token to access _artifactsLocation. Leave it blank unless you need to provide your own value."
+        }
+     }
+  },
+  "variables": {
+    "applicationGatewayName": "[parameters('appGwName')]",
+    "publicIPAddressName": "[concat(parameters('appGwName'),'IP')]",
+    "virtualNetworkName": "[concat(parameters('appGwName'),'VNet')]",
+    "subnetName": "[concat(parameters('appGwName'),'Subnet')]",
+    "backendDnsPrefix": "[concat(parameters('appGwName'),'-backend-')]",
+    "wsDeploymentName": "[concat(parameters('appGwName'),'ws')]",
+    "wsDeploymentName1": "[concat(parameters('appGwName'),'ws1')]",
+    "wsDeploymentName2": "[concat(parameters('appGwName'),'ws2')]",
+    "appGatewayIPConfigName": "[concat(parameters('appGwName'),'-ipconfig')]",
+    "appGatewayrequestRoutingRuleName": "[concat(parameters('appGwName'),'-rule1')]",
+    "appGatewayHttpListenerName": "[concat(parameters('appGwName'),'-listener')]",
+    "appGatewayBackendHttpSettingsName": "[concat(parameters('appGwName'),'-httpsettings')]",
+    "appGatewayBackendPoolName": "[concat(parameters('appGwName'),'-backendpool')]",
+    "appGatewayFrontendPortName": "[concat(parameters('appGwName'),'-port')]",
+    "appGatewayFrontendIPConfigName": "[concat(parameters('appGwName'),'-ipconfig')]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/28",
+    "serverTestPage": [
+      "[concat('<h1 style=\"color:red;font-size:300%;\">This is Server 1, Location: ', parameters('location'), '</h1>')]",
+      "[concat('<h1 style=\"color:blue;font-size:300%;\">This is Server 2, Location: ', parameters('location'), '</h1>')]"
+    ],
+    "serverTestPageInfo": "<p>Send next request. If Cookie-based affinity is enabled, clear the cookies to change the backend server.</p><p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>"
+  },
+  "outputs": {
+    "ipId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-08-01",
+      "name": "[concat(variables('wsDeploymentName'), copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "wscopy",
+        "count": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/azuredeploywebserver.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "dnsNameForPublicIP": {
+            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-', copyIndex(1))]"
+          },
+          "testPageBody": {
+            "value": "[concat(variables('serverTestPage')[copyIndex()], variables('serverTestPageInfo'))]"
+          },
+          "testPage": {
+            "value": "index.php"
+          },
+          "testPageTitle": {
+            "value": "[concat('Server ', copyIndex(1))]"
+          },
+          "installPHP": {
+            "value": true
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "name": "[variables('applicationGatewayName')]",
+      "type": "Microsoft.Network/applicationGateways",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "wscopy"
+      ],
+      "properties": {
+        "sku": {
+          "name": "[parameters('size')]",
+          "tier": "Standard",
+          "capacity": "[parameters('capacity')]"
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "[variables('appGatewayIPConfigName')]",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('appGatewayFrontendIPConfigName')]",
+            "properties": {
+              "PublicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "[variables('appGatewayFrontendPortName')]",
+            "properties": {
+              "Port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('appGatewayBackendPoolName')]",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "IpAddress": "[reference(variables('wsDeploymentName1')).outputs.fqdn.value]"
+                },
+                {
+                  "IpAddress": "[reference(variables('wsDeploymentName2')).outputs.fqdn.value]"
+                }
+              ]
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "[variables('appGatewayBackendHttpSettingsName')]",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "[parameters('cookieBasedAffinity')]",
+              "requestTimeout": 30,
+              "requestRoutingRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/requestRoutingRules/', variables('applicationGatewayName'), variables('appGatewayrequestRoutingRuleName'))]"
+                }
+              ]
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "[variables('appGatewayHttpListenerName')]",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations/', variables('applicationGatewayName'), variables('appGatewayFrontendIPConfigName'))]"
+              },
+              "FrontendPort": {
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts/', variables('applicationGatewayName'), variables('appGatewayFrontendPortName'))]"
+              },
+              "Protocol": "Http"
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "Name": "[variables('appGatewayrequestRoutingRuleName')]",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners/', variables('applicationGatewayName'), variables('appGatewayHttpListenerName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/', variables('applicationGatewayName'), variables('appGatewayBackendPoolName'))]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/', variables('applicationGatewayName'), variables('appGatewayBackendHttpSettingsName'))]"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

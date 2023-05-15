@@ -1,0 +1,437 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "metadata": {
+        "description": "Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "metadata": {
+        "description": "Image Offer"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "metadata": {
+        "description": "Image SKU"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "myVNETspark",
+      "metadata": {
+        "description": "The arbitrary name of the virtual network provisioned for the cluster"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "The network address space for the virtual network"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "Subnet-1",
+      "metadata": {
+        "description": "Subnet name for the virtual network that resources will be provisioned in to"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Address space for the virtual network subnet"
+      }
+    },
+    "sparkVersion": {
+      "type": "string",
+      "defaultValue": "3.0.0",
+      "allowedValues": [
+        "2.0.2",
+        "2.1.3",
+        "2.2.3",
+        "2.3.4",
+        "2.4.6",
+        "3.0.0"
+      ],
+      "metadata": {
+        "description": "The version of the Spark package to be deployed on the cluster (or use 'stable' to pull in the latest and greatest)"
+      }
+    },
+    "sparkNodeIPAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.1",
+      "metadata": {
+        "description": "The IP address prefix that will be used for constructing a static private IP address for each node in the cluster"
+      }
+    },
+    "sparkSlaveNodeIPAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.3",
+      "metadata": {
+        "description": "The IP address prefix that will be used for constructing a static private IP address for each node in the cluster"
+      }
+    },
+    "jumpbox": {
+      "type": "string",
+      "defaultValue": "enabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Spark nodes"
+      }
+    },
+    "tshirtSizeIns": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        1,  //Size S
+        4,  //Size M
+        6   //Size L
+      ],
+      "metadata": {
+        "description": "T-shirt size of the Spark cluster Ex: S is 1, M is 4, L is 6"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "allowedValues": [
+        "Standard_D2_v3"
+      ],
+      "metadata": {
+        "Description": "VM Size"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+       "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "computerNamePrefix": "sparknode",
+    "sharedTemplateName": "shared-resources",
+    "jumpboxTemplateName": "jumpbox-resources-",
+    "TshirtSize": {
+      "numberOfMasterInstances": 1,
+      "numberOfSlavesInstances": "[parameters('tshirtSizeIns')]"
+    },
+    "numberOfMasterInstances": "[variables('TshirtSize').numberOfMasterInstances]",
+    "numberOfSlavesInstances": "[variables('TshirtSize').numberOfSlavesInstances]"
+  },
+  "resources": [
+    {
+      "name": "shared-resources",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('sharedTemplateName'), '.json', parameters('_artifactsLocationSasToken')))]",         
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "addressPrefix": {
+            "value": "[parameters('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[parameters('subnetPrefix')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "jumpbox-resources",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+        "uri": "[uri(parameters('_artifactsLocation'), concat(variables('jumpboxTemplateName'), parameters('jumpbox'), '.json', parameters('_artifactsLocationSasToken')))]",                        
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "computerNamePrefix": {
+            "value": "[variables('computerNamePrefix')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nic', copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfMasterInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(parameters('sparkNodeIPAddressPrefix'), copyindex())]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nicsl', copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicslLoop",
+        "count": "[variables('numberOfSlavesInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(parameters('sparkSlaveNodeIPAddressPrefix'), copyindex())]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion":  "2019-12-01", 
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('mastervm', copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "virtualMachineLoopMaster",
+        "count": "[variables('numberOfMasterInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'sparkCluserAS')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('computerNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat('mastervm', copyindex(),'_OSDisk')]", 
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nic', copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-12-01", 
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('slavevm', copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[variables('numberOfSlavesInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nicsl', copyindex()))]",
+        "virtualMachineLoopMaster"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'sparkCluserAS')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('computerNamePrefix'),'sl', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            
+           "name": "[concat('slavevm', copyindex(),'_OSDisk')]",    
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nicsl', copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat('mastervm', copyindex(), '/installsparkmaster')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "virtualMachineExtensionsLoopMaster",
+        "count": "[variables('numberOfMasterInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat('mastervm', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('spark-cluster-install.sh', parameters('_artifactsLocationSasToken')))]"   
+          ],
+          "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -d ', reference('nic0').ipConfigurations[0].properties.privateIPAddress,' -s ',variables('numberOfSlavesInstances'),' -m ', ' 1 ')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat('slavevm', copyindex(), '/installsparkslave')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "virtualMachineExtensionsLoopSlave",
+        "count": "[variables('numberOfSlavesInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat('slavevm', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nicsl', copyindex()))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('spark-cluster-install.sh', parameters('_artifactsLocationSasToken')))]" 
+          ],
+          "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -m ', ' 0 ')]"
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,368 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS name for the VM"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user name for the Virtual Machines"
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [
+        "Ubuntu-18.04-LTS",
+        "Ubuntu-12.04.5-LTS",
+        "Centos-7.1",
+        "Centos-7"
+      ],
+      "defaultValue": "Ubuntu-18.04-LTS",
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A0",
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "chef_node_name": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the node (VM) in the Chef Organization"
+      }
+    },
+    "chef_server_url": {
+      "type": "string",
+      "metadata": {
+        "description": "Organization URL for the Chef Server. Example https://ChefServerDnsName.cloudapp.net/organizations/Orgname"
+      }
+    },
+    "validation_client_name": {
+      "type": "string",
+      "metadata": {
+        "description": "Validator key name for the organization. Example : MyOrg-validator"
+      }
+    },
+    "runlist": {
+      "type": "string",
+      "defaultValue": "recipe[getting-started]",
+      "metadata": {
+        "description": "Optional Run List to Execute"
+      }
+    },
+    "validation_key": {
+      "type": "string",
+      "metadata": {
+        "description": "JSON Escaped Validation Key"
+      }
+    },
+    "validation_key_format": {
+      "type": "string",
+      "allowedValues": [
+        "plaintext",
+        "base64encoded"
+      ],
+      "defaultValue": "plaintext",
+      "metadata": {
+        "description": "Format in which Validation Key is given. e.g. plaintext, base64encoded"
+      }
+    },
+    "secret": {
+      "type": "securestring",
+      "defaultValue": "[uniqueString(newGuid())]",
+      "metadata": {
+        "description": "Encrypted Data bag secret"
+      }
+    },
+    "chef_service_interval": {
+      "type": "string",
+      "defaultValue": "30",
+      "metadata": {
+        "description": "Frequency(in minutes) at which the chef-service runs."
+      }
+    },
+    "bootstrap_version": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Chef Client Version"
+      }
+    },
+    "bootstrap_channel": {
+      "type": "string",
+      "defaultValue": "stable",
+      "metadata": {
+        "description": "Release channel for Chef Client Version"
+      }
+    },
+    "daemon": {
+      "type": "string",
+      "defaultValue": "service",
+      "metadata": {
+        "description": "Daemon option is only for Windows. Allowed values: none/service/task"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "images": {
+      "Ubuntu-18.04-LTS": {
+        "sku": "18.04-LTS",
+        "offer": "UbuntuServer",
+        "publisher": "Canonical"
+      },
+      "Ubuntu-12.04.5-LTS": {
+        "sku": "12.04.5-LTS",
+        "offer": "UbuntuServer",
+        "publisher": "Canonical"
+      },
+      "Centos-7.1": {
+        "sku": "7.1",
+        "offer": "CentOS",
+        "publisher": "OpenLogic"
+      },
+      "Centos-7": {
+        "sku": "7",
+        "offer": "CentOS",
+        "publisher": "OpenLogic"
+      }
+    },
+
+    "vmExtensionName": "LinuxChefExtension",
+    "vmName": "[parameters('vmDnsName')]",
+    "storageAccountType": "Standard_LRS",
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'cheflinuxvm')]",
+    "publicIPAddressName": "myPublicIP1",
+    "publicIPAddressType": "Dynamic",
+    "virtualNetworkName": "MyVNET1",
+    "addressPrefix": "10.0.0.0/16",
+    "subnet1Name": "subnet-1",
+    "subnet2Name": "subnet-2",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet2Prefix": "10.0.1.0/24",
+    "nicName": "myVMNic",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "networkSecurityGroupName": "default-NSG"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "apiVersion": "2021-02-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmDnsName')]"
+        }
+      }
+    },
+    {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups',variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('subnet1Name'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('images')[parameters('osType')].publisher]",
+            "offer": "[variables('images')[parameters('osType')].offer]",
+            "sku": "[variables('images')[parameters('osType')].sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/', variables('vmExtensionName'))]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Chef.Bootstrap.WindowsAzure",
+        "type": "LinuxChefClient",
+        "typeHandlerVersion": "1210.12",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "bootstrap_options": {
+            "chef_node_name": "[parameters('chef_node_name')]",
+            "chef_server_url": "[parameters('chef_server_url')]",
+            "validation_client_name": "[parameters('validation_client_name')]"
+          },
+          "runlist": "[parameters('runlist')]",
+          "validation_key_format": "[parameters('validation_key_format')]",
+          "chef_service_interval": "[parameters('chef_service_interval')]",
+          "bootstrap_version": "[parameters('bootstrap_version')]",
+          "bootstrap_channel": "[parameters('bootstrap_channel')]",
+          "daemon": "[parameters('daemon')]"
+        },
+        "protectedSettings": {
+          "validation_key": "[parameters('validation_key')]",
+          "secret": "[parameters('secret')]"
+        }
+      }
+    }
+  ]
+}

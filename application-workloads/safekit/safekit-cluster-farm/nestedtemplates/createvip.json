@@ -1,0 +1,43 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"VIPDnsLabel": {
+			"type": "string",
+			"metadata": {
+				"description": "Public VIP dns label (optional. If set, an additionnal Standard SKU, unassociated public IP will be created)"
+			},
+			"defaultValue": ""
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "resources location"
+			}
+		}
+	},
+	"resources": [
+		{
+			"condition": "[not(empty(parameters('VIPDnsLabel')))]",
+			"type": "Microsoft.Network/publicIPAddresses",
+			"apiVersion": "2020-11-01",
+			"name": "[concat('pip',parameters('VIPDnsLabel'))]",
+			"location": "[parameters('location')]",
+			"sku": {
+				"name": "Standard"
+			},
+			"properties": {
+				"publicIPAllocationMethod": "Static",
+				"dnsSettings": {
+					"domainNameLabel": "[toLower(parameters('VIPDnsLabel'))]"
+				}
+			}
+		}
+	],
+	"outputs": {
+		"fqdn": {
+			"type": "string",
+			"value": "[if(empty(parameters('VIPDnsLabel')),'',reference(resourceId('Microsoft.Network/publicIPAddresses', concat('pip',parameters('VIPDnsLabel')))).dnsSettings.fqdn)]"
+		}
+	}
+}

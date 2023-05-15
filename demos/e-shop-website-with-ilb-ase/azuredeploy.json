@@ -1,0 +1,866 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingASEName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the App Service Environment."
+      }
+    },
+    "existingASELocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the App Service Environment."
+      }
+    },
+    "existingASEDNSSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Suffix used for the ILB ASE"
+      }
+    },
+    "dnsSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "Root domain name used to access web apps on internet."
+      }
+    },
+    "sqlServerAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator login name of the Azure SQL Server."
+      }
+    },
+    "sqlServerAdministratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator login password of the Azure SQL Server."
+      }
+    },
+    "azureAdTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "Directory ID of the Azure Active Directory used by the Admin App."
+      }
+    },
+    "azureAdClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Application ID of the Admin App Registration."
+      }
+    },
+    "appInsightsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "description"
+      }
+    }
+  },
+  "variables": {
+    "location": "[parameters('existingAseLocation')]",
+    "vnetName": "[concat(parameters('existingAseName'), '-vnet')]",
+    "aseSubnetName": "[concat(parameters('existingAseName'), '-subnet')]",
+    "aseSubnetAddressPrefix": "192.168.251.64/26",
+    "agSubnetName": "app-gateway-subnet",
+    "aspName": "[concat(parameters('existingAseName'), '-asp')]",
+    "webAppName": "[concat(parameters('existingAseName'), '-web')]",
+    "contentAppName": "[concat(parameters('existingAseName'), '-content')]",
+    "apiAppName": "[concat(parameters('existingAseName'), '-api')]",
+    "adminAppName": "[concat(parameters('existingAseName'), '-admin')]",
+    "appInsightsName": "[concat(parameters('existingAseName'), '-app-insights')]",
+    "sqlServerName": "[concat(parameters('existingAseName'), '-sql-server')]",
+    "storageAccountName": "[concat(replace(parameters('existingAseName'), '-', ''), '')]",
+    "redisCacheName": "[concat(parameters('existingAseName'), '-cache')]",
+    "redisCacheSubnetName": "redis-cache-subnet",
+    "redisCacheSubnetAddressPrefix": "192.168.251.0/26",
+    "redisCacheStaticIP": "192.168.251.62",
+    "appGatewayName": "[concat(parameters('existingAseName'), '-waf')]",
+    "appGatewayPublicIPName": "[concat(parameters('existingAseName'), '-waf-ip')]",
+    "appGatewayPublicIPDnsPrefix": "[concat(parameters('existingAseName'), '-waf')]",
+    "cdnName": "[concat(parameters('existingAseName'), '-cdn')]",
+    "cdnWebAppEndpointName": "[concat(parameters('existingAseName'), '-cdn-web')]",
+    "cdnStorageEndpointName": "[concat(parameters('existingAseName'), '-cdn-storage')]",
+    "webAppExternalHostName": "[concat(variables('webAppName'), '.', parameters('dnsSuffix'))]",
+    "webAppInternalHostName": "[concat(variables('webAppName'), '.', parameters('existingASEDNSSuffix'))]",
+    "apiAppInternalHostName": "[concat(variables('apiAppName'), '.', parameters('existingASEDNSSuffix'))]",
+    "contentAppExternalHostName": "[concat(variables('contentAppName'), '.', parameters('dnsSuffix'))]",
+    "contentAppInternalHostName": "[concat(variables('contentAppName'), '.', parameters('existingASEDNSSuffix'))]",
+    "adminAppExternalHostName": "[concat(variables('adminAppName'), '.', parameters('dnsSuffix'))]",
+    "adminAppInternalHostName": "[concat(variables('adminAppName'), '.', parameters('existingASEDNSSuffix'))]",
+    "sourceCodeRepositoryURL": "https://github.com/OGCanviz/e-shop-website-with-ilb-ase/"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('vnetName'), '/', variables('redisCacheSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('redisCacheSubnetAddressPrefix')]"
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('vnetName'), '/', variables('agSubnetName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('aseSubnetAddressPrefix')]"
+      }
+    },
+    {
+      "apiVersion": "2020-02-02",
+      "type": "microsoft.insights/components",
+      "name": "[variables('appInsightsName')]",
+      "location": "[parameters('appInsightsLocation')]",
+      "properties": {
+        "Application_Type": "web",
+        "Request_Source": "IbizaWebAppExtensionCreate"
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "supportsHttpsTrafficOnly": false,
+        "accessTier": "Hot",
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Cache/Redis",
+      "name": "[variables('redisCacheName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "Premium",
+          "family": "P",
+          "capacity": 1
+        },
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]",
+        "staticIP": "[variables('redisCacheStaticIP')]",
+        "enableNonSslPort": true
+      }
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[variables('aspName')]",
+      "location": "[variables('location')]",
+      "kind": "app",
+      "properties": {
+        "name": "[variables('aspName')]",
+        "workerSize": "0",
+        "workerSizeId": "0",
+        "numberOfWorkers": "1",
+        "reserved": false,
+        "hostingEnvironment": "[parameters('existingAseName')]"
+      },
+      "sku": {
+        "tier": "Isolated",
+        "name": "I1"
+      }
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('contentAppName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]"
+      ],
+      "properties": {
+        "name": "[variables('contentAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "project",
+              "value": "src/Web/wwwroot"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2019-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('contentAppName'))]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
+            "branch": "master",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('apiAppName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
+      ],
+      "properties": {
+        "name": "[variables('apiAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "ApplicationInsights:InstrumentationKey",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "project",
+              "value": "src/API/API.csproj"
+            }
+          ],
+          "connectionstrings": [
+            {
+              "name": "SalesConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', reference(variables('sqlServerName')).fullyQualifiedDomainName, ',1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2019-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
+            "branch": "master",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('adminAppName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
+      ],
+      "properties": {
+        "name": "[variables('adminAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "AzureAd:Domain",
+              "value": ""
+            },
+            {
+              "name": "AzureAd:TenantId",
+              "value": "[parameters('azureAdTenantId')]"
+            },
+            {
+              "name": "AzureAd:ClientId",
+              "value": "[parameters('azureAdClientId')]"
+            },
+            {
+              "name": "ODataServiceBaseUrl",
+              "value": "[concat('http://', variables('apiAppInternalHostName'))]"
+            },
+            {
+              "name": "ApplicationInsights:InstrumentationKey",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "project",
+              "value": "src/Admin/Admin.csproj"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2019-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('adminAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('apiAppName'), 'web')]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
+            "branch": "master",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('webAppName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]"
+      ],
+      "properties": {
+        "name": "[variables('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "ODataServiceBaseUrl",
+              "value": "[concat('http://', variables('apiAppInternalHostName'))]"
+            },
+            {
+              "name": "cdn:url",
+              "value": "[concat('http://', reference(resourceId('microsoft.cdn/profiles/endpoints/', variables('cdnName'), variables('cdnWebAppEndpointName')), '2020-09-01').hostName)]"
+            },
+            {
+              "name": "CatalogBaseUrl",
+              "value": "[concat('https://', variables('cdnStorageEndpointName'), '.azureedge.net')]"
+            },
+            {
+              "name": "ApplicationInsights:InstrumentationKey",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "project",
+              "value": "src/Web/Web.csproj"
+            }
+          ],
+          "connectionstrings": [
+            {
+              "name": "CatalogConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', reference(variables('sqlServerName')).fullyQualifiedDomainName, ',1433;Initial Catalog=Catalog;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "SalesConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', reference(variables('sqlServerName')).fullyQualifiedDomainName, ',1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "IdentityConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', reference(variables('sqlServerName')).fullyQualifiedDomainName, ',1433;Initial Catalog=Identity;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "StorageConnection",
+              "type": "Custom",
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2021-04-01').keys[0].value,';')]"
+            },
+            {
+              "name": "RedisConnection",
+              "type": "Custom",
+              "connectionString": "[concat(variables('redisCacheName'), '.redis.cache.windows.net:6380,password=', listKeys(resourceId('Microsoft.Cache/Redis/', variables('redisCacheName')), '2020-06-01').primaryKey, ',ssl=True,abortConnect=False')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2019-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('adminAppName'), 'web')]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
+            "branch": "master",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2020-11-01-preview",
+      "type": "Microsoft.Sql/servers",
+      "location": "[variables('location')]",
+      "name": "[variables('sqlServerName')]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlServerAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlServerAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-11-01-preview",
+          "type": "databases",
+          "location": "[variables('location')]",
+          "name": "Catalog",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "edition": "Basic",
+            "zoneRedundant": false
+          }
+        },
+        {
+          "apiVersion": "2020-11-01-preview",
+          "type": "databases",
+          "location": "[variables('location')]",
+          "name": "Sales",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "edition": "Basic",
+            "zoneRedundant": false
+          }
+        },
+        {
+          "apiVersion": "2020-11-01-preview",
+          "type": "databases",
+          "location": "[variables('location')]",
+          "name": "Identity",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "edition": "Basic",
+            "zoneRedundant": false
+          }
+        },
+        {
+          "apiVersion": "2020-11-01-preview",
+          "type": "virtualNetworkRules",
+          "name": "[concat('allow-access-from-', variables('aseSubnetName'))]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('aseSubnetName'))]"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/applicationGateways",
+      "name": "[variables('appGatewayName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('agSubnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "WAF_Medium",
+          "tier": "WAF",
+          "capacity": 1
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('agSubnetName'))]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "PublicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName'))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "properties": {
+              "Port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "webAppBackendPool",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "fqdn": "[variables('webAppInternalHostName')]"
+                }
+              ]
+            }
+          },
+          {
+            "name": "contentAppBackendPool",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "fqdn": "[variables('contentAppInternalHostName')]"
+                }
+              ]
+            }
+          },
+          {
+            "name": "adminAppBackendPool",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "fqdn": "[variables('adminAppInternalHostName')]"
+                }
+              ]
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "webAppBackendHttpSettings",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Disabled",
+              "PickHostNameFromBackendAddress": false,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/probes', variables('appGatewayName'), 'webAppProbe')]"
+              }
+            }
+          },
+          {
+            "name": "contentAppBackendHttpSettings",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Disabled",
+              "PickHostNameFromBackendAddress": false,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/probes', variables('appGatewayName'), 'contentAppProbe')]"
+              }
+            }
+          },
+          {
+            "name": "adminAppBackendHttpSettings",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Disabled",
+              "PickHostNameFromBackendAddress": false,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/probes', variables('appGatewayName'), 'adminAppProbe')]"
+              }
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "webAppHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGatewayName'), 'appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGatewayName'), 'appGatewayFrontendPort')]"
+              },
+              "Protocol": "Http",
+              "HostName": "[variables('webAppExternalHostName')]"
+            }
+          },
+          {
+            "name": "contentAppHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGatewayName'), 'appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGatewayName'), 'appGatewayFrontendPort')]"
+              },
+              "Protocol": "Http",
+              "HostName": "[variables('contentAppExternalHostName')]"
+            }
+          },
+          {
+            "name": "adminAppHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGatewayName'), 'appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGatewayName'), 'appGatewayFrontendPort')]"
+              },
+              "Protocol": "Http",
+              "HostName": "[variables('adminAppExternalHostName')]"
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "Name": "webAppRule",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'webAppHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'webAppBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'webAppBackendHttpSettings')]"
+              }
+            }
+          },
+          {
+            "Name": "contentAppRule",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'contentAppHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'contentAppBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'contentAppBackendHttpSettings')]"
+              }
+            }
+          },
+          {
+            "Name": "adminAppRule",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'adminAppHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'adminAppBackendPool')]"
+              },
+              "backendHttpSettings": {
+
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'adminAppBackendHttpSettings')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "webAppProbe",
+            "properties": {
+              "protocol": "Http",
+              "path": "/",
+              "host": "[variables('webAppInternalHostName')]",
+              "interval": 30,
+              "timeout": 120,
+              "unhealthyThreshold": 3,
+              "pickHostNameFromBackendHttpSettings": false
+            }
+          },
+          {
+            "name": "contentAppProbe",
+            "properties": {
+              "protocol": "Http",
+              "path": "/",
+              "host": "[variables('contentAppInternalHostName')]",
+              "interval": 30,
+              "timeout": 120,
+              "unhealthyThreshold": 3,
+              "pickHostNameFromBackendHttpSettings": false
+            }
+          },
+          {
+            "name": "adminAppProbe",
+            "properties": {
+              "protocol": "Http",
+              "path": "/",
+              "host": "[variables('adminAppInternalHostName')]",
+              "interval": 30,
+              "timeout": 120,
+              "unhealthyThreshold": 3,
+              "pickHostNameFromBackendHttpSettings": false
+            }
+          }
+        ],
+        "webApplicationFirewallConfiguration": {
+          "enabled": true,
+          "firewallMode": "Prevention",
+          "ruleSetType": "OWASP",
+          "ruleSetVersion": "3.0",
+          "disabledRuleGroups": [
+            {
+              "ruleGroupName": "REQUEST-920-PROTOCOL-ENFORCEMENT",
+              "rules": [
+                920350
+              ]
+            },
+            {
+              "ruleGroupName": "REQUEST-931-APPLICATION-ATTACK-RFI",
+              "rules": [
+                931130
+              ]
+            },
+            {
+              "ruleGroupName": "REQUEST-942-APPLICATION-ATTACK-SQLI",
+              "rules": [
+                942130,
+                942440
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('appGatewayPublicIPName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('appGatewayPublicIPDnsPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-09-01",
+      "type": "microsoft.cdn/profiles",
+      "name": "[variables('cdnName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "standard_verizon"
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-09-01",
+          "type": "endpoints",
+          "name": "[variables('cdnWebAppEndpointName')]",
+          "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]"
+          ],
+          "properties": {
+            "isHttpAllowed": true,
+            "isHttpsAllowed": false,
+            "origins": [
+              {
+                "name": "contentApp",
+                "properties": {
+                  "hostName": "[variables('contentAppExternalHostName')]"
+                }
+              }
+            ],
+            "isCompressionEnabled": true,
+            "contentTypesToCompress": [
+              "text/plain",
+              "text/html",
+              "text/css",
+              "text/javascript",
+              "application/x-javascript",
+              "application/javascript",
+              "application/json",
+              "application/xml"
+            ],
+            "optimizationType": "GeneralWebDelivery",
+            "originHostHeader": "[variables('contentAppExternalHostName')]"
+          }
+        },
+        {
+          "apiVersion": "2020-09-01",
+          "type": "endpoints",
+          "name": "[variables('cdnStorageEndpointName')]",
+          "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+          ],
+          "properties": {
+            "isHttpAllowed": true,
+            "isHttpsAllowed": true,
+            "origins": [
+              {
+                "name": "Storage",
+                "properties": {
+                  "hostName": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
+                }
+              }
+            ],
+            "isCompressionEnabled": true,
+            "contentTypesToCompress": [
+              "text/plain",
+              "text/html",
+              "text/css",
+              "text/javascript",
+              "application/x-javascript",
+              "application/javascript",
+              "application/json",
+              "application/xml"
+            ],
+            "optimizationType": "GeneralWebDelivery",
+            "originHostHeader": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "webAppURL": {
+      "type": "string",
+      "value": "[concat('http://', variables('webAppExternalHostName'))]"
+    },
+    "adminAppURL": {
+      "type": "string",
+      "value": "[concat('http://', variables('adminAppExternalHostName'))]"
+    },
+    "adminAppRedirectURL": {
+      "type": "string",
+      "value": "[concat('http://', variables('adminAppExternalHostName'), '/signin-oidc')]"
+    },
+    "appGatewayPublicIPFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName')), '2020-11-01').dnsSettings.fqdn]"
+    }
+  }
+}

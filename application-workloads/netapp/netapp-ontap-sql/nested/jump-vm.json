@@ -1,0 +1,174 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "vnetID": {
+      "type": "string"
+    },
+    "webSubnetName": {
+      "type": "string"
+    },
+    "jumpVmName": {
+      "type": "string"
+    },
+    "jumpvmSize": {
+      "type": "string"
+    },
+    "jumpvmNicName": {
+      "type": "string"
+    },
+    "jumpvmPublicIPAddressName": {
+      "type": "string"
+    },
+    "jumpvmDnsName": {
+      "type": "string"
+    },
+    "NetAppTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "publicIPAddressType": "Static"
+  },
+  "resources": [
+       {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('jumpvmPublicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "comments": "jump-VM Public IP Address",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('NetAppTags').provider]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('PublicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('jumpvmDnsName')]"
+        },
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('jumpvmNicName')]",
+      "location": "[parameters('location')]",
+      "comments": "Jump Server nic Card",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('NetAppTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('jumpvmpublicIPAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('jumpvmpublicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[concat(parameters('vnetID'), '/subnets/', parameters('webSubnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('jumpvmName')]",
+      "location": "[parameters('location')]",
+      "comments": "Jump Server VM ",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('NetAppTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('jumpvmNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('jumpvmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('jumpvmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2012-R2-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('jumpvmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('jumpvmNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('jumpVmName'),'/','disableservermanager')]",
+          "apiVersion": "2017-03-30",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('jumpVmName'))]"
+          ],
+          "tags": {
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('NetAppTags').provider]"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.8",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "commandToExecute": "[concat('powershell -command',' ','\"Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask -Verbose\"')]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "jumpVmDNSLabel": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('jumpvmPublicIPAddressName'))).dnsSettings.fqdn]",
+      "type": "string"
+    }
+  }
+}

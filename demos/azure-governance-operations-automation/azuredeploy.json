@@ -1,0 +1,562 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsWorkspaceSharedKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Shared key of the OMS workspace"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Describes plan's instance count"
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "defaultValue": "cloudwiseuser",
+      "metadata": {
+        "description": "The account name to use for the database server administrator."
+      }
+    },
+    "sqlAdministratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password to use for the database server administrator."
+      }
+    },
+    "omsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "CloudWiseOMSWorkspace",
+      "metadata": {
+        "description": "Provide the OMS Workspace Name."
+      }
+    },
+    "automationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of an existing Automation Account with SPN."
+      }
+    },
+    "automationRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the existing Automation Account."
+      }
+    },
+    "omsRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the OMS regions."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "actionGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the action group."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "metadata": {
+        "description": "The short name of the action group."
+      }
+    },
+    "emails": {
+      "type": "array",
+      "metadata": {
+        "description": "A list of strings representing the email addresses to send alerts to."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "hostingPlanName": "[concat('CloudWiseHostingplan-', uniqueString(resourceGroup().id))]",
+    "webSiteName": "[concat('CloudWise', uniqueString(resourceGroup().id))]",
+    "sqlserverName": "[concat('sqlcloudwise', uniqueString(resourceGroup().id))]",
+    "sqlDatabaseName": "cloudwisedb",
+    "sqlCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "sqlMaxSizeBytes": "1073741824",
+    "sqlEdition": "Basic",
+    "sqlRequestedServiceObjectiveName": "Basic",
+    "insightsName": "[concat(variables('webSiteName'),'insights')]",
+    "omsWorkspaceName": "[concat(parameters('omsWorkspaceName'), uniqueString(resourceGroup().id, deployment().name))]",
+    "OMSWebAppsRunBookAndDashboardTemplateFolder": "nested/AutomationRunbooksOMSDashboard",
+    "OMSWebAppsRunBookAndDashboardTemplateFileName": "OMSAutomationRunbooksDashboard.json",
+    "OMSCommonTemplateFolder": "nested/OMSCommon",
+    "OMSCommonTemplateFileName": "OMSCommon.json",
+    "quickstartTags": {
+      "type": "object",
+      "name": "azure-governance-operations-automation"
+    }
+  },
+  "resources": [
+    {
+      "name": "[variables('sqlserverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "SqlServer",
+        "quickstartName": "[variables('quickstartTags').name]"
+      },
+      "apiVersion": "2021-02-01-preview",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]"
+      },
+      "resources": [
+        {
+          "name": "[variables('sqlDatabaseName')]",
+          "type": "databases",
+          "location": "[parameters('location')]",
+          "apiVersion": "2021-02-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "edition": "[variables('sqlEdition')]",
+            "collation": "[variables('sqlCollation')]",
+            "maxSizeBytes": "[variables('sqlMaxSizeBytes')]",
+            "requestedServiceObjectiveName": "[variables('sqlRequestedServiceObjectiveName')]"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "name": "[variables('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "HostingPlan",
+        "quickstartName": "[variables('quickstartTags').name]"
+      },
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "properties": {
+        "name": "[variables('hostingPlanName')]"
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "name": "[variables('webSiteName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hostingPlanName')]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "empty",
+        "displayName": "Website",
+        "quickstartName": "[variables('quickstartTags').name]"
+      },
+      "properties": {
+        "name": "[variables('webSiteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-12-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]",
+            "[resourceId('Microsoft.Web/Sites/extensions', variables('webSiteName'), 'MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "WebAppConfig",
+            "quickstartName": "[variables('quickstartTags').name]"
+          },
+          "properties": {
+            "netFrameworkVersion": "v4.6"
+          }
+        },
+        {
+          "apiVersion": "2020-12-01",
+          "type": "config",
+          "name": "connectionstrings",
+          "dependsOn": [
+            "[variables('webSiteName')]",
+            "[resourceId('Microsoft.Web/Sites/extensions', variables('webSiteName'), 'MSDeploy')]"
+          ],
+          "properties": {
+            "DefaultConnection": {
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+              "type": "SQLServer"
+            },
+            "SQLCONNSTR_DefaultConnection": {
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+              "type": "SQLServer"
+            }
+          }
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('Websitename'))]"
+          ],
+          "tags": {
+            "displayName": "WebAppMSDeploy",
+            "quickstartName": "[variables('quickstartTags').name]"
+          },
+          "properties": {
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('artifacts/package.zip', parameters('_artifactsLocationSasToken')))]"
+          }
+        }
+      ]
+    },
+    {
+      "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
+      "type": "Microsoft.Insights/autoscalesettings",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
+        "displayName": "[concat(variables('insightsName'), ' AutoScale')]",
+        "quickstartName": "[variables('quickstartTags').name]"
+      },
+      "properties": {
+        "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": "1",
+              "maximum": "2",
+              "default": "1"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 80
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT1H",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1H"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": false,
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      }
+    },
+    {
+      "name": "[parameters('actionGroupName')]",
+      "type": "microsoft.insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "global",
+      "properties": {
+        "groupShortName": "[parameters('actionGroupShortName')]",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "test",
+            "emailAddress": "[parameters('emails')[0]]",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    },
+    { 
+      "name": "[concat('The average CPU is high across all the instances of ', variables('hostingPlanName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "tags": {
+        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "properties": {
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT15M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-cpupercentage')]",
+              "metricName": "CpuPercentage",
+              "operator": "GreaterThan",
+              "threshold": 90,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[resourceId('Microsoft.Insights/components',variables('insightsName'))]",
+          "metricName": "[concat('The average CPU is high across all the instances of ', variables('hostingPlanName'))]"
+          },
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat('LongHttpQueue ', variables('hostingPlanName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "tags": {
+        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "properties": {
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-httpqueuelegth')]",
+              "metricName": "HttpQueueLength",
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[resourceId('Microsoft.Insights/components',variables('insightsName'))]",
+          "metricName": "[concat('The HTTP queue for the instances of ', variables('hostingPlanName'), ' has a large number of pending requests.')]"
+          },
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat('ServerErrors ', variables('webSiteName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]": "Resource"
+      },
+      "properties": {
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/sites",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-5XX-errors')]",
+              "metricName": "Http5xx",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            },
+            {
+              "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-403-errors')]",
+              "metricName": "Http403",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[resourceId('Microsoft.Insights/components',variables('insightsName'))]",
+          "metricName": "[concat(variables('webSiteName'), 'server errors')]"
+          },
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('insightsName')]",
+      "type": "Microsoft.Insights/components",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-02-02",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
+      ],
+      "tags": {
+        "displayName": "[concat('Component', variables('insightsName'))]",
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]": "Resource",
+        "quickstartName": "[variables('quickstartTags').name]"
+      },
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "name": "omsWorkspace",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('OMSCommonTemplateFolder'), '/', variables('OMSCommonTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "workspaceName": {
+            "value": "[variables('omsWorkspaceName')]"
+          },
+          "omsRegion": {
+            "value": "[parameters('omsRegion')]"
+          },
+          "serviceTier": {
+            "value": "Free"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "OMSAutomationRunBooksAndDashboard",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/omsWorkspace"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('OMSWebAppsRunBookAndDashboardTemplateFolder'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsId": {
+            "value": "[reference('omsWorkspace').outputs.workspaceIdOutput.value]"
+          },
+          "omsKey": {
+            "value": "[parameters('omsWorkspaceSharedKey')]"
+          },
+          "automationAccountName": {
+            "value": "[parameters('automationAccountName')]"
+          },
+          "automationRegion": {
+            "value": "[parameters('automationRegion')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
+          }
+        }
+      }
+    }
+  ]
+}

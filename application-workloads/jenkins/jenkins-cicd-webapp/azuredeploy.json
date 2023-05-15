@@ -1,0 +1,317 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "jenkinsVMAdminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the Jenkins Virtual Machine."
+      }
+    },
+    "jenkinsDnsPrefix": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Jenkins Virtual Machine."
+      }
+    },
+    "jenkinsReleaseType": {
+      "type": "string",
+      "allowedValues": [
+        "LTS",
+        "weekly",
+        "verified"
+      ],
+      "defaultValue": "LTS",
+      "metadata": {
+        "description": "The Jenkins release type."
+      }
+    },
+    "repositoryUrl": {
+      "type": "string",
+      "defaultValue": "https://github.com/Azure/azure-quickstart-templates",
+      "minLength": 1,
+      "metadata": {
+        "description": "GitHub repository URL for the source code."
+      }
+    },
+    "clientId": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Client id for Azure service principal."
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Client secret for Azure service principal."
+      }
+    },
+    "appDnsPrefix": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Prefix name for web app components, accepts numbers and letters only."
+      }
+    },
+    "mySqlAdminLogin": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "User name for MySQL admin login."
+      }
+    },
+    "mySqlAdminPassword": {
+      "type": "securestring",
+      "minLength": 6,
+      "metadata": {
+        "description": "Password for MySQL admin login."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/jenkins/jenkins-cicd-webapp/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat(toLower(parameters('appDnsPrefix')), 'storage')]",
+    "servicePlanName": "[concat(parameters('appDnsPrefix'), 'ServicePlan')]",
+    "webAppName": "[concat(parameters('appDnsPrefix'), 'Web')]",
+    "appInsightsName": "[concat(parameters('appDnsPrefix'), 'AppInsights')]",
+    "mySqlServerName": "[concat(toLower(parameters('appDnsPrefix')), 'mysqlserver')]",
+    "mySqlDbName": "[concat(toLower(parameters('appDnsPrefix')), 'mysqldb')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "Storage",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2017-06-01",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "sku": {
+        "name": "B1"
+      },
+      "kind": "app",
+      "name": "[variables('servicePlanName')]",
+      "apiVersion": "2016-09-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('servicePlanName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[variables('webAppName')]",
+      "apiVersion": "2016-08-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+      },
+      "resources": [
+        {
+          "type": "config",
+          "name": "web",
+          "apiVersion": "2016-08-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+          ],
+          "properties": {
+            "javaVersion": "1.8",
+            "javaContainer": "TOMCAT",
+            "javaContainerVersion": "9.0"
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "name": "connectionstrings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+          ],
+          "properties": {
+            "defaultConnection": {
+              "value": "[concat('Database=', variables('mySqlDbName'), ';Data Source=', reference(resourceId('Microsoft.DBforMySQL/servers',variables('mySqlServerName'))).fullyQualifiedDomainName, ';User Id=', parameters('mySqlAdminLogin'),'@', variables('mySqlServerName'),';Password=', parameters('mySqlAdminPassword'))]",
+              "type": "MySql"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "microsoft.insights/components",
+      "kind": "java",
+      "name": "[variables('appInsightsName')]",
+      "apiVersion": "2015-05-01",
+      "location": "eastus",
+      "tags": {
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webAppName'))]": "Resource"
+      },
+      "properties": {
+        "ApplicationId": "[variables('appInsightsName')]"
+      }
+    },
+    {
+      "type": "Microsoft.DBforMySQL/servers",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "name": "[variables('mySqlServerName')]",
+      "properties": {
+        "version": "5.7",
+        "storageMB": 51200,
+        "administratorLogin": "[parameters('mySqlAdminLogin')]",
+        "administratorLoginPassword": "[parameters('mySqlAdminPassword')]"
+      },
+      "sku": {
+        "name": "B_Gen5_2",
+        "tier": "Basic",
+        "capacity": 2
+      },
+      "resources": [
+        {
+          "type": "firewallrules",
+          "apiVersion": "2017-12-01",
+          "location": "[parameters('location')]",
+          "name": "[concat(variables('mySqlServerName'),'Firewall')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.DBforMySQL/servers', variables('mySqlServerName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "255.255.255.255"
+          }
+        },
+        {
+          "name": "[variables('mySqlDbName')]",
+          "type": "databases",
+          "apiVersion": "2017-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.DBforMySQL/servers', variables('mySqlServerName'))]"
+          ],
+          "properties": {
+            "charset": "utf8",
+            "collation": "utf8_general_ci"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "jenkinsDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/jenkins.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('jenkinsVMAdminUsername')]"
+          },
+          "dnsPrefix": {
+            "value": "[parameters('jenkinsDnsPrefix')]"
+          },
+          "jenkinsReleaseType": {
+            "value": "[parameters('jenkinsReleaseType')]"
+          },
+          "repositoryUrl": {
+            "value": "[parameters('repositoryUrl')]"
+          },
+          "clientId": {
+            "value": "[parameters('clientId')]"
+          },
+          "clientSecret": {
+            "value": "[parameters('clientSecret')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "storageAccountKey": {
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value]"
+          },
+          "webAppName": {
+            "value": "[variables('webAppName')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "jenkinsURL": {
+      "type": "string",
+      "value": "[reference('jenkinsDeployment').outputs.jenkinsURL.value]"
+    },
+    "jenkinsSSH": {
+      "type": "string",
+      "value": "[reference('jenkinsDeployment').outputs.jenkinsSSH.value]"
+    },
+    "webAppURL": {
+      "type": "string",
+      "value": "[concat('http://', reference(variables('webAppName')).defaultHostName)]"
+    }
+  }
+}
