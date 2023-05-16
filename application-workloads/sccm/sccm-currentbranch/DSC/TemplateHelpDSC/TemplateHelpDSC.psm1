@@ -533,7 +533,7 @@ class DownloadSCCM
         $WebClient.DownloadFile($cmurl,$cmpath)
         if(!(Test-Path $cmsourcepath))
         {
-            Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+            Start-Process -Filepath ($cmpath) -ArgumentList ('/x:"' + $cmsourcepath + '"','/q') -wait
         }
     }
 
