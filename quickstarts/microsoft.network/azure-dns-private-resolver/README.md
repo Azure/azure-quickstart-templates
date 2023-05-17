@@ -35,15 +35,16 @@ A virtual network is deployed with two subnets that will be used for resolver's 
 For more information on **Azure DNS Private Resolver**
 - [What is Azure DNS Private Resolver](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview)
 
-### Microsoft.Network/dnsresolvers
+### Description
+Seven resources have been defined in this template:
 
-Description
-- **virtualNetwork**: Virtual network for dnsresolver
-    -  **subnets:** subnet for inbound and ounbound endpoints.
-- **dnsresolvers:** The DNS private resolver
-- **resolverEndpoint:** Resolver's Inbound & Outbound Endpoint.
-- **forwardingRuleSet:** Forwarding Ruleset
-- **forwardingRule:** Forwarding rules with the target DNS servers for conditional forwarding.
+- [**Microsoft.Network/virtualnetworks**](/azure/templates/microsoft.network/virtualnetworks)
+- [**Microsoft.Network/dnsResolvers**](/azure/templates/microsoft.network/dnsresolvers)
+- [**Microsoft.Network/dnsResolvers/inboundEndpoints**](/azure/templates/microsoft.network/dnsresolvers/inboundendpoints)
+- [**Microsoft.Network/dnsResolvers/outboundEndpoints**](/azure/templates/microsoft.network/dnsresolvers/outboundendpoints)
+- [**Microsoft.Network/dnsForwardingRulesets**](/azure/templates/microsoft.network/dnsforwardingrulesets)
+- [**Microsoft.Network/dnsForwardingRulesets/forwardingRules**](/azure/templates/microsoft.network/dnsforwardingrulesets/forwardingrules)
+- [**Microsoft.Network/dnsForwardingRulesets/virtualNetworkLinks**](/azure/templates/microsoft.network/dnsforwardingrulesets/virtualnetworklinks)
 
 ## Deployment steps
 
