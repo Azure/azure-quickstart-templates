@@ -38,19 +38,19 @@ For more information on **Azure DNS Private Resolver**
 ### Description
 Seven resources have been defined in this template:
 
-- [**Microsoft.Network/virtualnetworks**](/azure/templates/microsoft.network/virtualnetworks)
-- [**Microsoft.Network/dnsResolvers**](/azure/templates/microsoft.network/dnsresolvers)
-- [**Microsoft.Network/dnsResolvers/inboundEndpoints**](/azure/templates/microsoft.network/dnsresolvers/inboundendpoints)
-- [**Microsoft.Network/dnsResolvers/outboundEndpoints**](/azure/templates/microsoft.network/dnsresolvers/outboundendpoints)
-- [**Microsoft.Network/dnsForwardingRulesets**](/azure/templates/microsoft.network/dnsforwardingrulesets)
-- [**Microsoft.Network/dnsForwardingRulesets/forwardingRules**](/azure/templates/microsoft.network/dnsforwardingrulesets/forwardingrules)
-- [**Microsoft.Network/dnsForwardingRulesets/virtualNetworkLinks**](/azure/templates/microsoft.network/dnsforwardingrulesets/virtualnetworklinks)
+- [**Microsoft.Network/virtualnetworks**](https://learn.microsoft.com/azure/templates/microsoft.network/virtualnetworks)
+- [**Microsoft.Network/dnsResolvers**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsresolvers)
+- [**Microsoft.Network/dnsResolvers/inboundEndpoints**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsresolvers/inboundendpoints)
+- [**Microsoft.Network/dnsResolvers/outboundEndpoints**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsresolvers/outboundendpoints)
+- [**Microsoft.Network/dnsForwardingRulesets**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsforwardingrulesets)
+- [**Microsoft.Network/dnsForwardingRulesets/forwardingRules**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsforwardingrulesets/forwardingrules)
+- [**Microsoft.Network/dnsForwardingRulesets/virtualNetworkLinks**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsforwardingrulesets/virtualnetworklinks)
 
 ## Deployment steps
 
 The virtual network and DNS private resolver location should be chosen as one of the supported locations for DNS private resolver. More information [here.](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability)
-```Bash
+````azurecli
 az deployment group create --resource-group <resourcegroup name> --template-file <bicep file location>
-```
+````
 
 `Tags: dns resolver, private resolver, private dns resolver, Microsoft.Network, Microsoft.Network/dnsresolvers`
