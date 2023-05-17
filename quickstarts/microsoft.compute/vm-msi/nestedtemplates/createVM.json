@@ -8,6 +8,31 @@
       },
       "type": "string"
     },
+    "secureBoot": {
+      "defaultValue": true,
+      "type": "bool",
+      "metadata": {
+          "description": "Secure Boot setting of the virtual machine."
+      }
+    },
+    "vTPM": {
+      "defaultValue": true,
+      "type": "bool",
+      "metadata": {
+          "description": "vTPM setting of the virtual machine."
+      }
+    },
+    "extensionPublisher": {
+      "type": "string",
+      "defaultValue": "Microsoft.Azure.Security.LinuxAttestation",
+      "allowedValues": [
+          "Microsoft.Azure.Security.WindowsAttestation",
+          "Microsoft.Azure.Security.LinuxAttestation"
+        ],            
+      "metadata": {
+        "description": "extension Publisher for Windows and Linux"
+      }
+    },
     "_artifactsLocationSasToken": {
       "defaultValue": "",
       "metadata": {
@@ -102,6 +127,9 @@
     }
   },
   "variables": {
+    "extensionName": "GuestAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",    
     "isWindowsOS": "[bool(contains(toLower(variables('imageReference')[parameters('operatingSystem')].offer), 'windows'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -115,23 +143,29 @@
       }
     },
     "imageReference": {
-      "UbuntuServer_16.04-LTS": {
-        "publisher": "Canonical",
-        "offer": "UbuntuServer",
-        "sku": "16.04-LTS",
-        "version": "latest"
+      "UbuntuServer_23_04-gen2": {
+          "publisher": "Canonical",
+          "offer": "0001-com-ubuntu-server-lunar",
+          "sku": "23_04-gen2",
+          "version": "latest"
       },
-      "UbuntuServer_18.04-LTS": {
-        "publisher": "Canonical",
-        "offer": "UbuntuServer",
-        "sku": "18.04-LTS",
-        "version": "latest"
+      "UbuntuServer_23_04-daily-gen2": {
+          "publisher": "Canonical",
+          "offer": "0001-com-ubuntu-server-lunar-daily",
+          "sku": "23_04-daily-gen2",
+          "version": "latest"
       },
-      "WindowsServer_2016-DataCenter": {
-        "publisher": "MicrosoftWindowsServer",
-        "offer": "WindowsServer",
-        "sku": "2016-Datacenter",
-        "version": "latest"
+      "WindowsServer_2022-datacenter-azure-edition": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2022-datacenter-azure-edition",
+          "version": "latest"
+      },
+      "WindowsServer_2022-datacenter-smalldisk-g2": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "WindowsServer_2022-datacenter-smalldisk-g2",
+          "version": "latest"
       }
     },
     "windowsConfiguration": {
@@ -203,6 +237,13 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')[parameters('operatingSystem')]]"
         },
+        "securityProfile": {
+            "uefiSettings": {
+                "secureBootEnabled": "[parameters('secureBoot')]",
+                "vTpmEnabled": "[parameters('vTPM')]"
+            },
+            "securityType": "TrustedLaunch"
+        },
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -219,6 +260,37 @@
       }
     },
     {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "[parameters('extensionPublisher')]",
+            "type": "[variables('extensionName')]",
+            "typeHandlerVersion": "[variables('extensionVersion')]",
+            "autoUpgradeMinorVersion": true,
+            "enableAutomaticUpgrade": true,
+            "settings": {
+                "AttestationConfig": {
+                    "MaaSettings": {
+                        "maaEndpoint": "",
+                        "maaTenantName": "[variables('maaTenantName')]"
+                    },
+                    "AscSettings": {
+                      "ascReportingEndpoint": "",
+                      "ascReportingFrequency": ""
+                    },
+                    "useCustomToken": "false",
+                    "disableAlerts": "false"
+                }
+            }
+        },
+        "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]"
+    },
+    {
       "condition": "[and(variables('isWindowsOS'), parameters('provisionExtensions'))]",
       "name": "[concat(parameters('vmName'),'/cse-windows')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -230,7 +302,7 @@
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.8",
+        "typeHandlerVersion": "1.10",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
