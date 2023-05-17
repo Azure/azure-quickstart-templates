@@ -42,7 +42,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
         vmSize: agentVMSize
         osType: 'Linux'
         mode: 'System'
-        osSKU: 'Mariner'
+        osSKU: 'AzureLinux'
       }
     ]
     linuxProfile: {
