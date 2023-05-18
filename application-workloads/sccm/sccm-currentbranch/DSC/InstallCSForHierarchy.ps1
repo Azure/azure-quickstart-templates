@@ -13,7 +13,7 @@ $Configuration.InstallSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
 $cmpath = "c:\$CM.exe"
-$cmsourcepath = "c:\$CM"
+$cmsourceextractpath = "c:\$CM"
 if(!(Test-Path $cmpath))
 {
     "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Copying SCCM installation source..." | Out-File -Append $logpath
@@ -21,10 +21,12 @@ if(!(Test-Path $cmpath))
     Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
     if(!(Test-Path $cmsourcepath))
     {
-        Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+        Start-Process -Filepath ($cmpath) -ArgumentList ('/x:"' + $cmsourceextractpath + '"','/q') -wait
     }
 }
-$CMINIPath = "c:\$CM\HierarchyCS.ini"
+
+$cmsourcepath = "$cmsourceextractpath\cd.preview"
+$CMINIPath = "$cmsourceextractpath\HierarchyCS.ini"
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Check ini file." | Out-File -Append $logpath
 
 $cmini = @'
@@ -38,7 +40,7 @@ SiteName=%Role%
 SMSInstallDir=%InstallDir%
 SDKServer=%MachineFQDN%
 PrerequisiteComp=0
-PrerequisitePath=C:\%CM%\REdist
+PrerequisitePath=%cmsourcepath%\REdist
 MobileDeviceLanguage=0
 AdminConsole=1
 JoinCEIP=0
@@ -75,10 +77,11 @@ $cmini = $cmini.Replace('%Role%',$Role)
 $cmini = $cmini.Replace('%SQLDataFilePath%',$sqlinfo.DefaultData)
 $cmini = $cmini.Replace('%SQLLogFilePath%',$sqlinfo.DefaultLog)
 $cmini = $cmini.Replace('%CM%',$CM)
+$cmini = $cmini.Replace('%cmsourcepath%',$cmsourcepath)
 
-if(!(Test-Path C:\$CM\Redist))
+if(!(Test-Path $cmsourcepath\Redist))
 {
-    New-Item C:\$CM\Redist -ItemType directory | Out-Null
+    New-Item $cmsourcepath\Redist -ItemType directory | Out-Null
 }
     
 if($inst.ToUpper() -eq "MSSQLSERVER")
@@ -90,7 +93,7 @@ else
     $tinstance = $inst.ToUpper() + "\"
     $cmini = $cmini.Replace('%SQLInstance%',$tinstance)
 }
-$CMInstallationFile = "c:\$CM\SMSSETUP\BIN\X64\Setup.exe"
+$CMInstallationFile = "$cmsourcepath\SMSSETUP\BIN\X64\Setup.exe"
 $cmini > $CMINIPath 
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Installing.." | Out-File -Append $logpath
 Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait
