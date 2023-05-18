@@ -11,6 +11,9 @@ param nsgId string
 var maaTenantName = 'GuestAttestation'
 var nicName = '${virtualMachineName}Nic'
 var publicIPAddressName = '${virtualMachineName}-ip'
+var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
+var extensionVersion = '1.0'
+var extensionName = 'GuestAttestation'
 
 resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   name: publicIPAddressName
@@ -91,9 +94,9 @@ resource virtualMachineName_GuestAttestation 'Microsoft.Compute/virtualMachines/
   name: 'GuestAttestation'
   location: existingVnetLocation
   properties: {
-    publisher: 'Microsoft.Azure.Security.WindowsAttestation'
-    type: 'GuestAttestation'
-    typeHandlerVersion: '1.0'
+    publisher: extensionPublisher
+    type: extensionName
+    typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
     enableAutomaticUpgrade: true
     settings: {
