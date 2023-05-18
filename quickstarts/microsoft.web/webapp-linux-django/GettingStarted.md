@@ -14,7 +14,7 @@ Before proceeding to the deployment of the template, we need to perform the foll
 
 ### The Template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+Don't let the size of the template scare you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
 Those are the parameters on the template. Most of them are already with the values, the ones that you need to inform are **web app name** and **location**.
 
