@@ -48,7 +48,7 @@ var delimiters = [
 var prefix = split(IntegrationRuntimeName, delimiters)[0]
 var networkSecurityGroupName = '${IntegrationRuntimeName}nsg'
 var subnetId = resourceId(existingVnetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', existingVirtualNetworkName, existingSubnetInYourVnet)
-var scriptURL = uri(_artifactsLocation, 'gatewayInstall.ps1${_artifactsLocationSasToken}')
+var scriptURL = '${_artifactsLocation}/gatewayInstall.ps1${_artifactsLocationSasToken}'
 
 module nestedTemplate 'nested/IRtemplate.bicep' = {
   name: 'nestedTemplate'
