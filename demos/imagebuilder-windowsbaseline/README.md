@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: imagebuilder-windowsbaseline
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Image Builder with Azure Windows Baseline
 
