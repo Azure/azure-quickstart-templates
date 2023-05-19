@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
+    "secureBoot": {
+        "defaultValue": true,
+        "type": "bool",
+        "metadata": {
+            "description": "Secure Boot setting of the virtual machine."
+        }
+    },
+    "vTPM": {
+        "defaultValue": true,
+        "type": "bool",
+        "metadata": {
+            "description": "vTPM setting of the virtual machine."
+        }
+    },
     "location": {
       "defaultValue": "[resourceGroup().location]",
       "type": "string",
@@ -10,7 +24,7 @@
       }
     },
     "aksClusterName": {
-      "defaultValue": "[concat('aks-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('aks', uniqueString(resourceGroup().id))]",
       "type": "string",
       "metadata": {
         "description": "Specifies the name of the AKS cluster."
@@ -118,7 +132,7 @@
     },
     "aksClusterKubernetesVersion": {
       "type": "string",
-      "defaultValue": "1.20.5",
+      "defaultValue": "1.26.3",
       "metadata": {
         "description": "Specifies the version of Kubernetes specified when creating the managed cluster."
       }
@@ -512,7 +526,7 @@
       }
     },
     "virtualNetworkName": {
-      "defaultValue": "[concat(parameters('aksClusterName'), 'Vnet')]",
+      "defaultValue": "myVnet",
       "type": "string",
       "metadata": {
         "description": "Specifies the name of the virtual network."
@@ -624,9 +638,13 @@
     },
     "imageSku": {
       "type": "string",
-      "defaultValue": "18.04-LTS",
+      "defaultValue": "18_04-lts-gen2",
+      "allowedValues": [
+          "18_04-daily-lts-gen2",
+          "18_04-lts-gen2"
+      ],            
       "metadata": {
-        "description": "Specifies the Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+          "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
       }
     },
     "authenticationType": {
@@ -886,6 +904,10 @@
     }
   },
   "variables": {
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "readerRoleDefinitionName": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
     "contributorRoleDefinitionName": "b24988ac-6180-42a0-ab88-20f7382dd24c",
     "acrPullRoleDefinitionName": "7f951dda-4ed3-4680-a7ca-43fe172d538d",
@@ -1259,7 +1281,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-08-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -1275,6 +1297,13 @@
           "adminUsername": "[parameters('vmAdminUsername')]",
           "adminPassword": "[parameters('vmAdminPasswordOrKey')]",
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "securityProfile": {
+          "securityType": "TrustedLaunch",
+          "uefiSettings": {
+              "secureBootEnabled": "[parameters('secureBoot')]",
+              "vTpmEnabled": "[parameters('vTPM')]"
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -1324,6 +1353,37 @@
         }
       }
     },
+    {
+      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+              "AttestationConfig": {
+                  "MaaSettings": {
+                      "maaEndpoint": "",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                  },
+                  "AscSettings": {
+                    "ascReportingEndpoint": "",
+                    "ascReportingFrequency": ""
+                  },
+                  "useCustomToken": "false",
+                  "disableAlerts": "false"
+              }
+          }
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
+    }, 
     {
       "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -1501,6 +1561,7 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
       "name": "[variables('aksContributorRoleAssignmentName')]",
+      "scope": "[resourceGroup().id]",
       "dependsOn": [
         "[variables('aksClusterUserDefinedManagedIdentityId')]",
         "[variables('virtualNetworkId')]"
@@ -1509,8 +1570,7 @@
         "roleDefinitionId": "[variables('contributorRoleId')]",
         "description": "Assign the cluster user-defined managed identity contributor role on the resource group.",
         "principalId": "[reference(variables('aksClusterUserDefinedManagedIdentityName')).principalId]",
-        "principalType": "ServicePrincipal",
-        "scope": "[resourceGroup().id]"
+        "principalType": "ServicePrincipal"
       }
     },
     {
@@ -2155,6 +2215,14 @@
       "name": "AllAzureAdvisorAlert",
       "location": "Global",
       "properties": {
+        "actions": {
+          "actionGroups": [
+            {
+              "actionGroupId": "",
+              "webhookProperties": {}
+            }
+          ]
+        },  
         "scopes": [
           "[resourceGroup().id]"
         ],
@@ -2436,7 +2504,7 @@
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2022-04-01",
       "name": "[variables('appGwContributorRoleAssignmentName')]",
       "dependsOn": [
         "[variables('aksClusterId')]",
@@ -2453,4 +2521,3 @@
   "outputs": {
   }
 }
-
