@@ -41,6 +41,53 @@
         "description": "Number of VM instances (16 or less)."
       }
     },
+    "secureBoot": {
+        "defaultValue": true,
+        "type": "Bool",
+        "metadata": {
+            "description": "Secure Boot setting of the virtual machine."
+        }
+    },
+    "vTPM": {
+        "defaultValue": true,
+        "type": "Bool",
+        "metadata": {
+            "description": "vTPM setting of the virtual machine."
+        }
+    },
+    "imageOffer": {
+        "defaultValue": "0001-com-ubuntu-server-lunar",
+        "allowedValues": [
+            "0001-com-ubuntu-minimal-bionic",
+            "0001-com-ubuntu-minimal-lunar-daily",
+            "0001-com-ubuntu-server-focal",
+            "0001-com-ubuntu-server-jammy",
+            "0001-com-ubuntu-server-lunar",
+            "0001-com-ubuntu-server-lunar-daily",
+            "0003-com-ubuntu-server-trusted-vm"
+        ],
+        "type": "String",
+        "metadata": {
+            "description": "Windows Server and SQL Offer"
+        }
+    },
+    "sqlSku": {
+        "defaultValue": "23_04-gen2",
+        "allowedValues": [
+            "22_10-minimal-gen2",
+            "18_04-lts-gen2",
+            "minimal-20_04-daily-lts-gen2",
+            "minimal-23_04-daily-gen2",
+            "minimal-23_04-gen2",
+            "20_04-daily-lts-gen2",
+            "23_04-daily-gen2",
+            "23_04-gen2"
+        ],
+        "type": "String",
+        "metadata": {
+            "description": "SQL Server Sku"
+        }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -98,10 +145,10 @@
     },
     "osType": {
       "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "18.04-LTS",
+      "offer": "[parameters('imageOffer')]",
+      "sku": "[parameters('sqlSku')]",
       "version": "latest"
-    },
+  },
     "imageReference": "[variables('osType')]",
     "publicIPAddressName": "[format('{0}pip', parameters('vmssName'))]",
     "publicIPPrefixName": "[format('{0}pubipprefix', parameters('vmssName'))]",
@@ -215,7 +262,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "name": "[parameters('vmssName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -241,6 +288,13 @@
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPasswordOrKey')]",
             "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          },
+          "securityProfile": {
+              "uefiSettings": {
+                  "secureBootEnabled": "[parameters('secureBoot')]",
+                  "vTpmEnabled": "[parameters('vTPM')]"
+              },
+              "securityType": "TrustedLaunch"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
