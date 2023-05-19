@@ -23,7 +23,7 @@ if(!(Test-Path $cmpath))
     }
 }
 
-$cmsourcepath = "$cmsourceextractpath\cd.preview"
+$cmsourcepath = "$cmsourceextractpath\cd.retail"
 $CMINIPath = "$cmsourceextractpath\Standalone.ini"
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Check ini file." | Out-File -Append $logpath
 
