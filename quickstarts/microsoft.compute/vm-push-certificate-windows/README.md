@@ -23,8 +23,10 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-push-certificate-windows%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-push-certificate-windows%2Fazuredeploy.json)
 
-Push a certificate onto a VM. Pass in the URL of the secret in Key Vault.  The url must be a secret, not a certificate or key.
+Push a certificate onto a VM. Create one managedIdentity as pre-req. Generate the certificate in the key vault. Grant access via access policy to this managedidentity to access certificate. Enable the key vault for template deployment in access configuration. The url must be a secret identifier of the certificate kept in key vault, not a certificate or key.
 
 Use <a href="https://gist.github.com/bmoore-msft/425b79b7b7e226264554ec534b956a48">this script to create a new cert and put it into the vault.  The script can be easily modified to work with an existing cert.
 
-`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`
+Use <a href="https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/app-service/overview-managed-identity.md">this script to create a user assigned managed identity.
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions`
