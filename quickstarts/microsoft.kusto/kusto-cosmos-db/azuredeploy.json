@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.14.46.61228",
-      "templateHash": "7937407265431471093"
+      "version": "0.17.1.54307",
+      "templateHash": "13673649489438267206"
     }
   },
   "parameters": {
@@ -111,7 +111,7 @@
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
       "apiVersion": "2022-08-15",
-      "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName')))]",
+      "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName'), 'data-plane'))]",
       "properties": {
         "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2022-11-11', 'full').identity.principalId]",
         "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosDbAccountName'), variables('cosmosDataReader'))]",
@@ -137,7 +137,7 @@
     {
       "type": "Microsoft.Kusto/clusters/databases/dataConnections",
       "apiVersion": "2022-11-11",
-      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('kustoDatabaseName'), 'eventConnection')]",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('kustoDatabaseName'), 'cosmosDbConnection')]",
       "location": "[parameters('location')]",
       "kind": "CosmosDb",
       "properties": {
@@ -149,7 +149,7 @@
         "cosmosDbContainer": "[parameters('cosmosDbContainerName')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName')))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName'), 'data-plane'))]",
         "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]",
         "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('kustoDatabaseName'))]",
         "[resourceId('Microsoft.Kusto/clusters/databases/scripts', parameters('clusterName'), parameters('kustoDatabaseName'), 'db-script')]"
@@ -180,6 +180,22 @@
         ],
         "databaseAccountOfferType": "Standard"
       }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.DocumentDB/databaseAccounts/{0}', parameters('cosmosDbAccountName'))]",
+      "name": "[guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName'), 'rbac')]",
+      "properties": {
+        "description": "Giving RBAC reader on Cosmos DB",
+        "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2022-11-11', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'fbdf93bf-df7d-467e-a4d2-9458aa1360c8')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]"
+      ]
     },
     {
       "type": "Microsoft.Kusto/clusters",
