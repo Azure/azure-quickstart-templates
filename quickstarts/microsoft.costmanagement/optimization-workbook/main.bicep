@@ -49,4 +49,4 @@ resource workbook 'Microsoft.Insights/workbooks@2022-04-01' = {
 output workbookId string = workbook.id
 
 @sys.description('Link to the workbook in the Azure portal.')
-output workbookUrl string = 'https://portal.azure.com/#view/AppInsightsExtension/UsageNotebookBlade/ComponentId/Azure%20Monitor/ConfigurationId/%2Fsubscriptions%2F${subscription().id}%2Fresourcegroups%2F${resourceGroup().name}%2Fproviders%2Fmicrosoft.insights%2Fworkbooks%2F${workbook.name}/Type/${workbook.properties.category}/WorkbookTemplateName/${replace(displayName, '/', '%2F')}'
+output workbookUrl string = '${environment().portal}/#view/AppInsightsExtension/UsageNotebookBlade/ComponentId/Azure%20Monitor/ConfigurationId/${uriComponent(workbook.id)}/Type/${workbook.properties.category}/WorkbookTemplateName/${uriComponent(workbook.properties.displayName)}'
