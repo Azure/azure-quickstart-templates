@@ -358,6 +358,11 @@ class WaitForExtendSchemaFile
     [void] Set()
     {
         $_FilePath = "\\$($this.MachineName)\$($this.ExtFolder)"
+
+        while(!(Test-Path $_FilePath))
+        {
+            Write-Verbose "Wating for the path $_FilePath available... "
+        }
         $cmsourcepath = (Get-ChildItem -Path $_FilePath | ?{$_.Name.ToLower().Contains("cd.")}).FullName
         $extadschpath = Join-Path -Path $cmsourcepath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
         
