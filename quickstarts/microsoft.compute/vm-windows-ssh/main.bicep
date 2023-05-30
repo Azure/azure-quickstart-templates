@@ -14,7 +14,7 @@ param adminPassword string = newGuid()
 param publicSshKey string
 
 @description('VM size for VM')
-param vmsize string = 'Standard_D4_v5'
+param vmsize string = 'Standard_D4s_v5'
 
 @description('SKU of the Windows Server')
 @allowed([
@@ -243,7 +243,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: storagename_resource.properties.primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
   }
