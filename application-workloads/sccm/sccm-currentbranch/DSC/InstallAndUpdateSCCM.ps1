@@ -17,13 +17,14 @@ if(!(Test-Path $cmpath))
     "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Copying SCCM installation source..." | Out-File -Append $logpath
     $cmurl = "https://go.microsoft.com/fwlink/?linkid=2093192"
     Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
-    if(!(Test-Path $cmsourcepath))
+    if(!(Test-Path $cmsourceextractpath))
     {
-        Start-Process -Filepath ($cmpath) -ArgumentList ('/x:"' + $cmsourceextractpath + '"','/q') -wait
+        New-Item -ItemType Directory -Path $cmsourceextractpath
+        Start-Process -WorkingDirectory ($cmsourceextractpath) -Filepath ($cmpath) -ArgumentList ('/s') -wait
     }
 }
 
-$cmsourcepath = "$cmsourceextractpath\cd.retail"
+$cmsourcepath = (Get-ChildItem -Path $cmsourceextractpath | ?{$_.Name.ToLower().Contains("cd.")}).FullName
 $CMINIPath = "$cmsourceextractpath\Standalone.ini"
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Check ini file." | Out-File -Append $logpath
 
