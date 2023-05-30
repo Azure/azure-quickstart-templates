@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.13.1.58284",
-      "templateHash": "9285416752927271496"
+      "version": "0.17.1.54307",
+      "templateHash": "11664508253795316259"
     }
   },
   "parameters": {
@@ -39,7 +39,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D4s_v3",
+      "defaultValue": "Standard_A4_v2",
       "metadata": {
         "description": "SKU Size for the VMs"
       }
@@ -51,7 +51,7 @@
       }
     },
     "adminPassword": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "Password for the virtual machine"
       }
@@ -88,7 +88,7 @@
       }
     },
     "_artifactsLocationSasToken": {
-      "type": "secureString",
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
@@ -103,7 +103,7 @@
     "prefix": "[split(parameters('IntegrationRuntimeName'), variables('delimiters'))[0]]",
     "networkSecurityGroupName": "[format('{0}nsg', parameters('IntegrationRuntimeName'))]",
     "subnetId": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetInYourVnet'))]",
-    "scriptURL": "[concat(parameters('_artifactsLocation'), concat('/gatewayInstall.ps1', parameters('_artifactsLocationSasToken')))]"
+    "scriptURL": "[uri(parameters('_artifactsLocation'), format('gatewayInstall.ps1{0}', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -131,7 +131,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "nestedTemplate",
       "resourceGroup": "[parameters('existingDataFactoryResourceGroup')]",
       "properties": {
@@ -153,8 +153,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "4165770150403136675"
+              "version": "0.17.1.54307",
+              "templateHash": "12535090198905133255"
             }
           },
           "parameters": {
@@ -191,7 +191,7 @@
         "count": "[length(range(0, parameters('NodeCount')))]"
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('vmCopy-{0}', range(0, parameters('NodeCount'))[copyIndex()])]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -227,25 +227,11 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "5443578025096018367"
+              "version": "0.17.1.54307",
+              "templateHash": "9503221338010603266"
             }
           },
           "parameters": {
-            "secureBoot": {
-                "defaultValue": true,
-                "type": "bool",
-                "metadata": {
-                    "description": "Secure Boot setting of the virtual machine."
-                }
-            },
-            "vTPM": {
-                "defaultValue": true,
-                "type": "bool",
-                "metadata": {
-                    "description": "vTPM setting of the virtual machine."
-                }
-            },  
             "virtualMachineName": {
               "type": "string"
             },
@@ -256,7 +242,7 @@
               "type": "string"
             },
             "adminPassword": {
-              "type": "secureString"
+              "type": "securestring"
             },
             "existingVnetLocation": {
               "type": "string"
@@ -269,10 +255,6 @@
             }
           },
           "variables": {
-            "extensionName": "GuestAttestation",
-            "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
-            "extensionVersion": "1.0",
-            "maaTenantName": "GuestAttestation",   
             "nicName": "[format('{0}Nic', parameters('virtualMachineName'))]",
             "publicIPAddressName": "[format('{0}-ip', parameters('virtualMachineName'))]"
           },
@@ -332,7 +314,7 @@
                   "imageReference": {
                     "publisher": "MicrosoftWindowsServer",
                     "offer": "WindowsServer",
-                    "sku": "2022-datacenter-azure-edition",
+                    "sku": "2022-Datacenter",
                     "version": "latest"
                   },
                   "osDisk": {
@@ -341,13 +323,6 @@
                     "createOption": "FromImage"
                   }
                 },
-                "securityProfile": {
-                  "uefiSettings": {
-                    "secureBootEnabled": "[parameters('secureBoot')]",
-                    "vTpmEnabled": "[parameters('vTPM')]"
-                  },
-                  "securityType": "TrustedLaunch"
-                },  
                 "networkProfile": {
                   "networkInterfaces": [
                     {
@@ -359,37 +334,7 @@
               "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
               ]
-            },
-            {
-              "type": "Microsoft.Compute/virtualMachines/extensions",
-              "apiVersion": "2022-03-01",
-              "name": "[format('{0}/GuestAttestation', parameters('virtualMachineName'))]",
-              "location": "[parameters('existingVnetLocation')]",
-              "properties": {
-                "publisher": "[variables('extensionPublisher')]",
-                "type": "[variables('extensionName')]",
-                "typeHandlerVersion": "[variables('extensionVersion')]",
-                  "autoUpgradeMinorVersion": true,
-                  "enableAutomaticUpgrade": true,
-                  "settings": {
-                      "AttestationConfig": {
-                          "MaaSettings": {
-                              "maaEndpoint": "",
-                              "maaTenantName": "[variables('maaTenantName')]"
-                          },
-                          "AscSettings": {
-                              "ascReportingEndpoint": "",
-                              "ascReportingFrequency": ""
-                          },
-                          "useCustomToken": "false",
-                          "disableAlerts": "false"
-                      }
-                  }
-              },
-              "dependsOn": [
-                  "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
-              ]
-            }        
+            }
           ]
         }
       },
@@ -406,7 +351,7 @@
         "batchSize": 1
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('irInstallCopy-{0}', range(0, parameters('NodeCount'))[copyIndex()])]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -433,8 +378,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "3302662470492548200"
+              "version": "0.17.1.54307",
+              "templateHash": "8662714689762209589"
             }
           },
           "parameters": {
@@ -463,7 +408,7 @@
               "properties": {
                 "publisher": "Microsoft.Compute",
                 "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.10",
+                "typeHandlerVersion": "1.7",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                   "fileUris": [
