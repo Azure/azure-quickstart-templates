@@ -150,8 +150,9 @@ New-CMAdministrativeUser -Name $CMUser -RoleName "Full Administrator" -SecurityS
 "Done" | Out-File -Append $logpath
 
 #Add PS computer account as CM administrative user
-"Setting $PSComputerAccount as CM administrative user." | Out-File -Append $logpath
-New-CMAdministrativeUser -Name $PSComputerAccount  -RoleName "Full Administrator" -SecurityScopeName "All","All Systems","All Users and User Groups"
+$ComputerAccount = $PSComputerAccount.Split('$')[0]
+"Setting $ComputerAccount as CM administrative user." | Out-File -Append $logpath
+New-CMAdministrativeUser -Name $ComputerAccount  -RoleName "Full Administrator" -SecurityScopeName "All","All Systems","All Users and User Groups"
 "Done" | Out-File -Append $logpath
 
 $upgradingfailed = $false
@@ -420,7 +421,6 @@ $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 $PSSystemServer = Get-CMSiteSystemServer -SiteCode $PSRole
 while(!$PSSystemServer)
 {
-    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] 111" | Out-File -Append $logpath
     "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Wait for PS finished installing, will try 60 seconds later..." | Out-File -Append $logpath
     Start-Sleep -Seconds 60
     $PSSystemServer = Get-CMSiteSystemServer -SiteCode $PSRole
