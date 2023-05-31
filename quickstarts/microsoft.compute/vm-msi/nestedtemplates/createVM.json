@@ -114,18 +114,7 @@
       "metadata": {
           "description": "vTPM setting of the virtual machine."
       }
-   },
-   "extensionPublisher": {
-      "type": "string",
-      "defaultValue": "Microsoft.Azure.Security.LinuxAttestation",
-      "metadata": {
-        "description": "Windows or Linux Guest attestation extension publisher for the virtual machine"
-      },
-      "allowedValues": [
-        "Microsoft.Azure.Security.WindowsAttestation",
-        "Microsoft.Azure.Security.LinuxAttestation"
-      ]
-    }
+   }
   },
   "variables": {
     "extensionName": "GuestAttestation",
@@ -264,7 +253,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
         ],
         "properties": {
-            "publisher": "[parameters('extensionPublisher')]",
+            "publisher": "Microsoft.Azure.Security.WindowsAttestation",
             "type": "[variables('extensionName')]",
             "typeHandlerVersion": "[variables('extensionVersion')]",
             "autoUpgradeMinorVersion": true,
@@ -284,7 +273,38 @@
                 }
             }
         },
-        "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]"
+        "condition": "[and(variables('isWindowsOS'), and(parameters('vTPM'), parameters('secureBoot')))]"
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.Azure.Security.LinuxAttestation",
+            "type": "[variables('extensionName')]",
+            "typeHandlerVersion": "[variables('extensionVersion')]",
+            "autoUpgradeMinorVersion": true,
+            "enableAutomaticUpgrade": true,
+            "settings": {
+                "AttestationConfig": {
+                    "MaaSettings": {
+                        "maaEndpoint": "",
+                        "maaTenantName": "[variables('maaTenantName')]"
+                    },
+                    "AscSettings": {
+                      "ascReportingEndpoint": "",
+                      "ascReportingFrequency": ""
+                    },
+                    "useCustomToken": "false",
+                    "disableAlerts": "false"
+                }
+            }
+        },
+        "condition": "[and(not(variables('isWindowsOS')), and(parameters('vTPM'), parameters('secureBoot')))]"
     },
     {
       "condition": "[and(variables('isWindowsOS'), parameters('provisionExtensions'))]",
