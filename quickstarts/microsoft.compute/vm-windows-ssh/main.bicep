@@ -14,7 +14,7 @@ param adminPassword string = newGuid()
 param publicSshKey string
 
 @description('VM size for VM')
-param vmsize string = 'Standard_D4_v5'
+param vmsize string = 'Standard_D4s_v5'
 
 @description('SKU of the Windows Server')
 @allowed([
@@ -48,6 +48,17 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param _artifactsLocationSasToken string = ''
 
+@description('Secure Boot setting of the virtual machine.')
+param secureBoot bool = true
+
+@description('vTPM setting of the virtual machine.')
+param vTPM bool = true
+
+var vmName = 'sshhost'
+var extensionName = 'GuestAttestation'
+var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
+var extensionVersion = '1.0'
+var maaTenantName = 'GuestAttestation'
 var initScriptUrl = uri(_artifactsLocation, 'initialize.ps1${_artifactsLocationSasToken}')
 var sshdConfigUrl = uri(_artifactsLocation, 'configs/sshd_config_wopwd${_artifactsLocationSasToken}')
 
@@ -178,8 +189,8 @@ resource datadisk 'Microsoft.Compute/disks@2020-09-30' = {
   }
 }
 
-resource sshhost 'Microsoft.Compute/virtualMachines@2021-07-01' = {
-  name: 'sshhost'
+resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
+  name: vmName
   location: location
   tags: {
     displayName: 'Windows Server with SSH'
@@ -189,7 +200,7 @@ resource sshhost 'Microsoft.Compute/virtualMachines@2021-07-01' = {
       vmSize: vmsize
     }
     osProfile: {
-      computerName: 'sshhost'
+      computerName: vmName
       adminUsername: adminUser
       adminPassword: adminPassword
     }
@@ -215,6 +226,13 @@ resource sshhost 'Microsoft.Compute/virtualMachines@2021-07-01' = {
         }
       ]
     }
+    securityProfile: {
+      uefiSettings: {
+        secureBootEnabled: secureBoot
+        vTpmEnabled: vTPM
+      }
+      securityType: 'TrustedLaunch'
+    }
     networkProfile: {
       networkInterfaces: [
         {
@@ -231,8 +249,35 @@ resource sshhost 'Microsoft.Compute/virtualMachines@2021-07-01' = {
   }
 }
 
-resource sshhost_setupScript 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' = {
-  parent: sshhost
+resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (vTPM && secureBoot) {
+  parent: vm
+  name: 'GuestAttestation'
+  location: location
+  properties: {
+    publisher: extensionPublisher
+    type: extensionName
+    typeHandlerVersion: extensionVersion
+    autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: ''
+          maaTenantName: maaTenantName
+        }
+        AscSettings: {
+          ascReportingEndpoint: ''
+          ascReportingFrequency: ''
+        }
+        useCustomToken: 'false'
+        disableAlerts: 'false'
+      }
+    }
+  }
+}
+
+resource vmName_setupScript 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' = {
+  parent: vm
   name: 'setupScript'
   location: location
   tags: {
