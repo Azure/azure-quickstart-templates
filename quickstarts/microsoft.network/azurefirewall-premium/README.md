@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: azurefirewall-premium
 languages:
+- bicep
 - json
 ---
 # Testing environment for Azure Firewall Premium
