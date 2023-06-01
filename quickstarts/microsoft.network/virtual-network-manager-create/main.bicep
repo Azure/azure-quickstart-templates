@@ -8,7 +8,7 @@ param resourceGroupName string = 'rg-avnm-sample'
 
 @description('The location of this regional hub. All resources, including spoke resources, will be deployed to this region.')
 @minLength(6)
-param location string = 'eastus'
+param location string
 
 // Connectivity Topology Options:
 //
