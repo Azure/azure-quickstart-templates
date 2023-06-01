@@ -30,7 +30,8 @@
             "defaultValue": "[resourceGroup().name]"
         },
         "sqlServerImageType": {
-            "allowedValues": [ "SQL2017-WS2016", "SQL2016-WS2016", "SQL2019-WS2019" ],
+            "defaultValue": "sql2019-ws2022",
+            "allowedValues": [ "sql2017-ws2019", "sql2019-WS2019", "sql2019-ws2022" ],
             "type": "string",
             "metadata": {
                 "description": "Select the version of SQL Server Image type"
@@ -82,10 +83,10 @@
         },
         "_artifactsLocation": {
             "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.sqlvirtualmachine/sql-vm-ag-setup/",
             "metadata": {
                 "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
-            },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.sqlvirtualmachine/sql-vm-ag-setup/"
+            }
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -105,12 +106,12 @@
     "variables": {
         "existingVMListArray": "[split(parameters('existingVmList'),',')]",
         "GroupResourceId": "[resourceId('Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups', parameters('failoverClusterName'))]",
-        "joinClusterTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/join-cluster.json',parameters('_artifactsLocationSasToken'))]"
+        "joinClusterTemplateURL": "[uri(parameters('_artifactsLocation'),format('/nested/join-cluster.json',parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
             "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
-            "apiVersion": "2017-03-01-preview",
+            "apiVersion": "2022-08-01-preview",
             "name": "[trim(variables('existingVMListArray')[copyIndex()])]",
             "location": "[parameters('location')]",
             "copy": {
@@ -124,7 +125,7 @@
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2018-07-01",
+            "apiVersion": "2022-09-01",
             "name": "[parameters('cloudWitnessName')]",
             "sku": {
                 "name": "Standard_LRS"
@@ -138,7 +139,7 @@
         },
         {
             "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups",
-            "apiVersion": "2017-03-01-preview",
+            "apiVersion": "2022-08-01-preview",
             "name": "[parameters('failoverClusterName')]",
             "location": "[parameters('location')]",
             "properties": {
@@ -150,14 +151,14 @@
                     "ClusterBootstrapAccount": "[parameters('existingDomainAccount')]",
                     "ClusterOperatorAccount": "[parameters('existingDomainAccount')]",
                     "SqlServiceAccount": "[parameters('existingSqlServiceAccount')]",
-                    "StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').primaryEndpoints['blob']]",
-                    "StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').keys[0].value]"
+                    "StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2022-09-01').primaryEndpoints['blob']]",
+                    "StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2022-09-01').keys[0].value]"
                 }
             }
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-03-01",
+            "apiVersion": "2022-09-01",
             "name": "joincluster",
             "dependsOn": [
                 "[parameters('failoverClusterName')]",
