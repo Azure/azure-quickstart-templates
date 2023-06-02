@@ -101,22 +101,26 @@
         "description": "SAS Token for accessing script path"
       }
     },
-    "secureBoot": {
-        "defaultValue": true,
-        "type": "bool",
-        "metadata": {
-            "description": "Secure Boot setting of the virtual machine."
-        }
-    },
-    "vTPM": {
-        "defaultValue": true,
-        "type": "bool",
-        "metadata": {
-            "description": "vTPM setting of the virtual machine."
-        }
-    }    
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "vmName": "sshhost",
     "extensionName": "GuestAttestation",
     "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
@@ -306,13 +310,7 @@
             }
           ]
         },
-        "securityProfile": {
-          "uefiSettings": {
-              "secureBootEnabled": "[parameters('secureBoot')]",
-              "vTpmEnabled": "[parameters('vTPM')]"
-          },
-          "securityType": "TrustedLaunch"
-        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -334,7 +332,7 @@
       ]
     },
     {
-        "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+        "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "apiVersion": "2022-03-01",
         "name": "[format('{0}/GuestAttestation', variables('vmName'))]",
