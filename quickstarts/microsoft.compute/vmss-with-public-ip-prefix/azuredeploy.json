@@ -41,19 +41,16 @@
         "description": "Number of VM instances (16 or less)."
       }
     },
-    "secureBoot": {
-        "defaultValue": true,
-        "type": "Bool",
-        "metadata": {
-            "description": "Secure Boot setting of the virtual machine."
-        }
-    },
-    "vTPM": {
-        "defaultValue": true,
-        "type": "Bool",
-        "metadata": {
-            "description": "vTPM setting of the virtual machine."
-        }
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     },
     "imageOffer": {
         "defaultValue": "0001-com-ubuntu-server-lunar",
@@ -163,7 +160,14 @@
     "natBackendPort": 22,
     "bePoolName": "[format('{0}bepool', parameters('vmssName'))]",
     "nicName": "[format('{0}nic', parameters('vmssName'))]",
-    "ipConfigName": "[format('{0}ipconfig', parameters('vmssName'))]"
+    "ipConfigName": "[format('{0}ipconfig', parameters('vmssName'))]",
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    }
   },
   "resources": [
     {
@@ -289,13 +293,7 @@
             "adminPassword": "[parameters('adminPasswordOrKey')]",
             "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
-          "securityProfile": {
-              "uefiSettings": {
-                  "secureBootEnabled": "[parameters('secureBoot')]",
-                  "vTpmEnabled": "[parameters('vTPM')]"
-              },
-              "securityType": "TrustedLaunch"
-          },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
