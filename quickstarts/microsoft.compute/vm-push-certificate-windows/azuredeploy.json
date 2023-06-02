@@ -63,19 +63,16 @@
             "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
         }
     },
-    "secureBoot": {
-        "defaultValue": true,
-        "type": "Bool",
-        "metadata": {
-            "description": "Secure Boot setting of the virtual machine."
-        }
-    },
-    "vTPM": {
-        "defaultValue": true,
-        "type": "Bool",
-        "metadata": {
-            "description": "vTPM setting of the virtual machine."
-        }
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     },
     "location": {
       "type": "string",
@@ -86,6 +83,13 @@
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "extensionName": "GuestAttestation",
     "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
     "extensionVersion": "1.0",
@@ -101,7 +105,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2021-02-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPName')]",
       "location": "[parameters('location')]",
@@ -112,7 +116,7 @@
     {
       "comments": "Simple Network Security Group for subnet [variables('subnet1Name')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2022-07-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -134,7 +138,7 @@
       }
     },
     {
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -161,7 +165,7 @@
       }
     },
     {
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -187,7 +191,7 @@
       }
     },
     {
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -234,13 +238,7 @@
             "createOption": "FromImage"
           }
         },
-        "securityProfile": {
-            "uefiSettings": {
-                "secureBootEnabled": "[parameters('secureBoot')]",
-                "vTpmEnabled": "[parameters('vTPM')]"
-            },
-            "securityType": "TrustedLaunch"
-        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -251,6 +249,7 @@
       }
       },
       {
+        "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "apiVersion": "2022-03-01",
           "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
