@@ -8,29 +8,15 @@
       },
       "type": "string"
     },
-    "secureBoot": {
-      "defaultValue": true,
-      "type": "bool",
-      "metadata": {
-          "description": "Secure Boot setting of the virtual machine."
-      }
-    },
-    "vTPM": {
-      "defaultValue": true,
-      "type": "bool",
-      "metadata": {
-          "description": "vTPM setting of the virtual machine."
-      }
-    },
-    "extensionPublisher": {
+    "securityType": {
       "type": "string",
-      "defaultValue": "Microsoft.Azure.Security.LinuxAttestation",
+      "defaultValue": "TrustedLaunch",
       "allowedValues": [
-          "Microsoft.Azure.Security.WindowsAttestation",
-          "Microsoft.Azure.Security.LinuxAttestation"
-        ],            
+        "Standard",
+        "TrustedLaunch"
+      ],
       "metadata": {
-        "description": "extension Publisher for Windows and Linux"
+        "description": "Security Type of the Virtual Machine."
       }
     },
     "_artifactsLocationSasToken": {
@@ -129,7 +115,14 @@
   "variables": {
     "extensionName": "GuestAttestation",
     "extensionVersion": "1.0",
-    "maaTenantName": "GuestAttestation",    
+    "maaTenantName": "GuestAttestation",   
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "isWindowsOS": "[bool(contains(toLower(variables('imageReference')[parameters('operatingSystem')].offer), 'windows'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -237,13 +230,7 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')[parameters('operatingSystem')]]"
         },
-        "securityProfile": {
-            "uefiSettings": {
-                "secureBootEnabled": "[parameters('secureBoot')]",
-                "vTpmEnabled": "[parameters('vTPM')]"
-            },
-            "securityType": "TrustedLaunch"
-        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -268,7 +255,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
         ],
         "properties": {
-            "publisher": "[parameters('extensionPublisher')]",
+            "publisher": "Microsoft.Azure.Security.WindowsAttestation",
             "type": "[variables('extensionName')]",
             "typeHandlerVersion": "[variables('extensionVersion')]",
             "autoUpgradeMinorVersion": true,
@@ -288,7 +275,38 @@
                 }
             }
         },
-        "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]"
+        "condition": "[and(variables('isWindowsOS'),and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true()))))]"
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.Azure.Security.LinuxAttestation",
+            "type": "[variables('extensionName')]",
+            "typeHandlerVersion": "[variables('extensionVersion')]",
+            "autoUpgradeMinorVersion": true,
+            "enableAutomaticUpgrade": true,
+            "settings": {
+                "AttestationConfig": {
+                    "MaaSettings": {
+                        "maaEndpoint": "",
+                        "maaTenantName": "[variables('maaTenantName')]"
+                    },
+                    "AscSettings": {
+                      "ascReportingEndpoint": "",
+                      "ascReportingFrequency": ""
+                    },
+                    "useCustomToken": "false",
+                    "disableAlerts": "false"
+                }
+            }
+        },
+        "condition": "[and(not(variables('isWindowsOS')), and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true()))))]"
     },
     {
       "condition": "[and(variables('isWindowsOS'), parameters('provisionExtensions'))]",
