@@ -23,19 +23,16 @@
         "description": "Default location"
       }
     },
-    "secureBoot": {
-        "defaultValue": true,
-        "type": "bool",
-        "metadata": {
-            "description": "Secure Boot setting of the virtual machine."
-        }
-      },
-      "vTPM": {
-        "defaultValue": true,
-        "type": "bool",
-        "metadata": {
-            "description": "vTPM setting of the virtual machine."
-        }
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     },
     "instanceCount": {
       "type": "int",
@@ -109,6 +106,13 @@
     }    
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "extensionName": "GuestAttestation",
     "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
     "extensionVersion": "1.0",
@@ -264,13 +268,7 @@
             "adminPassword": "[parameters('adminPasswordOrKey')]",
             "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
-          "securityProfile": {
-            "uefiSettings": {
-                "secureBootEnabled": "[parameters('secureBoot')]",
-                "vTpmEnabled": "[parameters('vTPM')]"
-            },
-            "securityType": "TrustedLaunch"
-          },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
@@ -322,6 +320,37 @@
                       "commandToExecute": "[concat('bash mountazurefiles.sh ', parameters('storageAccountName'), ' ', parameters('storageAccountKey'), ' ', parameters('shareName'), ' ', parameters('mountpointPath'), ' ', parameters('adminUsername'))]"
                   }
                 }
+              },
+              {
+                  "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+                  "type": "Microsoft.Compute/virtualMachines/extensions",
+                  "apiVersion": "2022-03-01",
+                  "name": "[format('{0}/GuestAttestation', parameters('vmssName'))]",
+                  "location": "[parameters('location')]",
+                  "properties": {
+                    "publisher": "[variables('extensionPublisher')]",
+                    "type": "[variables('extensionName')]",
+                    "typeHandlerVersion": "[variables('extensionVersion')]",
+                    "autoUpgradeMinorVersion": true,
+                    "enableAutomaticUpgrade": true,
+                    "settings": {
+                      "AttestationConfig": {
+                        "MaaSettings": {
+                          "maaEndpoint": "",
+                          "maaTenantName": "[variables('maaTenantName')]"
+                        },
+                        "AscSettings": {
+                          "ascReportingEndpoint": "",
+                          "ascReportingFrequency": ""
+                        },
+                        "useCustomToken": "false",
+                        "disableAlerts": "false"
+                      }
+                    }
+                  },
+                  "dependsOn": [
+                    "[resourceId('Microsoft.Compute/virtualMachines', '[parameters('vmssName')]')]"
+                  ]
               }
             ]
           }
