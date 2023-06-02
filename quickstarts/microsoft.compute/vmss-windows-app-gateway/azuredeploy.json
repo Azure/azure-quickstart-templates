@@ -41,19 +41,16 @@
           "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
       }
     },
-    "secureBoot": {
-        "defaultValue": true,
-        "type": "bool",
-        "metadata": {
-            "description": "Secure Boot setting of the virtual machine."
-        }
-    },
-    "vTPM": {
-        "defaultValue": true,
-        "type": "bool",
-        "metadata": {
-            "description": "vTPM setting of the virtual machine."
-        }
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     },
     "vmssName": {
       "type": "string",
@@ -91,6 +88,13 @@
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.8.0/21",
@@ -273,13 +277,7 @@
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
           },
-          "securityProfile": {
-              "uefiSettings": {
-                  "secureBootEnabled": "[parameters('secureBoot')]",
-                  "vTpmEnabled": "[parameters('vTPM')]"
-              },
-              "securityType": "TrustedLaunch"
-          },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
