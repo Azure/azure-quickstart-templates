@@ -97,20 +97,17 @@
                 "description": "Storage account name the MSI will be given access to"
             }
         },
-        "secureBoot": {
-            "defaultValue": true,
-            "type": "bool",
-            "metadata": {
-                "description": "Secure Boot setting of the virtual machine."
-            }
+        "securityType": {
+          "type": "string",
+          "defaultValue": "TrustedLaunch",
+          "allowedValues": [
+            "Standard",
+            "TrustedLaunch"
+          ],
+          "metadata": {
+            "description": "Security Type of the Virtual Machine."
+          }
         },
-        "vTPM": {
-            "defaultValue": true,
-            "type": "bool",
-            "metadata": {
-                "description": "vTPM setting of the virtual machine."
-            }
-        },  
         "msiRole": {
             "type": "string",
             "defaultValue": "StorageBlobDataReader",
@@ -128,7 +125,14 @@
         "extensionName": "GuestAttestation",
         "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
         "extensionVersion": "1.0",
-        "maaTenantName": "GuestAttestation",  
+        "maaTenantName": "GuestAttestation",
+        "securityProfileJson": {
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          },
+          "securityType": "[parameters('securityType')]"
+        },  
         "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
         "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
@@ -282,13 +286,7 @@
                         "version": "latest"
                     }
                 },
-                "securityProfile": {
-                    "uefiSettings": {
-                        "secureBootEnabled": "[parameters('secureBoot')]",
-                        "vTpmEnabled": "[parameters('vTPM')]"
-                    },
-                    "securityType": "TrustedLaunch"
-                },
+                "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
                 "networkProfile": {
                     "networkInterfaces": [
                         {
@@ -299,7 +297,7 @@
             }
         },
         {
-            "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+            "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2022-03-01",
             "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
