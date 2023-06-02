@@ -20,18 +20,15 @@
         "description": "DNS for Load Balancer IP."
       }
     },
-    "secureBoot": {
-      "defaultValue": true,
-      "type": "bool",
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
       "metadata": {
-          "description": "Secure Boot setting of the virtual machine."
-      }
-    },
-    "vTPM": {
-      "defaultValue": true,
-      "type": "bool",
-      "metadata": {
-          "description": "vTPM setting of the virtual machine."
+        "description": "Security Type of the Virtual Machine."
       }
     },
     "OSVersion": {
@@ -94,6 +91,13 @@
     "extensionVersion": "1.0",
     "maaEndpoint": "[substring('emptystring', 0, 0)]",
     "maaTenantName": "GuestAttestation", 
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "addressPrefix": "10.0.0.0/16",
     "imageOffer": "WindowsServer",
     "imagePublisher": "MicrosoftWindowsServer",
@@ -266,13 +270,7 @@
             "createOption": "FromImage"
           }
         },
-        "securityProfile": {
-          "uefiSettings": {
-              "secureBootEnabled": "[parameters('secureBoot')]",
-              "vTpmEnabled": "[parameters('vTPM')]"
-          },
-          "securityType": "TrustedLaunch"
-      },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -298,7 +296,7 @@
       }
     },
     {
-      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2022-03-01",
       "name": "[format('{0}/GuestAttestation', variables('vmNamePrefix'))]",
