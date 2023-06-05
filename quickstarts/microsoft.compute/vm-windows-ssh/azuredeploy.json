@@ -41,7 +41,7 @@
     },
     "vmsize": {
       "type": "string",
-      "defaultValue": "Standard_D4_v5",
+      "defaultValue": "Standard_D4s_v5",
       "metadata": {
         "description": "VM size for VM"
       }
@@ -100,9 +100,32 @@
       "metadata": {
         "description": "SAS Token for accessing script path"
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "vmName": "sshhost",
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "initScriptUrl": "[uri(parameters('_artifactsLocation'), format('initialize.ps1{0}', parameters('_artifactsLocationSasToken')))]",
     "sshdConfigUrl": "[uri(parameters('_artifactsLocation'), format('configs/sshd_config_wopwd{0}', parameters('_artifactsLocationSasToken')))]"
   },
@@ -250,6 +273,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2021-07-01",
+      "name": "[variables('vmName')]",
       "name": "sshhost",
       "location": "[parameters('location')]",
       "tags": {
@@ -286,6 +310,7 @@
             }
           ]
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -307,9 +332,40 @@
       ]
     },
     {
+        "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/GuestAttestation', variables('vmName'))]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "publisher": "[variables('extensionPublisher')]",
+            "type": "[variables('extensionName')]",
+            "typeHandlerVersion": "[variables('extensionVersion')]",
+            "autoUpgradeMinorVersion": true,
+            "enableAutomaticUpgrade": true,
+            "settings": {
+                "AttestationConfig": {
+                    "MaaSettings": {
+                        "maaEndpoint": "",
+                        "maaTenantName": "[variables('maaTenantName')]"
+                    },
+                    "AscSettings": {
+                      "ascReportingEndpoint": "",
+                      "ascReportingFrequency": ""
+                    },
+                    "useCustomToken": "false",
+                    "disableAlerts": "false"
+                }
+            }
+        },
+        "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+        ]
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2021-07-01",
-      "name": "[format('{0}/{1}', 'sshhost', 'setupScript')]",
+      "name": "[format('{0}/{1}', variables('vmName'), 'setupScript')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "Setup script for SSH"
@@ -330,7 +386,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', 'sshhost')]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ]
     }
   ],
