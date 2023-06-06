@@ -12,7 +12,7 @@ resource storageContainer 'Microsoft.AzureStackHCI/storageContainers@2021-09-01-
     name: customLocationId
   }
   properties: {
-    path: 'C:\\ClusterStorage\\CSV-DefaultVMs\\'
+    path: 'C:\\ClusterStorage\\CSV-DefaultVMs'
     resourceName: storageContainerName
   }
 }
