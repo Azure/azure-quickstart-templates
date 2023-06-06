@@ -1,15 +1,15 @@
 ---
-description: This template creates an Azure Stack HCI Image from an Azure Marketplace Gallery Image. 
+description: This template creates an Azure Stack HCI Image from an Azure Marketplace Gallery Image.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: hci-image-from-marketplace
+urlFragment: image-from-azure-marketplace
 languages:
-- json
 - bicep
+- json
 ---
-# Create an image from the Azure Marketplace
+# creates an Azure Stack HCI Image from Marketplace Image
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/image-from-azure-marketplace/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/image-from-azure-marketplace/PublicDeployment.svg)
