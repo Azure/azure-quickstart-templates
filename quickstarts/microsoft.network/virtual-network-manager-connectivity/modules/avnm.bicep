@@ -18,6 +18,7 @@ resource networkManager 'Microsoft.Network/networkManagers@2022-09-01' = {
   properties: {
     networkManagerScopeAccesses: [
       'Connectivity'
+      'Routing'
     ]
     networkManagerScopes: {
       subscriptions: [
