@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vmss-with-public-ip-prefix
 languages:
-- json
 - bicep
+- json
 ---
 # VMSS with Public IP Prefix
 
