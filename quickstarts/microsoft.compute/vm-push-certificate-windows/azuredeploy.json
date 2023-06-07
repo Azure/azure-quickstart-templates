@@ -9,11 +9,11 @@
         "description": "Name of the VM"
       }
     },
-    "userAssignedIdentityName": {
-        "type": "String",
-        "metadata": {
-            "description": "The name of the existing User assigned Managed Identity resource. In existing Key Vault this managed identity needs to be granted the role to access secret."
-        }
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of existing the Key Vault resource."
+      }
     },
     "vmSize": {
       "type": "string",
@@ -58,7 +58,7 @@
             "2022-datacenter-g2",
             "2022-datacenter-smalldisk-g2"
         ],
-        "type": "String",
+        "type": "string",
         "metadata": {
             "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
         }
@@ -83,6 +83,7 @@
     }
   },
   "variables": {
+    "managedIdentityName": "KeyVaultReader",
     "securityProfileJson": {
       "uefiSettings": {
         "secureBootEnabled": true,
@@ -104,6 +105,80 @@
     "networkSecurityGroupName": "[concat(variables('subnet1Name'), '-nsg')]"
   },
   "resources": [
+    {
+      "comments": "User-Defined Managed Identity defined. Used to access the cert from key vault.",
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "name": "[variables('managedIdentityName')]",
+      "apiVersion": "2018-11-30",
+      "location": "[parameters('location')]"      
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "role-assignment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "roleAssignmentName": {
+            "value": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))).principalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483'))]"
+          },
+          "roleDefinitionId": {
+            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')]"
+          },
+          "principalId": {
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))).principalId]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "10686647958147090630"
+            }
+          },
+          "parameters": {
+            "roleAssignmentName": {
+              "type": "string"
+            },
+            "roleDefinitionId": {
+              "type": "string"
+            },
+            "principalId": {
+              "type": "string"
+            },
+            "keyVaultName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-10-01-preview",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+              "name": "[parameters('roleAssignmentName')]",
+              "properties": {
+                "roleDefinitionId": "[parameters('roleDefinitionId')]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]"
+      ]
+    },
     {
       "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -201,7 +276,7 @@
       "identity": {
           "type": "UserAssigned",
           "userAssignedIdentities": {
-              "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/',parameters('userAssignedIdentityName'))]": {}
+              "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/',variables('managedIdentityName'))]": {}
           }
       },
       "properties": {
