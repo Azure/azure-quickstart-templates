@@ -69,11 +69,20 @@ param logPath string = 'G:\\SQLLog'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-@description('Secure Boot setting of the virtual machine.')
-param secureBoot bool = true
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
 
-@description('vTPM setting of the virtual machine.')
-param vTPM bool = true
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
 
 var networkInterfaceName = '${virtualMachineName}-nic'
 var networkSecurityGroupName = '${virtualMachineName}-nsg'
@@ -204,17 +213,11 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         provisionVMAgent: true
       }
     }
-    securityProfile: {
-      uefiSettings: {
-        secureBootEnabled: secureBoot
-        vTpmEnabled: vTPM
-      }
-      securityType: 'TrustedLaunch'
-    }
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
   }
 }
 
-resource virtualMachineName_extension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (vTPM && secureBoot) {
+resource virtualMachineName_extension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
   parent: virtualMachine
   name: extensionName
   location: location
