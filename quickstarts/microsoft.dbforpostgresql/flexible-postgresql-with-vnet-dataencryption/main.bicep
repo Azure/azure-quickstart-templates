@@ -111,7 +111,7 @@ resource managedidentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
   location: location
 }
 
-resource kv 'Microsoft.KeyVault/vaults@2023-02-01' = {
+resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -148,7 +148,7 @@ resource kvKey 'Microsoft.KeyVault/vaults/keys@2022-07-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -159,7 +159,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
     }
   }
 
-resource subnet 'subnets@2021-05-01' = {
+resource subnet 'subnets@2022-07-01' = {
     name: subnetName
     properties: {
       addressPrefix: postgresqlSubnetPrefix
