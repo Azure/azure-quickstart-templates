@@ -37,7 +37,7 @@ var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(resourceGroup().id, location))
 var ncName = !empty(networkConnectionName) ? networkConnectionName : '${abbrs.networkConnections}${resourceToken}'
 
-module vnet 'core/vnet.bicep' = if(empty(existingSubnetId)) {
+module vnet 'modules/vnet.bicep' = if(empty(existingSubnetId)) {
   name: 'vnet'
   params: {
     location: location
@@ -49,7 +49,7 @@ module vnet 'core/vnet.bicep' = if(empty(existingSubnetId)) {
   }
 }
 
-module devcenter 'core/devcenter.bicep' = {
+module devcenter 'modules/devcenter.bicep' = {
   name: 'devcenter'
   params: {
     location: location
