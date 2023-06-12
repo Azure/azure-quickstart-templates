@@ -146,20 +146,17 @@
         "description": "Name of the resource group for the public ip address"
       }
     },
-    "secureBoot": {
-      "defaultValue": true,
-      "type": "bool",
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
       "metadata": {
-          "description": "Secure Boot setting of the virtual machine."
+        "description": "Security Type of the Virtual Machine."
       }
     },
-    "vTPM": {
-      "defaultValue": true,
-      "type": "bool",
-      "metadata": {
-          "description": "vTPM setting of the virtual machine."
-      }
-    },    
     "imageOffer": {
       "defaultValue": "0001-com-ubuntu-server-lunar",
       "allowedValues": [
@@ -195,6 +192,13 @@
     }
   },
   "variables": {
+      "securityProfileJson": {
+        "uefiSettings": {
+          "secureBootEnabled": true,
+          "vTpmEnabled": true
+        },
+        "securityType": "[parameters('securityType')]"
+      },
       "extensionName": "GuestAttestation",
       "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
       "extensionVersion": "1.0",
@@ -317,7 +321,7 @@
       }
     },
     {
-      "apiVersion": "2021-03-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -347,13 +351,7 @@
             "createOption": "FromImage"
           }
         },
-        "securityProfile": {
-          "uefiSettings": {
-              "secureBootEnabled": "[parameters('secureBoot')]",
-              "vTpmEnabled": "[parameters('vTPM')]"
-          },
-          "securityType": "TrustedLaunch"
-        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -370,7 +368,7 @@
       }
     },
     {
-      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2022-03-01",
       "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
