@@ -4,7 +4,7 @@
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_D2_v3",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
@@ -21,6 +21,17 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Default location"
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
       }
     },
     "instanceCount": {
@@ -95,6 +106,17 @@
     }    
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(parameters('vmssName'), 'vnet')]",
@@ -111,7 +133,7 @@
     "osType": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "16.04-LTS",
+      "sku": "18_04-lts-gen2",
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
@@ -217,7 +239,7 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2021-07-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -246,6 +268,7 @@
             "adminPassword": "[parameters('adminPasswordOrKey')]",
             "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
@@ -305,4 +328,3 @@
     }
   ]
 }
-
