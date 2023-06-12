@@ -31,8 +31,6 @@ param principalId string = ''
 @description('The type of principal id: User, Group or ServicePrincipal')
 param principalType string = 'User'
 
-param tags object = {}
-
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(resourceGroup().id, location))
 var ncName = !empty(networkConnectionName) ? networkConnectionName : '${abbrs.networkConnections}${resourceToken}'
@@ -41,7 +39,6 @@ module vnet 'modules/vnet.bicep' = if(empty(existingSubnetId)) {
   name: 'vnet'
   params: {
     location: location
-    tags: tags
     vnetAddressPrefixes: vnetAddressPrefixes
     vnetName: !empty(vnetName) ? vnetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
     subnetAddressPrefixes: subnetAddressPrefixes
@@ -53,7 +50,6 @@ module devcenter 'modules/devcenter.bicep' = {
   name: 'devcenter'
   params: {
     location: location
-    tags: tags
     devcenterName: !empty(devcenterName) ? devcenterName : '${abbrs.devcenter}${resourceToken}'
     subnetId: !empty(existingSubnetId) ? existingSubnetId : vnet.outputs.subnetId
     networkConnectionName: ncName

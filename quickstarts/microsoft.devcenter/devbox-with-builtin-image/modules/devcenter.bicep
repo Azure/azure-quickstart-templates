@@ -1,11 +1,23 @@
+@description('The name of Dev Center e.g. dc-devbox-test')
 param devcenterName string
+
+@description('The name of Network Connection e.g. con-devbox-test')
 param networkConnectionName string
-param networkingResourceGroupName string
-param subnetId string
+
+@description('The name of Dev Center project e.g. dcprj-devbox-test')
 param projectName string
+
+@description('The resource group name of Network Connection e.g. rg-devbox-test')
+param networkingResourceGroupName string
+
+@description('The resource id of Virtual network subnet')
+param subnetId string
+
+@description('The user or group id that will be granted to Devcenter Dev Box User role')
 param principalId string
+
+@description('Primary location for all resources e.g. eastus')
 param location string = resourceGroup().location
-param tags object = {}
 
 @allowed([
   'Group'
@@ -38,7 +50,6 @@ var storage = {
 resource devcenter 'Microsoft.DevCenter/devcenters@2023-01-01-preview' = {
   name: devcenterName
   location: location
-  tags: tags
 }
 
 resource networkConnection 'Microsoft.DevCenter/networkConnections@2023-01-01-preview' = {
@@ -49,7 +60,6 @@ resource networkConnection 'Microsoft.DevCenter/networkConnections@2023-01-01-pr
     subnetId: subnetId
     networkingResourceGroupName: networkingResourceGroupName
   }
-  tags: tags
 }
 
 resource attachedNetworks 'Microsoft.DevCenter/devcenters/attachednetworks@2023-01-01-preview' = {
@@ -98,7 +108,6 @@ resource project 'Microsoft.DevCenter/projects@2022-11-11-preview' = {
   dependsOn: [
     devboxDefinitions
   ]
-  tags: tags
 }
 
 resource role 'Microsoft.Authorization/roleAssignments@2022-04-01' = if(!empty(principalId)) {
