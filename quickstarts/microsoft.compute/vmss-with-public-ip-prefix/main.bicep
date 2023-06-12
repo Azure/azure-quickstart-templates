@@ -17,11 +17,20 @@ param authenticationType string = 'sshPublicKey'
 @maxValue(16)
 param instanceCount int = 5
 
-@description('Secure Boot setting of the virtual machine.')
-param secureBoot bool = true
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
 
-@description('vTPM setting of the virtual machine.')
-param vTPM bool = true
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
 
 @description('Windows Server and SQL Offer')
 @allowed([
@@ -219,13 +228,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-11-01' = {
         adminPassword: adminPasswordOrKey
         linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
       }
-      securityProfile: {
-        uefiSettings: {
-          secureBootEnabled: secureBoot
-          vTpmEnabled: vTPM
-        }
-        securityType: 'TrustedLaunch'
-      }
+      securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
       networkProfile: {
         networkInterfaceConfigurations: [
           {
