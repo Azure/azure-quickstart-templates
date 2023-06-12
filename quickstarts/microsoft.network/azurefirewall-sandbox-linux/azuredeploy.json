@@ -86,9 +86,27 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "extensionName": "GuestAttestation",
     "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
     "extensionVersion": "1.0",
@@ -364,13 +382,7 @@
             }
           ]
         },
-        "securityProfile": {
-            "uefiSettings": {
-                "secureBootEnabled": "[parameters('secureBoot')]",
-                "vTpmEnabled": "[parameters('vTPM')]"
-            },
-            "securityType": "TrustedLaunch"
-        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
@@ -380,7 +392,7 @@
       }
     },
     {
-        "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+        "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "apiVersion": "2022-03-01",
         "name": "[format('JumpBox/{0}', variables('extensionName'))]",
