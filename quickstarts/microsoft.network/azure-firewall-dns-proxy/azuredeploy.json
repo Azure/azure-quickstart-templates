@@ -2,6 +2,17 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
     "adlsStorageAccountName": {
       "type": "string",
       "defaultValue": "[concat('adls', uniqueString(resourceGroup().id))]",
@@ -110,15 +121,13 @@
     },
     "imageSku": {
       "type": "string",
-      "defaultValue": "18.04-LTS",
+      "defaultValue": "18_04-lts-gen2",
       "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.5-LTS",
-        "16.04.0-LTS",
-        "18.04-LTS"
-      ],
+          "18_04-daily-lts-gen2",
+          "18_04-lts-gen2"
+      ],            
       "metadata": {
-        "description": "Specifies the Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+          "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
       }
     },
     "authenticationType": {
@@ -489,6 +498,17 @@
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "bastionPublicIpAddressName": "[concat(parameters('bastionHostName'),'PublicIp')]",
     "bastionPublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpAddressName'))]",
     "bastionSubnetName": "AzureBastionSubnet",
@@ -1293,7 +1313,7 @@
       "condition": "[parameters('deployCustomDnsForwarder')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('dnsVmName')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('dnsAvailabilitySetId')]",
@@ -1346,6 +1366,7 @@
             }
           ]
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -1360,12 +1381,43 @@
           }
         }
       }
+    },      
+    {
+      "condition": "[and(parameters('deployCustomDnsForwarder'), and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true()))))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-11-01",
+      "name": "[format('{0}/GuestAttestation', parameters('dnsVmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+              "AttestationConfig": {
+                  "MaaSettings": {
+                      "maaEndpoint": "",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                  },
+                  "AscSettings": {
+                    "ascReportingEndpoint": "",
+                    "ascReportingFrequency": ""
+                  },
+                  "useCustomToken": "false",
+                  "disableAlerts": "false"
+              }
+          }
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', parameters('dnsVmName'))]"
+      ]
     },
     {
       "condition": "[parameters('deployCustomDnsForwarder')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsVmName'),'/CustomScript')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('dnsVmId')]"
@@ -1385,7 +1437,7 @@
     },
     {
       "condition": "[parameters('deployCustomDnsForwarder')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsVmName'),'/LogAnalytics')]",
       "location": "[parameters('location')]",
@@ -1409,7 +1461,7 @@
     },
     {
       "condition": "[parameters('deployCustomDnsForwarder')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsVmName'),'/DependencyAgent')]",
       "location": "[parameters('location')]",
@@ -1427,7 +1479,7 @@
       }
     },
     {
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('devVmNicName')]",
       "location": "[parameters('location')]",
@@ -1449,7 +1501,7 @@
       }
     },
     {
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2022-04-01",
       "type": "Microsoft.Authorization/roleAssignments",
       "name": "[variables('devContributorRoleAssignmentGuid')]",
       "dependsOn": [
@@ -1462,7 +1514,7 @@
       }
     },
     {
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2022-04-01",
       "type": "Microsoft.Authorization/roleAssignments",
       "name": "[variables('devStorageBlobDataContributorRoleAssignmentGuid')]",
       "dependsOn": [
@@ -1475,7 +1527,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('devVmName')]",
       "location": "[parameters('location')]",
@@ -1531,6 +1583,7 @@
             }
           ]
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -1547,7 +1600,38 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-11-01",
+      "name": "[format('{0}/GuestAttestation', parameters('devVmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+              "AttestationConfig": {
+                  "MaaSettings": {
+                      "maaEndpoint": "",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                  },
+                  "AscSettings": {
+                    "ascReportingEndpoint": "",
+                    "ascReportingFrequency": ""
+                  },
+                  "useCustomToken": "false",
+                  "disableAlerts": "false"
+              }
+          }
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', parameters('devVmName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('devVmName'), '/CustomScript')]",
       "location": "[parameters('location')]",
@@ -1575,7 +1659,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('devVmName'),'/LogAnalytics')]",
       "location": "[parameters('location')]",
@@ -1598,7 +1682,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('devVmName'),'/DependencyAgent')]",
       "location": "[parameters('location')]",
@@ -1638,7 +1722,7 @@
       }
     },
     {
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2022-04-01",
       "type": "Microsoft.Authorization/roleAssignments",
       "name": "[variables('prodContributorRoleAssignmentGuid')]",
       "dependsOn": [
@@ -1651,7 +1735,7 @@
       }
     },
     {
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2022-04-01",
       "type": "Microsoft.Authorization/roleAssignments",
       "name": "[variables('prodStorageBlobDataContributorRoleAssignmentGuid')]",
       "dependsOn": [
@@ -1664,7 +1748,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('prodVmName')]",
       "location": "[parameters('location')]",
@@ -1720,6 +1804,7 @@
             }
           ]
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",     
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -1736,7 +1821,38 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-11-01",
+      "name": "[format('{0}/GuestAttestation', parameters('prodVmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+              "AttestationConfig": {
+                  "MaaSettings": {
+                      "maaEndpoint": "",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                  },
+                  "AscSettings": {
+                    "ascReportingEndpoint": "",
+                    "ascReportingFrequency": ""
+                  },
+                  "useCustomToken": "false",
+                  "disableAlerts": "false"
+              }
+          }
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', parameters('prodVmName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('prodVmName'), '/CustomScript')]",
       "location": "[parameters('location')]",
@@ -1764,7 +1880,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('prodVmName'),'/LogAnalytics')]",
       "location": "[parameters('location')]",
@@ -1787,7 +1903,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('prodVmName'),'/DependencyAgent')]",
       "location": "[parameters('location')]",
@@ -2579,7 +2695,7 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2022-07-01",
       "name": "[parameters('adlsStorageAccountAdlsPrivateEndpointName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -2605,7 +2721,7 @@
       "resources": [
         {
           "type": "privateDnsZoneGroups",
-          "apiVersion": "2020-07-01",
+          "apiVersion": "2022-07-01",
           "name": "PrivateDnsZoneGroup",
           "location": "[parameters('location')]",
           "dependsOn": [
@@ -2627,7 +2743,7 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2022-07-01",
       "name": "[parameters('adlsStorageAccountBlobPrivateEndpointName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -2653,7 +2769,7 @@
       "resources": [
         {
           "type": "privateDnsZoneGroups",
-          "apiVersion": "2020-07-01",
+          "apiVersion": "2022-07-01",
           "name": "PrivateDnsZoneGroup",
           "location": "[parameters('location')]",
           "dependsOn": [
@@ -2675,7 +2791,7 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2022-07-01",
       "name": "[parameters('blobStorageAccountBlobPrivateEndpointName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -2701,7 +2817,7 @@
       "resources": [
         {
           "type": "privateDnsZoneGroups",
-          "apiVersion": "2020-07-01",
+          "apiVersion": "2022-07-01",
           "name": "PrivateDnsZoneGroup",
           "location": "[parameters('location')]",
           "dependsOn": [
@@ -2725,4 +2841,3 @@
   "outputs": {
   }
 }
-
