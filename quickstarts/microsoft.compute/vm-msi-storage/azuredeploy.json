@@ -41,11 +41,10 @@
         },
         "ubuntuOSVersion": {
             "type": "string",
-            "defaultValue": "19.04",
+            "defaultValue": "18_04-lts-gen2",
             "allowedValues": [
-                "16.04.0-LTS",
-                "18.04-LTS",
-                "19.04"
+                "18_04-daily-lts-gen2",
+                "18_04-lts-gen2"
             ],
             "metadata": {
                 "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
@@ -98,6 +97,17 @@
                 "description": "Storage account name the MSI will be given access to"
             }
         },
+        "securityType": {
+          "type": "string",
+          "defaultValue": "TrustedLaunch",
+          "allowedValues": [
+            "Standard",
+            "TrustedLaunch"
+          ],
+          "metadata": {
+            "description": "Security Type of the Virtual Machine."
+          }
+        },
         "msiRole": {
             "type": "string",
             "defaultValue": "StorageBlobDataReader",
@@ -112,6 +122,17 @@
         }
     },
     "variables": {
+        "extensionName": "GuestAttestation",
+        "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+        "extensionVersion": "1.0",
+        "maaTenantName": "GuestAttestation",
+        "securityProfileJson": {
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          },
+          "securityType": "[parameters('securityType')]"
+        },  
         "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
         "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
@@ -232,7 +253,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2019-03-01",
+            "apiVersion": "2021-03-01",
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -265,6 +286,7 @@
                         "version": "latest"
                     }
                 },
+                "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
                 "networkProfile": {
                     "networkInterfaces": [
                         {
@@ -274,6 +296,37 @@
                 }
             }
         },
+        {
+            "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2022-03-01",
+            "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publisher": "[variables('extensionPublisher')]",
+                "type": "[variables('extensionName')]",
+                "typeHandlerVersion": "[variables('extensionVersion')]",
+                "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": true,
+                "settings": {
+                    "AttestationConfig": {
+                        "MaaSettings": {
+                            "maaEndpoint": "",
+                            "maaTenantName": "[variables('maaTenantName')]"
+                        },
+                        "AscSettings": {
+                          "ascReportingEndpoint": "",
+                          "ascReportingFrequency": ""
+                        },
+                        "useCustomToken": "false",
+                        "disableAlerts": "false"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+            ]
+        },  
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-09-01",
