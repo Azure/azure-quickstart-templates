@@ -13,9 +13,6 @@ param subnetAddressPrefixes string
 @description('The location of the resource')
 param location string
 
-@description('The tags that will be associated to the Resources')
-param tags object
-
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-11-01' = {
   name: vnetName
   location: location
@@ -38,8 +35,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-11-01' = {
   resource subnet 'subnets' existing = {
     name: subnetName
   }
-  
-  tags: tags
 }
 
 output vnetName string = virtualNetwork.name
