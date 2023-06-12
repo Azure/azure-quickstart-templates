@@ -30,7 +30,7 @@
       }
     },
     "adminPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "defaultValue": "[newGuid()]"
     },
     "publicSshKey": {
@@ -95,28 +95,32 @@
       }
     },
     "_artifactsLocationSasToken": {
-      "type": "securestring",
+      "type": "secureString",
       "defaultValue": "",
       "metadata": {
         "description": "SAS Token for accessing script path"
       }
     },
-    "secureBoot": {
-      "type": "bool",
-      "defaultValue": true,
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
       "metadata": {
-        "description": "Secure Boot setting of the virtual machine."
-      }
-    },
-    "vTPM": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "vTPM setting of the virtual machine."
+        "description": "Security Type of the Virtual Machine."
       }
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "vmName": "sshhost",
     "extensionName": "GuestAttestation",
     "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
@@ -240,7 +244,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')]"
               },
               "subnet": {
-                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork'), '2020-04-01').subnets[0].id]"
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork')).subnets[0].id]"
               }
             }
           }
@@ -305,13 +309,7 @@
             }
           ]
         },
-        "securityProfile": {
-          "uefiSettings": {
-            "secureBootEnabled": "[parameters('secureBoot')]",
-            "vTpmEnabled": "[parameters('vTPM')]"
-          },
-          "securityType": "TrustedLaunch"
-        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -333,35 +331,35 @@
       ]
     },
     {
-      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2022-03-01",
-      "name": "[format('{0}/{1}', variables('vmName'), 'GuestAttestation')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "publisher": "[variables('extensionPublisher')]",
-        "type": "[variables('extensionName')]",
-        "typeHandlerVersion": "[variables('extensionVersion')]",
-        "autoUpgradeMinorVersion": true,
-        "enableAutomaticUpgrade": true,
-        "settings": {
-          "AttestationConfig": {
-            "MaaSettings": {
-              "maaEndpoint": "",
-              "maaTenantName": "[variables('maaTenantName')]"
-            },
-            "AscSettings": {
-              "ascReportingEndpoint": "",
-              "ascReportingFrequency": ""
-            },
-            "useCustomToken": "false",
-            "disableAlerts": "false"
-          }
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-      ]
+        "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/GuestAttestation', variables('vmName'))]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "publisher": "[variables('extensionPublisher')]",
+            "type": "[variables('extensionName')]",
+            "typeHandlerVersion": "[variables('extensionVersion')]",
+            "autoUpgradeMinorVersion": true,
+            "enableAutomaticUpgrade": true,
+            "settings": {
+                "AttestationConfig": {
+                    "MaaSettings": {
+                        "maaEndpoint": "",
+                        "maaTenantName": "[variables('maaTenantName')]"
+                    },
+                    "AscSettings": {
+                      "ascReportingEndpoint": "",
+                      "ascReportingFrequency": ""
+                    },
+                    "useCustomToken": "false",
+                    "disableAlerts": "false"
+                }
+            }
+        },
+        "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+        ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
