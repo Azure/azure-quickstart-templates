@@ -1,5 +1,5 @@
 ---
-description: This ARM template is intented to create a Cosmos DB Account quickly with the minimal required values
+description: This ARM template is intented to create a CosmosDB Account quickly with the minimal required values
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: cosmosdb-create-account
 languages:
 - json
 ---
-# Create an Azure Cosmos DB Account
+# Create an Azure CosmosDB Account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-create-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-create-account/PublicDeployment.svg)
