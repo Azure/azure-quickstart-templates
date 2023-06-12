@@ -4,21 +4,52 @@
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
     },
     "windowsOSVersion": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "2022-datacenter-azure-edition",
       "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter"
+          "2016-datacenter-gensecond",
+          "2016-datacenter-server-core-g2",
+          "2016-datacenter-server-core-smalldisk-g2",
+          "2016-datacenter-smalldisk-g2",
+          "2016-datacenter-with-containers-g2",
+          "2016-datacenter-zhcn-g2",
+          "2019-datacenter-core-g2",
+          "2019-datacenter-core-smalldisk-g2",
+          "2019-datacenter-core-with-containers-g2",
+          "2019-datacenter-core-with-containers-smalldisk-g2",
+          "2019-datacenter-gensecond",
+          "2019-datacenter-smalldisk-g2",
+          "2019-datacenter-with-containers-g2",
+          "2019-datacenter-with-containers-smalldisk-g2",
+          "2019-datacenter-zhcn-g2",
+          "2022-datacenter-azure-edition",
+          "2022-datacenter-azure-edition-core",
+          "2022-datacenter-azure-edition-core-smalldisk",
+          "2022-datacenter-azure-edition-smalldisk",
+          "2022-datacenter-core-g2",
+          "2022-datacenter-core-smalldisk-g2",
+          "2022-datacenter-g2",
+          "2022-datacenter-smalldisk-g2"
+      ],
+      "type": "string",
+      "metadata": {
+          "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
       ],
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+        "description": "Security Type of the Virtual Machine."
       }
     },
     "vmssName": {
@@ -57,6 +88,13 @@
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.8.0/21",
@@ -83,7 +121,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-08-01",
+      "apiVersion": "2022-07-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -110,7 +148,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('appGwPublicIPAddressName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2022-07-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
@@ -119,7 +157,7 @@
       "type": "Microsoft.Network/applicationGateways",
       "name": "[variables('appGwName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2022-07-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGwPublicIPAddressName'))]"
@@ -128,7 +166,7 @@
         "sku": {
           "name": "Standard_Large",
           "tier": "Standard",
-          "capacity": "10"
+          "capacity": 10
         },
         "gatewayIPConfigurations": [
           {
@@ -210,7 +248,7 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2022-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[resourceId('Microsoft.Network/applicationGateways/', variables('appGwName'))]"
@@ -239,6 +277,7 @@
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
           },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
