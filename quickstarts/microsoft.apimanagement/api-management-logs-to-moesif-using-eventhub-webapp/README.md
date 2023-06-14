@@ -117,7 +117,8 @@ return new JObject(
         <forward-request follow-redirects="true" />
     </backend>
     <outbound>
-        <base />
+        <!-- Uncomment base element if policy added to a single API (i.e. not global) -->
+        <!-- <base /> -->
         <choose>
             <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
                 <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
