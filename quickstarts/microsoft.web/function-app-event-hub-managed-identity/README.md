@@ -4,6 +4,9 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- azure-functions
+- azure-event-hubs
+- azure-storage
 urlFragment: function-app-event-hub-managed-identity
 languages:
 - bicep
