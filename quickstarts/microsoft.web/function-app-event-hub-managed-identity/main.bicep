@@ -27,7 +27,7 @@ param linuxFxVersion string
 @description('The zip content url.')
 param packageUri string
 
-@description('Name of EventHub namespace')
+@description('Name of Event Hub namespace')
 param eventHubNamespaceName string = 'ehns-${uniqueString(resourceGroup().id)}'
 
 @description('The messaging tier for Event Hub namespace')
@@ -37,7 +37,7 @@ param eventHubNamespaceName string = 'ehns-${uniqueString(resourceGroup().id)}'
 ])
 param eventhubSku string = 'Standard'
 
-@description('MessagingUnits for premium namespace')
+@description('Event Hub throughput units.')
 @allowed([
   1
   2
@@ -151,6 +151,21 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-10-01-preview' = {
+  name: eventHubNamespaceName
+  location: location
+  sku: {
+    name: eventhubSku
+    capacity: eventHubSkuCapacity
+  }
+  properties: {}
+
+  resource eventHub 'eventhubs' = {
+    name: eventHubName
+    properties: {}
+  }
+}
+
 resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: storageFunctionRoleAssignment
   properties: {
@@ -165,20 +180,5 @@ resource eventHubRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04
   properties: {
     principalId: functionApp.identity.principalId
     roleDefinitionId: eventHubDataReceiverRoleId
-  }
-}
-
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-10-01-preview' = {
-  name: eventHubNamespaceName
-  location: location
-  sku: {
-    name: eventhubSku
-    capacity: eventHubSkuCapacity
-  }
-  properties: {}
-
-  resource eventHub 'eventhubs' = {
-    name: eventHubName
-    properties: {}
   }
 }
