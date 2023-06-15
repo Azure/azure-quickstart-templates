@@ -88,6 +88,11 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     name: storageAccountType
   }
   kind: 'Storage'
+  properties: {
+    supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: false
+  }
 }
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2022-03-01' = {
@@ -114,6 +119,7 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     reserved: true
     serverFarmId: hostingPlan.id
+    httpsOnly: true
     siteConfig: {
       linuxFxVersion: linuxFxVersion
       appSettings: [
@@ -147,6 +153,14 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
           value: 'EnableWorkerIndexing'
         }
       ]
+    }
+  }
+
+  resource config 'config' = {
+    name: 'web'
+    properties: {
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
     }
   }
 }
