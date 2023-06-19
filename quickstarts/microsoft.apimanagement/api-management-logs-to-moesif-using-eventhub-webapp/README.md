@@ -1,5 +1,5 @@
 ---
-description: The template will log API calls from Azure API Management to Moesif API Analytics. Grow and monetize your API products with a powerful API analytics and billing platform.
+description: The template will log API calls from Azure API Management to Moesif API analytics and monetization platform
 page_type: sample
 products:
 - azure
