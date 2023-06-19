@@ -1,5 +1,19 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in June 19, 2023
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the June 2023 CU for SharePoint Subscription
+  - Updated SQL image to use SQL Server 2022 on Windows Server 2022.
+- Configuration for all virtual machines
+  - Update DSC module `ComputerManagementDsc`
+- Configuration for all VMs except DC
+  - Update DSC module `SqlServerDsc`
+- Configuration for SPSE and FESE
+  - Update DSC module `StorageDsc`
+
 ## Enhancements & bug-fixes - Published in June 02, 2023
 
 ### Changed
