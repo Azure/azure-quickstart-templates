@@ -228,6 +228,8 @@ This template performs the following tasks
 
 If you need to update [Moesif/ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1) and don't want to redeploy the entire template, you can follow these steps:
 
+_Note: If you installed the webjob using Deploy to Azure one click buttom, then the webjob that Moesif created points to `run.bat` which upon start always does fresh git clone of v1 builds and runs it. In this case, you don't need to follow below steps. Rather, stop and start the webjob. Check with Moesif support if questions._
+
 Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1), so it's in your GitHub account.
 
 1. Log into your Azure Portal and navigate to the resource group holding your Moesif resources. 
