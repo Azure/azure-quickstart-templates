@@ -120,7 +120,7 @@ return new JObject(
         <base />
         <choose>
             <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
-                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
+                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">@{
 var body = context.Response.Body?.As<string>(true);
 var MAX_BODY_EH = 145000;
 var origBodyLen = (null != body) ? body.Length : 0;
@@ -145,7 +145,7 @@ return new JObject(
         <!-- <base /> -->
         <choose>
             <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
-                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
+                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">@{
 var body = context.Response.Body?.As<string>(true);
 var MAX_BODY_EH = 145000;
 var origBodyLen = (null != body) ? body.Length : 0;
