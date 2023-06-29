@@ -2,11 +2,11 @@
 description: This QuickStart template creates a new ‘Elastic Cloud (Elasticsearch) – An Azure Native ISV Service’ resource in your Azure subscription, which you can use to create and manage your Elastic deployments, right from Azure.
 page_type: sample
 products:
-- azure
-- azure-resource-manager
+  - azure
+  - azure-resource-manager
 urlFragment: elastic-create
 languages:
-- json
+  - json
 ---
 # Create an ‘Elastic Cloud (Elasticsearch) - An Azure Native ISV Service’ Resource
 
