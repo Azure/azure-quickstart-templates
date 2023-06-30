@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: nat-gateway-1-vm
 languages:
-- json
 - bicep
+- json
 ---
 # Virtual Network NAT with VM
 
