@@ -43,7 +43,7 @@ All the runbooks requires an **Azure RunAs Account** in the automation account. 
 
 ##### ASR-SQL-FailoverAG
 
-This runbook fails over SQL Always On Availability Group inside an Azure virtual machine as part of failover/migration to **Azure**
+This runbook fails over SQL Always On availability group inside an Azure virtual machine as part of failover/migration to **Azure**
 
 **How to use this runbook**
 
