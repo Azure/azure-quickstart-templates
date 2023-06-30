@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- sharepoint
 urlFragment: sharepoint-adfs
 languages:
 - json
