@@ -9,7 +9,8 @@ languages:
 - bicep
 - json
 ---
-# Cost optimization workbook
+
+# Cost optimization workbook template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/optimization-workbook/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/optimization-workbook/PublicDeployment.svg)
