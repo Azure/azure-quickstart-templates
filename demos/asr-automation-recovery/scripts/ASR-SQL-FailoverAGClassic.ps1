@@ -1,9 +1,9 @@
 <# 
     .DESCRIPTION 
-        This script fails over SQL Always On Availability Group inside a Classic Azure virtual machine  
+        This script fails over SQL Always On availability group inside a Classic Azure virtual machine  
          
 	Pre-requisites 
-	The script below assumes that the SQL Availability Group is hosted in a classic Azure VM
+	The script below assumes that the SQL Server availability group is hosted in a classic Azure VM
 	
 	and that the name of restored virtual machine in Step-2 is SQLAzureVM-Test. Modify the script, based on the name you use for the recovered virtual machine.
 
@@ -55,7 +55,7 @@ workflow ASR-SQL-FailoverAGClassic
                 Write-Output "ILB Created"
 
                 #Update the script with name of the virtual machine recovered using Azure Backup
-                Write-Output "Adding SQL AG Endpoint"
+                Write-Output "Adding SQL Server availability group Endpoint"
                 Get-AzureVM -ServiceName "SQLAzureVM-Test" -Name "SQLAzureVM-Test"| Add-AzureEndpoint -Name sqlag -LBSetName sqlagset -Protocol tcp -LocalPort 1433 -PublicPort 1433 -ProbePort 59999 -ProbeProtocol tcp -ProbeIntervalInSeconds 10 -InternalLoadBalancerName SQLAGILB | Update-AzureVM
 
                 Write-Output "Added Endpoint"
@@ -84,7 +84,7 @@ workflow ASR-SQL-FailoverAGClassic
 
             Write-output "Starting AG Failover";
             #Execute the SQL Failover script
-            #Pass the SQL AG path as the argument.
+            #Pass the SQL Server availability group path as the argument.
 
             $AGArgs="-SQLAvailabilityGroupPath sqlserver:\sql\sqlazureVM\default\availabilitygroups\testag";
 
