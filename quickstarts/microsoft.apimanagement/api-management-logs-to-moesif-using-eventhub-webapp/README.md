@@ -121,7 +121,7 @@ return new JObject(
         <!-- <base /> -->
         <choose>
             <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
-                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
+                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">@{
 var body = context.Response.Body?.As<string>(true);
 var MAX_BODY_EH = 145000;
 var origBodyLen = (null != body) ? body.Length : 0;
@@ -146,7 +146,7 @@ return new JObject(
         <!-- <base /> -->
         <choose>
             <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
-                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
+                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">@{
 var body = context.Response.Body?.As<string>(true);
 var MAX_BODY_EH = 145000;
 var origBodyLen = (null != body) ? body.Length : 0;
@@ -208,6 +208,10 @@ If the name of an existing Azure API Management is not specified during deployme
 
 More info on configuring Moesif is available on [Microsoft's documentation](https://docs.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample).
 
+## Updating the integration
+
+To run the latest version of webjob, simply stop, and then restart the WebJob (Within the Azure Portal, go to your WebApp and select the WebJobs panel).
+
 ## Steps performed by the Azure Resource Template
 This template performs the following tasks
 
@@ -224,27 +228,5 @@ This template performs the following tasks
 - Ensure the `policy` is set on Api Management Apis
 - Ensure App Service configuration contains correct environment variables. View your App Service/Settings/Configuration/Application settings
 - Review the logs of App Service Webjob named `azure-api-mgmt-logs-2-moesif` and ensure it is running. View your App Service/Settings/WebJobs
-
-## Updating the integration
-
-If you need to update [Moesif/ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1) and don't want to redeploy the entire template, you can follow these steps:
-
-Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1), so it's in your GitHub account.
-
-1. Log into your Azure Portal and navigate to the resource group holding your Moesif resources. 
-
-2. Select the WebApp and then click the Deployment Center panel on the left side.
-
-3. This will open the deployment panel as shown below, you'll want to click on GitHub.
-
-  ![Redeploy Webjob GitHub](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-github.png)
-
-4. Click on _App Service build service_ (via Kudu) deployment
-
-  ![Redeploy Webjob Kudu](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-kudu.png)
-
-5.  Select the repo you forked earlier and finish the walkthrough.
-
-Deployment may take a few minutes. Double check your XML policy if there are any changes.
 
 `Tags: Azure API Management, API Management, API Monetization, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, Gloo, Solo, Billing, Usage-based, usage-based, billing, WebApp, WebJob, App, Microsoft.Resources/deployments, Microsoft.ApiManagement/service/apis/policies, Microsoft.ApiManagement/service/loggers, Microsoft.EventHub/namespaces, Microsoft.EventHub/namespaces/eventhubs, Microsoft.EventHub/namespaces/eventhubs/authorizationRules, Microsoft.EventHub/namespaces/authorizationRules, Microsoft.Storage/storageAccounts, Microsoft.Web/sites/extensions, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.Web/sites/config, Microsoft.Web/sites/hostNameBindings`
