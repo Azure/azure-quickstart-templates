@@ -1,5 +1,5 @@
 ---
-description: Deploy SQL AvailabilityGroup listener on existing Always ON setup. This creates Listener on an existing SQL Availability Group, sets up corresponding load balancer rules and probe ports on Azure Load balancer to get the listener connections working.
+description: Deploy SQL AvailabilityGroup listener on existing Always ON setup. This creates Listener on an existing SQL Server availability group, sets up corresponding load balancer rules and probe ports on Azure Load balancer to get the listener connections working.
 page_type: sample
 products:
 - azure
@@ -22,7 +22,7 @@ languages:
 Before deploying the template you must have the following
 
 1. **AlwaysON setup** Always ON setup must exist as created by azure-quickstart-templates/101-sql-vm-ag-setup. This will include the VMs over which the setup was done.
-2. **SQL Availability Group** SQL Availability Group must have been created over the Always ON setup. No existing listener should be present for the SQL Availability Group.
+2. **SQL Availability Group** SQL Server availability group must have been created over the Always ON setup. No existing listener should be present for the SQL Server availability group.
 3. **LoadBalancer** Internal load balancer in same location as VMs.
 4. **CNO permissions** The CNO (COmputer object for Cluster name) should have Create Computer object permissions in the OU it is placed in.
 
@@ -34,9 +34,9 @@ Before deploying the template you must have the following
 
 ## Solution overview and deployed resources
 
-This deployment will create an AG listener for a SQL Availability Group. This will also setup Load balancer rules corresponding to the Listener.
+This deployment will create an AG listener for a SQL Server availability group. This will also setup Load balancer rules corresponding to the Listener.
  Following resources will be created
- - SQL Availability Group Listener for the provided AG.
+ - SQL Server availability group listener for the provided AG.
  - Load balancer rules that will enable Listner to work in Azure.
  - Resource of type "AvailabilityGroupListener" in Microsoft.SqlVirtualMachine resource provider.
 
