@@ -4,14 +4,14 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "1908625783801438696"
+      "version": "0.18.4.5664",
+      "templateHash": "18281262414980837218"
     }
   },
   "parameters": {
     "vmname": {
       "type": "string",
-      "defaultValue": "vm-1",
+      "defaultValue": "myVM",
       "metadata": {
         "description": "Name of the virtual machine"
       }
@@ -25,61 +25,74 @@
     },
     "vnetname": {
       "type": "string",
-      "defaultValue": "vnet-1",
+      "defaultValue": "myVnet",
       "metadata": {
         "description": "Name of the virtual network"
       }
     },
     "subnetname": {
       "type": "string",
-      "defaultValue": "subnet-1",
+      "defaultValue": "mySubnet",
       "metadata": {
         "description": "Name of the subnet for virtual network"
       }
     },
     "vnetaddressspace": {
       "type": "string",
-      "defaultValue": "10.0.0.0/16",
+      "defaultValue": "192.168.0.0/16",
       "metadata": {
         "description": "Address space for virtual network"
       }
     },
     "vnetsubnetprefix": {
       "type": "string",
-      "defaultValue": "10.0.0.0/24",
+      "defaultValue": "192.168.0.0/24",
       "metadata": {
         "description": "Subnet prefix for virtual network"
       }
     },
     "natgatewayname": {
       "type": "string",
-      "defaultValue": "nat-gateway",
+      "defaultValue": "myNATgateway",
       "metadata": {
         "description": "Name of the NAT gateway"
       }
     },
     "networkinterfacename": {
       "type": "string",
-      "defaultValue": "nic-1",
+      "defaultValue": "myvmNIC",
       "metadata": {
         "description": "Name of the virtual machine nic"
       }
     },
     "publicipname": {
       "type": "string",
-      "defaultValue": "public-ip-nat",
+      "defaultValue": "myPublicIP",
       "metadata": {
         "description": "Name of the NAT gateway public IP"
       }
     },
     "nsgname": {
       "type": "string",
-      "defaultValue": "nsg-1",
+      "defaultValue": "myVMnsg",
       "metadata": {
         "description": "Name of the virtual machine NSG"
       }
     },
-    
+    "publicipvmname": {
+      "type": "string",
+      "defaultValue": "myPublicIPVM",
+      "metadata": {
+        "description": "Name of the virtual machine public IP"
+      }
+    },
+    "publicipprefixname": {
+      "type": "string",
+      "defaultValue": "myPublicIPPrefix",
+      "metadata": {
+        "description": "Name of the NAT gateway public IP"
+      }
+    },
     "adminusername": {
       "type": "string",
       "metadata": {
@@ -87,7 +100,7 @@
       }
     },
     "adminpassword": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "Administrator password for virtual machine"
       }
@@ -139,6 +152,33 @@
       }
     },
     {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('publicipvmname')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPPrefixes",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('publicipprefixname')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "prefixLength": 31,
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2021-11-01",
       "name": "[parameters('vmname')]",
@@ -150,8 +190,8 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
-            "offer": "0001-com-ubuntu-server-jammy",
-            "sku": "22_04-lts-gen2",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -232,16 +272,22 @@
           {
             "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipname'))]"
           }
+        ],
+        "publicIpPrefixes": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPPrefixes', parameters('publicipprefixname'))]"
+          }
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipname'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipname'))]",
+        "[resourceId('Microsoft.Network/publicIPPrefixes', parameters('publicipprefixname'))]"
       ]
     },
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2021-05-01",
-      "name": "[format('{0}/{1}', parameters('vnetname'), 'subnet-1')]",
+      "name": "[format('{0}/{1}', parameters('vnetname'), 'mySubnet')]",
       "properties": {
         "addressPrefix": "[parameters('vnetsubnetprefix')]",
         "natGateway": {
@@ -265,9 +311,13 @@
           {
             "name": "ipconfig1",
             "properties": {
+              "privateIPAddress": "192.168.0.4",
               "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipvmname'))]"
+              },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetname'), 'subnet-1')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetname'), 'mySubnet')]"
               },
               "primary": true,
               "privateIPAddressVersion": "IPv4"
@@ -281,8 +331,9 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetname'), 'subnet-1')]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgname'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetname'), 'mySubnet')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgname'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicipvmname'))]"
       ]
     }
   ]
