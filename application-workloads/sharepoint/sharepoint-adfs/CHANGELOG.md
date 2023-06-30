@@ -1,5 +1,12 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in June 30, 2023
+
+### Fixed
+
+- Configuration for SP Legacy and FE Legacy (SharePoint 2019 / 2016 / 2013 VMs)
+  - Fixed the deployment error caused by DSC resource cChocoInstaller
+
 ## Enhancements & bug-fixes - Published in June 19, 2023
 
 ### Changed
