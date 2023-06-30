@@ -1,18 +1,15 @@
 ---
-description: This template provisions an Azure Function app on a Linux Consumption plan, along with an Event Hub, Azure Storage, and Application Insights.  The function app is able to use managed identity to connect to the Event Hub and Storage account.
+description: his template provisions an Azure Function app on a Linux Consumption plan, along with an Event Hub, Azure Storage, and Application Insights.  The function app is able to use managed identity to connect to the Event Hub and Storage account
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-functions
-- azure-event-hubs
-- azure-storage
 urlFragment: function-app-event-hub-managed-identity
 languages:
 - bicep
 - json
 ---
-# Azure Function App with Event Hub Using Managed Identity
+# Azure Function App with Event Hub and Managed Identity
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-event-hub-managed-identity/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-event-hub-managed-identity/PublicDeployment.svg)
