@@ -22,7 +22,7 @@ resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2020-01
 }
 
 #disable-next-line BCP081
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01-preview' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -34,7 +34,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-04-01
 }
 
 #disable-next-line BCP081
-resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2022-04-01-preview' = {
+resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2023-06-01' = {
   parent: exampleMobileNetwork
   name: dataNetworkName
   location: location
