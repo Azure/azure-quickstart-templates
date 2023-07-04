@@ -28,7 +28,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01
   }
 
   #disable-next-line BCP081
-  resource exampleDataNetwork 'dataNetworks@2023-06-011' = {
+  resource exampleDataNetwork 'dataNetworks@2023-06-01' = {
     name: dataNetworkName
     location: location
     properties: {}
