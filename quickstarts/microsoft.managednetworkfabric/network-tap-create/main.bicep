@@ -5,7 +5,7 @@ param networkTapName string
 param location string = resourceGroup().location
 
 @description('Switch configuration description')
-param annotation string
+param annotation string = ''
 
 @description('ARM resource ID of the Network Packet Broker')
 param networkPacketBrokerId string
@@ -15,20 +15,29 @@ param networkPacketBrokerId string
   'Pull'
   'Push'
 ])
-param pollingType string
+param pollingType string = 'Pull'
 
 @description('List of destinations to send the filter traffic.')
-param destinations object
+param destinations array
 
 @description('Create Network Tap Resource')
 resource tap 'Microsoft.ManagedNetworkFabric/networkTaps@2023-06-15' = {
   name: networkTapName
   location: location
   properties: {
-    annotation: annotation
+    annotation: !empty(annotation) ? annotation : null
     networkPacketBrokerId: networkPacketBrokerId
     pollingType: pollingType
-    destinations: destinations
+    destinations: [for i in range(0, length(destinations)): {
+      name: destinations[i].name
+      destinationType: destinations[i].destinationType
+      destinationId: destinations[i].destinationId
+      isolationDomainProperties: contains(destinations[i], 'isolationDomainProperties') ? {
+        encapsulation: contains(destinations[i].isolationDomainProperties, 'encapsulation') ? destinations[i].isolationDomainProperties.encapsulation : null
+        neighborGroupIds: contains(destinations[i].isolationDomainProperties, 'neighborGroupIds') ? destinations[i].isolationDomainProperties.neighborGroupIds : null
+      } : null
+      destinationTapRuleId: contains(destinations[i], 'destinationTapRuleId') ? destinations[i].destinationTapRuleId : null
+    }]
   }
 }
 

@@ -5,7 +5,7 @@ param internetGatewayRuleName string
 param location string = resourceGroup().location
 
 @description('Switch configuration description')
-param annotation string
+param annotation string = ''
 
 @description('Rules for the InternetGateways')
 param ruleProperties object
@@ -15,8 +15,11 @@ resource internetGatewayRule 'Microsoft.ManagedNetworkFabric/internetGatewayRule
   name: internetGatewayRuleName
   location: location
   properties: {
-    annotation: annotation
-    ruleProperties: ruleProperties
+    annotation: !empty(annotation) ? annotation : null
+    ruleProperties: {
+      action: ruleProperties.action
+      addressList: ruleProperties.addressList
+    }
   }
 }
 

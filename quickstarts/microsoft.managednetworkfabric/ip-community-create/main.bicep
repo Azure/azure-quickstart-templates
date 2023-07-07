@@ -5,7 +5,7 @@ param ipCommunityName string
 param location string = resourceGroup().location
 
 @description('Switch configuration description')
-param annotation string
+param annotation string = ''
 
 @description('List of IP Community Rules')
 param ipCommunityRules array
@@ -15,8 +15,13 @@ resource ipCommunity 'Microsoft.ManagedNetworkFabric/ipCommunities@2023-06-15' =
   name: ipCommunityName
   location: location
   properties: {
-    annotation: annotation
-    ipCommunityRules: ipCommunityRules
+    annotation: !empty(annotation) ? annotation : null
+    ipCommunityRules: [for i in range(0, length(ipCommunityRules)): {
+      action: ipCommunityRules[i].action
+      sequenceNumber: ipCommunityRules[i].sequenceNumber
+      wellKnownCommunities: contains(ipCommunityRules[i], 'wellKnownCommunities') ? ipCommunityRules[i].wellKnownCommunities : null
+      communityMembers: ipCommunityRules[i].communityMembers
+    }]
   }
 }
 

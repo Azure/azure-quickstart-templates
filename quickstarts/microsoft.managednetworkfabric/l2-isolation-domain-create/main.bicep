@@ -5,7 +5,7 @@ param l2DomainName string
 param location string = resourceGroup().location
 
 @description('Switch configuration description')
-param annotation string
+param annotation string = ''
 
 @description('Resource Id of the Network Fabric, is should be in the format of /subscriptions/<Sub ID>/resourceGroups/<Resource group name>/providers/Microsoft.ManagedNetworkFabric/networkFabrics/<networkFabric name>')
 param networkFabricId string
@@ -14,17 +14,17 @@ param networkFabricId string
 param vlanId int
 
 @description('Maximum transmission unit')
-param mtu int
+param mtu int = 0
 
 @description('Create L2 Isolation Domain Resource')
 resource l2IsolationDomains 'Microsoft.ManagedNetworkFabric/l2IsolationDomains@2023-06-15' = {
   name: l2DomainName
   location: location
   properties: {
-    annotation: annotation
+    annotation: !empty(annotation) ? annotation : null
     networkFabricId: networkFabricId
     vlanId: vlanId
-    mtu: mtu
+    mtu: mtu != 0 ? mtu : null
   }
 }
 

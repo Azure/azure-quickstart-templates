@@ -5,7 +5,7 @@ param ipExtendedCommunityName string
 param location string = resourceGroup().location
 
 @description('Switch configuration description')
-param annotation string
+param annotation string = ''
 
 @description('List of IP Extended Community Rules')
 param ipExtendedCommunityRules array
@@ -14,8 +14,12 @@ resource ipExtendedCommunity 'Microsoft.ManagedNetworkFabric/ipExtendedCommuniti
   name: ipExtendedCommunityName
   location: location
   properties: {
-    annotation: annotation
-    ipExtendedCommunityRules: ipExtendedCommunityRules
+    annotation: !empty(annotation) ? annotation : null
+    ipExtendedCommunityRules: [for i in range(0, length(ipExtendedCommunityRules)): {
+      action: ipExtendedCommunityRules[i].action
+      sequenceNumber: ipExtendedCommunityRules[i].sequenceNumber
+      routeTargets: ipExtendedCommunityRules[i].routeTargets
+    }]
   }
 }
 

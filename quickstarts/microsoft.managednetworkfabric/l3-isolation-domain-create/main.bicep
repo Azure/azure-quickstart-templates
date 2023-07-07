@@ -8,21 +8,21 @@ param location string = resourceGroup().location
 param networkFabricId string
 
 @description('Switch configuration description')
-param annotation string
+param annotation string = ''
 
 @description('Advertise Connected Subnets')
 @allowed([
   'True'
   'False'
 ])
-param redistributeConnectedSubnets string
+param redistributeConnectedSubnets string ='True'
 
 @description('Advertise Static Routes')
 @allowed([
   'True'
   'False'
 ])
-param redistributeStaticRoutes string
+param redistributeStaticRoutes string ='False'
 
 @description('List of Ipv4 and Ipv6 route configurations')
 param aggregateRouteConfiguration object
@@ -36,16 +36,15 @@ resource l3IsolationDomains 'Microsoft.ManagedNetworkFabric/l3IsolationDomains@2
   location: location
   properties: {
     networkFabricId: networkFabricId
-    annotation: annotation
+    annotation: !empty(annotation) ? annotation : null
     redistributeConnectedSubnets: redistributeConnectedSubnets
     redistributeStaticRoutes: redistributeStaticRoutes
-    aggregateRouteConfiguration: aggregateRouteConfiguration != {} ? {
-      ipv4Routes: aggregateRouteConfiguration.ipv4Routes != [] ? aggregateRouteConfiguration.ipv4Routes : null
-      ipv6Routes: aggregateRouteConfiguration.ipv6Routes != [] ? aggregateRouteConfiguration.ipv6Routes : null
+    aggregateRouteConfiguration: !empty(aggregateRouteConfiguration) ? {
+      ipv4Routes: contains(aggregateRouteConfiguration, 'ipv4Routes') ? aggregateRouteConfiguration.ipv4Routes : null
+      ipv6Routes: contains(aggregateRouteConfiguration, 'ipv6Routes') ? aggregateRouteConfiguration.ipv6Routes : null
     } : null
-    connectedSubnetRoutePolicy: connectedSubnetRoutePolicy != {} ? {
-      exportRoutePolicyId: connectedSubnetRoutePolicy.exportRoutePolicyId
-      exportRoutePolicy: connectedSubnetRoutePolicy.exportRoutePolicy
+    connectedSubnetRoutePolicy: !empty(connectedSubnetRoutePolicy) ? {
+      exportRoutePolicy: contains(connectedSubnetRoutePolicy, 'exportRoutePolicy') ? connectedSubnetRoutePolicy.exportRoutePolicy : null
     } : null
   }
 }

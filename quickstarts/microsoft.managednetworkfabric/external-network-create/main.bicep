@@ -5,7 +5,7 @@ param externalNetworkName string
 param l3IsolationDomainName string
 
 @description('Switch configuration description')
-param annotation string
+param annotation string = ''
 
 @description('Peering option list')
 @allowed([
@@ -15,22 +15,16 @@ param annotation string
 param peeringOption string
 
 @description('option A properties')
-param optionAProperties object
+param optionAProperties object = {}
 
 @description('option B properties')
-param optionBProperties object
-
-@description('ARM resource ID of importRoutePolicy')
-param importRoutePolicyId string
-
-@description('ARM resource ID of exportRoutePolicy')
-param exportRoutePolicyId string
+param optionBProperties object = {}
 
 @description('Import Route Policy configuration')
-param importRoutePolicy object
+param importRoutePolicy object = {}
 
 @description('Export Route Policy configuration')
-param exportRoutePolicy object
+param exportRoutePolicy object = {}
 
 @description('Name of existing l3 Isolation Domain Resource')
 resource l3IsolationDomains 'Microsoft.ManagedNetworkFabric/l3IsolationDomains@2023-06-15' existing = {
@@ -43,26 +37,28 @@ resource externalNetwork 'Microsoft.ManagedNetworkFabric/l3IsolationDomains/exte
   parent: l3IsolationDomains
   properties: {
     peeringOption: peeringOption
-    annotation: annotation
-    optionAProperties: optionAProperties != {} ? {
-      bfdConfiguration: optionAProperties.bfdConfiguration
-      mtu: optionAProperties.mtu != '' ? optionAProperties.mtu : null
+    annotation: !empty(annotation) ? annotation : null
+    optionAProperties: !empty(optionAProperties) ? {
+      bfdConfiguration: contains(optionAProperties, 'bfdConfiguration') ? optionAProperties.bfdConfiguration : null
+      mtu: contains(optionAProperties, 'mtu') ? optionAProperties.mtu : null
       vlanId: optionAProperties.vlanId
       peerASN: optionAProperties.peerASN
-      primaryIpv4Prefix: optionAProperties.primaryIpv4Prefix != '' ? optionAProperties.primaryIpv4Prefix : null
-      primaryIpv6Prefix: optionAProperties.primaryIpv6Prefix != '' ? optionAProperties.primaryIpv6Prefix : null
-      secondaryIpv4Prefix: optionAProperties.secondaryIpv4Prefix != '' ? optionAProperties.secondaryIpv4Prefix : null
-      secondaryIpv6Prefix: optionAProperties.secondaryIpv6Prefix != '' ? optionAProperties.secondaryIpv6Prefix : null
+      primaryIpv4Prefix: contains(optionAProperties, 'primaryIpv4Prefix') ? optionAProperties.primaryIpv4Prefix : null
+      primaryIpv6Prefix: contains(optionAProperties, 'primaryIpv6Prefix') ? optionAProperties.primaryIpv6Prefix : null
+      secondaryIpv4Prefix: contains(optionAProperties, 'secondaryIpv4Prefix') ? optionAProperties.secondaryIpv4Prefix : null
+      secondaryIpv6Prefix: contains(optionAProperties, 'secondaryIpv6Prefix') ? optionAProperties.secondaryIpv6Prefix : null
     } : null
-    optionBProperties: optionBProperties != {} ? {
-      importRouteTargets: optionBProperties.importRouteTargets != '' ? optionBProperties.importRouteTargets : null
-      exportRouteTargets: optionBProperties.exportRouteTargets != '' ? optionBProperties.exportRouteTargets : null
-      routeTargets: optionBProperties.routeTargets
+    optionBProperties: !empty(optionBProperties) ? {
+      routeTargets: contains(optionBProperties, 'routeTargets') ? optionBProperties.routeTargets : null
     } : null
-    importRoutePolicyId: importRoutePolicyId != '' ? importRoutePolicyId : null
-    exportRoutePolicyId: exportRoutePolicyId != '' ? exportRoutePolicyId : null
-    importRoutePolicy: importRoutePolicy
-    exportRoutePolicy: exportRoutePolicy
+    importRoutePolicy: !empty(importRoutePolicy) ? {
+      importIpv4RoutePolicyId: contains(importRoutePolicy, 'importIpv4RoutePolicyId') ? importRoutePolicy.importIpv4RoutePolicyId : null
+      importIpv6RoutePolicyId: contains(importRoutePolicy, 'importIpv6RoutePolicyId') ? importRoutePolicy.importIpv6RoutePolicyId : null
+    } : null
+    exportRoutePolicy: !empty(exportRoutePolicy) ? {
+      exportIpv4RoutePolicyId: contains(exportRoutePolicy, 'exportIpv4RoutePolicyId') ? exportRoutePolicy.exportIpv4RoutePolicyId : null
+      exportIpv6RoutePolicyId: contains(exportRoutePolicy, 'exportIpv6RoutePolicyId') ? exportRoutePolicy.exportIpv6RoutePolicyId : null
+    } : null
   }
 }
 
