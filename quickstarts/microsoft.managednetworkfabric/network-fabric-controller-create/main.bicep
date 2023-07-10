@@ -12,7 +12,7 @@ param annotation string = ''
   'False'
   'True'
 ])
-param workloadManagementNetwork string
+param isWorkloadManagementNetworkEnabled string = 'True'
 
 @description('Network Fabric Controller SKU')
 @allowed([
@@ -20,7 +20,7 @@ param workloadManagementNetwork string
   'HighPerformance'
   'Standard'
 ])
-param nfcSku string
+param nfcSku string = 'Standard'
 
 @description('Express route dedicated for Infrastructure services')
 param infrastructureExpressRouteConnections array = []
@@ -40,7 +40,7 @@ resource networkFabricController 'Microsoft.ManagedNetworkFabric/networkFabricCo
   location: location
   properties: {
     annotation: !empty(annotation) ? annotation : null
-    workloadManagementNetwork: workloadManagementNetwork
+    isWorkloadManagementNetworkEnabled: isWorkloadManagementNetworkEnabled
     nfcSku: nfcSku
     infrastructureExpressRouteConnections: [for i in range(0, length(infrastructureExpressRouteConnections)): {
       expressRouteCircuitId: infrastructureExpressRouteConnections[i].expressRouteCircuitId

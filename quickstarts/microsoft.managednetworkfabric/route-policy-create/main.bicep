@@ -26,6 +26,7 @@ resource routePolicies 'Microsoft.ManagedNetworkFabric/routePolicies@2023-06-15'
         ipCommunityIds: contains(statements[i].condition, 'ipCommunityIds') ? statements[i].condition.ipCommunityIds : null
         ipExtendedCommunityIds: contains(statements[i].condition, 'ipExtendedCommunityIds') ? statements[i].condition.ipExtendedCommunityIds : null
         ipPrefixId: contains(statements[i].condition, 'ipPrefixId') ? statements[i].condition.ipPrefixId : null
+        type: contains(statements[i].condition, 'type') ? statements[i].condition.type : null
       }
       action: {
         localPreference: contains(statements[i].action, 'localPreference') ? statements[i].action.localPreference : null
