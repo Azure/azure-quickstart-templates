@@ -161,9 +161,9 @@ resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
   }
 }
 
-resource mySubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   parent: vnet
-  name: 'mySubnet'
+  name: 'subnet-1'
   properties: {
     addressPrefix: vnetsubnetprefix
     natGateway: {
@@ -185,7 +185,7 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
           privateIPAddress: '10.0.0.4'
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: mySubnet.id
+            id: subnet.id
           }
           primary: true
           privateIPAddressVersion: 'IPv4'
