@@ -62,6 +62,7 @@ param dataNetworkName string = 'internet'
 @allowed([
   'EPC'
   '5GC'
+  'EPC + 5GC'
 ])
 param coreNetworkTechnology string = '5GC'
 
@@ -79,7 +80,7 @@ param dnsAddresses array
 param customLocation string = ''
 
 #disable-next-line BCP081
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -91,14 +92,14 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01
 }
 
 #disable-next-line BCP081
-resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' = {
+resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2023-06-01' = {
   parent: exampleMobileNetwork
   name: siteName
   location: location
 }
 
 #disable-next-line BCP081
-resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2022-11-01' = {
+resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2023-06-01' = {
   parent: exampleMobileNetwork
   name: dataNetworkName
   location: location
@@ -106,7 +107,7 @@ resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks
 }
 
 #disable-next-line BCP081
-resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01' = {
+resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2023-06-01' = {
   parent: exampleMobileNetwork
   name: sliceName
   location: location
@@ -118,7 +119,7 @@ resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01'
 }
 
 #disable-next-line BCP081
-resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-11-01' = {
+resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2023-06-01' = {
   parent: exampleMobileNetwork
   name: serviceName
   location: location
@@ -147,7 +148,7 @@ resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2022-11
 }
 
 #disable-next-line BCP081
-resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2022-11-01' = {
+resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2023-06-01' = {
   parent: exampleMobileNetwork
   name: simPolicyName
   location: location
@@ -189,7 +190,7 @@ resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@20
 }
 
 #disable-next-line BCP081
-resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-11-01' = if (!empty(simGroupName)) {
+resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2023-06-01' = if (!empty(simGroupName)) {
   name: empty(simGroupName) ? 'placeHolderForValidation' : simGroupName
   location: location
   properties: {
@@ -210,7 +211,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-11-01' 
   }
 
   #disable-next-line BCP081
-  resource exampleSimResources 'sims@2022-11-01' = [for item in simResources: {
+  resource exampleSimResources 'sims@2023-06-01' = [for item in simResources: {
     name: item.simName
     properties: {
       integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
@@ -226,7 +227,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2022-11-01' 
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-06-01' = {
   name: siteName
   location: location
   dependsOn: [
@@ -259,7 +260,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
   }
 
   #disable-next-line BCP081
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-11-01' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2023-06-01' = {
     name: siteName
     location: location
     properties: {
@@ -269,7 +270,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
 
     #disable-next-line BCP081
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-11-01' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2023-06-01' = {
       name: dataNetworkName
       location: location
       properties: {
