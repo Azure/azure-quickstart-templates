@@ -1,5 +1,5 @@
 ---
-description: This creates a new AKS Cluster and then deploy SQL Server always on availability groups into it using a CNAB Package deployed using Duffle and ACI
+description: This creates a new AKS Cluster and then deploys SQL Server availability groups into it using a CNAB package deployed using Duffle and ACI
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: aks-sql-server-always-on
 languages:
 - json
 ---
-# SQL Server Always On AG on AKS
+# SQL Server availability group on AKS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/PublicDeployment.svg)
