@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: mobilenetwork-create-sim-policy
 languages:
-- json
 - bicep
+- json
 ---
 # Create a sim policy
 

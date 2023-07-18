@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: vmss-windows-app-gateway
 languages:
+- bicep
 - json
 ---
 # Deploy a Windows VM scale set with Azure Application Gateway
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-windows-app-gateway/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-windows-app-gateway/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-windows-app-gateway/BicepVersion.svg)
 
 This template deploys a Windows VM Scale Set integrated with Azure Application Gateway.
 
