@@ -63,11 +63,6 @@ resource networkToNetworkInterconnect 'Microsoft.ManagedNetworkFabric/networkFab
       secondaryIpv4Prefix: contains(optionBLayer3Configuration, 'secondaryIpv4Prefix') ? optionBLayer3Configuration.secondaryIpv4Prefix : null
       secondaryIpv6Prefix: contains(optionBLayer3Configuration, 'secondaryIpv6Prefix') ? optionBLayer3Configuration.secondaryIpv6Prefix : null
     } : null
-    npbStaticRouteConfiguration: !empty(npbStaticRouteConfiguration) ? {
-      bfdConfiguration: contains(npbStaticRouteConfiguration, 'bfdConfiguration') ? npbStaticRouteConfiguration.bfdConfiguration : null
-      ipv4Routes: contains(npbStaticRouteConfiguration, 'ipv4Routes') ? npbStaticRouteConfiguration.ipv4Routes : null
-      ipv6Routes: contains(npbStaticRouteConfiguration, 'ipv6Routes') ? npbStaticRouteConfiguration.ipv6Routes : null
-    } : null
     importRoutePolicy: !empty(importRoutePolicy) ? {
       importIpv4RoutePolicyId: contains(importRoutePolicy, 'importIpv4RoutePolicyId') ? importRoutePolicy.importIpv4RoutePolicyId : null
       importIpv6RoutePolicyId: contains(importRoutePolicy, 'importIpv6RoutePolicyId') ? importRoutePolicy.importIpv6RoutePolicyId : null

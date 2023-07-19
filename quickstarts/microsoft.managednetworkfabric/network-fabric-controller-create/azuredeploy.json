@@ -1,0 +1,126 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.19.5.34762",
+      "templateHash": "857085097465066443"
+    }
+  },
+  "parameters": {
+    "networkFabricControllerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Network Fabric Controller"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure Region for deployment of the Network Fabric Controller and associated resources"
+      }
+    },
+    "annotation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Switch configuration description"
+      }
+    },
+    "isWorkloadManagementNetworkEnabled": {
+      "type": "string",
+      "defaultValue": "True",
+      "allowedValues": [
+        "False",
+        "True"
+      ],
+      "metadata": {
+        "description": "A workload management network is required for all the tenant (workload) traffic. This traffic is only dedicated for Tenant workloads which are required to access internet or any other MSFT/Public endpoints"
+      }
+    },
+    "nfcSku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Basic",
+        "HighPerformance",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Network Fabric Controller SKU"
+      }
+    },
+    "infrastructureExpressRouteConnections": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Express route dedicated for Infrastructure services"
+      }
+    },
+    "workloadExpressRouteConnections": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Express route is dedicated for Workload services"
+      }
+    },
+    "ipv4AddressSpace": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Ipv4 address space used for NFC workload management"
+      }
+    },
+    "ipv6AddressSpace": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Ipv6 address space used for NFC workload management"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedNetworkFabric/networkFabricControllers",
+      "apiVersion": "2023-06-15",
+      "name": "[parameters('networkFabricControllerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "infrastructureExpressRouteConnections",
+            "count": "[length(range(0, length(parameters('infrastructureExpressRouteConnections'))))]",
+            "input": {
+              "expressRouteCircuitId": "[parameters('infrastructureExpressRouteConnections')[range(0, length(parameters('infrastructureExpressRouteConnections')))[copyIndex('infrastructureExpressRouteConnections')]].expressRouteCircuitId]",
+              "expressRouteAuthorizationKey": "[parameters('infrastructureExpressRouteConnections')[range(0, length(parameters('infrastructureExpressRouteConnections')))[copyIndex('infrastructureExpressRouteConnections')]].expressRouteAuthorizationKey]"
+            }
+          },
+          {
+            "name": "workloadExpressRouteConnections",
+            "count": "[length(range(0, length(parameters('workloadExpressRouteConnections'))))]",
+            "input": {
+              "expressRouteCircuitId": "[parameters('workloadExpressRouteConnections')[range(0, length(parameters('workloadExpressRouteConnections')))[copyIndex('workloadExpressRouteConnections')]].expressRouteCircuitId]",
+              "expressRouteAuthorizationKey": "[parameters('workloadExpressRouteConnections')[range(0, length(parameters('workloadExpressRouteConnections')))[copyIndex('workloadExpressRouteConnections')]].expressRouteAuthorizationKey]"
+            }
+          }
+        ],
+        "annotation": "[if(not(empty(parameters('annotation'))), parameters('annotation'), null())]",
+        "isWorkloadManagementNetworkEnabled": "[parameters('isWorkloadManagementNetworkEnabled')]",
+        "nfcSku": "[parameters('nfcSku')]",
+        "ipv4AddressSpace": "[if(not(empty(parameters('ipv4AddressSpace'))), parameters('ipv4AddressSpace'), null())]",
+        "ipv6AddressSpace": "[if(not(empty(parameters('ipv6AddressSpace'))), parameters('ipv6AddressSpace'), null())]"
+      },
+      "metadata": {
+        "description": "Create Network Fabric Controller Resource"
+      }
+    }
+  ],
+  "outputs": {
+    "resourceID": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ManagedNetworkFabric/networkFabricControllers', parameters('networkFabricControllerName'))]"
+    }
+  }
+}
