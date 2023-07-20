@@ -16,7 +16,7 @@ param azureStackEdgeName string
 @description('The name of the data network')
 param dataNetworkName string = 'internet'
 
-resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2020-01-01' = {
+resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2022-03-01' = {
   name: azureStackEdgeName
   location: location
 }
