@@ -35,6 +35,7 @@ param userEquipmentStaticAddressPoolPrefix string = ''
 @allowed([
   'EPC'
   '5GC'
+  'EPC + 5GC'
 ])
 param coreNetworkTechnology string = '5GC'
 
