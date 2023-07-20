@@ -19,6 +19,10 @@ param dataNetworkName string = 'internet'
 resource exampleAzureStackEdge 'Microsoft.DataBoxEdge/DataBoxEdgeDevices@2022-03-01' = {
   name: azureStackEdgeName
   location: location
+  sku: {
+    name: 'Management'
+    tier: 'Standard'
+  }
 }
 
 #disable-next-line BCP081
