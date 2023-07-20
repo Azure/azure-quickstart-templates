@@ -52,24 +52,24 @@ param dnsAddresses array
 param customLocation string = ''
 
 #disable-next-line BCP081
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01' existing = {
   name: existingMobileNetworkName
 
   #disable-next-line BCP081
-  resource existingDataNetwork 'dataNetworks@2022-11-01' existing = {
+  resource existingDataNetwork 'dataNetworks@2023-06-01' existing = {
     name: existingDataNetworkName
   }
 }
 
 #disable-next-line BCP081
-resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2022-11-01' = {
+resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2023-06-01' = {
   name: siteName
   parent: existingMobileNetwork
   location: location
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-06-01' = {
   name: siteName
   location: location
   properties: {
@@ -99,7 +99,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
   }
 
   #disable-next-line BCP081
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-11-01' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2023-06-01' = {
     name: siteName
     location: location
     properties: {
@@ -109,7 +109,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
 
     #disable-next-line BCP081
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2022-11-01' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2023-06-01' = {
       name: existingDataNetworkName
       location: location
       properties: {
