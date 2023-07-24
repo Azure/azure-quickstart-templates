@@ -1,18 +1,15 @@
 ---
+description: This template deploys an Azure Virtual Network Manager and sample virtual networks into the named resource group. It supports multiple connectivity topologies and network group membership types.
 page_type: sample
-languages:
-- azurepowershell
-- azurecli
 products:
-  - azure
-  - azure-virtual-network
-  - virtual-network-manager
-description: This sample demonstrates using Bicep to deploy Azure Virtual Network Manager and example Virtual Networks with different connectivity topology and network group membership types. 
-urlFragment: avmn-bicep-sample
-azureDeploy: https://raw.githubusercontent.com/mspnp/samples/main/solutions/avnm-bicep-sample/azuredeploy.json
+- azure
+- azure-resource-manager
+urlFragment: virtual-network-manager-connectivity
+languages:
+- bicep
+- json
 ---
-
-# Azure Virtual Network Manager Deployment
+# Create an Azure Virtual Network Manager and sample VNETs
 
 This sample demonstrates using Bicep to deploy Azure Virtual Network Manager and example Virtual Networks with different connectivity topology and network group membership types. Use deployment parameters to specify the type of configuration to deploy.
 
@@ -88,3 +85,4 @@ az deployment subscription create \
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-network-manager-create/BicepVersion.svg)
 
+`Tags: `
