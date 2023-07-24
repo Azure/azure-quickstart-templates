@@ -21,6 +21,7 @@ param cnabInstallationName string = 'porter-sql-server-always-on'
 @description('The file share name in the storage account for the CNAB state to be stored in')
 param cnabStateShareName string = ''
 
+@secure()
 @description('The storage account key for the account for the CNAB state to be stored in, if this is left blank it will be looked up at runtime')
 param cnabStateStorageAccountKey string = ''
 
@@ -31,10 +32,10 @@ param cnabStateStorageAccountName string = 'cnabstate${uniqueString(resourceGrou
 param cnabStateStorageAccountResourceGroupName string = resourceGroup().name
 
 @description('Name for the container group')
-param containerGroupName string = 'cg-${uniqueString(resourceGroup().id, newGuid())}'
+param containerGroupName string = 'cg-${uniqueString(resourceGroup().id)}'
 
 @description('Name for the container')
-param containerName string = 'cn-${uniqueString(resourceGroup().id, newGuid())}'
+param containerName string = 'cn-${uniqueString(resourceGroup().id)}'
 
 @description('The location in which the resources will be created.')
 param location string = resourceGroup().location
@@ -77,8 +78,8 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
           image: 'cnabquickstartstest.azurecr.io/simongdavies/run-duffle:latest'
           resources: {
             requests: {
-              cpu: '1.0'
-              memoryInGB: '1.5'
+              cpu: int('1.0')
+              memoryInGB: int('1.5')
             }
           }
           environmentVariables: [
