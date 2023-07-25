@@ -1,5 +1,5 @@
 ---
-description: This template creates a new Datadog – An Azure Native ISV Service resource and a Datadog organization to monitor resources in your subscription.
+description: This template creates a new Datadog - An Azure Native ISV Service resource and a Datadog organization to monitor resources in your subscription.
 page_type: sample
 products:
 - azure
