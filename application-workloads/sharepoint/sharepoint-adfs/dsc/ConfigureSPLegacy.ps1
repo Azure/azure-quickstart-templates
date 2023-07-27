@@ -95,6 +95,10 @@ configuration ConfigureSPVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
 
+        # cChocoInstaller fails with this error: Get-FileDownload for 'https://chocolatey.org/install.ps1' failed on attempt 1 with this error: .NET Framework 4.8 was installed, but a reboot is required.  Please reboot the system and try to install/upgrade Chocolatey again.
+        # But running it right at the beginning eventually works, and somehow it does not propagate the error to the Azure DSC extension (and doing a reboot juste before has no effect)
+        cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; }
+
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
@@ -228,12 +232,7 @@ configuration ConfigureSPVM
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
-
-        cChocoInstaller InstallChoco
-        {
-            InstallDir = "C:\Chocolatey"
-        }
-
+        
         cChocoPackageInstaller InstallEdge
         {
             Name                 = "microsoft-edge"
