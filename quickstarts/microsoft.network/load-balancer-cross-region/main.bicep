@@ -14,7 +14,7 @@ param projectName string
   'UKsouth'
   'USgovvirginia'
 ])
-param location_cr string = 'eastus2'
+param locationCr string = 'eastus2'
 
 @description('Specifies the location for the regional load balancer.')
 @allowed([
@@ -91,7 +91,7 @@ param location_cr string = 'eastus2'
   'uaecentral'
   'brazilsoutheast'
 ])
-param location_r1 string = 'eastus'
+param locationR1 string = 'eastus'
 
 @description('Specifies the location for the regional load balancer.')
 @allowed([
@@ -168,7 +168,7 @@ param location_r1 string = 'eastus'
   'uaecentral'
   'brazilsoutheast'
 ])
-param location_r2 string = 'westus2'
+param locationR2 string = 'westus2'
 
 @description('Specifies the virtual machine administrator username.')
 param adminUsername string
@@ -183,48 +183,48 @@ param vmSize string = 'Standard_DS1_v2'
 var publicIPAddressType = 'Static'
 var lbSkuName = 'Standard'
 var vmStorageAccountType = 'Premium_LRS'
-var lbName_r1_var = '${projectName}-lb-r1'
-var lbPublicIpAddressName_r1_var = '${projectName}-lbPublicIP-r1'
-var lbPublicIPAddressNameOutbound_r1_var = '${projectName}-lbPublicIPOutbound-r1'
-var lbFrontEndName_r1 = 'LoadBalancerFrontEnd-r1'
-var lbFrontEndNameOutbound_r1 = 'LoadBalancerFrontEndOutbound-r1'
-var lbBackendPoolName_r1 = 'LoadBalancerBackEndPool-r1'
-var lbBackendPoolNameOutbound_r1 = 'LoadBalancerBackEndPoolOutbound-r1'
-var lbProbeName_r1 = 'loadBalancerHealthProbe-r1'
-var nsgName_r1_var = '${projectName}-nsg-r1'
-var vNetName_r1_var = '${projectName}-vnet-r1'
-var vNetAddressPrefix_r1 = '10.0.0.0/16'
-var vNetSubnetName_r1 = 'BackendSubnet-r1'
-var vNetSubnetAddressPrefix_r1 = '10.0.0.0/24'
-var bastionName_r1_var = '${projectName}-bastion-r1'
-var bastionSubnetName_r1 = 'AzureBastionSubnet'
-var vNetBastionSubnetAddressPrefix_r1 = '10.0.1.0/24'
-var bastionPublicIPAddressName_r1_var = '${projectName}-bastionPublicIP-r1'
-var lbName_r2_var = '${projectName}-lb-r2'
-var lbPublicIpAddressName_r2_var = '${projectName}-lbPublicIP-r2'
-var lbPublicIPAddressNameOutbound_r2_var = '${projectName}-lbPublicIPOutbound-r2'
-var lbFrontEndName_r2 = 'LoadBalancerFrontEnd-r2'
-var lbFrontEndNameOutbound_r2 = 'LoadBalancerFrontEndOutbound-r2'
-var lbBackendPoolName_r2 = 'LoadBalancerBackEndPool-r2'
-var lbBackendPoolNameOutbound_r2 = 'LoadBalancerBackEndPoolOutbound-r2'
-var lbProbeName_r2 = 'loadBalancerHealthProbe-r2'
-var nsgName_r2_var = '${projectName}-nsg-r2'
-var vNetName_r2_var = '${projectName}-vnet-r2'
-var vNetAddressPrefix_r2 = '11.0.0.0/16'
-var vNetSubnetName_r2 = 'BackendSubnet-r2'
-var vNetSubnetAddressPrefix_r2 = '11.0.0.0/24'
-var bastionName_r2_var = '${projectName}-bastion-r2'
-var bastionSubnetName_r2 = 'AzureBastionSubnet'
-var vNetBastionSubnetAddressPrefix_r2 = '11.0.1.0/24'
-var bastionPublicIPAddressName_r2_var = '${projectName}-bastionPublicIP-r2'
-var lbName_cr_var = '${projectName}-lb-cr'
-var lbBackendPoolName_cr = 'LoadBalancerBackEndPool-cr'
-var lbPublicIpAddressName_cr_var = '${projectName}-lbPublicIP-cr'
-var lbFrontEndName_cr = 'LoadBalancerFrontEnd-cr'
+var lbR1Name = '${projectName}-lb-r1'
+var lbPIPR1Name = '${projectName}-lbPublicIP-r1'
+var lbPIPOutboundR1Name = '${projectName}-lbPublicIPOutbound-r1'
+var lbFrontEndR1Name = 'LoadBalancerFrontEnd-r1'
+var lbFrontEndNameOutboundR1 = 'LoadBalancerFrontEndOutbound-r1'
+var lbBackendPoolR1Name = 'LoadBalancerBackEndPool-r1'
+var lbBackendPoolNameOutboundR1 = 'LoadBalancerBackEndPoolOutbound-r1'
+var lbProbeR1Name = 'loadBalancerHealthProbe-r1'
+var nsgR1Name = '${projectName}-nsg-r1'
+var vnetR1Name = '${projectName}-vnet-r1'
+var vnetAddressPrefixR1 = '10.0.0.0/16'
+var vnetSubnetR1Name = 'BackendSubnet-r1'
+var vnetSubnetAddressPrefixR1 = '10.0.0.0/24'
+var bastionHostR1Name = '${projectName}-bastion-r1'
+var bastionSubnetR1Name = 'AzureBastionSubnet'
+var vnetBastionSubnetAddressPrefixR1 = '10.0.1.0/24'
+var bastionPIPR1Name = '${projectName}-bastionPublicIP-r1'
+var lbR2Name = '${projectName}-lb-r2'
+var lbPIPR2Name = '${projectName}-lbPublicIP-r2'
+var lbPIPOutboundR2Name = '${projectName}-lbPublicIPOutbound-r2'
+var lbFrontEndR2Name = 'LoadBalancerFrontEnd-r2'
+var lbFrontEndNameOutboundR2 = 'LoadBalancerFrontEndOutbound-r2'
+var lbBackendPoolR2Name = 'LoadBalancerBackEndPool-r2'
+var lbBackendPoolNameOutboundR2 = 'LoadBalancerBackEndPoolOutbound-r2'
+var lbProbeR2Name = 'loadBalancerHealthProbe-r2'
+var nsgR2Name = '${projectName}-nsg-r2'
+var vnetR2Name = '${projectName}-vnet-r2'
+var vnetAddressPrefixR2 = '11.0.0.0/16'
+var vnetSubnetR2Name = 'BackendSubnet-r2'
+var vnetSubnetAddressPrefixR2 = '11.0.0.0/24'
+var bastionHostR2Name = '${projectName}-bastion-r2'
+var bastionSubnetR2Name = 'AzureBastionSubnet'
+var vnetBastionSubnetAddressPrefixR2 = '11.0.1.0/24'
+var bastionPIPR2Name = '${projectName}-bastionPublicIP-r2'
+var lbCrName = '${projectName}-lb-cr'
+var lbBackendPoolCrName = 'LoadBalancerBackEndPool-cr'
+var lbPIPCrName = '${projectName}-lbPublicIP-cr'
+var lbFrontEndCrName = 'LoadBalancerFrontEnd-cr'
 
 resource nicVmR1 'Microsoft.Network/networkInterfaces@2023-02-01' = [for i in range(0, 3): {
   name: 'vm-r1-${(i + 1)}-networkInterface'
-  location: location_r1
+  location: locationR1
   properties: {
     ipConfigurations: [
       {
@@ -236,30 +236,28 @@ resource nicVmR1 'Microsoft.Network/networkInterfaces@2023-02-01' = [for i in ra
           }
           loadBalancerBackendAddressPools: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r1_var, lbBackendPoolName_r1)
+              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR1Name, lbBackendPoolR1Name)
             }
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r1_var, lbBackendPoolNameOutbound_r1)
+              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR1Name, lbBackendPoolNameOutboundR1)
             }
           ]
         }
       }
     ]
     networkSecurityGroup: {
-      id: nsgName_r1.id
+      id: nsgR1.id
     }
   }
   dependsOn: [
-    vNetName_r1
-    vnetSubnetR1
-    lbName_r1
-    nsgName_r1
+    vnetR1
+    lbR1
   ]
 }]
 
 resource installWebServerVmR1 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = [for i in range(0, 3): {
   name: 'vm-r1-${(i + 1)}/InstallWebServer'
-  location: location_r1
+  location: locationR1
   properties: {
     publisher: 'Microsoft.Compute'
     type: 'CustomScriptExtension'
@@ -270,13 +268,13 @@ resource installWebServerVmR1 'Microsoft.Compute/virtualMachines/extensions@2023
     }
   }
   dependsOn: [
-    vm_r2_1
+    vmR2
   ]
 }]
 
 resource vmR1 'Microsoft.Compute/virtualMachines@2023-03-01' = [for i in range(0, 3): {
   name: 'vm-r1-${(i + 1)}'
-  location: location_r1
+  location: locationR1
   properties: {
     hardwareProfile: {
       vmSize: vmSize
@@ -313,25 +311,23 @@ resource vmR1 'Microsoft.Compute/virtualMachines@2023-03-01' = [for i in range(0
     }
   }
   dependsOn: [
-    vm_r2_1_networkInterface
+    nicVmR2
   ]
 }]
 
 resource vnetSubnetR1Bastion 'Microsoft.Network/virtualNetworks/subnets@2023-02-01' = {
-  parent: vNetName_r1
-  location: location_r1
-  name: '${bastionSubnetName_r1}'
+  parent: vnetR1
+  name: bastionSubnetR1Name
   properties: {
-    addressPrefix: vNetBastionSubnetAddressPrefix_r1
+    addressPrefix: vnetBastionSubnetAddressPrefixR1
   }
 }
 
 resource vnetSubnetR1 'Microsoft.Network/virtualNetworks/subnets@2023-02-01' = {
-  parent: vNetName_r1
-  location: location_r1
-  name: '${vNetSubnetName_r1}'
+  parent: vnetR1
+  name: vnetSubnetR1Name
   properties: {
-    addressPrefix: vNetSubnetAddressPrefix_r1
+    addressPrefix: vnetSubnetAddressPrefixR1
   }
   dependsOn: [
 
@@ -339,9 +335,9 @@ resource vnetSubnetR1 'Microsoft.Network/virtualNetworks/subnets@2023-02-01' = {
   ]
 }
 
-resource bastionName_r1 'Microsoft.Network/bastionHosts@2023-02-01' = {
-  name: bastionName_r1_var
-  location: location_r1
+resource bastionHostR1 'Microsoft.Network/bastionHosts@2023-02-01' = {
+  name: bastionHostR1Name
+  location: locationR1
   properties: {
     ipConfigurations: [
       {
@@ -349,7 +345,7 @@ resource bastionName_r1 'Microsoft.Network/bastionHosts@2023-02-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: bastionPublicIPAddressName_r1.id
+            id: bastionPIPR1.id
           }
           subnet: {
             id: vnetSubnetR1Bastion.id
@@ -360,14 +356,14 @@ resource bastionName_r1 'Microsoft.Network/bastionHosts@2023-02-01' = {
   }
   dependsOn: [
 
-    vNetName_r1
+    vnetR1
 
   ]
 }
 
-resource bastionPublicIPAddressName_r1 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-  name: bastionPublicIPAddressName_r1_var
-  location: location_r1
+resource bastionPIPR1 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: bastionPIPR1Name
+  location: locationR1
   sku: {
     name: lbSkuName
   }
@@ -377,37 +373,37 @@ resource bastionPublicIPAddressName_r1 'Microsoft.Network/publicIPAddresses@2023
   }
 }
 
-resource lbName_r1 'Microsoft.Network/loadBalancers@2023-02-01' = {
-  name: lbName_r1_var
-  location: location_r1
+resource lbR1 'Microsoft.Network/loadBalancers@2023-02-01' = {
+  name: lbR1Name
+  location: locationR1
   sku: {
     name: lbSkuName
   }
   properties: {
     frontendIPConfigurations: [
       {
-        name: lbFrontEndName_r1
+        name: lbFrontEndR1Name
         properties: {
           publicIPAddress: {
-            id: lbPublicIPAddressName_r1.id
+            id: lbPIPR1.id
           }
         }
       }
       {
-        name: lbFrontEndNameOutbound_r1
+        name: lbFrontEndNameOutboundR1
         properties: {
           publicIPAddress: {
-            id: lbPublicIPAddressNameOutbound_r1.id
+            id: lbPIPOutboundR1.id
           }
         }
       }
     ]
     backendAddressPools: [
       {
-        name: lbBackendPoolName_r1
+        name: lbBackendPoolR1Name
       }
       {
-        name: lbBackendPoolNameOutbound_r1
+        name: lbBackendPoolNameOutboundR1
       }
     ]
     loadBalancingRules: [
@@ -415,10 +411,10 @@ resource lbName_r1 'Microsoft.Network/loadBalancers@2023-02-01' = {
         name: 'myHTTPRule'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName_r1_var, lbFrontEndName_r1)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbR1Name, lbFrontEndR1Name)
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r1_var, lbBackendPoolName_r1)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR1Name, lbBackendPoolR1Name)
           }
           frontendPort: 80
           backendPort: 80
@@ -429,14 +425,14 @@ resource lbName_r1 'Microsoft.Network/loadBalancers@2023-02-01' = {
           loadDistribution: 'Default'
           disableOutboundSnat: true
           probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', lbName_r1_var, lbProbeName_r1)
+            id: resourceId('Microsoft.Network/loadBalancers/probes', lbR1Name, lbProbeR1Name)
           }
         }
       }
     ]
     probes: [
       {
-        name: lbProbeName_r1
+        name: lbProbeR1Name
         properties: {
           protocol: 'Http'
           port: 80
@@ -455,11 +451,11 @@ resource lbName_r1 'Microsoft.Network/loadBalancers@2023-02-01' = {
           enableTcpReset: false
           idleTimeoutInMinutes: 15
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r1_var, lbBackendPoolNameOutbound_r1)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR1Name, lbBackendPoolNameOutboundR1)
           }
           frontendIPConfigurations: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName_r1_var, lbFrontEndNameOutbound_r1)
+              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbR1Name, lbFrontEndNameOutboundR1)
             }
           ]
         }
@@ -468,9 +464,9 @@ resource lbName_r1 'Microsoft.Network/loadBalancers@2023-02-01' = {
   }
 }
 
-resource lbPublicIPAddressName_r1 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-  name: lbPublicIpAddressName_r1_var
-  location: location_r1
+resource lbPIPR1 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: lbPIPR1Name
+  location: locationR1
   sku: {
     name: lbSkuName
   }
@@ -480,9 +476,9 @@ resource lbPublicIPAddressName_r1 'Microsoft.Network/publicIPAddresses@2023-02-0
   }
 }
 
-resource lbPublicIPAddressNameOutbound_r1 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-  name: lbPublicIPAddressNameOutbound_r1_var
-  location: location_r1
+resource lbPIPOutboundR1 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: lbPIPOutboundR1Name
+  location: locationR1
   sku: {
     name: lbSkuName
   }
@@ -492,9 +488,9 @@ resource lbPublicIPAddressNameOutbound_r1 'Microsoft.Network/publicIPAddresses@2
   }
 }
 
-resource nsgName_r1 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
-  name: nsgName_r1_var
-  location: location_r1
+resource nsgR1 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
+  name: nsgR1Name
+  location: locationR1
   properties: {
     securityRules: [
       {
@@ -514,21 +510,21 @@ resource nsgName_r1 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
   }
 }
 
-resource vNetName_r1 'Microsoft.Network/virtualNetworks@2023-02-01' = {
-  name: vNetName_r1_var
-  location: location_r1
+resource vnetR1 'Microsoft.Network/virtualNetworks@2023-02-01' = {
+  name: vnetR1Name
+  location: locationR1
   properties: {
     addressSpace: {
       addressPrefixes: [
-        vNetAddressPrefix_r1
+        vnetAddressPrefixR1
       ]
     }
   }
 }
 
-resource vm_r2_1_networkInterface 'Microsoft.Network/networkInterfaces@2023-02-01' = [for i in range(0, 3): {
+resource nicVmR2 'Microsoft.Network/networkInterfaces@2023-02-01' = [for i in range(0, 3): {
   name: 'vm-r2-${(i + 1)}-networkInterface'
-  location: location_r2
+  location: locationR2
   properties: {
     ipConfigurations: [
       {
@@ -536,34 +532,32 @@ resource vm_r2_1_networkInterface 'Microsoft.Network/networkInterfaces@2023-02-0
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: vNetName_r2_vNetSubnetName_r2.id
+            id: vnetSubnetR2.id
           }
           loadBalancerBackendAddressPools: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r2_var, lbBackendPoolName_r2)
+              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR2Name, lbBackendPoolR2Name)
             }
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r2_var, lbBackendPoolNameOutbound_r2)
+              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR2Name, lbBackendPoolNameOutboundR2)
             }
           ]
         }
       }
     ]
     networkSecurityGroup: {
-      id: nsgName_r2.id
+      id: nsgR2.id
     }
   }
   dependsOn: [
-    vNetName_r2
-    vNetName_r2_vNetSubnetName_r2
-    lbName_r2
-    nsgName_r2
+    vnetR2
+    lbR2
   ]
 }]
 
-resource vm_r2_1_InstallWebServer 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = [for i in range(0, 3): {
+resource installWebServerVmR2 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = [for i in range(0, 3): {
   name: 'vm-r2-${(i + 1)}/InstallWebServer'
-  location: location_r2
+  location: locationR2
   properties: {
     publisher: 'Microsoft.Compute'
     type: 'CustomScriptExtension'
@@ -574,13 +568,13 @@ resource vm_r2_1_InstallWebServer 'Microsoft.Compute/virtualMachines/extensions@
     }
   }
   dependsOn: [
-    vm_r2_1
+    vmR2
   ]
 }]
 
-resource vm_r2_1 'Microsoft.Compute/virtualMachines@2023-03-01' = [for i in range(0, 3): {
+resource vmR2 'Microsoft.Compute/virtualMachines@2023-03-01' = [for i in range(0, 3): {
   name: 'vm-r2-${(i + 1)}'
-  location: location_r2
+  location: locationR2
   properties: {
     hardwareProfile: {
       vmSize: vmSize
@@ -617,35 +611,33 @@ resource vm_r2_1 'Microsoft.Compute/virtualMachines@2023-03-01' = [for i in rang
     }
   }
   dependsOn: [
-    vm_r2_1_networkInterface
+    nicVmR2
   ]
 }]
 
-resource vNetName_r2_bastionSubnetName_r2 'Microsoft.Network/virtualNetworks/subnets@2023-02-01' = {
-  parent: vNetName_r2
-  location: location_r2
-  name: '${bastionSubnetName_r2}'
+resource vnetSubnetR2Bastion 'Microsoft.Network/virtualNetworks/subnets@2023-02-01' = {
+  parent: vnetR2
+  name: bastionSubnetR2Name
   properties: {
-    addressPrefix: vNetBastionSubnetAddressPrefix_r2
+    addressPrefix: vnetBastionSubnetAddressPrefixR2
   }
 }
 
-resource vNetName_r2_vNetSubnetName_r2 'Microsoft.Network/virtualNetworks/subnets@2023-02-01' = {
-  parent: vNetName_r2
-  location: location_r2
-  name: '${vNetSubnetName_r2}'
+resource vnetSubnetR2 'Microsoft.Network/virtualNetworks/subnets@2023-02-01' = {
+  parent: vnetR2
+  name: vnetSubnetR2Name
   properties: {
-    addressPrefix: vNetSubnetAddressPrefix_r2
+    addressPrefix: vnetSubnetAddressPrefixR2
   }
   dependsOn: [
 
-    vNetName_r2_bastionSubnetName_r2
+    vnetSubnetR2Bastion
   ]
 }
 
-resource bastionName_r2 'Microsoft.Network/bastionHosts@2023-02-01' = {
-  name: bastionName_r2_var
-  location: location_r2
+resource bastionHostR2 'Microsoft.Network/bastionHosts@2023-02-01' = {
+  name: bastionHostR2Name
+  location: locationR2
   properties: {
     ipConfigurations: [
       {
@@ -653,10 +645,10 @@ resource bastionName_r2 'Microsoft.Network/bastionHosts@2023-02-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: bastionPublicIPAddressName_r2.id
+            id: bastionPIPR2.id
           }
           subnet: {
-            id: vNetName_r2_bastionSubnetName_r2.id
+            id: vnetSubnetR2Bastion.id
           }
         }
       }
@@ -664,14 +656,14 @@ resource bastionName_r2 'Microsoft.Network/bastionHosts@2023-02-01' = {
   }
   dependsOn: [
 
-    vNetName_r2
+    vnetR2
 
   ]
 }
 
-resource bastionPublicIPAddressName_r2 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-  name: bastionPublicIPAddressName_r2_var
-  location: location_r2
+resource bastionPIPR2 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: bastionPIPR2Name
+  location: locationR2
   sku: {
     name: lbSkuName
   }
@@ -681,37 +673,37 @@ resource bastionPublicIPAddressName_r2 'Microsoft.Network/publicIPAddresses@2023
   }
 }
 
-resource lbName_r2 'Microsoft.Network/loadBalancers@2023-02-01' = {
-  name: lbName_r2_var
-  location: location_r2
+resource lbR2 'Microsoft.Network/loadBalancers@2023-02-01' = {
+  name: lbR2Name
+  location: locationR2
   sku: {
     name: lbSkuName
   }
   properties: {
     frontendIPConfigurations: [
       {
-        name: lbFrontEndName_r2
+        name: lbFrontEndR2Name
         properties: {
           publicIPAddress: {
-            id: lbPublicIPAddressName_r2.id
+            id: lbPIPR2.id
           }
         }
       }
       {
-        name: lbFrontEndNameOutbound_r2
+        name: lbFrontEndNameOutboundR2
         properties: {
           publicIPAddress: {
-            id: lbPublicIPAddressNameOutbound_r2.id
+            id: lbPIPOutboundR2.id
           }
         }
       }
     ]
     backendAddressPools: [
       {
-        name: lbBackendPoolName_r2
+        name: lbBackendPoolR2Name
       }
       {
-        name: lbBackendPoolNameOutbound_r2
+        name: lbBackendPoolNameOutboundR2
       }
     ]
     loadBalancingRules: [
@@ -719,10 +711,10 @@ resource lbName_r2 'Microsoft.Network/loadBalancers@2023-02-01' = {
         name: 'myHTTPRule'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName_r2_var, lbFrontEndName_r2)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbR2Name, lbFrontEndR2Name)
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r2_var, lbBackendPoolName_r2)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR2Name, lbBackendPoolR2Name)
           }
           frontendPort: 80
           backendPort: 80
@@ -733,14 +725,14 @@ resource lbName_r2 'Microsoft.Network/loadBalancers@2023-02-01' = {
           loadDistribution: 'Default'
           disableOutboundSnat: true
           probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', lbName_r2_var, lbProbeName_r2)
+            id: resourceId('Microsoft.Network/loadBalancers/probes', lbR2Name, lbProbeR2Name)
           }
         }
       }
     ]
     probes: [
       {
-        name: lbProbeName_r2
+        name: lbProbeR2Name
         properties: {
           protocol: 'Http'
           port: 80
@@ -759,11 +751,11 @@ resource lbName_r2 'Microsoft.Network/loadBalancers@2023-02-01' = {
           enableTcpReset: false
           idleTimeoutInMinutes: 15
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName_r2_var, lbBackendPoolNameOutbound_r2)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbR2Name, lbBackendPoolNameOutboundR2)
           }
           frontendIPConfigurations: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName_r2_var, lbFrontEndNameOutbound_r2)
+              id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbR2Name, lbFrontEndNameOutboundR2)
             }
           ]
         }
@@ -772,9 +764,9 @@ resource lbName_r2 'Microsoft.Network/loadBalancers@2023-02-01' = {
   }
 }
 
-resource lbPublicIPAddressName_r2 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-  name: lbPublicIpAddressName_r2_var
-  location: location_r2
+resource lbPIPR2 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: lbPIPR2Name
+  location: locationR2
   sku: {
     name: lbSkuName
   }
@@ -784,9 +776,9 @@ resource lbPublicIPAddressName_r2 'Microsoft.Network/publicIPAddresses@2023-02-0
   }
 }
 
-resource lbPublicIPAddressNameOutbound_r2 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-  name: lbPublicIPAddressNameOutbound_r2_var
-  location: location_r2
+resource lbPIPOutboundR2 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: lbPIPOutboundR2Name
+  location: locationR2
   sku: {
     name: lbSkuName
   }
@@ -796,9 +788,9 @@ resource lbPublicIPAddressNameOutbound_r2 'Microsoft.Network/publicIPAddresses@2
   }
 }
 
-resource nsgName_r2 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
-  name: nsgName_r2_var
-  location: location_r2
+resource nsgR2 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
+  name: nsgR2Name
+  location: locationR2
   properties: {
     securityRules: [
       {
@@ -818,21 +810,21 @@ resource nsgName_r2 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
   }
 }
 
-resource vNetName_r2 'Microsoft.Network/virtualNetworks@2023-02-01' = {
-  name: vNetName_r2_var
-  location: location_r2
+resource vnetR2 'Microsoft.Network/virtualNetworks@2023-02-01' = {
+  name: vnetR2Name
+  location: locationR2
   properties: {
     addressSpace: {
       addressPrefixes: [
-        vNetAddressPrefix_r2
+        vnetAddressPrefixR2
       ]
     }
   }
 }
 
-resource lbPublicIpAddressName_cr 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-  name: lbPublicIpAddressName_cr_var
-  location: location_cr
+resource lbPIPCr 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: lbPIPCrName
+  location: locationCr
   sku: {
     name: 'Standard'
     tier: 'Global'
@@ -842,9 +834,9 @@ resource lbPublicIpAddressName_cr 'Microsoft.Network/publicIPAddresses@2023-02-0
   }
 }
 
-resource lbName_cr 'Microsoft.Network/loadBalancers@2023-02-01' = {
-  name: lbName_cr_var
-  location: location_cr
+resource lbCr 'Microsoft.Network/loadBalancers@2023-02-01' = {
+  name: lbCrName
+  location: locationCr
   sku: {
     name: 'Standard'
     tier: 'Global'
@@ -852,17 +844,17 @@ resource lbName_cr 'Microsoft.Network/loadBalancers@2023-02-01' = {
   properties: {
     frontendIPConfigurations: [
       {
-        name: lbFrontEndName_cr
+        name: lbFrontEndCrName
         properties: {
           publicIPAddress: {
-            id: lbPublicIpAddressName_cr.id
+            id: lbPIPCr.id
           }
         }
       }
     ]
     backendAddressPools: [
       {
-        name: lbBackendPoolName_cr
+        name: lbBackendPoolCrName
       }
     ]
     loadBalancingRules: [
@@ -870,10 +862,10 @@ resource lbName_cr 'Microsoft.Network/loadBalancers@2023-02-01' = {
         name: 'LBRule'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName_cr_var, lbFrontEndName_cr)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbCrName, lbFrontEndCrName)
           }
           backendAddressPool: {
-            id: lbName_cr_lbBackendPoolName_cr.id
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbCrName, lbBackendPoolCrName)
           }
           protocol: 'Tcp'
           frontendPort: 80
@@ -885,34 +877,31 @@ resource lbName_cr 'Microsoft.Network/loadBalancers@2023-02-01' = {
   }
 }
 
-resource lbName_cr_lbBackendPoolName_cr 'Microsoft.Network/loadBalancers/backendAddressPools@2023-02-01' = {
-  name: '${lbName_cr_var}/${lbBackendPoolName_cr}'
-  location: location_cr
+resource lbBackendPoolCr 'Microsoft.Network/loadBalancers/backendAddressPools@2023-02-01' = {
+  parent: lbCr
+  name: lbBackendPoolCrName
   properties: {
     loadBalancerBackendAddresses: [
       {
         name: 'address1'
         properties: {
-          probeAdministrativeState: 'InService'
           loadBalancerFrontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName_r1_var, lbFrontEndName_r1)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbR1Name, lbFrontEndR1Name)
           }
         }
       }
       {
         name: 'address2'
         properties: {
-          probeAdministrativeState: 'InService'
           loadBalancerFrontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName_r2_var, lbFrontEndName_r2)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbR2Name, lbFrontEndR2Name)
           }
         }
       }
     ]
   }
   dependsOn: [
-    lbName_cr
-    lbName_r1
-    lbName_r2
+    lbR1
+    lbR2
   ]
 }
