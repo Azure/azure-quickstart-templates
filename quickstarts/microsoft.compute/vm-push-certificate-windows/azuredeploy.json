@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.19.5.34762",
+      "templateHash": "17899701281085571031"
+    }
+  },
   "parameters": {
     "vmName": {
       "type": "string",
@@ -41,21 +48,21 @@
       }
     },
     "OSVersion": {
-        "defaultValue": "2022-datacenter-azure-edition",
-        "allowedValues": [
-            "2022-datacenter-azure-edition",
-            "2022-datacenter-azure-edition-core",
-            "2022-datacenter-azure-edition-core-smalldisk",
-            "2022-datacenter-azure-edition-smalldisk",
-            "2022-datacenter-core-g2",
-            "2022-datacenter-core-smalldisk-g2",
-            "2022-datacenter-g2",
-            "2022-datacenter-smalldisk-g2"
-        ],
-        "type": "string",
-        "metadata": {
-            "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
-        }
+      "type": "string",
+      "defaultValue": "2022-datacenter-azure-edition",
+      "allowedValues": [
+        "2022-datacenter-azure-edition",
+        "2022-datacenter-azure-edition-core",
+        "2022-datacenter-azure-edition-core-smalldisk",
+        "2022-datacenter-azure-edition-smalldisk",
+        "2022-datacenter-core-g2",
+        "2022-datacenter-core-smalldisk-g2",
+        "2022-datacenter-g2",
+        "2022-datacenter-smalldisk-g2"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
     },
     "securityType": {
       "type": "string",
@@ -95,12 +102,12 @@
     "virtualNetworkName": "certVNET",
     "addressPrefix": "10.0.0.0/16",
     "publicIPName": "certPublicIP",
-    "networkSecurityGroupName": "[concat(variables('subnet1Name'), '-nsg')]"
+    "networkSecurityGroupName": "[format('{0}-nsg', variables('subnet1Name'))]"
   },
   "resources": [
     {
-      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-11-01",
       "name": "[variables('publicIPName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -108,9 +115,8 @@
       }
     },
     {
-      "comments": "Simple Network Security Group for subnet [variables('subnet1Name')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2022-11-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -132,13 +138,10 @@
       }
     },
     {
-      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -156,17 +159,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-11-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -182,16 +184,17 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -234,38 +237,41 @@
             }
           ]
         }
-      }
       },
-      {
-        "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "apiVersion": "2022-03-01",
-          "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-              "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
-          ],
-          "properties": {
-              "publisher": "[variables('extensionPublisher')]",
-              "type": "[variables('extensionName')]",
-              "typeHandlerVersion": "[variables('extensionVersion')]",
-              "autoUpgradeMinorVersion": true,
-              "enableAutomaticUpgrade": true,
-              "settings": {
-                  "AttestationConfig": {
-                      "MaaSettings": {
-                          "maaEndpoint": "",
-                          "maaTenantName": "[variables('maaTenantName')]"
-                      },
-                      "AscSettings": {
-                          "ascReportingEndpoint": "",
-                          "ascReportingFrequency": ""
-                      },
-                      "useCustomToken": "false",
-                      "disableAlerts": "false"
-                  }
-              }
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ]
+    },
+    {
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-03-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), 'GuestAttestation')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
           }
-      }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
+    }
   ]
 }
