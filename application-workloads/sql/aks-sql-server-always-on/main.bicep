@@ -78,8 +78,8 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
           image: 'cnabquickstartstest.azurecr.io/simongdavies/run-duffle:latest'
           resources: {
             requests: {
-              cpu: int('1.0')
-              memoryInGB: int('1.5')
+              cpu: 1
+              memoryInGB: 2
             }
           }
           environmentVariables: [
