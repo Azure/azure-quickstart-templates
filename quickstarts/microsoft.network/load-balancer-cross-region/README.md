@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: load-balancer-cross-region
 languages:
+- bicep
 - json
 ---
 # Create a cross-region load balancer
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/load-balancer-cross-region/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/load-balancer-cross-region/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/load-balancer-cross-region/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fload-balancer-cross-region%2Fazuredeploy.json)
 
