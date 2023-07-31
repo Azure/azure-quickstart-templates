@@ -1283,11 +1283,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-12-01' = {
           applicationGatewayId: applicationGateway.id
         }
         enabled: true
-        identity: {
-          clientId: reference(applicationGatewayUserDefinedManagedIdentityId).clientId
-          objectId: reference(applicationGatewayUserDefinedManagedIdentityId).principalId
-          resourceId: applicationGatewayUserDefinedManagedIdentityId
-        }
       }
     }
     podIdentityProfile: {
@@ -1400,31 +1395,19 @@ resource containerInsightsSolution 'Microsoft.OperationsManagement/solutions@201
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: blobPrivateDnsZoneName
   location: 'global'
-  properties: {
-    maxNumberOfRecordSets: 25000
-    maxNumberOfVirtualNetworkLinks: 1000
-    maxNumberOfVirtualNetworkLinksWithRegistration: 100
-  }
+  properties: {}
 }
 
 resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: keyVaultPrivateDnsZoneName
   location: 'global'
-  properties: {
-    maxNumberOfRecordSets: 25000
-    maxNumberOfVirtualNetworkLinks: 1000
-    maxNumberOfVirtualNetworkLinksWithRegistration: 100
-  }
+  properties: {}
 }
 
 resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (acrSku == 'Premium') {
   name: acrPrivateDnsZoneName
   location: 'global'
-  properties: {
-    maxNumberOfRecordSets: 25000
-    maxNumberOfVirtualNetworkLinks: 1000
-    maxNumberOfVirtualNetworkLinksWithRegistration: 100
-  }
+  properties: {}
 }
 
 resource blobPrivateDnsZoneName_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
