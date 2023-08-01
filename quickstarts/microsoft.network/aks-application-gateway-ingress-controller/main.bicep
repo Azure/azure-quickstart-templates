@@ -1037,7 +1037,7 @@ resource aksContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2
   ]
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -1189,7 +1189,7 @@ resource acrName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticSettin
   }
 }
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-12-01' = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-05-01' = {
   name: aksClusterName
   location: location
   identity: {
@@ -1295,7 +1295,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-12-01' = {
       podCidr: aksClusterPodCidr
       serviceCidr: aksClusterServiceCidr
       dnsServiceIP: aksClusterDnsServiceIP
-      dockerBridgeCidr: aksClusterDockerBridgeCidr
       outboundType: aksClusterOutboundType
       loadBalancerSku: aksClusterLoadBalancerSku
       loadBalancerProfile: null
@@ -1395,19 +1394,16 @@ resource containerInsightsSolution 'Microsoft.OperationsManagement/solutions@201
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: blobPrivateDnsZoneName
   location: 'global'
-  properties: {}
 }
 
 resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: keyVaultPrivateDnsZoneName
   location: 'global'
-  properties: {}
 }
 
 resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (acrSku == 'Premium') {
   name: acrPrivateDnsZoneName
   location: 'global'
-  properties: {}
 }
 
 resource blobPrivateDnsZoneName_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
