@@ -56,6 +56,21 @@ A NetApp account (storage account) is the entry point for using Azure NetApp Fil
    * Create a NetApp account.
    * Create a manual QoS capacity pool.
 
+3. **Create the AvSet and PPG**:
+For production landscapes, we recommend using a AvSet that is manually pinned to a data center where Azure NetApp Files resources are available in proximity. AvSet pinning ensures that VMs will not be moved on restart.
+You need to assign the PPG to the AvSet. The PPG helps the application volume group find the closest Azure NetApp Files hardware. For details, see [Best practices about proximity placement groups](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups).
+   * Create the AvSet,
+   * Create the PPG,
+   * Assign the PPG to the AvSet,
+
+4. **Manually request AvSet pinning**.
+AvSet pinning is required for long-term SAP HANA systems. Microsoft capacity planning team ensures that the required VMs for SAP HANA and Azure NetApp Files resources in proximity to the VMs are available. It also ensures that the VMs will not move on restart.
+   * Use the SAP HANA VM Pinning Requirements Form (https://aka.ms/HANAPINNING) to request pinning.
+
+5. **Create and start HANA DB VM**:
+Before you can create volumes using the application volume group, you must anchor the PPG. This means you must create at least one VM using the pinned AvSet. After this VM is started, the PPG can be used to detect where the VM is running (anchored).
+   * Create and start the VM using the AvSet.
+
 After the above preparation, you can use the application volume group template to create volumes. Steps #3, #4 and #5 are not required if AvailabilityZone option selected. 
 
 ## Automated prerequisite template
