@@ -62,7 +62,7 @@ To test your logic apps after deployment completes, you can perform these steps:
 1. Open the logic app for FabrikamFinance-AS2Send. On the logic app's **Overview** page, and select **Run Trigger**.
 
    The async MDN is received by the logic app, FabrikamFinance-AS2ReceiveMDN.
-fabrikamfinance-as2receivemdn-runhistory.pngfabrikamfinance-as2receivemdn-runhistory.png
+
    ![Screenshot that shows FabrikamFinance-AS2ReceiveMDN run history](images/fabrikamfinance-as2receivemdn-runhistory.png)
 
 1. Again, you can review the run history, inputs, and outputs for each action in these logic apps.
