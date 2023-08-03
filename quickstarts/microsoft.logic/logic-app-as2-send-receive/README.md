@@ -45,25 +45,25 @@ To test your logic apps after deployment completes, you can perform these steps:
 
 1. In the Azure portal, open the resource group page that shows where you deployed all the resources.
 
-   ![Screenshot that shows Azure resources](images/azure-resources.png"Azure resources")
+   ![Screenshot that shows Azure resources](images/azure-resources.png)
 
    The logic apps, FabrikamSales-AS2Send and Contoso-Receive, show the sync send receive scenario.
 
 1. Open the logic app for FabrikamSales-AS2Send. On the logic app's **Overview** page, and select **Run Trigger**.
 
-   ![Screenshot that shows FabrikamSales-AS2Send logic app](images/fabrikamsales-as2send.png"Run FabrikamSales-AS2Send Logic App")
+   ![Screenshot that shows FabrikamSales-AS2Send logic app](images/fabrikamsales-as2send.png)
 
 1. On the **Overview** page, you can also review the run history, inputs, and outputs for each action in these logic apps:
 
-   ![Screenshot that shows Contoso-AS2Receive run history](images/contoso-as2receive-runhistory.png"Contoso-AS2Receive run history")
+   ![Screenshot that shows Contoso-AS2Receive run history](images/contoso-as2receive-runhistory.png)
 
    The logic apps, FabrikamFinance-AS2Send and Contoso-Receive, show the async send receive scenario.
 
 1. Open the logic app for FabrikamFinance-AS2Send. On the logic app's **Overview** page, and select **Run Trigger**.
 
    The async MDN is received by the logic app, FabrikamFinance-AS2ReceiveMDN.
-
-   ![Screenshot that shows FabrikamFinance-AS2ReceiveMDN run history](images/fabrikamfinance-as2receivemdn-runhistory.png"FabrikamFinance-AS2ReceiveMDN run history")
+fabrikamfinance-as2receivemdn-runhistory.pngfabrikamfinance-as2receivemdn-runhistory.png
+   ![Screenshot that shows FabrikamFinance-AS2ReceiveMDN run history](images/fabrikamfinance-as2receivemdn-runhistory.png)
 
 1. Again, you can review the run history, inputs, and outputs for each action in these logic apps.
 
