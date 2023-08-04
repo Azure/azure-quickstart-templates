@@ -4,8 +4,6 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-api-management
-- azure-application-gateway
 urlFragment: api-management-create-with-internal-vnet-application-gateway
 languages:
 - json
