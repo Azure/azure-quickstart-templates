@@ -1,12 +1,28 @@
+@description('The name of Azure Compute Gallery')
 param galleryName string
+
+@description('The name of Azure Compute Gallery image definition')
 param imageDefinitionName string
+
+@description('The name of image offer')
 param imageOffer string
+
+@description('The name of image publisher')
 param imagePublisher string
+
+@description('The name of image sku')
 param imageSku string
+
+@description('The name of image template for customized image')
 param imageTemplateName string
+
+@description('The name of image template identity')
 param templateIdentityName string
+
+@description('Primary location for all resources')
 param location string = resourceGroup().location
-param tags object = {}
+
+@description('The guid id that generat the different name for image build name')
 param guidId string
 
 var templateRoleDefinitionName = guid(resourceGroup().id)
@@ -29,7 +45,6 @@ var customizedCommand = [{
 resource computeGallery 'Microsoft.Compute/galleries@2022-03-03' = {
   name: galleryName
   location: location
-  tags: tags
 }
 
 resource imageDefinition 'Microsoft.Compute/galleries/images@2022-03-03' = {
