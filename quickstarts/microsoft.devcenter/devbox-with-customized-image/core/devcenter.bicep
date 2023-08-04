@@ -1,21 +1,40 @@
+@description('The name of Dev Center e.g. dc-devbox-test')
 param devcenterName string
+
+@description('The name of Network Connection e.g. con-devbox-test')
 param networkConnectionName string
+
+@description('The name of Resource Group hosting network connection e.g. rg-con-devbox-test-eastus')
 param networkingResourceGroupName string
+
+@description('The subnet id hosting Dev Box')
 param subnetId string
+
+@description('The name of Dev Center project e.g. dcprj-devbox-test')
 param projectName string
+
+@description('The user or group id that will be granted to Devcenter Dev Box User and Deployment Environments User role')
 param principalId string
+
+@description('Primary location for all resources e.g. eastus')
 param location string = resourceGroup().location
+
+@description('The name of Dev Center user identity')
 param managedIdentityName string
+
+@description('The name of Azure Compute Gallery')
 param galleryName string
+
+@description('The name of Azure Compute Gallery image definition')
 param imageDefinitionName string
+
+@description('The name of image template for customized image')
 param imageTemplateName string
 
-@allowed([
-  'Group'
-  'ServicePrincipal'
-  'User'
-])
+@description('The type of principal id: User or Group')
 param principalType string = 'User'
+
+@description('The guid id that generat the different name for image template. Please keep it by default')
 param guidId string
 
 // DevCenter Dev Box User role 

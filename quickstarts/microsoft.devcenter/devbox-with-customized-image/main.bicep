@@ -1,3 +1,13 @@
+@description('The user or group id that will be granted to Devcenter Dev Box User and Deployment Environments User role')
+param userPrincipalId string = ''
+
+@description('The type of principal id: User or Group')
+@allowed([
+  'Group'
+  'User'
+])
+param userPrincipalType string = 'User'
+
 var suffix = 'default'
 
 @description('The name of Dev Center e.g. dc-devbox-test')
@@ -23,16 +33,6 @@ var networkVnetAddressPrefixes = '10.4.0.0/16'
 
 @description('The subnet address prefixes of Dev Box e.g. 10.4.0.0/24')
 var networkSubnetAddressPrefixes = '10.4.0.0/24'
-
-@description('The user or group id that will be granted to Devcenter Dev Box User and Deployment Environments User role')
-param userPrincipalId string = ''
-
-@description('The type of principal id: User or Group')
-@allowed([
-  'Group'
-  'User'
-])
-param userPrincipalType string = 'User'
 
 @description('The name of Azure Compute Gallery')
 var imageGalleryName = 'gallery${suffix}'
