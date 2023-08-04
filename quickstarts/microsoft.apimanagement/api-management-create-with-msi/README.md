@@ -4,11 +4,10 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-api-management
 urlFragment: api-management-create-with-msi
 languages:
-- json
 - bicep
+- json
 ---
 # Create an API Management instance having MSI Identity
 
