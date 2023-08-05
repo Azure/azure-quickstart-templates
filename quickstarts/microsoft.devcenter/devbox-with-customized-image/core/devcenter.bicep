@@ -34,6 +34,9 @@ param imageTemplateName string
 @description('The type of principal id: User or Group')
 param principalType string = 'User'
 
+@description('The id of template identity user can read the image template status')
+param templateIdentityId string
+
 @description('The guid id that generat the different name for image template. Please keep it by default')
 param guidId string
 
@@ -49,20 +52,10 @@ var devceterSettings = loadJsonContent('./devcenter-settings.json')
 var customizedImageDefinition = devceterSettings.customizedImageDevboxdefinitions[0]
 var queryTemplateProgress = take('${imageDefinitionName}-${guidId}-query',64)
 
-var image = {
-  'win11-ent-base': 'microsoftwindowsdesktop_windows-ent-cpc_win11-21h2-ent-cpc-os'
-  'win11-ent-m365': 'microsoftwindowsdesktop_windows-ent-cpc_win11-21h2-ent-cpc-m365'
-  'win11-ent-vs2022': 'microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2'
-}
-
 var compute = {
-  '8-vcpu-32gb-mem': 'general_a_8c32gb_v1'
-}
-
-var storage = {
-  '256gb': 'ssd_256gb'
-  '512gb': 'ssd_512gb'
-  '1024gb': 'ssd_1024gb'
+  '8c-32gb': 'general_i_8c32gb256ssd_v2'
+  '16c-64gb': 'general_i_8c32gb512ssd_v2'
+  '32c-128gb': 'general_i_8c32gb1024ssd_v2'
 }
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
@@ -104,7 +97,7 @@ resource readGalleryRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
   }
 }
 
-resource devcenterGallery 'Microsoft.DevCenter/devcenters/galleries@2023-01-01-preview' = {
+resource devcenterGallery 'Microsoft.DevCenter/devcenters/galleries@2023-04-01' = {
   name: galleryName
   parent: devcenter
   properties: {
@@ -116,7 +109,7 @@ resource devcenterGallery 'Microsoft.DevCenter/devcenters/galleries@2023-01-01-p
   ]
 }
 
-resource networkConnection 'Microsoft.DevCenter/networkConnections@2023-01-01-preview' = {
+resource networkConnection 'Microsoft.DevCenter/networkConnections@2023-04-01' = {
   name: networkConnectionName
   location: location
   properties: {
@@ -126,7 +119,7 @@ resource networkConnection 'Microsoft.DevCenter/networkConnections@2023-01-01-pr
   }
 }
 
-resource attachedNetworks 'Microsoft.DevCenter/devcenters/attachednetworks@2023-01-01-preview' = {
+resource attachedNetworks 'Microsoft.DevCenter/devcenters/attachednetworks@2023-04-01' = {
   parent: devcenter
   name: networkConnection.name
   properties: {
@@ -134,7 +127,7 @@ resource attachedNetworks 'Microsoft.DevCenter/devcenters/attachednetworks@2023-
   }
 }
 
-resource dcGalleryImage 'Microsoft.DevCenter/devcenters/galleries/images@2022-11-11-preview' existing = {
+resource dcGalleryImage 'Microsoft.DevCenter/devcenters/galleries/images@2023-04-01' existing = {
   name: imageDefinitionName
   parent: devcenterGallery
 }
@@ -146,7 +139,7 @@ resource imageTemplateBuild 'Microsoft.Resources/deploymentScripts@2020-10-01' =
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${managedIdentity.id}': {}
+      '${templateIdentityId}': {}
     }
   }
   properties: {
@@ -158,25 +151,7 @@ resource imageTemplateBuild 'Microsoft.Resources/deploymentScripts@2020-10-01' =
   }
 }
 
-resource builtinImageDevboxDefinitions 'Microsoft.DevCenter/devcenters/devboxdefinitions@2022-11-11-preview' = [for definition in devceterSettings.builtinImageDevboxDefinitions: {
-  parent: devcenter
-  name: definition.name
-  location: location
-  properties: {
-    imageReference: {
-      id: '${devcenter.id}/galleries/default/images/${image[definition.image]}'
-    }
-    sku: {
-      name: compute[definition.compute]
-    }
-    osStorageType: storage[definition.storage]
-  }
-  dependsOn: [
-    attachedNetworks
-  ]
-}]
-
-resource customizedImageDevboxDefinitions 'Microsoft.DevCenter/devcenters/devboxdefinitions@2022-11-11-preview' = {
+resource customizedImageDevboxDefinitions 'Microsoft.DevCenter/devcenters/devboxdefinitions@2023-04-01' = {
   parent: devcenter
   name: customizedImageDefinition.name
   location: location
@@ -184,10 +159,10 @@ resource customizedImageDevboxDefinitions 'Microsoft.DevCenter/devcenters/devbox
     imageReference: {
       id: dcGalleryImage.id
     }
+    hibernateSupport: 'Enabled'
     sku: {
       name: compute[customizedImageDefinition.compute]
     }
-    osStorageType: storage[customizedImageDefinition.storage]
   }
   dependsOn: [
     attachedNetworks
@@ -195,7 +170,7 @@ resource customizedImageDevboxDefinitions 'Microsoft.DevCenter/devcenters/devbox
   ]
 }
 
-resource project 'Microsoft.DevCenter/projects@2022-11-11-preview' = {
+resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
   name: projectName
   location: location
   properties: {
@@ -203,23 +178,7 @@ resource project 'Microsoft.DevCenter/projects@2022-11-11-preview' = {
   }
 }
 
-resource builtinPools 'Microsoft.DevCenter/projects/pools@2023-01-01-preview' = [for pool in devceterSettings.builtinImagePools: {
-  parent: project
-  name: pool.name
-  location: location
-  properties: {
-    devBoxDefinitionName: pool.definition
-    networkConnectionName: networkConnection.name
-    licenseType: 'Windows_Client'
-    localAdministrator: pool.administrator
-    
-  }
-  dependsOn: [
-    builtinImageDevboxDefinitions
-  ]
-}]
-
-resource customizedImagePools 'Microsoft.DevCenter/projects/pools@2023-01-01-preview' = [for pool in devceterSettings.customizedImagePools: {
+resource customizedImagePools 'Microsoft.DevCenter/projects/pools@2023-04-01' = [for pool in devceterSettings.customizedImagePools: {
   parent: project
   name: pool.name
   location: location
@@ -247,19 +206,9 @@ resource devboxRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if(!e
 }
 
 output devcenterName string = devcenter.name
-
-output builtinImageDevboxDefinitions array = [for (definition, i) in devceterSettings.builtinImageDevboxDefinitions: {
-  name: builtinImageDevboxDefinitions[i].name
-}]
 output customizedImageDevboxDefinitions string = customizedImageDevboxDefinitions.name
-
 output networkConnectionName string = networkConnection.name
-
 output projectName string = project.name
-
-output builtinImagePools array = [for (pool, i) in devceterSettings.builtinImagePools: {
-  name: builtinPools[i].name
-}]
 output customizedImagePools array = [for (pool, i) in devceterSettings.customizedImagePools: {
   name: customizedImagePools[i].name
 }]
