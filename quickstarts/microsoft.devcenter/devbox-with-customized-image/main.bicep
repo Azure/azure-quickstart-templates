@@ -8,6 +8,9 @@ param userPrincipalId string = ''
 ])
 param userPrincipalType string = 'User'
 
+@description('Primary location for all resources e.g. eastus')
+param location string = resourceGroup().location
+
 var suffix = 'default'
 
 @description('The name of Dev Center e.g. dc-devbox-test')
@@ -51,9 +54,6 @@ var imagePublisher = 'MicrosoftWindowsDesktop'
 
 @description('The name of image sku')
 var imageSku = 'win11-22h2-ent-cpc-m365'
-
-@description('Primary location for all resources e.g. eastus')
-var location = resourceGroup().location
 
 @description('The guid id that generat the different name for image template. Please keep it by default')
 var guidId = guid(resourceGroup().id, location)
