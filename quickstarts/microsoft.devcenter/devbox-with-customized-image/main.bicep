@@ -113,6 +113,7 @@ module devcenter 'core/devcenter.bicep' = {
     managedIdentityName: idName
     imageDefinitionName: imageDefinitionName
     imageTemplateName: imageTemplateName
+    templateIdentityId: gallery.outputs.templateIdentityId
     guidId: guidId
   }
 }
@@ -122,7 +123,5 @@ output projectName string = devcenter.outputs.projectName
 output networkConnectionName string = devcenter.outputs.networkConnectionName
 output vnetName string = empty(existingSubnetId) ? vnet.outputs.vnetName : ''
 output subnetName string = empty(existingSubnetId) ? vnet.outputs.subnetName : ''
-output builtinImageDevboxDefinitions array = devcenter.outputs.builtinImageDevboxDefinitions
 output customizedImageDevboxDefinitions string = devcenter.outputs.customizedImageDevboxDefinitions
-output builtinPools array = devcenter.outputs.builtinImagePools
 output customizedImagePools array = devcenter.outputs.customizedImagePools

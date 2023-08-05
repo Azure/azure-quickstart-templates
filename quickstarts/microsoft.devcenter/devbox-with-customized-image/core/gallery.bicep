@@ -135,6 +135,7 @@ resource templateRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04
           'Microsoft.Resources/deploymentScripts/read'
           'Microsoft.Resources/deploymentScripts/write'
           'Microsoft.VirtualMachineImages/imageTemplates/run/action'
+          'Microsoft.VirtualMachineImages/imageTemplates/read'
           'Microsoft.ContainerInstance/containerGroups/read'
           'Microsoft.ContainerInstance/containerGroups/write'
           'Microsoft.ContainerInstance/containerGroups/start/action'
@@ -181,3 +182,4 @@ resource imageTemplateBuild 'Microsoft.Resources/deploymentScripts@2020-10-01' =
 }
 
 output name string = computeGallery.name
+output templateIdentityId string = templateIdentity.id
