@@ -70,12 +70,12 @@ resource imageDefinition 'Microsoft.Compute/galleries/images@2022-03-03' = {
   }
 }
 
-resource templateIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource templateIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: templateIdentityName
   location: location
 }
 
-resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14' = {
+resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-07-01' = {
   name: imageTemplateName
   location: location
   identity: {

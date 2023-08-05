@@ -58,11 +58,11 @@ var compute = {
   '32c-128gb': 'general_i_8c32gb1024ssd_v2'
 }
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: managedIdentityName
 }
 
-resource devcenter 'Microsoft.DevCenter/devcenters@2023-01-01-preview' = {
+resource devcenter 'Microsoft.DevCenter/devcenters@2023-04-01' = {
   name: devcenterName
   location: location
   identity: {
