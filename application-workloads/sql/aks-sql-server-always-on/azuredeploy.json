@@ -1,0 +1,240 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.20.4.51522",
+      "templateHash": "1872651855046424762"
+    }
+  },
+  "parameters": {
+    "aksClusterName": {
+      "type": "string",
+      "defaultValue": "sql-server-aks",
+      "metadata": {
+        "description": "The name to use for the AKS Cluster."
+      }
+    },
+    "aksResourceGroupName": {
+      "type": "string",
+      "defaultValue": "sql-server-always-on",
+      "metadata": {
+        "description": "The name of the resource group to create the AKS Cluster in."
+      }
+    },
+    "azureClientId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AAD Client ID for Azure account authentication - used to authenticate to Azure using Service Principal for ACI creation to run CNAB operation and also for AKS Cluster."
+      }
+    },
+    "azureClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AAD Client Secret for Azure account authentication - used to authenticate to Azure using Service Principal for ACI creation to run CNAB operation and also for AKS Cluster."
+      }
+    },
+    "cnabAction": {
+      "type": "string",
+      "defaultValue": "install",
+      "metadata": {
+        "description": "The name of the action to be performed on the application instance."
+      }
+    },
+    "cnabInstallationName": {
+      "type": "string",
+      "defaultValue": "porter-sql-server-always-on",
+      "metadata": {
+        "description": "The name of the application instance."
+      }
+    },
+    "cnabStateShareName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The file share name in the storage account for the CNAB state to be stored in"
+      }
+    },
+    "cnabStateStorageAccountKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The storage account key for the account for the CNAB state to be stored in, if this is left blank it will be looked up at runtime"
+      }
+    },
+    "cnabStateStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('cnabstate{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The storage account name for the account for the CNAB state to be stored in, by default this will be in the current resource group and will be created if it does not exist"
+      }
+    },
+    "cnabStateStorageAccountResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The resource group name for the storage account for the CNAB state to be stored in, by default this will be in the current resource group, if this is changed to a different resource group the storage account is expected to already exist"
+      }
+    },
+    "containerGroupName": {
+      "type": "string",
+      "defaultValue": "[format('cg-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name for the container group"
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "defaultValue": "[format('cn-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name for the container"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location in which the resources will be created."
+      }
+    },
+    "sqlMasterkeyPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The Password for the SQL Server Master Key."
+      }
+    },
+    "sqlSaPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The Password for the sa user in SQL Server."
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('cnabStateStorageAccountResourceGroupName'), resourceGroup().name)]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('cnabStateStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "file": {
+              "enabled": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('containerGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('containerName')]",
+            "properties": {
+              "image": "cnabquickstartstest.azurecr.io/simongdavies/run-duffle:latest",
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGB": 2
+                }
+              },
+              "environmentVariables": [
+                {
+                  "name": "CNAB_ACTION",
+                  "value": "[parameters('cnabAction')]"
+                },
+                {
+                  "name": "CNAB_INSTALLATION_NAME",
+                  "value": "[parameters('cnabInstallationName')]"
+                },
+                {
+                  "name": "ACI_LOCATION",
+                  "value": "[parameters('location')]"
+                },
+                {
+                  "name": "CNAB_STATE_STORAGE_ACCOUNT_NAME",
+                  "value": "[parameters('cnabStateStorageAccountName')]"
+                },
+                {
+                  "name": "CNAB_STATE_STORAGE_ACCOUNT_KEY",
+                  "secureValue": "[parameters('cnabStateStorageAccountKey')]"
+                },
+                {
+                  "name": "CNAB_STATE_SHARE_NAME",
+                  "value": "[parameters('cnabStateShareName')]"
+                },
+                {
+                  "name": "VERBOSE",
+                  "value": "false"
+                },
+                {
+                  "name": "CNAB_BUNDLE_NAME",
+                  "value": "porter/sql-server-always-on"
+                },
+                {
+                  "name": "AKS_CLUSTER_NAME",
+                  "value": "[parameters('aksClusterName')]"
+                },
+                {
+                  "name": "AKS_RESOURCE_GROUP",
+                  "value": "[parameters('aksResourceGroupName')]"
+                },
+                {
+                  "name": "LOCATION",
+                  "value": "[parameters('location')]"
+                },
+                {
+                  "name": "SQL_MASTERKEYPASSWORD",
+                  "secureValue": "[parameters('sqlMasterkeyPassword')]"
+                },
+                {
+                  "name": "SQL_SAPASSWORD",
+                  "secureValue": "[parameters('sqlSaPassword')]"
+                },
+                {
+                  "name": "AZURE_CLIENT_ID",
+                  "secureValue": "[parameters('azureClientId')]"
+                },
+                {
+                  "name": "AZURE_CLIENT_SECRET",
+                  "secureValue": "[parameters('azureClientSecret')]"
+                },
+                {
+                  "name": "AZURE_SUBSCRIPTION_ID",
+                  "value": "[subscription().subscriptionId]"
+                },
+                {
+                  "name": "AZURE_TENANT_ID",
+                  "value": "[subscription().tenantId]"
+                }
+              ]
+            }
+          }
+        ],
+        "osType": "Linux",
+        "restartPolicy": "Never"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('cnabStateStorageAccountName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "CNAB_Package_Action_Logs_Command": {
+      "type": "string",
+      "value": "[format('az container logs -g {0} -n {1}  --container-name {2} --follow', resourceGroup().name, parameters('containerGroupName'), parameters('containerName'))]"
+    }
+  }
+}
