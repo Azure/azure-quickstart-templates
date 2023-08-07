@@ -49,6 +49,14 @@ Click the "Deploy to Azure" button to deploy. There will be the deployment page 
 
 or Run the Powershell script if you do not know how to get user principal id. 
 
+### Microsoft.DevCenter
+
+The resource provider "Microsoft.DevCenter" provides the capability to manage the Azure Dev Center.
+
+- **Microsoft.DevCenter/devcenters**: include gallery, dev box definition
+- **Microsoft.DevCenter/projects**: include project and dev box pool
+- **Microsoft.DevCenter/networkConnections**: include network connection
+
 ## Parameters
 
 When deploying this template you can provide parameters to customize the dev box and related resources.
@@ -74,3 +82,15 @@ After you use this template to generate the customized image, if you want to gen
 | Data | Git, Azure CLI, VSCode，Python3, VSCode Extension for Python and Jupyter |
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devcenter%2Fdevbox-with-customized-image%2Fcustomized-image%2Fcustomized-image.json)
+
+
+If you're new to **Dev Box**, see:
+
+- [Microsoft Dev Box Documentation](https://learn.microsoft.com/en-us/azure/dev-box/overview-what-is-microsoft-dev-box)
+- [Quickstarts: Microsoft Dev Box](https://learn.microsoft.com/en-us/azure/dev-box/quickstart-configure-dev-box-service?tabs=AzureADJoin)
+
+If you're new to template deployment, see:
+
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+`Tags: Devcenter, Dev Box, ARM Template, Microsoft.DevCenter/devcenters`
