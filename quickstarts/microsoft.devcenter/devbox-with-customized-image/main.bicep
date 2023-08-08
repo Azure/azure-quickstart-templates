@@ -64,10 +64,9 @@ var existingSubnetId = ''
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(resourceGroup().id, location))
 var ncName = !empty(networkConnectionName) ? networkConnectionName : '${abbrs.networkConnections}${resourceToken}'
-var galName = !empty(imageGalleryName) ? imageGalleryName : '${abbrs.computeGalleries}${resourceToken}'
 var idName = !empty(userIdentityName) ? userIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}${resourceToken}'
 
-module vnet 'core/vnet.bicep' = if(empty(existingSubnetId)) {
+module vnet 'modules/vnet.bicep' = if(empty(existingSubnetId)) {
   name: 'vnet'
   params: {
     location: location
@@ -83,10 +82,10 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-
   location: location
 }
 
-module gallery 'core/gallery.bicep' = {
-  name: galName
+module gallery 'modules/gallery.bicep' = {
+  name: 'gallery'
   params: {
-    galleryName: galName
+    galleryName: !empty(imageGalleryName) ? imageGalleryName : '${abbrs.computeGalleries}${resourceToken}'
     location: location
     imageDefinitionName: imageDefinitionName
     imageOffer: imageOffer
@@ -98,7 +97,7 @@ module gallery 'core/gallery.bicep' = {
   }
 }
 
-module devcenter 'core/devcenter.bicep' = {
+module devcenter 'modules/devcenter.bicep' = {
   name: 'devcenter'
   params: {
     location: location
