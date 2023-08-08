@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: mobilenetwork-create-full-5gc-deployment
 languages:
-- json
 - bicep
+- json
 ---
 # Create a full 5G Core deployment
 

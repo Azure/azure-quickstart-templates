@@ -358,13 +358,19 @@ class WaitForExtendSchemaFile
     [void] Set()
     {
         $_FilePath = "\\$($this.MachineName)\$($this.ExtFolder)"
-        $extadschpath = Join-Path -Path $_FilePath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
+
+        while(!(Test-Path $_FilePath))
+        {
+            Write-Verbose "Wating for the path $_FilePath available... "
+        }
+        $cmsourcepath = (Get-ChildItem -Path $_FilePath | ?{$_.Name.ToLower().Contains("cd.")}).FullName
+        $extadschpath = Join-Path -Path $cmsourcepath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
         
         while(!(Test-Path $extadschpath))
         {
             Write-Verbose "Wait for extadsch.exe exist on $($this.MachineName), will try 10 seconds later..."
             Start-Sleep -Seconds 10
-            $extadschpath = Join-Path -Path $_FilePath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
+            $extadschpath = Join-Path -Path $cmsourcepath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
         }
 
         Write-Verbose "Extended the Active Directory schema..."
@@ -533,7 +539,8 @@ class DownloadSCCM
         $WebClient.DownloadFile($cmurl,$cmpath)
         if(!(Test-Path $cmsourcepath))
         {
-            Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+            New-Item -ItemType Directory -Path $cmsourcepath
+            Start-Process -WorkingDirectory ($cmsourcepath) -Filepath ($cmpath) -ArgumentList ('/s') -wait
         }
     }
 

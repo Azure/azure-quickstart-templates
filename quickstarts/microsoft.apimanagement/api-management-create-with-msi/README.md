@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: api-management-create-with-msi
 languages:
-- json
 - bicep
+- json
 ---
 # Create an API Management instance having MSI Identity
 

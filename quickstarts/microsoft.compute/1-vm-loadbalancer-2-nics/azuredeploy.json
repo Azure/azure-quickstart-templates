@@ -20,6 +20,49 @@
         "description": "DNS for Load Balancer IP."
       }
     },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "OSVersion": {
+      "defaultValue": "2022-datacenter-azure-edition",
+      "allowedValues": [
+          "2016-datacenter-gensecond",
+          "2016-datacenter-server-core-g2",
+          "2016-datacenter-server-core-smalldisk-g2",
+          "2016-datacenter-smalldisk-g2",
+          "2016-datacenter-with-containers-g2",
+          "2016-datacenter-zhcn-g2",
+          "2019-datacenter-core-g2",
+          "2019-datacenter-core-smalldisk-g2",
+          "2019-datacenter-core-with-containers-g2",
+          "2019-datacenter-core-with-containers-smalldisk-g2",
+          "2019-datacenter-gensecond",
+          "2019-datacenter-smalldisk-g2",
+          "2019-datacenter-with-containers-g2",
+          "2019-datacenter-with-containers-smalldisk-g2",
+          "2019-datacenter-zhcn-g2",
+          "2022-datacenter-azure-edition",
+          "2022-datacenter-azure-edition-core",
+          "2022-datacenter-azure-edition-core-smalldisk",
+          "2022-datacenter-azure-edition-smalldisk",
+          "2022-datacenter-core-g2",
+          "2022-datacenter-core-smalldisk-g2",
+          "2022-datacenter-g2",
+          "2022-datacenter-smalldisk-g2"
+      ],
+      "type": "string",
+      "metadata": {
+          "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
+    },
     "location": {
       "type": "string",
       "metadata": {
@@ -36,17 +79,29 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2_v3",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of the virtual machine."
       }
     }
   },
   "variables": {
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
+    "extensionVersion": "1.0",
+    "maaEndpoint": "[substring('emptystring', 0, 0)]",
+    "maaTenantName": "GuestAttestation", 
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "addressPrefix": "10.0.0.0/16",
     "imageOffer": "WindowsServer",
     "imagePublisher": "MicrosoftWindowsServer",
-    "imageSKU": "2019-Datacenter",
+    "imageSKU": "[parameters('OSVersion')]",
     "lbName": "myLB",
     "networkSecurityGroupName": "[concat(variables('subnetName'), '-nsg')]",
     "nic1NamePrefix": "nic1",
@@ -63,7 +118,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-09-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('storageAccountType')]"
@@ -119,7 +174,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nic1NamePrefix')]",
       "location": "[parameters('location')]",
@@ -152,7 +207,7 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nic2NamePrefix')]",
       "location": "[parameters('location')]",
@@ -174,7 +229,7 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -186,7 +241,7 @@
       }
     },
     {
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmNamePrefix')]",
       "location": "[parameters('location')]",
@@ -215,6 +270,7 @@
             "createOption": "FromImage"
           }
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -240,7 +296,32 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/GuestAttestation', variables('vmNamePrefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+              "AttestationConfig": {
+                  "MaaSettings": {
+                      "maaEndpoint": "[variables('maaEndpoint')]",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                  }
+              }
+          }
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', variables('vmNamePrefix'))]"
+      ]
+    },
+    {
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
@@ -268,4 +349,3 @@
     }
   ]
 }
-

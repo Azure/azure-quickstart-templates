@@ -1,5 +1,5 @@
 ---
-description: The MedTech service is one of the Azure Health Data Services designed to ingest device message data from multiple devices, transform that data into FHIR Observations, which are then persisted in the Azure Health Data Services FHIR service.
+description: The MedTech service is one of the Azure Health Data Services designed to ingest device data from multiple devices, transform the device data into FHIR Observations, which are then persisted in the Azure Health Data Services FHIR service.
 page_type: sample
 products:
 - azure
@@ -37,13 +37,13 @@ This template deploys the MedTech service with the required resources and access
 
 * To learn about the MedTech service, see [What is the MedTech service?](https://learn.microsoft.com/azure/healthcare-apis/iot/overview)
 
-* To learn about the MedTech service device message data transformation, see [Understand the MedTech service device message data transformation](https://learn.microsoft.com/azure/healthcare-apis/iot/understand-service).
+* To learn about the MedTech service device data processing stages, see [Overview of the MedTech service device data processing stages](https://learn.microsoft.com/azure/healthcare-apis/iot/overview-of-device-data-processing-stages).
 
 * To learn how to use the MedTech service Mapping debugger, see [How to use the MedTech service Mapping debugger](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-use-mapping-debugger).
 
-* To learn how to configure the MedTech service device mapping, see [How to configure the MedTech service device mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-device-mappings).
+* For an overview of the MedTech service device mapping, see [Overview of the MedTech service device mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/overview-of-device-mapping).
 
-* To learn how to configure the MedTech service FHIR destination mapping, see [How to configure the MedTech service FHIR destination mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/how-to-configure-fhir-mappings).
+* For an overview of the MedTech service FHIR destination mapping, see [Overview of the MedTech service FHIR destination mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/overview-of-fhir-destination-mapping).
 
 FHIR® is a registered trademark of Health Level Seven International, registered in the U.S. Trademark Office and is used with their permission.
 
