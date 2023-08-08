@@ -1,5 +1,47 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in June 30, 2023
+
+### Fixed
+
+- Configuration for SP Legacy and FE Legacy (SharePoint 2019 / 2016 / 2013 VMs)
+  - Fixed the deployment error caused by DSC resource cChocoInstaller
+
+## Enhancements & bug-fixes - Published in June 19, 2023
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the June 2023 CU for SharePoint Subscription
+  - Updated SQL image to use SQL Server 2022 on Windows Server 2022.
+- Configuration for all virtual machines
+  - Update DSC module `ComputerManagementDsc`
+- Configuration for all VMs except DC
+  - Update DSC module `SqlServerDsc`
+- Configuration for SPSE and FESE
+  - Update DSC module `StorageDsc`
+
+## Enhancements & bug-fixes - Published in June 02, 2023
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the May 2023 CU for SharePoint Subscription
+- Configuration for DC
+  - Update DSC module `AdfsDsc`
+
+## Enhancements & bug-fixes - Published in April 12, 2023
+
+### Fixed
+
+- Template
+  - The size of the OS disk is no longer hardcoded on SharePoint virtual machines, so now VMs for SharePoint Subscription and 2019 are really created with a 32 GB disk
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2023 CU for SharePoint Subscription
+
 ## Enhancements & bug-fixes - Published in April 06, 2023
 
 ### Added

@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: mobilenetwork-create-new-slice
 languages:
-- json
 - bicep
+- json
 ---
 # Create a slice
 

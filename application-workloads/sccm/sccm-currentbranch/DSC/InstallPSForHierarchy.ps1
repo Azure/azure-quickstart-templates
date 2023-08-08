@@ -121,7 +121,7 @@ Remove-Item $CMINIPath
 $CSConfiguration = Get-Content -Path $CSConfigurationFile -ErrorAction Ignore | ConvertFrom-Json
 while($CSConfiguration.$("PSReadytoUse").Status -ne "Completed")
 {
-    Write-Verbose "Wait for step : [PSReadytoUse] finished running on $CSName, will try 60 seconds later..."
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Wait for step : [PSReadytoUse] finished running on $CSName, will try 60 seconds later..." | Out-File -Append $logpath
     Start-Sleep -Seconds 60
     $CSConfiguration = Get-Content -Path $CSConfigurationFile | ConvertFrom-Json
 }
