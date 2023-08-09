@@ -4,7 +4,6 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- virtual-network-manager
 urlFragment: virtual-network-manager-connectivity
 languages:
 - bicep
