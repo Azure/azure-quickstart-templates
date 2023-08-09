@@ -8,7 +8,7 @@ urlFragment: newrelic
 languages:
 - json
 ---
-# Create a Azure native New Relic Resource
+# Create a Azure Native New Relic Resource
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/newrelic.observability/newrelic/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/newrelic.observability/newrelic/PublicDeployment.svg)
