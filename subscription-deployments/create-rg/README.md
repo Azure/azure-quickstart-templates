@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: create-rg
 languages:
-- json
 - bicep
+- json
 ---
 # Create a resourceGroup
 
