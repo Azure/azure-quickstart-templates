@@ -1,0 +1,639 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.20.4.51522",
+      "templateHash": "6598093403949168763"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "openAiAccountName": {
+      "type": "string",
+      "defaultValue": "oai-private-demo",
+      "metadata": {
+        "description": "Name of the Azure OpenAI account"
+      }
+    },
+    "customSubDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Custom subdomain name for the Azure OpenAI account"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "S0",
+      "metadata": {
+        "description": "SKU for the Azure OpenAI account"
+      }
+    },
+    "embeddingsDeploymentCapacity": {
+      "type": "int",
+      "metadata": {
+        "description": "Tokens per Minute Rate Limit (thousands)"
+      }
+    },
+    "embeddingsModelName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Embeddings Model to deploy"
+      }
+    },
+    "gptDeploymentCapacity": {
+      "type": "int",
+      "metadata": {
+        "description": "Tokens per Minute Rate Limit (thousands)"
+      }
+    },
+    "chatGptModelName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the GPT Model to deploy"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet-oai-demo",
+      "metadata": {
+        "description": "Name of the Azure Virtual Network"
+      }
+    },
+    "oaiPrivateDnsZoneName": {
+      "type": "string",
+      "defaultValue": "privatelink.openai.azure.com",
+      "metadata": {
+        "description": "Name of the Azure OpenaAI Private DNS Zone"
+      }
+    },
+    "oaiPrivateEndpointName": {
+      "type": "string",
+      "defaultValue": "oaiDemoPrivateEndpoint",
+      "metadata": {
+        "description": "Name of the Azure OpenaAI Private Endpoint"
+      }
+    },
+    "bastionHostName": {
+      "type": "string",
+      "defaultValue": "bastion-oai-demo",
+      "metadata": {
+        "description": "The name of the Azure Bastion host"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "minLength": 12,
+      "metadata": {
+        "description": "Admin Password for the Virtual Machine."
+      }
+    },
+    "OSVersion": {
+      "type": "string",
+      "defaultValue": "win11-22h2-ent",
+      "allowedValues": [
+        "win11-22h2-pro",
+        "win11-22h2-pron",
+        "win11-22h2-pro-zh-cn",
+        "win11-22h2-ent"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "vm-oai-demo",
+      "metadata": {
+        "description": "Name of the virtual machine."
+      }
+    }
+  },
+  "variables": {
+    "embeddingsDeployment": "[if(empty(parameters('embeddingsModelName')), 'ada', parameters('embeddingsModelName'))]",
+    "chatGptDeployment": "[if(empty(parameters('chatGptModelName')), 'chat', parameters('chatGptModelName'))]",
+    "deployments": [
+      {
+        "name": "[variables('embeddingsDeployment')]",
+        "model": {
+          "format": "OpenAI",
+          "name": "[parameters('embeddingsModelName')]"
+        },
+        "sku": {
+          "name": "Standard",
+          "capacity": "[parameters('embeddingsDeploymentCapacity')]"
+        }
+      },
+      {
+        "name": "[variables('chatGptDeployment')]",
+        "model": {
+          "format": "OpenAI",
+          "name": "[parameters('chatGptModelName')]"
+        },
+        "sku": {
+          "name": "Standard",
+          "capacity": "[parameters('gptDeploymentCapacity')]"
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-07-01",
+      "name": "nsg-pe-oai-demo",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-07-01",
+      "name": "nsg-vm-oai-demo",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-11-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/24"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "OpenAI",
+            "properties": {
+              "addressPrefix": "10.0.0.0/27",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-pe-oai-demo')]"
+              },
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            },
+            "type": "Microsoft.Network/virtualNetworks/subnets"
+          },
+          {
+            "name": "VMs",
+            "properties": {
+              "addressPrefix": "10.0.0.32/28",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-vm-oai-demo')]"
+              },
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            },
+            "type": "Microsoft.Network/virtualNetworks/subnets"
+          },
+          {
+            "name": "AzureBastionSubnet",
+            "properties": {
+              "addressPrefix": "10.0.0.192/26",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-{0}', parameters('bastionHostName')))]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            },
+            "type": "Microsoft.Network/virtualNetworks/subnets"
+          }
+        ],
+        "virtualNetworkPeerings": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-{0}', parameters('bastionHostName')))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-pe-oai-demo')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-vm-oai-demo')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('openAiAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "OpenAI",
+      "properties": {
+        "customSubDomainName": "[parameters('customSubDomainName')]",
+        "publicNetworkAccess": "Disabled"
+      },
+      "sku": {
+        "name": "[parameters('sku')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "deployment",
+        "count": "[length(variables('deployments'))]",
+        "mode": "serial",
+        "batchSize": 1
+      },
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('openAiAccountName'), variables('deployments')[copyIndex()].name)]",
+      "properties": {
+        "model": "[variables('deployments')[copyIndex()].model]",
+        "raiPolicyName": "[if(contains(variables('deployments')[copyIndex()], 'raiPolicyName'), variables('deployments')[copyIndex()].raiPolicyName, null())]"
+      },
+      "sku": "[if(contains(variables('deployments')[copyIndex()], 'sku'), variables('deployments')[copyIndex()].sku, createObject('name', 'Standard', 'capacity', 20))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('openAiAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "privatelink.openai.azure.com",
+      "location": "global",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', 'privatelink.openai.azure.com', format('{0}-link', parameters('oaiPrivateDnsZoneName')))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.openai.azure.com')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-11-01",
+      "name": "[parameters('oaiPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('{0}-connection', parameters('oaiPrivateEndpointName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('openAiAccountName'))]",
+              "groupIds": [
+                "account"
+              ],
+              "privateLinkServiceConnectionState": {
+                "status": "Approved",
+                "description": "Approved",
+                "actionsRequired": "None"
+              }
+            }
+          }
+        ],
+        "customNetworkInterfaceName": "[format('{0}-nic', parameters('oaiPrivateEndpointName'))]",
+        "subnet": {
+          "id": "[format('{0}/subnets/OpenAI', resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('openAiAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', parameters('oaiPrivateEndpointName'), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.openai.azure.com')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.openai.azure.com')]",
+        "[resourceId('Microsoft.Network/privateEndpoints', parameters('oaiPrivateEndpointName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}-nic', parameters('vmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[format('{0}/subnets/VMs', resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "microsoftwindowsdesktop",
+            "offer": "windows-11",
+            "sku": "[parameters('OSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            }
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false
+          }
+        },
+        "securityProfile": {
+          "securityType": "TrustedLaunch",
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), 'GuestAttestation')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Security.WindowsAttestation",
+        "type": "GuestAttestation",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "[substring('emptyString', 0, 0)]",
+              "maaTenantName": "GuestAttestation"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-07-01",
+      "name": "[format('pip-{0}', parameters('bastionHostName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      },
+      "sku": {
+        "name": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Network/bastionHosts",
+      "apiVersion": "2022-07-01",
+      "name": "[parameters('bastionHostName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "[format('{0}/subnets/AzureBastionSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')))]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('bastionHostName')))]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            },
+            "name": "ipconfig1"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('bastionHostName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-07-01",
+      "name": "[format('nsg-{0}', parameters('bastionHostName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHttpsInBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "Internet",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowGatewayManagerInBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "GatewayManager",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowLoadBalancerInBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowBastionHostCommunicationInBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationPortRanges": [
+                "8080",
+                "5701"
+              ],
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationPortRange": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowSshRdpOutBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationPortRanges": [
+                "22",
+                "3389"
+              ],
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowAzureCloudCommunicationOutBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "AzureCloud",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowBastionHostCommunicationOutBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationPortRanges": [
+                "8080",
+                "5701"
+              ],
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowGetSessionInformationOutBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "destinationPortRanges": [
+                "80",
+                "443"
+              ],
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
