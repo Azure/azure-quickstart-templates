@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vm-tags
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy a simple Windows VM with tags
 
