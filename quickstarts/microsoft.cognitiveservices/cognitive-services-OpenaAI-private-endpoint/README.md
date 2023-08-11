@@ -1,5 +1,5 @@
 ---
-description: This template deploys an Azure OpenAI resource with embeddings and GPT model deployments. It ensures private network access through a private endpoint and private DNS zone linked to a VNET, while also deploying a virtual machine and a Bastion host for for internal endpoint connectivity testing.
+description: This template deploys an Azure OpenAI resource with embeddings and GPT model deployments. It ensures private network access through a private endpoint and private DNS zone linked to a VNET, while also deploying a virtual machine and a Bastion host for internal endpoint connectivity testing.
 page_type: sample
 products:
 - azure
