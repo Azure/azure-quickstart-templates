@@ -1,6 +1,6 @@
 ---
 description: This template deploys storage for ORACLE deployments. Storage is provided using Azure NetApp Files, built on NetApp ONTAP storage OS.
-page_type: sampleORACLE
+page_type: sample
 products:
 - azure
 - azure-resource-manager
