@@ -1412,6 +1412,22 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog","[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
+
+        Script FixMissingDatabasesPermissions
+        {
+            SetScript =
+            {
+                # Fix for slipstream installs with 2022-10 CU or newer: Fix the SharePoint configuration wizard failing at step 9/10, when executed after installing a CU
+                # Do this after all databases were created, and just before a new server may join the SharePoint farm
+                foreach ($db in Get-SPDatabase) {
+                    $db.GrantOwnerAccessToDatabaseAccount()
+                }
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
         
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
         # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.

@@ -1,5 +1,18 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in August 21, 2023
+
+### Fixed
+
+- Configuration for SPSE
+  - When doing a slipstream install of SharePoint using 2022-10 CU or newer: Fixed the SharePoint configuration wizard hanging at 10% of step 10/10, when executed after installing a CU
+
+### Changed
+
+- Template
+  - Changed the prefix of the built-in administrator from `local-` to `l-` so it does not exceed 15 characters, because the reset password feature in Azure requires that it has 15 characters maximum.
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the August 2023 CU for SharePoint Subscription
+
 ## Enhancements & bug-fixes - Published in June 30, 2023
 
 ### Fixed
