@@ -3,7 +3,7 @@ param vWANHub1ID string
 param vWANHub2ID string
 param ErGatewayScaleUnit int
 param LogAnalyticsWorkspaceID string
-param LogAnalyticsWorkspaceRetentionDays int 
+//param LogAnalyticsWorkspaceRetentionDays int 
 
 resource Hub1ErGateway 'Microsoft.Network/expressRouteGateways@2023-04-01' = {
   name: '${vWANhubs[0].name}-ErGateway'
@@ -30,10 +30,10 @@ resource ErGw1_DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true
           days: LogAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }
     ]
   }
@@ -64,10 +64,10 @@ resource ErGw2_DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true 
           days: LogAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }
     ]
   }

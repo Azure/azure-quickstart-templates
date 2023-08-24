@@ -1,7 +1,7 @@
 param logAnalyticsWorkspaceName string
 param location string
 param logAnalyticsWorkspaceSKU string
-param logAnalyticsWorkspaceRetentionDays int
+//param logAnalyticsWorkspaceRetentionDays int
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsWorkspaceName
@@ -10,7 +10,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10
     sku: {
       name: logAnalyticsWorkspaceSKU
     }
-    retentionInDays: logAnalyticsWorkspaceRetentionDays
+    //retentionInDays: logAnalyticsWorkspaceRetentionDays
     features: {
       enableLogAccessUsingOnlyResourcePermissions: true
     }

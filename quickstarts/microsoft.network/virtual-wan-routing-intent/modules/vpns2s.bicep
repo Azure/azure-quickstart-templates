@@ -3,7 +3,7 @@ param vWANHub1ID string
 param vWANHub2ID string
 param vpnGatewayScaleUnit int
 param logAnalyticsWorkspaceID string
-param logAnalyticsWorkspaceRetentionDays int
+//param logAnalyticsWorkspaceRetentionDays int
 
 var defaultASN = 65515
 var defaultPeerWeight = 0
@@ -34,20 +34,20 @@ resource S2SvpnGw1DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021
       {
         categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }      
     ]
     metrics: [
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }
     ]
   }
@@ -79,20 +79,20 @@ resource S2SvpnGw2DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021
       {
         categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }      
     ]
     metrics: [
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }
     ]
   }
