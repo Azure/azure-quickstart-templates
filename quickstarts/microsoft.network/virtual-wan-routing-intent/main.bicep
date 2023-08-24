@@ -136,7 +136,7 @@ module firewallPolicies './modules/firewallpolicies.bicep' = {
   }
 }
 
-resource vWAN 'Microsoft.Network/virtualWans@2022-11-01' = {
+resource vWAN 'Microsoft.Network/virtualWans@2023-04-01' = {
   name: vWANname
   location: vWANlocation
   properties: {
@@ -146,7 +146,7 @@ resource vWAN 'Microsoft.Network/virtualWans@2022-11-01' = {
   }
 }
 
-resource vWANHub1 'Microsoft.Network/virtualHubs@2022-11-01' = {
+resource vWANHub1 'Microsoft.Network/virtualHubs@2023-04-01' = {
   name: vWANhubs[0].name
   location: vWANhubs[0].location
   properties: {
@@ -167,7 +167,7 @@ resource vWANHub1 'Microsoft.Network/virtualHubs@2022-11-01' = {
   }
 }
 
-resource vWANHub2 'Microsoft.Network/virtualHubs@2022-11-01' = {
+resource vWANHub2 'Microsoft.Network/virtualHubs@2023-04-01' = {
   name: vWANhubs[1].name
   location: vWANhubs[1].location
   properties: {
@@ -188,7 +188,7 @@ resource vWANHub2 'Microsoft.Network/virtualHubs@2022-11-01' = {
   }
 }
 
-resource hub1Firewall 'Microsoft.Network/azureFirewalls@2022-11-01' = {
+resource hub1Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   name: vWANhubs[0].fwName
   location: vWANhubs[0].location
   zones: pickZones('Microsoft.Network', 'azureFirewalls', vWANhubs[0].location,3)
@@ -213,7 +213,7 @@ resource hub1Firewall 'Microsoft.Network/azureFirewalls@2022-11-01' = {
   }
 }
 
-resource hub2Firewall 'Microsoft.Network/azureFirewalls@2022-11-01' = {
+resource hub2Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   name: vWANhubs[1].fwName
   location: vWANhubs[1].location
   zones: pickZones('Microsoft.Network', 'azureFirewalls', vWANhubs[1].location,3)

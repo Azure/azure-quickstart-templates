@@ -5,7 +5,7 @@ param destinationIPAddressSpaces array
 var NetworkRuleCollectionGroupPriority = 50000
 var DefaultNetworkRuleCollectionGroup = 'DefaultNetworkRuleCollectionGroup'
 
-resource hub1FirewallPolicy 'Microsoft.Network/firewallPolicies@2022-11-01' = {
+resource hub1FirewallPolicy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
   name: vWANhubs[0].fwpolicyname
   location: vWANhubs[0].location
   properties: {
@@ -13,14 +13,10 @@ resource hub1FirewallPolicy 'Microsoft.Network/firewallPolicies@2022-11-01' = {
       tier: vWANhubs[0].fwtier
     }
     threatIntelMode: vWANhubs[0].threatintelmode
-    threatIntelWhitelist: {
-      fqdns: []
-      ipAddresses: []
-    }
   }
 }
 
-resource hub2FirewallPolicy 'Microsoft.Network/firewallPolicies@2022-11-01' = {
+resource hub2FirewallPolicy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
   name: vWANhubs[1].fwpolicyname
   location: vWANhubs[1].location
   properties: {
@@ -28,14 +24,10 @@ resource hub2FirewallPolicy 'Microsoft.Network/firewallPolicies@2022-11-01' = {
       tier: vWANhubs[1].fwtier
     }
     threatIntelMode: vWANhubs[1].threatintelmode
-    threatIntelWhitelist: {
-      fqdns: []
-      ipAddresses: []
-    }
   }
 }
 
-resource hub2FirewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2022-11-01' = {
+resource hub2FirewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-04-01' = {
   parent: hub2FirewallPolicy
   name: DefaultNetworkRuleCollectionGroup
   properties: {
@@ -57,10 +49,7 @@ resource hub2FirewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/
               'Any'
             ]
             sourceAddresses: sourceIPAddressSpaces
-            sourceIpGroups: []
             destinationAddresses: destinationIPAddressSpaces
-            destinationIpGroups: []
-            destinationFqdns: []
             destinationPorts: [
               '*'
             ]
@@ -73,7 +62,7 @@ resource hub2FirewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/
   }
 }
 
-resource hub1FirewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2022-11-01' = {
+resource hub1FirewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-04-01' = {
   parent: hub1FirewallPolicy
   name: DefaultNetworkRuleCollectionGroup
   properties: {
@@ -95,10 +84,7 @@ resource hub1FirewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/
               'Any'
             ]
             sourceAddresses: sourceIPAddressSpaces
-            sourceIpGroups: []
             destinationAddresses: destinationIPAddressSpaces
-            destinationIpGroups: []
-            destinationFqdns: []
             destinationPorts: [
               '*'
             ]

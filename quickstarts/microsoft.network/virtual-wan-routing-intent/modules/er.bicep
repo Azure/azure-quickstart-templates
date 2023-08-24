@@ -5,14 +5,13 @@ param ErGatewayScaleUnit int
 param LogAnalyticsWorkspaceID string
 param LogAnalyticsWorkspaceRetentionDays int 
 
-resource Hub1ErGateway 'Microsoft.Network/expressRouteGateways@2022-11-01' = {
+resource Hub1ErGateway 'Microsoft.Network/expressRouteGateways@2023-04-01' = {
   name: '${vWANhubs[0].name}-ErGateway'
   location: vWANhubs[0].location
   properties: {
     virtualHub: {
       id: vWANHub1ID
     }
-    expressRouteConnections: []
     allowNonVirtualWanTraffic: false
     autoScaleConfiguration: {
       bounds: {
@@ -27,8 +26,6 @@ resource ErGw1_DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05
   scope: Hub1ErGateway
   properties: {
     workspaceId: LogAnalyticsWorkspaceID
-    logs: [       
-    ]
     metrics: [
       {
         category: 'AllMetrics'
@@ -42,14 +39,13 @@ resource ErGw1_DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05
   }
 }
 
-resource Hub2ErGateway 'Microsoft.Network/expressRouteGateways@2022-11-01' = {
+resource Hub2ErGateway 'Microsoft.Network/expressRouteGateways@2023-04-01' = {
   name: '${vWANhubs[1].name}-ErGateway'
   location: vWANhubs[1].location
   properties: {
     virtualHub: {
       id: vWANHub2ID
     }
-    expressRouteConnections: []
     allowNonVirtualWanTraffic: false
     autoScaleConfiguration: {
       bounds: {
@@ -64,8 +60,6 @@ resource ErGw2_DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05
   scope: Hub2ErGateway
   properties: {
     workspaceId: LogAnalyticsWorkspaceID
-    logs: [     
-    ]
     metrics: [
       {
         category: 'AllMetrics'
