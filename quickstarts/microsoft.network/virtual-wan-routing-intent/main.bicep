@@ -153,9 +153,6 @@ resource vWANHub1 'Microsoft.Network/virtualHubs@2023-04-01' = {
     virtualHubRouteTableV2s: []
     addressPrefix: vWANhubs[0].addressSpace
     virtualRouterAsn: virtualRouterAsn
-    routeTable: {
-      routes: []
-    }
     virtualRouterAutoScaleConfiguration: {
       minCapacity: minRoutingInfrastructureUnit 
     }
@@ -174,9 +171,6 @@ resource vWANHub2 'Microsoft.Network/virtualHubs@2023-04-01' = {
     virtualHubRouteTableV2s: []
     addressPrefix: vWANhubs[1].addressSpace 
     virtualRouterAsn: virtualRouterAsn
-    routeTable: {
-      routes: []
-    }
     virtualRouterAutoScaleConfiguration: {
       minCapacity: minRoutingInfrastructureUnit
     }
@@ -196,9 +190,7 @@ resource hub1Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' = {
     sku: {
       name: 'AZFW_Hub'
       tier: vWANhubs[0].fwTier
-    }     
-    additionalProperties: {
-    }
+    } 
     virtualHub: {
       id: vWANHub1.id
     }
@@ -222,7 +214,6 @@ resource hub2Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' = {
       name: 'AZFW_Hub'
       tier: vWANhubs[1].fwTier
     }
-    additionalProperties: {}
     virtualHub: {
       id: vWANHub2.id
     }
