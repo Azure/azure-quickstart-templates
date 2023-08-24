@@ -3,7 +3,7 @@ param location string
 param logAnalyticsWorkspaceSKU string
 param logAnalyticsWorkspaceRetentionDays int
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsWorkspaceName
   location: location
   properties: {

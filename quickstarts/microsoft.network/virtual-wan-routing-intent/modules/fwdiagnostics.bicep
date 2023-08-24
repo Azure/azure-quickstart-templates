@@ -2,11 +2,11 @@ param vWANhubs array
 param logAnalyticsWorkspaceID string
 param logAnalyticsWorkspaceRetentionDays int
 
-resource hub1Firewall 'Microsoft.Network/azureFirewalls@2022-11-01' existing = {
+resource hub1Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' existing = {
   name: vWANhubs[0].fwname
 }
 
-resource hub2Firewall 'Microsoft.Network/azureFirewalls@2022-11-01' existing = {
+resource hub2Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' existing = {
   name: vWANhubs[1].fwname
 }
 

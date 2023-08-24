@@ -1,7 +1,7 @@
 param vWANname string
 param vWANhubs array
 
-resource IPGroupHub1SpokeVnet1 'Microsoft.Network/ipGroups@2022-11-01' = {
+resource IPGroupHub1SpokeVnet1 'Microsoft.Network/ipGroups@2023-04-01' = {
   name: 'IPGroup-${vWANname}-${vWANhubs[0].spoke1.name}'
   location: vWANhubs[0].location
   properties: {
@@ -11,7 +11,7 @@ resource IPGroupHub1SpokeVnet1 'Microsoft.Network/ipGroups@2022-11-01' = {
   }
 }
 
-resource IPGroupHub1SpokeVnet2 'Microsoft.Network/ipGroups@2022-11-01' = {
+resource IPGroupHub1SpokeVnet2 'Microsoft.Network/ipGroups@2023-04-01' = {
   name: 'IPGroup-${vWANname}-${vWANhubs[0].spoke2.name}'
   location: vWANhubs[0].location
   properties: {
@@ -23,7 +23,7 @@ resource IPGroupHub1SpokeVnet2 'Microsoft.Network/ipGroups@2022-11-01' = {
   dependsOn: [IPGroupHub1SpokeVnet1]
 }
 
-resource IPGroupHub2SpokeVnet1 'Microsoft.Network/ipGroups@2022-11-01' = {
+resource IPGroupHub2SpokeVnet1 'Microsoft.Network/ipGroups@2023-04-01' = {
   name: 'IPGroup-${vWANname}-${vWANhubs[1].spoke1.name}'
   location: vWANhubs[1].location
   properties: {
@@ -35,7 +35,7 @@ resource IPGroupHub2SpokeVnet1 'Microsoft.Network/ipGroups@2022-11-01' = {
   dependsOn: [IPGroupHub1SpokeVnet2]
 }
 
-resource IPGroupHub2SpokeVnet2 'Microsoft.Network/ipGroups@2022-11-01' = {
+resource IPGroupHub2SpokeVnet2 'Microsoft.Network/ipGroups@2023-04-01' = {
   name: 'IPGroup-${vWANname}-${vWANhubs[1].spoke2.name}'
   location: vWANhubs[1].location
   properties: {

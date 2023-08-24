@@ -8,11 +8,10 @@ param logAnalyticsWorkspaceRetentionDays int
 var defaultASN = 65515
 var defaultPeerWeight = 0
 
-resource hub1VPNs2sGateway 'Microsoft.Network/vpnGateways@2022-11-01' = {
+resource hub1VPNs2sGateway 'Microsoft.Network/vpnGateways@2023-04-01' = {
   name: '${vWANhubs[0].name}-VPNs2sGateway'
   location: vWANhubs[0].location
   properties: {
-    connections: []
     virtualHub: {
       id: vWANHub1ID
     }
@@ -21,7 +20,6 @@ resource hub1VPNs2sGateway 'Microsoft.Network/vpnGateways@2022-11-01' = {
       peerWeight: defaultPeerWeight
     }
     vpnGatewayScaleUnit: vpnGatewayScaleUnit
-    natRules: []
     enableBgpRouteTranslationForNat: false
     isRoutingPreferenceInternet: false
   }
@@ -55,11 +53,10 @@ resource S2SvpnGw1DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021
   }
 }
 
-resource hub2VPNs2sGateway 'Microsoft.Network/vpnGateways@2022-11-01' = {
+resource hub2VPNs2sGateway 'Microsoft.Network/vpnGateways@2023-04-01' = {
   name: '${vWANhubs[1].name}-VPNs2sGateway'
   location: vWANhubs[1].location
   properties: {
-    connections: []
     virtualHub: {
       id: vWANHub2ID
     }
@@ -68,7 +65,6 @@ resource hub2VPNs2sGateway 'Microsoft.Network/vpnGateways@2022-11-01' = {
       peerWeight: defaultPeerWeight
     }
     vpnGatewayScaleUnit: vpnGatewayScaleUnit 
-    natRules: []
     enableBgpRouteTranslationForNat: false
     isRoutingPreferenceInternet: false
   }
