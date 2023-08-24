@@ -1,56 +1,65 @@
 ---
-description: This template provisions Azure DNS Private Resolver in a virtual network with required forwarding ruleset and rules. It creates a new virtual network with two subnets, and deploy Azure DNS Private Resolver in this VNET.
+description: This template provisions an Azure Virtual WAN with two hubs with Routing Intent and Policies enabled using integrated Azure Firewall instances. 
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: azure-dns-private-resolver
+urlFragment: virtual-wan-routing-intent
 languages:
 - bicep
 - json
 ---
-# Azure DNS Private Resolver
+# Azure Virtual WAN multi-hub with Routing Intent and Policies
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/CredScanResult.svg)
 
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-dns-private-resolver/BicepVersion.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazure-dns-private-resolver%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fvirtual-wan-routing-intent%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazure-dns-private-resolver%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fvirtual-wan-routing-intent%2Fazuredeploy.json)
 
-This template will deploy **Azure DNS Private resolver** with required resources such as Virtual Network, subnets (for Inbound and Outbound endpoints), DNS private resolver endpoints, forwarding rulesets, and forwarding rules. It deploys the private resolver and the virtual network in the same location mentioned in the parameter.
+### Overview
 
-# Overview and deployed resources
-
-A virtual network is deployed with two subnets that will be used for resolver's inbound and outbound endpoint. The dns resolver resource is then deployed in this virtual network along with inbound, outbound endpoints, forwarding ruleset and forwarding rules with target DNS servers. The ruleset will be linked to the outbound endpoint for conditional forwarding.
-
-For more information on **Azure DNS Private Resolver**
-- [What is Azure DNS Private Resolver](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview)
+This template provisions an Azure Virtual WAN with two hubs with **Routing Intent and Policies** feature enabled using integrated Azure Firewall instances. Optionally, Express Route and S2S VPN Gateways will be also created.
 
 ### Description
-Seven resources have been defined in this template:
 
-- [**Microsoft.Network/virtualnetworks**](https://learn.microsoft.com/azure/templates/microsoft.network/virtualnetworks)
-- [**Microsoft.Network/dnsResolvers**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsresolvers)
-- [**Microsoft.Network/dnsResolvers/inboundEndpoints**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsresolvers/inboundendpoints)
-- [**Microsoft.Network/dnsResolvers/outboundEndpoints**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsresolvers/outboundendpoints)
-- [**Microsoft.Network/dnsForwardingRulesets**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsforwardingrulesets)
-- [**Microsoft.Network/dnsForwardingRulesets/forwardingRules**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsforwardingrulesets/forwardingrules)
-- [**Microsoft.Network/dnsForwardingRulesets/virtualNetworkLinks**](https://learn.microsoft.com/azure/templates/microsoft.network/dnsforwardingrulesets/virtualnetworklinks)
+An Azure Virtual WAN is deployed, composed by two Hubs. Each Hub is secured by an integrated Azure Firewall instance (tier can be selected). For each Hub, two Virtual Network resources are created and peered to the hub. Optionally, Express Route and VPN S2S Gateways can be created. Then, Routing Intent and Policy feature is demonstrated applying the required configuration. By default, routing policies to control both Private and Internet traffic are enabled, behavior can be changed through parameters. For each Azure Firewall instance, a default policy is created containing a default Rule Collection Group, Rule Collection (Network) and default Rule to ALLOW all traffic either private and to the Internet. Additionally, IP Groups representing each Virtual Network address space is created and can be eventually used in the Firewall Policy definition as source and/or target.
 
-## Deployment steps
+### Architecture
+The architecture of this solution will be similar to the picture below:
 
-The virtual network and DNS private resolver location should be chosen as one of the supported locations for DNS private resolver. More information [here.](https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability)
-````azurecli
-az deployment group create --resource-group <resourcegroup name> --template-file <bicep file location>
-````
+![Figure 1](images/two-secured-hubs-diagram.png)
 
-`Tags: dns resolver, private resolver, private dns resolver, Microsoft.Network, Microsoft.Network/dnsresolvers`
+> [!NOTE]
+> P2S Gateways will be not created. VPN S2S and Express Route Gateways can be created (optional) by the template, but no connections nor circuits will be deployed.
+
+For more information on **Azure Virtual WAN Routing Intent and Policies** see article [How to configure Virtual WAN Hub routing intent and routing policies](https://learn.microsoft.com/azure/virtual-wan/how-to-routing-policies).
+
+### Deployed Resources
+
+The following resource types will be created as part of this template deployment:
+
+- [**Microsoft.Network/virtualWans**](https://learn.microsoft.com/azure/virtual-wan/virtual-wan-about)
+- [**Microsoft.Network/virtualHubs**](https://learn.microsoft.com/azure/virtual-wan/virtual-wan-global-transit-network-architecture)
+- [**Microsoft.Network/virtualHubs/routingIntent**](https://learn.microsoft.com/azure/virtual-wan/how-to-routing-policies)
+- [**Microsoft.Network/azureFirewalls**](https://learn.microsoft.com/azure/firewall/overview)
+- [**Microsoft.Network/firewallPolicies**](https://learn.microsoft.com/azure/firewall/policy-rule-sets)
+- [**Microsoft.Network/ipGroups**](https://learn.microsoft.com/azure/firewall/ip-groups)
+- [**Microsoft.Network/virtualNetworks**](https://learn.microsoft.com/azure/templates/microsoft.network/virtualnetworks)
+- [**Microsoft.Network/expressRouteGateways**](https://learn.microsoft.com/azure/expressroute/expressroute-about-virtual-network-gateways)
+- [**Microsoft.Network/vpnGateways**](https://learn.microsoft.com/azure/vpn-gateway/vpn-gateway-about-vpngateways)
+
+### Deployment steps
+
+Before deploying the template, or immediately after and before using for production purposes, it is highly recommended to review the Azure Firewall policies and rules to adapt to your own security and network requirements. By default all internal VNet-toVNet and outbound Internet traffic is allowed.
+
+`Tags:Virtual WAN, vWAN, Hub, Routing Intent and Policies, Azure Firewall, Azure Firewall Policies, ExpressRoute, VPN S2S, Microsoft.Network/virtualWans, Microsoft.Network/virtualHubs, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualHubs/hubVirtualNetworkConnections, Microsoft.Network/vpnGateways, Microsoft.Network/expressRouteGateways, Microsoft.Network/azureFirewalls, Microsoft.Network/firewallPolicies, Microsoft.Network/ipGroups, Microsoft.Network/virtualHubs/routingIntent`

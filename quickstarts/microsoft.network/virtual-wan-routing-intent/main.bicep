@@ -44,7 +44,7 @@ param hub2Spoke2AddressSpace string = '10.2.4.0/24'
   'Standard'
   'Premium'
 ])
-param firewallTier string = 'Premium' 
+param firewallTier string = 'Standard' 
 
 @description('Enable vWAN Routing Intent and Policy for Internet Traffic')
 param internetTrafficRoutingPolicy bool = true
@@ -55,10 +55,10 @@ param privateTrafficRoutingPolicy bool = true
 // NOTE: vWAN Routing Intent and Policy requires either InternetTrafficRoutingPolicy or PrivateTrafficRoutingPolicy to be true, otherwise feature will be disabled.
 
 @description('Deploy VPN Site-to-Site (S2S) Gateways')
-param deployS2Sgw bool = true
+param deployS2Sgw bool = false
 
 @description('Deploy ExpressRoute Gateways')
-param deployERgw bool = true
+param deployERgw bool = false
 
 var vWANtype = 'Standard' // 'Standard' vWAN is required for Routing Intent and Policy
 var logAnalyticsWorkspaceName = '${vWANname}-LogAnalyticsWS' //single Log Analytics workspace for firewall logging
