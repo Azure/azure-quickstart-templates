@@ -1,5 +1,5 @@
 ---
-description: This template provisions an Azure Virtual WAN with two hubs with Routing Intent and Policies enabled using integrated Azure Firewall instances. 
+description: This template provisions an Azure Virtual WAN with two hubs with Routing Intent and Policies feature enabled.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure Virtual WAN multi-hub with Routing Intent and Policies
+# Azure Virtual WAN Routing Intent and Policies
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-routing-intent/PublicDeployment.svg)
@@ -63,4 +63,4 @@ The following resource types will be created as part of this template deployment
 
 Before deploying the template, or immediately after and before using for production purposes, it is highly recommended to review the Azure Firewall policies and rules to adapt to your own security and network requirements. By default all internal VNet-toVNet and outbound Internet traffic is allowed.
 
-`Tags:Virtual WAN, vWAN, Hub, Routing Intent and Policies, Azure Firewall, Azure Firewall Policies, ExpressRoute, VPN S2S, Microsoft.Network/virtualWans, Microsoft.Network/virtualHubs, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualHubs/hubVirtualNetworkConnections, Microsoft.Network/vpnGateways, Microsoft.Network/expressRouteGateways, Microsoft.Network/azureFirewalls, Microsoft.Network/firewallPolicies, Microsoft.Network/ipGroups, Microsoft.Network/virtualHubs/routingIntent`
+`Tags: Virtual WAN, vWAN, Hub, Routing Intent and Policies, Azure Firewall, Azure Firewall Policies, ExpressRoute, VPN S2S, Microsoft.Network/virtualWans, Microsoft.Network/virtualHubs, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualHubs/hubVirtualNetworkConnections, Microsoft.Network/vpnGateways, Microsoft.Network/expressRouteGateways, Microsoft.Network/azureFirewalls, Microsoft.Network/firewallPolicies, Microsoft.Network/ipGroups, Microsoft.Network/virtualHubs/routingIntent`
