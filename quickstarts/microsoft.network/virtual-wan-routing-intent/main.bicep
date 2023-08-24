@@ -183,7 +183,7 @@ resource vWANHub2 'Microsoft.Network/virtualHubs@2023-04-01' = {
 resource hub1Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   name: vWANhubs[0].fwName
   location: vWANhubs[0].location
-  zones: pickZones('Microsoft.Network', 'azureFirewalls', vWANhubs[0].location,3)
+  //zones: pickZones('Microsoft.Network', 'azureFirewalls', vWANhubs[0].location,3)
   properties: {
     sku: {
       name: 'AZFW_Hub'
@@ -206,7 +206,7 @@ resource hub1Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' = {
 resource hub2Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   name: vWANhubs[1].fwName
   location: vWANhubs[1].location
-  zones: pickZones('Microsoft.Network', 'azureFirewalls', vWANhubs[1].location,3)
+ // zones: pickZones('Microsoft.Network', 'azureFirewalls', vWANhubs[1].location,3)
   properties: {
     sku: {
       name: 'AZFW_Hub'
