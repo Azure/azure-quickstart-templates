@@ -150,7 +150,6 @@ resource vWANHub1 'Microsoft.Network/virtualHubs@2023-04-01' = {
   name: vWANhubs[0].name
   location: vWANhubs[0].location
   properties: {
-    virtualHubRouteTableV2s: []
     addressPrefix: vWANhubs[0].addressSpace
     virtualRouterAsn: virtualRouterAsn
     virtualRouterAutoScaleConfiguration: {
@@ -168,7 +167,6 @@ resource vWANHub2 'Microsoft.Network/virtualHubs@2023-04-01' = {
   name: vWANhubs[1].name
   location: vWANhubs[1].location
   properties: {
-    virtualHubRouteTableV2s: []
     addressPrefix: vWANhubs[1].addressSpace 
     virtualRouterAsn: virtualRouterAsn
     virtualRouterAutoScaleConfiguration: {
