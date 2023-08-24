@@ -26,15 +26,16 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fvirtual-wan-routing-intent%2Fazuredeploy.json)
 
-### Overview
+## Overview
 
 This template provisions an Azure Virtual WAN with two hubs with **Routing Intent and Policies** feature enabled using integrated Azure Firewall instances. Optionally, Express Route and S2S VPN Gateways will be also created.
 
-### Description
+## Description
 
 An Azure Virtual WAN is deployed, composed by two Hubs. Each Hub is secured by an integrated Azure Firewall instance (tier can be selected). For each Hub, two Virtual Network resources are created and peered to the hub. Optionally, Express Route and VPN S2S Gateways can be created. Then, Routing Intent and Policy feature is demonstrated applying the required configuration. By default, routing policies to control both Private and Internet traffic are enabled, behavior can be changed through parameters. For each Azure Firewall instance, a default policy is created containing a default Rule Collection Group, Rule Collection (Network) and default Rule to ALLOW all traffic either private and to the Internet. Additionally, IP Groups representing each Virtual Network address space is created and can be eventually used in the Firewall Policy definition as source and/or target.
 
-### Architecture
+## Architecture
+
 The architecture of this solution will be similar to the picture below:
 
 ![Figure 1](images/two-secured-hubs-diagram.png)
