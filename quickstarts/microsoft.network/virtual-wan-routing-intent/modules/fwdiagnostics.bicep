@@ -1,6 +1,6 @@
 param vWANhubs array
 param logAnalyticsWorkspaceID string
-param logAnalyticsWorkspaceRetentionDays int
+// param logAnalyticsWorkspaceRetentionDays int
 
 resource hub1Firewall 'Microsoft.Network/azureFirewalls@2023-04-01' existing = {
   name: vWANhubs[0].fwname
@@ -19,20 +19,20 @@ resource Firewall1DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021
       {
         categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }      
     ]
     metrics: [
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
+       /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }
     ]
   }
@@ -47,20 +47,20 @@ resource Firewall2DiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021
       {
         categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
+       /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }      
     ]
     metrics: [
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
+        /* retentionPolicy: {
           enabled: true
           days: logAnalyticsWorkspaceRetentionDays
-        }
+        } */
       }
     ]
   }

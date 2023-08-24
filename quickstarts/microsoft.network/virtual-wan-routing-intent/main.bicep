@@ -63,7 +63,7 @@ param deployERgw bool = false
 var vWANtype = 'Standard' // 'Standard' vWAN is required for Routing Intent and Policy
 var logAnalyticsWorkspaceName = '${vWANname}-LogAnalyticsWS' //single Log Analytics workspace for firewall logging
 var logAnalyticsWorkspaceSKU = 'pergb2018' // default value is 'pergb2018'
-var logAnalyticsWorkspaceRetentionDays = 30 // default value is 30
+// var logAnalyticsWorkspaceRetentionDays = 30 // default value is 30
 var rfc1918addressSpaces = ['10.0.0.0','172.16.0.0','192.168.0.0'] // RFC1918 address spaces
 var vpnGatewayScaleUnit = 1 // minimum value is 1
 var erGatewayScaleUnit = 1 // minimum value is 1
@@ -105,7 +105,7 @@ module logAnalyticsWsModule './modules/loganalyticsws.bicep' = {
    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
    location: vWANhubs[0].location
    logAnalyticsWorkspaceSKU: logAnalyticsWorkspaceSKU
-   logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
+   //logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
 }
 
@@ -244,7 +244,7 @@ module firewallDiagnosticsModule './modules/fwdiagnostics.bicep' = {
   params: {
     vWANhubs: vWANhubs
     logAnalyticsWorkspaceID: logAnalyticsWsModule.outputs.LogAnalyticsWorkspaceID
-    logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
+    // logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
   #disable-next-line no-unnecessary-depends
   dependsOn:[hub1Firewall, hub2Firewall]
@@ -268,7 +268,7 @@ module vpnS2Smodule './modules/vpns2s.bicep' = if (deployS2Sgw == true) {
     vWANHub2ID: vWANHub2.id
     vpnGatewayScaleUnit: vpnGatewayScaleUnit
     logAnalyticsWorkspaceID: logAnalyticsWsModule.outputs.LogAnalyticsWorkspaceID
-    logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
+    // logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
   #disable-next-line no-unnecessary-dependson // This is required to avoid conflicts in vWAN RP, some resources must be created in a certain order
   dependsOn: [resourceIntentModule]
@@ -282,7 +282,7 @@ module erModule './modules/er.bicep' = if (deployERgw == true) {
     vWANHub2ID: vWANHub2.id
     ErGatewayScaleUnit: erGatewayScaleUnit
     LogAnalyticsWorkspaceID: logAnalyticsWsModule.outputs.LogAnalyticsWorkspaceID
-    LogAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
+    //LogAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
   #disable-next-line no-unnecessary-dependson
   dependsOn: [resourceIntentModule]
