@@ -18,7 +18,7 @@ if [[ -z "$ASA_SERVICE_NAME" ]]; then
   exit 1
 fi
 
-base_url="https://github.com/moarychan/azure-quickstart-templates/releases/download/3.0.1.test/"
+base_url="https://github.com/Azure-Samples/spring-petclinic-microservices/releases/download"
 auth_header="no-auth"
 version="3.0.1"
 declare -a artifact_arr=("admin-server" "customers-service" "vets-service" "visits-service" "api-gateway")
@@ -28,7 +28,7 @@ az extension add --name spring --upgrade
 for item in "${artifact_arr[@]}"
 do
   jar_file_name="$item-$version.jar"
-  source_url=$base_url$jar_file_name
+  source_url="$base_url/v$version/$jar_file_name"
   # Download binary
   echo "Downloading binary from $source_url to $jar_file_name"
   if [ "$auth_header" == "no-auth" ]; then

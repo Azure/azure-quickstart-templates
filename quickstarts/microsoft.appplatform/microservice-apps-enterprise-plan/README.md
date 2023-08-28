@@ -10,15 +10,18 @@ languages:
 ---
 # Deploy a simple Azure Spring Apps microservice application
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/spring/microservice-apps-enterprise-plan/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/spring/microservice-apps-enterprise-plan/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/microservice-apps-enterprise-plan/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/icroservice-apps-enterprise-plan/PublicDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/spring/microservice-apps-enterprise-plan/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/spring/microservice-apps-enterprise-plan/CredScanResult.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/microservice-apps-enterprise-plan/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/microservice-apps-enterprise-plan/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/microservice-apps-enterprise-plan/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appplatform/microservice-apps-enterprise-plan/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appplatform%2Fmicroservice-apps-enterprise-plan%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appplatform%2Fmicroservice-apps-enterprise-plan%2Fazuredeploy.json)
 
-This template deploys a simple Azure Spring Apps [microservice application](https://github.com/Azure-Samples/spring-petclinic-microservices) to run on Azure. You'll see that there are two deployments in the template: The first deployment provisions resources, but traffic is not yet routed to the apps; the second deployment sets the apps to _active_.
+This template deploys microservice applications to the enterprise plan of Azure Spring Apps. For more information about the microservice sample, see [Azure-Samples/spring-petclinic-microservices](https://github.com/Azure-Samples/spring-petclinic-microservices).
 
 `Tags: Azure Spring Apps, Spring Boot, microservice, application, Microsoft.AppPlatform/Spring, apps, deployments, Jar, Microsoft.Resources/deployments, Microsoft.AppPlatform/Spring/apps`
