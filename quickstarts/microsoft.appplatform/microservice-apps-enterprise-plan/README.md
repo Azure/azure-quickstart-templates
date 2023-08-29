@@ -22,6 +22,6 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appplatform%2Fmicroservice-apps-enterprise-plan%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appplatform%2Fmicroservice-apps-enterprise-plan%2Fazuredeploy.json)
 
-This template deploys microservice applications to the enterprise plan of Azure Spring Apps. For more information about the microservice sample, see [Azure-Samples/spring-petclinic-microservices](https://github.com/Azure-Samples/spring-petclinic-microservices).
+This template deploys the PetClinic microservice to the Azure Spring Apps enterprise plan. For more information about the microservice sample, see [Azure-Samples/spring-petclinic-microservices](https://github.com/Azure-Samples/spring-petclinic-microservices).
 
 `Tags: Azure Spring Apps, Spring Boot, microservice, application, Microsoft.AppPlatform/Spring, apps, deployments, Jar, Microsoft.Resources/deployments, Microsoft.AppPlatform/Spring/apps`
