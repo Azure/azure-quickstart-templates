@@ -1,17 +1,17 @@
 @description('An example of a boolean parameter')
-param myBool bool = true
+param myBool bool
 
 @description('An example of an integer parameter')
-param myInt int = 42
+param myInt int
 
 @description('An example of a string parameter')
-param myString string = 'Hello!'
+param myString string
 
 @description('An example of an array parameter')
-param myArray array = ['abc', 'def']
+param myArray array
 
 @description('An example of an object parameter')
-param myObject object = { key1: 'abc', key2: 'def' }
+param myObject object
 
 var scriptArguments = {
   myBool: myBool ? '$True' : '$False'
