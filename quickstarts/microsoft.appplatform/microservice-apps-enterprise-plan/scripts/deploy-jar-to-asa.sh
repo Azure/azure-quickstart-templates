@@ -2,7 +2,6 @@
 
 set -Eeuo pipefail
 
-# trigger pipeline to verify failure
 # Fail fast the deployment if envs are empty
 if [[ -z "$SUBSCRIPTION_ID" ]]; then
   echo "The subscription Id is not successfully retrieved, please retry another deployment." >&2
