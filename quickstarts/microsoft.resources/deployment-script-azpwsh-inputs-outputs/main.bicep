@@ -16,7 +16,7 @@ param myObject object
 var scriptArguments = {
   myBool: myBool ? '$True' : '$False'
   myInt: '${myInt}'
-  myString: '\'${replace(myString, '\'', '\\\'')}\''
+  myString: '\'${replace(replace(myString, '\'', '\\\''), '"', '\\"')}\''
   myArray: '(ConvertFrom-Json \'${replace(replace(string(myArray), '\'', '\\\''), '"', '\\"')}\')'
   myObject: '(ConvertFrom-Json \'${replace(replace(string(myObject), '\'', '\\\''), '"', '\\"')}\')'
 }
@@ -43,5 +43,17 @@ resource logs 'Microsoft.Resources/deploymentScripts/logs@2020-10-01' existing =
 @description('The logs written by the script')
 output logs array = split(logs.properties.log, '\n')
 
-@description('The output returned by the script')
-output outputs object = myScript.properties.outputs
+@description('An example of a boolean output')
+output myBool bool = myScript.properties.outputs.myBool
+
+@description('An example of an integer output')
+output myInt int = myScript.properties.outputs.myInt
+
+@description('An example of a string output')
+output myString string = myScript.properties.outputs.myString
+
+@description('An example of an array output')
+output myArray array = myScript.properties.outputs.myArray
+
+@description('An example of an object output')
+output myObject object = myScript.properties.outputs.myObject
