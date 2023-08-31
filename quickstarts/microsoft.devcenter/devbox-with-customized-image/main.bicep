@@ -5,6 +5,7 @@ param userPrincipalId string = ''
 @allowed([
   'Group'
   'User'
+  'ServicePrincipal'
 ])
 param userPrincipalType string = 'User'
 
