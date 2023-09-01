@@ -1,5 +1,5 @@
 ---
-description: This template demonstrates best practices for passing and reading complex inputs, outputs and logs to an Az CLI Deployment Script.
+description: This template demonstrates best practices for passing and reading complex inputs, outputs and logs to an Az CLI Deployment Script
 page_type: sample
 products:
 - azure
