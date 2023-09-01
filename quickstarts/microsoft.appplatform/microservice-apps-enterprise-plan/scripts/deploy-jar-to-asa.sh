@@ -47,7 +47,20 @@ do
   deployJar $item &
 done
 
-wait
+jobs_count=$(jobs -p | wc -l)
+
+# Loop until all jobs are done
+while [ $jobs_count -gt 0 ]; do
+  wait -n
+  exit_status=$?
+
+  if [ $exit_status -ne 0 ]; then
+    echo "One of the deployment failed with exit status $exit_status"
+    exit $exit_status
+  else
+    jobs_count=$((jobs_count - 1))
+  fi
+done
 
 echo "Deployed to Azure Spring Cloud successfully."
 
