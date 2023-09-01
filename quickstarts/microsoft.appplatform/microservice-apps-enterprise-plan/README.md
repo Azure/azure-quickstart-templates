@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: azure-spring-apps
+urlFragment: microservice-apps-enterprise-plan
 languages:
 - json
 ---
