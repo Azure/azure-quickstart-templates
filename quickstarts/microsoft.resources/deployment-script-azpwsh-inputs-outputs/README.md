@@ -1,5 +1,5 @@
 ---
-description: This template demonstrates best practices for passing and reading complex inputs, outputs and logs to an Az Powershell Deployment Script.
+description: This template demonstrates best practices for passing and reading complex inputs, outputs and logs to an Az Powershell Deployment Script
 page_type: sample
 products:
 - azure
