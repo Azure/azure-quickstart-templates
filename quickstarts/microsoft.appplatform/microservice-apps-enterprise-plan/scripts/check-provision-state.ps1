@@ -8,16 +8,13 @@ $asaServiceName = $env:ASA_SERVICE_NAME
 
 # Fail fast the deployment if envs are empty
 if (!$subscriptionId) {
-    Write-Error "The subscription Id is not successfully retrieved, please retry another deployment."
-    exit 1
+    throw "The subscription Id is not successfully retrieved, please retry another deployment."
 }
 if (!$resourceGroup) {
-    Write-Error "The resource group is not successfully retrieved, please retry another deployment."
-    exit 1
+    throw "The resource group is not successfully retrieved, please retry another deployment."
 }
 if (!$asaServiceName) {
-    Write-Error "The Azure Spring Apps service name is not successfully retrieved, please retry another deployment."
-    exit 1
+    throw "The Azure Spring Apps service name is not successfully retrieved, please retry another deployment."
 }
 
 $apiUrl = 'https://management.azure.com/subscriptions/' + $subscriptionId + '/resourceGroups/' + $resourceGroup + '/providers/Microsoft.AppPlatform/Spring/' + $asaServiceName + '/buildServices/default/builders/default?api-version=2023-05-01-preview'
@@ -41,6 +38,5 @@ while ($sw.Elapsed -lt $timeout) {
 }
 Write-Output "State: $state"
 if ($state -ne $Succeeded) {
-    Write-Error "The Build Service Builder provisioning state is not succeeded."
-    exit 1
+    throw "The Build Service Builder provisioning state is not succeeded."
 }
