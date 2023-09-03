@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: storage-account-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Standard Storage Account
 

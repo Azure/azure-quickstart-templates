@@ -10,6 +10,12 @@ param eventHubName string = 'eventHub-${uniqueString(resourceGroup().id)}'
 @description('Name given to Azure Data Explorer cluster resource')
 param adxClusterName string = 'adx${uniqueString(resourceGroup().id)}'
 
+@description('Name given to twin lifecycle event table')
+param adxTwinLifecycleEventsTableName string = 'AdtTwinLifecycleEvents'
+
+@description('Name given to relationship lifecycle event table')
+param adxRelationshipLifecycleEventsTableName string = 'AdtRelationshipLifecycleEvents'
+
 @description('Name given to database')
 param databaseName string = 'database-${uniqueString(resourceGroup().id)}'
 
@@ -159,6 +165,8 @@ module tsdbConnection 'modules/tsdbconnection.bicep' = {
     eventHubsNamespaceName: eventHubsNamespaceName
     eventHubName: eventHubName
     adxClusterName: adxClusterName
+    adxTwinLifecycleEventsTableName: adxTwinLifecycleEventsTableName
+    adxRelationshipLifecycleEventsTableName: adxRelationshipLifecycleEventsTableName
     databaseName: databaseName
     databaseTableName: databaseTableName
   }

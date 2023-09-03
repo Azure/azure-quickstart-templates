@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: function-premium-vnet-integration
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy an Azure Function Premium plan with vnet integration
 

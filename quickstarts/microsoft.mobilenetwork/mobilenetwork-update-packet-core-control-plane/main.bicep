@@ -11,6 +11,7 @@ param existingSiteId string
 @allowed([
   'EPC'
   '5GC'
+  'EPC + 5GC'
 ])
 param existingPacketCoreNetworkTechnology string = '5GC'
 
@@ -32,10 +33,50 @@ param accessGateway string
 @description('The version of packet core to use. Only set this field when instructed to by your support engineer.')
 param newVersion string = ''
 
+@description('Name of the existing slice to use for the packetcorecontrolPlane')
+param existingSliceName string = 'slice-1'
+
+@description('The name for the private mobile network')
+param mobileNetworkName string
+
+@description('The mobile country code for the private mobile network')
+param mobileCountryCode string = '001'
+
+@description('The mobile network code for the private mobile network')
+param mobileNetworkCode string = '01'
+
+
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01' = {
+  name: mobileNetworkName
+  location: location
+  properties: {
+    publicLandMobileNetworkIdentifier: {
+      mcc: mobileCountryCode
+      mnc: mobileNetworkCode
+    }
+  }
+}
+
+#disable-next-line BCP081
+resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2023-06-01' = {
+  parent: exampleMobileNetwork
+  name: existingSliceName
+  location: location
+  properties: {
+    snssai: {
+      sst: 1
+    }
+  }
+}
+
+#disable-next-line BCP081
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-06-01' = {
   name: existingSiteName
   location: location
+  dependsOn: [
+    existingSlice
+  ]
   properties: {
     sites: [
       {
@@ -61,4 +102,4 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
     version: newVersion
   }
-}
+ }

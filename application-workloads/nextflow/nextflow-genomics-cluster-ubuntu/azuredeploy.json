@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.15.31.15270",
+      "templateHash": "6448981810901409360"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -11,7 +18,7 @@
     },
     "dnsNameForJumpBox": {
       "type": "string",
-      "defaultValue": "[concat('jumpbox-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('jumpbox-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the Docker Virtual Machine (master node)."
       }
@@ -25,8 +32,8 @@
         "version": "latest"
       },
       "metadata": {
-        "description": "The image to use for VMs created. This can be marketplace or custom image",
-        "link": "https://docs.microsoft.com/en-us/nodejs/api/azure-arm-compute/imagereference?view=azure-node-2.2.0"
+        "link": "https://docs.microsoft.com/en-us/nodejs/api/azure-arm-compute/imagereference?view=azure-node-2.2.0",
+        "description": "The image to use for VMs created. This can be marketplace or custom image"
       }
     },
     "vmNodeSku": {
@@ -45,18 +52,19 @@
     },
     "vmMasterDiskType": {
       "type": "string",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [
         "Standard_LRS",
         "StandardSSD_LRS",
         "Premium_LRS"
       ],
-      "defaultValue": "Premium_LRS",
       "metadata": {
         "description": "Choose between a standard disk for and SSD disk for the master node's NFS fileshare"
       }
     },
     "vmMasterDiskSize": {
       "type": "int",
+      "defaultValue": 256,
       "allowedValues": [
         32,
         64,
@@ -68,7 +76,6 @@
         4000,
         10000
       ],
-      "defaultValue": 256,
       "metadata": {
         "description": "The SSD Size to be used for the NFS file share. For pricing details see https://azure.microsoft.com/en-us/pricing/details/managed-disks/"
       }
@@ -96,12 +103,12 @@
     },
     "instanceCount": {
       "type": "int",
+      "defaultValue": 2,
+      "maxValue": 100,
+      "minValue": 1,
       "metadata": {
         "description": "Number of cluster VM instances (100 or less)."
-      },
-      "defaultValue": 2,
-      "minValue": 1,
-      "maxValue": 100      
+      }
     },
     "adminUsername": {
       "type": "string",
@@ -128,24 +135,24 @@
     },
     "vnetName": {
       "type": "string",
+      "defaultValue": "nfvnet",
       "metadata": {
         "description": "Name of the virtual network to deploy the scale set into."
-      },
-      "defaultValue": "nfvnet"
+      }
     },
     "subnetName": {
       "type": "string",
+      "defaultValue": "nfsubnet",
       "metadata": {
         "description": "Name of the subnet to deploy the scale set into."
-      },
-      "defaultValue": "nfsubnet"
+      }
     },
     "shareName": {
       "type": "string",
+      "defaultValue": "sharedstorage",
       "metadata": {
         "description": "Azure file share name."
-      },
-      "defaultValue": "sharedstorage"
+      }
     },
     "mountpointPath": {
       "type": "string",
@@ -155,8 +162,8 @@
       }
     },
     "nodeMaxCpus": {
-      "defaultValue": 2,
       "type": "int",
+      "defaultValue": 2,
       "metadata": {
         "description": "Sets the cluster.maxCpus setting on all cluster nodes"
       }
@@ -170,41 +177,41 @@
     },
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "*Advanced* This is best left as default unless you are an advanced user. The base URI where artifacts required by this template are located."
-      },
-      "defaultValue": "[deployment().properties.templateLink.uri]"
+      }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
+      "defaultValue": "",
       "metadata": {
         "description": "*Advanced* This should be left as default unless you are an advanced user. The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
+      }
     },
     "_diskInitScriptUri": {
       "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh",
       "metadata": {
         "description": "*Advanced* This should be left as default unless you are an advanced user. The folder in the artifacts location were shared scripts are stored."
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+      }
     },
     "_artifactsNextflowFolder": {
       "type": "string",
+      "defaultValue": "scripts",
       "metadata": {
         "description": "*Advanced* This should be left as default unless you are an advanced user. The folder in the artifacts location were nextflow scripts are stored."
-      },
-      "defaultValue": "scripts"
+      }
     }
   },
   "variables": {
-    "nextflowInitScript": "[uri(parameters('_artifactsLocation'), concat(parameters('_artifactsNextflowFolder'), '/init.sh', parameters('_artifactsLocationSasToken')))]",
+    "nextflowInitScript": "[uri(parameters('_artifactsLocation'), format('{0}/init.sh{1}', parameters('_artifactsNextflowFolder'), parameters('_artifactsLocationSasToken')))]",
     "jumpboxNICName": "jumpboxNIC",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
-    "vmssName": "[concat('cluster', uniqueString(parameters('dnsNameForJumpBox')))]",
+    "vmssName": "[format('cluster{0}', uniqueString(parameters('dnsNameForJumpBox')))]",
     "storageAccountType": "Standard_LRS",
-    "storageAccountName": "[concat('nfstorage', uniqueString(resourceGroup().id))]",
+    "storageAccountName": "[format('nfstorage{0}', uniqueString(resourceGroup().id))]",
     "storageSuffix": "[environment().suffixes.storage]",
     "publicIPAddressName": "jumpboxPublicIP",
     "publicIPAddressType": "Dynamic",
@@ -215,7 +222,7 @@
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -226,8 +233,8 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
       "kind": "Storage",
       "sku": {
@@ -235,8 +242,8 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-09-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -247,9 +254,8 @@
       }
     },
     {
-      "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-09-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -271,13 +277,10 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-09-01",
       "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -295,17 +298,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-09-01",
       "name": "[variables('jumpboxNICName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -313,7 +315,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -321,26 +323,26 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     },
     {
-      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-11-01",
       "name": "[variables('jumpboxVMName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpboxNICName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmMasterSKU')]"
+          "vmSize": "[parameters('vmMasterSku')]"
         },
         "osProfile": {
           "computerName": "[variables('jumpboxVMName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('vmImageReference')]",
@@ -363,20 +365,21 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('jumpboxNICName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpboxNICName'))]"
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpboxNICName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('jumpboxVMName'),'/nfinit')]",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-11-01",
+      "name": "[format('{0}/{1}', variables('jumpboxVMName'), 'nfinit')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('jumpboxVMName'))]"
-      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -390,23 +393,23 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[format('bash init.sh {0} \"{1}\" {2} {3} {4} {5} {6} {7} {8} {9} {10}', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value, parameters('shareName'), variables('storageSuffix'), parameters('mountpointPath'), 'false', parameters('adminUsername'), '0', parameters('nextflowInstallUrl'),  parameters('vmAdditionalInstallScriptUrl'), parameters('vmAdditionalInstallScriptArgument'))]"
+          "commandToExecute": "[format('bash init.sh {0} \"{1}\" {2} {3} {4} false {5} 0 {6} {7} {8}', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-09-01').keys[0].value, parameters('shareName'), variables('storageSuffix'), parameters('mountpointPath'), parameters('adminUsername'), parameters('nextflowInstallUrl'), parameters('vmAdditionalInstallScriptUrl'), parameters('vmAdditionalInstallScriptArgument'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('jumpboxVMName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2022-11-01",
       "name": "[variables('vmssName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-12-01",
       "sku": {
-        "name": "[parameters('vmNodeSKU')]",
+        "name": "[parameters('vmNodeSku')]",
         "capacity": "[parameters('instanceCount')]"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-      ],
       "properties": {
         "overprovision": true,
         "upgradePolicy": {
@@ -424,7 +427,7 @@
             "computerNamePrefix": "[variables('vmssName')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPasswordOrKey')]",
-            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
@@ -463,28 +466,32 @@
                     ]
                   },
                   "protectedSettings": {
-                    "commandToExecute": "[format('bash init.sh {0} \"{1}\" {2} {3} {4} {5} {6} {7} {8} {9} {10}', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value, parameters('shareName'), variables('storageSuffix'), parameters('mountpointPath'), 'true', parameters('adminUsername'), parameters('nodeMaxCpus'), parameters('nextflowInstallUrl'), parameters('vmAdditionalInstallScriptUrl'), parameters('vmAdditionalInstallScriptArgument'))]"
+                    "commandToExecute": "[format('bash init.sh {0} \"{1}\" {2} {3} {4} true {5} {6} {7} {8} {9}', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-09-01').keys[0].value, parameters('shareName'), variables('storageSuffix'), parameters('mountpointPath'), parameters('adminUsername'), parameters('nodeMaxCpus'), parameters('nextflowInstallUrl'), parameters('vmAdditionalInstallScriptUrl'), parameters('vmAdditionalInstallScriptArgument'))]"
                   }
                 }
               }
             ]
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     }
   ],
   "outputs": {
     "JumpboxConnectionString": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[format('ssh {0}@{1}', parameters('adminUsername'), reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2022-09-01').dnsSettings.fqdn)]"
     },
     "ExampleNextflowCommand": {
       "type": "string",
-      "value": "[concat('nextflow run hello -process.executor ignite -cluster.join path:', parameters('mountpointPath'), '/cifs/cluster', ' -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0')]"
+      "value": "[format('nextflow run hello -process.executor ignite -cluster.join path:{0}/cifs/cluster -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0', parameters('mountpointPath'))]"
     },
     "ExampleNextflowCommandWithDocker": {
       "type": "string",
-      "value": "[concat('nextflow run nextflow-io/rnatoy -with-docker -process.executor ignite -cluster.join path:', parameters('mountpointPath'), '/cifs/cluster', ' -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0')]"
+      "value": "[format('nextflow run nextflow-io/rnatoy -with-docker -process.executor ignite -cluster.join path:{0}/cifs/cluster -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0', parameters('mountpointPath'))]"
     }
   }
 }

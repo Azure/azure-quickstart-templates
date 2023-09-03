@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vm-simple-windows
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy a simple Windows VM
 

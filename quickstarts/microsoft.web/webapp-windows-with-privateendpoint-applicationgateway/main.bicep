@@ -2,34 +2,20 @@
 param location string = resourceGroup().location
 
 @description('Name of the WebApp')
-param siteName string = 'MutasemHamad0001'
+param siteName string = 'AppService0001'
 
 @description('Address prefix for the Virtual Network')
-param addressPrefix string = '10.0.0.0/16'
+var addressPrefix  = '10.0.0.0/16'
 
 @description('Subnet prefix of the App Gateway')
-param AppGatewaySubnetPrefix string = '10.0.0.0/28'
+var AppGatewaySubnetPrefix  = '10.0.0.0/28'
 
 @description('Subnet prefix of the Private Endpoint of the Web App ')
-param PrivateEndPointSubnetPrefix string = '10.0.1.0/28'
+var PrivateEndPointSubnetPrefix  = '10.0.1.0/28'
 
 @description('Name of your Private Endpoint')
-param privateEndpoint_name string = 'privateendpoint'
+var privateEndpoint_name  = '${siteName}-privateEndpoint'
 
-@description('Name of the Subnet for PrivateEndpoint')
-param subnet1_name string = 'subnetPE'
-
-@description('Name of the Subnet for ApplicationGateway')
-param subnetName string = 'appGatewaySubnet'
-
-@description('Link name between your Private Endpoint and your Web App')
-param privateLinkConnection_name string = 'privatelinkconnection'
-
-@description('Name must be privatelink.azurewebsites.net')
-param privateDNSZone_name string = 'privatelink.azurewebsites.net'
-
-@description('Virtual Network Resouce Name')
-param virtualNetworkNameResource string = 'virtualNetwork1'
 
 @allowed([
   'B1'
@@ -47,9 +33,29 @@ param virtualNetworkNameResource string = 'virtualNetwork1'
 ])
 param ASPSKU string = 'B1'
 
+@description('Name of the Subnet for PrivateEndpoint')
+var PESubnetName  = '${siteName}-PeSubnet'
+
+@description('Link name between your Private Endpoint and your Web App')
+var privateLinkConnection_name = '${siteName}-privatelinkconnection'
+
+@description('Name must be privatelink.azurewebsites.net')
+var privateDNSZone_name = 'privatelink.azurewebsites.net'
+
+@description('Virtual Network Resouce Name')
+var virtualNetworkNameResource = '${siteName}-virtualNetwork'
+
+@description('App Gateway Resource name')
 var applicationGatewayNameResource = '${siteName}-agw'
+
+@description('Name of the Subnet for ApplicationGateway')
+var subnetName = '${applicationGatewayNameResource}-appGatewaySubnet'
+
+@description('Public Ip Resource Name')
 var publicIPAddressNameResource = '${siteName}-pip'
-var hostingPlanNameResource = '${siteName}serviceplan'
+
+@description('App Service Plan Resource name')
+var hostingPlanNameResource = '${siteName}-serviceplan'
 
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkNameResource, subnetName)
 var publicIPRef = publicIPAddressName.id
@@ -81,7 +87,7 @@ resource virtualNetworkName 'Microsoft.Network/virtualNetworks@2022-07-01' = {
           addressPrefix: AppGatewaySubnetPrefix
         }
       }, {
-        name: subnet1_name
+        name: PESubnetName
         properties: {
           addressPrefix: PrivateEndPointSubnetPrefix
         }
@@ -144,9 +150,10 @@ resource ApplicationGateway 'Microsoft.Network/applicationGateways@2022-07-01' =
         name: 'appGatewayBackendHttpSettings'
         properties: {
           port: 80
+          hostName: '${siteName}.azurewebsites.net'
           protocol: 'Http'
           cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: true
+          pickHostNameFromBackendAddress: false
           probeEnabled: true
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes/', applicationGatewayNameResource, 'Probe1')

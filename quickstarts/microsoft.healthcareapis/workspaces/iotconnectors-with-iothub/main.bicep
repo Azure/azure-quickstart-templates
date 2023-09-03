@@ -10,12 +10,17 @@ param basename string
   'centralindia'
   'eastus'
   'eastus2'
+  'francecentral'
+  'japaneast'
   'koreacentral'
+  'northcentralus'
   'northeurope'
+  'qatarcentral'
   'southcentralus'
   'southeastasia'
   'swedencentral'
   'switzerlandnorth'
+  'westcentralus'
   'westeurope'
   'westus2'
   'westus3'
@@ -31,11 +36,11 @@ param deviceMapping object = {
   templateType: 'CollectionContent'
   template: [
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'HeartRate'
         typeMatchExpression: '$..[?(@Body.HeartRate)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -46,11 +51,11 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'HeartRateVariability'
         typeMatchExpression: '$..[?(@Body.HeartRateVariability)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -61,11 +66,11 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'RespiratoryRate'
         typeMatchExpression: '$..[?(@Body.RespiratoryRate)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -76,11 +81,11 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'BodyTemperature'
         typeMatchExpression: '$..[?(@Body.BodyTemperature)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -91,11 +96,11 @@ param deviceMapping object = {
       }
     }
     {
-      templateType: 'IotJsonPathContentTemplate'
+      templateType: 'IotJsonPathContent'
       template: {
         typeName: 'BloodPressure'
         typeMatchExpression: '$..[?(@Body.BloodPressure.Systolic && @Body.BloodPressure.Diastolic)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -113,7 +118,7 @@ param deviceMapping object = {
   ]
 }
 
-@description('The mapping JSON that determines how normalized data is converted to FHIR Observations.')
+@description('The mapping JSON that determines how normalized data is converted into FHIR Observations.')
 param destinationMapping object = {
   templateType: 'CollectionFhir'
   template: [

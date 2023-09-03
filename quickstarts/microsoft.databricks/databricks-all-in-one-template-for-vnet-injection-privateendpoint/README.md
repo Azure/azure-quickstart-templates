@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: databricks-all-in-one-template-for-vnet-injection-privateendpoint
 languages:
+- bicep
 - json
 ---
 # Azure Databricks All-in-one Templat VNetInjection-Pvtendpt

@@ -6,10 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: nested-vms-in-virtual-network
 languages:
-- json
 - bicep
+- json
 ---
-# Hyper-V Host Virtual Machine with nested VMs.
+# Hyper-V Host Virtual Machine with nested VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/PublicDeployment.svg)

@@ -10,12 +10,17 @@ param basename string
   'centralindia'
   'eastus'
   'eastus2'
+  'francecentral'
+  'japaneast'
   'koreacentral'
+  'northcentralus'
   'northeurope'
+  'qatarcentral'
   'southcentralus'
   'southeastasia'
   'swedencentral'
   'switzerlandnorth'
+  'westcentralus'
   'westeurope'
   'westus2'
   'westus3'
@@ -29,7 +34,7 @@ param deviceMapping object = {
   template: []
 }
 
-@description('The mapping JSON that determines how normalized data is converted to FHIR Observations.')
+@description('The mapping JSON that determines how normalized data is converted into FHIR Observations.')
 param destinationMapping object = {
   templateType: 'CollectionFhir'
   template: []
@@ -51,6 +56,7 @@ resource eventhubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
     isAutoInflateEnabled: true
     maximumThroughputUnits: 8
     kafkaEnabled: false
+    disableLocalAuth: true
   }
 }
 

@@ -1,15 +1,15 @@
 ---
-description: This template allows you to create an Cognitive Service Universal.
+description: This template deploys all the Cognitive Services APIs Cognitive Services bring AI within reach of every developer?without requiring machine-learning expertise. All it takes is an API call to embed the ability to see, hear, speak, search, understand, and accelerate decision-making into your apps.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: cognitive-services-universalkey
 languages:
-- json
 - bicep
+- json
 ---
-# Cognitive Service Universal Key
+# Deploy a Cognitive Service Universal key
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-universalkey/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-universalkey/PublicDeployment.svg)

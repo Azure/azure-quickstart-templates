@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: machine-learning-end-to-end-secure
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Machine Learning end-to-end secure setup
 

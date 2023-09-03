@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: ubuntu-desktop-gnome-rdp
 languages:
+- bicep
 - json
 ---
 # Linux VM with Gnome Desktop RDP VSCode and Azure CLI
@@ -18,6 +19,7 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/CredScanResult.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome-rdp%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome-rdp%2Fazuredeploy.json)

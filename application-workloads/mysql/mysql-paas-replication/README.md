@@ -27,7 +27,7 @@ languages:
 
 # Introduction
 
-This ARM template provides a solution to replicate a Azure DB for MySQL instance.
+This ARM template provides a solution to replicate a Azure Database for MySQL instance.
 
 # Template description
 

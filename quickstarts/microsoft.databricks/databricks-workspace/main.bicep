@@ -15,15 +15,17 @@ param pricingTier string = 'premium'
 param location string = resourceGroup().location
 
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGName}'
 
-resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
   name: workspaceName
   location: location
   sku: {
     name: pricingTier
   }
   properties: {
-    managedResourceGroupId: managedResourceGroup.id
+    managedResourceGroupId: managedResourceGroupId
     parameters: {
       enableNoPublicIp: {
         value: disablePublicIp
@@ -32,9 +34,4 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
   }
 }
 
-resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
-  scope: subscription()
-  name: managedResourceGroupName
-}
-
-output workspace object = ws.properties
+output workspace object = workspace

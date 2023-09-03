@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: digitaltwins-with-function-private-link
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Digital Twins with Function and Private Link service
 

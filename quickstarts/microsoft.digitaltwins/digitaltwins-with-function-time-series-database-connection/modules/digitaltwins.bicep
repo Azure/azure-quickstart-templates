@@ -18,7 +18,7 @@ param digitalTwinsName string
 param location string
 
 // Creates Digital Twins instance
-resource digitalTwins 'Microsoft.DigitalTwins/digitalTwinsInstances@2022-05-31' = {
+resource digitalTwins 'Microsoft.DigitalTwins/digitalTwinsInstances@2022-10-31' = {
   name: digitalTwinsName
   location: location
   identity: {
