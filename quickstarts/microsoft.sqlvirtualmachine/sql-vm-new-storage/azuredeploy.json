@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.10.61.36676",
-      "templateHash": "11696421255365761999"
+      "version": "0.17.1.54307",
+      "templateHash": "3407567292495018002"
     }
   },
   "parameters": {
@@ -44,11 +44,11 @@
     },
     "imageOffer": {
       "type": "string",
-      "defaultValue": "sql2019-ws2019",
+      "defaultValue": "sql2019-ws2022",
       "allowedValues": [
         "sql2019-ws2019",
         "sql2017-ws2019",
-        "SQL2017-WS2016",
+        "sql2019-ws2022",
         "SQL2016SP1-WS2016",
         "SQL2016SP2-WS2016",
         "SQL2014SP3-WS2012R2",
@@ -60,13 +60,13 @@
     },
     "sqlSku": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "standard-gen2",
       "allowedValues": [
-        "Standard",
-        "Enterprise",
-        "SQLDEV",
-        "Web",
-        "Express"
+        "standard-gen2",
+        "enterprise-gen2",
+        "SQLDEV-gen2",
+        "web-gen2",
+        "enterprisedbengineonly-gen2"
       ],
       "metadata": {
         "description": "SQL Server Sku"
@@ -79,7 +79,7 @@
       }
     },
     "adminPassword": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "The admin password of the VM"
       }
@@ -134,6 +134,20 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "secureBoot": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Secure Boot setting of the virtual machine."
+      }
+    },
+    "vTPM": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "vTPM setting of the virtual machine."
+      }
     }
   },
   "variables": {
@@ -169,7 +183,11 @@
       "storageAccountType": "Premium_LRS",
       "diskSizeGB": 1023
     },
-    "tempDbPath": "D:\\SQLTemp"
+    "tempDbPath": "D:\\SQLTemp",
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation"
   },
   "resources": [
     {
@@ -236,11 +254,11 @@
           "copy": [
             {
               "name": "dataDisks",
-              "count": "[length(range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount'))))]",
+              "count": "[length(range(0, length(range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount'))))))]",
               "input": {
-                "lun": "[range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))[copyIndex('dataDisks')]]",
+                "lun": "[range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))[range(0, length(range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))))[copyIndex('dataDisks')]]]",
                 "createOption": "[variables('dataDisks').createOption]",
-                "caching": "[if(greaterOrEquals(range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))[copyIndex('dataDisks')], parameters('sqlDataDisksCount')), 'None', variables('dataDisks').caching)]",
+                "caching": "[if(greaterOrEquals(range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))[range(0, length(range(0, add(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))))[copyIndex('dataDisks')]], parameters('sqlDataDisksCount')), 'None', variables('dataDisks').caching)]",
                 "writeAcceleratorEnabled": "[variables('dataDisks').writeAcceleratorEnabled]",
                 "diskSizeGB": "[variables('dataDisks').diskSizeGB]",
                 "managedDisk": {
@@ -277,10 +295,48 @@
             "enableAutomaticUpdates": true,
             "provisionVMAgent": true
           }
+        },
+        "securityProfile": {
+          "uefiSettings": {
+            "secureBootEnabled": "[parameters('secureBoot')]",
+            "vTpmEnabled": "[parameters('vTPM')]"
+          },
+          "securityType": "TrustedLaunch"
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+      ]
+    },
+    {
+      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', parameters('virtualMachineName'), variables('extensionName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
       ]
     },
     {

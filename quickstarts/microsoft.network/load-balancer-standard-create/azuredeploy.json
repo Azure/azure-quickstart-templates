@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.9.1.41621",
-      "templateHash": "1833787209941575306"
+      "version": "0.17.1.54307",
+      "templateHash": "6950672787599885905"
     }
   },
   "parameters": {
@@ -29,7 +29,7 @@
       }
     },
     "adminPassword": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "Specifies the virtual machine administrator password."
       }
@@ -40,9 +40,74 @@
       "metadata": {
         "description": "Size of the virtual machine"
       }
+    },
+    "OSVersion": {
+      "type": "string",
+      "defaultValue": "2022-datacenter-azure-edition",
+      "allowedValues": [
+        "2016-datacenter-gensecond",
+        "2016-datacenter-server-core-g2",
+        "2016-datacenter-server-core-smalldisk-g2",
+        "2016-datacenter-smalldisk-g2",
+        "2016-datacenter-with-containers-g2",
+        "2016-datacenter-zhcn-g2",
+        "2019-datacenter-core-g2",
+        "2019-datacenter-core-smalldisk-g2",
+        "2019-datacenter-core-with-containers-g2",
+        "2019-datacenter-core-with-containers-smalldisk-g2",
+        "2019-datacenter-gensecond",
+        "2019-datacenter-smalldisk-g2",
+        "2019-datacenter-with-containers-g2",
+        "2019-datacenter-with-containers-smalldisk-g2",
+        "2019-datacenter-zhcn-g2",
+        "2022-datacenter-azure-edition",
+        "2022-datacenter-azure-edition-core",
+        "2022-datacenter-azure-edition-core-smalldisk",
+        "2022-datacenter-azure-edition-smalldisk",
+        "2022-datacenter-core-g2",
+        "2022-datacenter-core-smalldisk-g2",
+        "2022-datacenter-g2",
+        "2022-datacenter-smalldisk-g2"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "vs-2019-ent-latest-win11-n-gen2",
+      "allowedValues": [
+        "vs-2019-ent-latest-win11-n-gen2",
+        "vs-2019-pro-general-win11-m365-gen2",
+        "vs-2019-comm-latest-win11-n-gen2",
+        "vs-2019-ent-general-win10-m365-gen2",
+        "vs-2019-ent-general-win11-m365-gen2",
+        "vs-2019-pro-general-win10-m365-gen2"
+      ],
+      "metadata": {
+        "description": "Linux Sku"
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "lbName": "[format('{0}-lb', parameters('projectName'))]",
     "lbSkuName": "Standard",
     "lbPublicIpAddressName": "[format('{0}-lbPublicIP', parameters('projectName'))]",
@@ -61,7 +126,13 @@
     "bastionSubnetName": "AzureBastionSubnet",
     "vNetBastionSubnetAddressPrefix": "10.0.1.0/24",
     "bastionPublicIPAddressName": "[format('{0}-bastionPublicIP', parameters('projectName'))]",
-    "vmStorageAccountType": "Premium_LRS"
+    "vmStorageAccountType": "Premium_LRS",
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
+    "maaEndpoint": "[substring('emptyString', 0, 0)]",
+    "ascReportingEndpoint": "[substring('emptystring', 0, 0)]"
   },
   "resources": [
     {
@@ -100,7 +171,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('vNetSubnetName'))]"
       ]
     },
@@ -116,7 +186,7 @@
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.7",
+        "typeHandlerVersion": "1.10",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "commandToExecute": "powershell.exe Install-WindowsFeature -name Web-Server -IncludeManagementTools && powershell.exe remove-item 'C:\\inetpub\\wwwroot\\iisstart.htm' && powershell.exe Add-Content -Path 'C:\\inetpub\\wwwroot\\iisstart.htm' -Value $('Hello World from ' + $env:computername)"
@@ -146,7 +216,7 @@
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "2019-Datacenter",
+            "sku": "[parameters('OSVersion')]",
             "version": "latest"
           },
           "osDisk": {
@@ -171,10 +241,46 @@
             "enableAutomaticUpdates": true,
             "provisionVMAgent": true
           }
-        }
+        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]"
       },
       "dependsOn": [
         "project_vm_1_networkInterface"
+      ]
+    },
+    {
+      "copy": {
+        "name": "projectName_vm_1_3_GuestAttestation",
+        "count": "[length(range(1, 3))]"
+      },
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}-vm{1}/GuestAttestation', parameters('projectName'), range(1, 3)[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "[variables('maaEndpoint')]",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "[variables('ascReportingEndpoint')]",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
+          }
+        }
+      },
+      "dependsOn": [
+        "project_vm_1"
       ]
     },
     {

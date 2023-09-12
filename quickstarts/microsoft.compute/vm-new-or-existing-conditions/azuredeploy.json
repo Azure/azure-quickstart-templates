@@ -41,7 +41,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2_v2",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size for the Virtual Machine."
       }
@@ -145,11 +145,66 @@
       "metadata": {
         "description": "Name of the resource group for the public ip address"
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "imageOffer": {
+      "defaultValue": "0001-com-ubuntu-server-lunar",
+      "allowedValues": [
+          "0001-com-ubuntu-minimal-bionic",
+          "0001-com-ubuntu-minimal-lunar-daily",
+          "0001-com-ubuntu-server-focal",
+          "0001-com-ubuntu-server-jammy",
+          "0001-com-ubuntu-server-lunar",
+          "0001-com-ubuntu-server-lunar-daily",
+          "0003-com-ubuntu-server-trusted-vm"
+      ],
+      "type": "string",
+      "metadata": {
+          "description": "Windows Server and SQL Offer"
+      }
+    },
+    "sqlSku": {
+      "defaultValue": "23_04-gen2",
+      "allowedValues": [
+          "22_10-minimal-gen2",
+          "18_04-lts-gen2",
+          "minimal-20_04-daily-lts-gen2",
+          "minimal-23_04-daily-gen2",
+          "minimal-23_04-gen2",
+          "20_04-daily-lts-gen2",
+          "23_04-daily-gen2",
+          "23_04-gen2"
+      ],
+      "type": "string",
+      "metadata": {
+          "description": "SQL Server Sku"
+      }
     }
   },
   "variables": {
-    "nicName": "[concat(parameters('vmName'), '-nic')]",
-    "linuxConfiguration": {
+      "securityProfileJson": {
+        "uefiSettings": {
+          "secureBootEnabled": true,
+          "vTpmEnabled": true
+        },
+        "securityType": "[parameters('securityType')]"
+      },
+      "extensionName": "GuestAttestation",
+      "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+      "extensionVersion": "1.0",
+      "maaTenantName": "GuestAttestation",
+      "nicName": "[concat(parameters('vmName'), '-nic')]",
+      "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
@@ -266,7 +321,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -287,8 +342,8 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "16.04-LTS",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('sqlSku')]",
             "version": "latest"
           },
           "osDisk": {
@@ -296,6 +351,7 @@
             "createOption": "FromImage"
           }
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -310,6 +366,37 @@
           }
         }
       }
+    },
+    {
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+              "AttestationConfig": {
+                  "MaaSettings": {
+                      "maaEndpoint": "",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                  },
+                  "AscSettings": {
+                    "ascReportingEndpoint": "",
+                    "ascReportingFrequency": ""
+                  },
+                  "useCustomToken": "false",
+                  "disableAlerts": "false"
+              }
+          }
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
     }
   ]
 }

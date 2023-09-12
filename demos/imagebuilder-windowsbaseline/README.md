@@ -6,10 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: imagebuilder-windowsbaseline
 languages:
-- json
 - bicep
+- json
 ---
-# Azure Image Builder with Azure Windows Baseline.
+# Azure Image Builder with Azure Windows Baseline
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/imagebuilder-windowsbaseline/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/imagebuilder-windowsbaseline/PublicDeployment.svg)

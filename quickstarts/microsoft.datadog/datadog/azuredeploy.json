@@ -1,0 +1,214 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of the resource group in which the datadog resource will be created"
+            }
+        },
+        "monitorName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify a name for the Datadog resource"
+            },
+            "defaultValue": "[format('Datadog-{0}', uniqueString(subscription().id))]"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "westus2",
+            "allowedValues": [
+                "westus2"
+            ],
+            "metadata": {
+                "description": "Specify the region for the monitor resource"
+            }
+        },
+        "plan": {
+            "type": "string",
+            "defaultValue": "Datadog Pro Pay-As-You-Go",
+            "allowedValues": [
+                "Datadog Pro Pay-As-You-Go"
+            ],
+            "metadata": {
+                "description": "Datadog pricing plan"
+            }
+        },
+        "billingTerm": {
+            "type": "string",
+            "defaultValue": "Monthly",
+            "allowedValues": [
+                "Monthly"
+            ],
+            "metadata": {
+                "description": ""
+            }
+        }
+    },
+    "variables": {
+        "guidValue": "[guid(deployment().name, 'datadog')]",
+        "roleDefinition": "/providers/Microsoft.Authorization/roleDefinitions/43d0d8ad-25c7-4714-9337-8ba259a9fe05",
+        "monitorDeploymentName": "[concat('DatadogMonitor_', substring(variables('guidValue'), 0, 8))]",
+        "roleAssignmentName": "[variables('guidValue')]"
+    },
+    "functions": [],
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2020-10-01",
+            "name": "[parameters('resourceGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[variables('monitorDeploymentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', parameters('resourceGroupName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "monitorName": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "skuName": {
+                            "type": "string"
+                        },
+                        "singleSignOnState": {
+                            "type": "string"
+                        },
+                        "tagRulesProperties": {
+                            "type": "object"
+                        },
+                        "monitorTags": {
+                            "type": "object"
+                        },
+                        "cspm": {
+                            "type": "bool"
+                        }
+                    },
+                    "variables": {
+                        "monitorId": "[concat(resourceGroup().id, '/providers/Microsoft.Datadog/monitors/', parameters('monitorName'))]"
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "2023-01-01",
+                            "name": "[parameters('monitorName')]",
+                            "location": "[parameters('location')]",
+                            "type": "Microsoft.Datadog/monitors",
+                            "sku": {
+                                "name": "[parameters('skuName')]"
+                            },
+                            "properties": {
+                                "datadogOrganizationProperties": {
+                                    "name": "[parameters('monitorName')]",
+                                    "enterpriseAppId": "",
+                                    "cspm": "[parameters('cspm')]"
+                                },
+                                "userInfo": {
+                                    "name": "",
+                                    "phoneNumber": ""
+                                }
+                            },
+                            "tags": "[parameters('monitorTags')]",
+                            "identity": {
+                                "type": "SystemAssigned"
+                            },
+                            "resources": [
+                                {
+                                    "apiVersion": "2023-01-01",
+                                    "name": "default",
+                                    "type": "tagRules",
+                                    "dependsOn": [
+                                        "[parameters('monitorName')]"
+                                    ],
+                                    "properties": "[parameters('tagRulesProperties')]"
+                                },
+                                {
+                                    "apiVersion": "2023-01-01",
+                                    "name": "default",
+                                    "type": "singleSignOnConfigurations",
+                                    "dependsOn": [
+                                        "[parameters('monitorName')]"
+                                    ],
+                                    "properties": {
+                                        "enterpriseAppId": "",
+                                        "singleSignOnState": "[parameters('singleSignOnState')]"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "outputs": {
+                        "monitorPrincipalId": {
+                            "type": "string",
+                            "value": "[reference(variables('monitorId'), '2023-01-01', 'Full').identity.principalId]"
+                        }
+                    }
+                },
+                "parameters": {
+                    "monitorName": {
+                        "value": "[parameters('monitorName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "skuName": {
+                        "value": "payg_v2_Monthly@TIDgmz7xq9ge3py"
+                    },
+                    "singleSignOnState": {
+                        "value": "Initial"
+                    },
+                    "tagRulesProperties": {
+                        "value": {
+                            "metricRules": {
+                                "filteringTags": []
+                            },
+                            "logRules": {
+                                "sendSubscriptionLogs": true,
+                                "sendResourceLogs": true,
+                                "filteringTags": []
+                            },
+                            "automuting": true
+                        }
+                    },
+                    "monitorTags": {
+                        "value": {}
+                    },
+                    "cspm": {
+                        "value": false
+                    }
+                }
+            },
+            "resourceGroup": "[parameters('resourceGroupName')]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('roleAssignmentName')]",
+            "dependsOn": [
+                "[variables('monitorDeploymentName')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[concat(subscription().id, variables('roleDefinition'))]",
+                "principalId": "[reference(variables('monitorDeploymentName')).outputs.monitorPrincipalId.value]",
+                "scope": "[subscription().id]",
+                "principalType": "ServicePrincipal"
+            }
+        }
+    ],
+    "outputs": {}
+}
