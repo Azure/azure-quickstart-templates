@@ -1,6 +1,6 @@
 param storageContainerName string
 param hciLocalPath string
-param location string = 'eastus'
+param location string
 param customLocationName string 
 
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName)
