@@ -1,6 +1,9 @@
-param storageContainerName string = 'csv-defaultvms3'
+param storageContainerName string
+param hciLocalPath string
+param virtualNetworkName string
+param vmSwitchName string
 param location string = 'eastus'
-param customLocationName string = 'mtbhcicluster-cl'
+param customLocationName string = 'hcicluster-cl'
 
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName)
 
@@ -12,7 +15,22 @@ resource storageContainer 'Microsoft.AzureStackHCI/storageContainers@2021-09-01-
     name: customLocationId
   }
   properties: {
-    path: 'C:\\ClusterStorage\\CSV-DefaultVMs'
+    path: hciLocalPath
     resourceName: storageContainerName
+  }
+}
+
+resource virtualNetwork 'Microsoft.AzureStackHCI/virtualNetworks@2022-12-15-preview' = {
+  name: virtualNetworkName
+  location: location
+  extendedLocation: {
+    type: 'CustomLocation'
+    name: customLocationId
+  }
+  properties: {
+    networkType: 'Transparent'
+    subnets: []
+    vmSwitchName: vmSwitchName
+    dhcpOptions: {}
   }
 }
