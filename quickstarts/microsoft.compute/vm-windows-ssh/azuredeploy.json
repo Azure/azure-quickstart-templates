@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "970950630511580202"
+      "version": "0.17.1.54307",
+      "templateHash": "13045471063543149627"
     }
   },
   "parameters": {
@@ -30,7 +30,7 @@
       }
     },
     "adminPassword": {
-      "type": "secureString",
+      "type": "securestring",
       "defaultValue": "[newGuid()]"
     },
     "publicSshKey": {
@@ -41,7 +41,7 @@
     },
     "vmsize": {
       "type": "string",
-      "defaultValue": "Standard_D4_v5",
+      "defaultValue": "Standard_D4s_v5",
       "metadata": {
         "description": "VM size for VM"
       }
@@ -95,14 +95,33 @@
       }
     },
     "_artifactsLocationSasToken": {
-      "type": "secureString",
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "SAS Token for accessing script path"
       }
+    },
+    "secureBoot": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Secure Boot setting of the virtual machine."
+      }
+    },
+    "vTPM": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "vTPM setting of the virtual machine."
+      }
     }
   },
   "variables": {
+    "vmName": "sshhost",
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "initScriptUrl": "[uri(parameters('_artifactsLocation'), format('initialize.ps1{0}', parameters('_artifactsLocationSasToken')))]",
     "sshdConfigUrl": "[uri(parameters('_artifactsLocation'), format('configs/sshd_config_wopwd{0}', parameters('_artifactsLocationSasToken')))]"
   },
@@ -221,7 +240,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')]"
               },
               "subnet": {
-                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork')).subnets[0].id]"
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork'), '2020-04-01').subnets[0].id]"
               }
             }
           }
@@ -250,7 +269,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2021-07-01",
-      "name": "sshhost",
+      "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "Windows Server with SSH"
@@ -260,7 +279,7 @@
           "vmSize": "[parameters('vmsize')]"
         },
         "osProfile": {
-          "computerName": "sshhost",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUser')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -286,6 +305,13 @@
             }
           ]
         },
+        "securityProfile": {
+          "uefiSettings": {
+            "secureBootEnabled": "[parameters('secureBoot')]",
+            "vTpmEnabled": "[parameters('vTPM')]"
+          },
+          "securityType": "TrustedLaunch"
+        },
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -296,7 +322,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storagename')))).primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storagename'))), '2021-06-01').primaryEndpoints.blob]"
           }
         }
       },
@@ -307,9 +333,40 @@
       ]
     },
     {
+      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', variables('vmName'), 'GuestAttestation')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2021-07-01",
-      "name": "[format('{0}/{1}', 'sshhost', 'setupScript')]",
+      "name": "[format('{0}/{1}', variables('vmName'), 'setupScript')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "Setup script for SSH"
@@ -330,14 +387,14 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', 'sshhost')]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ]
     }
   ],
   "outputs": {
     "sshhost_connect": {
       "type": "string",
-      "value": "[format('ssh {0}@{1}', parameters('adminUser'), reference(resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')).dnsSettings.fqdn)]"
+      "value": "[format('ssh {0}@{1}', parameters('adminUser'), reference(resourceId('Microsoft.Network/publicIPAddresses', 'publicIP'), '2020-11-01').dnsSettings.fqdn)]"
     }
   }
 }

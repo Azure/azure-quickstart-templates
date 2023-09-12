@@ -31,6 +31,12 @@ param dnsResolverName string = 'dnsResolver'
   'koreacentral'
   'southafricanorth'
   'centralindia'
+  'westus'
+  'canadaeast'
+  'qatarcentral'
+  'uaenorth'
+  'australiasoutheast'
+  'polandcentral'
 ])
 param location string
 
@@ -60,15 +66,15 @@ param DomainName string = 'contoso.com.'
 
 @description('the list of target DNS servers ip address and the port number for conditional forwarding')
 param targetDNS array = [
-    {
-      ipaddress: '10.0.0.4'
-      port: 53
-    }
-    {
-      ipaddress: '10.0.0.5'
-      port: 53
-    }
-  ]
+  {
+    ipaddress: '10.0.0.4'
+    port: 53
+  }
+  {
+    ipaddress: '10.0.0.5'
+    port: 53
+  }
+]
 
 resource resolver 'Microsoft.Network/dnsResolvers@2022-07-01' = {
   name: dnsResolverName
@@ -154,11 +160,11 @@ resource resolverVnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         name: inboundSubnet
         properties: {
           addressPrefix: inboundAddressPrefix
-          delegations:[
+          delegations: [
             {
-              name:'Microsoft.Network.dnsResolvers'
-              properties:{
-                serviceName:'Microsoft.Network/dnsResolvers'
+              name: 'Microsoft.Network.dnsResolvers'
+              properties: {
+                serviceName: 'Microsoft.Network/dnsResolvers'
               }
             }
           ]
@@ -168,11 +174,11 @@ resource resolverVnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         name: outboundSubnet
         properties: {
           addressPrefix: outboundAddressPrefix
-          delegations:[
+          delegations: [
             {
-              name:'Microsoft.Network.dnsResolvers'
-              properties:{
-                serviceName:'Microsoft.Network/dnsResolvers'
+              name: 'Microsoft.Network.dnsResolvers'
+              properties: {
+                serviceName: 'Microsoft.Network/dnsResolvers'
               }
             }
           ]

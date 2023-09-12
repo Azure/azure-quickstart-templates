@@ -23,7 +23,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.0.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
@@ -31,9 +31,9 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.3.1
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
-    Import-DscResource -ModuleName StorageDsc -ModuleVersion 5.0.1
+    Import-DscResource -ModuleName StorageDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
     
     # Init
@@ -1411,6 +1411,22 @@ configuration ConfigureSPVM
             SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog","[SPAppManagementServiceApp]CreateAppManagementServiceApp"
+        }
+
+        Script FixMissingDatabasesPermissions
+        {
+            SetScript =
+            {
+                # Fix for slipstream installs with 2022-10 CU or newer: Fix the SharePoint configuration wizard failing at step 9/10, when executed after installing a CU
+                # Do this after all databases were created, and just before a new server may join the SharePoint farm
+                foreach ($db in Get-SPDatabase) {
+                    $db.GrantOwnerAccessToDatabaseAccount()
+                }
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
         
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created

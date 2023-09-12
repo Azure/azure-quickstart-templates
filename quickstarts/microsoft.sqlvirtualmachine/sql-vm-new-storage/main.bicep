@@ -17,23 +17,23 @@ param existingSubnetName string
 @allowed([
   'sql2019-ws2019'
   'sql2017-ws2019'
-  'SQL2017-WS2016'
+  'sql2019-ws2022'
   'SQL2016SP1-WS2016'
   'SQL2016SP2-WS2016'
   'SQL2014SP3-WS2012R2'
   'SQL2014SP2-WS2012R2'
 ])
-param imageOffer string = 'sql2019-ws2019'
+param imageOffer string = 'sql2019-ws2022'
 
 @description('SQL Server Sku')
 @allowed([
-  'Standard'
-  'Enterprise'
-  'SQLDEV'
-  'Web'
-  'Express'
+  'standard-gen2'
+  'enterprise-gen2'
+  'SQLDEV-gen2'
+  'web-gen2'
+  'enterprisedbengineonly-gen2'
 ])
-param sqlSku string = 'Standard'
+param sqlSku string = 'standard-gen2'
 
 @description('The admin user name of the VM')
 param adminUsername string
@@ -69,6 +69,21 @@ param logPath string = 'G:\\SQLLog'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
+
 var networkInterfaceName = '${virtualMachineName}-nic'
 var networkSecurityGroupName = '${virtualMachineName}-nsg'
 var networkSecurityGroupRules = [
@@ -102,6 +117,10 @@ var dataDisks = {
   diskSizeGB: 1023
 }
 var tempDbPath = 'D:\\SQLTemp'
+var extensionName = 'GuestAttestation'
+var extensionPublisher = 'Microsoft.Azure.Security.WindowsAttestation'
+var extensionVersion = '1.0'
+var maaTenantName = 'GuestAttestation'
 
 resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   name: publicIpAddressName
@@ -155,6 +174,16 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
       vmSize: virtualMachineSize
     }
     storageProfile: {
+      dataDisks: [for j in range(0, length(range(0, (sqlDataDisksCount + sqlLogDisksCount)))): {
+        lun: range(0, (sqlDataDisksCount + sqlLogDisksCount))[j]
+        createOption: dataDisks.createOption
+        caching: ((range(0, (sqlDataDisksCount + sqlLogDisksCount))[j] >= sqlDataDisksCount) ? 'None' : dataDisks.caching)
+        writeAcceleratorEnabled: dataDisks.writeAcceleratorEnabled
+        diskSizeGB: dataDisks.diskSizeGB
+        managedDisk: {
+          storageAccountType: dataDisks.storageAccountType
+        }
+      }]
       osDisk: {
         createOption: 'FromImage'
         managedDisk: {
@@ -167,16 +196,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         sku: sqlSku
         version: 'latest'
       }
-      dataDisks: [for j in range(0, (sqlDataDisksCount + sqlLogDisksCount)): {
-        lun: j
-        createOption: dataDisks.createOption
-        caching: ((j >= sqlDataDisksCount) ? 'None' : dataDisks.caching)
-        writeAcceleratorEnabled: dataDisks.writeAcceleratorEnabled
-        diskSizeGB: dataDisks.diskSizeGB
-        managedDisk: {
-          storageAccountType: dataDisks.storageAccountType
-        }
-      }]
     }
     networkProfile: {
       networkInterfaces: [
@@ -194,10 +213,38 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         provisionVMAgent: true
       }
     }
+    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
   }
 }
 
-resource sqlVirtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2022-07-01-preview' = {
+resource virtualMachineName_extension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+  parent: virtualMachine
+  name: extensionName
+  location: location
+  properties: {
+    publisher: extensionPublisher
+    type: extensionName
+    typeHandlerVersion: extensionVersion
+    autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
+    settings: {
+      AttestationConfig: {
+        MaaSettings: {
+          maaEndpoint: ''
+          maaTenantName: maaTenantName
+        }
+        AscSettings: {
+          ascReportingEndpoint: ''
+          ascReportingFrequency: ''
+        }
+        useCustomToken: 'false'
+        disableAlerts: 'false'
+      }
+    }
+  }
+}
+
+resource Microsoft_SqlVirtualMachine_sqlVirtualMachines_virtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2022-07-01-preview' = {
   name: virtualMachineName
   location: location
   properties: {
