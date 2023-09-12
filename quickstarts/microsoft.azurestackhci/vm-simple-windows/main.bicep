@@ -1,3 +1,4 @@
+@maxLength(15)
 param name string
 param location string
 param vCPUCount int = 2
@@ -24,7 +25,7 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualmachines@2021-09-01-prev
     osProfile: {
       adminUsername: adminUsername
       adminPassword: adminPassword
-      osType: 'windows'
+      osType: 'Windows'
       computerName: name
       windowsConfiguration: {
         provisionVMAgent: true
