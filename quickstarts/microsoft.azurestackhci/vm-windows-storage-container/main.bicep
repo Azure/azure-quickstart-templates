@@ -1,3 +1,4 @@
+@maxLength(15) // maxlength 15 for Windows
 param name string
 param location string
 param vCPUCount int = 2
