@@ -15,30 +15,60 @@
             },
             "defaultValue": "[format('Datadog-{0}', uniqueString(subscription().id))]"
         },
-        "monitorLocation": {
+        "location": {
             "type": "string",
             "defaultValue": "westus2",
             "allowedValues": [
                 "westus2"
             ],
             "metadata": {
-                "description": "Specify the region for the resource"
+                "description": "Specify the region for the monitor resource"
+            }
+        },
+        "plan": {
+            "type": "string",
+            "defaultValue": "Datadog Pro Pay-As-You-Go",
+            "allowedValues": [
+                "Datadog Pro Pay-As-You-Go"
+            ],
+            "metadata": {
+                "description": "Datadog pricing plan"
+            }
+        },
+        "billingTerm": {
+            "type": "string",
+            "defaultValue": "Monthly",
+            "allowedValues": [
+                "Monthly"
+            ],
+            "metadata": {
+                "description": ""
             }
         }
     },
-    "functions": [],
     "variables": {
         "guidValue": "[guid(deployment().name, 'datadog')]",
         "roleDefinition": "/providers/Microsoft.Authorization/roleDefinitions/43d0d8ad-25c7-4714-9337-8ba259a9fe05",
         "monitorDeploymentName": "[concat('DatadogMonitor_', substring(variables('guidValue'), 0, 8))]",
         "roleAssignmentName": "[variables('guidValue')]"
     },
+    "functions": [],
     "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2020-10-01",
+            "name": "[parameters('resourceGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+        },
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
             "name": "[variables('monitorDeploymentName')]",
-            "resourceGroup": "[parameters('resourceGroupName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', parameters('resourceGroupName'))]"
+            ],
             "properties": {
                 "mode": "Incremental",
                 "expressionEvaluationOptions": {
@@ -51,7 +81,7 @@
                         "monitorName": {
                             "type": "string"
                         },
-                        "monitorLocation": {
+                        "location": {
                             "type": "string"
                         },
                         "skuName": {
@@ -77,7 +107,7 @@
                         {
                             "apiVersion": "2023-01-01",
                             "name": "[parameters('monitorName')]",
-                            "location": "[parameters('monitorLocation')]",
+                            "location": "[parameters('location')]",
                             "type": "Microsoft.Datadog/monitors",
                             "sku": {
                                 "name": "[parameters('skuName')]"
@@ -86,7 +116,7 @@
                                 "datadogOrganizationProperties": {
                                     "name": "[parameters('monitorName')]",
                                     "enterpriseAppId": "",
-                                    "cspm":"[parameters('cspm')]"
+                                    "cspm": "[parameters('cspm')]"
                                 },
                                 "userInfo": {
                                     "name": "",
@@ -123,7 +153,7 @@
                         }
                     ],
                     "outputs": {
-                        "monitorPrincipalId":{
+                        "monitorPrincipalId": {
                             "type": "string",
                             "value": "[reference(variables('monitorId'), '2023-01-01', 'Full').identity.principalId]"
                         }
@@ -133,8 +163,8 @@
                     "monitorName": {
                         "value": "[parameters('monitorName')]"
                     },
-                    "monitorLocation": {
-                        "value": "[parameters('monitorLocation')]"
+                    "location": {
+                        "value": "[parameters('location')]"
                     },
                     "skuName": {
                         "value": "payg_v2_Monthly@TIDgmz7xq9ge3py"
@@ -162,7 +192,8 @@
                         "value": false
                     }
                 }
-            }
+            },
+            "resourceGroup": "[parameters('resourceGroupName')]"
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
