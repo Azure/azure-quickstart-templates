@@ -1,5 +1,5 @@
 ---
-description: Deploy a Dev Box service with customized iamge
+description: This template would create all Dev Box admin resources as per Dev Box quick start guide (https&#58;//learn.microsoft.com/en-us/azure/dev-box/quickstart-create-dev-box). You can view all resources created, or directly go to DevPortal.microsoft.com to create your first Dev Box.
 page_type: sample
 products:
 - azure
@@ -8,9 +8,8 @@ urlFragment: devbox-with-customized-image
 languages:
 - bicep
 - json
-- powershell
 ---
-# Deploy Dev Box Service with customized image
+# Configure Dev Box service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-customized-image/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-customized-image/PublicDeployment.svg)
