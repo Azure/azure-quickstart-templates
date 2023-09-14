@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: api-management-create-with-external-redis-cache
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy API Management with an external Azure Cache for Redis
 

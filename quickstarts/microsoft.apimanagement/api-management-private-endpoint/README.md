@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: api-management-private-endpoint
 languages:
-- json
 - bicep
+- json
 ---
 # Create an API Management service with a private endpoint
 

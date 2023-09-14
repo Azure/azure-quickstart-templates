@@ -1,0 +1,198 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the name of the resource group in which the newrelic resource will be created"
+      }
+    },
+    "resourceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify a name for the NewRelic resource"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus",
+      "allowedValues": [ "eastus", "centraluseuap", "eastus2euap" ],
+      "metadata": {
+        "description": "Specify the region for the monitor resource"
+      }
+    },
+    "plan": {
+      "type": "string",
+      "defaultValue": "Azure Native New Relic Service PAYG",
+      "allowedValues": [ "Azure Native New Relic Service PAYG" ],
+      "metadata": {
+        "description": "Choose a NewRelic pricing plan"
+      }
+    },
+    "firstName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide your first name (same as that setup as subscription owner on Azure)"
+      }
+    },
+    "lastName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide your last name (same as that setup as subscription owner on Azure)"
+      }
+    },
+    "emailAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide your work email address (same as that setup as subscription owner on Azure)"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "guidValue": "[guid(deployment().name, 'newrelic')]",
+    "roleDefinition": "/providers/Microsoft.Authorization/roleDefinitions/43d0d8ad-25c7-4714-9337-8ba259a9fe05",
+    "monitorDeploymentName": "[concat('NewRelicMonitor_', substring(variables('guidValue'), 0, 8))]",
+    "roleAssignmentName": "[variables('guidValue')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[variables('monitorDeploymentName')]",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "mode": "Incremental",
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "resourceName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "emailAddress": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "tagRulesProperties": {
+              "type": "object"
+            },
+            "monitorTags": {
+              "type": "object",
+              "defaultValue": {}
+            },
+            "effectiveDate": {
+              "type": "string",
+              "defaultValue": "[utcNow('yyyy-MM-ddTHH:mm:ssZ')]"
+            }
+          },
+          "variables": {
+            "monitorId": "[concat(resourceGroup().id, '/providers/NewRelic.Observability/monitors/', parameters('resourceName'))]"
+          },
+          "resources": [
+            {
+              "apiVersion": "2022-07-01",
+              "name": "[parameters('resourceName')]",
+              "location": "[parameters('location')]",
+              "type": "NewRelic.Observability/monitors",
+              "properties": {
+                "planData": {
+                  "usageType": "PAYG",
+                  "billingCycle": "MONTHLY",
+                  "planDetails": "newrelic-pay-as-you-go-free-live@TIDgmz7xq9ge3py@PUBIDnewrelicinc1635200720692.newrelic_liftr_payg",
+                  "effectiveDate": "[parameters('effectiveDate')]"
+                },
+                "userInfo": {
+                  "firstName": "[parameters('firstName')]",
+                  "lastName": "[parameters('lastName')]",
+                  "emailAddress": "[parameters('emailAddress')]",
+                  "phoneNumber": ""
+                }
+              },
+              "tags": "[parameters('monitorTags')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "resources": [
+                {
+                  "apiVersion": "2022-07-01",
+                  "name": "default",
+                  "type": "tagRules",
+                  "dependsOn": [
+                    "[parameters('resourceName')]"
+                  ],
+                  "properties": "[parameters('tagRulesProperties')]"
+                }
+              ]
+            }
+          ],
+          "outputs": {
+            "monitorPrincipalId": {
+              "type": "string",
+              "value": "[reference(variables('monitorId'), '2022-07-01', 'Full').identity.principalId]"
+            }
+          }
+        },
+        "parameters": {
+          "resourceName": {
+            "value": "[parameters('resourceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "emailAddress": {
+            "value": "[parameters('emailAddress')]"
+          },
+          "firstName": {
+            "value": "[parameters('firstName')]"
+          },
+          "lastName": {
+            "value": "[parameters('lastName')]"
+          },
+          "tagRulesProperties": {
+            "value": {
+              "logRules": {
+                "sendAadLogs": "Disabled",
+                "sendSubscriptionLogs": "Disabled",
+                "sendActivityLogs": "Enabled",
+                "filteringTags": []
+              },
+              "metricRules": {
+                "sendMetrics": "Enabled",
+                "filteringTags": [],
+                "userEmail": "[parameters('emailAddress')]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('roleAssignmentName')]",
+      "dependsOn": [
+        "[variables('monitorDeploymentName')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[concat(subscription().id, variables('roleDefinition'))]",
+        "principalId": "[reference(variables('monitorDeploymentName')).outputs.monitorPrincipalId.value]",
+        "scope": "[subscription().id]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ],
+  "outputs": {}
+}
