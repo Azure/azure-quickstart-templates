@@ -1,0 +1,516 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.21.1.54444",
+      "templateHash": "10232446619770364878"
+    }
+  },
+  "parameters": {
+    "devcenterName": {
+      "type": "string",
+      "defaultValue": "dc-devbox-test",
+      "metadata": {
+        "description": "The name of Dev Center e.g. dc-devbox-test"
+      }
+    },
+    "networkConnectionName": {
+      "type": "string",
+      "defaultValue": "con-devbox-test",
+      "metadata": {
+        "description": "The name of Network Connection e.g. con-devbox-test"
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "defaultValue": "dcprj-devbox-test",
+      "metadata": {
+        "description": "The name of Dev Center project e.g. dcprj-devbox-test"
+      }
+    },
+    "existingSubnetId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The subnet resource id if the user wants to use existing subnet"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Primary location for all resources e.g. eastus"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-{0}-{1}', parameters('projectName'), parameters('location'))]",
+      "metadata": {
+        "description": "The name of the Virtual Network e.g. vnet-dcprj-devbox-test-eastus"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "default",
+      "metadata": {
+        "description": "the subnet name of Dev Box e.g. default"
+      }
+    },
+    "vnetAddressPrefixes": {
+      "type": "string",
+      "defaultValue": "10.4.0.0/16",
+      "metadata": {
+        "description": "The vnet address prefixes of Dev Box e.g. 10.4.0.0/16"
+      }
+    },
+    "subnetAddressPrefixes": {
+      "type": "string",
+      "defaultValue": "10.4.0.0/24",
+      "metadata": {
+        "description": "The subnet address prefixes of Dev Box e.g. 10.4.0.0/24"
+      }
+    },
+    "principalId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The user or group id that will be granted to Devcenter Dev Box User role"
+      }
+    },
+    "principalType": {
+      "type": "string",
+      "defaultValue": "User",
+      "metadata": {
+        "description": "The type of principal id: User, Group or ServicePrincipal"
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": {
+      "networkVirtualNetworks": "vnet-",
+      "networkVirtualNetworksSubnets": "snet-",
+      "networkConnections": "con-",
+      "devcenter": "dc-",
+      "devcenterProject": "dcprj-",
+      "devcenterNetworkingResourceGroup": "ni-"
+    },
+    "abbrs": "[variables('$fxv#0')]",
+    "resourceToken": "[toLower(uniqueString(resourceGroup().id, parameters('location')))]",
+    "ncName": "[if(not(empty(parameters('networkConnectionName'))), parameters('networkConnectionName'), format('{0}{1}', variables('abbrs').networkConnections, variables('resourceToken')))]"
+  },
+  "resources": [
+    {
+      "condition": "[empty(parameters('existingSubnetId'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "vnet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetAddressPrefixes": {
+            "value": "[parameters('vnetAddressPrefixes')]"
+          },
+          "vnetName": "[if(not(empty(parameters('vnetName'))), createObject('value', parameters('vnetName')), createObject('value', format('{0}{1}', variables('abbrs').networkVirtualNetworks, variables('resourceToken'))))]",
+          "subnetAddressPrefixes": {
+            "value": "[parameters('subnetAddressPrefixes')]"
+          },
+          "subnetName": "[if(not(empty(parameters('subnetName'))), createObject('value', parameters('subnetName')), createObject('value', format('{0}{1}', variables('abbrs').networkVirtualNetworksSubnets, variables('resourceToken'))))]"
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.21.1.54444",
+              "templateHash": "8514869359743040800"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Virtual Network"
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "the app subnet name of Dev Box"
+              }
+            },
+            "vnetAddressPrefixes": {
+              "type": "string",
+              "metadata": {
+                "description": "The address prefixes of the vnet"
+              }
+            },
+            "subnetAddressPrefixes": {
+              "type": "string",
+              "metadata": {
+                "description": "The subnet address prefixes for Dev Box"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location of the resource"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2022-11-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressPrefixes')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[parameters('subnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('subnetAddressPrefixes')]"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "subnetName": {
+              "type": "string",
+              "value": "[parameters('subnetName')]"
+            },
+            "subnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "devcenter",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "devcenterName": "[if(not(empty(parameters('devcenterName'))), createObject('value', parameters('devcenterName')), createObject('value', format('{0}{1}', variables('abbrs').devcenter, variables('resourceToken'))))]",
+          "subnetId": "[if(not(empty(parameters('existingSubnetId'))), createObject('value', parameters('existingSubnetId')), createObject('value', reference(resourceId('Microsoft.Resources/deployments', 'vnet'), '2022-09-01').outputs.subnetId.value))]",
+          "networkConnectionName": {
+            "value": "[variables('ncName')]"
+          },
+          "projectName": "[if(not(empty(parameters('projectName'))), createObject('value', parameters('projectName')), createObject('value', format('{0}{1}', variables('abbrs').devcenterProject, variables('resourceToken'))))]",
+          "networkingResourceGroupName": {
+            "value": "[format('{0}{1}-{2}', variables('abbrs').devcenterNetworkingResourceGroup, variables('ncName'), parameters('location'))]"
+          },
+          "principalId": {
+            "value": "[parameters('principalId')]"
+          },
+          "principalType": {
+            "value": "[parameters('principalType')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.21.1.54444",
+              "templateHash": "16686202828644905129"
+            }
+          },
+          "parameters": {
+            "devcenterName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of Dev Center e.g. dc-devbox-test"
+              }
+            },
+            "networkConnectionName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of Network Connection e.g. con-devbox-test"
+              }
+            },
+            "projectName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of Dev Center project e.g. dcprj-devbox-test"
+              }
+            },
+            "networkingResourceGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource group name of Network Connection e.g. rg-devbox-test"
+              }
+            },
+            "subnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource id of Virtual network subnet"
+              }
+            },
+            "principalId": {
+              "type": "string",
+              "metadata": {
+                "description": "The user or group id that will be granted to Devcenter Dev Box User role"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Primary location for all resources e.g. eastus"
+              }
+            },
+            "principalType": {
+              "type": "string",
+              "defaultValue": "User",
+              "allowedValues": [
+                "Group",
+                "ServicePrincipal",
+                "User"
+              ]
+            }
+          },
+          "variables": {
+            "$fxv#0": {
+              "definitions": [
+                {
+                  "name": "win11-vs2022-vscode",
+                  "image": "win11-ent-vs2022",
+                  "compute": "16c-64gb",
+                  "storage": "512gb"
+                },
+                {
+                  "name": "win11-m365",
+                  "image": "win11-ent-m365",
+                  "compute": "16c-64gb",
+                  "storage": "512gb"
+                },
+                {
+                  "name": "win11-base",
+                  "image": "win11-ent-base",
+                  "compute": "8c-32gb",
+                  "storage": "256gb"
+                }
+              ],
+              "pools": [
+                {
+                  "name": "win11-vs2022-vscode-pool",
+                  "definition": "win11-vs2022-vscode",
+                  "administrator": "Enabled"
+                }
+              ]
+            },
+            "roleDefinitionId": "45d50f46-0b78-4001-a660-4198cbe8cd05",
+            "devceterSettings": "[variables('$fxv#0')]",
+            "image": {
+              "win11-ent-base": "microsoftwindowsdesktop_windows-ent-cpc_win11-21h2-ent-cpc-os",
+              "win11-ent-m365": "microsoftwindowsdesktop_windows-ent-cpc_win11-21h2-ent-cpc-m365",
+              "win11-ent-vs2022": "microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2"
+            },
+            "compute": {
+              "8c-32gb": "general_i_8c32gb256ssd_v2",
+              "16c-64gb": "general_i_16c64gb512ssd_v2",
+              "32c-128gb": "general_i_32c128gb1024ssd_v2"
+            }
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "pools",
+                "count": "[length(variables('devceterSettings').pools)]"
+              },
+              "type": "Microsoft.DevCenter/projects/pools",
+              "apiVersion": "2022-11-11-preview",
+              "name": "[format('{0}/{1}', parameters('projectName'), variables('devceterSettings').pools[copyIndex()].name)]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "devBoxDefinitionName": "[variables('devceterSettings').pools[copyIndex()].definition]",
+                "networkConnectionName": "[parameters('networkConnectionName')]",
+                "licenseType": "Windows_Client",
+                "localAdministrator": "[variables('devceterSettings').pools[copyIndex()].administrator]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/networkConnections', parameters('networkConnectionName'))]",
+                "[resourceId('Microsoft.DevCenter/projects', parameters('projectName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DevCenter/devcenters",
+              "apiVersion": "2023-01-01-preview",
+              "name": "[parameters('devcenterName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.DevCenter/networkConnections",
+              "apiVersion": "2023-01-01-preview",
+              "name": "[parameters('networkConnectionName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "domainJoinType": "AzureADJoin",
+                "subnetId": "[parameters('subnetId')]",
+                "networkingResourceGroupName": "[parameters('networkingResourceGroupName')]"
+              }
+            },
+            {
+              "type": "Microsoft.DevCenter/devcenters/attachednetworks",
+              "apiVersion": "2023-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('devcenterName'), parameters('networkConnectionName'))]",
+              "properties": {
+                "networkConnectionId": "[resourceId('Microsoft.DevCenter/networkConnections', parameters('networkConnectionName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName'))]",
+                "[resourceId('Microsoft.DevCenter/networkConnections', parameters('networkConnectionName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "devboxDefinitions",
+                "count": "[length(variables('devceterSettings').definitions)]"
+              },
+              "type": "Microsoft.DevCenter/devcenters/devboxdefinitions",
+              "apiVersion": "2022-11-11-preview",
+              "name": "[format('{0}/{1}', parameters('devcenterName'), variables('devceterSettings').definitions[copyIndex()].name)]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "imageReference": {
+                  "id": "[format('{0}/galleries/default/images/{1}', resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName')), variables('image')[variables('devceterSettings').definitions[copyIndex()].image])]"
+                },
+                "sku": {
+                  "name": "[variables('compute')[variables('devceterSettings').definitions[copyIndex()].compute]]"
+                },
+                "osStorageType": "[format('ssd_{0}', variables('devceterSettings').definitions[copyIndex()].storage)]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/devcenters/attachednetworks', parameters('devcenterName'), parameters('networkConnectionName'))]",
+                "[resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DevCenter/projects",
+              "apiVersion": "2022-11-11-preview",
+              "name": "[parameters('projectName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "devCenterId": "[resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName'))]"
+              },
+              "dependsOn": [
+                "devboxDefinitions",
+                "[resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName'))]"
+              ]
+            },
+            {
+              "condition": "[not(empty(parameters('principalId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.DevCenter/projects/{0}', parameters('projectName'))]",
+              "name": "[guid(subscription().id, resourceGroup().id, parameters('principalId'), variables('roleDefinitionId'))]",
+              "properties": {
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roleDefinitionId'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/projects', parameters('projectName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "devcenterName": {
+              "type": "string",
+              "value": "[parameters('devcenterName')]"
+            },
+            "definitions": {
+              "type": "array",
+              "copy": {
+                "count": "[length(variables('devceterSettings').definitions)]",
+                "input": {
+                  "name": "[variables('devceterSettings').definitions[copyIndex()].name]"
+                }
+              }
+            },
+            "networkConnectionName": {
+              "type": "string",
+              "value": "[parameters('networkConnectionName')]"
+            },
+            "projectName": {
+              "type": "string",
+              "value": "[parameters('projectName')]"
+            },
+            "poolNames": {
+              "type": "array",
+              "copy": {
+                "count": "[length(variables('devceterSettings').pools)]",
+                "input": {
+                  "name": "[variables('devceterSettings').pools[copyIndex()].name]"
+                }
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'vnet')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "vnetName": {
+      "type": "string",
+      "value": "[if(empty(parameters('existingSubnetId')), reference(resourceId('Microsoft.Resources/deployments', 'vnet'), '2022-09-01').outputs.vnetName.value, '')]"
+    },
+    "subnetName": {
+      "type": "string",
+      "value": "[if(empty(parameters('existingSubnetId')), reference(resourceId('Microsoft.Resources/deployments', 'vnet'), '2022-09-01').outputs.subnetName.value, '')]"
+    },
+    "devcetnerName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'devcenter'), '2022-09-01').outputs.devcenterName.value]"
+    },
+    "projectName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'devcenter'), '2022-09-01').outputs.projectName.value]"
+    },
+    "networkConnectionName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'devcenter'), '2022-09-01').outputs.networkConnectionName.value]"
+    },
+    "definitions": {
+      "type": "array",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'devcenter'), '2022-09-01').outputs.definitions.value]"
+    },
+    "pools": {
+      "type": "array",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'devcenter'), '2022-09-01').outputs.poolNames.value]"
+    }
+  }
+}
