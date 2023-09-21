@@ -9,7 +9,7 @@ param workspaceName string = 'default'
 param pricingTier string = 'premium'
 
 @description('The object ID of the AzureDatabricks enterprise application.')
-param ObjectID string
+param objectId string
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
