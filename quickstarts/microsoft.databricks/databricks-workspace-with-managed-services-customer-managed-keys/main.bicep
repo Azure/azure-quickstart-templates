@@ -38,7 +38,7 @@ module addAccessPolicy './nested_addAccessPolicy.bicep' = {
   scope: resourceGroup(keyVaultResourceGroupName)
   params: {
     keyVaultName: keyVaultName
-    ObjectID: objectId
+    objectId: objectId
   }
 }
 
