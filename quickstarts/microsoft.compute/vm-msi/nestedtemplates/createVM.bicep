@@ -109,7 +109,7 @@ var windowsConfiguration = {
 var publicIPAddressName = 'publicIp'
 var nicName = 'nic'
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2019-11-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -117,7 +117,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2019-11-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2019-11-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
   name: nicName
   location: location
   properties: {
@@ -141,7 +141,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2019-11-01' = {
   }
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-11-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
   name: vmName
   location: location
   identity: {
@@ -172,15 +172,15 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-11-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: reference(storageAccountId, '2018-02-01').primaryEndpoints.blob
+        storageUri: reference(storageAccountId, '2023-01-01').primaryEndpoints.blob
       }
     }
   }
 }
 
-resource Microsoft_Compute_virtualMachines_extensions_vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if (isWindowsOS && ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true)))) {
+resource guestAttestationWindows 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = if (isWindowsOS && ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true)))) {
   parent: vm
-  name: 'GuestAttestation'
+  name: 'GuestAttestation-windows'
   location: location
   properties: {
     publisher: 'Microsoft.Azure.Security.WindowsAttestation'
@@ -205,9 +205,9 @@ resource Microsoft_Compute_virtualMachines_extensions_vmName_GuestAttestation 'M
   }
 }
 
-resource Microsoft_Compute_virtualMachines_extensions_vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((!isWindowsOS) && ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true)))) {
+resource guestAttestationLinux 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = if ((!isWindowsOS) && ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true)))) {
   parent: vm
-  name: 'GuestAttestation'
+  name: 'GuestAttestation-linux'
   location: location
   properties: {
     publisher: 'Microsoft.Azure.Security.LinuxAttestation'
@@ -232,7 +232,7 @@ resource Microsoft_Compute_virtualMachines_extensions_vmName_GuestAttestation 'M
   }
 }
 
-resource vmName_cse_windows 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = if (isWindowsOS && provisionExtensions) {
+resource cseWindows 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = if (isWindowsOS && provisionExtensions) {
   parent: vm
   name: 'cse-windows'
   location: location
@@ -250,7 +250,7 @@ resource vmName_cse_windows 'Microsoft.Compute/virtualMachines/extensions@2019-1
   }
 }
 
-resource vmName_cse_linux 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = if ((!isWindowsOS) && provisionExtensions) {
+resource cseLinux 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = if ((!isWindowsOS) && provisionExtensions) {
   parent: vm
   name: 'cse-linux'
   location: location
@@ -271,6 +271,6 @@ resource vmName_cse_linux 'Microsoft.Compute/virtualMachines/extensions@2019-12-
   }
 }
 
-output principalId string = reference(vm.id, '2019-12-01', 'Full').identity.principalId
+output principalId string = vm.identity.principalId
 output linuxTest bool = ((!isWindowsOS) && provisionExtensions)
 output windowsTest bool = (isWindowsOS && provisionExtensions)
