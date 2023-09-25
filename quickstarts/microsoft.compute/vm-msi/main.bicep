@@ -1,5 +1,5 @@
 @description('Username for the Virtual Machine.')
-param adminUsername string = 'jgao'
+param adminUsername string
 
 @description('Authentication type')
 @allowed([
@@ -42,20 +42,17 @@ param _artifactsLocationSasToken string = ''
 param operatingSystem string = 'UbuntuServer_23_04-daily-gen2'
 
 var azureCLI2DockerImage = 'mcr.microsoft.com/azure-cli'
-var vmPrefix = 'vm'
-var storageAccountName = concat(vmPrefix, uniqueString(resourceGroup().id))
+var storageAccountName = 'vm${uniqueString(resourceGroup().id)}'
 var networkSecurityGroupName = 'nsg'
 var addressPrefix = '10.0.0.0/16'
 var subnetName = 'Subnet'
 var subnetPrefix = '10.0.0.0/24'
-var vmName = concat(vmPrefix, uniqueString(resourceGroup().id))
+var vmName = 'vm${uniqueString(resourceGroup().id)}'
 var virtualNetworkName = 'vnet'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var containerName = 'msi'
-var createVMUrl = uri(_artifactsLocation, 'nestedtemplates/createVM.json${_artifactsLocationSasToken}')
-var createRBACUrl = uri(_artifactsLocation, 'nestedtemplates/setUpRBAC.json${_artifactsLocationSasToken}')
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -65,7 +62,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   properties: {}
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2019-11-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -85,7 +82,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2019-11-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -96,7 +93,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-07-0
           priority: 1000
           sourceAddressPrefix: '*'
           protocol: 'Tcp'
-          destinationPortRange: (contains(toLower(operatingSystem), 'windows') ? 3389 : 22)
+          destinationPortRange: (contains(toLower(operatingSystem), 'windows') ? '3389' : '22')
           access: 'Allow'
           direction: 'Inbound'
           sourcePortRange: '*'
@@ -130,14 +127,13 @@ module creatingVM './nestedtemplates/createVM.bicep' = {
   }
   dependsOn: [
     virtualNetwork
-
   ]
 }
 
 module creatingRBAC './nestedtemplates/setuprbac.bicep' = {
   name: 'creatingRBAC'
   params: {
-    principalId: reference(creatingVM.id, '2019-09-01').outputs.principalId.value
+    principalId: creatingVM.outputs.principalId
     storageAccountName: storageAccountName
   }
 }

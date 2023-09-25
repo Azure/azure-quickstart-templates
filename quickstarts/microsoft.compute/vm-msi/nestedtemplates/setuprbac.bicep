@@ -8,12 +8,15 @@ var contributor = subscriptionResourceId('Microsoft.Authorization/roleDefinition
 var scope = resourceId('Microsoft.Storage/storageAccounts', storageAccountName)
 var RBACResourceName = guid(scope, contributor, principalId)
 
-resource storageAccountName_Microsoft_Authorization_RBACResource 'Microsoft.Storage/storageAccounts/providers/roleAssignments@2019-04-01-preview' = {
-  name: '${storageAccountName}/Microsoft.Authorization/${RBACResourceName}'
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: storageAccountName
+}
+resource storageAccountName_Microsoft_Authorization_RBACResource 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: RBACResourceName
   properties: {
     roleDefinitionId: contributor
     principalId: principalId
-    scope: scope
     principalType: 'ServicePrincipal'
   }
 }
