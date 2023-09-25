@@ -1,15 +1,15 @@
 ---
-description: This template creates an Azure Stack HCI Storage Path/Container representing a physical path on the on-prem Azure Stack HCI cluster.
+description: This template creates an Azure Stack HCI Storage Path/Container representing a physical path on the Azure Stack HCI cluster.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: hci-storage-container-create
+urlFragment: storage-container
 languages:
-- json
 - bicep
+- json
 ---
-# Create a Storage Path/Container
+# Create an Azure Stack HCI Storage Path
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/storage-container/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/storage-container/PublicDeployment.svg)
