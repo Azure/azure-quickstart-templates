@@ -1,15 +1,15 @@
 ---
-description: This template creates a simple Windows VM on Azure Stack HCI from the referenced image. 
+description: This template creates a simple Windows VM from the referenced Azure Marketplace image on Azure Stack HCI
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: hci-simple-windows-vm-create
+urlFragment: vm-simple-windows
 languages:
-- json
 - bicep
+- json
 ---
-# Create a simple Windows VM from the referenced image on Azure Stack HCI
+# Create a VM from the referenced image on Azure Stack HCI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/vm-simple-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/vm-simple-windows/PublicDeployment.svg)
