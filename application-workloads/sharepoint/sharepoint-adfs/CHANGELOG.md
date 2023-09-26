@@ -1,5 +1,13 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in September 13, 2023
+
+### Changed
+
+- Template
+  - Added value `Subscription-23H2` to parameter `sharePointVersion`, to install SharePoint Subscription with 23H2 update
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the September 2023 CU for SharePoint Subscription (23H2 update)
+
 ## Enhancements & bug-fixes - Published in August 21, 2023
 
 ### Fixed
