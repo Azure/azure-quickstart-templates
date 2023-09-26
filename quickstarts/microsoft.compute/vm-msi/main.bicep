@@ -138,7 +138,7 @@ module creatingRBAC './nestedtemplates/setuprbac.bicep' = {
   }
 }
 
-module updatingVM './nestedtemplates/createVM.json' = {
+module updatingVM './nestedtemplates/createVM.bicep' = {
   name: 'updatingVM'
   params: {
     _artifactsLocation: _artifactsLocation
