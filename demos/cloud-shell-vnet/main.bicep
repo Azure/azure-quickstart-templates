@@ -4,6 +4,9 @@ param existingVNETName string
 @description('Name of Azure Relay Namespace.')
 param relayNamespaceName string
 
+@description('Name of Network Security Group.')
+param nsgName string
+
 @description('Object Id of Azure Container Instance Service Principal. We have to grant this permission to create hybrid connections in the Azure Relay you specify. To get it: Get-AzADServicePrincipal -DisplayNameBeginsWith \'Azure Container Instance\'')
 param azureContainerInstanceOID string
 
@@ -41,6 +44,7 @@ var contributorRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefini
 var networkRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')
 var privateDnsZoneName = ((toLower(environment().name) == 'azureusgovernment') ? 'privatelink.servicebus.usgovcloudapi.net' : 'privatelink.servicebus.windows.net')
 var vnetResourceId = resourceId('Microsoft.Network/virtualNetworks', existingVNETName)
+var nsgResourceId = resourceId('Microsoft.Network/networkSecurityGroups', nsgName)
 
 resource existingVNET 'Microsoft.Network/virtualNetworks@2021-08-01' existing = {
   name: existingVNETName
@@ -65,6 +69,46 @@ resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' 
         properties: {
           serviceName: 'Microsoft.ContainerInstance/containerGroups'
         }
+      }
+    ]
+    networkSecurityGroup: {
+      id: nsgResourceId
+    }
+  }
+  dependsOn: [
+    networkSecurityGroup
+  ]
+}
+
+resource networkSecurityGroupDefaultRules 'Microsoft.Network/networkSecurityGroups/defaultSecurityRules@2023-04-01' existing = {
+  name: nsgName
+  parent: networkSecurityGroup
+}
+
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-04-01' = {
+  name: nsgName
+  location: location
+  properties: {
+    securityRules: [
+      {
+        id: nsgResourceId
+        name: 'DenyIntraSubnetTraffic'
+        properties: {
+          description: 'Deny traffic between container groups in cloudshellsubnet'
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: containerSubnetAddressPrefix
+          destinationAddressPrefix: containerSubnetAddressPrefix
+          access: 'Deny'
+          priority: 100
+          direction: 'Inbound'
+          sourcePortRanges: []
+          destinationPortRanges: []
+          sourceAddressPrefixes: []
+          destinationAddressPrefixes: []
+        }
+        type: 'Microsoft.Network/networkSecurityGroups/securityRules'
       }
     ]
   }
@@ -212,3 +256,5 @@ resource privateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetwor
 output vnetId string = vnetResourceId
 output containerSubnetId string = containerSubnet.id
 output storageSubnetId string = storageSubnet.id
+output nsgResourceId string = networkSecurityGroup.id
+output nsgDefaultRules string = networkSecurityGroupDefaultRules.id
