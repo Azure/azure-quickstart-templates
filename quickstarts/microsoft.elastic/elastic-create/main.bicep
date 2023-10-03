@@ -34,7 +34,7 @@ var tagRulesProperties = {
   }
 }
 
-resource resource 'Microsoft.Elastic/monitors@2023-02-01-preview' = {
+resource monitor 'Microsoft.Elastic/monitors@2023-02-01-preview' = {
   name: resourceName
   location: location
   sku: {
@@ -49,7 +49,7 @@ resource resource 'Microsoft.Elastic/monitors@2023-02-01-preview' = {
 }
 
 resource resourceName_default 'Microsoft.Elastic/monitors/tagRules@2023-02-01-preview' = {
-  parent: resource
+  parent: monitor
   name: 'default'
   properties: tagRulesProperties
 }
