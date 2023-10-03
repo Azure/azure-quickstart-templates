@@ -68,11 +68,10 @@ var securityProfileJson = {
   securityType: securityType
 }
 var storageAccountName = '${uniqueString(resourceGroup().id)}sardpvm'
-var virtualNetworkName = 'rdpVNET'
+var vNetName = 'rdpVNET'
+var subnetName = 'Subnet'
 var vnetAddressRange = '10.0.0.0/16'
 var subnetAddressRange = '10.0.0.0/24'
-var subnetName = 'Subnet'
-var subnet_id = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var imagePublisher = 'MicrosoftWindowsServer'
 var imageOffer = 'WindowsServer'
 var imageSku = OSVersion
@@ -120,8 +119,8 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-0
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: virtualNetworkName
+resource vNet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
+  name: vNetName
   location: location
   properties: {
     addressSpace: {
@@ -131,7 +130,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
     }
     subnets: [
       {
-        name: 'Subnet'
+        name: subnetName
         properties: {
           addressPrefix: subnetAddressRange
           networkSecurityGroup: {
@@ -141,6 +140,11 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
       }
     ]
   }
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: vNet
+  name: subnetName
 }
 
 resource loadBalancer 'Microsoft.Network/loadBalancers@2023-05-01' = {
@@ -179,6 +183,16 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-05-01' = {
   }
 }
 
+resource backendAddressPool 'Microsoft.Network/loadBalancers/backendAddressPools@2023-05-01' existing = {
+  parent: loadBalancer
+  name: 'LBBAP'
+}
+
+resource inboundNatRule 'Microsoft.Network/loadBalancers/inboundNatRules@2023-05-01' existing = {
+  parent: loadBalancer
+  name: 'rdp'
+}
+
 resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
   name: '${vmName}-nic'
   location: location
@@ -189,26 +203,22 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: subnet_id
+            id: subnet.id
           }
           loadBalancerBackendAddressPools: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'loadBalancer', 'LBBAP')
+              id: backendAddressPool.id
             }
           ]
           loadBalancerInboundNatRules: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/inboundNatRules', 'loadBalancer', 'rdp')
+              id: inboundNatRule.id
             }
           ]
         }
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-    loadBalancer
-  ]
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
@@ -245,14 +255,10 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: reference(storageAccountName, '2020-08-01-preview').primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
   }
-  dependsOn: [
-    storageAccount
-
-  ]
 }
 
 resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
