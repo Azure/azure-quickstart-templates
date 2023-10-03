@@ -238,7 +238,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: reference(storageAccountName, '2019-06-01').primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
   }
