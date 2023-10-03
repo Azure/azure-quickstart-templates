@@ -54,6 +54,11 @@ param subnetPrefix string = '10.0.0.0/24'
 param virtualNetworkResourceGroupName string = resourceGroup().name
 
 @description('Determines whether or not a new public ip should be provisioned.')
+@allowed([
+  'new'
+  'existing'
+  'none'
+])
 param publicIpNewOrExisting string = 'new'
 
 @description('Name of the public ip address')
