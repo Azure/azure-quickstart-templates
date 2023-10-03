@@ -125,6 +125,16 @@ resource lb 'Microsoft.Network/loadBalancers@2023-05-01' = {
   }
 }
 
+resource backendAddressPool 'Microsoft.Network/loadBalancers/backendAddressPools@2023-05-01' existing = {
+  parent: lb
+  name: 'BackendPool1'
+}
+
+resource inboundNatRule 'Microsoft.Network/loadBalancers/inboundNatRules@2023-05-01' existing = {
+  parent: lb
+  name: 'RDP-VM0'
+}
+
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
   name: networkSecurityGroupName
   location: location
@@ -141,26 +151,22 @@ resource nic1 'Microsoft.Network/networkInterfaces@2023-05-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
+            id: subnet.id
           }
           loadBalancerBackendAddressPools: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName, 'BackendPool1')
+              id: backendAddressPool.id
             }
           ]
           loadBalancerInboundNatRules: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/inboundNatRules', lbName, 'RDP-VM0')
+              id: inboundNatRule.id
             }
           ]
         }
       }
     ]
   }
-  dependsOn: [
-    vnet
-    lb
-  ]
 }
 
 resource nic2 'Microsoft.Network/networkInterfaces@2023-05-01' = {
@@ -173,15 +179,12 @@ resource nic2 'Microsoft.Network/networkInterfaces@2023-05-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
+            id: subnet.id
           }
         }
       }
     ]
   }
-  dependsOn: [
-    vnet
-  ]
 }
 
 resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
@@ -238,14 +241,10 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: reference(storageAccountName, '2019-06-01').primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
   }
-  dependsOn: [
-    storageAccount
-
-  ]
 }
 
 resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
@@ -290,4 +289,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
       }
     ]
   }
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: vnet
+  name: subnetName
 }
