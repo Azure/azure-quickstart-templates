@@ -48,7 +48,7 @@ resource monitor 'Microsoft.Elastic/monitors@2023-02-01-preview' = {
   tags: monitorTags
 }
 
-resource resourceName_default 'Microsoft.Elastic/monitors/tagRules@2023-02-01-preview' = {
+resource tagRule 'Microsoft.Elastic/monitors/tagRules@2023-02-01-preview' = {
   parent: monitor
   name: 'default'
   properties: tagRulesProperties
