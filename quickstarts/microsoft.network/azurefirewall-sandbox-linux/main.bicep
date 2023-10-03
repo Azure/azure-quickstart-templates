@@ -71,15 +71,12 @@ var serversSubnetName = 'ServersSubnet'
 var jumpBoxPublicIPAddressName = 'JumpHostPublicIP'
 var jumpBoxNsgName = 'JumpHostNSG'
 var jumpBoxNicName = 'JumpHostNic'
-var jumpBoxSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, jumpBoxSubnetName)
 var serverNicName = 'ServerNic'
-var serverSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, serversSubnetName)
 var storageAccountName = '${uniqueString(resourceGroup().id)}sajumpbox'
 var azfwRouteTableName = 'AzfwRouteTable'
 var firewallName = 'firewall1'
 var publicIPNamePrefix = 'publicIP'
-var azureFirewallSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, azureFirewallSubnetName)
-var azureFirewallSubnetJSON = json('{"id": "${azureFirewallSubnetId}"}')
+var azureFirewallSubnetJSON = json('{"id": "${azureFirewallSubnet.id}"}')
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -177,6 +174,21 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   }
 }
 
+resource jumpBoxSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent:virtualNetwork
+  name: jumpBoxSubnetName
+}
+
+resource serversSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent:virtualNetwork
+  name: serversSubnetName
+}
+
+resource azureFirewallSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent:virtualNetwork
+  name: azureFirewallSubnetName
+}
+
 resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
   name: '${publicIPNamePrefix}${i + 1}'
   location: location
@@ -232,7 +244,7 @@ resource jumpBoxNic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
             id: jumpBoxPublicIPAddress.id
           }
           subnet: {
-            id: jumpBoxSubnetId
+            id: jumpBoxSubnet.id
           }
         }
       }
@@ -241,11 +253,6 @@ resource jumpBoxNic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
       id: jumpBoxNsg.id
     }
   }
-  dependsOn: [
-
-    virtualNetwork
-
-  ]
 }
 
 resource serverNic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
@@ -258,15 +265,12 @@ resource serverNic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: serverSubnetId
+            id: serversSubnet.id
           }
         }
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource jumpBox 'Microsoft.Compute/virtualMachines@2023-07-01' = {
@@ -479,7 +483,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2023-05-01' = {
     }
   }
   dependsOn: [
-    virtualNetwork
     publicIP
   ]
 }
