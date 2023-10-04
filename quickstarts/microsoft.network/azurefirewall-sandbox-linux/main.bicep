@@ -94,7 +94,7 @@ var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPA
   properties: {
     subnet: ((i == 0) ? azureFirewallSubnetJSON : null)
     publicIPAddress: {
-      id: publicIP[i+1].id
+      id: publicIP[i].id
     }
   }
 }]
@@ -175,17 +175,17 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
 }
 
 resource jumpBoxSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
-  parent:virtualNetwork
+  parent: virtualNetwork
   name: jumpBoxSubnetName
 }
 
 resource serversSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
-  parent:virtualNetwork
+  parent: virtualNetwork
   name: serversSubnetName
 }
 
 resource azureFirewallSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
-  parent:virtualNetwork
+  parent: virtualNetwork
   name: azureFirewallSubnetName
 }
 
