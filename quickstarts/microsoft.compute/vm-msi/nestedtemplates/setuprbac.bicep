@@ -4,9 +4,8 @@ param principalId string
 @description('The storage account to set access for')
 param storageAccountName string
 
-var contributor = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var scope = resourceId('Microsoft.Storage/storageAccounts', storageAccountName)
-var RBACResourceName = guid(scope, contributor, principalId)
+var RBACResourceName = guid(scope, contributorRoleDefinition.id, principalId)
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
@@ -15,8 +14,13 @@ resource storageAccountName_Microsoft_Authorization_RBACResource 'Microsoft.Auth
   scope: storageAccount
   name: RBACResourceName
   properties: {
-    roleDefinitionId: contributor
+    roleDefinitionId: contributorRoleDefinition.id
     principalId: principalId
     principalType: 'ServicePrincipal'
   }
+}
+
+resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
+  scope: subscription()
+  name: 'b24988ac-6180-42a0-ab88-20f7382dd24c' //Azure contributor role
 }
