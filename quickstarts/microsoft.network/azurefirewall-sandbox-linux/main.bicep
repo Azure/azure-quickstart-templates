@@ -327,12 +327,7 @@ resource jumpBoxExtension 'Microsoft.Compute/virtualMachines/extensions@2023-07-
     settings: {
       AttestationConfig: {
         MaaSettings: {
-          maaEndpoint: ''
           maaTenantName: maaTenantName
-        }
-        AscSettings: {
-          ascReportingEndpoint: ''
-          ascReportingFrequency: ''
         }
         useCustomToken: 'false'
         disableAlerts: 'false'
@@ -401,12 +396,7 @@ resource serverExtension 'Microsoft.Compute/virtualMachines/extensions@2023-07-0
     settings: {
       AttestationConfig: {
         MaaSettings: {
-          maaEndpoint: ''
           maaTenantName: maaTenantName
-        }
-        AscSettings: {
-          ascReportingEndpoint: ''
-          ascReportingFrequency: ''
         }
         useCustomToken: 'false'
         disableAlerts: 'false'
