@@ -46,11 +46,11 @@ var privateDnsZoneName = ((toLower(environment().name) == 'azureusgovernment') ?
 var vnetResourceId = resourceId('Microsoft.Network/virtualNetworks', existingVNETName)
 var nsgResourceId = resourceId('Microsoft.Network/networkSecurityGroups', nsgName)
 
-resource existingVNET 'Microsoft.Network/virtualNetworks@2021-08-01' existing = {
+resource existingVNET 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
   name: existingVNETName
 }
 
-resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
   parent: existingVNET
   name: containerSubnetName
   properties: {
@@ -80,12 +80,12 @@ resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' 
   ]
 }
 
-resource networkSecurityGroupDefaultRules 'Microsoft.Network/networkSecurityGroups/defaultSecurityRules@2023-04-01' existing = {
+resource networkSecurityGroupDefaultRules 'Microsoft.Network/networkSecurityGroups/defaultSecurityRules@2023-05-01' existing = {
   name: nsgName
   parent: networkSecurityGroup
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-04-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
   name: nsgName
   location: location
   properties: {
@@ -114,7 +114,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-04-0
   }
 }
 
-resource networkProfile 'Microsoft.Network/networkProfiles@2021-08-01' = {
+resource networkProfile 'Microsoft.Network/networkProfiles@2023-05-01' = {
   name: networkProfileName
   tags: tagName
   location: location
@@ -139,7 +139,7 @@ resource networkProfile 'Microsoft.Network/networkProfiles@2021-08-01' = {
   }
 }
 
-resource networkProfile_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource networkProfile_roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: networkProfile
   name: guid(networkRoleDefinitionId, azureContainerInstanceOID, networkProfile.name)
   properties: {
@@ -148,7 +148,7 @@ resource networkProfile_roleAssignment 'Microsoft.Authorization/roleAssignments@
   }
 }
 
-resource relayNamespace 'Microsoft.Relay/namespaces@2018-01-01-preview' = {
+resource relayNamespace 'Microsoft.Relay/namespaces@2021-11-01' = {
   name: relayNamespaceName
   tags: tagName
   location: location
@@ -158,7 +158,7 @@ resource relayNamespace 'Microsoft.Relay/namespaces@2018-01-01-preview' = {
   }
 }
 
-resource relayNamespace_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource relayNamespace_roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: relayNamespace
   name: guid(contributorRoleDefinitionId, azureContainerInstanceOID, relayNamespace.name)
   properties: {
@@ -167,7 +167,7 @@ resource relayNamespace_roleAssignment 'Microsoft.Authorization/roleAssignments@
   }
 }
 
-resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
   parent: existingVNET
   name: relaySubnetName
   properties: {
@@ -180,7 +180,7 @@ resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
   ]
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-08-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
   name: privateEndpointName
   tags: tagName
   location: location
@@ -202,7 +202,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-08-01' = {
   }
 }
 
-resource storageSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource storageSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
   parent: existingVNET
   name: storageSubnetName
   properties: {
