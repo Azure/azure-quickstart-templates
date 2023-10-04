@@ -856,12 +856,7 @@ resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2
     settings: {
       AttestationConfig: {
         MaaSettings: {
-          maaEndpoint: ''
           maaTenantName: maaTenantName
-        }
-        AscSettings: {
-          ascReportingEndpoint: ''
-          ascReportingFrequency: ''
         }
         useCustomToken: 'false'
         disableAlerts: 'false'
@@ -1312,7 +1307,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-07-02-previ
       dnsServiceIP: aksClusterDnsServiceIP
       outboundType: aksClusterOutboundType
       loadBalancerSku: aksClusterLoadBalancerSku
-      loadBalancerProfile: null
     }
     aadProfile: (aadEnabled ? aadProfileConfiguration : null)
     autoScalerProfile: {
@@ -1589,9 +1583,7 @@ resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2023-01-01-p
         }
       ]
     }
-    actions: {
-      actionGroups: []
-    }
+    actions: {}
     enabled: true
     description: 'All azure advisor alerts'
   }
