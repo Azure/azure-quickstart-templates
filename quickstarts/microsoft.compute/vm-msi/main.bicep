@@ -49,7 +49,6 @@ var subnetName = 'Subnet'
 var subnetPrefix = '10.0.0.0/24'
 var vmName = 'vm${uniqueString(resourceGroup().id)}'
 var virtualNetworkName = 'vnet'
-var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var containerName = 'msi'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
@@ -80,6 +79,11 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
       }
     ]
   }
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: virtualNetwork
+  name: subnetName
 }
 
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
@@ -121,13 +125,10 @@ module creatingVM './nestedtemplates/createVM.bicep' = {
     provisionExtensions: false
     storageAccountId: storageAccount.id
     storageAccountName: storageAccountName
-    subnetRef: subnetRef
+    subnetRef: subnet.id
     vmSize: vmSize
     vmName: vmName
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 module creatingRBAC './nestedtemplates/setuprbac.bicep' = {
@@ -154,7 +155,7 @@ module updatingVM './nestedtemplates/createVM.bicep' = {
     provisionExtensions: true
     storageAccountId: storageAccount.id
     storageAccountName: storageAccountName
-    subnetRef: subnetRef
+    subnetRef: subnet.id
     vmSize: vmSize
     vmName: vmName
   }
