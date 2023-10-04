@@ -7,8 +7,6 @@ param tagRulesProperties object
 param monitorTags object = {}
 param effectiveDate string = utcNow('yyyy-MM-ddTHH:mm:ssZ')
 
-var monitorId = '${resourceGroup().id}/providers/NewRelic.Observability/monitors/${resourceName}'
-
 resource monitor 'NewRelic.Observability/monitors@2022-07-01' = {
   name: resourceName
   location: location
@@ -38,4 +36,4 @@ resource resourceName_default 'NewRelic.Observability/monitors/tagRules@2022-07-
   properties: tagRulesProperties
 }
 
-output monitorPrincipalId string = reference(monitorId, '2022-07-01', 'Full').identity.principalId
+output monitorPrincipalId string = monitor.identity.principalId

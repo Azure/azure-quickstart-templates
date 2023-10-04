@@ -24,7 +24,6 @@ param lastName string
 param emailAddress string
 
 var guidValue = guid(deployment().name, 'newrelic')
-var roleDefinition = '/providers/Microsoft.Authorization/roleDefinitions/43d0d8ad-25c7-4714-9337-8ba259a9fe05'
 var monitorDeploymentName = 'NewRelicMonitor_${substring(guidValue, 0, 8)}'
 var roleAssignmentName = guidValue
 
@@ -53,10 +52,15 @@ module monitorDeployment './nested_monitorDeployment.bicep' = {
   }
 }
 
+resource monitoringReaderRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  scope: subscription()
+  name: '43d0d8ad-25c7-4714-9337-8ba259a9fe05' //Azure monitor reader role
+}
+
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: roleAssignmentName
   properties: {
-    roleDefinitionId: format('{0}{1}', subscription().id, roleDefinition)
+    roleDefinitionId: monitoringReaderRoleDefinition.id
     principalId: monitorDeployment.outputs.monitorPrincipalId
     principalType: 'ServicePrincipal'
   }
