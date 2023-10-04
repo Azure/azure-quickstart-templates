@@ -123,6 +123,11 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   }
 }
 
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: virtualNetwork
+  name: subnet1Name
+}
+
 resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
   name: nicName
   location: location
@@ -136,16 +141,12 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
             id: publicIPAddress.id
           }
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnet1Name)
+            id: subnet.id
           }
         }
       }
     ]
   }
-  dependsOn: [
-
-    virtualNetwork
-  ]
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
