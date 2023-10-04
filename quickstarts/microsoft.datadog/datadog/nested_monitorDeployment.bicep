@@ -6,8 +6,6 @@ param tagRulesProperties object
 param monitorTags object
 param cspm bool
 
-var monitorId = '${resourceGroup().id}/providers/Microsoft.Datadog/monitors/${monitorName}'
-
 resource monitor 'Microsoft.Datadog/monitors@2023-01-01' = {
   name: monitorName
   location: location
@@ -46,4 +44,4 @@ resource ssoConfig 'Microsoft.Datadog/monitors/singleSignOnConfigurations@2023-0
   }
 }
 
-output monitorPrincipalId string = reference(monitorId, '2023-01-01', 'Full').identity.principalId
+output monitorPrincipalId string = monitor.identity.principalId
