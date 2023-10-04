@@ -13,7 +13,6 @@ param monitorName string = 'Datadog-${uniqueString(subscription().id)}'
 param location string = 'westus2'
 
 var guidValue = guid(deployment().name, 'datadog')
-var roleDefinition = '/providers/Microsoft.Authorization/roleDefinitions/43d0d8ad-25c7-4714-9337-8ba259a9fe05'
 var monitorDeploymentName = 'DatadogMonitor_${substring(guidValue, 0, 8)}'
 var roleAssignmentName = guidValue
 
@@ -50,8 +49,13 @@ module monitorDeployment './nested_monitorDeployment.bicep' = {
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: roleAssignmentName
   properties: {
-    roleDefinitionId: format('{0}{1}', subscription().id, roleDefinition)
+    roleDefinitionId: monitoringReaderRoleDefinition.id
     principalId: monitorDeployment.outputs.monitorPrincipalId
     principalType: 'ServicePrincipal'
   }
+}
+
+resource monitoringReaderRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  scope: subscription()
+  name: '43d0d8ad-25c7-4714-9337-8ba259a9fe05' //Azure monitoring reader role
 }
