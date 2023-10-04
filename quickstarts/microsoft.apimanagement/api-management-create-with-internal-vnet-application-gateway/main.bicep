@@ -57,12 +57,9 @@ resource apimService 'Microsoft.ApiManagement/service@2022-08-01' = {
     publisherEmail: apim_publisher_email
     virtualNetworkType: 'Internal'
     virtualNetworkConfiguration: {
-      subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'apimSubnet')
+      subnetResourceId: apimSubnet.id
     }
   }
-  dependsOn: [
-    vnet
-  ]
 }
 
 resource apimGateway 'Microsoft.ApiManagement/service/gateways@2022-08-01' = {
@@ -162,7 +159,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
         name: 'appGatewayIpConfig'
         properties: {
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'appGatewaySubnet')
+            id: appGatewaySubnet.id
           }
         }
       }
@@ -274,8 +271,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
   }
   dependsOn: [
     appInsightComponent
-
-    vnet
     privateDnsZone
   ]
 }
@@ -379,6 +374,16 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
       }
     ]
   }
+}
+
+resource apimSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: vnet
+  name: 'apimSubnet'
+}
+
+resource appGatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: vnet
+  name: 'appGatewaySubnet'
 }
 
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
