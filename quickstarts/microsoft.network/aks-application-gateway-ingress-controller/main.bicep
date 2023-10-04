@@ -43,9 +43,6 @@ param aksClusterServiceCidr string = '10.3.0.0/16'
 @description('Specifies the IP address assigned to the Kubernetes DNS service. It must be within the Kubernetes service address range specified in serviceCidr.')
 param aksClusterDnsServiceIP string = '10.3.0.10'
 
-@description('Specifies the CIDR notation IP range assigned to the Docker bridge network. It must not overlap with any Subnet IP ranges or the Kubernetes service address range.')
-param aksClusterDockerBridgeCidr string = '172.17.0.1/16'
-
 @description('Specifies the sku of the load balancer used by the virtual machine scale sets used by nodepools.')
 @allowed([
   'basic'
@@ -458,23 +455,16 @@ var extensionName = 'GuestAttestation'
 var extensionPublisher = 'Microsoft.Azure.Security.LinuxAttestation'
 var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
-var readerRoleDefinitionName = 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
-var contributorRoleDefinitionName = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
-var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 var aksClusterUserDefinedManagedIdentityName = '${aksClusterName}ManagedIdentity'
 var aksClusterUserDefinedManagedIdentityId = aksClusterUserDefinedManagedIdentity.id
 var applicationGatewayUserDefinedManagedIdentityName = '${applicationGatewayName}ManagedIdentity'
 var applicationGatewayUserDefinedManagedIdentityId = applicationGatewayUserDefinedManagedIdentity.id
 var aadPodIdentityUserDefinedManagedIdentityName = '${aksClusterName}AadPodManagedIdentity'
-var aadPodIdentityUserDefinedManagedIdentityId = aadPodIdentityUserDefinedManagedIdentity.id
 var vmSubnetNsgName = '${vmSubnetName}Nsg'
 var vmSubnetNsgId = vmSubnetNsg.id
 var virtualNetworkId = virtualNetwork.id
 var bastionSubnetNsgName = '${bastionHostName}Nsg'
 var bastionSubnetNsgId = bastionSubnetNsg.id
-var aksSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, aksSubnetName)
-var vmSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, vmSubnetName)
-var applicationGatewaySubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, applicationGatewaySubnetName)
 var vmNicName = '${vmName}Nic'
 var blobStorageAccountId = blobStorageAccount.id
 var blobPublicDNSZoneForwarder = 'blob.${environment().suffixes.storage}'
@@ -499,11 +489,7 @@ var linuxConfiguration = {
 var bastionPublicIpAddressName = '${bastionHostName}PublicIp'
 var bastionPublicIpAddressId = bastionPublicIpAddress.id
 var bastionSubnetName = 'AzureBastionSubnet'
-var bastionSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, bastionSubnetName)
 var workspaceId = logAnalyticsWorkspace.id
-var readerRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', readerRoleDefinitionName)
-var contributorRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionName)
-var acrPullRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleDefinitionName)
 var aksContributorRoleAssignmentName = guid('${resourceGroup().id}${aksClusterUserDefinedManagedIdentityName}${aksClusterName}')
 var appGwContributorRoleAssignmentName = guid('${resourceGroup().id}${applicationGatewayUserDefinedManagedIdentityName}${applicationGatewayName}')
 var acrPullRoleAssignmentName = 'Microsoft.Authorization/${guid('${resourceGroup().id}acrPullRoleAssignment')}'
@@ -536,7 +522,22 @@ var aadProfileConfiguration = {
   tenantID: aadProfileTenantId
 }
 
-resource bastionPublicIpAddress 'Microsoft.Network/publicIPAddresses@2022-11-01' = {
+resource readerRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
+  scope: subscription()
+  name: 'acdd72a7-3385-48ef-bd42-f606fba81ae7' //Azure reader role
+}
+
+resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
+  scope: subscription()
+  name: 'b24988ac-6180-42a0-ab88-20f7382dd24c' //Azure contributor role
+}
+
+resource acrPullRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
+  scope: subscription()
+  name: '7f951dda-4ed3-4680-a7ca-43fe172d538d' //Azure ACR pull role
+}
+
+resource bastionPublicIpAddress 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: bastionPublicIpAddressName
   location: location
   sku: {
@@ -547,7 +548,7 @@ resource bastionPublicIpAddress 'Microsoft.Network/publicIPAddresses@2022-11-01'
   }
 }
 
-resource bastionSubnetNsg 'Microsoft.Network/networkSecurityGroups@2022-11-01' = {
+resource bastionSubnetNsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
   name: bastionSubnetNsgName
   location: location
   properties: {
@@ -724,7 +725,7 @@ resource bastionSubnetNsgName_Microsoft_Insights_default 'Microsoft.Insights/dia
   }
 }
 
-resource bastionHost 'Microsoft.Network/bastionHosts@2022-11-01' = {
+resource bastionHost 'Microsoft.Network/bastionHosts@2023-05-01' = {
   name: bastionHostName
   location: location
   properties: {
@@ -733,7 +734,7 @@ resource bastionHost 'Microsoft.Network/bastionHosts@2022-11-01' = {
         name: 'IpConf'
         properties: {
           subnet: {
-            id: bastionSubnetId
+            id: bastionSubnet.id
           }
           publicIPAddress: {
             id: bastionPublicIpAddressId
@@ -742,9 +743,6 @@ resource bastionHost 'Microsoft.Network/bastionHosts@2022-11-01' = {
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource bastionHostName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
@@ -761,7 +759,7 @@ resource bastionHostName_Microsoft_Insights_default 'Microsoft.Insights/diagnost
   }
 }
 
-resource blobStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+resource blobStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: blobStorageAccountName
   location: location
   sku: {
@@ -770,7 +768,7 @@ resource blobStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   kind: 'StorageV2'
 }
 
-resource vmNic 'Microsoft.Network/networkInterfaces@2022-11-01' = {
+resource vmNic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
   name: vmNicName
   location: location
   properties: {
@@ -780,18 +778,15 @@ resource vmNic 'Microsoft.Network/networkInterfaces@2022-11-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: vmSubnetId
+            id: vmSubnet.id
           }
         }
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
   name: vmName
   location: location
   properties: {
@@ -842,13 +837,13 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: reference(blobStorageAccountId).primaryEndpoints.blob
+        storageUri: blobStorageAccount.properties.primaryEndpoints.blob
       }
     }
   }
 }
 
-resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
   parent: vm
   name: 'GuestAttestation'
   location: location
@@ -875,7 +870,7 @@ resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2
   }
 }
 
-resource vmName_omsAgentForLinux 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = {
+resource vmName_omsAgentForLinux 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = {
   parent: vm
   name: omsAgentForLinuxName
   location: location
@@ -884,16 +879,16 @@ resource vmName_omsAgentForLinux 'Microsoft.Compute/virtualMachines/extensions@2
     type: 'OmsAgentForLinux'
     typeHandlerVersion: '1.12'
     settings: {
-      workspaceId: reference(workspaceId, '2020-03-01-preview').customerId
+      workspaceId: reference(workspaceId, '2022-10-01').customerId
       stopOnMultipleConnections: false
     }
     protectedSettings: {
-      workspaceKey: listKeys(workspaceId, '2020-03-01-preview').primarySharedKey
+      workspaceKey: listKeys(workspaceId, '2022-10-01').primarySharedKey
     }
   }
 }
 
-resource vmName_omsDependencyAgentForLinux 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = {
+resource vmName_omsDependencyAgentForLinux 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = {
   parent: vm
   name: omsDependencyAgentForLinuxName
   location: location
@@ -909,7 +904,7 @@ resource vmName_omsDependencyAgentForLinux 'Microsoft.Compute/virtualMachines/ex
   ]
 }
 
-resource vmSubnetNsg 'Microsoft.Network/networkSecurityGroups@2022-11-01' = {
+resource vmSubnetNsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
   name: vmSubnetNsgName
   location: location
   properties: {
@@ -957,7 +952,7 @@ resource vmSubnetNsgName_Microsoft_Insights_default 'Microsoft.Insights/diagnost
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-11-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -1009,6 +1004,26 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-11-01' = {
   }
 }
 
+resource aksSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: virtualNetwork
+  name: aksSubnetName
+}
+
+resource vmSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: virtualNetwork
+  name: vmSubnetName
+}
+
+resource applicationGatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: virtualNetwork
+  name: applicationGatewaySubnetName
+}
+
+resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
+  parent: virtualNetwork
+  name: bastionSubnetName
+}
+
 resource aksClusterUserDefinedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: aksClusterUserDefinedManagedIdentityName
   location: location
@@ -1027,7 +1042,7 @@ resource aadPodIdentityUserDefinedManagedIdentity 'Microsoft.ManagedIdentity/use
 resource aksContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: aksContributorRoleAssignmentName
   properties: {
-    roleDefinitionId: contributorRoleId
+    roleDefinitionId: contributorRoleDefinition.id
     description: 'Assign the cluster user-defined managed identity contributor role on the resource group.'
     principalId: aksClusterUserDefinedManagedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
@@ -1043,8 +1058,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   properties: {
     accessPolicies: [
       {
-        tenantId: reference(applicationGatewayUserDefinedManagedIdentityId).tenantId
-        objectId: reference(applicationGatewayUserDefinedManagedIdentityId).principalId
+        tenantId: applicationGatewayUserDefinedManagedIdentity.properties.tenantId
+        objectId: applicationGatewayUserDefinedManagedIdentity.properties.principalId
         permissions: {
           secrets: [
             'get'
@@ -1056,8 +1071,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
         }
       }
       {
-        tenantId: reference(aadPodIdentityUserDefinedManagedIdentityId).tenantId
-        objectId: reference(aadPodIdentityUserDefinedManagedIdentityId).principalId
+        tenantId: aadPodIdentityUserDefinedManagedIdentity.properties.tenantId
+        objectId: aadPodIdentityUserDefinedManagedIdentity.properties.principalId
         permissions: {
           secrets: [
             'get'
@@ -1109,15 +1124,15 @@ resource keyVaultName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticS
 
 resource keyVaultName_Microsoft_Authorization_id_readerRoleId 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: keyVault
-  name: guid(concat(resourceGroup().id), readerRoleId)
+  name: guid(concat(resourceGroup().id), readerRoleDefinition.id)
   properties: {
-    roleDefinitionId: readerRoleId
-    principalId: reference(aadPodIdentityUserDefinedManagedIdentityId).principalId
+    roleDefinitionId: readerRoleDefinition.id
+    principalId: aadPodIdentityUserDefinedManagedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
-resource acr 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
+resource acr 'Microsoft.ContainerRegistry/registries@2023-08-01-preview' = {
   name: acrName
   location: location
   tags: {
@@ -1158,7 +1173,7 @@ resource acrName_acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@
   scope: acr
   name: acrPullRoleAssignmentName
   properties: {
-    roleDefinitionId: acrPullRoleId
+    roleDefinitionId: acrPullRoleDefinition.id
     principalId: aksCluster.properties.identityProfile.kubeletidentity.objectId
     principalType: 'ServicePrincipal'
   }
@@ -1189,7 +1204,7 @@ resource acrName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticSettin
   }
 }
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-05-01' = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-07-02-preview' = {
   name: aksClusterName
   location: location
   identity: {
@@ -1212,7 +1227,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-05-01' = {
         count: systemNodePoolAgentCount
         vmSize: systemNodePoolVmSize
         osDiskSizeGB: systemNodePoolOsDiskSizeGB
-        vnetSubnetID: aksSubnetId
+        vnetSubnetID: aksSubnet.id
         maxPods: systemNodePoolMaxPods
         osType: systemNodePoolOsType
         maxCount: systemNodePoolMaxCount
@@ -1231,7 +1246,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-05-01' = {
         count: userNodePoolAgentCount
         vmSize: userNodePoolVmSize
         osDiskSizeGB: userNodePoolOsDiskSizeGB
-        vnetSubnetID: aksSubnetId
+        vnetSubnetID: aksSubnet.id
         maxPods: userNodePoolMaxPods
         osType: userNodePoolOsType
         maxCount: userNodePoolMaxCount
@@ -1315,7 +1330,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-05-01' = {
     }
   }
   dependsOn: [
-    virtualNetwork
     keyVaultPrivateEndpoint
     acrPrivateEndpoint
     aksContributorRoleAssignment
@@ -1366,7 +1380,7 @@ resource aksClusterName_Microsoft_Insights_default 'Microsoft.Insights/diagnosti
   }
 }
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsWorkspaceName
   location: location
   properties: {
@@ -1442,7 +1456,7 @@ resource acrPrivateDnsZoneName_link_to_virtualNetwork 'Microsoft.Network/private
   }
 }
 
-resource blobStorageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-02-01' = {
+resource blobStorageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
   name: blobStorageAccountPrivateEndpointName
   location: location
   properties: {
@@ -1458,15 +1472,12 @@ resource blobStorageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2
       }
     ]
     subnet: {
-      id: vmSubnetId
+      id: vmSubnet.id
     }
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
-resource blobStorageAccountPrivateEndpointName_blobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-02-01' = {
+resource blobStorageAccountPrivateEndpointName_blobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
   parent: blobStorageAccountPrivateEndpoint
   name: blobPrivateDnsZoneGroupName
   properties: {
@@ -1481,7 +1492,7 @@ resource blobStorageAccountPrivateEndpointName_blobPrivateDnsZoneGroup 'Microsof
   }
 }
 
-resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-02-01' = {
+resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
   name: keyVaultPrivateEndpointName
   location: location
   properties: {
@@ -1497,15 +1508,12 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-02-01'
       }
     ]
     subnet: {
-      id: vmSubnetId
+      id: vmSubnet.id
     }
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
-resource keyVaultPrivateEndpointName_keyVaultPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-02-01' = {
+resource keyVaultPrivateEndpointName_keyVaultPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
   parent: keyVaultPrivateEndpoint
   name: keyVaultPrivateDnsZoneGroupName
   properties: {
@@ -1523,7 +1531,7 @@ resource keyVaultPrivateEndpointName_keyVaultPrivateDnsZoneGroup 'Microsoft.Netw
   ]
 }
 
-resource acrPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-02-01' = if (acrSku == 'Premium') {
+resource acrPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (acrSku == 'Premium') {
   name: acrPrivateEndpointName
   location: location
   properties: {
@@ -1539,15 +1547,12 @@ resource acrPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-02-01' = if
       }
     ]
     subnet: {
-      id: vmSubnetId
+      id: vmSubnet.id
     }
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
-resource acrPrivateEndpointName_acrPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-02-01' = if (acrSku == 'Premium') {
+resource acrPrivateEndpointName_acrPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = if (acrSku == 'Premium') {
   parent: acrPrivateEndpoint
   name: acrPrivateDnsZoneGroupName
   properties: {
@@ -1592,7 +1597,7 @@ resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2023-01-01-p
   }
 }
 
-resource applicationGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+resource applicationGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: applicationGatewayPublicIPAddressName
   location: location
   sku: {
@@ -1603,7 +1608,7 @@ resource applicationGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@
   }
 }
 
-resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2023-02-01' = {
+resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2023-05-01' = {
   name: wafPolicyName
   location: location
   properties: {
@@ -1671,7 +1676,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
   }
 }
 
-resource applicationGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
+resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
   name: applicationGatewayName
   location: location
   identity: {
@@ -1691,7 +1696,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-02-01' =
         name: applicationGatewayIPConfigurationName
         properties: {
           subnet: {
-            id: applicationGatewaySubnetId
+            id: applicationGatewaySubnet.id
           }
         }
       }
@@ -1809,7 +1814,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-02-01' =
   }
   dependsOn: [
     keyVault
-    virtualNetwork
   ]
 }
 
@@ -1844,7 +1848,7 @@ resource applicationGatewayName_Microsoft_Insights_default 'Microsoft.Insights/d
 resource appGwContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: appGwContributorRoleAssignmentName
   properties: {
-    roleDefinitionId: contributorRoleId
+    roleDefinitionId: contributorRoleDefinition.id
     principalId: aksCluster.properties.addonProfiles.ingressApplicationGateway.identity.objectId
     principalType: 'ServicePrincipal'
   }
