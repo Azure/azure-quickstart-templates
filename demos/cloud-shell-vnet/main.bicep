@@ -103,10 +103,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-0
           access: 'Deny'
           priority: 100
           direction: 'Inbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
         type: 'Microsoft.Network/networkSecurityGroups/securityRules'
       }
