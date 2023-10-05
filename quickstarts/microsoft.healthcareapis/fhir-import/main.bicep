@@ -17,8 +17,13 @@ param fhirKind string = 'fhir-R4'
 @description('Name of storage account to use for import. Needs to be an existing storage account. Leave blank if this has already been configured.')
 param storageName string = ''
 
-@description('Flag to enable or disable $import')
-param enableImport bool
+@description('FHIR Service Import mode to enable (or disable import)')
+@allowed([
+  'Initial Import'
+  'Incremental Import'
+  'Disabled'
+])
+param importMode string
 
 @allowed([
   'new'
@@ -26,15 +31,24 @@ param enableImport bool
 ])
 param newOrExisting string = 'existing'
 
-var enableConfiguration = {
+var initialImport = {
   enabled: true
   initialImportMode: true
   integrationDataStore: storageName
 }
+
+var incrementalImport = {
+  enabled: true
+  initialImportMode: false
+  integrationDataStore: storageName
+}
+
 var disableConfiguration = {
   enabled: false
   initialImportMode: false
 }
+
+
 var newDeployName = 'newdeploy${uniqueString(resourceGroup().id, fhirName)}'
 var existingDeployName = 'existingdeploy${uniqueString(resourceGroup().id, fhirName)}'
 
@@ -47,7 +61,7 @@ resource fhir 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' = {
     type: 'SystemAssigned'
   }
   properties: union((newOrExisting == 'existing') ? existingDeploy.outputs.properties : newDeploy.outputs.properties, {
-      importConfiguration: (enableImport ? enableConfiguration : disableConfiguration)
+      importConfiguration: (importMode == 'Initial Import' ? initialImport : importMode == 'Incremental Import' ? incrementalImport : disableConfiguration)
     })
 }
 
@@ -71,4 +85,4 @@ module newDeploy './nested_newdeployname.bicep' = if (newOrExisting == 'new') {
 }
 
 @description('Used to validate that the storage account exists when enabling import')
-output storageAccountName string = (enableImport ? storageName : '')
+output storageAccountName string = (importMode != 'Disabled' ? storageName : '')
