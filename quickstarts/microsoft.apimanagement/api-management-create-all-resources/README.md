@@ -9,7 +9,7 @@ urlFragment: api-management-create-all-resources
 languages:
 - json
 ---
-# Create an API Management instance and all sub resources using template
+# Create an API Management instance and all subresources using template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-create-all-resources/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-create-all-resources/PublicDeployment.svg)
