@@ -325,12 +325,7 @@ resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-07-
     settings: {
       AttestationConfig: {
         MaaSettings: {
-          maaEndpoint: ''
           maaTenantName: maaTenantName
-        }
-        AscSettings: {
-          ascReportingEndpoint: ''
-          ascReportingFrequency: ''
         }
         useCustomToken: 'false'
         disableAlerts: 'false'
