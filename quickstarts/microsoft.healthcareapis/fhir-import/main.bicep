@@ -2,9 +2,11 @@
 param resourceLocation string = resourceGroup().location
 
 @description('Workspace containing the Azure Health Data Services workspace')
+@minLength(3)
 param workspaceName string
 
 @description('Name of FHIR service')
+@minLength(3)
 param fhirName string
 
 @description('Kind of the FHIR service to update')
@@ -47,7 +49,6 @@ var disableConfiguration = {
   enabled: false
   initialImportMode: false
 }
-
 
 var newDeployName = 'newdeploy${uniqueString(resourceGroup().id, fhirName)}'
 var existingDeployName = 'existingdeploy${uniqueString(resourceGroup().id, fhirName)}'
