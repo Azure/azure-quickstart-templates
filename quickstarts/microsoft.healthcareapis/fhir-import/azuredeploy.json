@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.21.1.54444",
-      "templateHash": "16954011609398821360"
+      "version": "0.13.1.58284",
+      "templateHash": "17241932705120126845"
     }
   },
   "parameters": {
@@ -46,15 +46,10 @@
         "description": "Name of storage account to use for import. Needs to be an existing storage account. Leave blank if this has already been configured."
       }
     },
-    "importMode": {
-      "type": "string",
-      "allowedValues": [
-        "Initial Import",
-        "Incremental Import",
-        "Disabled"
-      ],
+    "enableImport": {
+      "type": "bool",
       "metadata": {
-        "description": "FHIR Service Import mode to enable (or disable import)"
+        "description": "Flag to enable or disable $import"
       }
     },
     "newOrExisting": {
@@ -67,14 +62,9 @@
     }
   },
   "variables": {
-    "initialImport": {
+    "enableConfiguration": {
       "enabled": true,
       "initialImportMode": true,
-      "integrationDataStore": "[parameters('storageName')]"
-    },
-    "incrementalImport": {
-      "enabled": true,
-      "initialImportMode": false,
       "integrationDataStore": "[parameters('storageName')]"
     },
     "disableConfiguration": {
@@ -94,7 +84,7 @@
       "identity": {
         "type": "SystemAssigned"
       },
-      "properties": "[union(if(equals(parameters('newOrExisting'), 'existing'), reference(resourceId('Microsoft.Resources/deployments', variables('existingDeployName')), '2022-09-01').outputs.properties.value, reference(resourceId('Microsoft.Resources/deployments', variables('newDeployName')), '2022-09-01').outputs.properties.value), createObject('importConfiguration', if(equals(parameters('importMode'), 'Initial Import'), variables('initialImport'), if(equals(parameters('importMode'), 'Incremental Import'), variables('incrementalImport'), variables('disableConfiguration')))))]",
+      "properties": "[union(if(equals(parameters('newOrExisting'), 'existing'), reference(resourceId('Microsoft.Resources/deployments', variables('existingDeployName')), '2020-10-01').outputs.properties.value, reference(resourceId('Microsoft.Resources/deployments', variables('newDeployName')), '2020-10-01').outputs.properties.value), createObject('importConfiguration', if(parameters('enableImport'), variables('enableConfiguration'), variables('disableConfiguration'))))]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', variables('existingDeployName'))]",
         "[resourceId('Microsoft.Resources/deployments', variables('newDeployName'))]"
@@ -106,7 +96,7 @@
     {
       "condition": "[equals(parameters('newOrExisting'), 'existing')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2020-10-01",
       "name": "[variables('existingDeployName')]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -127,8 +117,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.21.1.54444",
-              "templateHash": "1378819859420502483"
+              "version": "0.13.1.58284",
+              "templateHash": "8027949065940780632"
             }
           },
           "parameters": {
@@ -149,7 +139,7 @@
           "outputs": {
             "properties": {
               "type": "object",
-              "value": "[reference(resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('workspaceName'), parameters('fhirName')), '2023-02-28')]"
+              "value": "[reference(resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('workspaceName'), parameters('fhirName')), '2022-06-01')]"
             }
           }
         }
@@ -161,7 +151,7 @@
     {
       "condition": "[equals(parameters('newOrExisting'), 'new')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2020-10-01",
       "name": "[variables('newDeployName')]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -185,8 +175,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.21.1.54444",
-              "templateHash": "9540714951106146551"
+              "version": "0.13.1.58284",
+              "templateHash": "736950215381405193"
             }
           },
           "parameters": {
@@ -240,10 +230,10 @@
   "outputs": {
     "storageAccountName": {
       "type": "string",
+      "value": "[if(parameters('enableImport'), parameters('storageName'), '')]",
       "metadata": {
         "description": "Used to validate that the storage account exists when enabling import"
-      },
-      "value": "[if(not(equals(parameters('importMode'), 'Disabled')), parameters('storageName'), '')]"
+      }
     }
   }
 }
