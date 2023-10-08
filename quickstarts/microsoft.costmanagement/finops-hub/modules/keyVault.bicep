@@ -30,6 +30,9 @@ param sku string = 'premium'
 @description('Optional. Resource tags.')
 param tags object = {}
 
+@description('Optional. Tags to apply to resources based on their resource type. Resource type specific tags will be merged with tags for all resources.')
+param tagsByResource object = {}
+
 //------------------------------------------------------------------------------
 // Variables
 //------------------------------------------------------------------------------
@@ -53,7 +56,7 @@ var formattedAccessPolicies = [for accessPolicy in accessPolicies: {
 resource keyVault 'Microsoft.KeyVault/vaults@2022-11-01' = {
   name: keyVaultName
   location: location
-  tags: tags
+  tags: union(tags, contains(tagsByResource, 'Microsoft.KeyVault/vaults') ? tagsByResource['Microsoft.KeyVault/vaults'] : {})
   properties: {
     enabledForDeployment: true
     enabledForTemplateDeployment: true
