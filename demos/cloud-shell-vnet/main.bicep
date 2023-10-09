@@ -104,7 +104,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-0
           priority: 100
           direction: 'Inbound'
         }
-        type: 'Microsoft.Network/networkSecurityGroups/securityRules'
       }
     ]
   }
