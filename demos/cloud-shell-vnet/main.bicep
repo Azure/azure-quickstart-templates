@@ -44,7 +44,6 @@ var contributorRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefini
 var networkRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')
 var privateDnsZoneName = ((toLower(environment().name) == 'azureusgovernment') ? 'privatelink.servicebus.usgovcloudapi.net' : 'privatelink.servicebus.windows.net')
 var vnetResourceId = resourceId('Microsoft.Network/virtualNetworks', existingVNETName)
-var nsgResourceId = resourceId('Microsoft.Network/networkSecurityGroups', nsgName)
 
 resource existingVNET 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
   name: existingVNETName
@@ -72,7 +71,7 @@ resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' 
       }
     ]
     networkSecurityGroup: {
-      id: nsgResourceId
+      id: networkSecurityGroup.id
     }
   }
   dependsOn: [
@@ -91,7 +90,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-0
   properties: {
     securityRules: [
       {
-        id: nsgResourceId
+        id: resourceId('Microsoft.Network/networkSecurityGroups', nsgName)
         name: 'DenyIntraSubnetTraffic'
         properties: {
           description: 'Deny traffic between container groups in cloudshellsubnet'
@@ -251,5 +250,5 @@ resource privateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetwor
 output vnetId string = vnetResourceId
 output containerSubnetId string = containerSubnet.id
 output storageSubnetId string = storageSubnet.id
-output nsgResourceId string = networkSecurityGroup.id
+output networkSecurityGroupResourceId string = networkSecurityGroup.id
 output nsgDefaultRules string = networkSecurityGroupDefaultRules.id
