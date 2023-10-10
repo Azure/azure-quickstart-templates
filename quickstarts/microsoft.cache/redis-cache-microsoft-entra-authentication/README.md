@@ -1,15 +1,15 @@
 ---
-description: This template creates an Azure Redis Cache with Microsoft Entra authentication.
+description: This template creates a Redis Cache. Then assigns a built-in access policy to a redis user. Then creates a custom access policy. And then assigns the custom access policy to another Redis user.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: redis-cache-microsoft-entra-authentication
 languages:
-- json
 - bicep
+- json
 ---
-# Create a Redis Cache with Microsoft Entra authentication using a template
+# Create a Redis Cache with Microsoft Entra Authentication.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-cache/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-cache/PublicDeployment.svg)
