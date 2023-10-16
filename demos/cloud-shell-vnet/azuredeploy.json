@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.6.1.6515",
-      "templateHash": "6272974467202002345"
+      "version": "0.22.6.54827",
+      "templateHash": "1048285105677865241"
     }
   },
   "parameters": {
@@ -19,6 +19,12 @@
       "type": "string",
       "metadata": {
         "description": "Name of Azure Relay Namespace."
+      }
+    },
+    "nsgName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Network Security Group."
       }
     },
     "azureContainerInstanceOID": {
@@ -100,7 +106,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-05-01",
       "name": "[format('{0}/{1}', parameters('existingVNETName'), parameters('containerSubnetName'))]",
       "properties": {
         "addressPrefix": "[parameters('containerSubnetAddressPrefix')]",
@@ -119,12 +125,43 @@
               "serviceName": "Microsoft.ContainerInstance/containerGroups"
             }
           }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('nsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+            "name": "DenyIntraSubnetTraffic",
+            "properties": {
+              "description": "Deny traffic between container groups in cloudshellsubnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+              "destinationAddressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+              "access": "Deny",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
         ]
       }
     },
     {
       "type": "Microsoft.Network/networkProfiles",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-05-01",
       "name": "[variables('networkProfileName')]",
       "tags": "[parameters('tagName')]",
       "location": "[parameters('location')]",
@@ -153,7 +190,7 @@
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-10-01-preview",
+      "apiVersion": "2022-04-01",
       "scope": "[format('Microsoft.Network/networkProfiles/{0}', variables('networkProfileName'))]",
       "name": "[guid(variables('networkRoleDefinitionId'), parameters('azureContainerInstanceOID'), variables('networkProfileName'))]",
       "properties": {
@@ -166,7 +203,7 @@
     },
     {
       "type": "Microsoft.Relay/namespaces",
-      "apiVersion": "2018-01-01-preview",
+      "apiVersion": "2021-11-01",
       "name": "[parameters('relayNamespaceName')]",
       "tags": "[parameters('tagName')]",
       "location": "[parameters('location')]",
@@ -177,7 +214,7 @@
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-10-01-preview",
+      "apiVersion": "2022-04-01",
       "scope": "[format('Microsoft.Relay/namespaces/{0}', parameters('relayNamespaceName'))]",
       "name": "[guid(variables('contributorRoleDefinitionId'), parameters('azureContainerInstanceOID'), parameters('relayNamespaceName'))]",
       "properties": {
@@ -190,7 +227,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-05-01",
       "name": "[format('{0}/{1}', parameters('existingVNETName'), parameters('relaySubnetName'))]",
       "properties": {
         "addressPrefix": "[parameters('relaySubnetAddressPrefix')]",
@@ -203,7 +240,7 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-05-01",
       "name": "[parameters('privateEndpointName')]",
       "tags": "[parameters('tagName')]",
       "location": "[parameters('location')]",
@@ -230,7 +267,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-05-01",
       "name": "[format('{0}/{1}', parameters('existingVNETName'), parameters('storageSubnetName'))]",
       "properties": {
         "addressPrefix": "[parameters('storageSubnetAddressPrefix')]",
@@ -262,7 +299,7 @@
         "ttl": 3600,
         "aRecords": [
           {
-            "ipv4Address": "[first(first(reference(resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName'))).customDnsConfigs).ipAddresses)]"
+            "ipv4Address": "[first(first(reference(resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName')), '2023-05-01').customDnsConfigs).ipAddresses)]"
           }
         ]
       },
@@ -300,6 +337,14 @@
     "storageSubnetId": {
       "type": "string",
       "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('storageSubnetName'))]"
+    },
+    "networkSecurityGroupResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+    },
+    "nsgDefaultRules": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups/defaultSecurityRules', parameters('nsgName'), parameters('nsgName'))]"
     }
   }
 }
