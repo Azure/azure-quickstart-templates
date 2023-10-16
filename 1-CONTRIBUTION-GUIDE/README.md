@@ -62,7 +62,7 @@ Note, that for samples that follow the best practices for artifacts in the repo,
 
 ## Contribution Guide
 
-To make sure your template is added to Azure.com index, please follow these guidelines.  PRs that doe not follow these guidelines will not be merged.
+To make sure your template is added to Azure.com index, please follow these guidelines.  PRs that do not follow these guidelines will not be merged.
 
 ## Files, folders and naming conventions
 

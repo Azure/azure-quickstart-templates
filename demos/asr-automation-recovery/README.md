@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: asr-automation-recovery
 languages:
+- bicep
 - json
 ---
 # ASR Runbooks
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/asr-automation-recovery/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/asr-automation-recovery/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/asr-automation-recovery/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fasr-automation-recovery%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fasr-automation-recovery%2Fazuredeploy.json)
@@ -43,7 +46,7 @@ All the runbooks requires an **Azure RunAs Account** in the automation account. 
 
 ##### ASR-SQL-FailoverAG
 
-This runbook fails over SQL Always On Availability Group inside an Azure virtual machine as part of failover/migration to **Azure**
+This runbook fails over SQL Always On availability group inside an Azure virtual machine as part of failover/migration to **Azure**
 
 **How to use this runbook**
 
