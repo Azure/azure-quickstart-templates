@@ -1,9 +1,18 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.20.4.51522",
+      "templateHash": "6751594373748643624"
+    }
+  },
   "parameters": {
     "adminUsername": {
       "type": "string",
+      "minLength": 1,
+      "maxLength": 20,
       "metadata": {
         "description": "Username for the Virtual Machine."
       }
@@ -16,12 +25,12 @@
     },
     "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "[concat('vm-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('vm-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
-    "windowsOSVersion": {
+    "windowSOSVersion": {
       "type": "string",
       "defaultValue": "2019-Datacenter",
       "allowedValues": [
@@ -47,87 +56,84 @@
         "Datacenter-Core-1903-with-Containers-smalldisk"
       ],
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+        "description": "The Windows version for the VM."
       }
     },
     "departmentName": {
       "type": "string",
       "defaultValue": "MyDepartment",
       "metadata": {
-        "description": "Department Tag"
+        "description": "Department Tag."
       }
     },
     "applicationName": {
       "type": "string",
       "defaultValue": "MyApp",
       "metadata": {
-        "description": "Application Tag"
+        "description": "Application Tag."
       }
     },
     "createdBy": {
       "type": "string",
       "defaultValue": "MyName",
       "metadata": {
-        "description": "Created By Tag"
+        "description": "CreatedBy Tag"
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2_V3",
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
-        "description": "Size for the virtual machine."
+        "description": "Size for the Virtual Machine"
       }
     },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Location for all resources"
       }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'satagsvm')]",
-    "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer",
-    "nicName": "myVMNic",
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id, 'diagsa'))]",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "MyPublicIP",
+    "publicIPAddressType": "Dynamic",
+    "networkSecurityGroupName": "default-NSG",
+    "virtualNetworkName": "MyVNET",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "myPublicIP",
-    "publicIPAddressType": "Dynamic",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
     "vmName": "MyVM",
-    "virtualNetworkName": "MyVNET",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "networkSecurityGroupName": "default-NSG"
+    "nicName": "[format('{0}Nic', variables('vmName'))]",
+    "diskName": "[format('{0}Disk', variables('vmName'))]",
+    "resourceTags": {
+      "Department": "[parameters('departmentName')]",
+      "Application": "[parameters('applicationName')]",
+      "CreatedBy": "[parameters('createdBy')]"
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2020-08-01-preview",
+      "apiVersion": "2022-09-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
-      "kind": "Storage",
+      "kind": "StorageV2",
       "sku": {
         "name": "[variables('storageAccountType')]"
       },
-      "tags": {
-        "Department": "[parameters('departmentName')]",
-        "Application": "[parameters('applicationName')]",
-        "Created By": "[parameters('createdBy')]"
-      }
+      "tags": "[variables('resourceTags')]"
     },
     {
-      "apiVersion": "2019-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-04-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "Department": "[parameters('departmentName')]",
-        "Application": "[parameters('applicationName')]",
-        "Created By": "[parameters('createdBy')]"
-      },
+      "tags": "[variables('resourceTags')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -136,11 +142,11 @@
       }
     },
     {
-      "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2023-04-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
       "properties": {
         "securityRules": [
           {
@@ -160,51 +166,40 @@
       }
     },
     {
-      "apiVersion": "2019-06-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-04-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
-      "tags": {
-        "Department": "[parameters('departmentName')]",
-        "Application": "[parameters('applicationName')]",
-        "Created By": "[parameters('createdBy')]"
-      },
+      "tags": "[variables('resourceTags')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
             "[variables('addressPrefix')]"
           ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-              }
-            }
-          }
-        ]
+        }
       }
     },
     {
-      "apiVersion": "2019-06-01",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
-      "tags": {
-        "Department": "[parameters('departmentName')]",
-        "Application": "[parameters('applicationName')]",
-        "Created By": "[parameters('createdBy')]"
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-04-01",
+      "name": "[format('{0}/{1}', variables('virtualNetworkName'), variables('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('subnetPrefix')]",
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-      ],
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
       "properties": {
         "ipConfigurations": [
           {
@@ -212,30 +207,26 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
         ]
-      }
-    },
-    {
-      "apiVersion": "2019-07-01",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "location": "[parameters('location')]",
-      "tags": {
-        "Department": "[parameters('departmentName')]",
-        "Application": "[parameters('applicationName')]",
-        "Created By": "[parameters('createdBy')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
-      ],
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -249,27 +240,32 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('windowsOSVersion')]",
+            "sku": "[parameters('windowSOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "name": "[variables('diskName')]"
           }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(variables('storageAccountName')).primaryEndpoints['blob']]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-09-01').primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
     }
   ]
 }

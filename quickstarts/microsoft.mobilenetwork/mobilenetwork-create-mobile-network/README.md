@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: mobilenetwork-create-mobile-network
 languages:
-- json
 - bicep
+- json
 ---
 # Create a private mobile network
 
