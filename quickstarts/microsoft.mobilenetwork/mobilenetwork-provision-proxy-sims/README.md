@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: mobilenetwork-provision-proxy-sims
 languages:
-- json
 - bicep
+- json
 ---
 # Provision proxy SIMs
 

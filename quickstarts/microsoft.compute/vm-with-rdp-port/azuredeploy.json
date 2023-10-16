@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.21.1.54444",
+      "templateHash": "17215654851852396133"
+    }
+  },
   "parameters": {
     "dnsLabelPrefix": {
       "type": "string",
@@ -106,12 +113,11 @@
       },
       "securityType": "[parameters('securityType')]"
     },
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sardpvm')]",
-    "virtualNetworkName": "rdpVNET",
+    "storageAccountName": "[format('{0}sardpvm', uniqueString(resourceGroup().id))]",
+    "vNetName": "rdpVNET",
+    "subnetName": "Subnet",
     "vnetAddressRange": "10.0.0.0/16",
     "subnetAddressRange": "10.0.0.0/24",
-    "subnetName": "Subnet",
-    "subnet-id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "imageSku": "[parameters('OSVersion')]",
@@ -119,8 +125,8 @@
   },
   "resources": [
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-05-01",
       "name": "publicIp",
       "location": "[parameters('location')]",
       "properties": {
@@ -131,8 +137,8 @@
       }
     },
     {
-      "apiVersion": "2020-08-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -141,9 +147,8 @@
       "kind": "StorageV2"
     },
     {
-      "comments": "Simple Network Security Group for subnet [Subnet]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2023-05-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -165,13 +170,10 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('vNetName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -180,7 +182,7 @@
         },
         "subnets": [
           {
-            "name": "Subnet",
+            "name": "[variables('subnetName')]",
             "properties": {
               "addressPrefix": "[variables('subnetAddressRange')]",
               "networkSecurityGroup": {
@@ -189,16 +191,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
-      "name": "loadBalancer",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2023-05-01",
+      "name": "loadBalancer",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "Microsoft.Network/publicIPAddresses/publicIp"
-      ],
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -229,17 +231,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIp')]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('vmName'),'-nic')]",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}-nic', parameters('vmName'))]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "Microsoft.Network/loadBalancers/loadBalancer"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -247,7 +248,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnet-id')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
@@ -262,17 +263,17 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', 'loadBalancer')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]"
+      ]
     },
     {
-      "apiVersion": "2021-03-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-07-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('vmName'), '-nic'))]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -297,47 +298,50 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
             }
           ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(variables('storageAccountName'), '2020-08-01-preview').primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
     },
     {
       "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2022-03-01",
-      "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), 'GuestAttestation')]",
       "location": "[parameters('location')]",
       "properties": {
-          "publisher": "[variables('extensionPublisher')]",
-          "type": "[variables('extensionName')]",
-          "typeHandlerVersion": "[variables('extensionVersion')]",
-          "autoUpgradeMinorVersion": true,
-          "enableAutomaticUpgrade": true,
-          "settings": {
-              "AttestationConfig": {
-                  "MaaSettings": {
-                      "maaEndpoint": "[variables('maaEndpoint')]",
-                      "maaTenantName": "[variables('maaTenantName')]"
-                  },
-                  "AscSettings": {
-                      "ascReportingEndpoint": "",
-                      "ascReportingFrequency": ""
-                  }
-              }
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "[variables('maaEndpoint')]",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            }
           }
+        }
       },
       "dependsOn": [
-          "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
     }
-
   ]
 }

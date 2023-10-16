@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: vmss-azure-files-linux
 languages:
+- bicep
 - json
 ---
 # Deploy a VMSS that connects each VM to an Azure Files share
@@ -19,16 +20,21 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-azure-files-linux/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-azure-files-linux/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-azure-files-linux/BicepVersion.svg)
+
 This template demonstrates using Azure File with virtual machine scale sets on Ubuntu. Every VM in this scale set will have a mounted Azure Files file share at the location you specify, and a symbolic link will also be created in the user's home directory.
 
 ## Prerequisites
+
 In order to run this template you need to create a storage account and file share in advance, which you will pass in as parameters. This template expects the following parameters (in addition to scale set name, capacity etc.):
+
 1. Storage Account Name
 2. Storage Account Key
 3. File Share Name
 4. Mount point
 
 ## Step1: To create an Azure Storage Account
+
 * [How to create a Storage Account](https://docs.microsoft.com/azure/storage/storage-create-storage-account#create-a-storage-account)
 * [How to create Azure File Share](https://docs.microsoft.com/azure/storage/storage-dotnet-how-to-use-files#use-the-azure-portal-to-manage-a-file-share)
 
