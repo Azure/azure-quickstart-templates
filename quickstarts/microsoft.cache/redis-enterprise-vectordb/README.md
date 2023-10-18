@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Redis Cache with Azure Search module enabled to store embeddings for vector search.
+description: This template creates an Azure Redis Cache with Azure Search module enabled to store and query embeddings for performing vector search using indexes.
 page_type: sample
 products:
 - azure
