@@ -1,5 +1,5 @@
 @description('Azure Spring Apps resource name.')
-param name string
+param springName string
 
 @description('Docker image deployed to the app')
 param image string = 'azurespringapps/samples/hello-world:0.0.1'
@@ -18,10 +18,10 @@ param imageServerUsername string = ''
 param imageServerPassword string = ''
 
 @description('App name')
-param appName string = 'hello-world'
+param springApp string = 'hello-world'
 
 @description('Deployment name')
-param deploymentName string = 'default'
+param springDeployment string = 'default'
 
 @description('Bind to Service Registry. Used for Enterprise tier only.')
 param bindServiceRegistry bool = true
@@ -30,7 +30,7 @@ param bindServiceRegistry bool = true
 param applicationConfigurationServicePattern array = []
 
 resource spring 'Microsoft.AppPlatform/Spring@2022-12-01' existing = {
-  name: name
+  name: springName
 }
 
 var bindAppWithServiceRegistry = bindServiceRegistry && spring.sku.name == 'E0'
@@ -48,7 +48,7 @@ resource applicationConfigurationService 'Microsoft.AppPlatform/Spring/configura
 }
 
 resource app 'Microsoft.AppPlatform/Spring/apps@2022-12-01' = {
-  name: appName
+  name: springApp
   parent: spring
   properties: {
     addonConfigs: {
@@ -64,7 +64,7 @@ resource app 'Microsoft.AppPlatform/Spring/apps@2022-12-01' = {
 }
 
 resource deployment 'Microsoft.AppPlatform/Spring/apps/deployments@2022-12-01' = {
-  name: deploymentName
+  name: springDeployment
   parent: app
   properties: {
     source: {
