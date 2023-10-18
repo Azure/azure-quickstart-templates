@@ -13,6 +13,7 @@ param redisCacheCapacity int
 @description('Eviction Policy of the Redis Enterprise Cache')
 param evictionPolicy string = 'NoEviction'
 
+@description('Port of the Redis Enterprise Cache')
 param redisPort int = 10000
 
 resource redisEnterprise 'Microsoft.Cache/redisEnterprise@2022-01-01' = {
