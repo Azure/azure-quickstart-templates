@@ -21,7 +21,7 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Froute-server-quagga%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Froute-server-quagga%2Fazuredeploy.json)
 
-The purpose of setup is shown interoperability between Quagga and Azure Route server. This template deployes in the same Azure Virtual Network (VNet) a Route Server in the **RouteServerSubnet** and an Ubuntu Azure VM with Quagga. Once the BGP (Border Gateway Protocol) sessions between the Route Server and Quagga are established, the Route Server advertises to Quagga the address space of the VNet, and Quagga advertises few network prefixes to the Route Servers.
+The purpose of setup is shown interoperability between Quagga and Azure Route server. This template deploys in the same Azure Virtual Network (VNet) a Route Server in the **RouteServerSubnet** and an Ubuntu Azure VM with Quagga. Once the BGP (Border Gateway Protocol) sessions between the Route Server and Quagga are established, the Route Server advertises to Quagga the address space of the VNet, and Quagga advertises few network prefixes to the Route Servers.
 
 ## Network diagram
 
