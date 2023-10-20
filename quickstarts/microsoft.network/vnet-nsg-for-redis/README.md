@@ -36,7 +36,7 @@ This template deploys a Network Security Group. The NSG is preconfigured with se
 The following resources are deployed as part of the solution
 
 #### Network Security Groups
-This template deployes a Network Security Group
+This template deploys a Network Security Group
 
 + **Microsoft.Network/networkSecurityGroups**: the new Network Security Group with preconfigured Azure Redis Cache security rules
 
