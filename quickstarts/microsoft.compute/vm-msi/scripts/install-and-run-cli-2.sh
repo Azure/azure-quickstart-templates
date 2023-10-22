@@ -20,20 +20,20 @@ while getopts ":i:a:c:r:" opt; do
 done
 
 if [ -z $docker_image ]; then
-    docker_image="mcr.microsoft.com/azure-cli"
+  docker_image="mcr.microsoft.com/azure-cli"
 fi
 
 if [ -z $script_file ]; then
-    script_file="writeblob.sh"
+  script_file="writeblob.sh"
 fi
 
 for var in storage_account resource_group
 do
 
-    if [ -z ${!var} ]; then
-        echo "Argument $var is not set" >&2
-        exit 1
-    fi
+  if [ -z ${!var} ]; then
+    echo "Argument $var is not set" >&2
+    exit 1
+  fi
 
 done
 
