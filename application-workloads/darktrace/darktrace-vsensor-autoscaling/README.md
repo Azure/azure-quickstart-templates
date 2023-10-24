@@ -156,6 +156,8 @@ The template should appear as a form that expects values for input parameters (w
 | ------ | ------ |
 | Subscription | Choose the Subscription to use for this deployment. |
 | Resource Group | Choose a pre-existing RG or create a new RG; resources created as part of this deployment will be stored in this RG (excluding VNet/Subnets). |
+| shortID | A short (upto 20 character alphanumeric) string to prefix resource names by (where available). Defaults to resource group name. |
+| zones | List of availability zone numbers for vSensors to be deployed into. Leave default for all Zones. |
 | existingVirtualNetworkName | Name of the existing Virtual Network to be monitored, should be in the same **location** as this deployment/resource group. |
 | existingVirtualNetworkResourceGroup | The Resource Group the VNet is deployed in. |
 | natGatewayEnable | Deploy a NAT Gateway in the Virtual Network. If using an existing VNet and are using other firewall configurations, False may be required. |
