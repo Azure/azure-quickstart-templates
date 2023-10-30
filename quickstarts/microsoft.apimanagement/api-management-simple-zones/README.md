@@ -4,11 +4,10 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-api-management
 urlFragment: api-management-simple-zones
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy API Management into Availability Zones
 
