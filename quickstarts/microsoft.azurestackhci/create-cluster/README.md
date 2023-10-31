@@ -32,3 +32,5 @@ In order to deploy this template, you must have Arc enabled the server(s) and in
 > The secrets must be entered into the template being encoded using base64. Prior encoding the format must be "username:password" for credentials,for the SPN it must be "AppID:secret". The storage account key is directly encoded to base64. Here is a sample using PowerShell to encode to base64: 
 $secret="username:password"
 [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($secret))
+
+`Tags: Microsoft.AzureStackHCI/clusters, hci`
