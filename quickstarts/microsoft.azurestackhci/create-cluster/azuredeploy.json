@@ -1,0 +1,633 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deploymentMode":{
+      "defaultValue": "Validate",
+      "type": "string",
+      "allowedValues": [
+          "Validate",
+          "Deploy"
+        ],
+      "metadata": {
+          "description" : "First must pass Validate prior running Deploy"
+      }
+  },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The KeyVault name used to store the secrets."
+    }
+    },
+    "softDeleteRetentionDays": {
+      "type": "int",
+      "defaultValue": 30
+    },
+    "diagnosticStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the storage account used for KV audit logs"
+      }
+    },
+    "logsRetentionInDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "minValue": 0,
+      "maxValue": 365,
+      "metadata": {
+        "description": "Specifies the number of days that logs are gonna be kept. If you do not want to apply any retention policy and retain data forever, set value to 0."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+    "secretsLocation":{
+        "defaultValue": "",
+        "type": "string",
+        "metadata": {
+            "description": "The fqdn of your KeyVault"
+        }
+    },
+    "ClusterWitnessStorageAccountName": {
+        "defaultValue": "",
+        "type": "string",
+        "metadata": {
+            "description": "The existing storage account name used for the cluster witness"
+        }
+    },
+    "clusterName": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 24
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]"
+      },
+    "tenantId": {
+      "type": "string",
+      "defaultValue": "[subscription().tenantId]"
+    },
+    "localAdminSecretName": {
+      "type": "string",
+      "defaultValue": "LocalAdminCredential",
+      "allowedValues": [
+        "LocalAdminCredential"
+      ],
+      "metadata": {
+        "description": "The name can not be changed"
+    }
+    },
+    "localAdminSecretValue": {
+      "type": "securestring"
+    },
+    "domainAdminSecretName": {
+      "type": "string",
+      "defaultValue": "AzureStackLCMUserCredential",
+      "allowedValues": [
+        "AzureStackLCMUserCredential"
+      ],
+      "metadata": {
+        "description": "The name can not be changed"
+    }
+    },
+    "domainAdminSecretValue": {
+      "type": "securestring"
+    },
+    "arbDeploymentSpnName": {
+      "type": "string",
+      "defaultValue": "DefaultARBApplication",
+      "allowedValues": [
+        "DefaultARBApplication"
+      ],
+      "metadata": {
+        "description": "The name can not be changed"
+    }
+    },
+    "arbDeploymentSpnValue": {
+      "type": "securestring"
+    },
+    "storageWitnessName": {
+      "type": "string",
+      "defaultValue": "WitnessStorageKey",
+      "allowedValues": [
+        "WitnessStorageKey"
+      ],
+      "metadata": {
+        "description": "The name can not be changed"
+    }
+    },
+    "storageWitnessValue": {
+      "type": "securestring"
+    },
+    "apiVersion": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The api version for deploying a hci cluster"
+            }
+        },
+        "arcNodeResourceIds": {
+            "defaultValue": [
+            ],
+            "type": "array",
+            "metadata": {
+                "description": "The arc for server node Ids of the hci cluster"
+            }
+        },
+        "domainFqdn": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The domain name of the Active Directory Domain Services"
+            }
+        },
+        "namingPrefix": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The ADFS name prefix"
+            }
+        },
+        "adouPath": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The ADDS OU path"
+            }
+        },
+        "securityLevel": {
+            "defaultValue": "Recommended",
+            "type": "string",
+            "allowedValues": [
+                "Recommended",
+                "Customized"
+              ],
+            "metadata": {
+                "description": "The security level data for deploying a hci cluster"
+            }
+        },
+        "driftControlEnforced": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The security setting driftControlEnforced data for deploying a hci cluster"
+            }
+        },
+        "credentialGuardEnforced": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The security setting credentialGuardEnforced data for deploying a hci cluster"
+            }
+        },
+        "smbSigningEnforced": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The security setting smbSigningEnforced data for deploying a hci cluster"
+            }
+        },
+        "smbClusterEncryption": {
+            "defaultValue": false,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The security setting smbClusterEncryption data for deploying a hci cluster"
+            }
+        },
+        "bitlockerBootVolume": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The security setting bitlockerBootVolume data for deploying a hci cluster"
+            }
+        },
+        "bitlockerDataVolumes": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The security setting bitlockerDataVolumes data for deploying a hci cluster"
+            }
+        },
+        "wdacEnforced": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The security setting wdacEnforced data for deploying a hci cluster"
+            }
+        },
+        "streamingDataClient": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The metrics data for deploying a hci cluster"
+            }
+        },
+        "euLocation": {
+            "defaultValue": false,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The location data for deploying a hci cluster"
+            }
+        },
+        "episodicDataUpload": {
+            "defaultValue": true,
+            "type": "bool",
+            "allowedValues": [
+                true,
+                false
+              ],
+            "metadata": {
+                "description": "The diagnostic data for deploying a hci cluster"
+            }
+        },
+        "configurationMode": {
+            "defaultValue": "Express",
+            "type": "string",
+            "allowedValues": [
+                "Express",
+                "InfraOnly",
+                "KeepStorage"
+              ],
+            "metadata": {
+                "description": "The storage volume configuration mode"
+            }
+        },
+        "subnetMask": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The subnet mask for deploying a hci cluster"
+            }
+        },
+        "defaultGateway": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The default gateway for deploying a hci cluster"
+            }
+        },
+        "startingIPAddress": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The starting ip address for deploying a hci cluster"
+            }
+        },
+        "endingIPAddress": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The ending ip address for deploying a hci cluster"
+            }
+        },
+        "dnsServers": {
+            "defaultValue": [
+                ""
+            ],
+            "type": "array",
+            "metadata": {
+                "description": "The dns servers for deploying a hci cluster"
+            }
+        },
+        "physicalNodesSettings": {
+            "defaultValue": [
+                {
+                    "name": "node1",
+                    "ipv4Address": "100.69.32.64"
+                },
+                {
+                    "name": "node2",
+                    "ipv4Address": "100.69.32.65"
+                }
+            ],
+            "type": "array",
+            "metadata": {
+                "description": "The physical nodes settings for deploying a hci cluster"
+            }
+        },
+        "networkingType": {
+            "defaultValue": "",
+            "type": "string",
+            "allowedValues": [
+                "switchedMultiServerDeployment",
+                "switchlessMultiServerDeployment",
+                "singleServerDeployment"
+              ],
+            "metadata": {
+                "description": "The networking type for deploying a hci cluster"
+            }
+        },
+        "networkingPattern": {
+            "defaultValue": "",
+            "type": "string",
+            "allowedValues": [
+              "hyperConverged",
+              "convergedManagementCompute"
+            ],
+            "metadata": {
+                "description": "The networking pattern for deploying a hci cluster"
+            }
+        },
+        "intentList": {
+            "defaultValue": [
+            ],
+            "type": "array",
+            "metadata": {
+                "description": "The intent list for deploying a hci cluster"
+            }
+        },
+        "storageNetworkList": {
+            "defaultValue": [
+            ],
+            "type": "array",
+            "metadata": {
+                "description": "The storage network list for deploying a hci cluster"
+            }
+        },
+        "storageConnectivitySwitchless": {
+            "defaultValue": false,
+            "type": "bool",
+            "metadata": {
+                "description": "The storage connectivity switchless value for deploying a hci cluster"
+            }
+        },
+        "customLocation": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The custom location for deploying a hci cluster"
+            }
+        }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-01-01",
+      "name": "[parameters('diagnosticStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [ 
+              "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]"
+              ],
+      "properties": {
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true,
+        "enabledForDiskEncryption": true,
+        "enableSoftDelete": false,
+        "softDeleteRetentionInDays": "[parameters('softDeleteRetentionDays')]",
+        "enableRbacAuthorization": true,
+        "publicNetworkAccess": "Enabled",
+        "accessPolicies": [],
+        "tenantId": "[parameters('tenantId')]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
+      "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
+      "apiVersion": "2016-09-01",
+      "Location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticStorageAccountName'))]"
+      ],
+      "properties": {
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]",
+        "logs": [
+          {
+            "category": "AuditEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": "[parameters('LogsRetentionInDays')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+        "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
+        "type": "Microsoft.AzureStackHCI/clusters",
+      "apiVersion": "2023-08-01-preview",
+      "name": "[parameters('clusterName')]",
+      "dependsOn": [ 
+              "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ],
+      "identity":  {
+        "type":  "SystemAssigned"
+    },
+      "location": "[parameters('location')]",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('domainAdminSecretName'))]",
+      "dependsOn": [ 
+              "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ],
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "contentType": "Secret",
+        "value": "[parameters('domainAdminSecretValue')]",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('localAdminSecretName'))]",
+      "dependsOn": [ 
+              "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ],
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "contentType": "Secret",
+        "value": "[parameters('localAdminSecretValue')]",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('arbDeploymentSpnName'))]",
+      "dependsOn": [ 
+              "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ],
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "contentType": "Secret",
+        "value": "[parameters('arbDeploymentSpnValue')]",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('storageWitnessName'))]",
+      "dependsOn": [ 
+              "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ],
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "contentType": "Secret",
+        "value": "[parameters('storageWitnessValue')]",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
+            "type": "microsoft.azurestackhci/clusters/deploymentSettings",
+            "apiVersion": "[parameters('apiVersion')]",
+            "name": "[format('{0}/default', parameters('clusterName'))]",
+            "dependsOn": [ 
+              "[resourceId('Microsoft.AzureStackHCI/clusters', parameters('clusterName'))]"
+              ],
+            "properties": {
+                "arcNodeResourceIds": "[parameters('arcNodeResourceIds')]",
+                "deploymentMode": "[parameters('deploymentMode')]",
+                "deploymentConfiguration": {
+                    "version": "10.0.0.0",
+                    "scaleUnits": [
+                        {
+                            "deploymentData": {
+                                "securitySettings": {
+                                    "hvciProtection": true,
+                                    "drtmProtection": true,
+                                    "driftControlEnforced": "[parameters('driftControlEnforced')]",
+                                    "credentialGuardEnforced": "[parameters('credentialGuardEnforced')]",
+                                    "smbSigningEnforced": "[parameters('smbSigningEnforced')]",
+                                    "smbClusterEncryption": "[parameters('smbClusterEncryption')]",
+                                    "sideChannelMitigationEnforced": true,
+                                    "bitlockerBootVolume": "[parameters('bitlockerBootVolume')]",
+                                    "bitlockerDataVolumes": "[parameters('bitlockerDataVolumes')]",
+                                    "wdacEnforced": "[parameters('wdacEnforced')]"
+                                },
+                                "observability": {
+                                    "streamingDataClient": "[parameters('streamingDataClient')]",
+                                    "euLocation": "[parameters('euLocation')]",
+                                    "episodicDataUpload": "[parameters('episodicDataUpload')]"
+                                },
+                                "cluster": {
+                                    "name": "[parameters('clusterName')]",
+                                    "witnessType": "Cloud",
+                                    "witnessPath": "",
+                                    "cloudAccountName": "[parameters('ClusterWitnessStorageAccountName')]",
+                                    "azureServiceEndpoint": "core.windows.net"
+                                },
+                                "storage": {
+                                    "configurationMode": "[parameters('configurationMode')]"
+                                },
+                                "namingPrefix": "[parameters('namingPrefix')]",
+                                "domainFqdn": "[parameters('domainFqdn')]",
+                                "infrastructureNetwork": [
+                                    {
+                                        "subnetMask": "[parameters('subnetMask')]",
+                                        "gateway": "[parameters('defaultGateway')]",
+                                        "ipPools": [
+                                            {
+                                                "startingAddress": "[parameters('startingIPAddress')]",
+                                                "endingAddress": "[parameters('endingIPAddress')]"
+                                            }
+                                        ],
+                                        "dnsServers": "[parameters('dnsServers')]"
+                                    }
+                                ],
+                                "physicalNodes": "[parameters('physicalNodesSettings')]",
+                                "hostNetwork": {
+                                    "intents": "[parameters('intentList')]",
+                                    "storageNetworks": "[parameters('storageNetworkList')]",
+                                    "storageConnectivitySwitchless": "[parameters('storageConnectivitySwitchless')]"
+                                },
+                                "adouPath": "[parameters('adouPath')]",
+                                "secretsLocation": "[parameters('secretsLocation')]",
+                                "optionalServices": {
+                                    "customLocation": "[parameters('customLocation')]"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+  ]
+}

@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: cloud-shell-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Cloud Shell - VNet
 

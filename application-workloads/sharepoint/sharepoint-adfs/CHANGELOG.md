@@ -1,5 +1,16 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in October 12, 2023
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the October 2023 CU for SharePoint Subscription
+
+### Fixed
+- All SharePoint configurations
+  - Fixed regression with installation of Chocolatey
+
 ## Enhancements & bug-fixes - Published in September 13, 2023
 
 ### Changed
