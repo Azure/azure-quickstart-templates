@@ -9,6 +9,22 @@
                 "description": "Location for all resources. The default is the Resource Group location."
             }
         },
+        "shortID": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "A short (upto 20 character alphanumeric) string to prefix resource names by (where available). Leave blank to use resource group name."
+            },
+            "minLength": 0,
+            "maxLength": 20
+        },
+        "zones": {
+            "defaultValue": [],
+            "type": "array",
+            "metadata": {
+                "description:": "List of availability zone numbers for vSensors to be deployed into. Leave default for all Zones."
+            }
+        },
         "existingVirtualNetworkName": {
             "type": "string",
             "minLength": 2,
@@ -159,10 +175,10 @@
         "PCAPLifetimeDays": {
             "type": "int",
             "defaultValue": 7,
-            "minValue": 1,
+            "minValue": 0,
             "maxValue": 365,
             "metadata": {
-                "description": "Captured packets storage retention (days), longer retention will increase storage costs."
+                "description": "Captured packets storage retention (days), longer retention will increase storage costs. Set to 0 to disable PCAP storage and storage account."
             }
         },
         "privateLinkEnable": {
@@ -185,9 +201,8 @@
     },
     "variables": {
         "location": "[parameters('location')]",
-        "prefix": "[resourceGroup().name]",
+        "prefix": "[if(empty(parameters('shortID')), substring(resourceGroup().name,0, min(20, length(resourceGroup().name))), parameters('shortID'))]",
         "resourceGroup": "[resourceGroup().name]",
-
         "bastionName": "[concat(variables('prefix'),'-bastion')]",
         "bastionPublicIPAddressName": "[concat(variables('prefix'),'-bastion-publicip')]",
         "bastionSubnetName": "AzureBastionSubnet",
@@ -231,6 +246,7 @@
             "version": "latest"
         },
         "resgpguid": "[toLower(replace(concat(substring(variables('prefix'),0, min(16, length(variables('prefix')))), substring(guid(resourceGroup().id), 0, 8)), '-', ''))]",
+        "blobStorageEnable": "[not(equals(parameters('PCAPLifetimeDays'),0))]",
         "blobStorageAccountName": "[variables('resgpguid')]",
         "blobStorageContainerName": "darktrace-vsensor-quickstart-pcaps",
         "blobStorageAccountRef": "[resourceId('Microsoft.Storage/storageAccounts/', variables('blobStorageAccountName'))]",
@@ -617,17 +633,8 @@
                                 "networkSecurityGroup": {
                                     "id": "[resourceId(variables('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
                                 },
-                                "serviceEndpoints": [
-                                    {
-                                        "service": "Microsoft.Storage",
-                                        "locations": "[variables('location')]"
-                                    }
-                                ],
-                                "serviceEndpointPolicies": [
-                                    {
-                                        "id": "[resourceId(variables('resourceGroup'), 'Microsoft.Network/serviceEndpointPolicies', variables('serviceEndpointPolicyName'))]"
-                                    }
-                                ],
+                                "serviceEndpoints": "[if(variables('blobStorageEnable'), json(concat('[{\"service\": \"Microsoft.Storage\", \"locations\": \"', variables('location'),'\"}]')),  json('null') )]",
+                                "serviceEndpointPolicies": "[if(variables('blobStorageEnable'), json(concat('[{\"id\": \"', resourceId(variables('resourceGroup'), 'Microsoft.Network/serviceEndpointPolicies', variables('serviceEndpointPolicyName')),'\"}]')),  json('null') )]",
                                 "privateLinkServiceNetworkPolicies": "Disabled"
                             }
                         },
@@ -731,6 +738,7 @@
                 "type": "SystemAssigned"
             },
             "tags": "[parameters('resourceTags')]",
+            "zones": "[parameters('zones')]",
             "properties": {
                 "additionalCapabilities": {
                     "hibernationEnabled": false,
@@ -782,6 +790,7 @@
                                 "properties": {
                                     "primary": true,
                                     "enableAcceleratedNetworking": true,
+                                    "enableIPForwarding": true,
                                     "ipConfigurations": [
                                         {
                                             "name": "[variables('ipConfigName')]",
@@ -844,12 +853,10 @@
                     },
                     "diagnosticsProfile": {
                         "bootDiagnostics": {
-                            "enabled": true,
-                            "storageUri": "[reference(variables('blobStorageAccountRef')).primaryEndpoints.blob]"
+                            "enabled": false
                         }
                     }
                 }
-                
             }
         },
         {
@@ -873,7 +880,7 @@
                   "timestamp":123456789          
                 },
                 "protectedSettings": {
-                   "script": "[base64(concat('#! /bin/bash -e\n\nwait_for_apt() {\n    echo \"Waiting for apt/dpkg lock.\"\n    tries=0\n    maxtries=10\n    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1 && [ $tries -le $maxtries ]; do\n       sleep 20\n       ((tries=tries+1))\n    done\n    if [ $tries -ge $maxtries ]; then\n        echo \"ERROR: Failed to get apt / dpkg lock before timeout. Please wait and try again, or fix dpkg lock manually.\"\n        exit 1\n    fi\n}\nif [ -f \"/etc/darktrace/.user-data-success\" ]; then\n    echo \"Not re-running user-data, already succeeded\"\n    exit 0\nfi\nexec > >(tee -a /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\nif [[ \"', parameters('VSensorUpdateKey'), '\" == \"updateKey-example\" ]]; then\n    echo \"Skipping install in azure CI due to dummy key.\"\n    exit 0\nfi\nwait_for_apt\nsleep 10\nwait_for_apt\nbash <(wget https://packages-cdn.darktrace.com/install -O -) --updateKey \"', parameters('VSensorUpdateKey'), '\"\n/usr/sbin/set_pushtoken.sh \"', parameters('appliancePushtoken'), '\" \"', parameters('applianceHostName'), ':', parameters('appliancePort'), '\"\nset_ossensor_hmac.sh \"', parameters('OSSensorHMACToken'), '\"\nset_pcap_azure_container.sh \"', variables('blobStorageAccountName'), '\" \"', variables('blobStorageContainerName'), '\"\nset_ossensor_loadbalancer_direct.sh \"', variables('loadBalancerDirectEnable'), '\"\nif [ \"', variables('loadBalancerDirectEnable'), '\" -eq \"0\" ]; then\n    set_tcp_proxy_access.sh \"', variables('privateLinkIP'), '/32\"\n    set_tcp_proxy_access.sh \"168.63.129.16/32\" # Allow Load Balancer Health Probes\nfi\nset_ephemeral.sh 1\necho \"Configuration complete, vSensor is ready for use.\"\ntouch /etc/darktrace/.user-data-success\n'))]"
+                   "script": "[base64(concat('#! /bin/bash -xe\n\nwait_for_apt() {\n    echo \"Waiting for apt/dpkg lock.\"\n    tries=0\n    maxtries=10\n    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1 && [ $tries -le $maxtries ]; do\n       sleep 20\n       ((tries=tries+1))\n    done\n    if [ $tries -ge $maxtries ]; then\n        echo \"ERROR: Failed to get apt / dpkg lock before timeout. Please wait and try again, or fix dpkg lock manually.\"\n        exit 1\n    fi\n}\nif [ -f \"/etc/darktrace/.user-data-success\" ]; then\n    echo \"Not re-running user-data, already succeeded\"\n    exit 0\nfi\nexec > >(tee -a /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\nif [[ \"', parameters('VSensorUpdateKey'), '\" == \"updateKey-example\" ]]; then\n    echo \"Skipping install in azure CI due to dummy key.\"\n    exit 0\nfi\nwait_for_apt\nsleep 10\nwait_for_apt\nbash <(wget https://packages-cdn.darktrace.com/install -O -) --updateKey \"', parameters('VSensorUpdateKey'), '\"\n/usr/sbin/set_pushtoken.sh \"', parameters('appliancePushtoken'), '\" \"', parameters('applianceHostName'), ':', parameters('appliancePort'), '\"\nset_ossensor_hmac.sh \"', parameters('OSSensorHMACToken'), '\"\nif [[ \"', variables('blobStorageEnable'), '\" == \"True\" ]]; then\n    set_pcap_azure_container.sh \"', variables('blobStorageAccountName'), '\" \"', variables('blobStorageContainerName'), '\"\nelse\n    set_pcap_size.sh 0\nfi\nset_ossensor_loadbalancer_direct.sh \"', variables('loadBalancerDirectEnable'), '\"\nif [ \"', variables('loadBalancerDirectEnable'), '\" -eq \"0\" ]; then\n    set_tcp_proxy_access.sh \"', variables('privateLinkIP'), '/32\"\n    set_tcp_proxy_access.sh \"168.63.129.16/32\" # Allow Load Balancer Health Probes\nfi\nset_ephemeral.sh 1\necho \"Configuration complete, vSensor is ready for use.\"\ntouch /etc/darktrace/.user-data-success\n'))]"
                 }
             }
         },
@@ -1119,14 +1126,13 @@
                 "dataCollectionRuleId": "[resourceId('Microsoft.Insights/dataCollectionRules', variables('dataCollectionName'))]"
             }
         },
-
-
         {
             "name": "[variables('blobStorageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "dependsOn": [
                 "[variables('subnetsTemplateRef')]"
             ],
+            "condition": "[variables('blobStorageEnable')]",
             "apiVersion": "2022-05-01",
             "location": "[variables('location')]",
             "kind": "StorageV2",
@@ -1169,6 +1175,7 @@
                     "type": "blobServices/containers",
                     "apiVersion": "2022-05-01",
                     "name": "[concat('default/', variables('blobStorageContainerName'))]",
+                    "condition": "[variables('blobStorageEnable')]",
                     "dependsOn": [
                         "[variables('blobStorageAccountName')]"
                     ],
@@ -1181,6 +1188,7 @@
                     "type": "managementPolicies",
                     "apiVersion": "2022-05-01",
                     "name": "default",
+                    "condition": "[variables('blobStorageEnable')]",
                     "dependsOn": [
                         "[variables('blobStorageAccountName')]"
                     ],
@@ -1219,6 +1227,7 @@
         {
             "type": "Microsoft.Network/serviceEndpointPolicies",
             "apiVersion": "2022-05-01",
+            "condition": "[variables('blobStorageEnable')]",
             "name": "[variables('serviceEndPointPolicyName')]",
             "location": "[variables('location')]",
             "tags": "[parameters('resourceTags')]"
@@ -1227,6 +1236,7 @@
             "type": "Microsoft.Network/serviceEndpointPolicies/serviceEndpointPolicyDefinitions",
             "apiVersion": "2022-05-01",
             "name": "[concat(variables('serviceEndPointPolicyName'), '/', variables('serviceEndPointPolicyDefinitionName'))]",
+            "condition": "[variables('blobStorageEnable')]",
             "dependsOn": [
                 "[variables('blobStorageAccountRef')]"
             ],
@@ -1240,6 +1250,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
+            "condition": "[variables('blobStorageEnable')]",
             "name": "[variables('blobStorageContribRoleName')]",
             "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('blobStorageAccountName'))]",
             "dependsOn": [
@@ -1254,6 +1265,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
+            "condition": "[variables('blobStorageEnable')]",
             "name": "[variables('blobStorageAccountContribRoleName')]",
             "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('blobStorageAccountName'))]",
             "dependsOn": [
