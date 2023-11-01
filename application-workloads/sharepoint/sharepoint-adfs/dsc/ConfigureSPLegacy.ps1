@@ -32,7 +32,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.3.1
-    Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
     # Init
