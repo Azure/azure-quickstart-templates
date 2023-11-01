@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Stack HCI 23H2 cluster.
+description: This template creates an Azure Stack HCI 23H2 cluster using an ARM template.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: create-cluster
 languages:
 - json
 ---
-# Create an Azure Stack HCI 23H2 cluster
+# creates an Azure Stack HCI 23H2 cluster
 
 This template allows you to create an Azure Stack HCI cluster using version 23H2. First you deploy the template in validate mode which does confirm the parameters at the device. Once passed you re-deploy the template with mode set to deploy.
 
