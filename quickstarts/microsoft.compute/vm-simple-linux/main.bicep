@@ -1,4 +1,4 @@
-@description('The name of you Virtual Machine.')
+@description('The name of your Virtual Machine.')
 param vmName string = 'simpleLinuxVM'
 
 @description('Username for the Virtual Machine.')
