@@ -31,7 +31,7 @@ languages:
 > [!NOTE]
 > [Fast Healthcare Interoperability Resources (FHIR®)](https://www.hl7.org/fhir/) is an open healthcare specification.
 
-This template deploys the MedTech service with the required resources and access permissions and includes an Azure IoT Hub for device creation/management and device message sending/routing. Conforming and valid device and FHIR destination mappings are also included.
+This template deploys the MedTech service with the required resources and access permissions and includes an Azure IoT Hub for device creation/management and device message routing. Conforming and valid device and FHIR destination mappings are also included.
 
 * To learn about this Azure Resource Manager (ARM) template, the resources deployed, and the configured access permissions, see [Receive device messages through Azure IoT Hub](https://learn.microsoft.com/azure/healthcare-apis/iot/device-messages-through-iot-hub).
 
@@ -48,6 +48,8 @@ This template deploys the MedTech service with the required resources and access
 * For an overview of the MedTech service FHIR destination mapping, see [Overview of the MedTech service FHIR destination mapping](https://learn.microsoft.com/azure/healthcare-apis/iot/overview-of-fhir-destination-mapping).
 
 * To learn about the Azure IoT Hub, see [IoT concepts and Azure IoT Hub](https://learn.microsoft.com/azure/iot-hub/iot-concepts-and-iot-hub).
+
+* To learn about Azure IoT Hub message routing, see [Use IoT Hub message routing to send device-to-cloud messages to different endpoints](https://learn.microsoft.com/azure/iot-hub/iot-hub-devguide-messages-d2c).
 
 FHIR® is a registered trademark of Health Level Seven International, registered in the U.S. Trademark Office and is used with their permission.
 

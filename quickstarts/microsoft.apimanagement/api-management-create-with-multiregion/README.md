@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: api-management-create-with-multiregion
 languages:
-- json
 - bicep
+- json
 ---
 # Create a multiregion Premium tier API Management instance
 
