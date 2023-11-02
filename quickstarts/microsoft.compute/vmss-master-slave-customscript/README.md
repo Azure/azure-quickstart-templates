@@ -1,5 +1,5 @@
 ---
-description: This template allows you to deploy a Linux VMSS with a Custom Script Extension in master slave architecture
+description: This template allows you to deploy a Linux VMSS with a Custom Script Extension in primary secondary architecture
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: vmss-master-slave-customscript
 languages:
 - json
 ---
-# Deploy a Linux VMSS wth master/slave architecture
+# Deploy a Linux VMSS wth primary/secondary architecture
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-master-slave-customscript/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-master-slave-customscript/PublicDeployment.svg)
@@ -25,7 +25,7 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvmss-master-slave-customscript%2Fazuredeploy.json)
 
 ## Description
-This template allows you to deploy a VM Scale Set of Linux VMs and create a new virtual network at the same time. These VMs have a custom script extension for customization and are behind a load balancer with NAT rules for SSH connections. This allows to specify the master node number and data node number, adapt to any master / slave architecture
+This template allows you to deploy a VM Scale Set of Linux VMs and create a new virtual network at the same time. These VMs have a custom script extension for customization and are behind a load balancer with NAT rules for SSH connections. This allows to specify the master node number and data node number, adapt to any primary / secondary architecture
 
 ## Using new features
 
