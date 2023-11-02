@@ -1,5 +1,5 @@
 ---
-description: This template creates an application gateway with an IPv6 frontend in a dual-stack virtual network with two load-balanced VMs.
+description: This template creates an application gateway with an IPv6 frontend in a dual-stack virtual network.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: application-gateway-ipv6-create
 languages:
 - json
 ---
-# Create an Azure Application Gateway
+# Create an IPv6 Application Gateway
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-ipv6-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-ipv6-create/PublicDeployment.svg)
