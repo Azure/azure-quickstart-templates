@@ -32,7 +32,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.3.1
-    Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
     # Init
@@ -69,8 +69,12 @@ configuration ConfigureSPVM
     [String] $AddinsSiteName = "Provider-hosted addins"
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
+    [String] $ClaimsProviderReleaseId = "latest"
     if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
         $SPTeamSiteTemplate = "STS#0"
+        if ([String]::Equals($SharePointVersion, "2013")) {
+            $ClaimsProviderReleaseId = "118551802"
+        }
     }
 
     Node localhost
@@ -216,7 +220,7 @@ configuration ConfigureSPVM
         xRemoteFile DownloadLDAPCP
         {
             DestinationPath = $LDAPCPFileFullPath
-            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp"
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "*.wsp" -ReleaseId $ClaimsProviderReleaseId
             MatchSource     = $false
         }
 
@@ -1558,16 +1562,17 @@ function Get-LatestGitHubRelease
     [OutputType([string])]
     param(
         [string] $Repo,
-        [string] $Artifact
+        [string] $Artifact,
+        [string] $ReleaseId
     )
     # Force protocol TLS 1.2 in Invoke-WebRequest to fix TLS/SSL connection error with GitHub in Windows Server 2012 R2, as documented in https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-update-1802
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
-    $latestRelease = Invoke-WebRequest https://github.com/$Repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
+
+    $latestRelease = Invoke-WebRequest "https://api.github.com/repos/$Repo/releases/$ReleaseId" -Headers @{"Accept"="application/json"} -UseBasicParsing
     $json = $latestRelease.Content | ConvertFrom-Json
-    $latestVersion = $json.tag_name
-    $url = "https://github.com/$Repo/releases/download/$latestVersion/$Artifact"
-    return $url
+    $asset = $json.assets | Where-Object{$_.name -like $Artifact}
+    $assetUrl = $asset.browser_download_url
+    return $assetUrl
 }
 
 function Get-NetBIOSName

@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: api-management-simple-zones
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy API Management into Availability Zones
 

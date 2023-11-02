@@ -32,7 +32,7 @@ This template will log API traffic from Azure API Management using [Moesif API A
 
 ## How it works
 
-This solution is deployed using an [Azure Resource Manager Template](https://azure.microsoft.com/resources/templates/201-api-management-logs-to-moesif-using-eventhub-webapp/). An XML Policy configures an APIM logger to send API logs to an Azure EventHub. An Azure WebJob reads from the EventHub and sends to Moesif for data processing.
+This solution is deployed using an [Azure Resource Manager Template](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/api-management-logs-to-moesif-using-eventhub-webapp/). An XML Policy configures an APIM logger to send API logs to an Azure EventHub. An Azure WebJob reads from the EventHub and sends to Moesif for data processing.
 [More info on this integration](https://www.moesif.com/implementation/log-http-calls-from-azure-api-management?platform=azure-management).
 
 ![Architecture Diagram Logging API Calls from Azure API Management](images/azure-api-management-logging-architecture-diagram.png)
@@ -204,7 +204,7 @@ Once created, the script will clone the [ApimEventProcessor repo 'v1' branch](ht
 
 ### APIM Logger
 
-If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json) or view [Microsoft docs](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs)
+If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.bicep` ARM template](nested/microsoft.apimanagement/service/loggers.bicep) or view [Microsoft docs](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs)
 
 More info on configuring Moesif is available on [Microsoft's documentation](https://docs.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample).
 
