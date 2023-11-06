@@ -12,7 +12,8 @@ param userPrincipalType string = 'User'
 @description('Primary location for all resources e.g. eastus')
 param location string = resourceGroup().location
 
-var suffix = 'default'
+@description('The suffix of the resource name. It will be used to generate the resource name. e.g. devcenter-default')
+param suffix string = 'default'
 
 @description('The name of Dev Center e.g. dc-devbox-test')
 var devcenterName = 'devcenter-${suffix}'
