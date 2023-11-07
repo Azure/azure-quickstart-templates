@@ -97,6 +97,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       ipv4Address: controlPlaneAccessIpAddress
       name: controlPlaneAccessInterfaceName
     }
+    installation: {
+      desiredState: 'Uninstalled'
+    }
   }
 
   #disable-next-line BCP081
