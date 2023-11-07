@@ -250,6 +250,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
         id: azureStackEdgeDevice
       }
     }
+    installation:{
+      desiredState: 'Uninstalled'
+    }
     localDiagnosticsAccess: {
       authenticationType: 'Password'
     }
