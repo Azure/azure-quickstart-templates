@@ -564,6 +564,51 @@ class DownloadSCCM
 }
 
 [DscResource()]
+class DownloadAndInstallODBC
+{
+    [DscProperty(key)]
+    [Ensure] $Ensure
+
+    [void] Set()
+    {
+        $odbcPath = "C:\msodbcsql.msi"
+        
+        Write-Verbose "Downloading ODBC installation source..."
+        $OdbcUrl = "http://go.microsoft.com/fwlink/?linkid=2220989"
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($OdbcUrl,$odbcPath)
+
+        Write-Verbose "installing ODBC..."
+        Start-Process -FilePath $odbcPath  -ArgumentList ('/qn', 'IACCEPTMSODBCSQLLICENSETERMS=YES') -Wait
+        Write-Verbose "ODBC installed Successfully!"
+    
+    }
+
+    [bool] Test()
+    {
+        #This minorVersion is the installed msodbc version.
+        $minorVersion = [version]'18.1.2.1'
+
+        $key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Default)
+        $subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\MSODBCSQL18")
+        if($subKey)
+        {
+            if(($msobcVersion = $subKey.GetValue('InstalledVersion')) -ne $null)
+            {
+                return ([version]$msobcVersion -ge $minorVersion)
+            }
+        }
+        return $false
+    
+    }
+
+    [DownloadAndInstallODBC] Get()
+    {
+        return $this
+    }
+}
+
+[DscResource()]
 class InstallDP
 {
     [DscProperty(key)]
