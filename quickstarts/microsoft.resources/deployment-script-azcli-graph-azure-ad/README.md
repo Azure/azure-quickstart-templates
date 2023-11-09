@@ -1,5 +1,5 @@
 ---
-description: This sample uses a deployment script to create objects in Azure Active Directory.
+description: This sample uses a deployment script to create objects in Microsoft Entra ID.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Use a deployment script to create Azure AD objects
+# Use a deployment script to create Microsoft Entra objects
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-graph-azure-ad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/deployment-script-azcli-graph-azure-ad/PublicDeployment.svg)
@@ -24,9 +24,9 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.resources%2Fdeployment-script-azcli-graph-azure-ad%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.resources%2Fdeployment-script-azcli-graph-azure-ad%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.resources%2Fdeployment-script-azcli-graph-azure-ad%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.resources%2Fdeployment-script-azcli-graph-azure-ad%2Fazuredeploy.json)
 
-This example shows how to use a deployment script to interact with Microsoft Graph. The deployment script creates an Azure AD application and service principal, but you could use a similar approach to create other objects in Azure Active Directory.
+This example shows how to use a deployment script to interact with Microsoft Graph. The deployment script creates a Microsoft Entra application and service principal, but you could use a similar approach to create other objects in Microsoft Entra ID.
 
 As of October 2022, you can't use Bicep or ARM templates to grant Microsoft Graph permissions to a user-assigned managed identity. Before the deployment runs, you need to create a user-assigned managed identity, and grant it the appropriate permisions to the Graph API.
 
@@ -62,9 +62,9 @@ managedIdentityObjectId=$(jq -r '.principalId' <<< "$userAssignedIdentity")
 
 ## Grant permission to the Graph API
 
-Next, you grant the user-assigned identity permission to create applications in Azure Active Directory.
+Next, you grant the user-assigned identity permission to create applications in Microsoft Entra ID.
 
-PowerShell with Azure AD cmdlets:
+PowerShell with Microsoft Entra cmdlets:
 
 ```powershell
 $tenantID = '<Your Azure AD tenant ID>'
@@ -149,4 +149,5 @@ az deployment group create \
   --template-file main.bicep \
   --parameters managedIdentityName=$managedIdentityName azureADApplicationName=MyApp
 ```
+
 `Tags: `

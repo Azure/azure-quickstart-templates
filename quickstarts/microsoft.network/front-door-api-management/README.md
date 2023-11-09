@@ -29,7 +29,7 @@ This sample demonstrates how to use [Azure Front Door](https://docs.microsoft.co
 - The use of a WAF policy at the edge provides API security against DDoS attacks and malicious users.
 - Response caching allows to drammatically improve performance of GET methods.
 
-## Architecture ##
+## Architecture
 
 The following picture shows the architecture and network topology of the sample.
 
@@ -69,14 +69,14 @@ The ARM template provides a boolean parameter called allowTrafficOnlyFromFrontDo
 
 Azure Front Door and API Management are configured to collect diagnostics logs and metrics in a Log Analytics workspace deployed by the ARM template.
 
-## Azure API Management ##
+## Azure API Management
 
 API Management helps organizations publish APIs to external, partner, and internal developers to unlock the potential of their data and services. Azure API Management provides the following capabilities:
 
 - Routing Rules
 - Local or external caching of response messages to improve performance
 - Protect backend API with rate and throttling limits
-- Protect a Web API backend using OAuth 2.0 with Azure Active Directory
+- Protect a Web API backend using OAuth 2.0 with Microsoft Entra ID
 - Secure access to the backend service of an API using certificates
 - Monitoring by sending request and response messages to an Event Hub
 - Monitoring requests via Application Insights
@@ -84,7 +84,7 @@ API Management helps organizations publish APIs to external, partner, and intern
 
 For more information, see [Azure API Management](https://docs.microsoft.com/azure/api-management/api-management-key-concepts).
 
-## Azure Front Door ##
+## Azure Front Door
 
 Azure Front Door is a global HTTP\HTTPS load balancer that works at layer 7 provides. Front Door terminates HTTPS requests at the edge of Microsoft’s network and actively probes to detect application or infrastructure health or latency changes. Front Door then always routes traffic to the fastest available backend. Refer to Front Door's routing architecture details and traffic routing methods to learn more about the service. When using Front Door, once a packet enters the Azure global WAN, the request is sent over extremely low latency connection between any two points. This speed cannot be matched on the public Internet where there would be many hops and much higher latency. Deployed to the edge of Microsoft’s global network, Azure Front Door exploits the same points of presence (POPs) of the Azure CDN and provides web and mobile applications, APIs, and/or cloud services with always-on reliability, high performance, easy scalability and simplified connectivity. Like Traffic Manager, Front Door is resilient to failures, including the failure of an entire Azure region. Azure Front Door provides the following functionalities:
 
@@ -101,13 +101,14 @@ Azure Front Door is a global HTTP\HTTPS load balancer that works at layer 7 prov
 
 For more information, see [Azure Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-overview)
 
-## Deployment ##
+## Deployment
 
 You can use the template.json ARM template and parameters.json file included in this repository to deploy the sample. Make sure to edit the parameters.json file to customize the installation. You can also use the deploy.sh Bash script under the scripts folder to deploy the ARM template. The following figure shows the resources deployed by the ARM template in the target resource group.
 
 ![Resource Group](images/ResourceGroup.png)
 
-## Testing ##
+## Testing
+
 You can the Azure Portal to verify that the resources have been successfully deployed in your Azure subscription. In particular, click the API Management resource and check if the both the Mock API and Postman Echo API have been successfully deployed as shown in the following figure.
 
 ![Postman Echo API](images/PostmanEchoAPI.png)
