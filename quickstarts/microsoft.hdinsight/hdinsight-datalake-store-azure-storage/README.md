@@ -23,11 +23,11 @@ languages:
 
 This template allows you to deploy a new Linux HDInsight cluster with new Data Lake Store and Storage accounts.
 
-### Prerequisites ###
+## Prerequisites
 
 **PFX Certificate and Service Principal**
 
-In order to properly deploy this ARM template, you need to first create a service principal in your Azure Active directory.
+In order to properly deploy this ARM template, you need to first create a service principal in your Microsoft Entra ID.
 
 This service principal needs to be configured to use a password-protected PFX certificate for authentication.
 
@@ -76,7 +76,7 @@ Below are instructions for creating the certificate and service principal.
 
     * Application ID: ``$servicePrincipal.ApplicationId``
     * Object ID: ``$servicePrincipal.Id``
-    * AAD Tenant ID: ``(Get-AzureRmContext).Tenant.TenantId``
+    * Microsoft Entra tenant ID: ``(Get-AzureRmContext).Tenant.TenantId``
     * Base-64 PFX file contents: ``[System.Convert]::ToBase64String((Get-Content $certFilePath -Encoding Byte))``
     * PFX password: ``$certPassword``
 

@@ -24,10 +24,10 @@ languages:
 
 This ARM template can be used to deploy a public or private [Azure Kubernetes Cluster (AKS) cluster](https://docs.microsoft.com/azure/aks/intro-kubernetes) with an [Azure Application Gateway](https://docs.microsoft.com/azure/application-gateway/overview) and  [Application Gateway Ingress Controller](https://docs.microsoft.com/azure/application-gateway/ingress-controller-overview) add-on. The template allows to deploy a rich set of AKS features such as:
 
-- [AKS-managed AAD integration](https://docs.microsoft.com/azure/aks/managed-aad)
+- [AKS-managed Microsoft Entra integration](https://docs.microsoft.com/azure/aks/managed-aad)
 - [Azure RBAC for Kubernetes Authorization](https://docs.microsoft.com/azure/aks/manage-azure-rbac)
 - [Managed identity in place of a service principal](https://docs.microsoft.com/azure/aks/use-managed-identity)
-- [Azure Active Directory pod-managed identities](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity)
+- [Microsoft Entra pod-managed identities](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity)
 - [Azure Network Policies](https://docs.microsoft.com/azure/aks/use-network-policies)
 - [Azure Monitor for containers add-on](https://docs.microsoft.com/azure/azure-monitor/containers/container-insights-enable-new-cluster)
 - [Application Gateway Ingress Controller add-on](https://azure.github.io/application-gateway-kubernetes-ingress/)
