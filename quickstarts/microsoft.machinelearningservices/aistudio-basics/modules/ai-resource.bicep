@@ -50,9 +50,6 @@ resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-pre
     storageAccount: storageAccountId
     applicationInsights: applicationInsightsId
     containerRegistry: containerRegistryId
-
-    // configuration for workspaces with private link endpoint
-    allowPublicAccessWhenBehindVnet: false
   }
   kind: 'hub'
   
