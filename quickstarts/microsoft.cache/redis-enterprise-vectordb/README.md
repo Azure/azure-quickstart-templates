@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: redis-cache-microsoft-vectordb
+urlFragment: redis-cache-vectordb
 languages:
 - json
 - bicep
