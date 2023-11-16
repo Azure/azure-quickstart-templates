@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Name of the Redis Enterprise Cache')
-param redisCacheName string = 'redisvectordbtest'
+param redisCacheName string = 'redisCache-${uniqueString(resourceGroup().id)}'
 
 @description('SKU of the Redis Enterprise Cache')
 param redisCacheSKU string = 'Enterprise_E10'
