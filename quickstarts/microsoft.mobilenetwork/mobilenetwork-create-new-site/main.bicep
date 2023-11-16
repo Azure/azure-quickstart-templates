@@ -52,25 +52,31 @@ param dnsAddresses array
 @description('The resource ID of the custom location that targets the Azure Kubernetes Service on Azure Stack HCI (AKS-HCI) cluster on the Azure Stack Edge Pro device in the site. If this parameter is not specified, the packet core instance will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
+@description('The desired installation state')
+param desiredState string = 'Uninstalled'
+
+@description('The MTU (in bytes) signaled to the UE. The same MTU is set on the user plane data links for all data networks. The MTU set on the user plane access link is calculated to be 60 bytes greater than this value to allow for GTP encapsulation. ')
+param ueMtu int = 1440
+
 #disable-next-line BCP081
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-09-01' existing = {
   name: existingMobileNetworkName
 
   #disable-next-line BCP081
-  resource existingDataNetwork 'dataNetworks@2023-06-01' existing = {
+  resource existingDataNetwork 'dataNetworks@2023-09-01' existing = {
     name: existingDataNetworkName
   }
 }
 
 #disable-next-line BCP081
-resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2023-06-01' = {
+resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2023-09-01' = {
   name: siteName
   parent: existingMobileNetwork
   location: location
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-06-01' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-09-01' = {
   name: siteName
   location: location
   properties: {
@@ -97,10 +103,14 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       ipv4Address: controlPlaneAccessIpAddress
       name: controlPlaneAccessInterfaceName
     }
+    installation: {
+      desiredState: desiredState
+    }
+    ueMtu: ueMtu
   }
 
   #disable-next-line BCP081
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2023-06-01' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2023-09-01' = {
     name: siteName
     location: location
     properties: {
@@ -110,7 +120,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
 
     #disable-next-line BCP081
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2023-06-01' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2023-09-01' = {
       name: existingDataNetworkName
       location: location
       properties: {
