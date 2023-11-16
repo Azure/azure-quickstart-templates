@@ -58,6 +58,9 @@ param userEquipmentStaticAddressPoolPrefix string = ''
 @description('The name of the data network')
 param dataNetworkName string = 'internet'
 
+@description('The desired Packet Core Installation State)
+param desiredState string = 'Uninstalled'
+
 @description('The mode in which the packet core instance will run')
 @allowed([
   'EPC'
@@ -251,7 +254,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     }
     installation:{
-      desiredState: 'Uninstalled'
+      desiredState: desiredState
     }
     localDiagnosticsAccess: {
       authenticationType: 'Password'
