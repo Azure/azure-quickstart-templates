@@ -62,7 +62,7 @@ param dataNetworkName string = 'internet'
 param desiredState string = 'Uninstalled'
 
 @description('The MTU (in bytes) signaled to the UE. The same MTU is set on the user plane data links for all data networks. The MTU set on the user plane access link is calculated to be 60 bytes greater than this value to allow for GTP encapsulation. ')
-param ueMtu string = '1440'
+param ueMtu int = '1440'
 
 @description('The mode in which the packet core instance will run')
 @allowed([
