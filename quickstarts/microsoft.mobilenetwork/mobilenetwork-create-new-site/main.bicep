@@ -52,6 +52,12 @@ param dnsAddresses array
 @description('The resource ID of the custom location that targets the Azure Kubernetes Service on Azure Stack HCI (AKS-HCI) cluster on the Azure Stack Edge Pro device in the site. If this parameter is not specified, the packet core instance will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
+@description('The desired installation state')
+param desiredState string = 'Uninstalled'
+
+@description('The MTU (in bytes) signaled to the UE. The same MTU is set on the user plane data links for all data networks. The MTU set on the user plane access link is calculated to be 60 bytes greater than this value to allow for GTP encapsulation. ')
+param ueMtu int = 1440
+
 #disable-next-line BCP081
 resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-09-01' existing = {
   name: existingMobileNetworkName
@@ -98,8 +104,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       name: controlPlaneAccessInterfaceName
     }
     installation: {
-      desiredState: 'Uninstalled'
+      desiredState: desiredState
     }
+    ueMtu: ueMtu
   }
 
   #disable-next-line BCP081
