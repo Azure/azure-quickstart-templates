@@ -1,11 +1,26 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in November 16, 2023
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the November 2023 CU for SharePoint Subscription
+- Configuration for SPSE
+  - Configure the SPTrustedBackedByUPAClaimProvider (as much as possible). There are remaining steps needed to finalize its configuration
+  - Update creation of user profiles to set their PreferredName
+  - Format the document
+- Configuration for most VMs
+    - Bump DSC modules ActiveDirectoryDsc and SqlServerDsc
+
 ## Enhancements & bug-fixes - Published in October 12, 2023
 
 ### Changed
 
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the October 2023 CU for SharePoint Subscription
+- Configuration for SPSE
+  - When doing a slipstream install of SharePoint using 2022-10 CU or newer: Fixed the SharePoint configuration wizard hanging at 10% of step 10/10, when executed after 
 
 ### Fixed
 - All SharePoint configurations

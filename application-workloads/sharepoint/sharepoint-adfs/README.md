@@ -59,7 +59,7 @@ There are some differences in the configuration, depending on the SharePoint ver
 ### Input parameters
 
 - parameter `sharePointVersion` lets you choose which version of SharePoint to install:
-  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: October 2023 ([KB5002506](https://support.microsoft.com/help/5002506)).
+  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: November 2023 ([KB5002527](https://support.microsoft.com/help/5002527)).
   - `Subscription-23H2`: Same as `Subscription-RTM`, then installs the [Feature Update 23H2](https://learn.microsoft.com/en-us/SharePoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h2-release) (September 2023 CU / [KB5002474](https://support.microsoft.com/help/5002474)).
   - `Subscription-23H1`: Same as `Subscription-RTM`, then installs the [Feature Update 23H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h1-release) (March 2023 CU / [KB5002355](https://support.microsoft.com/help/5002355)).
   - `Subscription-22H2`: Same as `Subscription-RTM`, then installs the [Feature Update 22H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-22h2-release) (September 2022 CU / [KB5002270](https://support.microsoft.com/help/5002270) and [KB5002271](https://support.microsoft.com/help/5002271)).
@@ -88,7 +88,7 @@ The following parameters configure how to connect to the virtual machines, and t
   - The DNS name format of virtual machines is `"[resourceGroupName]-[vm_name].[region].cloudapp.azure.com"` and is recorded as output in the state file.
 - parameter `RDPTrafficAllowed` specifies if RDP traffic is allowed:
   - If `"No"` (default): Firewall denies all incoming RDP traffic.
-  - If `"*"` or `"Internet"`: Firewall accepts all incoming RDP traffic from Internet.
+  - If `"*"` or `"Internet"`: Firewall accepts all incoming RDP traffic from Internet (very, very much not recommended).
   - If CIDR notation (e.g. `"192.168.99.0/24"` or `"2001:1234::/64"`) or IP address (e.g. `"192.168.99.0"` or `"2001:1234::"`): Firewall accepts incoming RDP traffic from the IP addresses specified.
 - parameter `addAzureBastion`:
   - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
