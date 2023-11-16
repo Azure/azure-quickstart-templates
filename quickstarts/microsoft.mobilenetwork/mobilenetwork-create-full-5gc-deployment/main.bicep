@@ -58,6 +58,12 @@ param userEquipmentStaticAddressPoolPrefix string = ''
 @description('The name of the data network')
 param dataNetworkName string = 'internet'
 
+@description('The desired installation state')
+param desiredState string = 'Uninstalled'
+
+@description('The MTU (in bytes) signaled to the UE. The same MTU is set on the user plane data links for all data networks. The MTU set on the user plane access link is calculated to be 60 bytes greater than this value to allow for GTP encapsulation. ')
+param ueMtu int = 1440
+
 @description('The mode in which the packet core instance will run')
 @allowed([
   'EPC'
@@ -80,7 +86,7 @@ param dnsAddresses array
 param customLocation string = ''
 
 #disable-next-line BCP081
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-09-01' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -92,14 +98,14 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-06-01
 }
 
 #disable-next-line BCP081
-resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2023-06-01' = {
+resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2023-09-01' = {
   parent: exampleMobileNetwork
   name: siteName
   location: location
 }
 
 #disable-next-line BCP081
-resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2023-06-01' = {
+resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks@2023-09-01' = {
   parent: exampleMobileNetwork
   name: dataNetworkName
   location: location
@@ -107,7 +113,7 @@ resource exampleDataNetwork 'Microsoft.MobileNetwork/mobileNetworks/dataNetworks
 }
 
 #disable-next-line BCP081
-resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2023-06-01' = {
+resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2023-09-01' = {
   parent: exampleMobileNetwork
   name: sliceName
   location: location
@@ -119,7 +125,7 @@ resource exampleSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2023-06-01'
 }
 
 #disable-next-line BCP081
-resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2023-06-01' = {
+resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2023-09-01' = {
   parent: exampleMobileNetwork
   name: serviceName
   location: location
@@ -148,7 +154,7 @@ resource exampleService 'Microsoft.MobileNetwork/mobileNetworks/services@2023-06
 }
 
 #disable-next-line BCP081
-resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2023-06-01' = {
+resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2023-09-01' = {
   parent: exampleMobileNetwork
   name: simPolicyName
   location: location
@@ -190,7 +196,7 @@ resource exampleSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@20
 }
 
 #disable-next-line BCP081
-resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2023-06-01' = if (!empty(simGroupName)) {
+resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2023-09-01' = if (!empty(simGroupName)) {
   name: empty(simGroupName) ? 'placeHolderForValidation' : simGroupName
   location: location
   properties: {
@@ -211,7 +217,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2023-06-01' 
   }
 
   #disable-next-line BCP081
-  resource exampleSimResources 'sims@2023-06-01' = [for item in simResources: {
+  resource exampleSimResources 'sims@2023-09-01' = [for item in simResources: {
     name: item.simName
     properties: {
       integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
@@ -227,7 +233,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2023-06-01' 
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-06-01' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-09-01' = {
   name: siteName
   location: location
   dependsOn: [
@@ -240,6 +246,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     ]
     sku: 'G0'
+    ueMtu: ueMtu
     coreNetworkTechnology: coreNetworkTechnology
     platform: {
       type: 'AKS-HCI'
@@ -249,6 +256,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       azureStackEdgeDevice: {
         id: azureStackEdgeDevice
       }
+    }
+    installation:{
+      desiredState: desiredState
     }
     localDiagnosticsAccess: {
       authenticationType: 'Password'
@@ -260,7 +270,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
   }
 
   #disable-next-line BCP081
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2023-06-01' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2023-09-01' = {
     name: siteName
     location: location
     properties: {
@@ -270,7 +280,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
 
     #disable-next-line BCP081
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2023-06-01' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2023-09-01' = {
       name: dataNetworkName
       location: location
       properties: {
