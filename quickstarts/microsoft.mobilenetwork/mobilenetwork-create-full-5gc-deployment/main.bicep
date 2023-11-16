@@ -58,6 +58,12 @@ param userEquipmentStaticAddressPoolPrefix string = ''
 @description('The name of the data network')
 param dataNetworkName string = 'internet'
 
+@description('The desired installation state')
+param desiredState string = 'Uninstalled'
+
+@description('The MTU (in bytes) signaled to the UE. The same MTU is set on the user plane data links for all data networks. The MTU set on the user plane access link is calculated to be 60 bytes greater than this value to allow for GTP encapsulation. ')
+param ueMtu string = '1440'
+
 @description('The mode in which the packet core instance will run')
 @allowed([
   'EPC'
@@ -240,6 +246,8 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       }
     ]
     sku: 'G0'
+    ueMtu: ueMtu
+    desiredState: desiredState
     coreNetworkTechnology: coreNetworkTechnology
     platform: {
       type: 'AKS-HCI'
