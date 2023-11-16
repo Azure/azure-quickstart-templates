@@ -2,13 +2,13 @@
 param location string = resourceGroup().location
 
 @description('Name of the Redis Enterprise Cache')
-param redisCacheName string = ''
+param redisCacheName string = 'redisvectordbtest'
 
 @description('SKU of the Redis Enterprise Cache')
 param redisCacheSKU string = 'Enterprise_E10'
 
 @description('Capacity of the Redis Enterprise Cache')
-param redisCacheCapacity int
+param redisCacheCapacity int = 2
 
 @description('Eviction Policy of the Redis Enterprise Cache')
 param evictionPolicy string = 'NoEviction'
