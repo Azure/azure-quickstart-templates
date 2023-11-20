@@ -56,8 +56,8 @@ resource webApp 'Microsoft.Web/sites@2021-01-01' = {
     serverFarmId: appServicePlan.id
     virtualNetworkSubnetId: vnet.properties.subnets[0].id
     httpsOnly: true
+    vnetRouteAllEnabled: true
     siteConfig: {
-      vnetRouteAllEnabled: true
       http20Enabled: true
     }
   }
