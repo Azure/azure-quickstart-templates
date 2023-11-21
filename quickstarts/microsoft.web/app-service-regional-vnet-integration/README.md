@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: app-service-regional-vnet-integration
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy an app service with regional VNet integration
 
