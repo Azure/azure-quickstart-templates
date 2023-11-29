@@ -182,7 +182,8 @@
             },
             "variables": {
               "roleDefinitionArmId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', parameters('roleDefinitionId'))]",
-              "msiArmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/',parameters('resourceGroupName'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('MSIName'))]"
+              "msiArmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/',parameters('resourceGroupName'), '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('MSIName'))]"
+
             },
             "resources": [
               {
@@ -275,7 +276,7 @@
               }
             },
             "variables": {
-              "msiArmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/',parameters('resourceGroupName'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('MSIName'))]",
+              "msiArmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/',parameters('resourceGroupName'), '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('MSIName'))]",
               "subscriptionArmId": "[concat('/subscriptions/',subscription().subscriptionId)]",
               "LatestRPAgeThresholdInDaysToMinutes": "[mul(int(parameters('LatestRPAgeThresholdInDays')), 1440)]",
               "argQuery": "arg(\"\").RecoveryServicesResources\n//| project type, id, properties\n| where type == \"microsoft.azurebusinesscontinuity/unifiedprotecteditems\"\n| project\n    id,\n    latestRecoveryPointPrimary = todatetime(parse_json(properties).primaryRegionProtectionDetails.latestRecoveryPoint.propertyValue),\n    dataSourceType =  tostring(parse_json(properties).dataSourceInformation.dataSourceType),\n    protectionStatusInPrimaryRegion = tostring(parse_json(properties).protectionStatusInPrimaryRegion)\n|where protectionStatusInPrimaryRegion != \"NotProtected\"\n| extend currentTime = now()\n| extend currentTimeSpan = totimespan(currentTime)\n| extend latestRecoveryPointPrimaryTimeSpan = totimespan(latestRecoveryPointPrimary)\n| extend TimeSpanDiff = currentTimeSpan - latestRecoveryPointPrimaryTimeSpan\n| extend dayValueExists = split(TimeSpanDiff, \".\", 2)\n| extend dayValue = split(TimeSpanDiff, \".\", 0)\n| extend day = toint(iff((dayValueExists != \"\"), dayValue[0], \"0\"))\n| extend nonDayTime = iff((dayValueExists != \"\"), split(TimeSpanDiff, \".\", 1)[0], split(TimeSpanDiff, \".\", 0)[0])\n| extend hour = toint(split(nonDayTime, \":\", 0)[0])\n| extend min = toint(split(nonDayTime, \":\", 1)[0])\n| extend sec = toint(split(nonDayTime, \":\", 2)[0])\n| extend totalMinutes = (((day * 24) + hour) * 60) + min\n| extend latestRPAge = iff((totalMinutes > @#LatestRPAgeThresholdInDaysToMinutes#@), 1, 0)\n| project\n    currentTime,\n    latestRecoveryPointPrimary,\n    TimeSpanDiff,\n    totalMinutes,\n    latestRPAge,\n    dataSourceType,\n    day,\n    hour,\n    min,\n    sec,\n    id\n"
