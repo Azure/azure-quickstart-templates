@@ -8,7 +8,7 @@ urlFragment: business-continuity-latest-recovery-point-age-alerts
 languages:
 - json
 ---
-# Backup existing File Share using Recovery Services (hourly)
+# Create alert rule for azure business continuity items
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurebusinesscontinuity/business-continuity-latest-recovery-point-age-alerts/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurebusinesscontinuity/business-continuity-latest-recovery-point-age-alerts/PublicDeployment.svg)
@@ -30,3 +30,4 @@ This templates creates an alert rule and user assigned MSI. It also assigns the 
 You can click the **Deploy to Azure** button at the beginning of this document. You may alternatively download the template and [deploy it using PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template) or use your preferred method of ARM template deployment.
 
 
+`Tags: `
