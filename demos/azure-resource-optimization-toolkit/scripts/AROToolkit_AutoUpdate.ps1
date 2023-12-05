@@ -54,7 +54,7 @@ try
 
     $WebClient = New-Object System.Net.WebClient
 
-    Write-Output "Download the AutoUpdateWorker script from Github..."
+    Write-Output "Download the AutoUpdateWorker script from GitHub..."
 
     $WebClient.DownloadFile($($GithubFullPath),"$PSScriptRoot\$($FileName)")    
     $psScriptPath = "$PSScriptRoot\$($FileName)"
