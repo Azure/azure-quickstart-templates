@@ -25,7 +25,7 @@ languages:
 
 [CustomScript Extension](https://github.com/Azure/azure-linux-extensions/tree/master/CustomScript) allows the owner of the Azure Virtual Machines to run customized scripts in the VM.
 
-This template shows a simple example to run scripts which are stored in public storage(e.g. Github).
+This template shows a simple example to run scripts which are stored in public storage(e.g. GitHub).
 
 ## Deploy
 
