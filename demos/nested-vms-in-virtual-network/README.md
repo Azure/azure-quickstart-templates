@@ -11,14 +11,7 @@ languages:
 ---
 # Hyper-V Host Virtual Machine with nested VMs
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/FairfaxDeployment.svg)
-
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/CredScanResult.svg)
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/BicepVersion.svg)
 
