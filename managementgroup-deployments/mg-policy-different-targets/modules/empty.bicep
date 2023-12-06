@@ -1,1 +1,0 @@
-targetScope = 'managementGroup'
