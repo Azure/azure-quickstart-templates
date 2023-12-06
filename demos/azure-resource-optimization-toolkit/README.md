@@ -39,7 +39,7 @@ Deploy an Azure Automation account with preconfigured runbooks and schedules to 
 
 ## **Step 1 Deploy ARO Toolkit**
 
-## **From Github**
+## **From GitHub**
 
 Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variables".
 
@@ -204,7 +204,7 @@ appended to the end.
 
   **Runbook Name** | **Parameters** | **What it does**
   --- | --- | ---
-  AROToolkit\_AutoUpdate | none | Checks Github to for any runbook, variable, or schedule update and applies the update. Gets an AROToolkit to the latest version. <br> **Note: Will overwrite any custom modifications to Toolkit runbooks and Default Schedules.**
+  AROToolkit\_AutoUpdate | none | Checks GitHub to for any runbook, variable, or schedule update and applies the update. Gets an AROToolkit to the latest version. <br> **Note: Will overwrite any custom modifications to Toolkit runbooks and Default Schedules.**
   AutoSnooze\_CreateAlert\_Child | VMObject <br> AlertAction <br> WebHookURI | Called from the parent runbook only. Creates alerts on per resource basis for AutoSnooze scenario.
   AutoSnooze\_CreateAlert\_Parent | WhatIf: True or False. | Creates or updates azure alert rules on VMs in the targeted subscription or resource groups. <br> WhatIf: True -> Runbook output will tell you which resources will be targeted. <br> WhatIf: False -> Create or update the alert rules.
   AutoSnooze\_Disable | none | Disable AutoSnooze alerts and default schedule.
