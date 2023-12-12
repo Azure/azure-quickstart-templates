@@ -4,6 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
+- azure-api-management
 urlFragment: azure-api-management-create
 languages:
 - json
@@ -26,6 +27,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fazure-api-management-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fazure-api-management-create%2Fazuredeploy.json)
 
-This template deploys an Azure API Management instance. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/api-management/quickstart-arm-template) article.
+This template deploys an Azure API Management instance. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/api-management/quickstart-arm-template) article.
 
 `Tags: Microsoft.ApiManagement/service`
