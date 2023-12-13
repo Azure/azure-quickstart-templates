@@ -27,10 +27,6 @@ param keyVaultId string
 @description('Resource ID of the storage account resource for storing experimentation outputs')
 param storageAccountId string
 
-@description('Indicates whether or not the Azure AI services provider is of type AIServices or Azure OpenAI.')
-@allowed(['AIServices', 'OpenAI'])
-param endpointKind string = 'AIServices'
-
 param endpointResourceId string = 'null'
  
 resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
