@@ -1,4 +1,15 @@
-# Create a free-tier Azure Cosmos DB account for Core (SQL) API
+---
+description: This template creates a free-tier Azure Cosmos DB account for SQL API with a database with shared throughput and container.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-free
+languages:
+- json
+- bicep
+---
+# Create a free-tier Azure Cosmos DB account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-free/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-free/PublicDeployment.svg)
@@ -15,9 +26,14 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-free%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-free%2Fazuredeploy.json)
 
-This template will create a free-tier Azure Cosmos account for Core (SQL) API in a single region with Session level consistency and one database with 400 RU/s that can be shared with up to 25 containers. Accounts in free tier will not be billed for usage of 400 RU/s or 5GB of data or less.
+This template will create a free-tier Azure Cosmos account for SQL API in a single region, a database with shared throughput of 1000 RU/s and one container. Accounts in free tier will not be billed for usage of 1000 RU/s or 50 GB of data or less.
+
+> [!IMPORTANT]
+> Only one free-tier account can be created per subscription.
 
 Below are the parameters which can be user configured in the parameters file or template including:
 
 - **Location:** Enter location for primary region.
-- **Database Name:** Enter the database name for the account.
+- **Account Name:** Enter the database name for the account.
+
+`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.DocumentDB/databaseAccounts/sqlDatabases, Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers`

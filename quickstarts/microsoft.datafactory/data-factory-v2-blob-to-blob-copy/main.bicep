@@ -15,7 +15,7 @@ var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -24,7 +24,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   kind: 'StorageV2'
 }
 
-resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-04-01' = {
+resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
   name: '${storageAccount.name}/default/${blobContainerName}'
 }
 
@@ -59,7 +59,7 @@ resource dataFactoryDataSetIn 'Microsoft.DataFactory/factories/datasets@2018-06-
     typeProperties: {
       location: {
         type: 'AzureBlobStorageLocation'
-        container: blobContainer.name
+        container: blobContainerName
         folderPath: 'input'
         fileName: 'emp.txt'
       }
@@ -79,7 +79,7 @@ resource dataFactoryDataSetOut 'Microsoft.DataFactory/factories/datasets@2018-06
     typeProperties: {
       location: {
         type: 'AzureBlobStorageLocation'
-        container: blobContainer.name
+        container: blobContainerName
         folderPath: 'output'
       }
     }
@@ -91,16 +91,9 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
   name: pipelineName
   properties: {
     activities: [
-      any({
+      {
         name: 'MyCopyActivity'
         type: 'Copy'
-        policy: {
-          timeout: '7.00:00:00'
-          retry: 0
-          retryIntervalInSeconds: 30
-          secureOutput: false
-          secureInput: false
-        }
         typeProperties: {
           source: {
             type: 'BinarySource'
@@ -112,7 +105,7 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
           sink: {
             type: 'BinarySink'
             storeSettings: {
-              type: 'AzureBlobStorageWriterSettings'
+              type: 'AzureBlobStorageWriteSettings'
             }
           }
           enableStaging: false
@@ -129,7 +122,7 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
             type: 'DatasetReference'
           }
         ]
-      })
+      }
     ]
   }
 }

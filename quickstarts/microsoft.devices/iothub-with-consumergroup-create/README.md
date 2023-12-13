@@ -1,4 +1,15 @@
-# Create IoT Hub and Device to Cloud Consumer Group
+---
+description: This template enables you to deploy an IoT Hub instance with device to cloud and cloud to device messaging configurations and a device to cloud consumer group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: iothub-with-consumergroup-create
+languages:
+- bicep
+- json
+---
+# Create an IoT Hub and a Device to Cloud Consumer Group
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-with-consumergroup-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-with-consumergroup-create/PublicDeployment.svg)
@@ -9,7 +20,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-with-consumergroup-create/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-with-consumergroup-create/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devices%2Fiothub-with-consumergroup-create%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devices%2Fiothub-with-consumergroup-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devices%2Fiothub-with-consumergroup-create%2Fazuredeploy.json)
 
 This template creates an IoT Hub instance with device to cloud and cloud to device messaging configurations and a device to cloud consumer group. For more information, go to: https://docs.microsoft.com/azure/iot-hub/.
@@ -24,8 +35,8 @@ If you are new to Azure Iot Hub, see:
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
 
-
+`Tags: Microsoft.Devices/IotHubs, Microsoft.Devices/iotHubs/eventhubEndpoints/ConsumerGroups`

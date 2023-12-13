@@ -1,4 +1,14 @@
-# Create 2 Windows VMs, a new AD Forest, Domain and 2 DCs in an availability set
+---
+description: This template creates 2 new VMs to be AD DCs (primary and backup) for a new Forest and Domain
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: active-directory-new-domain-ha-2-dc
+languages:
+- json
+---
+# Create an new AD Domain with 2 Domain Controllers
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/active-directory/active-directory-new-domain-ha-2-dc/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/active-directory/active-directory-new-domain-ha-2-dc/PublicDeployment.svg)
@@ -18,3 +28,5 @@ Click the button below to deploy
 ## Known Issues
 
 This template is entirely serial due to some concurrency issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently, this will be fixed in the near future
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Resources/deployments, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Compute/virtualMachines/extensions, Microsoft.Network/virtualNetworks`

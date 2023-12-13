@@ -11,18 +11,21 @@ $Configuration.InstallSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
 $cmpath = "c:\$CM.exe"
-$cmsourcepath = "c:\$CM"
+$cmsourceextractpath = "c:\$CM"
 if(!(Test-Path $cmpath))
 {
     "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Copying SCCM installation source..." | Out-File -Append $logpath
     $cmurl = "https://go.microsoft.com/fwlink/?linkid=2093192"
     Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
-    if(!(Test-Path $cmsourcepath))
+    if(!(Test-Path $cmsourceextractpath))
     {
-        Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+        New-Item -ItemType Directory -Path $cmsourceextractpath
+        Start-Process -WorkingDirectory ($cmsourceextractpath) -Filepath ($cmpath) -ArgumentList ('/s') -wait
     }
 }
-$CMINIPath = "c:\$CM\Standalone.ini"
+
+$cmsourcepath = (Get-ChildItem -Path $cmsourceextractpath | ?{$_.Name.ToLower().Contains("cd.")}).FullName
+$CMINIPath = "$cmsourceextractpath\Standalone.ini"
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Check ini file." | Out-File -Append $logpath
 
 $cmini = @'
@@ -38,7 +41,7 @@ SDKServer=%MachineFQDN%
 RoleCommunicationProtocol=HTTPorHTTPS
 ClientsUsePKICertificate=0
 PrerequisiteComp=0
-PrerequisitePath=C:\%CM%\REdist
+PrerequisitePath=%cmsourcepath%\REdist
 MobileDeviceLanguage=0
 AdminConsole=1
 JoinCEIP=0
@@ -75,10 +78,11 @@ $cmini = $cmini.Replace('%Role%',$Role)
 $cmini = $cmini.Replace('%SQLDataFilePath%',$sqlinfo.DefaultData)
 $cmini = $cmini.Replace('%SQLLogFilePath%',$sqlinfo.DefaultLog)
 $cmini = $cmini.Replace('%CM%',$CM)
+$cmini = $cmini.Replace('%cmsourcepath%',$cmsourcepath)
 
-if(!(Test-Path C:\$CM\Redist))
+if(!(Test-Path $cmsourcepath\Redist))
 {
-    New-Item C:\$CM\Redist -ItemType directory | Out-Null
+    New-Item $cmsourcepath\Redist -ItemType directory | Out-Null
 }
     
 if($inst.ToUpper() -eq "MSSQLSERVER")
@@ -90,7 +94,7 @@ else
     $tinstance = $inst.ToUpper() + "\"
     $cmini = $cmini.Replace('%SQLInstance%',$tinstance)
 }
-$CMInstallationFile = "c:\$CM\SMSSETUP\BIN\X64\Setup.exe"
+$CMInstallationFile = "$cmsourcepath\SMSSETUP\BIN\X64\Setup.exe"
 $cmini > $CMINIPath 
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Installing.." | Out-File -Append $logpath
 Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait

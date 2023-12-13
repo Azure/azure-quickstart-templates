@@ -354,13 +354,13 @@ class WaitForExtendSchemaFile
     [void] Set()
     {
         $_FilePath = "\\$($this.MachineName)\$($this.ExtFolder)"
-        $extadschpath = Join-Path -Path $_FilePath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
+        $extadschpath = Join-Path -Path $_FilePath -ChildPath "cd.preview\SMSSETUP\BIN\X64\extadsch.exe"
         
         while(!(Test-Path $extadschpath))
         {
             Write-Verbose "Wait for extadsch.exe exist on $($this.MachineName), will try 10 seconds later..."
             Start-Sleep -Seconds 10
-            $extadschpath = Join-Path -Path $_FilePath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
+            $extadschpath = Join-Path -Path $_FilePath -ChildPath "cd.preview\SMSSETUP\BIN\X64\extadsch.exe"
         }
 
         Write-Verbose "Extended the Active Directory schema..."
@@ -533,7 +533,7 @@ class DownloadSCCM
         $WebClient.DownloadFile($cmurl,$cmpath)
         if(!(Test-Path $cmsourcepath))
         {
-            Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+            Start-Process -Filepath ($cmpath) -ArgumentList ('/x:"' + $cmsourcepath + '"','/q') -wait
         }
     }
 
@@ -551,6 +551,51 @@ class DownloadSCCM
     }
 
     [DownloadSCCM] Get()
+    {
+        return $this
+    }
+}
+
+[DscResource()]
+class DownloadAndInstallODBC
+{
+    [DscProperty(key)]
+    [Ensure] $Ensure
+
+    [void] Set()
+    {
+        $odbcPath = "C:\msodbcsql.msi"
+        
+        Write-Verbose "Downloading ODBC installation source..."
+        $OdbcUrl = "http://go.microsoft.com/fwlink/?linkid=2220989"
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($OdbcUrl,$odbcPath)
+
+        Write-Verbose "installing ODBC..."
+        Start-Process -FilePath $odbcPath  -ArgumentList ('/qn', 'IACCEPTMSODBCSQLLICENSETERMS=YES') -Wait
+        Write-Verbose "ODBC installed Successfully!"
+    
+    }
+
+    [bool] Test()
+    {
+        #This minorVersion is the installed msodbc version.
+        $minorVersion = [version]'18.1.2.1'
+
+        $key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Default)
+        $subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\MSODBCSQL18")
+        if($subKey)
+        {
+            if(($msobcVersion = $subKey.GetValue('InstalledVersion')) -ne $null)
+            {
+                return ([version]$msobcVersion -ge $minorVersion)
+            }
+        }
+        return $false
+    
+    }
+
+    [DownloadAndInstallODBC] Get()
     {
         return $this
     }

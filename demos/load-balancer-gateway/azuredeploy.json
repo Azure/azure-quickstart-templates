@@ -1,0 +1,1076 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "9380224508165033203"
+    }
+  },
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation. If your artifacts are stored on a public repo or public storage account you can leave this blank."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources"
+      }
+    },
+    "vnet1Name": {
+      "type": "string",
+      "defaultValue": "vnetgtw",
+      "metadata": {
+        "description": "name of the VNet where is deployed the Gateway Load Balancer"
+      }
+    },
+    "vnet2Name": {
+      "type": "string",
+      "defaultValue": "vnetapp",
+      "metadata": {
+        "description": "name of the VNet where are deployed the Public Load Balancer and the application VMs"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2",
+      "metadata": {
+        "description": "size of the Virtual Machine"
+      }
+    },
+    "nva1Name": {
+      "type": "string",
+      "defaultValue": "nva1",
+      "metadata": {
+        "description": "name of the nva1 in the backend pool of the Gateway Load Balancer"
+      }
+    },
+    "nva2Name": {
+      "type": "string",
+      "defaultValue": "nva2",
+      "metadata": {
+        "description": "name of the nva2 in the backend pool of the Gateway Load Balancer"
+      }
+    },
+    "vmapp1Name": {
+      "type": "string",
+      "defaultValue": "vmapp1",
+      "metadata": {
+        "description": "name of the of the application VM1 in the backend pool of the Public Load Balancer"
+      }
+    },
+    "vmapp2Name": {
+      "type": "string",
+      "defaultValue": "vmapp2",
+      "metadata": {
+        "description": "name of the of the application VM2 in the backend pool of the Public Load Balancer"
+      }
+    },
+    "vmclient1Name": {
+      "type": "string",
+      "defaultValue": "vmclient1",
+      "metadata": {
+        "description": "name of the of VM client in the vnet2"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "VMs admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "VMs admin password"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "The storage account type for the disks of the VM"
+      }
+    },
+    "bastionName": {
+      "type": "string",
+      "defaultValue": "bastion",
+      "metadata": {
+        "description": "name of the azure bastion"
+      }
+    }
+  },
+  "variables": {
+    "scriptFolder": "scripts",
+    "elbName": "elb",
+    "elbSkuName": "Standard",
+    "elbPublicIpAddressName": "[format('{0}-pubIP', variables('elbName'))]",
+    "elbFrontEndName": "elbFrontEnd",
+    "elbBackEndPoolName": "elbBackEndPool",
+    "elbProbeName": "elbHealthProbe",
+    "elbRule1frontendPort": 8081,
+    "elbRule1backendPort": 8081,
+    "elbRule2frontendPort": 8082,
+    "elbRule2backendPort": 8082,
+    "elbRule3frontendPort": 8083,
+    "elbRule3backendPort": 8083,
+    "elbRule4frontendPort": 8084,
+    "elbRule4backendPort": 8084,
+    "elbprobePort": 8080,
+    "gwlbName": "gwlb",
+    "gwlbFrontEndIP": "10.0.1.100",
+    "gwlbFrontEndName": "lbFrontEndConf",
+    "gwlbBackEndPoolName": "gwlbBackEndPool",
+    "gwlbProbeName": "gwlbprobe",
+    "gwlbprobePort": 8080,
+    "vxlanTunnelInternalPort": 10800,
+    "vxlanTunnelInternalIdentifier": 800,
+    "vxlanTunnelExternalPort": 10801,
+    "vxlanTunnelExternalIdentifier": 801,
+    "vnet1Config": {
+      "location": "[parameters('location')]",
+      "name": "[parameters('vnet1Name')]",
+      "addressSpacePrefix1": "10.0.1.0/24",
+      "subnet1Name": "nvasubnet",
+      "subnet2Name": "fesubnet",
+      "subnet1Prefix": "10.0.1.0/28",
+      "subnet2Prefix": "10.0.1.96/28",
+      "peeringName": "[format('{0}To{1}', parameters('vnet1Name'), parameters('vnet2Name'))]"
+    },
+    "vnet2Config": {
+      "location": "[parameters('location')]",
+      "name": "[parameters('vnet2Name')]",
+      "addressSpacePrefix1": "10.0.2.0/24",
+      "subnet1Name": "appsubnet",
+      "subnet2Name": "clientsubnet",
+      "subnet3Name": "AzureBastionSubnet",
+      "subnet1Prefix": "10.0.2.0/28",
+      "subnet2Prefix": "10.0.2.32/28",
+      "subnet3Prefix": "10.0.2.192/26",
+      "peeringName": "[format('{0}To{1}', parameters('vnet2Name'), parameters('vnet1Name'))]"
+    },
+    "nginxScriptFileName": "nginx-serverblocks.sh",
+    "nginxScriptURL": "[uri(parameters('_artifactsLocation'), format('{0}/{1}{2}', variables('scriptFolder'), variables('nginxScriptFileName'), parameters('_artifactsLocationSasToken')))]",
+    "nginxCommand": "[format('bash {0} {1} {2} {3} {4}', variables('nginxScriptFileName'), variables('elbRule1backendPort'), variables('elbRule2backendPort'), variables('elbRule3backendPort'), variables('elbRule4backendPort'))]",
+    "nvaScriptFileName": "nva.sh",
+    "nvaScriptURL": "[uri(parameters('_artifactsLocation'), format('{0}/{1}{2}', variables('scriptFolder'), variables('nvaScriptFileName'), parameters('_artifactsLocationSasToken')))]",
+    "nvaCommand": "[format('bash {0} -p {1} -v {2} -P {3} -V {4} -n {5}', variables('nvaScriptFileName'), variables('vxlanTunnelInternalPort'), variables('vxlanTunnelInternalIdentifier'), variables('vxlanTunnelExternalPort'), variables('vxlanTunnelExternalIdentifier'), variables('gwlbFrontEndIP'))]",
+    "nva1IpAddresses": "10.0.1.10",
+    "nva2IpAddresses": "10.0.1.11",
+    "vmapp1IpAddress": "10.0.2.5",
+    "vmapp2IpAddress": "10.0.2.6",
+    "nvaArray": [
+      {
+        "location": "[parameters('location')]",
+        "vmName": "[parameters('nva1Name')]",
+        "publisher": "canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts",
+        "version": "latest",
+        "vnetName": "[variables('vnet1Config').name]",
+        "subnetName": "[variables('vnet1Config').subnet1Name]",
+        "privateIP": "[variables('nva1IpAddresses')]",
+        "enableIPForwarding": true,
+        "acceleratedNetworking": false,
+        "scriptURL": "[variables('nvaScriptURL')]",
+        "scriptCommand": "[variables('nvaCommand')]",
+        "nsgName": "[format('{0}-nsg', parameters('nva1Name'))]"
+      },
+      {
+        "location": "[parameters('location')]",
+        "vmName": "[parameters('nva2Name')]",
+        "publisher": "canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts",
+        "version": "latest",
+        "vnetName": "[variables('vnet1Config').name]",
+        "subnetName": "[variables('vnet1Config').subnet1Name]",
+        "privateIP": "[variables('nva2IpAddresses')]",
+        "enableIPForwarding": true,
+        "acceleratedNetworking": false,
+        "scriptURL": "[variables('nvaScriptURL')]",
+        "scriptCommand": "[variables('nvaCommand')]",
+        "nsgName": "[format('{0}-nsg', parameters('nva2Name'))]"
+      }
+    ],
+    "vmarray": [
+      {
+        "location": "[parameters('location')]",
+        "vmName": "[parameters('vmapp1Name')]",
+        "publisher": "canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts",
+        "version": "latest",
+        "vnetName": "[variables('vnet2Config').name]",
+        "subnetName": "[variables('vnet2Config').subnet1Name]",
+        "privateIP": "[variables('vmapp1IpAddress')]",
+        "enableIPForwarding": false,
+        "acceleratedNetworking": false,
+        "scriptURL": "[variables('nginxScriptURL')]",
+        "scriptCommand": "[variables('nginxCommand')]",
+        "nsgName": "[format('{0}-nsg', parameters('vmapp1Name'))]"
+      },
+      {
+        "location": "[parameters('location')]",
+        "vmName": "[parameters('vmapp2Name')]",
+        "publisher": "canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts",
+        "version": "latest",
+        "vNetName": "[variables('vnet2Config').name]",
+        "subnetName": "[variables('vnet2Config').subnet1Name]",
+        "privateIP": "[variables('vmapp2IpAddress')]",
+        "enableIPForwarding": false,
+        "acceleratedNetworking": false,
+        "scriptURL": "[variables('nginxScriptURL')]",
+        "scriptCommand": "[variables('nginxCommand')]",
+        "nsgName": "[format('{0}-nsg', parameters('vmapp2Name'))]"
+      },
+      {
+        "location": "[parameters('location')]",
+        "vmName": "[parameters('vmclient1Name')]",
+        "publisher": "canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts",
+        "version": "latest",
+        "vNetName": "[variables('vnet2Config').name]",
+        "subnetName": "[variables('vnet2Config').subnet2Name]",
+        "privateIP": "10.0.2.40",
+        "enableIPForwarding": false,
+        "acceleratedNetworking": false,
+        "scriptURL": "SKIP_CustomScript",
+        "scriptCommand": "SKIP_CustomScript",
+        "nsgName": "[format('{0}-nsg', parameters('vmclient1Name'))]"
+      }
+    ],
+    "nvaCount": "[length(variables('nvaArray'))]",
+    "vmCount": "[length(variables('vmarray'))]",
+    "vmStorageAccountType": "[parameters('storageAccountType')]",
+    "bastionSubnetName": "[variables('vnet2Config').subnet3Name]",
+    "bastionPublicIPAddressName": "[format('{0}-pubIP', parameters('bastionName'))]",
+    "bastionSkuName": "Standard",
+    "deploymentBastion": true
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('vnet1Config').name]",
+      "location": "[variables('vnet1Config').location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnet1Config').addressSpacePrefix1]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnet1Config').subnet1Name]",
+            "properties": {
+              "addressPrefix": "[variables('vnet1Config').subnet1Prefix]"
+            }
+          },
+          {
+            "name": "[variables('vnet1Config').subnet2Name]",
+            "properties": {
+              "addressPrefix": "[variables('vnet1Config').subnet2Prefix]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('vnet2Config').name]",
+      "location": "[variables('vnet2Config').location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnet2Config').addressSpacePrefix1]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnet2Config').subnet1Name]",
+            "properties": {
+              "addressPrefix": "[variables('vnet2Config').subnet1Prefix]"
+            }
+          },
+          {
+            "name": "[variables('vnet2Config').subnet2Name]",
+            "properties": {
+              "addressPrefix": "[variables('vnet2Config').subnet2Prefix]"
+            }
+          },
+          {
+            "name": "[variables('vnet2Config').subnet3Name]",
+            "properties": {
+              "addressPrefix": "[variables('vnet2Config').subnet3Prefix]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', variables('vnet1Config').name, variables('vnet1Config').peeringName)]",
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1Config').name)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', variables('vnet2Config').name, variables('vnet2Config').peeringName)]",
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1Config').name)]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1Config').name)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('gwlbName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Gateway",
+        "tier": "Regional"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('gwlbFrontEndName')]",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet1Config').name, variables('vnet1Config').subnet2Name)]"
+              },
+              "privateIPAddress": "[variables('gwlbFrontEndIP')]",
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('gwlbBackEndPoolName')]",
+            "properties": {
+              "tunnelInterfaces": [
+                {
+                  "port": "[variables('vxlanTunnelInternalPort')]",
+                  "identifier": "[variables('vxlanTunnelInternalIdentifier')]",
+                  "protocol": "VXLAN",
+                  "type": "Internal"
+                },
+                {
+                  "port": "[variables('vxlanTunnelExternalPort')]",
+                  "identifier": "[variables('vxlanTunnelExternalIdentifier')]",
+                  "protocol": "VXLAN",
+                  "type": "External"
+                }
+              ]
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "lbAnyPortRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('gwlbName'), variables('gwlbFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('gwlbName'), variables('gwlbBackEndPoolName'))]"
+              },
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('gwlbName'), variables('gwlbProbeName'))]"
+              },
+              "protocol": "All",
+              "frontendPort": 0,
+              "backendPort": 0,
+              "loadDistribution": "Default",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "disableOutboundSnat": true
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('gwlbProbeName')]",
+            "properties": {
+              "protocol": "Http",
+              "port": "[variables('gwlbprobePort')]",
+              "requestPath": "/",
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1Config').name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('elbPublicIpAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('elbSkuName')]"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('elbName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('elbSkuName')]"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('elbFrontEndName')]",
+            "properties": {
+              "gatewayLoadBalancer": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('gwlbName'), variables('gwlbFrontEndName'))]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('elbPublicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('elbBackEndPoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "[format('http-{0}', string(variables('elbRule1backendPort')))]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('elbName'), variables('elbFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/LoadBalancers/backendAddressPools', variables('elbName'), variables('elbBackEndPoolName'))]"
+              },
+              "frontendPort": "[variables('elbRule1frontendPort')]",
+              "backendPort": "[variables('elbRule1backendPort')]",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "enableTcpReset": true,
+              "loadDistribution": "Default",
+              "disableOutboundSnat": true,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('elbName'), variables('elbProbeName'))]"
+              }
+            }
+          },
+          {
+            "name": "[format('http-{0}', string(variables('elbRule2backendPort')))]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('elbName'), variables('elbFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/LoadBalancers/backendAddressPools', variables('elbName'), variables('elbBackEndPoolName'))]"
+              },
+              "frontendPort": "[variables('elbRule2frontendPort')]",
+              "backendPort": "[variables('elbRule2backendPort')]",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "enableTcpReset": true,
+              "loadDistribution": "Default",
+              "disableOutboundSnat": true,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('elbName'), variables('elbProbeName'))]"
+              }
+            }
+          },
+          {
+            "name": "[format('http-{0}', string(variables('elbRule3backendPort')))]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('elbName'), variables('elbFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/LoadBalancers/backendAddressPools', variables('elbName'), variables('elbBackEndPoolName'))]"
+              },
+              "frontendPort": "[variables('elbRule3frontendPort')]",
+              "backendPort": "[variables('elbRule3backendPort')]",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "enableTcpReset": true,
+              "loadDistribution": "Default",
+              "disableOutboundSnat": true,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('elbName'), variables('elbProbeName'))]"
+              }
+            }
+          },
+          {
+            "name": "[format('http-{0}', string(variables('elbRule4backendPort')))]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('elbName'), variables('elbFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/LoadBalancers/backendAddressPools', variables('elbName'), variables('elbBackEndPoolName'))]"
+              },
+              "frontendPort": "[variables('elbRule4frontendPort')]",
+              "backendPort": "[variables('elbRule4backendPort')]",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "enableTcpReset": true,
+              "loadDistribution": "Default",
+              "disableOutboundSnat": true,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('elbName'), variables('elbProbeName'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('elbProbeName')]",
+            "properties": {
+              "protocol": "Http",
+              "port": "[variables('elbprobePort')]",
+              "requestPath": "/",
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('elbPublicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('gwlbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers/backendAddressPools",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', variables('elbName'), variables('elbBackEndPoolName'))]",
+      "properties": {
+        "loadBalancerBackendAddresses": [
+          {
+            "name": "app1-address",
+            "properties": {
+              "virtualNetwork": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+              },
+              "ipAddress": "[variables('vmapp1IpAddress')]"
+            }
+          },
+          {
+            "name": "app2-address",
+            "properties": {
+              "virtualNetwork": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+              },
+              "ipAddress": "[variables('vmapp2IpAddress')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('elbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "nvaArray_nsg",
+        "count": "[length(range(0, variables('nvaCount')))]"
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].nsgName]",
+      "location": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH-rule",
+            "properties": {
+              "description": "allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 500,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "copy": {
+        "name": "nvaArray_pubIP",
+        "count": "[length(range(0, variables('nvaCount')))]"
+      },
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}-pubIP', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName)]",
+      "location": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].location]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "copy": {
+        "name": "nvaArray_NIC",
+        "count": "[length(range(0, variables('nvaCount')))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}-NIC', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName)]",
+      "location": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].location]",
+      "properties": {
+        "enableIPForwarding": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].enableIPForwarding]",
+        "enableAcceleratedNetworking": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].acceleratedNetworking]",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].privateIP]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pubIP', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vNetName, variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].subnetName)]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('gwlbName'), variables('gwlbBackEndPoolName'))]"
+                }
+              ]
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].nsgName)]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('gwlbName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nvaArray')[range(0, variables('nvaCount'))[range(0, variables('nvaCount'))[copyIndex()]]].nsgName)]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pubIP', variables('nvaArray')[range(0, variables('nvaCount'))[range(0, variables('nvaCount'))[copyIndex()]]].vmName))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1Config').name)]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "nvaArray_vm",
+        "count": "[length(range(0, variables('nvaCount')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-08-01",
+      "name": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName]",
+      "location": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].location]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].publisher]",
+            "offer": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].offer]",
+            "sku": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].sku]",
+            "version": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].version]"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "name": "[format('{0}-OS', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName)]",
+            "managedDisk": {
+              "storageAccountType": "[variables('vmStorageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-NIC', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-NIC', variables('nvaArray')[range(0, variables('nvaCount'))[range(0, variables('nvaCount'))[copyIndex()]]].vmName))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].scriptCommand))]",
+      "copy": {
+        "name": "nvaArray_customScript",
+        "count": "[length(range(0, variables('nvaCount')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-08-01",
+      "name": "[format('{0}/vmCustomScript', variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].vmName)]",
+      "location": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].scriptURL]"
+          ],
+          "commandToExecute": "[variables('nvaArray')[range(0, variables('nvaCount'))[copyIndex()]].scriptCommand]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('nvaArray')[range(0, variables('nvaCount'))[range(0, variables('nvaCount'))[copyIndex()]]].vmName)]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "vmArray_nsg",
+        "count": "[length(range(0, variables('vmCount')))]"
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].nsgName]",
+      "location": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH-rule",
+            "properties": {
+              "description": "allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "[format('Allow-{0}', variables('elbRule1backendPort'))]",
+            "properties": {
+              "description": "allow web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[string(variables('elbRule1backendPort'))]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "[format('Allow-{0}', variables('elbRule2backendPort'))]",
+            "properties": {
+              "description": "allow web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[string(variables('elbRule2backendPort'))]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 250,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "[format('Allow-{0}', variables('elbRule3backendPort'))]",
+            "properties": {
+              "description": "allow web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[string(variables('elbRule3backendPort'))]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "[format('Allow-{0}', variables('elbRule4backendPort'))]",
+            "properties": {
+              "description": "allow web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[string(variables('elbRule4backendPort'))]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 350,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "copy": {
+        "name": "vmArray_pubIP",
+        "count": "[length(range(0, variables('vmCount')))]"
+      },
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}-pubIP', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName)]",
+      "location": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].location]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "copy": {
+        "name": "vmArray_NIC",
+        "count": "[length(range(0, variables('vmCount')))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}-NIC', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName)]",
+      "location": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].location]",
+      "properties": {
+        "enableIPForwarding": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].enableIPForwarding]",
+        "enableAcceleratedNetworking": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].acceleratedNetworking]",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].privateIP]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pubIP', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vNetName, variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].subnetName)]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].nsgName)]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmarray')[range(0, variables('vmCount'))[range(0, variables('vmCount'))[copyIndex()]]].nsgName)]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pubIP', variables('vmarray')[range(0, variables('vmCount'))[range(0, variables('vmCount'))[copyIndex()]]].vmName))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1Config').name)]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "vmArray_vm",
+        "count": "[length(range(0, variables('vmCount')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-08-01",
+      "name": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName]",
+      "location": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].location]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].publisher]",
+            "offer": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].offer]",
+            "sku": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].sku]",
+            "version": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].version]"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "name": "[format('{0}-OS', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName)]",
+            "managedDisk": {
+              "storageAccountType": "[variables('vmStorageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-NIC', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-NIC', variables('vmarray')[range(0, variables('vmCount'))[range(0, variables('vmCount'))[copyIndex()]]].vmName))]"
+      ]
+    },
+    {
+      "condition": "[not(equals(variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].scriptCommand, 'SKIP_CustomScript'))]",
+      "copy": {
+        "name": "vmArray_customScript",
+        "count": "[length(range(0, variables('vmCount')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-08-01",
+      "name": "[format('{0}/vmCustomScript', variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].vmName)]",
+      "location": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].scriptURL]"
+          ],
+          "commandToExecute": "[variables('vmarray')[range(0, variables('vmCount'))[copyIndex()]].scriptCommand]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmarray')[range(0, variables('vmCount'))[range(0, variables('vmCount'))[copyIndex()]]].vmName)]"
+      ]
+    },
+    {
+      "condition": "[variables('deploymentBastion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('bastionPublicIPAddressName')]",
+      "location": "[variables('vnet2Config').location]",
+      "sku": {
+        "name": "[variables('bastionSkuName')]"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "condition": "[variables('deploymentBastion')]",
+      "type": "Microsoft.Network/bastionHosts",
+      "apiVersion": "2022-07-01",
+      "name": "[parameters('bastionName')]",
+      "location": "[variables('vnet2Config').location]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "disableCopyPaste": false,
+        "enableFileCopy": true,
+        "enableIpConnect": true,
+        "enableShareableLink": true,
+        "enableTunneling": true,
+        "ipConfigurations": [
+          {
+            "name": "IpConf",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Config').name, variables('bastionSubnetName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet2Config').name)]"
+      ]
+    }
+  ],
+  "outputs": {
+    "nginxScriptFileName": {
+      "type": "string",
+      "value": "[variables('nginxScriptFileName')]"
+    },
+    "nginxScriptURL": {
+      "type": "string",
+      "value": "[variables('nginxScriptURL')]"
+    },
+    "nginxCommand": {
+      "type": "string",
+      "value": "[variables('nginxCommand')]"
+    },
+    "nvaScriptFileName": {
+      "type": "string",
+      "value": "[variables('nvaScriptFileName')]"
+    },
+    "nvaScriptURL": {
+      "type": "string",
+      "value": "[variables('nvaScriptURL')]"
+    },
+    "nvaCommand": {
+      "type": "string",
+      "value": "[variables('nvaCommand')]"
+    }
+  }
+}

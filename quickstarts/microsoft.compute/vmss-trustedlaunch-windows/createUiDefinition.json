@@ -1,0 +1,212 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+      "resourceTypes": [
+          "microsoft.resources/resourcegroups"
+      ],
+      "basics": [
+          {
+              "name": "vmssName",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Vmss Name",
+              "defaultValue": "",
+              "toolTip": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended.",
+              "constraints": {
+                  "required": true,
+                  "regex": "^[a-z0-9A-Z-]{3,15}$",
+                  "validationMessage": "The virtual machine Scale Set Name must be between 3 and 15 characters long and contain letters, numbers and hyphens only."
+              },
+              "visible": true
+          },
+          {
+              "name": "adminUsername",
+              "type": "Microsoft.Compute.UserNameTextBox",
+              "label": "Username",
+              "toolTip": "Admin username for the virtual machine Scale set",
+              "osPlatform": "Windows",
+              "constraints": {
+                "required": true
+              },
+              "visible": true
+          },
+          {
+              "name": "adminPassword",
+              "type": "Microsoft.Common.PasswordBox",
+              "label": {
+                  "password": "Admin Password",
+                  "confirmPassword": "Confirm password"
+              },
+              "toolTip": "Admin password on all VMs.",
+              "constraints": {
+                  "required": true,
+                  "regex": "^(?=.*[A-Z])(?=.*[.!@#$%^&*()-_=+])(?=.*[0-9])(?=.*[a-z]).{12,40}$",
+                  "validationMessage": "Password must be at least 12 characters long, and contain upper case, lower case, number and symbol"
+              },
+              "options": {
+                  "hideConfirmation": false
+              },
+              "visible": true
+          }
+      ],
+      "steps": [
+        {
+          "name": "vmssConfig",
+          "label": "Virtual Machine Scale Set Settings",
+          "subLabel": {
+            "preValidation": "Configure the virtual machine Scale Set resources and settings",
+            "postValidation": "Done"
+          },
+          "bladeTitle": "Virtual Machine Scale Set Settings",
+          "elements": [
+            {
+              "name": "vmSku",
+              "type": "Microsoft.Compute.SizeSelector",
+              "label": "Vm Sku",
+              "toolTip": "Size of VMs in the VM Scale Set.",
+              "recommendedSizes": [
+                "Standard_D2s_v3"
+              ],
+              "osPlatform": "Windows",
+              "count": "1",
+              "visible": true
+            },
+            {
+              "name": "instanceCount",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Instance Count",
+              "defaultValue": "2",
+              "toolTip": "Number of VM instances (100 or less).",
+              "constraints": {
+                  "required": true,
+                  "regex": "^[0-9]{1,3}$",
+                  "validationMessage": "Number of VM instances (100 or less)."
+              },
+              "visible": true
+            },
+            {
+              "name": "sku",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Sku",
+              "defaultValue": "2022-datacenter-azure-edition",
+              "toolTip": "The Windows version for the VM. This will pick a fully patched image of this given Windows version.",
+              "constraints": {
+                  "required": false,
+                  "allowedValues": [
+                      {
+                          "label": "2019-DataCenter-GenSecond",
+                          "value": "2019-DataCenter-GenSecond"
+                      },
+                      {
+                          "label": "2016-DataCenter-GenSecond",
+                          "value": "2016-DataCenter-GenSecond"
+                      },
+                      {
+                          "label": "2022-datacenter-azure-edition",
+                          "value": "2022-datacenter-azure-edition"
+                      }
+                  ]
+              },
+              "visible": true
+            },
+            {
+              "name": "upgradePolicy",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Upgrade Policy",
+              "defaultValue": "Rolling",
+              "toolTip": "Upgrade Policy for VM Scale Set",
+              "constraints": {
+                  "required": false,
+                  "allowedValues": [
+                      {
+                          "label": "Rolling",
+                          "value": "Rolling"
+                      },
+                      {
+                          "label": "Manual",
+                          "value": "Manual"
+                      },
+                      {
+                          "label": "Automatic",
+                          "value": "Automatic"
+                      }
+                  ]
+              },
+              "visible": true
+            },
+            {
+              "name": "overProvision",
+              "type": "Microsoft.Common.CheckBox",
+              "label": "VMSS over-provision",
+              "toolTip": "Enable VMSS over-provisioning",
+              "constraints": {
+                "required": false
+              },
+              "visible": true
+            },
+            {
+              "name": "secureBoot",
+              "type": "Microsoft.Common.CheckBox",
+              "label": "Secure Boot setting",
+              "toolTip": "The Secure Boot setting of the virtual machine",
+              "constraints": {
+                "required": false
+              },
+              "visible": true
+            },
+            {
+              "name": "vTPM",
+              "type": "Microsoft.Common.CheckBox",
+              "label": "vTPM setting",
+              "toolTip": "The vTPM setting of the virtual machine",
+              "constraints": {
+                "required": false
+              },
+              "visible": true
+            },
+            {
+              "name": "publicIpAddress",
+              "type": "Microsoft.Network.PublicIpAddressCombo",
+              "label": {
+                  "publicIpAddress": "Public IP Address for the VM",
+                  "domainNameLabel": "DNS Prefix for the public IP Address"
+              },
+              "toolTip": {
+                  "publicIpAddress": "Public IP Address for the VM",
+                  "domainNameLabel": "DNS Prefix for the public IP Address, must be globally unique"
+              },
+              "defaultValue": {
+                "publicIpAddressName": "[toLower(concat(basics('vmssName'), '-ip-', take(replace(guid(), '-', ''), 6)))]",
+                "domainNameLabel": "[toLower(concat(basics('vmssName'), '-dn-', take(replace(guid(), '-', ''), 6)))]"
+              },
+              "options": {
+                  "hideExisting": true,
+                  "hideNone": true
+              },
+              "constraints": {
+                  "required": {
+                      "domainNameLabel": true
+                  }
+              }
+            }
+          ]
+        }
+      ],
+      "outputs": {
+          "vmSku": "[steps('vmssConfig').vmSku]",
+          "sku": "[steps('vmssConfig').sku]",
+          "vmssName": "[basics('vmssName')]",
+          "instanceCount": "[steps('vmssConfig').instanceCount]",
+          "adminUsername": "[basics('adminUsername')]",
+          "adminPassword": "[basics('adminPassword')]",
+          "location": "[location()]",
+          "overprovision": "[if(equals(steps('vmssConfig').overProvision, true), 'true', 'false')]",
+          "upgradePolicy": "[steps('vmssConfig').upgradePolicy]",
+          "dnsLabelPrefix": "[steps('vmssConfig').publicIpAddress.domainNameLabel]",
+          "publicIpName": "[steps('vmssConfig').publicIpAddress.name]",
+          "publicIPAllocationMethod": "[steps('vmssConfig').publicIpAddress.publicIPAllocationMethod]",
+          "publicIpSku": "[steps('vmssConfig').publicIpAddress.sku]"
+      }
+  }
+}

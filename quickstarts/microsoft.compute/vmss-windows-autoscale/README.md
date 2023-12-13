@@ -1,4 +1,15 @@
-# Autoscale a Windows VM Scale Set
+---
+description: This template allows you to deploy a simple VM Scale Set of Windows VMs using the latest patched version of Windows 2008-R2-SP1, 2012-Datacenter, or 2012-R2-Datacenter. These VMs are behind a load balancer with NAT rules for RDP connections. They also have Auto Scale integrated
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vmss-windows-autoscale
+languages:
+- json
+- bicep
+---
+# Deploy a VM Scale Set with Windows VMs and Auto Scale
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-windows-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-windows-autoscale/PublicDeployment.svg)
@@ -25,3 +36,4 @@ The Autoscale rules are configured as follows
 - if the Percent Processor Time is greater than 50% for 5 Minutes, then the scale out action (add more VM instances, one at a time) is triggered
 - once the scale out action is completed, the cool down period is 1 Minute
 
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, Microsoft.Insights/autoscalesettings, ChangeCount`

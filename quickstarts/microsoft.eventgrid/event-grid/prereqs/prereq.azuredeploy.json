@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.3.255.40792",
-      "templateHash": "8243481558500064980"
+      "version": "0.6.1.6515",
+      "templateHash": "1490062128727691181"
     }
   },
   "parameters": {
@@ -38,7 +38,6 @@
       }
     }
   },
-  "functions": [],
   "variables": {
     "appServicePlanName": "FunctionPlan",
     "appInsightsName": "AppInsights",
@@ -52,12 +51,11 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-09-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
+        "name": "Standard_LRS"
       },
       "kind": "StorageV2",
       "properties": {
@@ -80,7 +78,7 @@
     },
     {
       "type": "Microsoft.Insights/components",
-      "apiVersion": "2018-05-01-preview",
+      "apiVersion": "2020-02-02",
       "name": "[variables('appInsightsName')]",
       "location": "[parameters('location')]",
       "kind": "web",
@@ -113,11 +111,11 @@
           "appSettings": [
             {
               "name": "AzureWebJobsStorage",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value)]"
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
@@ -165,7 +163,7 @@
           ]
         },
         "files": {
-          "run.csx": "      #r \"Microsoft.Azure.EventGrid\"\n      using Microsoft.Azure.EventGrid.Models;\n      using Microsoft.Extensions.Logging;\n\n      public static void Run(EventGridEvent eventGridEvent, ILogger log)\n      {\n          log.LogInformation(eventGridEvent.Data.ToString());\n      }\n      "
+          "run.csx": "      #r \"Microsoft.Azure.EventGrid\"\r\n      using Microsoft.Azure.EventGrid.Models;\r\n      using Microsoft.Extensions.Logging;\r\n\r\n      public static void Run(EventGridEvent eventGridEvent, ILogger log)\r\n      {\r\n          log.LogInformation(eventGridEvent.Data.ToString());\r\n      }\r\n      "
         }
       },
       "dependsOn": [
@@ -202,12 +200,12 @@
       "identity": {
         "type": "UserAssigned",
         "userAssignedIdentities": {
-          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]": {}
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')))]": {}
         }
       },
       "properties": {
         "azPowerShellVersion": "5.4",
-        "scriptContent": "    param([string] $FunctionHostResourceId)\n\n    $ErrorActionPreference = 'Stop'\n\n    # Try to get the key. If this fails, retry up to 5 times.\n    $loopAttempts = 0\n    while ($loopAttempts -lt 5)\n    {\n      $listKeysOutput = Invoke-AzResourceAction -ResourceId $FunctionHostResourceId -Action listKeys -ApiVersion 2020-06-01 -Force\n      $eventGridKey = $listKeysOutput.systemKeys.eventgrid_extension\n      if ($null -ne $eventGridKey)\n      {\n        break\n      }\n\n      $loopAttempts += 1\n      Write-Output 'Event Grid key is not included in response. Sleeping for 5 seconds.'\n      Start-Sleep -Seconds 5\n    }\n\n    if ($null -eq $eventGridKey)\n    {\n      Write-Error 'Event Grid key could not be obtained.'\n      return 1\n    }\n\n    # Propagate to the deployment script output.\n    $DeploymentScriptOutputs = @{}\n    $DeploymentScriptOutputs['eventGridExtensionSystemKey'] = $eventGridKey\n    ",
+        "scriptContent": "    param([string] $FunctionHostResourceId)\r\n\r\n    $ErrorActionPreference = 'Stop'\r\n\r\n    # Try to get the key. If this fails, retry up to 5 times.\r\n    $loopAttempts = 0\r\n    while ($loopAttempts -lt 5)\r\n    {\r\n      $listKeysOutput = Invoke-AzResourceAction -ResourceId $FunctionHostResourceId -Action listKeys -ApiVersion 2020-06-01 -Force\r\n      $eventGridKey = $listKeysOutput.systemKeys.eventgrid_extension\r\n      if ($null -ne $eventGridKey)\r\n      {\r\n        break\r\n      }\r\n\r\n      $loopAttempts += 1\r\n      Write-Output 'Event Grid key is not included in response. Sleeping for 5 seconds.'\r\n      Start-Sleep -Seconds 5\r\n    }\r\n\r\n    if ($null -eq $eventGridKey)\r\n    {\r\n      Write-Error 'Event Grid key could not be obtained.'\r\n      return 1\r\n    }\r\n\r\n    # Propagate to the deployment script output.\r\n    $DeploymentScriptOutputs = @{}\r\n    $DeploymentScriptOutputs['eventGridExtensionSystemKey'] = $eventGridKey\r\n    ",
         "cleanupPreference": "OnSuccess",
         "retentionInterval": "PT4H",
         "arguments": "[format('-FunctionHostResourceId {0}/host/default', resourceId('Microsoft.Web/sites', parameters('appName')))]"

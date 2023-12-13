@@ -20,7 +20,7 @@ param trainingSubnetPrefix string = '192.168.0.0/24'
 @description('Scoring subnet address prefix')
 param scoringSubnetPrefix string = '192.168.1.0/24'
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
   name: virtualNetworkName
   location: location
   tags: tags

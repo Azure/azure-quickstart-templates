@@ -1,4 +1,14 @@
-# VM BOOTSTORM WORKLOAD FOR AZURE (CLOUD)
+---
+description: This template creates requested number of VMs and boot them simultaneously to calculate average VM boot time
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: bootstorm-vm-boot-time
+languages:
+- json
+---
+# VM bootstorm workload template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/bootstorm-vm-boot-time/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/bootstorm-vm-boot-time/PublicDeployment.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbootstorm-vm-boot-time%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbootstorm-vm-boot-time%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbootstorm-vm-boot-time%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fbootstorm-vm-boot-time%2Fazuredeploy.json)
 
 ## DESCRIPTION
 
@@ -85,4 +95,4 @@ VM Count: <Choose number of VMs to deploy>
 VM OS Sku: <Choose version of Windows to deploy>
 ```
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC`

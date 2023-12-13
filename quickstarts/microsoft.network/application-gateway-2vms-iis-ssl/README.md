@@ -1,4 +1,14 @@
-# Application Gateway with WAF, end to end SSL, two IIS servers and HTTP to HTTPS redirection
+---
+description: This template deploys an Application Gateway with WAF, end to end SSL and HTTP to HTTPS redirect on the IIS servers.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: application-gateway-2vms-iis-ssl
+languages:
+- json
+---
+# App Gateway with WAF, SSL, IIS and HTTPS redirection
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-2vms-iis-ssl/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-2vms-iis-ssl/PublicDeployment.svg)
@@ -75,6 +85,4 @@ The web page can be accessed by getting the IP or FQDN of the Application Gatewa
 
 Tags: `Application Gateway, IIS, SSL, Windows, DSC Extension`
 
-
-
-
+`Tags: Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Network/applicationGateways`

@@ -1,4 +1,14 @@
-﻿# Deployment of a Windows VM, configure windows featurtes like IIS, .Net framework etc., download application deployment packages, URL Rewrite & SSL configuration using DSC
+---
+description: This template allows you to deploy a Windows VM, configure windows features like IIS/Web Role, .Net, Custom loggin, windows auth, application initialization, download application deployment packages, URL Rewrite & SSL configuration using DSC and Azure Key Vault
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-win-iis-app-ssl
+languages:
+- json
+---
+# Deploy Windows VM configure windows featurtes SSL DSC
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-win-iis-app-ssl/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-win-iis-app-ssl/PublicDeployment.svg)
@@ -9,22 +19,22 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-win-iis-app-ssl/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-win-iis-app-ssl/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fvm-win-iis-app-ssl%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fvm-win-iis-app-ssl%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fvm-win-iis-app-ssl%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fvm-win-iis-app-ssl%2Fazuredeploy.json)
 <img src="images/deploytoazure.png"/>
 
 <img src="images/visualizebutton.png"/>
 
-To deploy this template using the scripts from the root of this repo: 
+To deploy this template using the scripts from the root of this repo:
 ```PowerShell
 
 .\Deploy-AzureResourceGroup.ps1 -StorageAccountName '<artifacts storage account name>' -ResourceGroupName '<Resource guroup name>' -ResourceGroupLocation '<RG location>' -TemplateFile .\azuredeploy.json -TemplateParametersFile .\azuredeploy.parameters.json -ArtifactStagingDirectory '.' -DSCSourceFolder '.\dsc' -UploadArtifacts
 ```
 
-This template deploys a  Windows VM, configure windows featurtes like IIS, .Net framework etc., download application deployment packages, URL Rewrite & SSL configuration using DSC. 
+This template deploys a  Windows VM, configure windows featurtes like IIS, .Net framework etc., download application deployment packages, URL Rewrite & SSL configuration using DSC.
 
-`Tags: Windows VM, IIS, Windows features, SSL, Certificate, Key Vault, Azure, Azure Key Vault, Application deployment`
+`Tags: Windows VM, IIS, Windows features, SSL, Certificate, Key Vault, Azure, Azure Key Vault, Application deployment, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Network/publicIPAddresses`
 
 ## Solution overview and deployed resources
 
@@ -33,7 +43,7 @@ This template will create the following Azure resources
 2) A NSG to allow http, https and rdp acces to the VM. The NSG is assigned to the subnet.<br/>
 3) A NIC, a Public IP and a VM with Windows Server 2012 R2<br/>
 4) The VM is deployed with a pfx certficate installed in the specified certificate store. The source of the certificate is stored in an Azure Key Vault<br/>
-5) The DSC script configures various windows fetaures like IIS/Web Role, IIS Management service and tools, .Net Framework 4.5, Custom loggin, request monitoring, http tracking, windows auth, application initialization etc.<br/> 
+5) The DSC script configures various windows fetaures like IIS/Web Role, IIS Management service and tools, .Net Framework 4.5, Custom loggin, request monitoring, http tracking, windows auth, application initialization etc.<br/>
 6) DSC downloads Web Deploy 3.6 & URL Rewrite 2.0 and installs the modules<br/>
 7) DSC downloads an application deployment package from an Azure Storage account and installs it in the default website <br/>
 8) DSC finds the certificate from the local store and create a 443 binding <br/>
@@ -41,7 +51,7 @@ This template will create the following Azure resources
 
 The following resources are deployed as part of the solution
 
-#### A VNet with a single subnet 
+#### A VNet with a single subnet
 The VNet and the subnet IP prefixes are defined in the variables section i.e. appVnetPrefix & appVnetSubnet1Prefix respectively. Set these two accrodingly.
 
 #### NSG to define the security rules
@@ -64,5 +74,4 @@ Script to upload the combined pfx certificate to an Azure Key Vault:(replace the
 $securepfxpwd = ConvertTo-SecureString –String '<strongpassword>' –AsPlainText –Force
 $cer = Import-AzureKeyVaultCertificate -VaultName '<Azurekeyvaultname>' -Name '<CertStoreName>' -FilePath '<C:\myCerts\www_custDomain_com.pfx>' -Password $securepfxpwd
 Set-AzureRmKeyVaultAccessPolicy -VaultName '<Azurekeyvaultname>' -UserPrincipalName '<udsarm@microsoft.com>' -PermissionsToCertificates all
-
 

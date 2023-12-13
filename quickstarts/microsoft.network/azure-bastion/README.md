@@ -1,4 +1,15 @@
-# Deploy Azure Bastion in an Azure Virtual Network
+---
+description: This template provisions Azure Bastion in a Virtual Network
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-bastion
+languages:
+- json
+- bicep
+---
+# Azure Bastion as a Service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-bastion/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-bastion/PublicDeployment.svg)
@@ -25,8 +36,10 @@ You can deploy these samples directly through the Azure Portal or by using scrip
 
 To deploy a sample using the Azure Portal, click the **Deploy to Azure** button.
 
-To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use scripts.
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/downloads/)) you can use scripts.
 
 ```
 Tags: ``bastion``
 ```
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/bastionHosts`

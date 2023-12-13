@@ -1,4 +1,14 @@
-# ACS Engine Swarm Mode
+---
+description: The Azure Container Service Engine (acs-engine) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with your choice of DC/OS, Kubernetes, Swarm Mode, or Swarm orchestrators. The input to the tool is a cluster definition. The cluster definition is very similar to (in many cases the same as) the ARM template syntax used to deploy a Microsoft Azure Container Service cluster.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: acsengine-swarmmode
+languages:
+- json
+---
+# Azure Container Service Engine (acs-engine) - Swarm Mode
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/swarm/acsengine-swarmmode/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/swarm/acsengine-swarmmode/PublicDeployment.svg)
@@ -15,6 +25,8 @@
 
 The Azure Container Service Engine (acs-engine) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with your choice of DC/OS, Kubernetes, Swarm Mode, or Swarm orchestrators. This template is generated using ACS Engine and will install a Docker Swarm Mode cluster.
 
-# For more details refer to ACS Engine: 
+# For more details refer to ACS Engine:
 
 https://github.com/Azure/acs-engine/blob/master/docs/swarmmode.md
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, Microsoft.Network/loadBalancers/inboundNatRules, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptForLinux`

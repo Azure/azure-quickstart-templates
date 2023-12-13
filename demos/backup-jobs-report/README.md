@@ -1,4 +1,14 @@
-# Create a Logic App to send information on your backup and restore jobs via email
+---
+description: Create a Logic App to send reports on your backup and restore jobs via email
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-jobs-report
+languages:
+- json
+---
+# Logic App to email reports on backup and restore jobs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-jobs-report/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-jobs-report/PublicDeployment.svg)
@@ -27,3 +37,5 @@ Following is the information that is exported by this Logic App:
   * List of backup and restore jobs in selected time range
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
+
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, Foreach, AppendToStringVariable, If, ApiConnection, InitializeVariable, string, array, Scope, Table, SetVariable, Microsoft.OperationalInsights/workspaces`

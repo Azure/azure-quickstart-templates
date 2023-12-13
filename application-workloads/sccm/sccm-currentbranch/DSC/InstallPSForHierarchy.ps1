@@ -30,7 +30,7 @@ while($CSConfiguration.$("UpgradeSCCM").Status -ne "Completed")
 }
 
 $Configuration.WaitingForCASFinsihedInstall.Status = 'Completed'
-$Configuration.WaitingForCASFinsihedInstall.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration.WaitingForCASFinsihedInstall.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
 $cmsourcepath = "\\$CSName\SMS_$CSRole\cd.latest"
@@ -110,6 +110,11 @@ else
 }
 $CMInstallationFile = "$cmsourcepath\SMSSETUP\BIN\X64\Setup.exe"
 $cmini > $CMINIPath 
+
+$Configuration.InstallSCCM.Status = 'Running'
+$Configuration.InstallSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Installing.." | Out-File -Append $logpath
 Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait
 
@@ -121,7 +126,7 @@ Remove-Item $CMINIPath
 $CSConfiguration = Get-Content -Path $CSConfigurationFile -ErrorAction Ignore | ConvertFrom-Json
 while($CSConfiguration.$("PSReadytoUse").Status -ne "Completed")
 {
-    Write-Verbose "Wait for step : [PSReadytoUse] finished running on $CSName, will try 60 seconds later..."
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Wait for step : [PSReadytoUse] finished running on $CSName, will try 60 seconds later..." | Out-File -Append $logpath
     Start-Sleep -Seconds 60
     $CSConfiguration = Get-Content -Path $CSConfigurationFile | ConvertFrom-Json
 }

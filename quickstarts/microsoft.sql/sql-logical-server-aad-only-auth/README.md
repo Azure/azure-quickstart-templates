@@ -1,4 +1,14 @@
-# Azure SQL logical server with Azure AD-only authentication
+---
+description: This template allows you to create SQL server in Azure with the Azure AD admin set and Azure AD-only authentication feature enabled.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-logical-server-aad-only-auth
+languages:
+- json
+---
+# SQL server with Azure AD-only authentication.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-logical-server-aad-only-auth/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-logical-server-aad-only-auth/PublicDeployment.svg)
@@ -15,7 +25,7 @@
 
 This template allows you to create an [Azure SQL logical server](https://docs.microsoft.com/azure/sql-database/sql-database-logical-servers) with [Azure AD-only authentication](https://docs.microsoft.com/azure/azure-sql/database/authentication-aad-only-auth) enabled.
 
-`Tags: Azure, SQL logical server, Azure AD-only authentication`
+`Tags: Azure, SQL logical server, Azure AD-only authentication, Microsoft.Sql/servers`
 
 ## Deployment steps
 

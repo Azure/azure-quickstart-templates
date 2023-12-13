@@ -1,4 +1,15 @@
-# Create Service Bus namespace with VirtualNetwork rule
+---
+description: This template enables you to deploy a Service Bus Premium namespace with Virtual Network rule
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: servicebus-namespace-vnet
+languages:
+- json
+- bicep
+---
+# Create a Service Bus namespace Virtual Network rule
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicebus/servicebus-namespace-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicebus/servicebus-namespace-vnet/PublicDeployment.svg)
@@ -15,5 +26,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.servicebus%2Fservicebus-namespace-vnet%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.servicebus%2Fservicebus-namespace-vnet%2Fazuredeploy.json)
 
-For information about using this template, see [Create a Service Bus Virtual Network rule for a Namespace](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-service-endpoints)
+For information about using this template, see [Create a Service Bus Virtual Network rule for a Namespace](https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints)
 
+`Tags: Microsoft.ServiceBus/namespaces, Microsoft.Network/virtualNetworks, Microsoft.ServiceBus/namespaces/virtualnetworkrules`

@@ -1,4 +1,14 @@
-﻿# Enterprise Azure Governance and Operations
+---
+description: Cloud adoption for an Enterprise, small or large, require responsible and efficient governance models to derive value from their cloud deployments. CloudWise (a code-name for the solution), is a composite solution available from Azure Partner QuickStarts, is an adoption enabler for Customers, System Integrators and Partners alike, that delivers a self-serviceable, automated governance and operations solution, focused on Optimizing Your Costs, Improve Your Application(s) Reliability, Reducing Business Risk. The solution highlights the core governance pillars of Visibility and Control.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-governance-operations-automation
+languages:
+- json
+---
+# Enterprise Governance-AppService, SQL DB, AD, OMS, Runbooks
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-governance-operations-automation/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-governance-operations-automation/PublicDeployment.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-governance-operations-automation%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-governance-operations-automation%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-governance-operations-automation%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-governance-operations-automation%2Fazuredeploy.json)
 
 ----------
 Table of Contents
@@ -42,34 +52,34 @@ Table of Contents
 ## Solution Overview
 Cloud adoption for an Enterprise, small or large, require responsible and efficient governance models to derive value from their cloud deployments.
 
-Cloudwise (a codename for the solution)a composite solution available from Azure Quick Starts, is an adoption enabler for Customers, System Integrators and Partners alike, that delivers a self-serviceable, automated governance solution, focused on 
+Cloudwise (a codename for the solution)a composite solution available from Azure Quick Starts, is an adoption enabler for Customers, System Integrators and Partners alike, that delivers a self-serviceable, automated governance solution, focused on
 
 * Optimizing Your Costs
-* Improve Your Application(s) Reliability 
-* Reducing Business Risk 
+* Improve Your Application(s) Reliability
+* Reducing Business Risk
 
 The solution highlights the core governance pillars of **Visibility** and **Control**.
 
-This composite solution includes 
+This composite solution includes
 
  - Custom Web Application [using Azure Graph, Azure Ratecard, Azure Usage and Azure Service APIs],
- - Visual Studio Application Insights 
- - Azure SQL Database, 
- - Azure Active Directory and Azure AD Application  
+ - Visual Studio Application Insights
+ - Azure SQL Database,
+ - Azure Active Directory and Azure AD Application
  - Microsoft Operationa Management Suite
     - Log Analytics,
-    - OMS custom dashboards 
+    - OMS custom dashboards
  - Azure Automation Runbooks [using OMSIngestion APIs]
  - Power BI Dashboards
- - Email Notifications 
+ - Email Notifications
 
-## Solution Template Overview  
+## Solution Template Overview
 
-**Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
+**Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
 
 Customers benefit greatly from solution templates because of the ease with which they can stand up enterprise-grade, fully integrated stacks on Azure. The extensive automation and testing of these solutions will allow them to spin up pre-production environments with minimal manual steps and customization.  Most importantly, customers now have the confidence to transition the solution into a fully production-ready environment with confidence.
 
-**Cloud Governance Pilot Solution Template 001** 
+**Cloud Governance Pilot Solution Template 001**
 *Disclaimer*: These are intended as **pilot solutions and not production ready**.
 Please [contact us](mailto:azuremarketplace@avyanconsulting.com) if you need further info or support on this solution.
 
@@ -86,15 +96,14 @@ In its current state, solution templates come with licenses built-in – there m
 
 <a name="prereqs"></a>
 ## Prerequisites
-* Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program ](https://azure.microsoft.com/en-us/marketplace/test-drives/)
+* Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program ](https://azure.microsoft.com/marketplace/test-drives/)
 * Azure user account with <span style="color:red;"> **Service Admin Role** </span>. This is required for creating an AD applicaition as well as a RunAs Service Role.
-* Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
-* Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
+* Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.
+* Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/cloud-platform/operations-management-suite))
 * Create an Automation account with RunAs Service principal. Unfortunately ARM templates don't allow for creating AD service principals as yet, so this step is currently a manual.
-    * Refer the blog [here](https://azure.microsoft.com/en-us/documentation/articles/automation-sec-configure-azure-runas-account/) for the steps.
+    * Refer the blog [here](https://azure.microsoft.com/documentation/articles/automation-sec-configure-azure-runas-account/) for the steps.
     * Creation of ServicePrincipal has a propensity to fail randomly. A basic verification whether it was successfully created is <span style="color:red;"> **mandatory** </span>
 * Capture the AutomationAccount name and the resourcegroup. You will need them as parameters when you 'Deploy to Azure'
- 
 
 ## Reference Architecture Diagram
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![[](images/CloudWiseArchitecture.png)](images/CloudWiseArchitecture.png)
@@ -125,7 +134,7 @@ You have now successfully deployed the application. You will have to do a few ad
 * Create the AD application by running the ServicePrincipal.ps1. You will need to supply subscriptionName and the deployed URL of the CloudWise App Service. <br />
     ***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
     ![](images/CreateADApp.png)
-* Currently, one has to manually start the scheduleIngestion Runbook. This is a dependency on ARM template as one cannot curently schedule a run of the runbook  
+* Currently, one has to manually start the scheduleIngestion Runbook. This is a dependency on ARM template as one cannot curently schedule a run of the runbook
     * Please navigate to your automation account. Click on Runbooks
     * Click open the scheduleIngestion runbook and click start to run the runbook. This step will kickstart the data ingestion to the OMS workspace specified.
     <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/StartIngestionRunbook.png)
@@ -139,7 +148,7 @@ This solution is planned to be made available as a product in Azure Marketplace 
 ## Support
 For any support-related issues or questions, please contact us for assistance.
 ```sh
-> azuremarketplace@avyanconsulting.com 
+> azuremarketplace@avyanconsulting.com
 ```
 
-
+`Tags: object, Microsoft.Sql/servers, databases, Microsoft.Web/serverfarms, Microsoft.Web/sites, config, SQLServer, extensions, Microsoft.Insights/autoscalesettings, ChangeCount, microsoft.insights/actionGroups, Microsoft.Insights/metricAlerts, Microsoft.Insights/components, Microsoft.Resources/deployments, microsoft.automation/automationAccounts/schedules, microsoft.automation/automationAccounts/jobSchedules, Microsoft.Automation/automationAccounts, runbooks, variables, string, modules, Microsoft.OperationalInsights/workspaces`

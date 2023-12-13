@@ -1,3 +1,13 @@
+---
+description: This template creates and configures a Syslog server with an onboarded Azure Sentinel Agent for a specified workspace.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: alsid-syslog-proxy
+languages:
+- json
+---
 # Alsid Syslog/Sentinel proxy
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/alsid-syslog-proxy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/alsid-syslog-proxy/PublicDeployment.svg)
@@ -45,4 +55,4 @@ Configure the agent to collect the logs.
 
 All of theses steps are showcased [here](https://www.youtube.com/watch?v=JwV1uZSyXM4&feature=youtu.be) as an example
 
-`Tags: alsid, syslog, sentinel, proxy`
+`Tags: alsid, syslog, sentinel, proxy, Microsoft.Compute/virtualMachines, extensions, CustomScript, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces`

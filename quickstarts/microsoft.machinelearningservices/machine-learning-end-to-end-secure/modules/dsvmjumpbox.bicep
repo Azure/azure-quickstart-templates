@@ -12,7 +12,7 @@ param networkSecurityGroupId string
 param virtualMachineName string
 
 @description('Virtual machine size')
-param vmSize string = 'Standard_DS3_v2'
+param vmSizeParameter string
 
 @description('Virtual machine admin username')
 param adminUsername string
@@ -24,7 +24,7 @@ param adminPassword string
 
 var aadLoginExtensionName = 'AADLoginForWindows'
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-03-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2022-07-01' = {
   name: '${virtualMachineName}-nic'
   location: location
   properties: {
@@ -50,7 +50,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: vmSize
+      vmSize: vmSizeParameter
     }
     storageProfile: {
       osDisk: {
@@ -97,7 +97,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   }
 }
 
-resource virtualMachineName_aadLoginExtensionName 'Microsoft.Compute/virtualMachines/extensions@2021-03-01' = {
+resource virtualMachineName_aadLoginExtensionName 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = {
   name: '${virtualMachine.name}/${aadLoginExtensionName}'
   location: location
   properties: {

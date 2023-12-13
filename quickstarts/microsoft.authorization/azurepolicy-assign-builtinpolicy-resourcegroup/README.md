@@ -1,3 +1,13 @@
+---
+description: This template assigns a built-in policy to an existing resource group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurepolicy-assign-builtinpolicy-resourcegroup
+languages:
+- json
+---
 # Assign a built-in policy to an existing resource group
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/azurepolicy-assign-builtinpolicy-resourcegroup/PublicLastTestDate.svg)
@@ -25,3 +35,5 @@ $policyDefinitionId = $(Get-AzPolicyDefinition  | Where-Object { $_.Properties.D
 ```
 
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/governance/policy/assign-policy-template) article.
+
+`Tags: Microsoft.Authorization/policyAssignments`

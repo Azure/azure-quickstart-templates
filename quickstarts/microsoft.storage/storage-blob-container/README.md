@@ -1,3 +1,14 @@
+---
+description: This template creates an Azure Storage account and a blob container.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-blob-container
+languages:
+- json
+- bicep
+---
 # Create an Azure Storage Account and Blob Container on Azure
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-blob-container/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-blob-container/PublicDeployment.svg)
@@ -24,8 +35,8 @@ If you are new to Azure Storage account, see:
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers`

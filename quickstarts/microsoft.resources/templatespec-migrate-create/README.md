@@ -1,3 +1,13 @@
+---
+description: This sample contains a script to easily migrate template gallery templates to templateSpec resources.  The template provide will deploy all templates that can be exported using the migration script.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: templatespec-migrate-create
+languages:
+- json
+---
 # Create TemplateSpecs from Template Gallery Templates
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/templatespec-migrate-create/PublicLastTestDate.svg)
@@ -19,7 +29,7 @@ The azuredeploy.json file in the repo simply creates a templateSpec from a linke
 
 ## TemplateSpecs
 
-See the [templateSpec documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
+See the [templateSpec documentation](https://docs.microsoft.com/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
 
 ## azuredeploy.json
 
@@ -29,7 +39,7 @@ This sample template will deploy a list of linked templates and is generic for t
 
 This sample also contains a PowerShell script that can be used to migrate or copy templates from the [Template Gallery in the Azure portal](https://portal.azure.com/#blade/HubsExtension/BrowseResourceBlade/resourceType/Microsoft.Gallery%2Fmyareas%2Fgalleryitems) to templateSpec resources in Azure.  TemplateSpecs will replace the Azure portal's Template Gallery that currently stores templates from the gallery.
 
-The migration script can create ARM Templates that will create the templateSpecs or directly create templateSpecs.  Additionally permissions can be set on the newly created templateSpecs or added the the ARM Templates.  Templates are not removed from the gallery and you can easily delete and create the files or templateSpecs that are created by simply removing the files or the resourceGroup.  
+The migration script can create ARM Templates that will create the templateSpecs or directly create templateSpecs.  Additionally permissions can be set on the newly created templateSpecs or added the the ARM Templates.  Templates are not removed from the gallery and you can easily delete and create the files or templateSpecs that are created by simply removing the files or the resourceGroup.
 
 When the script exports the templates to a file that will create a templateSpec, the azuredeploy.parameters.json file will be populated with the relative path of each file that's created, so they can easily be deployed as a group using azuredeploy.json.
 
@@ -56,3 +66,5 @@ A few notes to help with usage and understanding of the script and migration pro
 * If there are a large number of items in the gallery, the API response will be paged - this script does not follow the link to the next page so will only export from the first page.
 
 * Currently when templateSpecs are created from the script, the sort order of the template properties is changed by conversion to JSON so the source code in the resource itself may not look familiar.  To work around this, export the galleryItems to a file and manually deploy the templateSpecs from that file using the azuredeploy.json template in the sample.  The azuredeploy.parameters.json file created by this script can be used with azuredeploy.json to deploy all exported templates.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Resources/templateSpecs, versions, Microsoft.Compute/disks`

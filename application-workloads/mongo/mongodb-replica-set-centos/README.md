@@ -1,4 +1,14 @@
-# Install MongoDB Replica Set
+---
+description: This template deploys a MongoDB Replica Set on CentOS and enables Zabbix monitoring
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mongodb-replica-set-centos
+languages:
+- json
+---
+# MongoDB Replica Set
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-replica-set-centos/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-replica-set-centos/PublicDeployment.svg)
@@ -28,7 +38,7 @@ The nodes are under the same subnet 10.0.1.0/24. The primary node ip is 10.0.1.2
 - secondary node 2 ip: 10.0.1.5
 
 ##Important Notice
-Each VM of the replica set uses raid0 to improve performance. We use 4 data disks on each VM for raid0. The size of data disks(setup raid0) on each VM are determined by yourself. However, there is size of data disks limit per the VM size. Before you set the size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
+Each VM of the replica set uses raid0 to improve performance. We use 4 data disks on each VM for raid0. The size of data disks(setup raid0) on each VM are determined by yourself. However, there is size of data disks limit per the VM size. Before you set the size of data disks, please refer to the link https://azure.microsoft.com/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
 
 ##After deployment, you can do below to verify if the replica set really works or not:
 
@@ -41,7 +51,7 @@ Each VM of the replica set uses raid0 to improve performance. We use 4 data disk
   exit
   ```
 
-  Upper rs.status() command will show the replica set details. 
+  Upper rs.status() command will show the replica set details.
 
 2. You can also check the data replication status. SSH connect to primary node, execute below:
   ```
@@ -78,5 +88,4 @@ Each VM of the replica set uses raid0 to improve performance. We use 4 data disk
 - The replica set enables internal authentication. Check /etc/mongokeyfile for details.
 - More MongoDB usage details please visit MongoDB website https://www.mongodb.org/ .
 
-
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/virtualNetworks`

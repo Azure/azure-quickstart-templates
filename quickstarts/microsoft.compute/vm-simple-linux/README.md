@@ -1,4 +1,15 @@
-# Very simple deployment of a Linux Ubuntu VM
+---
+description: This template deploy a Ubuntu Server with a few options for the VM. You can provide the VM Name, OS Version, VM size, admin username and password. As default the VM size is Standard_B2s and O.S. Version is 18.04-LTS.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-simple-linux
+languages:
+- bicep
+- json
+---
+# Deploy a simple Ubuntu Linux VM 18.04-LTS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-linux/PublicDeployment.svg)
@@ -30,5 +41,5 @@ If you are new to template deployment, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create an Ubuntu Linux virtual machine using an ARM template](https://docs.microsoft.com/azure/virtual-machines/linux/quick-create-template)
 
-`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner`
+`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/publicIPAddresses, Microsoft.Compute/virtualMachines`
 

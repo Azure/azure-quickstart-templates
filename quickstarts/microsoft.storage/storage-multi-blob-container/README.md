@@ -1,4 +1,15 @@
-# Create an Azure storage account with multiple blob containers
+---
+description: Creates an Azure storage account and multiple blob containers. 
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-multi-blob-container
+languages:
+- json
+- bicep
+---
+# Create a storage account with multiple Blob containers
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-multi-blob-container/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-multi-blob-container/PublicDeployment.svg)
@@ -31,4 +42,4 @@ If you are new to template development, see:
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers`

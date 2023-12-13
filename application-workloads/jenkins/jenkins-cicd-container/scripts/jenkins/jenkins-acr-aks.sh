@@ -12,6 +12,7 @@ Arguments
   --repository|-rr                [Required] : Repository targeted by the pipeline
   --resource_group_name|-gn       [Required] : Name of the resource group which contains the AKS
   --cluster_name|-cn              [Required] : Name of the AKS cluster
+  --cluster_version|-cv           [Required] : Version of the AKS cluster
   --jenkins_fqdn|-jf              [Required] : Jenkins FQDN
   --service_principal_id|-spid    [Required] : The service principal ID.
   --service_principal_secret|-ss  [Required] : The service principal secret.
@@ -82,6 +83,10 @@ do
       cluster_name="$1"
       shift
       ;;
+    --cluster_version|-cv)
+      cluster_version="$1"
+      shift
+      ;;
     --jenkins_fqdn|-jf)
       jenkins_fqdn="$1"
       shift
@@ -136,10 +141,10 @@ throw_if_empty --subscription_id $subscription_id
 throw_if_empty --tenant_id $tenant_id
 throw_if_empty --resource_group_name $resource_group_name
 throw_if_empty --cluster_name $cluster_name
-throw_if_empty --cluster_name $mongodb_uri
+throw_if_empty --mongodb_uri $mongodb_uri
 
 #install jenkins
-run_util_script "scripts/jenkins/install_jenkins.sh" -jf "${jenkins_fqdn}" -spid "${service_principal_id}" -ss "${service_principal_secret}" -subid "${subscription_id}" -tid "${tenant_id}" -al "${artifacts_location}" -st "${artifacts_location_sas_token}"
+run_util_script "scripts/jenkins/install_jenkins.sh" -jf "${jenkins_fqdn}" -cn "${cluster_name}" -cv "${cluster_version}" -spid "${service_principal_id}" -ss "${service_principal_secret}" -subid "${subscription_id}" -tid "${tenant_id}" -al "${artifacts_location}" -st "${artifacts_location_sas_token}"
 
 #install git
 sudo apt-get install git --yes

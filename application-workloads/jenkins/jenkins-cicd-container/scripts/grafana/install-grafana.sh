@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Command Line Opts
-GRAFANA_VERSION="4.5.2"
+GRAFANA_VERSION="8.3.4"
 GRAFANA_PORT="3000"
 
 
@@ -53,10 +53,10 @@ done
 install_grafana()
 {
     log "Downloading grafana with version ${GRAFANA_VERSION}"
-    local DOWNLOAD_URL="https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_${GRAFANA_VERSION}_amd64.deb"
+    local DOWNLOAD_URL="https://dl.grafana.com/enterprise/release/grafana-enterprise_${GRAFANA_VERSION}_amd64.deb"
     sudo apt-get install -y adduser libfontconfig
     wget "${DOWNLOAD_URL}"
-    sudo dpkg -i "grafana_${GRAFANA_VERSION}_amd64.deb"
+    sudo dpkg -i "grafana-enterprise_${GRAFANA_VERSION}_amd64.deb"
     systemctl daemon-reload
 }
 
@@ -84,4 +84,3 @@ configure_admin_password()
 install_grafana
 configure_admin_password
 start_grafana
-install_azure_monitor_plugin

@@ -38,6 +38,9 @@ param dsvmJumpboxPassword string
 @description('Enable public IP for Azure Machine Learning compute nodes')
 param amlComputePublicIp bool = true
 
+@description('VM size for the default compute cluster')
+param amlComputeDefaultVmSize string = 'Standard_DS3_v2'
+
 // Variables
 var name = toLower('${prefix}')
 
@@ -75,7 +78,7 @@ module keyvault 'modules/keyvault.bicep' = {
     keyvaultName: 'kv-${name}-${uniqueSuffix}'
     keyvaultPleName: 'ple-${name}-${uniqueSuffix}-kv'
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     tags: tags
   }
 }
@@ -89,7 +92,7 @@ module storage 'modules/storage.bicep' = {
     storagePleFileName: 'ple-${name}-${uniqueSuffix}-st-file'
     storageSkuName: 'Standard_LRS'
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     tags: tags
   }
 }
@@ -101,7 +104,7 @@ module containerRegistry 'modules/containerregistry.bicep' = {
     containerRegistryName: 'cr${name}${uniqueSuffix}'
     containerRegistryPleName: 'ple-${name}-${uniqueSuffix}-cr'
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     tags: tags
   }
 }
@@ -111,6 +114,7 @@ module applicationInsights 'modules/applicationinsights.bicep' = {
   params: {
     location: location
     applicationInsightsName: 'appi-${name}-${uniqueSuffix}'
+    logAnalyticsWorkspaceName: 'ws-${name}-${uniqueSuffix}'
     tags: tags
   }
 }
@@ -136,12 +140,13 @@ module azuremlWorkspace 'modules/machinelearning.bicep' = {
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
     computeSubnetId: '${vnet.outputs.id}/subnets/snet-training'
     aksSubnetId: '${vnet.outputs.id}/subnets/snet-scoring'
-    virtualNetworkId: '${vnet.outputs.id}'
+    virtualNetworkId: vnet.outputs.id
     machineLearningPleName: 'ple-${name}-${uniqueSuffix}-mlw'
 
     // compute
     amlComputePublicIp: amlComputePublicIp
     mlAksName: 'aks-${name}-${uniqueSuffix}'
+    vmSizeParam: amlComputeDefaultVmSize
   }
   dependsOn: [
     keyvault
@@ -160,7 +165,8 @@ module dsvm 'modules/dsvmjumpbox.bicep' = if (deployJumphost) {
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
     adminUsername: dsvmJumpboxUsername
     adminPassword: dsvmJumpboxPassword
-    networkSecurityGroupId: nsg.outputs.networkSecurityGroup 
+    networkSecurityGroupId: nsg.outputs.networkSecurityGroup
+    vmSizeParameter: amlComputeDefaultVmSize
   }
 }
 
