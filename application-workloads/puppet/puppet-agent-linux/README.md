@@ -25,7 +25,7 @@ languages:
 
 [CustomScript Extension](https://github.com/Azure/azure-linux-extensions/tree/master/CustomScript) allows the owner of the Azure Virtual Machines to run customized scripts in the VM.
 
-This template installs the Puppet Agent in a Linux VM using a shell script that is stored in public storage(e.g. Github or a public container in Azure blob storage).
+This template installs the Puppet Agent in a Linux VM using a shell script that is stored in public storage(e.g. GitHub or a public container in Azure blob storage).
 
 ## Deploy
 
