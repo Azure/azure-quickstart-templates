@@ -13,7 +13,9 @@
 
 This set of templates demonstrates how to set up Azure AI Studio with the basic setup, meaning with public internet access enabled, Microsoft-managed keys for encryption and _Microsoft_-managed identity configuration for the AI resource.
 
-Azure AI Studio is built on Azure Machine Learning as the primary resource provider and takes a hard dependency on the Cognitive Services resource provider to surface model-as-a-service endpoints for Azure Speech, Azure Content Safety, And Azure OpenAI service.
+Azure AI Studio is built on Azure Machine Learning as the primary resource provider and takes a hard dependency on the Cognitive Services (Azure AI Services) resource provider to surface model-as-a-service endpoints for Azure Speech, Azure Content Safety, And Azure OpenAI service.
+
+An 'Azure AI resource' is implemented as special kind of 'Azure Machine Learning workspace', that is kind = "hub".
 
 ## Resources
 
@@ -24,8 +26,8 @@ Azure AI Studio is built on Azure Machine Learning as the primary resource provi
 | `Microsoft.KeyVault/vaults` | An Azure Key Vault instance associated to the Azure Machine Learning workspace |
 | `Microsoft.Storage/storageAccounts` | An Azure Storage instance associated to the Azure Machine Learning workspace |
 | `Microsoft.ContainerRegistry/registries` | An Azure Container Registry instance associated to the Azure Machine Learning workspace |
-| `Microsoft.MachineLearningServices/workspaces` | An Azure Machine Learning workspace instance |
-| `Microsoft.CognitiveServices/accounts` | An Azure Cognitive Services account as the model-as-a-service endpoint provider |
+| `Microsoft.MachineLearningServices/workspaces` | An Azure AI resource (Azure Machine Learning RP workspace of kind 'hub') |
+| `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
 
 ## Learn more
 
