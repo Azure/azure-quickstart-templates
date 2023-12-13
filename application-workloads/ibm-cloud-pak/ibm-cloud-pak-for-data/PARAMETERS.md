@@ -1,4 +1,5 @@
-### Description of all the parameters used in the AzureDeploy.json
+# Description of all the parameters used in the AzureDeploy.json
+
 | Parameters             | Default       | Description          |
 | --------------------- | :-----------: | -------------------- |
 | `aadClientId` | - | Follow steps [here](https://github.ibm.com/IIG/cpd_terraform/tree/master/azure#steps-to-deploy). The `appId` in the json after the `az ad sp create-for-rbac` command goes here. |
@@ -17,12 +18,12 @@
 | `masterSubnetPrefix` | 10.0.1.0/24 | Address space to deploy control plane nodes in. |
 | `workerSubnetName` | worker-subnet | Subnet Name to deploy control plane nodes in. |
 | `workerSubnetPrefix` | 10.0.2.0/24 | Address space to deploy compute nodes in. |
-| `singleZoneOrMultiZone` | multi | Deploy Openshift Cluster into a single zone or a multi-zone. If multi is selected, ensure the region selected supports Availability Zone. See [link](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#services-support-by-region) |
+| `singleZoneOrMultiZone` | multi | Deploy Openshift Cluster into a single zone or a multi-zone. If multi is selected, ensure the region selected supports Availability Zone. See [link](https://docs.microsoft.com/azure/availability-zones/az-overview#services-support-by-region) |
 | `masterInstanceCount` | 3 | Number of control plane nodes |
 | `workerInstanceCount` | 3 | Number of compute nodes |
-| `bastionVmSize` | Standard_D8_v3 | Default has 8vcpus and 32gb RAM. Use [Azure VM sizing](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes) for more information. |
-| `masterVmSize` | Standard_D8_v3 | Default has 8vcpus and 32gb RAM. Use [Azure VM sizing](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes) for more information. |
-| `workerVmSize` | Standard_D16_v3 | Default has 16vcpus and 64gb RAM. Use [Azure VM sizing](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes) for more information. |
+| `bastionVmSize` | Standard_D8_v3 | Default has 8vcpus and 32gb RAM. Use [Azure VM sizing](https://docs.microsoft.com/azure/virtual-machines/linux/sizes) for more information. |
+| `masterVmSize` | Standard_D8_v3 | Default has 8vcpus and 32gb RAM. Use [Azure VM sizing](https://docs.microsoft.com/azure/virtual-machines/linux/sizes) for more information. |
+| `workerVmSize` | Standard_D16_v3 | Default has 16vcpus and 64gb RAM. Use [Azure VM sizing](https://docs.microsoft.com/azure/virtual-machines/linux/sizes) for more information. |
 | `pullSecret` | - | The pull secret that you obtained from the [Pull Secret](https://cloud.redhat.com/openshift/install/pull-secret) page on the Red Hat OpenShift Cluster Manager site. You use this pull secret to authenticate with the services that are provided by the included authorities, including Quay.io, which serves the container images for OpenShift Container Platform components. |
 | `enableFips` | true | If FIPS mode is enabled, the Red Hat Enterprise Linux CoreOS (RHCOS) machines that OpenShift Container Platform runs on bypass the default Kubernetes cryptography suite and use the cryptography modules that are provided with RHCOS instead. |
 | `adminUsername` | core | Admin username for the bootnode |

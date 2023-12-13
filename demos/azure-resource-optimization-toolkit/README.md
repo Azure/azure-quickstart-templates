@@ -1,4 +1,14 @@
-﻿# Azure Resource Optimization(ARO) Toolkit
+---
+description: The Azure Resource Optimization Toolkit is a decentralized, native Azure solution using serverless technologies to optimize Azure resources on your subscription.  Optimization happens automatically on your subscription once you enable or create your own schedule, including on new resources. This is an Azure Automation account with preconfigured runbooks and schedules you can utilize on your subscription to start saving money.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-resource-optimization-toolkit
+languages:
+- json
+---
+# Azure Resource Optimization (ARO) Toolkit
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/PublicDeployment.svg)
@@ -8,12 +18,12 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/BestPracticeResult.svg)
 ![Cred Scan Check]( https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/CredScanResult.svg)
-    
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
 
-Deploy an Azure Automation account with preconfigured runbooks and schedules to your subscription and start saving money.  Azure resource optimization happens automatically on your subscription once you enable or create your own schedule including on new resources!  
+Deploy an Azure Automation account with preconfigured runbooks and schedules to your subscription and start saving money.  Azure resource optimization happens automatically on your subscription once you enable or create your own schedule including on new resources!
 
 ***Objective:*** Provide decentralized automation capabilities for customers who want to reduce their costs.  Features include:
 
@@ -43,7 +53,7 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
 
 1. Click on “**Automation Accounts**” from the service blade
 
-![alt text](images/AROToolkit/image10.png "Services")  
+![alt text](images/AROToolkit/image10.png "Services")
 
 1. Select the Azure Automation Account which you deployed
 
@@ -78,7 +88,7 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
 
 ## **Step 3 Enable Azure Automation Schedules**
 
-By Default, all default schedules deployed with the AROToolkit are disabled.  Based upon which optimization you wish to perform, you will need to enable the corresponding schedule.  To learn more about which schedule is right for you, please refer to Appendix -B. 
+By Default, all default schedules deployed with the AROToolkit are disabled.  Based upon which optimization you wish to perform, you will need to enable the corresponding schedule.  To learn more about which schedule is right for you, please refer to Appendix -B.
 
 1. Navigate to Azure portal and select your subscription (if you have
     more than one)
@@ -147,7 +157,7 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 1. Click on “**Add a schedule**”
 
      ![alt text](images/AROToolkit/image20.png "Add Schedule")
-  
+
 1. Click on “**Link a schedule to your runbook**”
 
      ![alt text](images/AROToolkit/image21.png "Link Schedule")
@@ -174,7 +184,7 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 This is a list of each of the Default Schedules which will be deployed with the AROToolkit.   It is not recommended that you modify the Default Schedules.  If a different schedule is required,  you should create a custom schedule as outlined in Appendix A.  By default each of these schedules are disabled, and is up to you to enable per your requirements.
 
-It is not recommended to enable ALL schedules as there would an overlap on which schedule performs an action, rather it would be best to determine which optimizations you wish to perform and choose accordingly. 
+It is not recommended to enable ALL schedules as there would an overlap on which schedule performs an action, rather it would be best to determine which optimizations you wish to perform and choose accordingly.
 
 **ScheduleName** | **Time and Frequency** | **What it does**
 --- | --- | ---
@@ -187,7 +197,7 @@ ScheduledSnooze_StopVM | 1:00AM (UTC), Every Day | Runs the ScheduledSnooze_Pare
 
 ## **Appendix – C : All about each Runbook**
 
-This is a list of runbooks that will be deployed with the AROToolkit.  It is not recommended that you make changes to the runbook code, as any changes made will be lost if you use the AROToolkit_AutoUpdate runbook. 
+This is a list of runbooks that will be deployed with the AROToolkit.  It is not recommended that you make changes to the runbook code, as any changes made will be lost if you use the AROToolkit_AutoUpdate runbook.
 
 ***Pro Tip:*** Don’t directly run any runbook with the name “Child”
 appended to the end.
@@ -201,7 +211,7 @@ appended to the end.
   AutoSnooze\_StopVM\_Child | WebHookData | Called from parent runbook only. Alert rules call this runbook and it does the work of stopping the VM.
   Bootstrap\_Main | none | Used one time to set-up bootstrap configurations such as Run As account and webhookURI which is typically not accessible from ARM. This runbook will be removed automatically if deployment has gone successfully.
   DeleteResourceGroup\_Child | RGName | Called from the parent runbook only. Deletes a single resource group.
-  DeleteResourceGroups\_Parent | RGNames: Comma separated list of resource groups.  WhatIf: True or False |Deletes resource groups in bulk. Typically an ad hoc subscription clean-up method. <br> WhatIf: True -> Shows which resource groups will be targeted. <br> WhatIf: False -> Deletes those targete resource groups.  
+  DeleteResourceGroups\_Parent | RGNames: Comma separated list of resource groups.  WhatIf: True or False |Deletes resource groups in bulk. Typically an ad hoc subscription clean-up method. <br> WhatIf: True -> Shows which resource groups will be targeted. <br> WhatIf: False -> Deletes those targete resource groups.
   DisableAllOptimizations | None | Turns off all alert rules and default schedules. Use this when you want to ensure all resources are available for an event like quarter close or Black Friday.
   ScheduledSnooze\_Child | VMName: <br> Action: Stop or Start <br> ResourceGroupName: | Called from parent runbook only. Does the actual execution of stop or start for scheduled snooze.
   ScheduledSnooze\_Parent | Action: Stop or Start <br> WhatIF: True or False | This will take effect on all VMs in the subscription unless you edit the “External\_ResourceGroupNames” which will restrict it to only execute on these target resource groups. You can also exclude specific VMs by updating the “External\_ExcludeVMNames” variable. WhatIf behaves the same as in other runbooks.
@@ -231,3 +241,5 @@ to the trouble of provisioning a service account to deploy ARO Toolkit.
      ![alt text](images/AROToolkit/image25.png "Bootstrap")
 
 1. After this runs successfully, you should be all set up
+
+`Tags: PowerShell, Microsoft.Automation/automationAccounts, Microsoft.Automation/automationAccounts/variables, string, Microsoft.Automation/automationAccounts/credentials, Microsoft.Automation/automationAccounts/modules, Microsoft.Automation/automationAccounts/runbooks, Microsoft.Automation/automationAccounts/schedules, Microsoft.Automation/automationAccounts/jobSchedules`

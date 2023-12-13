@@ -19,7 +19,7 @@ param CDNSku string = 'Standard_Microsoft'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   sku: {
@@ -27,7 +27,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   name: endpointName
   location: location
@@ -62,7 +62,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'RemoteAddress'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleRemoteAddressConditionParameters'
+                typeName: 'DeliveryRuleRemoteAddressConditionParameters'
                 operator: 'GeoMatch'
                 matchValues: [
                   'US'
@@ -74,7 +74,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'ModifyResponseHeader'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters'
+                typeName: 'DeliveryRuleHeaderActionParameters'
                 headerAction: 'Overwrite'
                 headerName: 'X-CLIENT-COUNTRY'
                 value: 'US'
@@ -89,7 +89,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'RemoteAddress'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleRemoteAddressConditionParameters'
+                typeName: 'DeliveryRuleRemoteAddressConditionParameters'
                 operator: 'IPMatch'
                 matchValues: [
                   '0.0.0.0/0'
@@ -101,7 +101,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'ModifyResponseHeader'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters'
+                typeName: 'DeliveryRuleHeaderActionParameters'
                 headerAction: 'Overwrite'
                 headerName: 'X-CLIENT-IP-VERSION'
                 value: 'IPv4'
@@ -116,7 +116,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'RemoteAddress'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleRemoteAddressConditionParameters'
+                typeName: 'DeliveryRuleRemoteAddressConditionParameters'
                 operator: 'IPMatch'
                 matchValues: [
                   '::0/0'
@@ -128,7 +128,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'ModifyResponseHeader'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters'
+                typeName: 'DeliveryRuleHeaderActionParameters'
                 headerAction: 'Overwrite'
                 headerName: 'X-CLIENT-IP-VERSION'
                 value: 'IPv6'

@@ -1,3 +1,13 @@
+---
+description: This template deploys a Virtual Network with 3 subnets, 3 Network Security Groups and appropriate security rules to make the FrontEnd subnet a DMZ
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: nsg-dmz-in-vnet
+languages:
+- json
+---
 # Multi tier VNet with NSGs and DMZ
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nsg-dmz-in-vnet/PublicLastTestDate.svg)
@@ -32,3 +42,5 @@ Each NSG is then associated with a subnet:
 * _DBSubnet_ to _DB_NSG_
 
 It creates DMZ rules for the App subnet to expose endpoints to the Internet. It secures the App subnet and the Database subnet with appropriate rules. It blocks Outbound Internet access to VMs in the App and Database subnets. It opens up the Database Subnet only on port 1433 the App Subnet.
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks`

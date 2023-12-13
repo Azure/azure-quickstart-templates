@@ -1,4 +1,14 @@
-# Install Mongo DB on a CentOS Virtual Machine using Custom Script Linux Extension
+---
+description: This template deploys Mongo DB on a CentOS Virtual Machine. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mongodb-on-centos
+languages:
+- json
+---
+# Install MongoDB on CentOS with Custom Script Linux Extension
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-on-centos/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-on-centos/PublicDeployment.svg)
@@ -16,3 +26,5 @@
 This template deploys Mongo DB on a CentOS Virtual Machine. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
 
 Note: Cent OS disables Username/Password on Azure SKUs by default. This template will be updated with SSH Keys for the VMs soon.
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

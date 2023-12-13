@@ -1,0 +1,236 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.12.40.16777",
+      "templateHash": "8801660400378332520"
+    }
+  },
+  "parameters": {
+    "accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Batch account"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2",
+      "metadata": {
+        "description": "Name of the VM SKU used by the Batch pool"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources - Azure Batch simplified node communication pools available in specific region, refer the documenation to select the supported region for this deployment. For more information see https://docs.microsoft.com/en-us/azure/batch/simplified-compute-node-communication#supported-regions"
+      }
+    }
+  },
+  "variables": {
+    "nodeManagementPrivateEndpointName": "[format('{0}-node-pe', parameters('accountName'))]",
+    "privateDnsZoneName": "privatelink.batch.azure.com",
+    "subnetName": "default",
+    "poolName": "no-public-ip-pool",
+    "nsgName": "deny-internet-outbound"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', parameters('vnetName'), variables('subnetName'))]",
+      "properties": {
+        "addressPrefix": "10.0.0.0/24",
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        },
+        "privateEndpointNetworkPolicies": "Disabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Batch/batchAccounts",
+      "apiVersion": "2022-10-01",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "publicNetworkAccess": "Enabled",
+        "networkProfile": {
+          "accountAccess": {
+            "defaultAction": "Deny",
+            "ipRules": [
+              {
+                "action": "Allow",
+                "value": "0.0.0.0/0"
+              }
+            ]
+          },
+          "nodeManagementAccess": {
+            "defaultAction": "Deny"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "DenyInternetOutbound",
+            "properties": {
+              "access": "Deny",
+              "protocol": "*",
+              "direction": "Outbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "Internet",
+              "destinationPortRange": "*",
+              "priority": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-05-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateDnsZoneName'), parameters('vnetName'))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('nodeManagementPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[variables('nodeManagementPrivateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Batch/batchAccounts', parameters('accountName'))]",
+              "groupIds": [
+                "nodeManagement"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('subnetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Batch/batchAccounts', parameters('accountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('subnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', variables('nodeManagementPrivateEndpointName'), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "private-dns-zone-integration",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('nodeManagementPrivateEndpointName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Batch/batchAccounts/pools",
+      "apiVersion": "2022-10-01",
+      "name": "[format('{0}/{1}', parameters('accountName'), variables('poolName'))]",
+      "properties": {
+        "vmSize": "[parameters('vmSize')]",
+        "targetNodeCommunicationMode": "Simplified",
+        "interNodeCommunication": "Disabled",
+        "taskSlotsPerNode": 4,
+        "taskSchedulingPolicy": {
+          "nodeFillType": "Pack"
+        },
+        "deploymentConfiguration": {
+          "virtualMachineConfiguration": {
+            "imageReference": {
+              "publisher": "canonical",
+              "offer": "ubuntuserver",
+              "sku": "18.04-lts",
+              "version": "latest"
+            },
+            "nodeAgentSkuId": "batch.node.ubuntu 18.04"
+          }
+        },
+        "networkConfiguration": {
+          "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('subnetName'))]",
+          "publicIPAddressConfiguration": {
+            "provision": "NoPublicIPAddresses"
+          }
+        },
+        "scaleSettings": {
+          "fixedScale": {
+            "targetDedicatedNodes": 1,
+            "targetLowPriorityNodes": 0,
+            "resizeTimeout": "PT15M"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Batch/batchAccounts', parameters('accountName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('nodeManagementPrivateEndpointName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('subnetName'))]"
+      ]
+    }
+  ]
+}

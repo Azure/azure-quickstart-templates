@@ -1,4 +1,14 @@
-﻿#  PubNub Realtime Gateway for Azure Event Hubs
+---
+description: The PubNub Realtime Gateway for Azure provides a realtime data stream bridge between the PubNub Data Stream Network and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure!
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: pubnub-eventhub-bridge
+languages:
+- json
+---
+# PubNub Realtime Gateway for Azure Event Hubs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/pubnub/pubnub-eventhub-bridge/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/pubnub/pubnub-eventhub-bridge/PublicDeployment.svg)
@@ -26,7 +36,7 @@ Then this is the ARM template for you!
 Tags: ``Event Hubs, Event Hub, Realtime, PubNub, PubSub, Pub/Sub, Publish/Subscribe, Node.js, Web Jobs``
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fpubnub%2Fpubnub-eventhub-bridge%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>    
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fpubnub%2Fpubnub-eventhub-bridge%2Fazuredeploy.json">
@@ -78,7 +88,7 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 	Going down the list...
 
 3. Choose the *Subscription* you wish to associated this deployment with.
-4. Create a new, or use an existing *Resource Group* to deploy this template to.  
+4. Create a new, or use an existing *Resource Group* to deploy this template to.
 
 	**NOTE:** It's suggested to use a unique Resource Group if it's your first time playing with this template... that way if you need to experiment with different configurations, deleting the entire Resource Group is a quick way to delete all the components so you can start over from the beginning with a clean slate.
 
@@ -86,7 +96,7 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
 	
-6. For the *Event Hub Namespace*, create a unique Namespace.  It's suggested to replace the "pn-" prefix with your own unique prefix, such as your company name, and add a "-suffix" at the end, where the suffix is also unique.  
+6. For the *Event Hub Namespace*, create a unique Namespace.  It's suggested to replace the "pn-" prefix with your own unique prefix, such as your company name, and add a "-suffix" at the end, where the suffix is also unique.
 	
 	**NOTE:**	For example, if your company was widgets.com: widgetscom-eventhub-1fba54e9-vegaswolfpack.  You don't need to follow this exact pattern, but be sure its completely unique!  Be sure to stick to dashes as seperators, or refer to Azure documentation for the list of legal chars in an Event Hub Namespace string.
 	
@@ -137,7 +147,7 @@ For this reason, if you plan to implement this bridge for an enterprise / produc
 The following tools can give you a 360-degree view of your traffic as it enters the ingress and egress PubNub Channels and Event Hubs.  Together they are useful for tracing your data through the system.
 
 ### Monitoring PubNub Traffic
-The PubNub Debug Console is a handy tool to use to monitor PubNub traffic.  
+The PubNub Debug Console is a handy tool to use to monitor PubNub traffic.
 
 1. Connect to <a href="https://www.pubnub.com/console">https://www.pubnub.com/console</a>
 2. Enter the PubNub Subscribe and Publish Keys
@@ -145,7 +155,7 @@ The PubNub Debug Console is a handy tool to use to monitor PubNub traffic.
 4. Connect
 5. Repeat Steps 1-4, but on step 3, enter the PubNub Egress Channel
 
-You can now monitor all incoming and outgoing PubNub traffic traversing through the PubNub/Azure gateway.  
+You can now monitor all incoming and outgoing PubNub traffic traversing through the PubNub/Azure gateway.
 
 You can also Publish test traffic on the "Ingress" console to send sample data through the system.
 
@@ -184,7 +194,7 @@ Based on what we're about to submit, our announce channel is pnAnnounce, and our
 node provisioningListener.js provision pnAnnounce demo
 ```
 
-Then, once the provisioningListener,js script is running, begin the deployment by clicking *Purchase* in the web-based ARM Template. 
+Then, once the provisioningListener,js script is running, begin the deployment by clicking *Purchase* in the web-based ARM Template.
 
 Once the deployment has completed, it will "announce" itself via the announce channel, and the provisioningListener.js script will autoconfigure based on the values sent in the announcement message:
 
@@ -243,7 +253,7 @@ To be sure the bridge never announces it's configuration, just enter *disabled* 
 If you have not explicitly disabled the provisioning script, it will continue to announce it's Event Hub configuration each time the script is restarted.  A script will restart not only manually, but also if for any reason it crashes (Azure Web Jobs automatically will try to restart it.)
 
 ##### Security
-For security purposes, the provisioningListener.js script should only be used in development, non-production environments.  
+For security purposes, the provisioningListener.js script should only be used in development, non-production environments.
 
 For production environments, set *disabled* for the PubNub Announcement Channel value to disable broadcast of the Event Hub information, and grab the connection string info manually via the Azure Portal's Web Job configuration (either by command line or web gui.)
 
@@ -261,4 +271,4 @@ If you are using Stream Analytics as an input to the Egress Event Hub, from with
 ### Support
 Questions about using this ARM Template?  Contact us at support@pubnub.com!
 
-
+`Tags: Microsoft.EventHub/namespaces, eventhubs, authorizationRules, Microsoft.Web/serverfarms, Microsoft.Web/sites, config, sourcecontrols, custom`

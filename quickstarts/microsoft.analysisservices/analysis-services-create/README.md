@@ -1,4 +1,15 @@
-# Deploy a new Azure Analysis Services server
+---
+description: This template creates an Azure Analysis Services server.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: analysis-services-create
+languages:
+- json
+- bicep
+---
+# Create an Azure Analysis Services server using a template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.analysisservices/analysis-services-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.analysisservices/analysis-services-create/PublicDeployment.svg)
@@ -18,3 +29,5 @@
 This template allows you to deploy a new Azure Analysis Services server with a simple firewall rule. The [quickstart](https://docs.microsoft.com/azure/analysis-services/analysis-services-create-template) article describes how to deploy the template.
 
 For more information about Azure Analysis Services, see [What is Azure Analysis Services?](https://docs.microsoft.com/azure/analysis-services/analysis-services-overview).
+
+`Tags: Microsoft.AnalysisServices/servers`

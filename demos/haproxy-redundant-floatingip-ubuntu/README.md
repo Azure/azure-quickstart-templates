@@ -1,4 +1,14 @@
-# Create a redundant haproxy setup with 2 Ubuntu VMs configured behind Azure load balancer with floating IP enabled.
+---
+description: This template creates a redundant haproxy setup with 2 Ubuntu VMs configured behind Azure load balancer with floating IP enabled. Each of the Ubuntu VMs run haproxy to load balance requests to other application VMs (running Apache in this case). Keepalived enables redundancy for the haproxy VMs by assigning the floating IP to the MASTER and blocking the load-balancer probe on the BACKUP. This template also deploys a Storage Account, Virtual Network, Public IP address, Network Interfaces.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: haproxy-redundant-floatingip-ubuntu
+languages:
+- json
+---
+# Redundant haproxy with Azure load-balancer and floating IP
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/haproxy-redundant-floatingip-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/haproxy-redundant-floatingip-ubuntu/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/haproxy-redundant-floatingip-ubuntu/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/haproxy-redundant-floatingip-ubuntu/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fhaproxy-redundant-floatingip-ubuntu%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fhaproxy-redundant-floatingip-ubuntu%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fhaproxy-redundant-floatingip-ubuntu%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fhaproxy-redundant-floatingip-ubuntu%2Fazuredeploy.json)
 
@@ -37,4 +47,4 @@ This template uses the resource loops capability to create network interfaces, v
   * Apache webserver is deployed as part of *CustomScript Extension*. No changes are done to default configuration.
   * This is only a proof-of-concept. The functionality of application VMs can be modified per requirement. Corresponding changes need to be done to *variables* section of the template.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

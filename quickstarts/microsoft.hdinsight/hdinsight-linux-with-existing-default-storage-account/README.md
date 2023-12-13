@@ -1,4 +1,14 @@
-# Deploy an HDInsight cluster using existing default storage account
+---
+description: This template allows you to create an Hadoop cluster in HDInsight. The cluster uses an existing storage account as the default storage accout.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-linux-with-existing-default-storage-account
+languages:
+- json
+---
+# Deploy HDInsight cluster with existing default storage
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-linux-with-existing-default-storage-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-linux-with-existing-default-storage-account/PublicDeployment.svg)
@@ -23,3 +33,4 @@ You don't want to use the default storage account container for storing business
 - It is not recommended to reuse a blob container for multiple times.
 
 If you want to create an HDInsight cluster with secure transfer enabled Azure storage accounts, make sure to use HDInsight version 3.6 or newer.  The default version is 3.5.  Only version 3.6 or newer supports secure transfer enabled Azure Storage accounts.
+`Tags: Microsoft.HDInsight/clusters, Microsoft.Storage/storageAccounts`

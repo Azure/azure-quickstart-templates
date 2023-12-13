@@ -1,3 +1,13 @@
+---
+description: This template allows you to deploy a VM using a operating system that is supported by SAP.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sap-3-tier-marketplace-image-multi-sid-xscs-md
+languages:
+- json
+---
 # SAP NetWeaver 3-tier multi SID (A)SCS (managed disks)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-3-tier-marketplace-image-multi-sid-xscs-md/PublicLastTestDate.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-3-tier-marketplace-image-multi-sid-xscs-md/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-3-tier-marketplace-image-multi-sid-xscs-md/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-3-tier-marketplace-image-multi-sid-xscs-md%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-3-tier-marketplace-image-multi-sid-xscs-md%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-3-tier-marketplace-image-multi-sid-xscs-md%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-3-tier-marketplace-image-multi-sid-xscs-md%2Fazuredeploy.json)
 
@@ -23,12 +33,12 @@ It takes a minimum amount of parameters and deploys a VM that is customized for 
 This template uses Managed Disks.
 
 ## ASCS/SCS Internal Load Balancer ports
-The template deploys one Azure Loadbalancer that supports multiple SAP systems. 
+The template deploys one Azure Loadbalancer that supports multiple SAP systems.
 
-* The ASCS instances are configured for instance number 00, 10, 20... 
-* The SCS instances are configured for instance number 01, 11, 21... 
-* The ASCS ERS (Linux only) instances are configured for instance number 02, 12, 22... 
-* The SCS ERS (Linux only) instances are configured for instance number 03, 13, 23... 
+* The ASCS instances are configured for instance number 00, 10, 20...
+* The SCS instances are configured for instance number 01, 11, 21...
+* The ASCS ERS (Linux only) instances are configured for instance number 02, 12, 22...
+* The SCS ERS (Linux only) instances are configured for instance number 03, 13, 23...
 
 The Load Balancer contains 1 (2 for Linux) VIP(s), 1x VIP for ASCS/SCS and 1x VIP for ERS (Linux only)
 
@@ -70,4 +80,4 @@ ERS Internal Load Balancer probe port (Linux only): **621x2**
 	</tr>
 </table>
 
-
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/loadBalancers`

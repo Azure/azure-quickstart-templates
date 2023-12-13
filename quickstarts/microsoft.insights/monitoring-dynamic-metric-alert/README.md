@@ -1,3 +1,13 @@
+---
+description: This template creates a metric alert rule that monitors the CPU Percentage metric of a virtual machine using a dynamic threshold condition type.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: monitoring-dynamic-metric-alert
+languages:
+- json
+---
 # Metric alert rule with a dynamic threshold
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-dynamic-metric-alert/PublicLastTestDate.svg)
@@ -5,7 +15,7 @@
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-dynamic-metric-alert/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-dynamic-metric-alert/FairfaxDeployment.svg)
-    
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-dynamic-metric-alert/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/monitoring-dynamic-metric-alert/CredScanResult.svg)
 
@@ -18,5 +28,7 @@ This template creates a metric alert rule that monitors the CPU Percentage metri
 
 For more information on **metric alert rules** see:
 
-- [Metric alert rules overview](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-metric-overview)
-- [Create a metric alert with a resource manager template](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-metric-create-templates)
+- [Metric alert rules overview](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-overview)
+- [Create a metric alert with a resource manager template](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-create-templates)
+
+`Tags: Microsoft.Insights/metricAlerts, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

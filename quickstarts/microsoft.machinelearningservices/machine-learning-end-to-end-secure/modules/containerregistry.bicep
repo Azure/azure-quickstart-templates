@@ -23,7 +23,7 @@ var privateDnsZoneName = 'privatelink${environment().suffixes.acrLoginServer}'
 
 var groupName = 'registry' 
 
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   name: containerRegistryNameCleaned
   location: location
   tags: tags
@@ -32,7 +32,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
   }
   properties: {
     adminUserEnabled: true
-    anonymousPullEnabled: false
     dataEndpointEnabled: false
     networkRuleBypassOptions: 'AzureServices'
     networkRuleSet: {
@@ -40,7 +39,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
     }
     policies: {
       quarantinePolicy: {
-        status: 'enabled'
+        status: 'disabled'
       }
       retentionPolicy: {
         status: 'enabled'
@@ -56,7 +55,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
   }
 }
 
-resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: containerRegistryPleName
   location: location
   tags: tags
@@ -78,12 +77,12 @@ resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@20
   }
 }
 
-resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName
   location: 'global'
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
   name: '${containerRegistryPrivateEndpoint.name}/${groupName}-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
@@ -97,7 +96,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   }
 }
 
-resource acrPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
+resource acrPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${acrPrivateDnsZone.name}/${uniqueString(containerRegistry.id)}'
   location: 'global'
   properties: {

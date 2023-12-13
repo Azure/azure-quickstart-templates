@@ -1,4 +1,15 @@
-# Create an Event Grid Custom Topic and Service Bus Queue Subscription on Azure
+---
+description: Creates an Azure Event Grid custom topic and a service bus queue subscription. Template originally authored by Markus Meyer.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: event-grid-servicebus-queue
+languages:
+- json
+- bicep
+---
+# Create Azure Event Grid Custom Topic and Queue Subscription
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-servicebus-queue/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-servicebus-queue/PublicDeployment.svg)
@@ -17,4 +28,4 @@
 
 This template creates an Event Grid custom topic and a service bus queue subscription on Azure. Template was authored by Markus Meyer.
 
-`Tags: eventgrid, servicebus`
+`Tags: eventgrid, servicebus, Microsoft.ServiceBus/namespaces, Microsoft.ServiceBus/namespaces/queues, Microsoft.EventGrid/topics, Microsoft.EventGrid/eventSubscriptions`

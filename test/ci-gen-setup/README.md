@@ -34,7 +34,7 @@ For everything not in **Section 2** of the .config.json, you have two options:
 
 ### Creating a Service Principal for AKS
 
-If you need to test AKS a service principal needs to be created - until AKS supports Managed Identity.  For most tests, this Service Principal needs no permission but the secret needs to be passed to the deployment from the config.  See the [docs](https://docs.microsoft.com/en-us/azure/aks/kubernetes-service-principal) for details on how to create the principal and then add the tokens of your choosing to the .config.json
+If you need to test AKS a service principal needs to be created - until AKS supports Managed Identity.  For most tests, this Service Principal needs no permission but the secret needs to be passed to the deployment from the config.  See the [docs](https://docs.microsoft.com/azure/aks/kubernetes-service-principal) for details on how to create the principal and then add the tokens of your choosing to the .config.json
 
 ## Using Your Configuration
 

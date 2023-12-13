@@ -52,7 +52,7 @@ try
 
     $WebClient = New-Object System.Net.WebClient
 
-    Write-Output "Download the $($FileName) template from Github..."
+    Write-Output "Download the $($FileName) template from GitHub..."
 
     $WebClient.DownloadFile($($GithubFullPath),"$PSScriptRoot\$($FileName)")
     
@@ -153,10 +153,10 @@ try
 
                     if($VersionDiffRB -gt 0)
                     {
-                        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/azure-resource-optimization-toolkit$($Runbooktable[$runb.name])"
+                        $RunbookDownloadPath = "$($GitHubRootPath)/$($GitHubBranch)/azure-resource-optimization-toolkit$($Runbooktable[$runb.name])"
                         Write-Output "Updates needed for $($runb.name)..."
                         #Now download the runbook and do the update
-                        Write-Output "Downloading the updated PowerShell script from Github..."
+                        Write-Output "Downloading the updated PowerShell script from GitHub..."
                         $WebClientRB = New-Object System.Net.WebClient
                         
                         $WebClientRB.DownloadFile($($RunbookDownloadPath),"$PSScriptRoot\$($runb.name).ps1")
@@ -171,10 +171,10 @@ try
                 }
                 else
                 {
-                    $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/azure-resource-optimization-toolkit$($Runbooktable[$runb.name])"
+                    $RunbookDownloadPath = "$($GitHubRootPath)/$($GitHubBranch)/azure-resource-optimization-toolkit$($Runbooktable[$runb.name])"
                     Write-Output "New Runbook $($runb.name) found..."
                     #New Runbook. So download and create it
-                    Write-Output "Downloading the PowerShell script from Github..."
+                    Write-Output "Downloading the PowerShell script from GitHub..."
                     $WebClientRB = New-Object System.Net.WebClient
                     $WebClientRB.DownloadFile($($RunbookDownloadPath),"$PSScriptRoot\$($runb.name).ps1")
                     $RunbookScriptPath = "$PSScriptRoot\$($runb.name).ps1"
@@ -197,8 +197,8 @@ try
         #just run the bootstrap_main runbook to create the schedules
         $Bootstrap_MainRunbook = "Bootstrap_Main"
 
-        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/demos/azure-resource-optimization-toolkit/scripts/Bootstrap_Main.ps1"
-        Write-Output "Downloading the Bootstrap_Main PowerShell script from Github..."
+        $RunbookDownloadPath = "$($GitHubRootPath)/$($GitHubBranch)/demos/azure-resource-optimization-toolkit/scripts/Bootstrap_Main.ps1"
+        Write-Output "Downloading the Bootstrap_Main PowerShell script from GitHub..."
         $WebClientRB = New-Object System.Net.WebClient
         $WebClientRB.DownloadFile($($RunbookDownloadPath),"$PSScriptRoot\$($Bootstrap_MainRunbook).ps1")
         $RunbookScriptPath = "$PSScriptRoot\Bootstrap_Main.ps1"

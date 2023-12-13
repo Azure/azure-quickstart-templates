@@ -52,7 +52,7 @@ param headNodeVirtualMachineSize string = 'Standard_E8_v3'
 ])
 param workerNodeVirtualMachineSize string = 'Standard_E8_v3'
 
-resource defaultStorageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource defaultStorageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: 'storage${uniqueString(resourceGroup().id)}'
   location: location
   sku: {
@@ -61,7 +61,7 @@ resource defaultStorageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = 
   kind: 'StorageV2'
 }
 
-resource cluster 'Microsoft.HDInsight/clusters@2018-06-01-preview' = {
+resource cluster 'Microsoft.HDInsight/clusters@2021-06-01' = {
   name: clusterName
   location: location
   properties: {
@@ -84,7 +84,7 @@ resource cluster 'Microsoft.HDInsight/clusters@2018-06-01-preview' = {
           name: replace(replace(defaultStorageAccount.properties.primaryEndpoints.blob, 'https://', ''), '/', '')
           isDefault: true
           container: clusterName
-          key: defaultStorageAccount.listKeys('2021-04-01').keys[0].value
+          key: defaultStorageAccount.listKeys('2021-08-01').keys[0].value
         }
       ]
     }

@@ -1,4 +1,15 @@
-# Create an Azure Key Vault with RBAC
+---
+description: This template creates an Azure Key Vault and a secret. Instead of relying on access policies, it leverages Azure RBAC to manage authorization on secrets
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: key-vault-create-rbac
+languages:
+- json
+- bicep
+---
+# Create an Azure Key Vault with RBAC and a secret
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.keyvault/key-vault-create-rbac/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.keyvault/key-vault-create-rbac/PublicDeployment.svg)
@@ -31,4 +42,4 @@ If you're new to the template development, see:
 - [Use Azure Key Vault to pass secure parameter value during deployment](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-keyvault-parameter)
 - [Tutorial: Integrate Azure Key Vault in Resource Manager Template deployment](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-tutorial-use-key-vault)
 
-`Tags: Azure Key Vault, Key Vault, Secrets, Resource Manager, Resource Manager templates, ARM templates, RBAC`
+`Tags: Azure Key Vault, Key Vault, Secrets, Resource Manager, Resource Manager templates, ARM templates, RBAC, Microsoft.KeyVault/vaults, Microsoft.KeyVault/vaults/secrets, Microsoft.Authorization/roleAssignments`

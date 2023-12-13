@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.412.5873",
-      "templateHash": "1628325295337612928"
+      "version": "0.14.46.61228",
+      "templateHash": "13044046474441454983"
     }
   },
   "parameters": {
@@ -14,12 +14,6 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources except Application Insights."
-      }
-    },
-    "appInsightsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Location for Application Insights."
       }
     },
     "runtime": {
@@ -34,13 +28,6 @@
         "description": "The language worker runtime to load in the function app."
       }
     },
-    "appName": {
-      "type": "string",
-      "defaultValue": "[format('fnapp{0}', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "The name of the function app that you wish to create."
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -52,34 +39,32 @@
       "metadata": {
         "description": "Storage Account type"
       }
-    },
-    "vnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the virtual network to be created."
-      }
-    },
-    "subnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the subnet to be created within the virtual network."
-      }
     }
   },
-  "functions": [],
   "variables": {
+    "resourceBaseName": "[uniqueString(resourceGroup().id)]",
     "vnetAddressPrefix": "10.0.0.0/16",
     "subnetAddressPrefix": "10.0.0.0/24",
-    "functionAppName": "[parameters('appName')]",
-    "hostingPlanName": "[parameters('appName')]",
-    "storageAccountName": "[format('{0}azfunctions', uniqueString(resourceGroup().id))]",
+    "subnetName": "default",
     "functionWorkerRuntime": "[parameters('runtime')]"
   },
   "resources": [
     {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', format('func-{0}', variables('resourceBaseName')), 'web')]",
+      "properties": {
+        "ftpsState": "Disabled",
+        "minTlsVersion": "1.2"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-{0}', variables('resourceBaseName')))]"
+      ]
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
-      "name": "[parameters('vnetName')]",
+      "apiVersion": "2022-05-01",
+      "name": "[format('vnet-{0}', variables('resourceBaseName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -89,7 +74,7 @@
         },
         "subnets": [
           {
-            "name": "[parameters('subnetName')]",
+            "name": "[variables('subnetName')]",
             "properties": {
               "addressPrefix": "[variables('subnetAddressPrefix')]",
               "delegations": [
@@ -107,28 +92,48 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-04-01",
-      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2022-05-01",
+      "name": "[format('st{0}', variables('resourceBaseName'))]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
-      "kind": "StorageV2"
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false,
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[format('log-{0}', variables('resourceBaseName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
     },
     {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02",
-      "name": "[variables('functionAppName')]",
-      "location": "[parameters('appInsightsLocation')]",
+      "name": "[format('ai-{0}', variables('resourceBaseName'))]",
+      "location": "[parameters('location')]",
       "kind": "web",
       "properties": {
-        "Application_Type": "web"
-      }
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', format('log-{0}', variables('resourceBaseName')))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('log-{0}', variables('resourceBaseName')))]"
+      ]
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('hostingPlanName')]",
+      "apiVersion": "2022-03-01",
+      "name": "[format('asp-{0}', variables('resourceBaseName'))]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "EP1",
@@ -141,33 +146,35 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('functionAppName')]",
+      "apiVersion": "2022-03-01",
+      "name": "[format('func-{0}', variables('resourceBaseName'))]",
       "location": "[parameters('location')]",
       "kind": "functionapp",
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', variables('resourceBaseName')))]",
+        "httpsOnly": true,
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', variables('resourceBaseName')), variables('subnetName'))]",
         "siteConfig": {
           "appSettings": [
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('Microsoft.Insights/components', variables('functionAppName'))).InstrumentationKey]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('ai-{0}', variables('resourceBaseName'))), '2020-02-02').InstrumentationKey]"
             },
             {
               "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[format('InstrumentationKey={0}', reference(resourceId('Microsoft.Insights/components', variables('functionAppName'))).InstrumentationKey)]"
+              "value": "[format('InstrumentationKey={0}', reference(resourceId('Microsoft.Insights/components', format('ai-{0}', variables('resourceBaseName'))), '2020-02-02').InstrumentationKey)]"
             },
             {
               "name": "AzureWebJobsStorage",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix= {1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix= {1};AccountKey={2}', format('st{0}', variables('resourceBaseName')), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('resourceBaseName'))), '2022-05-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2};', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2};', format('st{0}', variables('resourceBaseName')), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('resourceBaseName'))), '2022-05-01').keys[0].value)]"
             },
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~3"
+              "value": "~4"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -175,29 +182,16 @@
             },
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
-              "value": "~12"
+              "value": "~14"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Insights/components', variables('functionAppName'))]",
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Web/sites/networkConfig",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', variables('functionAppName'), 'virtualNetwork')]",
-      "properties": {
-        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
-        "swiftSupported": true
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        "[resourceId('Microsoft.Insights/components', format('ai-{0}', variables('resourceBaseName')))]",
+        "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', variables('resourceBaseName')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('resourceBaseName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', variables('resourceBaseName')))]"
       ]
     }
   ]

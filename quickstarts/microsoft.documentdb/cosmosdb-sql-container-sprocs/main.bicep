@@ -1,14 +1,11 @@
 @description('Cosmos DB account name')
-param accountName string = 'cosmos-${uniqueString(resourceGroup().id)}'
+param accountName string = 'sql-${uniqueString(resourceGroup().id)}'
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
-@description('The primary replica region for the Cosmos DB account.')
+@description('The primary region for the Cosmos DB account.')
 param primaryRegion string
-
-@description('The secondary replica region for the Cosmos DB account.')
-param secondaryRegion string
 
 @description('The default consistency level of the Cosmos DB account.')
 @allowed([
@@ -20,7 +17,7 @@ param secondaryRegion string
 ])
 param defaultConsistencyLevel string = 'Session'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647.')
 @minValue(10)
 @maxValue(2147483647)
 param maxStalenessPrefix int = 100000
@@ -30,13 +27,13 @@ param maxStalenessPrefix int = 100000
 @maxValue(86400)
 param maxIntervalInSeconds int = 300
 
-@description('Enable automatic failover for regions')
-param automaticFailover bool = true
+@description('Enable system managed failover for regions')
+param systemManagedFailover bool = true
 
-@description('The name for the Core (SQL) database')
-param databaseName string
+@description('The name for the database')
+param databaseName string = 'database1'
 
-@description('The name for the Core (SQL) API container')
+@description('The name for the container')
 param containerName string = 'container1'
 
 @description('The throughput for the container')
@@ -44,7 +41,6 @@ param containerName string = 'container1'
 @maxValue(1000000)
 param throughput int = 400
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -70,27 +66,22 @@ var locations = [
     failoverPriority: 0
     isZoneRedundant: false
   }
-  {
-    locationName: secondaryRegion
-    failoverPriority: 1
-    isZoneRedundant: false
-  }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: automaticFailover
+    enableAutomaticFailover: systemManagedFailover
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
-  parent: accountName_resource
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
+  parent: account
   name: databaseName
   properties: {
     resource: {
@@ -99,8 +90,8 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlData
   }
 }
 
-resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-04-15' = {
-  parent: accountName_databaseName
+resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-05-15' = {
+  parent: database
   name: containerName
   properties: {
     resource: {
@@ -120,7 +111,7 @@ resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAc
         ]
         excludedPaths: [
           {
-            path: '/myPathToNotIndex/*'
+            path: '/_etag/?'
           }
         ]
       }
@@ -131,8 +122,8 @@ resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAc
   }
 }
 
-resource accountName_databaseName_containerName_myStoredProcedure 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/storedProcedures@2021-04-15' = {
-  parent: accountName_databaseName_containerName
+resource storedProcedure 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/storedProcedures@2022-05-15' = {
+  parent: container
   name: 'myStoredProcedure'
   properties: {
     resource: {
@@ -142,8 +133,8 @@ resource accountName_databaseName_containerName_myStoredProcedure 'Microsoft.Doc
   }
 }
 
-resource accountName_databaseName_containerName_myPreTrigger 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/triggers@2021-04-15' = {
-  parent: accountName_databaseName_containerName
+resource trigger 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/triggers@2022-05-15' = {
+  parent: container
   name: 'myPreTrigger'
   properties: {
     resource: {
@@ -155,8 +146,8 @@ resource accountName_databaseName_containerName_myPreTrigger 'Microsoft.Document
   }
 }
 
-resource accountName_databaseName_containerName_myUserDefinedFunction 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/userDefinedFunctions@2021-04-15' = {
-  parent: accountName_databaseName_containerName
+resource userDefinedFunction 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/userDefinedFunctions@2022-05-15' = {
+  parent: container
   name: 'myUserDefinedFunction'
   properties: {
     resource: {

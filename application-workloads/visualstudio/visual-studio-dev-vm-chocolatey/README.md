@@ -1,4 +1,14 @@
-# ARMChocolatey
+---
+description: This template creates a Visual Studio 2013 or 2015 VM from the base gallery VM images available.  It creates the VM in a new vnet, storage account, nic, and public ip with the new compute stack.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: visual-studio-dev-vm-chocolatey
+languages:
+- json
+---
+# Visual Studio Development VM with Chocolatey packages
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/visual-studio-dev-vm-chocolatey/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/visual-studio-dev-vm-chocolatey/PublicDeployment.svg)
@@ -15,5 +25,4 @@
 
 ARM Template to provision a VM complete with Visual Studio and any given Chocolatey packages.
 
-
-
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScriptExtension, Microsoft.Network/publicIPAddresses`

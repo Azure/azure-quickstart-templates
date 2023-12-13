@@ -1,4 +1,15 @@
-# Azure Active Directory Domain Service (AADDS) template 
+---
+description: This template deploys an Managed Azure Active Directory Domain Service with required VNet and NSG configurations.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aad-domainservices
+languages:
+- json
+- bicep
+---
+# Managed Azure Active Directory Domain Services
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aad-domainservices/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aad-domainservices/PublicDeployment.svg)
@@ -15,9 +26,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Faad-domainservices%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Faad-domainservices%2Fazuredeploy.json)
 
- 
-
- 
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -107,7 +115,7 @@ Before proceeding to the deployment of the AADDS template, we need to perform th
 
 <p></p>
 
-**Note:** 
+**Note:**
 * Deployment takes around 40-50 minutes.
 
 <a name="postdeployment">
@@ -139,12 +147,14 @@ You need to change the active directory administrator [AADGlobalAdminUser] passw
 <a name="teardown">
 
 ### Teardown Deployment
-To remove this deployment simply remove the resource group that contains this sample. 
-    
+To remove this deployment simply remove the resource group that contains this sample.
+
 <a name="references">
 
 ### References
-1. Pre-requisites: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-enable-using-powershell
-2. Networking Considerations: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-networking
-3. Password Synchronization: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-getting-started-password-sync
-4. Troubleshooting Guide: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-troubleshooting
+1. Pre-requisites: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-enable-using-powershell
+2. Networking Considerations: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-networking
+3. Password Synchronization: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-getting-started-password-sync
+4. Troubleshooting Guide: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-troubleshooting
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.AAD/domainServices`

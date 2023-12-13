@@ -1,4 +1,4 @@
-@description('Server Name for Azure database for PostgreSQL')
+@description('Server Name for Azure Database for PostgreSQL')
 param serverName string
 
 @description('Database administrator login name')
@@ -10,16 +10,16 @@ param administratorLogin string
 @secure()
 param administratorLoginPassword string
 
-@description('Azure database for PostgreSQL compute capacity in vCores (2,4,8,16,32)')
+@description('Azure Database for PostgreSQL compute capacity in vCores (2,4,8,16,32)')
 param skuCapacity int = 2
 
-@description('Azure database for PostgreSQL sku name ')
+@description('Azure Database for PostgreSQL sku name ')
 param skuName string = 'GP_Gen5_2'
 
-@description('Azure database for PostgreSQL Sku Size ')
+@description('Azure Database for PostgreSQL Sku Size ')
 param skuSizeMB int = 51200
 
-@description('Azure database for PostgreSQL pricing tier')
+@description('Azure Database for PostgreSQL pricing tier')
 @allowed([
   'Basic'
   'GeneralPurpose'
@@ -27,7 +27,7 @@ param skuSizeMB int = 51200
 ])
 param skuTier string = 'GeneralPurpose'
 
-@description('Azure database for PostgreSQL sku family')
+@description('Azure Database for PostgreSQL sku family')
 param skuFamily string = 'Gen5'
 
 @description('PostgreSQL version')
@@ -78,7 +78,7 @@ var firewallrules = [
   }
 ]
 
-resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -90,7 +90,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   parent: vnet
   name: subnetName
   properties: {

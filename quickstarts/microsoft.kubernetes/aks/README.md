@@ -1,3 +1,14 @@
+---
+description: Deploy a managed cluster with Azure Container Service (AKS)
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aks
+languages:
+- json
+- bicep
+---
 # Azure Container Service (AKS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks/PublicLastTestDate.svg)
@@ -35,3 +46,5 @@ To use keys stored in `keyVault`, replace `"value":""` with a reference to `keyV
   }
 }
 ```
+
+`Tags: Microsoft.ContainerService/managedClusters, SystemAssigned`

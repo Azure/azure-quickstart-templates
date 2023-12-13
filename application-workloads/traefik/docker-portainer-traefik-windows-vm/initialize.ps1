@@ -1,7 +1,8 @@
 param (
     $mail,
     $publicdnsname,
-    $adminPwd
+    $adminPwd,
+    $publicSshKey
 )
 
 $ProgressPreference = 'SilentlyContinue'  
@@ -10,7 +11,7 @@ Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V, Containers
 
 $setupScript = Join-Path (Get-Location) "setup.ps1"
 
-$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy UnRestricted -File $setupScript -mail $mail -publicdnsname $publicdnsname -adminPwd $adminPwd -basepath $(Get-Location)"
+$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy UnRestricted -File $setupScript -mail $mail -publicdnsname $publicdnsname -adminPwd $adminPwd -basepath $(Get-Location) -publicSshKey `"$publicSshKey`""
 $startupTrigger = New-ScheduledTaskTrigger -AtStartup
 $startupTrigger.Delay = "PT1M"
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopOnIdleEnd

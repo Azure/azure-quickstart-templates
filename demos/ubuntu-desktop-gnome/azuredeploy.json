@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.15.31.15270",
+      "templateHash": "6028035175566938436"
+    }
+  },
   "parameters": {
     "newStorageAccountName": {
       "type": "string",
@@ -55,14 +62,14 @@
   },
   "variables": {
     "vmName": "jumpbox",
-    "availabilitySetNodes": "avail-set",
+    "availabilitySetNodesName": "avail-set",
     "osImagePublisher": "Canonical",
     "osImageOffer": "UbuntuServer",
     "osImageSKU": "18.04-LTS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "customScriptLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop-gnome/",
-    "wgetCommandPrefix": "[concat('wget --tries 20 --retry-connrefused --waitretry=15 -qO- ', variables('customScriptLocation'), 'configure-ubuntu.sh | nohup /bin/bash -s ')]",
+    "customScriptLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/ubuntu-desktop-gnome/",
+    "wgetCommandPrefix": "[format('wget --tries 20 --retry-connrefused --waitretry=15 -qO- {0}configure-ubuntu.sh | nohup /bin/bash -s ', variables('customScriptLocation'))]",
     "wgetCommandPostfix": " > /var/log/azure/firstinstall.log 2>&1 &'",
     "commandPrefix": "/bin/bash -c '",
     "virtualNetworkName": "VNET",
@@ -70,7 +77,7 @@
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "nsgName": "node-nsg",
-    "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
     "storageAccountType": "Standard_LRS",
     "nodesLbName": "nodeslb",
     "nodesLbBackendPoolName": "node-pool",
@@ -79,7 +86,7 @@
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -89,8 +96,8 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('storageAccountType')]"
@@ -98,9 +105,9 @@
       "kind": "StorageV2"
     },
     {
-      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "[variables('availabilitySetNodes')]",
+      "apiVersion": "2022-11-01",
+      "name": "[variables('availabilitySetNodesName')]",
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
@@ -111,8 +118,8 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-09-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -123,13 +130,10 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-09-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('nsgID')]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -147,11 +151,14 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-09-01",
       "name": "[variables('nsgName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -174,21 +181,17 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('vmName'), '-nic')]",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}-nic', variables('vmName'))]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/loadBalancers/', variables('nodesLbName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipConfigNode",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(split(variables('subnetPrefix'),'0/24')[0], '100')]",
+              "privateIPAddress": "[format('{0}100', split(variables('subnetPrefix'), '0/24')[0])]",
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
@@ -199,22 +202,23 @@
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('nodesLbName'), concat('SSH-',variables('vmName')) )]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('nodesLbName'), format('SSH-{0}', variables('vmName')))]"
                 }
               ]
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('nodesLbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
-      "name": "[variables('nodesLbName')]",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('nodesLbName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
-      ],
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -233,7 +237,7 @@
         ],
         "inboundNatRules": [
           {
-            "name": "[concat('SSH-',variables('vmName'))]",
+            "name": "[format('SSH-{0}', variables('vmName'))]",
             "properties": {
               "frontendIPConfiguration": {
                 "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('nodesLbName'), 'NodesLBFrontEnd')]"
@@ -245,21 +249,19 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+      ]
     },
     {
-      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-11-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('vmName'), '-nic'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetNodes'))]"
-      ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetNodes'))]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetNodesName'))]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -268,7 +270,7 @@
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -278,7 +280,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]",
+            "name": "[format('{0}_OSDisk', variables('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -286,29 +288,34 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmName'), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('vmName')))]"
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetNodesName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('vmName')))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/configuremaster')]",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-11-01",
+      "name": "[format('{0}/{1}', variables('vmName'), 'configuremaster')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "commandToExecute": "[concat(variables('commandPrefix'), variables('wgetCommandPrefix'), parameters('adminUsername'), variables('wgetCommandPostfix'))]"
+          "commandToExecute": "[format('{0}{1}{2}{3}', variables('commandPrefix'), variables('wgetCommandPrefix'), parameters('adminUsername'), variables('wgetCommandPostfix'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
     }
   ]
 }

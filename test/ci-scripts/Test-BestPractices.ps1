@@ -11,14 +11,19 @@ param (
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $MainTemplateDeploymentFilename = $ENV:MAINTEMPLATE_DEPLOYMENT_FILENAME,
     [string] $ttkFolder = $ENV:TTK_FOLDER,
-    [string[]] $Skip = $ENV:TTK_SKIP_TESTS 
+    [string[]] $Skip = $ENV:TTK_SKIP_TESTS,
+    [switch] $bicepSupported = ($ENV:BICEP_SUPPORTED -eq "true")
 )
 
 Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1"
 
-$templatePath = "$($SampleFolder)/$MainTemplateDeploymentFilename"
-Write-Host "Calling Test-AzureTemplate on $templatePath"
-$testOutput = @(Test-AzTemplate -TemplatePath $templatePath -Skip "$Skip")
+# build bicep
+if($bicepSupported){
+    bicep build "$($SampleFolder)/$MainTemplateDeploymentFilename" --outfile "$($SampleFolder)/azuredeploy.json"
+}
+
+Write-Host "Calling Test-AzureTemplate on $SampleFolder"
+$testOutput = @(Test-AzTemplate -TemplatePath $SampleFolder -Skip "$Skip")
 $testOutput
 
 if ($testOutput | ? { $_.Errors }) {
@@ -28,3 +33,8 @@ else {
     Write-Host "##vso[task.setvariable variable=result.best.practice]$true"
     exit 0
 } 
+
+# clean up the json
+if($bicepSupported){
+    Remove-Item "$($SampleFolder)/azuredeploy.json"
+}

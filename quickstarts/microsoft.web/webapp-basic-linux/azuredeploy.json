@@ -1,14 +1,21 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.12.40.16777",
+      "templateHash": "16004123048193185147"
+    }
+  },
   "parameters": {
     "webAppName": {
       "type": "string",
       "defaultValue": "AzureLinuxApp",
+      "minLength": 2,
       "metadata": {
         "description": "Base name of the resource such as web app name and app service plan "
-      },
-      "minLength": 2
+      }
     },
     "sku": {
       "type": "string",
@@ -33,13 +40,13 @@
     }
   },
   "variables": {
-    "webAppPortalName": "[concat(parameters('webAppName'), '-webapp')]",
-    "appServicePlanName": "[concat('AppServicePlan-', parameters('webAppName'))]"
+    "webAppPortalName": "[format('{0}-webapp', parameters('webAppName'))]",
+    "appServicePlanName": "[format('AppServicePlan-{0}', parameters('webAppName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-03-01",
       "name": "[variables('appServicePlanName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -52,19 +59,24 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-03-01",
       "name": "[variables('webAppPortalName')]",
       "location": "[parameters('location')]",
       "kind": "app",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
-      ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
         "siteConfig": {
-          "linuxFxVersion": "[parameters('linuxFxVersion')]"
-        }
-      }
+          "linuxFxVersion": "[parameters('linuxFxVersion')]",
+          "ftpsState": "FtpsOnly"
+        },
+        "httpsOnly": true
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
     }
   ]
 }

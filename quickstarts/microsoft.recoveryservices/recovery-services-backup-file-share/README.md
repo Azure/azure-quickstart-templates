@@ -1,4 +1,15 @@
-# Backup Azure File Share to Recovery Services Vault
+---
+description: This template configures protection for an existing File Share present in an existing Storage Account. It creates a new or uses an existing Recovery Services Vault and Backup Policy based on the set parameter values.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: recovery-services-backup-file-share
+languages:
+- json
+- bicep
+---
+# Backup existing File Share using Recovery Services (Daily)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-backup-file-share/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-backup-file-share%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-backup-file-share%2Fazuredeploy.json)
@@ -30,10 +43,10 @@ The Microsoft.RecoveryServices resource provider is used to create resources of 
 
 ## Prerequisites
 
-Users need to have an existing storage account with an existing file share present in it. For creating a new storage account and file share, use the template provided in the prereqs folder, or refer to the [create an Azure storage account with file share](https://github.com/Azure/azure-quickstart-templates/tree/master/101-storage-file-share) template.
+Users need to have an existing storage account with an existing file share present in it. For creating a new storage account and file share, use the template provided in the prereqs folder, or refer to the [create an Azure storage account with file share](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.storage/storage-file-share) template.
 
 ## Deployment steps
 
-You can click the **Deploy to Azure** button at the beginning of this document. You may alternatively download the template and [deploy it using PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template) or use your preferred method of ARM template deployment.
+You can click the **Deploy to Azure** button at the beginning of this document. You may alternatively download the template and [deploy it using PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template) or use your preferred method of ARM template deployment.
 
-`Tags: file share, backup, recovery services, configure protection`
+`Tags: file share, backup, recovery services, configure protection, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupPolicies, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/fileServices/shares`

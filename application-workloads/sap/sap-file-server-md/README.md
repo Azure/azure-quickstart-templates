@@ -1,4 +1,14 @@
-# SAP NetWeaver file server using a Marketplace image
+---
+description: This template allows you to deploy a file server that can be used as shared storage for SAP NetWeaver.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sap-file-server-md
+languages:
+- json
+---
+# SAP NetWeaver file server (managed disk)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-file-server-md/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-file-server-md/PublicDeployment.svg)
@@ -22,3 +32,5 @@ This template takes a minimum amount of parameters and deploys an NFS on SLES, G
 * no Load Balancer for RHEL and GlusterFS required
 
 Internal Load Balancer probe port: **61000**
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, [variables('cseExtName')]`
