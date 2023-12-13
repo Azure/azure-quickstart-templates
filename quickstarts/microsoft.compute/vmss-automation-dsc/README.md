@@ -1,4 +1,14 @@
-# VM Scale Set Configuration managed by Azure Automation DSC
+---
+description: Deploy a VM Scale Set where virtual machines are deployed as registered nodes in the Azure Automation Desired State Configuration service, and node configuration is guaranteed consistency after deployment. NOTE&#58; Required prerequisites Registration Key and Registration URL are available only after successful creation of an Azure Automation Account for Azure Automation DSC.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vmss-automation-dsc
+languages:
+- json
+---
+# VM Scale Set Configuration managed by Azure Automation
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-automation-dsc/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-automation-dsc/PublicDeployment.svg)
@@ -59,3 +69,5 @@ git clone https://github.com/Azure/azure-quickstart-templates/blob/master/201-vm
 [Deployment of Multiple VM Scale Sets of Windows VMs](https://github.com/Azure/azure-quickstart-templates/tree/02d32850258f5b172266896e498e30e8e526080a/301-multi-vmss-windows)
 [Copy a DSC Configuration to Azure Automation and compile](https://github.com/azureautomation/automation-packs/tree/master/201-Deploy-And-Compile-DSC-Configuration-Credentials)
 [azure-myriad](https://github.com/gbowerman/azure-myriad) - this repo is a great resource for learning about VM Scale Sets!
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Automation/automationAccounts, modules, configurations, uri, compilationjobs, runbooks, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, DSC, Microsoft.Insights/autoscaleSettings, ChangeCount`

@@ -1,4 +1,14 @@
-# Azure Service Bus Monitoring
+---
+description: Monitors Azure Service Bus instances
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: oms-servicebus-solution
+languages:
+- json
+---
+# OMS Service Bus Solution
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-servicebus-solution/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-servicebus-solution/PublicDeployment.svg)
@@ -9,11 +19,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-servicebus-solution/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-servicebus-solution/CredScanResult.svg)
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-servicebus-solution%2Fazuredeploy.json) 
-[![Deploy to Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-servicebus-solution%2Fazuredeploy.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-servicebus-solution%2Fazuredeploy.json)
+[![Deploy to Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-servicebus-solution%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-servicebus-solution%2Fazuredeploy.json)
 
-This community based solution (not offically supported by Microsoft) will allow you to capture your Azure Service Bus metrics and visualize them in Operations Management Suite (Log Analytics). This solution leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics views to present data about all your Azure Service Bus instances in a single Log Analytics workspace. 
+This community based solution (not offically supported by Microsoft) will allow you to capture your Azure Service Bus metrics and visualize them in Operations Management Suite (Log Analytics). This solution leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics views to present data about all your Azure Service Bus instances in a single Log Analytics workspace.
 
 ![alt text](images/ServiceBusSolution.png "Solution View")
 
@@ -40,12 +50,12 @@ This community based solution (not offically supported by Microsoft) will allow 
 + Added a free space remaining percentage for Queue and Topic thresholds
 + Before ingestion, added an alert threshold value if Queue and/or Topic threshold is reached, so that you can create an alert based on this value
 + Updated visualization with free space remaining for queues and topics, scheduled messages etc.
- 
+
 ![alt text](images/FreeSpaceAndAlertThreshold.png "Free space percentage and Alert Threshold")
 
 ## Prerequisites
 
-+ Azure Subscription (if you don't have one you can create one [here](https://azure.microsoft.com/en-us/free/))
++ Azure Subscription (if you don't have one you can create one [here](https://azure.microsoft.com/free/))
 + New Azure Automation Account (with a RunAs SPN Account). To create a new Automation Account refer to "How do I get started"  below
 + A PowerShell unique GUID (required for the Azure Automation jobschedule), please run the PowerShell command "New-Guid" to generate one
 
@@ -81,8 +91,6 @@ Click the button that says **Deploy to Azure**. This will launch the ARM Templat
 
 Accept the "Terms and Conditions" and click on "Purchase"
 
-                               
-
 ## Monitoring multiple subscriptions
 
 The solution is designed to monitor Azure Service Bus instances across subscriptions.
@@ -109,7 +117,7 @@ Once you have completed the pre-reqs, you can click on the deploy button below
 4. Enter an unique jobID (use PowerShell's New-Guid command to generate one)
 5. Accept the terms and conditions and click on Purchase
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-servicebus-solution%2Fnestedtemplates%2FaddMultipleSubscriptions.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-servicebus-solution%2Fnestedtemplates%2FaddMultipleSubscriptions.json)
 
 Once deployed you should start to see data from your additional subscriptions flowing into your workspace.
 
@@ -120,5 +128,4 @@ If you have deployed the May 2017 update and you would like to re-deploy make su
 + scheduleIngestion (1 schedule)
 + servicebusIngestion (6 schedules)
 
-
-
+`Tags: PowerShell, Microsoft.OperationalInsights/workspaces, views, Blade, OverviewTile, Microsoft.Automation/automationAccounts, variables, Modules, runbooks, schedules, jobSchedules, string, Microsoft.OperationsManagement/solutions`

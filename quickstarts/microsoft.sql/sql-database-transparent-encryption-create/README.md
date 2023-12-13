@@ -1,4 +1,14 @@
-# Provision a SQL Database with Transparent Data Encryption
+---
+description: This template provisions a SQL Server with firewall opened for Azure traffic and a SQL database with Transparent Data Encryption (TDE).
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-database-transparent-encryption-create
+languages:
+- json
+---
+# Provision a SQL Database with TDE
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-database-transparent-encryption-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-database-transparent-encryption-create/PublicDeployment.svg)
@@ -15,8 +25,8 @@
 
 This sample creates a SQL Database at the "Basic" service level.  The template can support other tiers of service, details for each service can be found here:
 
-[SQL Database Pricing](https://azure.microsoft.com/en-us/pricing/details/sql-database/)
+[SQL Database Pricing](https://azure.microsoft.com/pricing/details/sql-database/)
 
-For more information about Transparent Data Encryption (TDE), see [Transparent Data Encryption with Azure SQL Database](https://msdn.microsoft.com/en-us/library/dn948096.aspx).
+For more information about Transparent Data Encryption (TDE), see [Transparent Data Encryption with Azure SQL Database](https://msdn.microsoft.com/library/dn948096.aspx).
 
-
+`Tags: Microsoft.Sql/servers, databases, transparentDataEncryption, firewallrules`

@@ -1,0 +1,65 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+	"handler": "Microsoft.Azure.CreateUIDef",
+	"version": "0.1.2-preview",
+	"parameters": {
+		"basics": [
+			{
+				"name": "packetCoreSelector",
+				"type": "Microsoft.Solutions.ResourceSelector",
+				"label": "Existing packet core",
+				"resourceType": "Microsoft.MobileNetwork/packetCoreControlPlanes",
+				"toolTip": "Select the existing packet core / site you wish to upgrade",
+				"options": {
+					"filter": {
+						"subscription": "onBasics",
+						"location": "onBasics"
+					}
+				}
+			},
+			{
+				"name": "getSupportedPacketCoreVersions",
+				"type": "Microsoft.Solutions.ArmApiControl",
+				"request": {
+				  "method": "GET",
+				  "path": "/providers/Microsoft.MobileNetwork/packetCoreControlPlaneVersions?api-version=2023-06-01"
+				}
+			},
+			{
+				"name": "newVersion",
+				"type": "Microsoft.Common.DropDown",
+				"label": "New version",
+				"toolTip": "The new version of packet core to install. Contact your support engineer for instructions",
+				"defaultValue": {
+			      "value": "[first(map(filter(basics('getSupportedPacketCoreVersions').value, (item) => equals(concat(map(filter(item.properties.platforms, (platform) => equals(platform.platformType, 'AKS-HCI')), (platform) => platform.recommendedVersion), ''), 'Recommended')), (item) => item.name))]"
+				},
+				"constraints": {
+                  "allowedValues": "[map(filter(basics('getSupportedPacketCoreVersions').value, (item) => equals('Active', concat(map(filter(item.properties.platforms, (platform) => equals(platform.platformType, 'AKS-HCI')), (platform) => platform.versionState), ''))), (item) => parse(concat('{\"label\":\"', toUpper(item.name), if(equals(concat(map(filter(item.properties.platforms, (platform) => equals(platform.platformType, 'AKS-HCI')), (platform) => platform.recommendedVersion), ''), 'Recommended'), ' (Recommended)', ''), '\",\"value\":\"', item.name, '\"}')))]",
+				  "required": true
+				}
+			},
+			{
+        "name": "existingSiteConfig",
+        "type": "Microsoft.Solutions.ArmApiControl",
+        "request": {
+          "method": "GET",
+          "path": "[concat(basics('packetCoreSelector').id, '?api-version=2023-09-01')]"
+        },
+        "visible": false
+      }
+		],
+		"steps": [],
+		"outputs": {
+			"location": "[location()]",
+		    "existingSiteName": "[basics('packetCoreSelector').name]",
+			"existingSiteId": "[basics('existingSiteConfig').properties.sites[0].id]",
+			"existingPacketCoreNetworkTechnology": "[basics('existingSiteConfig').properties.coreNetworkTechnology]",
+			"existingPacketCoreCustomLocationId": "[basics('existingSiteConfig').properties.customLocation.id]",
+			"controlPlaneAccessInterfaceName": "[basics('existingSiteConfig').properties.controlPlaneAccessInterface.name]",
+			"controlPlaneAccessIpAddress": "[basics('existingSiteConfig').properties.controlPlaneAccessInterface.ipv4Address]",
+			"accessSubnet": "[basics('existingSiteConfig').properties.controlPlaneAccessInterface.ipv4Subnet]",
+			"accessGateway": "[basics('existingSiteConfig').properties.controlPlaneAccessInterface.ipv4Gateway]",
+			"newVersion": "[basics('newVersion')]"
+		}
+	}
+}

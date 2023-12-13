@@ -1,0 +1,136 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceName": {
+      "type": "String",
+      "defaultValue": "myPaymentHSM",
+      "metadata": {
+        "description": "Azure Payment HSM resource name"
+      }
+    },
+    "stampId": {
+      "type": "string",
+      "defaultValue": "stamp1",
+      "metadata": {
+        "description": "stamp id"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "payShield10K_LMK1_CPS60",
+      "allowedValues": [
+                "payShield10K_LMK1_CPS60", 
+                "payShield10K_LMK1_CPS250", 
+                "payShield10K_LMK1_CPS2500", 
+                "payShield10K_LMK2_CPS60", 
+                "payShield10K_LMK2_CPS250", 
+                "payShield10K_LMK2_CPS2500"
+            ],
+      "metadata": {
+        "description": "PayShield SKU name."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "myVNET",  
+      "metadata": {
+        "description": "Virtual network name"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",  
+      "metadata": {
+        "description": "Virtual network address prefix"
+      }
+    },
+    "hsmSubnetName": {
+      "type": "String",
+      "defaultValue": "myHSMSubnet",  
+      "metadata": {
+        "description": "Subnet name"
+      }
+    },
+    "hsmSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",  
+      "metadata": {
+        "description": "Subnet prefix"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+   {
+     "type": "Microsoft.HardwareSecurityModules/dedicatedHSMs",
+     "apiVersion": "2021-11-30",
+     "name": "[parameters('resourceName')]",
+	   "location": "[parameters('location')]",
+     "dependsOn": [
+      "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('hsmSubnetName'))]"
+     ],
+     "sku": {
+       "name": "[parameters('skuName')]"
+     },
+     "properties": {
+       "networkProfile": {
+         "subnet": {
+           "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('hsmSubnetName'))]"
+         }
+        },
+		"managementNetworkProfile": {
+          "subnet": {
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('hsmSubnetName'))]"
+          }
+        },
+        "stampId": "[parameters('stampId')]"
+     }
+   },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "fastpathenabled": "true"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-11-01",
+      "name": "[concat(parameters('vnetName'), '/', parameters('hsmSubnetName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[parameters('hsmSubnetPrefix')]",
+        "delegations": [
+          {
+            "name": "Microsoft.HardwareSecurityModules.dedicatedHSMs",
+            "properties": {
+              "serviceName": "Microsoft.HardwareSecurityModules/dedicatedHSMs"
+            }
+          }
+        ],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    }
+  ]
+}

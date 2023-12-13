@@ -35,7 +35,7 @@ resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018
   name: '17d1049b-9a84-46fb-8f53-869881c3d3ab'
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageAccountName
   location: location
   kind: 'StorageV2'

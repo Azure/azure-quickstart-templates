@@ -1,3 +1,13 @@
+---
+description: This template deploys a Virtual Network, segregates the network through subnets, deploys VMs and configures load balancing
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: multi-tier-service-networking
+languages:
+- json
+---
 # Multi tier App with NSG, ILB, AppGateway
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/multi-tier-service-networking/PublicLastTestDate.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmulti-tier-service-networking%2Fazuredeploy.json)
 
 This template showcases a simple 3 tier service with L7 load balancers in the Front end, Application servers in the middle tier and SQL data bases in the backend. The subnets are secured using Network Security Groups and databases are placed behind Internal load balancer.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/applicationGateways, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/availabilitySets, Microsoft.Compute/virtualMachines`

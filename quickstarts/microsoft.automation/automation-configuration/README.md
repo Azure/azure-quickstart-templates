@@ -1,4 +1,14 @@
-# Azure Automation Managed Node template
+---
+description: This template provides an example of how to deliver a virtual machine and and Automation account to manage the machine, in a single deployment
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: automation-configuration
+languages:
+- json
+---
+# Server managed by Desired State Configuration service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.automation/automation-configuration/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.automation/automation-configuration/PublicDeployment.svg)
@@ -11,15 +21,14 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.automation%2Fautomation-configuration%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.automation%2Fautomation-configuration%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.automation%2Fautomation-configuration%2Fazuredeploy.json)    
-
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.automation%2Fautomation-configuration%2Fazuredeploy.json)
 
 This template demonstrates a managed virtual machine where the configuration
 will be maintained by Azure for the life of the node as opposed to only applying
 the configuration at the time of deployment.
 
 For details about Azure Operations Management services,
-see the [Azure Automation Documentation](https://docs.microsoft.com/en-us/azure/automation/).
+see the [Azure Automation Documentation](https://docs.microsoft.com/azure/automation/).
 
 ## What is new in this template
 
@@ -46,14 +55,14 @@ this is essentially verifying the account before the server deployment.
 This model is the go-forward recommendation for utilizing DSC with Azure Virtual Machines.
 The [DSC Extension](https://blogs.msdn.microsoft.com/powershell/2014/08/07/introducing-the-azure-powershell-dsc-desired-state-configuration-extension/)
 is used only to apply settings to the Local Configuration Manager (LCM) and direct it
-to use the [Azure Automation DSC](https://docs.microsoft.com/en-us/azure/automation/automation-dsc-overview)
+to use the [Azure Automation DSC](https://docs.microsoft.com/azure/automation/automation-dsc-overview)
 service to deliver *and maintain* the state of the machine.
 The compliance state or any error messages from DSC can be viewed in the reporting
 available with the service.
 
 Users of the service also have tools to support Operations practices,
 such as publishing changes to the configuration without re-deployment of the virtual machine,
-or [linking the Automation Account with Log Analytics](https://docs.microsoft.com/en-us/azure/automation/automation-dsc-diagnostics)
+or [linking the Automation Account with Log Analytics](https://docs.microsoft.com/azure/automation/automation-dsc-diagnostics)
 for alerting (including notifications to mobile devices) when a node has drifted from
 the intended configuration.
 
@@ -71,3 +80,4 @@ those artifacts can be expected to remain unchanged.
 all code artifacts including ARM templates, PowerShell scripts, and DSC resources,
 before production deployment.**
 
+`Tags: Microsoft.Resources/deployments, Microsoft.Automation/automationAccounts, modules, credentials, configurations, uri, compilationjobs, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC`

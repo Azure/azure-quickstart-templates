@@ -4,10 +4,10 @@ param accountName string = 'sql-${uniqueString(resourceGroup().id)}'
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
-@description('The primary replica region for the Cosmos DB account.')
+@description('The primary region for the Cosmos DB account.')
 param primaryRegion string
 
-@description('The secondary replica region for the Cosmos DB account.')
+@description('The secondary region for the Cosmos DB account.')
 param secondaryRegion string
 
 @description('The default consistency level of the Cosmos DB account.')
@@ -20,7 +20,7 @@ param secondaryRegion string
 ])
 param defaultConsistencyLevel string = 'Session'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647.')
 @minValue(10)
 @maxValue(2147483647)
 param maxStalenessPrefix int = 100000
@@ -30,8 +30,8 @@ param maxStalenessPrefix int = 100000
 @maxValue(86400)
 param maxIntervalInSeconds int = 300
 
-@description('Enable automatic failover for regions')
-param automaticFailover bool = true
+@description('Enable system managed failover for regions')
+param systemManagedFailover bool = true
 
 @description('The name for the database')
 param databaseName string
@@ -39,12 +39,11 @@ param databaseName string
 @description('The name for the container')
 param containerName string
 
-@description('Maximum throughput for the container')
-@minValue(4000)
+@description('Maximum autoscale throughput for the container')
+@minValue(1000)
 @maxValue(1000000)
-param autoscaleMaxThroughput int = 4000
+param autoscaleMaxThroughput int = 1000
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -77,20 +76,20 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-01-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   kind: 'GlobalDocumentDB'
   location: location
   properties: {
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: automaticFailover
+    enableAutomaticFailover: systemManagedFailover
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-01-15' = {
-  parent: accountName_resource
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
+  parent: account
   name: databaseName
   properties: {
     resource: {
@@ -99,8 +98,8 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlData
   }
 }
 
-resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-01-15' = {
-  parent: accountName_databaseName
+resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-05-15' = {
+  parent: database
   name: containerName
   properties: {
     resource: {
@@ -121,6 +120,9 @@ resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAc
         excludedPaths: [
           {
             path: '/myPathToNotIndex/*'
+          }
+          {
+            path: '/_etag/?'
           }
         ]
         compositeIndexes: [

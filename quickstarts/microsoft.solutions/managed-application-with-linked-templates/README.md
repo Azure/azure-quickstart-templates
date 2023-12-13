@@ -1,20 +1,27 @@
-# Deploying your managed application with linked templates
+---
+description: This template creates a managed application that deploys linked templates.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: managed-application-with-linked-templates
+languages:
+- json
+---
+# Create a managed application that deploys linked templates
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.solutions/managed-application-with-linked-templates/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.solutions/managed-application-with-linked-templates/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.solutions/managed-application-with-linked-templates/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.solutions/managed-application-with-linked-templates/FairfaxDeployment.svg)
-    
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.solutions/managed-application-with-linked-templates/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.solutions/managed-application-with-linked-templates/CredScanResult.svg)
-    
-    
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.solutions%2Fmanaged-application-with-linked-templates%2Fazuredeploy.json)  
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.solutions%2Fmanaged-application-with-linked-templates%2Fazuredeploy.json) 
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.solutions%2Fmanaged-application-with-linked-templates%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.solutions%2Fmanaged-application-with-linked-templates%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.solutions%2Fmanaged-application-with-linked-templates%2Fazuredeploy.json)
-
-
 
 This sample template deploys a Service catalog managed application along with the definition that creates a linked deployment for the managed application. While creating managed application packages your scenario might require a complex deployment scenario which needs the ARM template to be broken down in to simpler templates that can be called by the main template. Managed Applications allow this by utilizing linked ARM template deployments and providing a location to store your linked templates.
 
@@ -44,7 +51,7 @@ Azure resource manager templates allow you to call other templates from within a
 }
 ```
 
-[To learn more about linked templates click here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/linked-templates)
+[To learn more about linked templates click here](https://docs.microsoft.com/azure/azure-resource-manager/templates/linked-templates)
 
 ## Including additional files in your managed application package
 
@@ -54,7 +61,7 @@ When you create your managed application package, you can choose to add files ot
 deployment().properties.templateLink.uri
 ```
 
-[To learn more about the deployment function click here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/template-functions-deployment)
+[To learn more about the deployment function click here](https://docs.microsoft.com/azure/azure-resource-manager/templates/template-functions-deployment)
 
 ## Putting it all together
 
@@ -83,4 +90,4 @@ To learn how to create application with metrics and alerts please visit:
 
 + [Creating managed application with metrics and alerts](https://github.com/Azure/azure-quickstart-templates/tree/master/101-managed-application-with-metrics-and-alerts)
 
-
+`Tags: Microsoft.Solutions/applicationDefinitions, Microsoft.Solutions/applications, Microsoft.Storage/storageAccounts, Microsoft.Resources/deployments`

@@ -1,4 +1,14 @@
-# Create a Logic App to send information on cost optimization opportunities with Azure Backup via email
+---
+description: This template deploys a Logic App that sends periodic reports on inactive backup resources, possible backup schedule optimizations and possible backup retention optimizations, to a specified set of email addresses.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-optimize-report
+languages:
+- json
+---
+# Logic App to email reports on backup cost optimizmation
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-optimize-report/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-optimize-report/PublicDeployment.svg)
@@ -27,3 +37,5 @@ Using this view, you can identify those items that have backups retained for a l
 Using this view, you can identify database workloads that have been configured for daily full backup. Often, using daily differential backup along with weekly full backup is more cost-effective.
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
+
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, Foreach, AppendToStringVariable, If, ApiConnection, InitializeVariable, string, array, Scope, Table, Microsoft.OperationalInsights/workspaces`

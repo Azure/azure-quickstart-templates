@@ -22,17 +22,19 @@ param imageGalleryName string = substring('ImageGallery_${guid(resourceGroup().i
 
 @description('Detailed image information to set for the custom image produced by the Azure Image Builder build.')
 param imageDefinitionProperties object = {
-  name: 'Win2019_AzureWindowsBaseline_Definition'
+  name: 'Win2022_AzureWindowsBaseline_Definition'
   publisher: 'AzureWindowsBaseline'
   offer: 'WindowsServer'
-  sku: '2019-Datacenter'
+  sku: '2022-Datacenter'
 }
 
+param vmSize string = 'Standard_D2_v3'
+
 @description('Name of the template to create in Azure Image Builder.')
-param imageTemplateName string = 'Win2019_AzureWindowsBaseline_Template'
+param imageTemplateName string = 'Win2022_AzureWindowsBaseline_Template'
 
 @description('Name of the custom iamge to create and distribute using Azure Image Builder.')
-param runOutputName string = 'Win2019_AzureWindowsBaseline_CustomImage'
+param runOutputName string = 'Win2022_AzureWindowsBaseline_CustomImage'
 
 @description('List the regions in Azure where you would like to replicate the custom image after it is created.')
 param replicationRegions array = [
@@ -49,18 +51,17 @@ param forceUpdateTag string = newGuid()
 var customizerScriptUri = uri(_artifactsLocation, '${customizerScriptName}${_artifactsLocationSasToken}')
 var templateIdentityRoleAssignmentName = guid(templateIdentity.id, resourceGroup().id, templateIdentityRoleDefinition.id)
 
-resource templateIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource templateIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: templateIdentityName
   location: location
 }
 
-resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-07-01' = {
+resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   name: templateIdentityRoleDefinitionName
   properties: {
     roleName: templateIdentityRoleDefinitionName
     description: 'Used for AIB template and ARM deployment script that runs AIB build'
     type: 'customRole'
-    isCustom: true
     permissions: [
       {
         actions: [
@@ -89,23 +90,22 @@ resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions
   }
 }
 
-resource templateRoleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
+resource templateRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: templateIdentityRoleAssignmentName
   properties: {
     roleDefinitionId: templateIdentityRoleDefinition.id
     principalId: templateIdentity.properties.principalId
-    scope: resourceGroup().id
     principalType: 'ServicePrincipal'
   }
 }
 
-resource imageGallery 'Microsoft.Compute/galleries@2020-09-30' = {
+resource imageGallery 'Microsoft.Compute/galleries@2022-03-03' = {
   name: imageGalleryName
   location: location
   properties: {}
 }
 
-resource imageDefinition 'Microsoft.Compute/galleries/images@2020-09-30' = {
+resource imageDefinition 'Microsoft.Compute/galleries/images@2022-03-03' = {
   parent: imageGallery
   name: imageDefinitionProperties.name
   location: location
@@ -131,7 +131,7 @@ resource imageDefinition 'Microsoft.Compute/galleries/images@2020-09-30' = {
   }
 }
 
-resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14' = {
+resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14' = {
   name: imageTemplateName
   location: location
   identity: {
@@ -143,14 +143,14 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14
   properties: {
     buildTimeoutInMinutes: 60
     vmProfile: {
-      vmSize: 'Standard_D2_v3'
+      vmSize: vmSize
       osDiskSizeGB: 127
     }
     source: {
       type: 'PlatformImage'
       publisher: 'MicrosoftWindowsServer'
       offer: 'WindowsServer'
-      sku: '2019-Datacenter'
+      sku: '2022-Datacenter'
       version: 'latest'
     }
     customize: [

@@ -2,7 +2,7 @@
 param logicAppName string
 
 @description('A test URI')
-param testUri string = 'https://status.azure.com/en-us/status/'
+param testUri string = 'https://azure.status.microsoft/status/'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location

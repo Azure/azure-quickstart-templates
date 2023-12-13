@@ -1,4 +1,14 @@
-# KEMP LoadMaster Multinic ARM template
+---
+description: This template creates a KEMP LoadMaster with two interfaces into existing Subnets.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: kemp-loadmaster-multinic
+languages:
+- json
+---
+# KEMP LoadMaster (MultiNIC)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kemp/kemp-loadmaster-multinic/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kemp/kemp-loadmaster-multinic/PublicDeployment.svg)
@@ -26,4 +36,4 @@ This template deploys a KEMP LoadMaster with multiple NICs. Doing so will enable
 
 More information can be [found here](https://kemptechnologies.com/solutions/microsoft-load-balancing/loadmaster-azure/).
 
-``Tags: loadbalancers, networking, lb``
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

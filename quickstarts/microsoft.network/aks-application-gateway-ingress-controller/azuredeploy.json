@@ -2,6 +2,17 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
     "location": {
       "defaultValue": "[resourceGroup().location]",
       "type": "string",
@@ -118,7 +129,7 @@
     },
     "aksClusterKubernetesVersion": {
       "type": "string",
-      "defaultValue": "1.20.5",
+      "defaultValue": "1.26.0",
       "metadata": {
         "description": "Specifies the version of Kubernetes specified when creating the managed cluster."
       }
@@ -624,9 +635,13 @@
     },
     "imageSku": {
       "type": "string",
-      "defaultValue": "18.04-LTS",
+      "defaultValue": "18_04-lts-gen2",
+      "allowedValues": [
+          "18_04-daily-lts-gen2",
+          "18_04-lts-gen2"
+      ],            
       "metadata": {
-        "description": "Specifies the Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
       }
     },
     "authenticationType": {
@@ -886,6 +901,17 @@
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "readerRoleDefinitionName": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
     "contributorRoleDefinitionName": "b24988ac-6180-42a0-ab88-20f7382dd24c",
     "acrPullRoleDefinitionName": "7f951dda-4ed3-4680-a7ca-43fe172d538d",
@@ -1259,7 +1285,7 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-08-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -1276,6 +1302,7 @@
           "adminPassword": "[parameters('vmAdminPasswordOrKey')]",
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "storageProfile": {
           "imageReference": {
             "publisher": "[parameters('imagePublisher')]",
@@ -1325,7 +1352,38 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+              "AttestationConfig": {
+                  "MaaSettings": {
+                      "maaEndpoint": "",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                  },
+                  "AscSettings": {
+                    "ascReportingEndpoint": "",
+                    "ascReportingFrequency": ""
+                  },
+                  "useCustomToken": "false",
+                  "disableAlerts": "false"
+              }
+          }
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/', variables('omsAgentForLinuxName'))]",
       "location": "[parameters('location')]",
@@ -1480,26 +1538,26 @@
       "comments": "User-Defined Managed Identity defined for the AKS cluster. Used to access the Virtual Network and other resources.",
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
       "name": "[variables('aksClusterUserDefinedManagedIdentityName')]",
-      "apiVersion": "2018-11-30",
+      "apiVersion": "2023-01-31",
       "location": "[parameters('location')]"      
     },
     {
       "comments": "User-Defined Managed Identity used by the Application Gateway is assigned. Used to access Azure Key Vault.",
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2018-11-30",
+      "apiVersion": "2023-01-31",
       "name": "[variables('applicationGatewayUserDefinedManagedIdentityName')]",
       "location": "[parameters('location')]"      
     },
     {
       "comments": "User-Defined Managed Identity used by an AAD Pod Identity. Used to access Azure Key Vault.",
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2018-11-30",
+      "apiVersion": "2023-01-31",
       "name": "[variables('aadPodIdentityUserDefinedManagedIdentityName')]",
       "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2022-01-01-preview",
       "name": "[variables('aksContributorRoleAssignmentName')]",
       "dependsOn": [
         "[variables('aksClusterUserDefinedManagedIdentityId')]",
@@ -1593,7 +1651,7 @@
         {
           "comments": "Grant the AKS cluster ingress controller pod managed identity with reader role permissions over Key Vault; paired with the Access Policy, this allows our ingress controller to pull certificates.",
           "type": "providers/roleAssignments",
-          "apiVersion": "2020-04-01-preview",
+          "apiVersion": "2022-01-01-preview",
           "name": "[concat('Microsoft.Authorization/', guid(concat(resourceGroup().id), variables('readerRoleId')))]",
           "dependsOn": [
             "[variables('keyVaultId')]",
@@ -1652,7 +1710,7 @@
       "resources": [
         {
           "type": "providers/roleAssignments",
-          "apiVersion": "2020-04-01-preview",
+          "apiVersion": "2022-01-01-preview",
           "name": "[variables('acrPullRoleAssignmentName')]",
           "dependsOn": [
             "[variables('aksClusterId')]",
@@ -1969,7 +2027,7 @@
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2018-09-01",
+      "apiVersion": "2020-06-01",
       "name": "[concat(variables('keyVaultPrivateDnsZoneName'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
       "location": "global",
       "dependsOn": [
@@ -2151,7 +2209,7 @@
     },
     {
       "type": "microsoft.insights/activityLogAlerts",
-      "apiVersion": "2017-04-01",
+      "apiVersion": "2020-10-01",
       "name": "AllAzureAdvisorAlert",
       "location": "Global",
       "properties": {
@@ -2188,7 +2246,7 @@
     },
     {
       "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-02-01",
       "name": "[parameters('wafPolicyName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -2436,7 +2494,7 @@
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2022-01-01-preview",
       "name": "[variables('appGwContributorRoleAssignmentName')]",
       "dependsOn": [
         "[variables('aksClusterId')]",
@@ -2453,4 +2511,3 @@
   "outputs": {
   }
 }
-

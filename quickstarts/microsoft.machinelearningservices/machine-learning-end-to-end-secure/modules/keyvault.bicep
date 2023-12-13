@@ -1,5 +1,5 @@
 // Creates a KeyVault with Private Link Endpoint
-@description('The Azure Region to deploy the resrouce group into')
+@description('The Azure Region to deploy the resources into')
 param location string = resourceGroup().location
 
 @description('Tags to apply to the Key Vault Instance')
@@ -19,7 +19,7 @@ param virtualNetworkId string
 
 var privateDnsZoneName = 'privatelink${environment().suffixes.keyvaultDns}'
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyvaultName
   location: location
   tags: tags
@@ -44,7 +44,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   }
 }
 
-resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: keyvaultPleName
   location: location
   tags: tags
@@ -66,12 +66,12 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
   }
 }
 
-resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName
   location: 'global'
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
   name: '${keyVaultPrivateEndpoint.name}/vault-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
@@ -85,7 +85,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   }
 }
 
-resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
+resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${keyVaultPrivateDnsZone.name}/${uniqueString(keyVault.id)}'
   location: 'global'
   properties: {

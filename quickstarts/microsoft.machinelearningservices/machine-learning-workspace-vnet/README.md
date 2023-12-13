@@ -1,4 +1,15 @@
-# Azure Machine Learning workspace (secure network configuration)
+---
+description: This deployment template specifies an Azure Machine Learning workspace, and its associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry. This configuration describes the set of resources you require to get started with Azure Machine Learning in a network isolated set up.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-workspace-vnet
+languages:
+- bicep
+- json
+---
+# Create an Azure Machine Learning service workspace (vnet)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-vnet/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-vnet%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-vnet%2Fazuredeploy.json)
@@ -91,7 +104,6 @@ This command is an example of creating workspace with user assigned identity.
 New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountOption "existing" -storageAccountResourceGroupName "existing-storage-rg" -storageAccountName "existing-storage-name" -keyVaultOption "existing" -keyVaultResourceGroupName "existing-kv-rg" -keyVaultName "existing-kv-name" -applicationInsightsOption "existing" -applicationInsightsResourceGroupName "existing-ai-rg" -applicationInsightsName "existing-ai-name" -identityType "userAssigned" -primaryUserAssignedIdentity "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/uai"
 ```
 
-
 ## Learn more
 
 If you are new to Azure Machine Learning, see:
@@ -105,3 +117,5 @@ If you are new to template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Create an Azure Machine Learning service workspace by using a template](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.ContainerRegistry/registries, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, [parameters('identityType')], Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`

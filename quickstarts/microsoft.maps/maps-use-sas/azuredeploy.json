@@ -1,0 +1,175 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "westeurope",
+                "eastus",
+                "westus2",
+                "northeurope",
+                "westcentralus",
+                "usgovvirginia",
+                "usgovarizona"
+            ],
+            "metadata": {
+                "description": "Specifies the location for all the resources."
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the resourceId of the key vault."
+            }
+        },
+        "accountName": {
+            "type": "string",
+            "defaultValue": "[concat('map', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name for the Azure Maps account."
+            }
+        },
+        "userAssignedIdentityResourceId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the resourceId for the user assigned managed identity resource."
+            }
+        },
+        "userAssignedIdentityPrincipalId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the resourceId for the user assigned managed identity resource."
+            }
+        },
+        "pricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "G2"
+            ],
+            "defaultValue": "G2",
+            "metadata": {
+                "description": "The pricing tier SKU for the account."
+            }
+        },
+        "kind": {
+            "type": "string",
+            "allowedValues": [
+                "Gen2"
+            ],
+            "defaultValue": "Gen2",
+            "metadata": {
+                "description": "The pricing tier for the account."
+            }
+        },
+        "startDateTime": {
+            "type": "string",
+            "defaultValue": "[utcNow('u')]",
+            "metadata": {
+                "description": "Current Universal DateTime in ISO 8601 'u' format to be used as start of the SAS Token."
+            }
+        },
+        "duration" : {
+            "type": "string",
+            "defaultValue": "P1Y",
+            "metadata": {
+                "description": "The duration of the SAS Token, P1Y is maximum, ISO 8601 format is expected."
+            }
+        },
+        "maxRatePerSecond": {
+            "type": "int",
+            "defaultValue": 500,
+            "minValue": 1,
+            "maxValue": 500,
+            "metadata": {
+                "description": "The approximate maximum rate per second the SAS token can be used."
+            }
+        },
+        "signingKey": {
+            "type": "string",
+            "defaultValue": "primaryKey",
+            "allowedValues": [
+                "primaryKey",
+                "seconaryKey"
+            ],
+            "metadata": {
+                "description": "The specified signing key which will be used to create the SAS Token."
+            }
+        },
+        "allowedOrigins": {
+            "type": "array",
+            "defaultValue": [],
+            "maxLength": 10,
+            "metadata": {
+                "description": "The specified application's web host header origins (example: https://www.azure.com) which the Maps account allows for Cross Origin Resource Sharing (CORS)."
+            }
+        }
+    },
+    "variables": {
+        "accountId": "[resourceId('Microsoft.Maps/accounts', parameters('accountName'))]",
+        "AzureMapsDataReader": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '423170ca-a8f6-4b0f-8487-9e4eb8f49bfa')]",
+        "sasParameters": {
+            "signingKey": "[parameters('signingKey')]",
+            "principalId": "[parameters('userAssignedIdentityPrincipalId')]",
+            "maxRatePerSecond": "[parameters('maxRatePerSecond')]",
+            "start": "[parameters('startDateTime')]",
+            "expiry": "[dateTimeAdd(parameters('startDateTime'), parameters('duration'))]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Maps/accounts",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('accountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('pricingTier')]"
+            },
+            "kind": "[parameters('kind')]",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[parameters('userAssignedIdentityResourceId')]": {}
+                }
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": [
+                        {
+                            "allowedOrigins": "[parameters('allowedOrigins')]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Maps/accounts/providers/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[concat(parameters('accountName'), '/Microsoft.Authorization/', guid(parameters('userAssignedIdentityPrincipalId'), variables('AzureMapsDataReader'), resourceId('Microsoft.Maps/accounts', parameters('accountName'))))]",            
+            "dependsOn": [
+                "[parameters('accountName')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('AzureMapsDataReader')]",
+                "principalId": "[parameters('userAssignedIdentityPrincipalId')]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2021-04-01-preview",
+            "name": "[concat(parameters('keyVaultName'), '/', parameters('accountName'))]",
+            "dependsOn": [
+                "[variables('accountId')]"
+            ],
+            "tags": {
+                "signingKey": "[variables('sasParameters').signingKey]",
+                "start" : "[variables('sasParameters').start]",
+                "expiry" : "[variables('sasParameters').expiry]"
+            },
+            "properties": {
+                "value": "[listSas(variables('accountId'), '2021-12-01-preview', variables('sasParameters')).accountSasToken]"
+            }
+        }
+    ]
+}

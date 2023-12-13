@@ -1,4 +1,15 @@
-# Virtual Network NAT
+---
+description: Deploy a NAT gateway and virtual machine
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: nat-gateway-1-vm
+languages:
+- bicep
+- json
+---
+# Virtual Network NAT with VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nat-gateway-1-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nat-gateway-1-vm/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nat-gateway-1-vm/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nat-gateway-1-vm/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nat-gateway-1-vm/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fnat-gateway-1-vm%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fnat-gateway-1-vm%2Fazuredeploy.json)
@@ -42,4 +55,4 @@ The following resources are deployed as part of the solution.
 
 - **virtualMachines**: Virtual machine for solution.
 
-`Tags: virtual network, vnet, nat, nat gateway, virtual machine`
+`Tags: virtual network, vnet, nat, nat gateway, virtual machine, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/publicIPPrefixes, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks, Microsoft.Network/natGateways, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/networkInterfaces`

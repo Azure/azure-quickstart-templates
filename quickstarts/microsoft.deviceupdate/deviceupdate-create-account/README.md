@@ -1,3 +1,14 @@
+---
+description: This template creates an account that provides public DNS record and allows to make REST API calls to Data Plane. Then user needs to create an instance under the account and link it with an IoT Hub to start using the service.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: deviceupdate-create-account
+languages:
+- json
+- bicep
+---
 # Create Device Update for IoT Hub account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.deviceupdate/deviceupdate-create-account/PublicLastTestDate.svg)
@@ -18,4 +29,4 @@
 
 This template creates an account that provides public DNS record and allows to make REST API calls to Data Plane.
 
-`Tags: iot, iot-hub, iot-hub-device-update`
+`Tags: iot, iot-hub, iot-hub-device-update, Microsoft.DeviceUpdate/accounts`

@@ -22,7 +22,7 @@ param defaultConsistencyLevel string = 'Session'
 
 @minValue(10)
 @maxValue(2147483647)
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2,147,483,647. Multi Region: 100,000 to 2,147,483,647.')
 param maxStalenessPrefix int = 100000
 
 @minValue(5)
@@ -34,8 +34,8 @@ param maxIntervalInSeconds int = 300
   true
   false
 ])
-@description('Enable automatic failover for regions')
-param automaticFailover bool = true
+@description('Enable system managed failover for regions')
+param systemManagedFailover bool = true
 
 @description('The name for the Cassandra Keyspace')
 param keyspaceName string
@@ -48,7 +48,6 @@ param tableName string
 @description('The throughput for Cassandra table')
 param throughput int = 400
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -81,8 +80,8 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
@@ -94,12 +93,12 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: automaticFailover
+    enableAutomaticFailover: systemManagedFailover
   }
 }
 
-resource accountName_keyspaceName 'Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces@2021-04-15' = {
-  name: '${accountName_resource.name}/${keyspaceName}'
+resource keyspace 'Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces@2022-05-15' = {
+  name: '${account.name}/${keyspaceName}'
   properties: {
     resource: {
       id: keyspaceName
@@ -107,8 +106,8 @@ resource accountName_keyspaceName 'Microsoft.DocumentDB/databaseAccounts/cassand
   }
 }
 
-resource accountName_keyspaceName_tableName 'Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables@2021-04-15' = {
-  name: '${accountName_keyspaceName.name}/${tableName}'
+resource table 'Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables@2022-05-15' = {
+  name: '${keyspace.name}/${tableName}'
   properties: {
     resource: {
       id: tableName

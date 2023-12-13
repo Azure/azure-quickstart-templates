@@ -1,4 +1,14 @@
-﻿# Azure API Management Service
+---
+description: This template demonstrates how to Create a instance of Azure API Management and configure custom hostname for proxy with ssl certificate from keyvault.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: api-management-create-with-reference-keyvault
+languages:
+- json
+---
+# Create API Management with custom proxy ssl using KeyVault.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-create-with-reference-keyvault/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-create-with-reference-keyvault/PublicDeployment.svg)
@@ -13,7 +23,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-create-with-reference-keyvault%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-create-with-reference-keyvault%2Fazuredeploy.json)
 
-This template shows an example of how to deploy an Azure API Management service with SSL Certificate from [KeyVault as Resource Manager Reference](https://azure.microsoft.com/en-us/documentation/articles/resource-manager-keyvault-parameter/).
+This template shows an example of how to deploy an Azure API Management service with SSL Certificate from [KeyVault as Resource Manager Reference](https://azure.microsoft.com/documentation/articles/resource-manager-keyvault-parameter/).
 
 In order to deploy this template, you need to have the following resources:
 1. A Key Vault
@@ -35,4 +45,4 @@ $secretContentType = 'application/x-pkcs12'
 Set-AzureKeyVaultSecret -VaultName KEY_VAULT_NAME -Name KEY_VAULT_SECRET_NAME -SecretValue $Secret -ContentType $secretContentType # Change Key Vault name and Secret name
 ```
 
-
+`Tags: Microsoft.ApiManagement/service, Proxy`

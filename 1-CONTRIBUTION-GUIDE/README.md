@@ -1,6 +1,6 @@
 # Azure Resource Manager QuickStart Templates
 
-This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at [Azure Resource Manager Templates](https://azure.microsoft.com/en-us/documentation/templates/).
+This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at [Azure Resource Manager Templates](https://azure.microsoft.com/documentation/templates/).
 
 The following information is relevant to get started with contributing to this repository.
 
@@ -15,7 +15,7 @@ You can deploy these samples directly through the Azure Portal or by using the s
 
 To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-To deploy the sample via the command line (using [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/overview) or the [Azure CLI 1.0](https://docs.microsoft.com/en-us/azure/cli-install-nodejs)) you can use the scripts below.
+To deploy the sample via the command line (using [Azure PowerShell](https://docs.microsoft.com/powershell/azure/overview) or the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)) you can use the scripts below.
 
 Simply execute the script and pass in the folder name of the sample you want to deploy.
 
@@ -29,16 +29,16 @@ For example:
 
 ### Bash
 
-Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://docs.microsoft.com/en-us/azure/cli-install-nodejs) installed.
+Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://docs.microsoft.com/cli/azure/install-azure-cli) installed.
 
 ```bash
-./azure-group-deploy.sh -a [foldername] -l eastus
+./az-group-deploy.sh -a [foldername] -l eastus
 ```
 
-+ If you see the following error: "syntax error near unexpected token `$'in\r''", run this command: 'dos2unix azure-group-deploy.sh'.
++ If you see the following error: "syntax error near unexpected token `$'in\r''", run this command: 'dos2unix az-group-deploy.sh'.
 + If you see the following error: "jq: command not found", run this command: "sudo apt install jq".
 + If you see the following error: "node: not found", install node and npm.
-+ If you see the following error: "azure-group-deploy.sh is not a command", make sure you run "chmod +x azure-group-deploy.sh".
++ If you see the following error: "az-group-deploy.sh is not a command", make sure you run "chmod +x az-group-deploy.sh".
 
 ## Uploading Artifacts
 
@@ -55,12 +55,14 @@ one will be created by the script or reused if it already exists (think of this 
 ### Bash (explicit staging)
 
 ```bash
-./azure-group-deploy.sh -a [foldername] -l eastus -u
+./az-group-deploy.sh -a [foldername] -l eastus -u
 ```
+
+Note, that for samples that follow the best practices for artifacts in the repo, the `-UploadArtifacts` switch is not needed.
 
 ## Contribution Guide
 
-To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blocklist** and not be indexed on Azure.com
+To make sure your template is added to Azure.com index, please follow these guidelines.  PRs that do not follow these guidelines will not be merged.
 
 ## Files, folders and naming conventions
 
@@ -75,52 +77,43 @@ To make sure your template is added to Azure.com index, please follow these guid
   + **subscription-deployments** - contains sample templates that must be deployed at the subscription scope.
   + **tenant-deployments** - contains sample templates that must be deployed at the tenant scope.
 
-+ **Protip** - Try to keep the name of your template folder short so that it fits inside the Github folder name column width.
++ **Protip** - Try to keep the name of your template folder short so that it fits inside the GitHub folder name column width.
 
-1. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md**, that should be in the format **UPPERCASE.lowercase**.
+1. GitHub uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md** file, that should be in the format **UPPERCASE.lowercase**.
 
 1. Include a **README.md** file that explains how the template works.
 
 + Guidelines on the README.md file below.
 
 1. The bicep deployment file (optional) must be named **main.bicep**
-1. The JSON deployment template file (required) must be named **azuredeploy.json**.
+1. The JSON deployment template file (required only when bicep is not included) must be named **azuredeploy.json**.
 1. There should be a parameters file named **azuredeploy.parameters.json**.
 
 + Guidelines on using Bicep [below](#bicep-support)
 
-+ Use defaultValues in the azuredeploy.json template whenever there is a value that will work for all users.  The parameters file, should contain only [GEN*](#parameters-file-placeholders) values for generating values for a test deployment.  Do NOT use values that require changes by the user for a successful deployment (e.g. changeme).
++ Use defaultValues in the template whenever there is a value that will work for all users.  The parameters file, should contain only [GEN*](#parameters-file-placeholders) values for generating values for a test deployment.  Do NOT use values that require changes by the user for a successful deployment (e.g. changeme).
 
-1. The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com/).
-
-+ Guidelines on the metadata.json file below.
-
-1. The custom scripts that are needed for successful template execution must be placed in a folder called **scripts**.
-1. Linked templates must be placed in a folder called **nested**.
-1. Images used in the README.md must be placed in a folder called **images**.
-1. Any resources that need to be setup outside the template should be named prefixed with existing (e.g. existingVNET, existingDiagnosticsStorageAccount and provision using a [prereqs](#template-pre-requisites) template.
-
-![alt text](/1-CONTRIBUTION-GUIDE/images/namingConvention.png "Files, folders and naming conventions")
+1. The template folder must contain a **metadata.json** file, the information in this file is used to create a searchable index at [https://learn.microsoft.com/samples](https://aka.ms/azqst).
 
 + Pull Request Guidelines
 
-1. A single PR should reference a single template.  There shouldn't be multiple templates being referenced in a single PR
+1. A single PR should reference a single template.  There shouldn't be multiple templates/samples being updated in a single PR.  Testing will block samples that update more than one sample.
 1. For each PR created the contributor needs to acknowledge the Contribution and Best Practices Guide.
 1. Each PR will run through the [arm-ttk](https://github.com/Azure/arm-ttk) and [Template Analyzer](https://github.com/Azure/template-analyzer) to ensure best practices
-1. Part of the pre-merge checks will be a deployment to both the Public and USGov clouds
+1. Part of the pre-merge checks will be a deployment to both the Public and USGov Clouds unless otherwise indicated by metadata.json.  All clouds must be supported unless the platform support is incomplete.
 
 ## Target Scopes
 
 Samples can be deployed to resourceGroup, subscription, managementGroup and tenant scope.  The scope of deployment should match the scope of the workload.  For example, while it's possible to deploy resources to a resourceGroup from a subscription scope template, this requires elevated permissions that users may not have.  For example, resourceGroups should not be created as part of a resourceGroup workload by requiring deployment to the subscription scope.  If the workload targets a resourceGroup, the sample's targetScope should target a resourceGroup.
 
-The target scope itself should not be created by the sample unless the creation of the scope is the sample, for example creating managementGroup hierarchies.  
+The target scope itself should not be created by the sample unless the creation of the scope is the sample, for example creating managementGroup hierarchies.
 
 ## Bicep support
 
-We encourage new samples to be written directly in [Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview) and encourage existing samples to be converted to support Bicep.
+We encourage new samples to be written directly in [Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/overview) and encourage existing samples to be converted to support Bicep.
 
 1. The bicep file must be named **main.bicep**
-1. The **azuredeploy.json** file must still be included, and must be generated by the bicep compiler (use this command: `bicep build main.bicep --outfile azuredeploy.json`)
+1. The **azuredeploy.json** must **not** be included in the PR as it will be built automatically when the sample is merged.
 1. The [**README.md**](sample-README.md) file must include a link to the bicep badge
 1. The parameter file must still be named **azuredeploy.parameters.json**
 
@@ -130,20 +123,22 @@ An easy way to convert an existing sample to support Bicep is to use the Bicep d
 bicep decompile azuredeploy.json --outfile main.bicep
 ```
 
-The decompiler is not guaranteed to produce correct Bicep code from JSON, so you will need to inspect and modify the **main.bicep** file afterwards (and then use `bicep build` to generate the matching **azuredeploy.json** file). Some general guidelines:
+The decompiler is not guaranteed to produce correct Bicep code from JSON, so you will need to inspect and modify the **main.bicep** file afterwards. Some general guidelines:
 
 1. Rename (F2 in VsCode) parameters and variables to be camel-cased.
 1. Rename resource symbolic names to a logical, short name, such as 'storage' or 'vmStorage' for a resource of type `Microsoft.Storage/storageAccounts`. Remove `Name` from the symbolic name if the decompiler creates it that way.
 1. Remove `_var`, `_param` and `_resource` prefixes if they are present in variables, parameters and resources.
 1. Use bicep concepts when possible
-1. See [decompiling](https://github.com/Azure/bicep/blob/main/docs/decompiling.md) for current limitations of the Bicep decompiler.
+1. See [decompiling](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/decompile?tabs=azure-cli) for current limitations of the Bicep decompiler.
 1. The top-level elements of the file must be in this order (if they exist):
-    - targetScope
-    - parameters
-    - variables
-    - resources and modules references
-    - outputs
-7. Parameters should have a `@description` or `@metadata` decorator, and if other decorators are present, `@description`/`@metadata` should come first. Place a blank line before and after each parameter.
+    + targetScope
+    + parameters
+    + variables
+    + resources and modules references
+    + outputs
+
+1. Parameters should have a `@description` or `@metadata` decorator, and if other decorators are present, `@description`/`@metadata` should come first. Place a blank line before and after each parameter.
+
 ```bicep
     @description('The location into which the resources should be deployed.')
     param location string = resourceGroup().location
@@ -156,42 +151,20 @@ The decompiler is not guaranteed to produce correct Bicep code from JSON, so you
       'Premium_LRS'
     ])
 ```
-8. Common resource properties, when present, should be authored consistently to provide for understandability and consumption of the code:
-```bicep
-    resource symbolicName 'Resource.Provider/resourceType@apiVersion' = {
-      comments:
-      parent:
-      scope:
-      name:
-      location:
-      zones:
-      sku:
-      kind:
-      scale:
-      plan:
-      identity:
-      dependsOn:
-      tags:
-      // Any other top-level properties should go here, before 'properties'
-      properties:
-    }
-```
 
-See also [Best practices for Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/best-practices)
+See also [Best practices for Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/best-practices)
 
 ## README.md
 
-The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [Github Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections
+The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections:
 
-+ Deploy to Azure button
++ Deploy to Azure/AzureGov button
 + Visualize button
 + Description of what the template will deploy
 + Tags, that can be used for search. Specify the tags comma separated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
 + *Optional: Description on how to use the application
 + *Optional: Notes
-
-Do **not include** the **parameters or the variables** of the deployment script. We render this on Azure.com from the template. Specifying these in the README.md will result in **duplicate entries** on Azure.com.
 
 You can download a [**sample README.md**](/1-CONTRIBUTION-GUIDE/sample-README.md) for use in your deployment scenario. The **sample README.md** also contains the code for the **Deploy to Azure** and **Visualize** buttons, that you can use as a reference.
 
@@ -211,57 +184,18 @@ A valid metadata.json must adhere to the following structure
 }
 ```
 
-### schema
+Guidelines on the metadata.json:
 
-+ Proper metadata schema
-
-### itemDisplayName
-
-+ Title of the sample
-
-### description
-
-+ Cannot contain HTML This is used for the template description on the Azure.com index template details page
-
-### summary
-
-+ This is shown for template description on the main Azure.com template index page
-
-### githubUsername
-
-+ This is the username of the original template author. Do not change this
-+ This is used to display template author and Github profile pic in the Azure.com index
-
-### dateUpdated
-
-+ Must be in yyyy-mm-dd format.
-+ The date must not be in the future to the date of the pull request
-
-### type
-
-+ Type of template; in this case, QuickStart
-
-### environments
-
-+ An array of the clouds supported by the sample, if omitted all clouds should be supported and will be tested.  See the schema for the allowed values.
-
-## Cloud Support
-
-If the sample does not support all clouds add the environments property to metadata.json indicating the clouds that are supported.  If omitted, the following is the default value of the environments property.
-
-```json
-{
-  ...
-  "environments": [
-    "AzureCloud",
-    "AzureUSGovernment"
-  ]
-}
-```
-
-## Validation Type
-
-If the sample cannot be automatically tested (e.g. tenant level deployments) set the validation type to "Manual", the default is "Automatic".
++ The schema for the metadata.json file can be found [here](https://github.com/Azure/azure-quickstart-templates/blob/master/test/metadata.schema.json)
++ **itemDisplayName:** short description of the sample
++ **summary:** short summary of what the sample does or is meant to illustrate, 200 chars in length
++ **description:** long description for the sample, can be up to 1000 chars
++ **githubUsername:** user that owns the sample, don't change this unless you want to assume ownership
++ **docOwner:** used to identify the owner of any documentation that references this sample - the doc owner is notified of changes via PRs
++ **validationType:** if the sample requires manual validation, set this to `Manual` otherwise omit the property
++ **type:** type of sample, see the schema for possible value
++ **environments:** list of supported clouds, if omitted, all clouds will be tested and listed as supported
++ **dateUpdated:** the date the sample was last updated, this will be automatically updated when the PR is merged
 
 ### Cloud Specific Parameter Files
 
@@ -284,14 +218,14 @@ To ensure your template passes, special placeholder values are required when dep
 
 + **GEN-UNIQUE[-N]** - use this for a new globally unique resource name. The value will always be alpha numeric value with a length of `[N]`, where `[N]` can be any number from 3 to 32 inclusive.  The default length when N is not specified is 18.
 + **GEN-SSH-PUB-KEY** - use this if you need an SSH public key
-+ **GEN-PASSWORD** - use this if you need an azure-compatible password for a VM
-+ **GEN-GUID** - use this to generate a GUID
++ **GEN-PASSWORD** - use this if you need a password
++ **GEN-GUID** - use this to generate a random GUID
 
 Quickstart CI engine provides few pre-created azure components which can be used by templates for automated validation. This includes a key vault with sample SSL certificate stored, specialized and generalized Windows Server VHD's, a custom domain and SSL cert data for Azure App Service templates and more.
 
 **Virtual Network Related placeholders:**
 
-+ **GEN-VNET-NAME** - the name of the virtual network
++ **GEN-VNET-NAME** - the name of the virtual network - this uses an existing vnet in the subscription and will **not** create a new vnet
 + **GEN-VNET-RESOURCEGROUP-NAME** - the name of the resource group for the virtual network
 + **GEN-VNET-SUBNET1-NAME** - the name of subnet-1
 + **GEN-VNET-SUBNET2-NAME** - the name of subnet-2
@@ -353,6 +287,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-COSMOS-DB-SP-OBJECTID** - objectId of the Cosmos DB Service Principal in the tenant
 
 **Static website related placeholders:**
+
 + **GEN-STATIC-WEBSITE-URL** - full URL of a static website
 + **GEN-STATIC-WEBSITE-HOST-NAME** - host name of a static website
 
@@ -379,25 +314,19 @@ Here's an example in an `azuredeploy.parameters.json` file:
 }
 ```
 
-### raw.githubusercontent.com Links
+### Artifacts Required for Deployment and raw.githubusercontent.com Links
 
-If you're making use of **raw.githubusercontent.com** links within your template contribution (within the template file itself or any scripts in your contribution) please ensure the following:
-
-+ Ensure any raw.githubusercontent.com links which refer to content within your pull request points to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/...` and **NOT** your fork.
-+ All raw.githubusercontent.com links are placed in your azuredeploy.json and you pass the link down into your scripts & linked templates via this top-level template. This ensures we re-link correctly from your pull-request repository and branch.
-+ Although pull requests with links pointing to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/...` may not exist in the Azure repo at the time of your pull-request, at CI run-time, those links will be converted to `https://raw.githubusercontent.com/{your_user_name}/azure-quickstart-templates/{your_branch}/...`. Be sure to check the casing of `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/...` as this is case-sensitive.
-
-Note: You can find an **example** of relative linking in the [nested template section](/1-CONTRIBUTION-GUIDE/best-practices.md#nested-templates) of best practices document.
+In general, when following the best practices for the repo, you should never have any absolute URLs in a sample.  Any files needed for the sample must be hosted in the **Azure/azure-quickstart-templates** repo and the samples must reference those samples using the pattern described in the [best practices document](./best-practices.md).
 
 ### Template Pre-requisites
 
-If your template has some pre-requisite such as existing Virtual Network or storage account, you should also submit pre-requisite template which deploys the pre-requisite components. CI automated validation engine automatically validates and deploy the pre-reqsuite template first and then deploys the main template. Following guidelines would help you in understanding how to leverage this capability.
+If your template has some pre-requisite such as existing Virtual Network or storage account, you should also submit pre-requisite template which deploys the pre-requisite components. CI automated validation engine automatically validates and deploy the pre-requisite template first and then deploys the main template. Prereqs can be provided using JSON or bicep templates following the same guidelines used for the sample templates.  In addition, the following guidelines would help you in understanding how to leverage this capability.
 
 + Create a folder named `prereqs` in root of your template folder, Store pre-requisite template file, parameters file and artifacts inside this folder.
-+ Store pre-requisite template file with name `prereq.azuredeploy.json` and parameters files with name `prereq.azuredeploy.parameters.json`
-+ `prereq.azuredeploy.json` should deploy all required pre-existing resources by your main template and also output the values required by main template to leverage those resources. For example, if your template needs an existing VNET to be available prior to the deployment of main template, you should develop a pre-req template which deploys a VNET and outputs the VNET ID or VNET name of the virtual network created.
-+ In order to use the values generated by outputs after deployment of `prereq.azuredeploy.json`, you will need to define parameter values as `GET-PREREQ-OutputName`. For example, if you generated a output with name `vnetID` in pre-req template, in order use the value of this output in main template, enter the value of corresponding parameter in main template parameters file as `GET-PREREQ-vnetID`
-+ Check out this [sample template](https://github.com/Azure/azure-quickstart-templates/tree/master/101-subnet-add-vnet-existing) to learn more
++ Store pre-requisite template file with name `prereq.azuredeploy.json` or `prereq.main.bicep` and parameters files with name `prereq.azuredeploy.parameters.json`
++ The prereq template should deploy all required pre-existing resources by your main template and also output the values required by main template to leverage those resources. For example, if your template needs an existing VNET to be available prior to the deployment of main template, you should develop a pre-req template which deploys a VNET and outputs the VNET ID or VNET name of the virtual network created.
++ In order to use the values generated by outputs after deployment of the prereq template, you will need to define parameter values as `GET-PREREQ-OutputName`. For example, if you generated a output with name `vnetID` in pre-req template, in order use the value of this output in main template, enter the value of corresponding parameter in main template parameters file as `GET-PREREQ-vnetID`
++ You can search for other samples that use prereqs to see examples of how to provide them
 + If the prereqs and the sample must be deployed to the same resource group add a file named `.settings.json` to the prereqs folder and put the following json snippet into the file (the comment is optional).  Do this only if required by the sample, otherwise it may block customer deployment scenarios:
 
 ```json
@@ -413,14 +342,14 @@ You can optionally provide a UI Definition file to customize the deployment expe
 
 More information can be found at the links below - the documentation is tailored for the marketplace but the schema and behavior for createUiDefinition is a generic construct for the Azure portal.
 
-[createUiDefinition Overview](https://docs.microsoft.com/en-us/azure/azure-resource-manager/managed-applications/create-uidefinition-overview)
+[createUiDefinition Overview](https://docs.microsoft.com/azure/azure-resource-manager/managed-applications/create-uidefinition-overview)
 
-[createUiDefinition UI elements reference](https://docs.microsoft.com/en-us/azure/azure-resource-manager/managed-applications/create-uidefinition-elements)
+[createUiDefinition UI elements reference](https://docs.microsoft.com/azure/azure-resource-manager/managed-applications/create-uidefinition-elements)
 
-[testing createUiDefinition](https://docs.microsoft.com/en-us/azure/azure-resource-manager/managed-applications/test-createuidefinition)
+[testing createUiDefinition](https://docs.microsoft.com/azure/azure-resource-manager/managed-applications/test-createuidefinition)
 
 ### Diagnosing Failures
 
-If your deployment fails, check the details link of the Travis CI build, which will take you to the CI log. If the template deployment was attempted, you will get two top-level fields. The first is `parameters` which is the rendered version of your `azuredeploy.parameters.json`. This will include any replacements for `GEN-` parameters. The second is `template` which is the contents of your `azuredeploy.json`, after any `raw.githubusercontent.com` relinking. These values are the exact values you need to reproduce the error. Keep in mind, that depending on the resources allocated, it can take a few minutes for the CI system to cleanup provisioned resources.
+If your deployment fails, check the details link of the Azure DevOps build, which will take you to the log. If the template deployment was attempted, you can see what parameters were used and the error that was encountered during deployment.  These values are the values you need to reproduce the error. Keep in mind, that depending on the resources allocated, it can take a few minutes for the CI system to cleanup provisioned resources.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

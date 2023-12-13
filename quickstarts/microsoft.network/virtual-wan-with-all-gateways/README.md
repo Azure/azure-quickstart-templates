@@ -1,3 +1,13 @@
+---
+description: This template allows you to create an Azure Virtual WAN (vWAN) multi-hub deployment including all gateways and VNET connections.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: virtual-wan-with-all-gateways
+languages:
+- json
+---
 # Azure Virtual WAN (vWAN) Multi-Hub Deployment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-with-all-gateways/PublicLastTestDate.svg)
@@ -51,4 +61,4 @@ Additionally, inside the Resource Group the following resources will be created:
 
 ![Figure 4](images/vwanresourcesinazureportal.jpg)
 
-`Tags: Virtual WAN, vWAN, Hub, ExpressRoute, VPN, S2S, P2S, Routing`
+`Tags:Virtual WAN, vWAN, Hub, ExpressRoute, VPN, S2S, P2S, Routing, Standard, Microsoft.Network/virtualWans, [variables('vwan_cfg').type], Microsoft.Network/virtualHubs, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualHubs/hubVirtualNetworkConnections, Microsoft.Network/vpnGateways, Microsoft.Network/expressRouteGateways, Microsoft.Network/vpnServerConfigurations, Microsoft.Network/p2sVpnGateways`

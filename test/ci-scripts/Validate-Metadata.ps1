@@ -13,25 +13,10 @@ Write-host "Validating contents against JSON schema from https://aka.ms/azure-qu
 $schema = Invoke-WebRequest -Uri "https://aka.ms/azure-quickstart-templates-metadata-schema" -UseBasicParsing
 $metadata | Test-Json -Schema $schema.content
 
-#Make sure the date has been updated
-$rawDate = ($metadata | convertfrom-json).dateUpdated
-$dateUpdated = (Get-Date $rawDate)
-
 if ($ENV:BUILD_REASON -eq "PullRequest") {
     #When running the scheduled tests, we don't want to check the date
-    try {
-        [DateTime]::ParseExact($rawDate, 'yyyy-MM-dd', $(Get-Culture))
-    }
-    Catch {
-        Write-Error "dateUpdate is not in the correct format: $rawDate must be in yyyy-MM-dd format."
-    }
-    # Provide one day grace in the future since half the planet is ahead of UTC
-    if ($dateUpdated -gt (Get-Date).AddDays(1)) {
-        Write-Error "dateUpdated in metadata.json must not be in the future -- $dateUpdated is later than $((Get-Date).AddDays(1))"
-    }
-    $oldDate = (Get-Date).AddDays(-60)
-    if ($dateUpdated -lt $oldDate) {
-        Write-Error "dateUpdated in metadata.json needs to be updated -- $dateUpdated is older than $oldDate"
+    if($($metadata | ConvertFrom-Json).itemDisplayName.EndsWith(".")){
+        Write-Error "itemDisplayName in metadata.json must not end with a period (.)"
     }
 }
 

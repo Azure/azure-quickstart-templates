@@ -1,4 +1,14 @@
-# Create an Azure Machine Learning Workspace
+---
+description: This template creates a Machine Learning Service ADLA Compute.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-compute-attach-adla
+languages:
+- json
+---
+# Create a Machine Learning Service ADLA Compute.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-compute-attach-adla/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-compute-attach-adla/PublicDeployment.svg)
@@ -20,3 +30,5 @@ If you are new to Azure Machine Learning, see:
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
+
+`Tags: Microsoft.MachineLearningServices/workspaces/computes, Microsoft.DataLakeStore/accounts, Microsoft.DataLakeAnalytics/accounts, Microsoft.Resources/deployments`

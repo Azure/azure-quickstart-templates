@@ -1,4 +1,14 @@
-# Build a simple Umbraco Web App 
+---
+description: This template provides a easy way to deploy umbraco CMS web app on Azure App Service Web Apps.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: umbraco-webapp-simple
+languages:
+- json
+---
+# Simple Umbraco CMS Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/umbraco/umbraco-webapp-simple/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/umbraco/umbraco-webapp-simple/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fumbraco%2Fumbraco-webapp-simple%2Fazuredeploy.json)
 
 [Umbraco CMS](http://umbraco.org) is an open source ASP.NET-based content management system, with a beautiful, user-friendly interface, full support for your own .NET controls, and no limits to your designs. With an integrated WYSIWYG editor and full support for web standards, this fully stocked application will make designing and managing websites a joy.
+
+`Tags: Microsoft.Sql/servers, databases, firewallrules, Microsoft.Storage/storageAccounts, Microsoft.Web/serverFarms, Microsoft.Web/Sites, Extensions, config, SQLAzure, microsoft.insights/autoscalesettings, ChangeCount, microsoft.insights/components`

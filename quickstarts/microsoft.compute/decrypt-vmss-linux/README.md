@@ -1,4 +1,14 @@
-# This template disables encryption on a running VM scale set of Linux VMs
+---
+description: Disables encryption on an existing Linux VMSS
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: decrypt-vmss-linux
+languages:
+- json
+---
+# Disable encryption on an existing Linux VMSS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/decrypt-vmss-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/decrypt-vmss-linux/PublicDeployment.svg)
@@ -15,6 +25,6 @@
 
 This template disables encryption on a running VM scale set of Linux VMs.
 
-For more information about Azure Disk Encryption, see https://docs.microsoft.com/en-us/azure/security/azure-security-disk-encryption-linux
+For more information about Azure Disk Encryption, see https://docs.microsoft.com/azure/security/azure-security-disk-encryption-linux
 
-
+`Tags: Microsoft.Compute/virtualMachineScaleSets, [variables('extensionName')]`

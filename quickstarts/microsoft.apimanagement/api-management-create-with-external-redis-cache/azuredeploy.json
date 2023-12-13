@@ -1,0 +1,143 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.19.5.34762",
+      "templateHash": "16268717919195154220"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location to deploy our resources to. Default is location of resource group"
+      }
+    },
+    "apimName": {
+      "type": "string",
+      "defaultValue": "[format('apim-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the APIM instance"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Consumption",
+      "allowedValues": [
+        "Consumption",
+        "Developer",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "The pricing tier of this API Management service."
+      }
+    },
+    "publisherName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the publisher"
+      }
+    },
+    "publisherEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "The email of the publisher"
+      }
+    },
+    "redisCacheName": {
+      "type": "string",
+      "defaultValue": "[format('redis-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Cache for Redis instance to deploy"
+      }
+    },
+    "redisCacheSKU": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Specify the pricing tier of the new Azure Redis Cache."
+      }
+    },
+    "redisCacheFamily": {
+      "type": "string",
+      "defaultValue": "C",
+      "allowedValues": [
+        "C",
+        "P"
+      ],
+      "metadata": {
+        "description": "Specify the family for the sku. C = Basic/Standard, P = Premium."
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "maxValue": 6,
+      "minValue": 0,
+      "metadata": {
+        "description": "Specify the size of the new Azure Redis Cache instance. Valid values: for C (Basic/Standard) family (0, 1, 2, 3, 4, 5, 6), for P (Premium) family (1, 2, 3, 4)"
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specify a boolean value that indicates whether to allow access via non-SSL ports."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2021-12-01-preview",
+      "name": "[parameters('apimName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": 0,
+        "name": "[parameters('sku')]"
+      },
+      "properties": {
+        "publisherEmail": "[parameters('publisherEmail')]",
+        "publisherName": "[parameters('publisherName')]"
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/caches",
+      "apiVersion": "2021-12-01-preview",
+      "name": "[format('{0}/{1}', parameters('apimName'), 'redisCache')]",
+      "properties": {
+        "connectionString": "[format('{0},password={1},ssl=True,abortConnect=False', reference(resourceId('Microsoft.Cache/redis', parameters('redisCacheName')), '2022-06-01').hostName, listKeys(resourceId('Microsoft.Cache/redis', parameters('redisCacheName')), '2022-06-01').primaryKey)]",
+        "useFromLocation": "default",
+        "description": "[reference(resourceId('Microsoft.Cache/redis', parameters('redisCacheName')), '2022-06-01').hostName]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]",
+        "[resourceId('Microsoft.Cache/redis', parameters('redisCacheName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2022-06-01",
+      "name": "[parameters('redisCacheName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enableNonSslPort": "[parameters('enableNonSslPort')]",
+        "minimumTlsVersion": "1.2",
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "[parameters('redisCacheFamily')]",
+          "name": "[parameters('redisCacheSKU')]"
+        }
+      }
+    }
+  ]
+}

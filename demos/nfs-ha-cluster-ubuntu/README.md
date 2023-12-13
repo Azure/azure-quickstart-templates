@@ -1,4 +1,14 @@
-# Deploy a Highly Available NFS Cluster with Ubuntu VMs
+---
+description: Deploys a highly availe 2-VM NFS cluster based on DRBD, Pacemaker and Corosync with Ubuntu.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: nfs-ha-cluster-ubuntu
+languages:
+- json
+---
+# Highly available NFS cluster in Ubuntu
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nfs-ha-cluster-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nfs-ha-cluster-ubuntu/PublicDeployment.svg)
@@ -76,3 +86,5 @@ We also need to conduct some load testing for a deployed NFS-HA cluster with hig
 Matt Kereczman (@kermat on Github) from [LINBIT](https://www.linbit.com/) (the force behind DRBD, which LINBIT claims is the de facto open standard for High Aavailability software for enterprise and cloud computing) greatly helped with the Pacemaker configuration for NFS fail-over and the Azure LB-based highly available front-end IP address. Thanks to Matt's help, I think this template can be made possible at least a few more weeks earlier than expected.
 
 This templated solution for highly available NFS was created mostly for the [Moodle-on-Azure](https://github.com/Azure/Moodle). In the process, we came to realize that this might be useful for other Azure Linux customers as well on many other occasions. Therefore, we made the templates as generic as possible for Azure quickstart templates repo publication.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript, Microsoft.Compute/availabilitySets, Microsoft.Network/loadBalancers, Microsoft.Network/virtualNetworks`

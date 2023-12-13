@@ -15,6 +15,20 @@
         "description": "Username for the Virtual Machine."
       }
     },
+    "secureBoot": {
+        "defaultValue": true,
+        "type": "Bool",
+        "metadata": {
+            "description": "Secure Boot setting of the virtual machine."
+        }
+    },
+    "vTPM": {
+        "defaultValue": true,
+        "type": "Bool",
+        "metadata": {
+            "description": "vTPM setting of the virtual machine."
+        }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -72,9 +86,31 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "vnetAddressPrefix": "10.0.0.0/16",
     "serversSubnetPrefix": "10.0.2.0/24",
     "azureFirewallSubnetPrefix": "10.0.1.0/24",
@@ -325,8 +361,8 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "offer": "0001-com-ubuntu-server-lunar-daily", 
+            "sku": "23_04-daily-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -346,6 +382,7 @@
             }
           ]
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
@@ -353,6 +390,37 @@
           }
         }
       }
+    },
+    {
+        "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('JumpBox/{0}', variables('extensionName'))]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+            "AttestationConfig": {
+              "MaaSettings": {
+                "maaEndpoint": "",
+                "maaTenantName": "[variables('maaTenantName')]"
+              },
+              "AscSettings": {
+                "ascReportingEndpoint": "",
+                "ascReportingFrequency": ""
+              },
+              "useCustomToken": "false",
+              "disableAlerts": "false"
+            }
+          }
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', 'JumpBox')]"
+        ]
     },
     {
       "name": "Server",
@@ -369,9 +437,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "Canonical",    
+            "offer": "0001-com-ubuntu-server-lunar", 
+            "sku": "23_04-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -391,6 +459,13 @@
             }
           ]
         },
+        "securityProfile": {
+            "uefiSettings": {
+                "secureBootEnabled": "[parameters('secureBoot')]",
+                "vTpmEnabled": "[parameters('vTPM')]"
+            },
+            "securityType": "TrustedLaunch"
+        },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
@@ -399,6 +474,37 @@
         }
       }
     },
+    {
+        "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('Server/{0}', variables('extensionName'))]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "publisher": "[variables('extensionPublisher')]",
+          "type": "[variables('extensionName')]",
+          "typeHandlerVersion": "[variables('extensionVersion')]",
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": true,
+          "settings": {
+            "AttestationConfig": {
+              "MaaSettings": {
+                "maaEndpoint": "",
+                "maaTenantName": "[variables('maaTenantName')]"
+              },
+              "AscSettings": {
+                "ascReportingEndpoint": "",
+                "ascReportingFrequency": ""
+              },
+              "useCustomToken": "false",
+              "disableAlerts": "false"
+            }
+          }
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', 'Server')]"
+        ]
+    },   
     {
       "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/azureFirewalls",
@@ -475,4 +581,3 @@
     }
   ]
 }
-

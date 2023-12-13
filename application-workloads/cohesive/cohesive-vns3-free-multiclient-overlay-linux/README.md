@@ -1,4 +1,14 @@
-# VNS3 cloud networking appliance for security, connectivity and federation in the clouds
+---
+description: VNS3 is a software only virtual appliance that provides the combined features and functions of a Security Appliance, Application Delivery Controller and Unified Threat Management device at the cloud application edge. Key benefits, On top of cloud networking, Always on end to end encryption, Federate data centres, cloud regions, cloud providers, and/or containers, creating one unified address space, Attestable control over encryption keys, Meshed network manageable at scale, Reliable HA in the Cloud, Isolate sensitive applications (fast low cost Network Segmentation), Segmentation within applications, Analysis of all data in motion in the cloud. Key network functions; virtual router, switch, firewall, vpn concentrator, multicast distributor, with plugins for WAF, NIDS, Caching, Proxy Load Balancers and other Layer 4 thru 7 network functions, VNS3 doesn't require new knowledge or training to implement, so you can integrate with existing network equipment.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cohesive-vns3-free-multiclient-overlay-linux
+languages:
+- json
+---
+# Multi-client VNS3 network appliance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cohesive/cohesive-vns3-free-multiclient-overlay-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cohesive/cohesive-vns3-free-multiclient-overlay-linux/PublicDeployment.svg)
@@ -10,7 +20,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cohesive/cohesive-vns3-free-multiclient-overlay-linux/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fcohesive%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fcohesive%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json)
-
 
 ### Introduction
 This Quickstart automates the process of deploying a Cohesive Networks VNS3 overlay network in Azure.
@@ -67,7 +76,7 @@ Up to 5 Ubuntu 16.04.0-LTS VM's running on a Standard_B1ms instance.
 
 VNET, Subnet, NSG's, NIC & PIP's
 
-Once the controller and hosts are deployed a custom script downloads, deploys and configures the overlay network. 
+Once the controller and hosts are deployed a custom script downloads, deploys and configures the overlay network.
 
 ### Prerequisites
 
@@ -81,7 +90,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ### Connect
 
-Once the deployment is complete, you can access the VNS3 Controller Web UI by navigating to the public IP on port 8000. 
+Once the deployment is complete, you can access the VNS3 Controller Web UI by navigating to the public IP on port 8000.
 
 **The username is**: vnscubed
 
@@ -93,6 +102,4 @@ Once the deployment is complete, you can access the VNS3 Controller Web UI by na
 
 For comprehesive documentation please visit our website https://www.cohesive.net/support/documentation	
 
-`Tags: VPN, HA, Multicast, Network Traffic Analysis, Network Visibility, Federation, Security, Isolation, Segmentation, Firewall, NIDS, WAF, Load-balancer, multi-cloud, hybrid, UTM, overlay, awesome`
-
-
+`Tags:VPN, HA, Multicast, Network Traffic Analysis, Network Visibility, Federation, Security, Isolation, Segmentation, Firewall, NIDS, WAF, Load-balancer, multi-cloud, hybrid, UTM, overlay, awesome, Microsoft.Compute/virtualMachines, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks/subnets, Microsoft.Compute/virtualMachines/extensions, [variables('CustomScriptForLinux')]`

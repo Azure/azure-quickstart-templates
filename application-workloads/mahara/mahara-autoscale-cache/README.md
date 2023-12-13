@@ -1,4 +1,14 @@
-# *Deploy and manage a Scalable Mahara Cluster on Azure*
+---
+description: Deploys an autoscaling Mahara cluster with configurable Azure MySQL/Postgres and Elasticsearch. Can be configured for very small or very large sites. Deploys frontend components to a private network with a jumphost to access nodes. Requires keyed SSH access.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mahara-autoscale-cache
+languages:
+- json
+---
+# Autoscalable Mahara on Azure
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mahara/mahara-autoscale-cache/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mahara/mahara-autoscale-cache/PublicDeployment.svg)
@@ -15,16 +25,15 @@ After deploying, these templates will provide you with a new Mahara site with ca
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmahara%2Fmahara-autoscale-cache%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmahara%2Fmahara-autoscale-cache%2Fazuredeploy.json)
 
-`Tags: cluster, ha, mahara, autoscale, linux, ubuntu`
-
 ## *What this stack will give you*
 
 This template set deploys the following infrastructure:
+
 - Autoscaling web frontend layer (Nginx for https termination, Varnish for caching, Apache/php or nginx/php-fpm)
 - Private virtual network for frontend instances
 - Controller instance running cron and handling syslog for the autoscaled site
 - Load balancer to balance across the autoscaled instances
-- [Azure Database for MySQL](https://azure.microsoft.com/en-us/services/mysql/) or [Azure Database for PostgreSQL](https://azure.microsoft.com/en-us/services/postgresql/) 
+- [Azure Database for MySQL](https://azure.microsoft.com/services/mysql/) or [Azure Database for PostgreSQL](https://azure.microsoft.com/services/postgresql/)
 - Three Elasticsearch VMs for search indexing in Mahara (optional)*
 - Dual Gluster nodes for high availability access to Mahara files
 
@@ -50,25 +59,25 @@ In testing, stacks typically took between 1 and 1 and a half hours to finish, de
 
 Once Mahara has been created, and (if necessary) with your custom `siteURL` DNS pointing to the load balancer, you should be able to load the `siteURL` and login with "admin" and the password suppliedin the maharaAdminPassword.
 
-#### Retrieving Deployment Configuration
+### Retrieving Deployment Configuration
 
 The outputs provided by your deployment should include everything you need to manage your Mahara deployment. These are available in the portal by clicking on the deployment for your resource group. They are also available via the Azure CLI. For example:
 
 Retrieve all the outputs in JSON format:
 
-```
+```bash
 az group deployment show --resource-group $MAHARA_RG_NAME --name $MAHARA_DEPLOYMENT_NAME --out json --query *.outputs
 ```
 
 Retrieve just the database password:
 
-```
+```bash
 az group deployment show --resource-group $MAHARA_RG_NAME --name $MAHARA_DEPLOYMENT_NAME --out tsv --query *.outputs.databaseAdminPassword.value
 ```
 
 Retrieve the public URL (if you did not provide your own URL):
 
-```
+```bash
 az group deployment show --resource-group $MAHARA_RG_NAME --name $MAHARA_DEPLOYMENT_NAME --out tsv --query *.outputs.siteURL.value
 ```
 
@@ -84,7 +93,7 @@ While Azure does not currently backup up Postgres/MySQL database, by dumping it 
 
 ### *Azure Recovery Services*
 
-If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Mahara code and your sitedata. Restoring a backed up VM is outside the scope of this dos, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-first-look-arm
+If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Mahara code and your sitedata. Restoring a backed up VM is outside the scope of this dos, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/azure/backup/backup-azure-vms-first-look-arm
 
 ### *Resizing your database*
 
@@ -124,7 +133,7 @@ As of the time of writing, Azure supports "Basic" and "Standard" tiers for datab
 - Basic: 50, 100
 - Standard: 100, 200, 400
 
-This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/en-us/azure/mysql/concepts-limits
+This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/azure/mysql/concepts-limits
 
 As the Mahara database will handle cron processes as well as the website, any public facing websites with than 10 users will likely require upgrading to 100. Once the site reaches 30+ users it will require upgrading to Standard for more compute units. This depends entirely on the individual site. As MySQL databases cannot change (or be restored to a different tier) once deployed it is a good idea to slightly overspec your database.
 
@@ -138,6 +147,6 @@ The controller handles both syslog and cron duties. Depending on how big you Mah
 
 In general the frontend instances will not be the source of any bottlenecs unless they are severely undersized versus the rest of the cluster. More powerful instances will be needed should fpm processess spawn and exhaust memory during periods of heavy site load. This can also be mitigated against by increasing the number of VMs but spawning new VMs is slower (and potentially more expensive) than having that capacity already available.
 
-It is worth noting that the memory allowances on these instances allow for more memory than they may be able to provide with lower instance tiers. This is intentional as you can opt to run larger VMs with more memory and not require manual configuration. FPM also allows for a very large number of threads with prevents the systerm from failing during many small jobs.
+It is worth noting that the memory allowances on these instances allow for more memory than they may be able to provide with lower instance tiers. This is intentional as you can opt to run larger VMs with more memory and not require manual configuration. FPM also allows for a very large number of threads with prevents the system from failing during many small jobs.
 
-
+`Tags: cluster, ha, mahara, autoscale, linux, ubuntu, Microsoft.Resources/deployments, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Compute/availabilitySets, Microsoft.DBforMySQL/servers, firewallRules, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/loadBalancers, Microsoft.DBforPostgreSQL/servers, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupPolicies, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems, Microsoft.Storage/storageAccounts, Microsoft.Compute/virtualMachineScaleSets, Microsoft.Insights/autoscaleSettings, ChangeCount`
