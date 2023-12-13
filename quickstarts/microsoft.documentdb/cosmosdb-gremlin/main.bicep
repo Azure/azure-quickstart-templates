@@ -20,18 +20,18 @@ param secondaryRegion string
 ])
 param defaultConsistencyLevel string = 'Session'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000,000. Multi Region: 100,000 to 2,147,483,647.')
 @minValue(10)
 @maxValue(2147483647)
 param maxStalenessPrefix int = 100000
 
-@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
+@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84,600. Multi Region: 300 to 86,400.')
 @minValue(5)
 @maxValue(86400)
 param maxIntervalInSeconds int = 300
 
-@description('Enable automatic failover for regions')
-param automaticFailover bool = true
+@description('Enable system managed failover for regions')
+param systemManagedFailover bool = true
 
 @description('The name for the Gremlin database')
 param databaseName string = 'database1'
@@ -44,7 +44,6 @@ param graphName string = 'graph1'
 @maxValue(1000000)
 param throughput int = 400
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -77,8 +76,8 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
@@ -90,12 +89,12 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: automaticFailover
+    enableAutomaticFailover: systemManagedFailover
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases@2021-04-15' = {
-  name: '${accountName_resource.name}/${databaseName}'
+resource database 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases@2022-05-15' = {
+  name: '${account.name}/${databaseName}'
   properties: {
     resource: {
       id: databaseName
@@ -103,8 +102,8 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/gremlin
   }
 }
 
-resource accountName_databaseName_graphName 'Microsoft.DocumentDb/databaseAccounts/gremlinDatabases/graphs@2021-04-15' = {
-  name: '${accountName_databaseName.name}/${graphName}'
+resource graph 'Microsoft.DocumentDb/databaseAccounts/gremlinDatabases/graphs@2022-05-15' = {
+  name: '${database.name}/${graphName}'
   properties: {
     resource: {
       id: graphName

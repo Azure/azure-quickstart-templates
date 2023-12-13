@@ -1,3 +1,13 @@
+---
+description: This template deploys OpenSIS Community Edition as a LAMP application on Ubuntu. It creates a single Ubuntu VM, does a silent install of MySQL, Apache and PHP on it, and then deploys OpenSIS Community Edition.  After the deployment is successful, you can go to /opensis-ce to start congfiguting OpenSIS.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: opensis-singlevm-ubuntu
+languages:
+- json
+---
 # Deploy OpenSIS Community Edition on Ubuntu on a single VM.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/opensis/opensis-singlevm-ubuntu/PublicLastTestDate.svg)
@@ -15,4 +25,4 @@
 
 This template deploys OpenSIS Community Edition as a LAMP application on Ubuntu. It creates a single Ubuntu VM, does a silent install of MySQL, Apache and PHP on it, and then deploys OpenSIS Community Edition.  After the deployment is successful, you can go to /opensis to start congfiguring OpenSIS.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

@@ -1,4 +1,15 @@
-# Create a Virtual Machine from a Windows Image with multiple empty Standard SSD Data Disks
+---
+description: This template allows you to create a Windows Virtual Machine from a specified image. It also attaches multiple empty StandardSSD data disks by default. Note that you can specify the size and the Storage type (Standard_LRS, StandardSSD_LRS and Premium_LRS) of the empty data disks.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-with-standardssd-disk
+languages:
+- json
+- bicep
+---
+# Create a VM with multiple empty StandardSSD_LRS Data Disks
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-with-standardssd-disk/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-with-standardssd-disk/PublicDeployment.svg)
@@ -16,3 +27,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-with-standardssd-disk%2Fazuredeploy.json)
 
 This template allows you to create a Windows Virtual Machine from a specified image during the template deployment. It also attaches multiple empty Standard SSD data disks. Note that you can specify the size of each of the empty data disks. This template also deploys a Virtual Network, Public IP addresses and a Network Interface.
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

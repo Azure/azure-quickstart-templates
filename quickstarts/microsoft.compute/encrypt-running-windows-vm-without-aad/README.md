@@ -1,4 +1,14 @@
-# Enable encryption on a running Windows VM. 
+---
+description: This template enables encryption on a running windows VM without needing AAD application details
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: encrypt-running-windows-vm-without-aad
+languages:
+- json
+---
+# Enable encryption on a running Windows VM without AAD
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-windows-vm-without-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-windows-vm-without-aad/PublicDeployment.svg)
@@ -20,4 +30,6 @@ Prerequisites: Create a KeyVault in the same subscription and region as the VM a
 Tags: AzureDiskEncryption
 
 References:
-White paper - https://azure.microsoft.com/en-us/documentation/articles/azure-security-disk-encryption/
+White paper - https://azure.microsoft.com/documentation/articles/azure-security-disk-encryption/
+
+`Tags: Microsoft.Compute/virtualMachines/extensions, [variables('extensionName')]`

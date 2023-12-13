@@ -1,3 +1,13 @@
+---
+description: Deploy a VM with Groestlcoin Core installed.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: blockchain
+languages:
+- json
+---
 # Blockchain Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/blockchain/blockchain/PublicLastTestDate.svg)
@@ -17,26 +27,6 @@ This Microsoft Azure Resource Manager template deploys a single VM and allows yo
 
 Options for blockchain software include:
 
-- [bitcoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/bitcoin.md)
-- [bitshares](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/bitshares.md) (note: failed testing on 10/7/2016)
-- [bitswift](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/bitswift.md)
-- [blocknet](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/blocknet.md)
-- [bloqenterprise](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/bloqenterprise.md) (note: failed testing on 10/7/2016)
-- [dash](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/dash.md)
-- [digibyte](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/digibyte.md)
-- [dynamic](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/dynamic.md)
-- [emercoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/emercoin.md)
 - [groestlcoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/groestlcoin.md)
-- [influx](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/influx.md)
-- [jumbucks](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/jumbucks.md)
-- [monero](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/monero.md)
-- [multichain](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/multichain.md)
-- [nxt](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/nxt.md)
-- [okcash](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/okcash.md)
-- [particl](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/particl.md)
-- [sequence](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/sequence.md)
-- [stratis](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/stratis.md)
-- [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/syscoin.md)
-- [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/vcash.md)
-- [vechain](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/vechain.md)
-- [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/viacoin.md)
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

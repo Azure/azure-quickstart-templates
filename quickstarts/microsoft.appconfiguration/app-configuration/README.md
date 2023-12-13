@@ -1,4 +1,14 @@
-# Azure App Configuration
+---
+description: This template references existing key-value configurations from an existing config store and uses retrieved values to set properties of the resources the template creates.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: app-configuration
+languages:
+- json
+---
+# App Configuration with VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration/PublicDeployment.svg)
@@ -33,4 +43,4 @@ If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Azure4Student, AppConfiguration, Beginner`
+`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

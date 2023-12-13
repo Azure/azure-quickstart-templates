@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.3.539.46024",
-      "templateHash": "1202222167196775397"
+      "version": "0.9.1.41621",
+      "templateHash": "6120132423365709425"
     }
   },
   "parameters": {
@@ -37,47 +37,48 @@
     },
     "defaultConsistencyLevel": {
       "type": "string",
-      "defaultValue": "Session",
+      "defaultValue": "Eventual",
+      "metadata": {
+        "description": "The default consistency level of the Cosmos DB account."
+      },
       "allowedValues": [
         "Eventual",
         "ConsistentPrefix",
         "Session",
         "BoundedStaleness",
         "Strong"
-      ],
-      "metadata": {
-        "description": "The default consistency level of the Cosmos DB account."
-      }
+      ]
     },
     "serverVersion": {
       "type": "string",
-      "defaultValue": "4.0",
+      "defaultValue": "4.2",
+      "metadata": {
+        "description": "Specifies the MongoDB server version to use."
+      },
       "allowedValues": [
         "3.2",
         "3.6",
-        "4.0"
-      ],
-      "metadata": {
-        "description": "Specifies the MongoDB server version to use."
-      }
+        "4.0",
+        "4.2"
+      ]
     },
     "maxStalenessPrefix": {
       "type": "int",
       "defaultValue": 100000,
-      "maxValue": 2147483647,
-      "minValue": 10,
       "metadata": {
-        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
-      }
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647."
+      },
+      "maxValue": 2147483647,
+      "minValue": 10
     },
     "maxIntervalInSeconds": {
       "type": "int",
       "defaultValue": 300,
-      "maxValue": 86400,
-      "minValue": 5,
       "metadata": {
         "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
-      }
+      },
+      "maxValue": 86400,
+      "minValue": 5
     },
     "databaseName": {
       "type": "string",
@@ -85,14 +86,14 @@
         "description": "The name for the Mongo DB database"
       }
     },
-    "throughput": {
+    "sharedThroughput": {
       "type": "int",
       "defaultValue": 400,
-      "maxValue": 1000000,
-      "minValue": 400,
       "metadata": {
-        "description": "The shared throughput for the Mongo DB database"
-      }
+        "description": "The shared throughput for the Mongo DB database, up to 25 collections"
+      },
+      "maxValue": 1000000,
+      "minValue": 400
     },
     "collection1Name": {
       "type": "string",
@@ -105,11 +106,18 @@
       "metadata": {
         "description": "The name for the second Mongo DB collection"
       }
+    },
+    "dedicatedThroughput": {
+      "type": "int",
+      "defaultValue": 400,
+      "metadata": {
+        "description": "The dedicated throughput for the orders collection"
+      },
+      "maxValue": 1000000,
+      "minValue": 400
     }
   },
-  "functions": [],
   "variables": {
-    "accountName_var": "[toLower(parameters('accountName'))]",
     "consistencyPolicy": {
       "Eventual": {
         "defaultConsistencyLevel": "Eventual"
@@ -145,39 +153,45 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-04-15",
-      "name": "[variables('accountName_var')]",
+      "apiVersion": "2022-05-15",
+      "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
       "kind": "MongoDB",
       "properties": {
         "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": true,
         "apiProperties": {
           "serverVersion": "[parameters('serverVersion')]"
-        }
+        },
+        "capabilities": [
+          {
+            "name": "DisableRateLimitingResponses"
+          }
+        ]
       }
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', variables('accountName_var'), parameters('databaseName'))]",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('databaseName')]"
         },
         "options": {
-          "throughput": "[parameters('throughput')]"
+          "throughput": "[parameters('sharedThroughput')]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('accountName')))]"
       ]
     },
     {
-      "type": "Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), parameters('collection1Name'))]",
+      "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}/{2}', toLower(parameters('accountName')), parameters('databaseName'), parameters('collection1Name'))]",
       "properties": {
         "resource": {
           "id": "[parameters('collection1Name')]",
@@ -202,38 +216,22 @@
             {
               "key": {
                 "keys": [
-                  "user_id",
-                  "user_address"
+                  "product_name",
+                  "product_category_name"
                 ]
-              },
-              "options": {
-                "unique": true
-              }
-            },
-            {
-              "key": {
-                "keys": [
-                  "_ts"
-                ]
-              },
-              "options": {
-                "expireAfterSeconds": 2629746
               }
             }
-          ],
-          "options": {
-            "If-Match": "<ETag>"
-          }
+          ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[0], split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[1])]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('accountName')), parameters('databaseName'))]"
       ]
     },
     {
-      "type": "Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections",
-      "apiVersion": "2021-04-15",
-      "name": "[format('{0}/{1}', format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), parameters('collection2Name'))]",
+      "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}/{2}', toLower(parameters('accountName')), parameters('databaseName'), parameters('collection2Name'))]",
       "properties": {
         "resource": {
           "id": "[parameters('collection2Name')]",
@@ -258,32 +256,19 @@
             {
               "key": {
                 "keys": [
-                  "company_id",
-                  "company_address"
+                  "customer_id",
+                  "order_id"
                 ]
-              },
-              "options": {
-                "unique": true
-              }
-            },
-            {
-              "key": {
-                "keys": [
-                  "_ts"
-                ]
-              },
-              "options": {
-                "expireAfterSeconds": 2629746
               }
             }
-          ],
-          "options": {
-            "If-Match": "<ETag>"
-          }
+          ]
+        },
+        "options": {
+          "throughput": "[parameters('dedicatedThroughput')]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[0], split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[1])]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('accountName')), parameters('databaseName'))]"
       ]
     }
   ]

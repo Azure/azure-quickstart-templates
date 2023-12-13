@@ -1,3 +1,13 @@
+---
+description: This template allows you to create a CentOS 8 VM running WildFly 18.0.1.Final and also deploy a web application called JBoss-EAP on Azure, you can login into the Admin Console using the Wildfly username and password configured at the time of the deployment.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: wildfly-standalone-centos8
+languages:
+- json
+---
 # WildFly 18 on CentOS 8 (stand-alone VM)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wildfly/wildfly-standalone-centos8/PublicLastTestDate.svg)
@@ -11,9 +21,9 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fwildfly%2Fwildfly-standalone-centos8%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fwildfly%2Fwildfly-standalone-centos8%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fwildfly%2Fwildfly-standalone-centos8%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fwildfly%2Fwildfly-standalone-centos8%2Fazuredeploy.json)
 
-`Tags: WildFly 18.0.1.Final, Red Hat, CentOS, Java, Java EE, Jakarta EE, Azure, Azure VM`
+`Tags: WildFly 18.0.1.Final, Red Hat, CentOS, Java, Java EE, Jakarta EE, Azure, Azure VM, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
 
 <!-- TOC -->
 
@@ -39,7 +49,7 @@ The technology behind WildFly is also available in Red Hat JBoss Enterprise Appl
 
 To learn more visit the [WildFly Documentation](https://docs.wildfly.org/18/) site.
 
-## Template Solution Architecture 
+## Template Solution Architecture
 
 This Azure Resource Manager (ARM) template creates all the Azure compute resources to run WildFly 18.0.1.Final setup on CentOS 8.0 VM. The following resources are created by this template:
 
@@ -53,11 +63,11 @@ Following is the Architecture:
 
 ![alt text](images/wildfly-arch.png)
 
-## Subscriptions and Costs 
+## Subscriptions and Costs
 
 This ARM template uses an Azure CentOS 8 image which is a Pay-As-You-Go (PAYG) VM image and does not require the user to license. The VM will be licensed automatically after the instance is launched for the first time and the user will be charged hourly in addition to Microsoft's Linux VM rates. [Linux Virtual Machine](https://azure.microsoft.com/pricing/details/virtual-machines/linux/#linux) provides pricing details. WildFly is free to download and use and does not require a Red Hat Subscription or License.
 
-## Prerequisites 
+## Prerequisites
 
 1. Azure Subscription with specified payment method. CentOS-Based 8.0 is an Azure Marketplace product and requires a payment method to be specified in the Azure Subscription.
 
@@ -67,10 +77,10 @@ This ARM template uses an Azure CentOS 8 image which is a Pay-As-You-Go (PAYG) V
 
     - **WildFly Username** and password to enable the WildFly Admin Console and Deployment method.
 
-## Deployment Steps  
+## Deployment Steps
 
-Build your environment with WildFly 18.0.1.Final on a VM by running CentOS 8.0 on Azure in a few simple steps:  
-1. Launch the template by clicking on the **Deploy to Azure** button.  
+Build your environment with WildFly 18.0.1.Final on a VM by running CentOS 8.0 on Azure in a few simple steps:
+1. Launch the template by clicking on the **Deploy to Azure** button.
 2. Complete the following parameter values, accept the Terms and Conditions and click on the **Purchase** button.
 
     - **Subscription** - Choose the appropriate subscription for deployment.
@@ -93,7 +103,7 @@ Build your environment with WildFly 18.0.1.Final on a VM by running CentOS 8.0 o
 
     - Leave the rest of the parameter values (Artifacts and Location) as is, accept the Terms & Conditions and proceed to purchase.
 
-## Deployment Time 
+## Deployment Time
 
 The deployment takes less than 10 minutes to complete.
 
@@ -102,7 +112,7 @@ The deployment takes less than 10 minutes to complete.
 Once the deployment is successful, go to the outputs section of the deployment to obtain the **Private IP of the CentOS VM**, **app URL** and the **Admin Console URL**. You can access the CentOS VM and the application by following one of the 5 options:
 
 1. Create a Public IP to access the CentOS VM and WildFly Admin Console.
-2. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the CentOS VM via a Jump VM. 
+2. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the CentOS VM via a Jump VM.
 3. Create a Jump VM in a different Virtual Network and access the CentOS VM using Virtual Network Peering. (recommended method)
 4. Using an Application Gateway.
 5. Using an External Load Balancer (ELB).
@@ -140,7 +150,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/app.png"/>
      </a>
-     
+
    - Access the WildFly Admin Console - paste the Admin Console URL that you copied from the output page in a browser inside the Jump VM to access the WildFly Admin Console and enter the WildFly username and password to login.
 
      ![alt text](images/wildfly-console.png)
@@ -160,7 +170,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/app.png"/>
      </a>
-     
+
    - Access the WildFly Admin Console - paste the Admin Console URL copied from the output page in a browser inside the Jump VM, enter the WilldFly username and password to login.
 
      ![alt text](images/wildfly-console.png)
@@ -207,7 +217,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 ## Troubleshooting
 
-This section includes common errors faced during deployments and details on how you can troubleshoot these errors. 
+This section includes common errors faced during deployments and details on how you can troubleshoot these errors.
 
 #### Azure Platform
 
@@ -241,7 +251,7 @@ This log file will have details that include deployment failure reason and possi
 
 Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VMs](https://docs.microsoft.com/azure/virtual-machines/extensions/custom-script-linux) for more details on troubleshooting VM custom script extensions.
 
-## Support 
+## Support
 
 For any support related questions, issues or customization requirements with the GitHub template please contact [Spektra Systems](mailto:info@spektrasystems.com).
 

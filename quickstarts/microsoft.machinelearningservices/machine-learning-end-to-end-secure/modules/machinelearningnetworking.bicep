@@ -29,7 +29,7 @@ var privateAznbDnsZoneName = {
     azurecloud: 'privatelink.notebooks.azure.net'
 }
 
-resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: machineLearningPleName
   location: location
   tags: tags
@@ -51,12 +51,12 @@ resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020
   }
 }
 
-resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName[toLower(environment().name)]
   location: 'global'
 }
 
-resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
+resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${amlPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
   location: 'global'
   properties: {
@@ -68,12 +68,12 @@ resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNet
 }
 
 // Notebook
-resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateAznbDnsZoneName[toLower(environment().name)]
   location: 'global'
 }
 
-resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
+resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${notebookPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
   location: 'global'
   properties: {
@@ -84,7 +84,7 @@ resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtu
   }
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
   name: '${machineLearningPrivateEndpoint.name}/amlworkspace-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [

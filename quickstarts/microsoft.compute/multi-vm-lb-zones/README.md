@@ -1,4 +1,14 @@
-# Create Multiple Virtual Machines in Different Availability Zones and Configure NAT Rules through the Standard Load balancer
+---
+description: This template allows you to create Virtual Machines distributed across Availability Zones with a Load Balancer and configure NAT rules through the load balancer. This template also deploys a Virtual Network, Public IP address and Network Interfaces. In this template, we use the resource loops capability to create the network interfaces and virtual machines
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: multi-vm-lb-zones
+languages:
+- json
+---
+# VMs in Availability Zones with a Load Balancer and NAT
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/multi-vm-lb-zones/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/multi-vm-lb-zones/PublicDeployment.svg)
@@ -17,4 +27,4 @@ In this template, we use the resource loops capability to create the network int
 
 The virtual machines are spread out into different availability zones.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers, Microsoft.Network/loadBalancers/inboundNatRules, Microsoft.Compute/virtualMachines`

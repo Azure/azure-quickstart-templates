@@ -4,6 +4,9 @@ param existingVNETName string
 @description('Name of Azure Relay Namespace.')
 param relayNamespaceName string
 
+@description('Name of Network Security Group.')
+param nsgName string
+
 @description('Object Id of Azure Container Instance Service Principal. We have to grant this permission to create hybrid connections in the Azure Relay you specify. To get it: Get-AzADServicePrincipal -DisplayNameBeginsWith \'Azure Container Instance\'')
 param azureContainerInstanceOID string
 
@@ -28,6 +31,11 @@ param storageSubnetAddressPrefix string
 @description('Name of Private Endpoint for Azure Relay.')
 param privateEndpointName string = 'cloudshellRelayEndpoint'
 
+@description('Name of the resource tag.')
+param tagName object = {
+  Environment: 'cloudshell'
+}
+
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
@@ -37,11 +45,11 @@ var networkRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinition
 var privateDnsZoneName = ((toLower(environment().name) == 'azureusgovernment') ? 'privatelink.servicebus.usgovcloudapi.net' : 'privatelink.servicebus.windows.net')
 var vnetResourceId = resourceId('Microsoft.Network/virtualNetworks', existingVNETName)
 
-resource existingVNET 'Microsoft.Network/virtualNetworks@2020-04-01' existing = {
+resource existingVNET 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
   name: existingVNETName
 }
 
-resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2020-04-01' = {
+resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
   parent: existingVNET
   name: containerSubnetName
   properties: {
@@ -62,11 +70,47 @@ resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2020-04-01' 
         }
       }
     ]
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
+  }
+  dependsOn: [
+    networkSecurityGroup
+  ]
+}
+
+resource networkSecurityGroupDefaultRules 'Microsoft.Network/networkSecurityGroups/defaultSecurityRules@2023-05-01' existing = {
+  name: nsgName
+  parent: networkSecurityGroup
+}
+
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
+  name: nsgName
+  location: location
+  properties: {
+    securityRules: [
+      {
+        id: resourceId('Microsoft.Network/networkSecurityGroups', nsgName)
+        name: 'DenyIntraSubnetTraffic'
+        properties: {
+          description: 'Deny traffic between container groups in cloudshellsubnet'
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: containerSubnetAddressPrefix
+          destinationAddressPrefix: containerSubnetAddressPrefix
+          access: 'Deny'
+          priority: 100
+          direction: 'Inbound'
+        }
+      }
+    ]
   }
 }
 
-resource networkProfile 'Microsoft.Network/networkProfiles@2019-11-01' = {
+resource networkProfile 'Microsoft.Network/networkProfiles@2023-05-01' = {
   name: networkProfileName
+  tags: tagName
   location: location
   properties: {
     containerNetworkInterfaceConfigurations: [
@@ -89,7 +133,7 @@ resource networkProfile 'Microsoft.Network/networkProfiles@2019-11-01' = {
   }
 }
 
-resource networkProfile_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource networkProfile_roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: networkProfile
   name: guid(networkRoleDefinitionId, azureContainerInstanceOID, networkProfile.name)
   properties: {
@@ -98,8 +142,9 @@ resource networkProfile_roleAssignment 'Microsoft.Authorization/roleAssignments@
   }
 }
 
-resource relayNamespace 'Microsoft.Relay/namespaces@2018-01-01-preview' = {
+resource relayNamespace 'Microsoft.Relay/namespaces@2021-11-01' = {
   name: relayNamespaceName
+  tags: tagName
   location: location
   sku: {
     name: 'Standard'
@@ -107,7 +152,7 @@ resource relayNamespace 'Microsoft.Relay/namespaces@2018-01-01-preview' = {
   }
 }
 
-resource relayNamespace_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource relayNamespace_roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: relayNamespace
   name: guid(contributorRoleDefinitionId, azureContainerInstanceOID, relayNamespace.name)
   properties: {
@@ -116,7 +161,7 @@ resource relayNamespace_roleAssignment 'Microsoft.Authorization/roleAssignments@
   }
 }
 
-resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2020-04-01' = {
+resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
   parent: existingVNET
   name: relaySubnetName
   properties: {
@@ -129,8 +174,9 @@ resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2020-04-01' = {
   ]
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-04-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
   name: privateEndpointName
+  tags: tagName
   location: location
   properties: {
     privateLinkServiceConnections: [
@@ -150,7 +196,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-04-01' = {
   }
 }
 
-resource storageSubnet 'Microsoft.Network/virtualNetworks/subnets@2020-04-01' = {
+resource storageSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
   parent: existingVNET
   name: storageSubnetName
   properties: {
@@ -169,12 +215,13 @@ resource storageSubnet 'Microsoft.Network/virtualNetworks/subnets@2020-04-01' = 
   ]
 }
 
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName
+  tags: tagName
   location: 'global'
 }
 
-resource privateDnsZoneARecord 'Microsoft.Network/privateDnsZones/A@2020-01-01' = {
+resource privateDnsZoneARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: privateDnsZone
   name: relayNamespaceName
   properties: {
@@ -187,9 +234,10 @@ resource privateDnsZoneARecord 'Microsoft.Network/privateDnsZones/A@2020-01-01' 
   }
 }
 
-resource privateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
+resource privateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDnsZone
   name: relayNamespaceName
+  tags: tagName
   location: 'global'
   properties: {
     registrationEnabled: false
@@ -202,3 +250,5 @@ resource privateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetwor
 output vnetId string = vnetResourceId
 output containerSubnetId string = containerSubnet.id
 output storageSubnetId string = storageSubnet.id
+output networkSecurityGroupResourceId string = networkSecurityGroup.id
+output nsgDefaultRules string = networkSecurityGroupDefaultRules.id

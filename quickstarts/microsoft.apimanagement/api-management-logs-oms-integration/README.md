@@ -1,4 +1,14 @@
-# Azure API Management Service
+---
+description: This template creates an instance of Azure API Management service and Log Analytics workspace and sets up monitoring for your API Management service with Log Analytics
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: api-management-logs-oms-integration
+languages:
+- json
+---
+# Create and monitor API Management instance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-logs-oms-integration/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-logs-oms-integration/PublicDeployment.svg)
@@ -15,4 +25,4 @@
 
 This solution will allow you to capture your Azure API Management gateway logs and search them in Operations Management Suite (Log Analytics).
 
-
+`Tags: Microsoft.ApiManagement/service, Microsoft.OperationalInsights/workspaces, Microsoft.ApiManagement/service/providers/diagnosticSettings`

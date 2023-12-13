@@ -1,4 +1,14 @@
-# Immutable Infrastructure CI/CD using Jenkins and Terraform on Azure Virtual Machine Scale Sets
+---
+description: This is a CI/CD sample using Jenkins and Terraform on Azure Virtual Machine Scale Sets
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: jenkins-cicd-vmss
+languages:
+- json
+---
+# CI/CD using Jenkins on Azure Virtual Machine Scale Sets
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cicd-vmss/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cicd-vmss/PublicDeployment.svg)
@@ -9,17 +19,15 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cicd-vmss/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cicd-vmss/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-vmss%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-vmss%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-vmss%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-vmss%2Fazuredeploy.json)
-
-
 
 Azure is a world-class cloud for hosting virtual machines running Windows or Linux. Whether you use Java, Node, Go or PHP to develop your applications, you will need a continuous integration and continuous deployment (CI/CD) pipeline to push your changes to these virtual machines automatically.
 
 ## Deployment steps
 
-1. Create service principal with the `Contributor` role with [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli?view=azure-cli-latest) if you don't have one in your subscription.
+1. Create service principal with the `Contributor` role with [Azure CLI](https://docs.microsoft.com/cli/azure/get-started-with-azure-cli?view=azure-cli-latest) if you don't have one in your subscription.
    ```shell
    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}"
    ```
@@ -96,7 +104,7 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 4. Navigate to http://localhost:8080/ on your local machine.
 
 5. Sign in with the user name `admin` and the initial password above.
-   
+
    ![](images/jenkins-login-ssh.png)
 
 6. Proceed management operations as need.
@@ -119,4 +127,4 @@ The VMSS components are created in a separate resource group whose name is postf
 
    ![](images/vmss-webapp.png)
 
-
+`Tags: Microsoft.OperationalInsights/workspaces, Microsoft.Resources/deployments, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

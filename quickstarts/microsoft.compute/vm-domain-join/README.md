@@ -1,4 +1,15 @@
-# Domain join a VM to an existing domain
+---
+description: This template demonstrates domain join to a private AD domain up in cloud.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-domain-join
+languages:
+- json
+- bicep
+---
+# Join a VM to an existing domain
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-domain-join/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-domain-join/PublicDeployment.svg)
@@ -22,3 +33,4 @@ This template joins the VM to an existing domain. The template requires a domain
 1. Existing domain controller
 2. Deploy to the resource group, VNET and Subnet of the domain controller
 
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, JsonADDomainExtension, Microsoft.Resources/deployments`

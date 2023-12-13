@@ -1,4 +1,14 @@
-# RBAC - Grant Azure AD authorization access on Azure Maps for a Managed Identity
+---
+description: This template creates a Managed Identity and assigns it access to an a created Azure Maps account.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: rbac-managedidentity-maps
+languages:
+- json
+---
+# RBAC - Create Managed Identity Access on Azure Maps account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/rbac-managedidentity-maps/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/rbac-managedidentity-maps/PublicDeployment.svg)
@@ -9,11 +19,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/rbac-managedidentity-maps/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/rbac-managedidentity-maps/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.authorization%2Frbac-managedidentity-maps%2Fazuredeploy.json) 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.authorization%2Frbac-managedidentity-maps%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.authorization%2Frbac-managedidentity-maps%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.authorization%2Frbac-managedidentity-maps%2Fazuredeploy.json)
-
-  
 
 This template assigns Azure Maps Data Reader access for a Manaaged Identity on an Azure Maps account in a resource group. It **does not assign the identity** to an Azure resource such as `Azure App Service` or `Azure Virtual Machines`. Inputs to this template are following fields:
 
@@ -27,6 +35,6 @@ These values should be unique per element as they represent the id of the role a
 
 ## For Automation on role assignments you must assign 'User Access Administrator'
 
-For automation scenarios without a user's principal, the built in role you must assign your automation is "User Access Adminstrator". This role with grant access to add and remove role assignments. The other option can be to create a [custom role definition](https://docs.microsoft.com/en-us/azure/role-based-access-control/custom-roles) with the permissions `Microsoft.Authorization/roleAssignments/write` and `Microsoft.Authorization/roleAssignments/delete`.
+For automation scenarios without a user's principal, the built in role you must assign your automation is "User Access Adminstrator". This role with grant access to add and remove role assignments. The other option can be to create a [custom role definition](https://docs.microsoft.com/azure/role-based-access-control/custom-roles) with the permissions `Microsoft.Authorization/roleAssignments/write` and `Microsoft.Authorization/roleAssignments/delete`.
 
-
+`Tags: Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Maps/accounts, Microsoft.Maps/accounts/providers/roleAssignments`

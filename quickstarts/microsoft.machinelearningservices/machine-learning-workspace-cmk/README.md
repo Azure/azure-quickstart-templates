@@ -1,4 +1,15 @@
-# Azure Machine Learning workspace (customer-managed key encryption)
+---
+description: This deployment template specifies an Azure Machine Learning workspace, and its associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry. The example shows how to configure Azure Machine Learning for encryption with a customer-managed encryption key.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-workspace-cmk
+languages:
+- json
+- bicep
+---
+# Create an Azure Machine Learning service workspace (CMK)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-cmk/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-cmk/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-cmk/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-cmk/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-cmk/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-cmk%2Fazuredeploy.json)
 [![Deploy To Azure Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-cmk%2Fazuredeploy.json)
@@ -20,7 +33,7 @@ This configuration describes the set of resources required to:
 1. (prerequisite) Create and configure an Azure Key vault resource to host an encryption key for Azure Machine Learning.
 1. Create an Azure Machine Learning workspace and dependent resources, and configure it for encryption with the above encryption key.
 
-When using a customer-managed key, Azure Machine Learning creates a secondary resource group in your subscription which contains a Cosmos DB resource, an Azure Storage resource, and Azure Search resource. For more information, see [encryption at rest - Cosmos DB](https://docs.microsoft.com/en-us/azure/machine-learning/concept-enterprise-security#encryption-at-rest).
+When using a customer-managed key, Azure Machine Learning creates a secondary resource group in your subscription which contains a Cosmos DB resource, an Azure Storage resource, and Azure Search resource. For more information, see [encryption at rest - Cosmos DB](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#encryption-at-rest).
 
 ## Resources
 
@@ -54,7 +67,6 @@ Before using this template, you must meet the following requirements:
 * You must have an access policy in Azure Key Vault that grants __get__, __wrap__, and __unwrap__ access to the __Azure Cosmos DB__ application.
 
 To add the Azure Machine Learning service principal as a contributor to your subscription, you can use the following steps in the Azure CLI or Powershell for automation. Alternatively complete the steps via the Azure Portal.
-
 
 ### Add Azure Machine Learning as a contributor
 
@@ -152,16 +164,16 @@ Azure CLI:
     az keyvault show --name <keyvault-name>
 ```
 
-PowerShell: 
+PowerShell:
 
 ```powershell
     Get-AzKeyVault -VaultName '<keyvault-name>'
-``` 
+```
 
 Use the below command to find the required value for the `cmk_keyvault_key_uri` template parameter. The property `kid` represents the cmk_keyvault_key_uri, and has the following resource naming: `https://<keyvault-name>.vault.azure.net/keys/<key-name>/<key-version>`.
 
 ```bash
-    az keyvault key show --vault-name <keyvault-name> --name <key-name> 
+    az keyvault key show --vault-name <keyvault-name> --name <key-name>
 ```
 
 PowerShell:
@@ -178,7 +190,7 @@ If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/concept-enterprise-security).
+- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security).
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 
 To learn about encryption with Azure Machine Learning, see:
@@ -191,3 +203,5 @@ If you are new to template development, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.ContainerRegistry/registries, Microsoft.MachineLearningServices/workspaces, systemAssigned, Microsoft.KeyVault/vaults/keys`

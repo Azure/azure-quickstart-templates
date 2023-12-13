@@ -1,4 +1,15 @@
-# Windows VM with Azure secure baseline
+---
+description: The template creates a virtual machine running Windows Server in a new virtual network, with a public IP address. Once the machine has deployed, the guest configuration extension is installed and the Azure secure baseline for Windows Server is applied. If the configuration of the machines drifts, you can re-apply the settings by deploying the template again.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-windows-baseline
+languages:
+- json
+- bicep
+---
+# Windows VM with Azure secure baseline.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-windows-baseline/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-windows-baseline/PublicDeployment.svg)
@@ -13,16 +24,16 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-baseline%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-baseline%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-baseline%2Fazuredeploy.json)
 
 This template allows you to deploy a Windows VM with the Azure secure baseline applied. For details about the settings in the baseline,
 review the reference documentation.
 
-[Windows secure baseline](https://docs.microsoft.com/en-us/azure/governance/policy/samples/guest-configuration-baseline-windows)
+[Windows secure baseline](https://docs.microsoft.com/azure/governance/policy/samples/guest-configuration-baseline-windows)
 
 General information about how configurations are assigned to machines in Azure is available in documentation.
 
-[Understand the guest configuration feature of Azure Policy](https://docs.microsoft.com/en-us/azure/governance/policy/concepts/guest-configuration)
+[Understand the guest configuration feature of Azure Policy](https://docs.microsoft.com/azure/governance/policy/concepts/guest-configuration)
 
 A detailed how to document about assigning configurations to machines, and how to customize configurations from ARM,
 is also available.
@@ -57,7 +68,7 @@ associated with the network adapter for the machine.
 
 ---
 
-[How to create a guest configuration assignment using templates](https://docs.microsoft.com/en-us/azure/governance/policy/how-to/guest-configuration-create-assignment)
+[How to create a guest configuration assignment using templates](https://docs.microsoft.com/azure/governance/policy/how-to/guest-configuration-create-assignment)
 
 If you're new to Azure virtual machines, see:
 
@@ -71,3 +82,5 @@ If you're new to template deployment, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create a Windows virtual machine using an ARM template](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-template)
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, ConfigurationforWindows, Microsoft.GuestConfiguration/guestConfigurationAssignments`

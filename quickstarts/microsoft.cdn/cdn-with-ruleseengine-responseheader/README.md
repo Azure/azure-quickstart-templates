@@ -1,4 +1,15 @@
-# Simple deployment of response header addition via rules engine for a CDN end point
+---
+description: This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine with Remote address based match and adds corresponding response headers.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-ruleseengine-responseheader
+languages:
+- json
+- bicep
+---
+# Create a CDN Endpoint with response header addition
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-ruleseengine-responseheader/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-ruleseengine-responseheader/PublicDeployment.svg)
@@ -15,4 +26,4 @@
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine with a Remote address based match and adds corresponding response headers.
 
-
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/endpoints`

@@ -4,10 +4,13 @@ param accountName string = 'cosmos-${uniqueString(resourceGroup().id)}'
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
-@description('The name for the Core (SQL) database')
+@description('The name for the SQL API database')
 param databaseName string
 
-resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+@description('The name for the SQL API container')
+param containerName string
+
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
   name: toLower(accountName)
   location: location
   properties: {
@@ -24,14 +27,44 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   }
 }
 
-resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
-  name: '${cosmosAccount.name}/${toLower(databaseName)}'
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
+  parent: account
+  name: databaseName
   properties: {
     resource: {
       id: databaseName
     }
     options: {
-      throughput: 400
+      throughput: 1000
+    }
+  }
+}
+
+resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-05-15' = {
+  parent: database
+  name: containerName
+  properties: {
+    resource: {
+      id: containerName
+      partitionKey: {
+        paths: [
+          '/myPartitionKey'
+        ]
+        kind: 'Hash'
+      }
+      indexingPolicy: {
+        indexingMode: 'consistent'
+        includedPaths: [
+          {
+            path: '/*'
+          }
+        ]
+        excludedPaths: [
+          {
+            path: '/_etag/?'
+          }
+        ]
+      }
     }
   }
 }

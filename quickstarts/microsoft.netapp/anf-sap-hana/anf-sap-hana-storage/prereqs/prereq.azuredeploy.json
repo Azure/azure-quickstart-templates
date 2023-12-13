@@ -1,0 +1,268 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachines_avgvm_name": {
+            "defaultValue": "avgvm",
+            "type": "String"
+        },
+        "virtualMachines_vmSize": {
+            "defaultValue": "Standard_M8ms",
+            "type": "String"
+        },
+        "virtualNetworks_vnet1_name": {
+            "defaultValue": "vnet1",
+            "type": "String"
+        },
+        "netAppAccounts_ANFaccount_name": {
+            "defaultValue": "ANFaccount",
+            "type": "String"
+        },
+        "networkInterfaces_avgvm980_name": {
+            "defaultValue": "avgvm980",
+            "type": "String"
+        },
+        "proximityPlacementGroups_avgppg_name": {
+            "defaultValue": "avgppg",
+            "type": "String"
+        },
+        "adminUsername": {
+            "type": "String"
+        },
+        "adminPassword": {
+            "type": "SecureString"
+        },
+        "location": {
+             "type": "String",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "availabilitySets_name": {
+            "type": "String",
+            "defaultValue": "avgavset"
+        },
+        "deployVM": {
+            "type": "bool",
+            "defaultValue": true
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('virtualNetworks_vnet1_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.2.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "addressPrefix": "10.2.0.0/24",
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "ANFsubnet",
+                        "properties": {
+                            "addressPrefix": "10.2.1.0/24",
+                            "delegations": [
+                                {
+                                    "name": "Microsoft.Netapp.volumes",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Netapp/volumes"
+                                    }
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ],
+                "enableDdosProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.NetApp/netAppAccounts",
+            "apiVersion": "2021-08-01",
+            "name": "[parameters('netAppAccounts_ANFaccount_name')]",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.NetApp/netAppAccounts/capacityPools",
+            "apiVersion": "2021-08-01",
+            "name": "[concat(parameters('netAppAccounts_ANFaccount_name'), '/pool')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccounts_ANFaccount_name'))]"
+            ],
+            "properties": {
+                "serviceLevel": "Premium",
+                "size": 21990232555520,
+                "qosType": "Manual"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/proximityPlacementGroups",
+            "apiVersion": "2021-11-01",
+            "name": "[parameters('proximityPlacementGroups_avgppg_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "proximityPlacementGroupType": "Standard"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2021-11-01",
+            "name": "[parameters('availabilitySets_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('proximityPlacementGroups_avgppg_name'))]"
+            ],
+            "sku": {
+                "name": "Aligned"
+            },
+            "properties": {
+                "platformUpdateDomainCount": 2,
+                "platformFaultDomainCount": 2,
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('proximityPlacementGroups_avgppg_name'))]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('deployVM')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('networkInterfaces_avgvm980_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_vnet1_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "10.2.0.4",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet1_name'), 'default')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false
+            }
+        },
+        {
+            "condition": "[parameters('deployVM')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-11-01",
+            "name": "[parameters('virtualMachines_avgvm_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('proximityPlacementGroups_avgppg_name'))]",
+                "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySets_name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_avgvm980_name'))]"
+            ],
+            "properties": {
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('proximityPlacementGroups_avgppg_name'))]"
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySets_name'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachines_vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "canonical",
+                        "offer": "0001-com-ubuntu-server-focal",
+                        "sku": "20_04-lts-gen2",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "StandardSSD_LRS"
+                        },
+                        "deleteOption": "Delete",
+                        "diskSizeGB": 30
+                    }
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_avgvm_name')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "allowExtensionOperations": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_avgvm980_name'))]",
+                            "properties": {
+                                "deleteOption": "Delete"
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "anfNetAppAccountName": {
+            "type": "string",
+            "value": "[parameters('netAppAccounts_ANFaccount_name')]"
+        },
+        "azureNetappFilesLocation": {
+            "type": "string",
+            "value": "[parameters('location')]"
+        },
+        "proximityPlacementGroupName": {
+            "type": "string",
+            "value": "[parameters('proximityPlacementGroups_avgppg_name')]"
+        },
+        "proximityPlacementGroupResourceGroup": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        },
+        "capacityPool": {
+            "type": "string",
+            "value": "pool"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[parameters('virtualNetworks_vnet1_name')]"
+        },
+        "delegatedSubnet": {
+            "type": "string",
+            "value": "ANFsubnet"
+        }
+    }
+}

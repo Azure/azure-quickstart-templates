@@ -5,7 +5,7 @@ node {
       git branch: 'master', url: params.GIT_REPO
     }
     stage('Build Docker image') {
-      built_img = docker.build(params.DOCKER_REPOSITORY + ":${env.BUILD_NUMBER}", './jenkins-cicd-container')
+      built_img = docker.build(params.DOCKER_REPOSITORY + ":${env.BUILD_NUMBER}", './application-workloads/jenkins/jenkins-cicd-container/')
     }
     stage('Push Docker image to Azure Container Registry') {
       docker.withRegistry(params.REGISTRY_URL, params.REGISTRY_CREDENTIALS_ID ) {
@@ -15,7 +15,13 @@ node {
     }
     stage('Deploy configurations to Azure Container Service (AKS)') {
       withEnv(['TAGGED_IMAGE_NAME=' + taggedImageName]) {
-        acsDeploy azureCredentialsId: params.AZURE_SERVICE_PRINCIPAL_ID, configFilePaths: 'jenkins-cicd-container/kubernetes/*.yaml', containerService: params.AKS_CLUSTER_NAME + ' | AKS', dcosDockerCredentialsPath: '', enableConfigSubstitution: true, resourceGroupName: params.AKS_RESOURCE_GROUP_NAME, secretName: '', sshCredentialsId: ''
+          withCredentials([azureServicePrincipal('azure_service_principal')]) {
+            sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID'
+          }
+        
+        sh 'az aks get-credentials --resource-group $AKS_RESOURCE_GROUP_NAME --name $AKS_CLUSTER_NAME'
+        sh 'envsubst &lt; ./application-workloads/jenkins/jenkins-cicd-container/kubernetes/hello-world-deployment.yaml | kubectl apply -f -'
+        sh 'kubectl apply -f ./application-workloads/jenkins/jenkins-cicd-container/kubernetes/hello-world-service.yaml'
       }
     }
 }

@@ -1,4 +1,14 @@
-# Service Health Alert
+---
+description: This template allows you to deploy a simple alert which uses an action group to send email notifications for any Service Health records in the Azure Activity Log
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: monitor-servicehealth-alert
+languages:
+- json
+---
+# Deploy a Service Health Alert
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/monitor-servicehealth-alert/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/monitor-servicehealth-alert/PublicDeployment.svg)
@@ -17,4 +27,4 @@ The template deploys an Activity Log Alert with Action Group configured to send 
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmonitor-servicehealth-alert%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmonitor-servicehealth-alert%2Fazuredeploy.json)
 
-
+`Tags: Microsoft.Insights/actionGroups, Microsoft.Insights/activityLogAlerts`

@@ -17,6 +17,46 @@ param authenticationType string = 'sshPublicKey'
 @maxValue(16)
 param instanceCount int = 5
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
+
+@description('Windows Server and SQL Offer')
+@allowed([
+  '0001-com-ubuntu-minimal-bionic'
+  '0001-com-ubuntu-minimal-lunar-daily'
+  '0001-com-ubuntu-server-focal'
+  '0001-com-ubuntu-server-jammy'
+  '0001-com-ubuntu-server-lunar'
+  '0001-com-ubuntu-server-lunar-daily'
+  '0003-com-ubuntu-server-trusted-vm'
+])
+param imageOffer string = '0001-com-ubuntu-server-lunar'
+
+@description('SQL Server Sku')
+@allowed([
+  '22_10-minimal-gen2'
+  '18_04-lts-gen2'
+  'minimal-20_04-daily-lts-gen2'
+  'minimal-23_04-daily-gen2'
+  'minimal-23_04-gen2'
+  '20_04-daily-lts-gen2'
+  '23_04-daily-gen2'
+  '23_04-gen2'
+])
+param sqlSku string = '23_04-gen2'
+
 @description('Location for resources. Default is the current resource group location.')
 param location string = resourceGroup().location
 
@@ -30,7 +70,7 @@ param location string = resourceGroup().location
 param publicIPPrefixLength int = 28
 
 @description('Size of VMs in the VM Scale Set.')
-param vmSku string = 'Standard_D2_v3'
+param vmSku string = 'Standard_D2s_v3'
 
 @description('String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended.')
 @maxLength(9)
@@ -40,7 +80,6 @@ param vmssName string
 @minLength(3)
 @maxLength(61)
 param dnsName string
-
 
 var linuxConfiguration = {
   disablePasswordAuthentication: true
@@ -55,8 +94,8 @@ var linuxConfiguration = {
 }
 var osType = {
   publisher: 'Canonical'
-  offer: 'UbuntuServer'
-  sku: '18.04-LTS'
+  offer: imageOffer
+  sku: sqlSku
   version: 'latest'
 }
 var imageReference = osType
@@ -74,7 +113,6 @@ var natBackendPort = 22
 var bePoolName = '${vmssName}bepool'
 var nicName = '${vmssName}nic'
 var ipConfigName = '${vmssName}ipconfig'
-
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: virtualNetworkName
@@ -163,8 +201,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2020-05-01' = {
   }
 }
 
-
-resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
+resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-11-01' = {
   name: vmssName
   location: location
   sku: {
@@ -189,8 +226,9 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
         computerNamePrefix: vmssName
         adminUsername: adminUsername
         adminPassword: adminPasswordOrKey
-        linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+        linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
       }
+      securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
       networkProfile: {
         networkInterfaceConfigurations: [
           {
@@ -233,7 +271,3 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
     }
   }
 }
-
-
-
-

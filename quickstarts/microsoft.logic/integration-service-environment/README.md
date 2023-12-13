@@ -1,4 +1,14 @@
-# Provision an Integration Service Environment with a VNET, subnets, and managed connectors
+---
+description: Template that creates a virtual network, 4 subnets, and then an Integration Service Environment (ISE), including non-native connectors. Use as a base for templates that require a Logic Apps ISE.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: integration-service-environment
+languages:
+- json
+---
+# Integration Service Environment Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/integration-service-environment/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/integration-service-environment/PublicDeployment.svg)
@@ -25,27 +35,27 @@ This template deploys the following resources:
 
 ## Managed Connectors
 
-All native connectors will be available by default in ISE. Refer to [documentation](https://docs.microsoft.com/en-us/azure/logic-apps/connect-virtual-network-vnet-isolated-environment-overview#isolated-versus-global) to learn more about ISE specific Managed Connectors. These need to be specifically deployed into the ISE to be available (with the ISE label) in the Logic Apps editor. At the time of creation of this template, the possible list of values for the `managedConnectors` template parameter are:
+All native connectors will be available by default in ISE. Refer to [documentation](https://docs.microsoft.com/azure/logic-apps/connect-virtual-network-vnet-isolated-environment-overview#isolated-versus-global) to learn more about ISE specific Managed Connectors. These need to be specifically deployed into the ISE to be available (with the ISE label) in the Logic Apps editor. At the time of creation of this template, the possible list of values for the `managedConnectors` template parameter are:
 
 | Value       | Connector         |
 |:---------------------------------------- |:----------------------------------------------------- |
-| sql | [SQL Server](https://docs.microsoft.com/en-us/connectors/sql/) |
-| ftp | [FTP](https://docs.microsoft.com/en-us/connectors/ftp/) |
-| azureblob | [Azure Blob Storage](https://docs.microsoft.com/en-us/connectors/azureblob/) |
-| azurefile | [Azure File Storage](https://docs.microsoft.com/en-us/connectors/azurefile/) |
-| azurequeues | [Azure Queues](https://docs.microsoft.com/en-us/connectors/azurequeues/) |
-| azuretables | [Azure Table Storage](https://docs.microsoft.com/en-us/connectors/azuretables/) |
-| sftpwithssh | [SFTP - SSH](https://docs.microsoft.com/en-us/connectors/sftpwithssh/) |
-| edifact | [EDIFACT](https://docs.microsoft.com/en-us/connectors/edifact/) |
-| x12 | [X12](https://docs.microsoft.com/en-us/connectors/x12/) |
-| servicebus | [Service Bus](https://docs.microsoft.com/en-us/connectors/servicebus/) |
-| documentdb | [Cosmos DB](https://docs.microsoft.com/en-us/connectors/documentdb/) |
-| eventhubs | [Event Hubs](https://docs.microsoft.com/en-us/connectors/eventhubs/) |
-| mq | [IBM WebSphere MQ](https://docs.microsoft.com/en-us/connectors/mq/) |
-| sqldw | [SQL Data Warehouse](https://docs.microsoft.com/en-us/connectors/sqldw/) |
-| db2 | [DB2](https://docs.microsoft.com/en-us/connectors/db2/) |
-| smtp | [SMTP](https://docs.microsoft.com/en-us/connectors/smtp/) |
-| si3270 | [IBM 3270](https://docs.microsoft.com/en-us/connectors/si3270/) |
+| sql | [SQL Server](https://docs.microsoft.com/connectors/sql/) |
+| ftp | [FTP](https://docs.microsoft.com/connectors/ftp/) |
+| azureblob | [Azure Blob Storage](https://docs.microsoft.com/connectors/azureblob/) |
+| azurefile | [Azure File Storage](https://docs.microsoft.com/connectors/azurefile/) |
+| azurequeues | [Azure Queues](https://docs.microsoft.com/connectors/azurequeues/) |
+| azuretables | [Azure Table Storage](https://docs.microsoft.com/connectors/azuretables/) |
+| sftpwithssh | [SFTP - SSH](https://docs.microsoft.com/connectors/sftpwithssh/) |
+| edifact | [EDIFACT](https://docs.microsoft.com/connectors/edifact/) |
+| x12 | [X12](https://docs.microsoft.com/connectors/x12/) |
+| servicebus | [Service Bus](https://docs.microsoft.com/connectors/servicebus/) |
+| documentdb | [Cosmos DB](https://docs.microsoft.com/connectors/documentdb/) |
+| eventhubs | [Event Hubs](https://docs.microsoft.com/connectors/eventhubs/) |
+| mq | [IBM WebSphere MQ](https://docs.microsoft.com/connectors/mq/) |
+| sqldw | [SQL Data Warehouse](https://docs.microsoft.com/connectors/sqldw/) |
+| db2 | [DB2](https://docs.microsoft.com/connectors/db2/) |
+| smtp | [SMTP](https://docs.microsoft.com/connectors/smtp/) |
+| si3270 | [IBM 3270](https://docs.microsoft.com/connectors/si3270/) |
 
 Specify the values in the template (CLI or Portal UX) as a JSON array:
 ```json
@@ -65,10 +75,8 @@ As the Integration Service Environment puts a subnet service delegation on the f
 
 ## Miscellaneous
 
-* This template does not deploy a Network Security Group and NSG rules. Review [the documentation](https://docs.microsoft.com/en-us/azure/logic-apps/connect-virtual-network-vnet-isolated-environment#check-network-ports) on recommendations for filtering traffic in your virtual network.
+* This template does not deploy a Network Security Group and NSG rules. Review [the documentation](https://docs.microsoft.com/azure/logic-apps/connect-virtual-network-vnet-isolated-environment#check-network-ports) on recommendations for filtering traffic in your virtual network.
 
 * There is a `rebuildVNET` parameter in the template. If the VNET has already been deployed, this should be changed to false so it doesn't try deleting and recreating the VNET (it will attempt it even if the deployment mode is set to Incremental).
 
-``Tags: logic-apps, ise, vnet``
-
-
+`Tags: Microsoft.Network/virtualNetworks, subnets, Microsoft.Logic/integrationServiceEnvironments, [parameters('accessEndpointType')], Microsoft.Logic/integrationServiceEnvironments/ManagedApis`

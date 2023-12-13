@@ -1,4 +1,14 @@
-# Create Azure Firewall sandbox setup
+---
+description: This template creates a virtual network with 3 subnets (server subnet, jumpbox subet and AzureFirewall subnet), a jumpbox VM with public IP, A server VM, UDR route to point to Azure Firewall for the Server Subnet and an Azure Firewall with 1 or more Public IP addresses, 1 sample application rule, 1 sample network rule and default private ranges
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-sandbox-linux
+languages:
+- json
+---
+# Create a sandbox setup of Azure Firewall with Linux VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-sandbox-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-sandbox-linux/PublicDeployment.svg)
@@ -17,4 +27,6 @@ Azure Firewall is a managed cloud-based network security service that protects y
 It is a fully stateful firewall as a service with built-in high availability and unrestricted cloud scalability.
 You can centrally create, enforce, and log application and network connectivity policies across subscriptions and virtual network.
 Azure Firewall uses one or more static public IP addresses for your virtual network resources allowing outside firewalls to identify traffic originating from your virtual network.
-The service is fully integrated with Azure Monitor for logging and analytics. Learn more at https://docs.microsoft.com/en-us/azure/firewall.
+The service is fully integrated with Azure Monitor for logging and analytics. Learn more at https://docs.microsoft.com/azure/firewall.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/routeTables, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/azureFirewalls, Allow`
