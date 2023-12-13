@@ -135,7 +135,7 @@ Click on the Resource Group to expand and show the **Resources**:
 
 Click on the Web Plan and then look for **Deployment Center**.
 
-Here you can check the external Github account linked to your Web App.
+Here you can check the external GitHub account linked to your Web App.
 
 ![Screen](./images/azdeployportal3.png)
 
