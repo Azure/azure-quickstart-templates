@@ -49,6 +49,7 @@ resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-pre
   }
   kind: 'hub'
   
+  #disable-next-line BCP081
   resource azureOpenAIEndpoint 'endpoints@2023-08-01-preview' = {
       name: 'Azure.OpenAI'
       properties: {
@@ -57,7 +58,8 @@ resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-pre
         associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
       }
   }
-  
+
+  #disable-next-line BCP081
   resource contentSafetyEndpoint 'endpoints@2023-08-01-preview' = {
       name: 'Azure.ContentSafety'
       properties: {
@@ -66,7 +68,8 @@ resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-pre
         associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
       }
   }
-  
+
+  #disable-next-line BCP081
   resource speechEndpoint 'endpoints@2023-08-01-preview' = {
       name: 'Azure.Speech'
       properties: {
