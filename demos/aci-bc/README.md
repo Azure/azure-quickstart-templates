@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: aci-bc
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Container Instances - BC with SQL Server and IIS
 
