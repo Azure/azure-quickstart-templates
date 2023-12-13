@@ -8,7 +8,7 @@ urlFragment: web-app-github-deploy
 languages:
 - json
 ---
-# WebApp GitHub
+# Web App Deployment from GitHub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-github-deploy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-github-deploy/PublicDeployment.svg)
