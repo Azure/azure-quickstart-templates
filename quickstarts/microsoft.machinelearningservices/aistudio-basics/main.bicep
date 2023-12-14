@@ -2,7 +2,7 @@
 
 // Parameters
 @minLength(2)
-@maxLength(10)
+@maxLength(12)
 @description('Name for the AI resource and used to derive name of dependent resources.')
 param aiResourceName string = 'demo'
 
