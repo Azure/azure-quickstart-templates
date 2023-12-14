@@ -4,11 +4,10 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-api-management
 urlFragment: azure-api-management-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create an API Management instance using a template
 
