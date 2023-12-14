@@ -4,7 +4,13 @@
 @minLength(2)
 @maxLength(12)
 @description('Name for the AI resource and used to derive name of dependent resources.')
-param aiResourceName string = 'demo'
+param aiResourceName string = 'air-demo'
+
+@description('Friendly name for your Azure AI resource')
+param aiResourceFriendlyName string = 'Demo AI resource'
+
+@description('Description of your Azure AI resource dispayed in AI studio')
+param aiResourceDescription string = 'This is an example AI resource for use in Azure AI Studio.'
 
 @description('Azure region used for the deployment of all resources.')
 param location string = resourceGroup().location
@@ -35,9 +41,9 @@ module aiResource 'modules/ai-resource.bicep' = {
   name: 'ai-${name}-${uniqueSuffix}-deployment'
   params: {
     // workspace organization
-    aiResourceName: 'mlw-${name}-${uniqueSuffix}'
-    aiResourceFriendlyName: 'Demo AI resources'
-    aiResourceDescription: 'This is an example AI resource for use in Azure AI Studio.'
+    aiResourceName: 'ai-${name}-${uniqueSuffix}'
+    aiResourceFriendlyName: aiResourceFriendlyName
+    aiResourceDescription: aiResourceDescription
     location: location
     tags: tags
 
