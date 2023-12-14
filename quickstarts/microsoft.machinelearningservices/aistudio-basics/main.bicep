@@ -36,8 +36,8 @@ module aiResource 'modules/ai-resource.bicep' = {
   params: {
     // workspace organization
     aiResourceName: 'mlw-${name}-${uniqueSuffix}'
-    aiResourceFriendlyName: 'Private link endpoint sample workspace'
-    aiResourceDescription: 'This is an example workspace having a private link endpoint.'
+    aiResourceFriendlyName: 'Demo AI resources'
+    aiResourceDescription: 'This is an example AI resource for use in Azure AI Studio.'
     location: location
     tags: tags
 
@@ -46,7 +46,7 @@ module aiResource 'modules/ai-resource.bicep' = {
     containerRegistryId: aiDependencies.outputs.containerRegistryId
     keyVaultId: aiDependencies.outputs.keyvaultId
     storageAccountId: aiDependencies.outputs.storageId
-    
+
   }
   dependsOn: [
     aiDependencies

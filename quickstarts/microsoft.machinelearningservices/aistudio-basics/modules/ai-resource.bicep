@@ -28,7 +28,7 @@ param keyVaultId string
 param storageAccountId string
 
 param endpointResourceId string = 'null'
- 
+
 resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
   name: aiResourceName
   location: location
@@ -48,35 +48,35 @@ resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-pre
     containerRegistry: containerRegistryId
   }
   kind: 'hub'
-  
+
   #disable-next-line BCP081
   resource azureOpenAIEndpoint 'endpoints@2023-08-01-preview' = {
+    name: 'Azure.OpenAI'
+    properties: {
       name: 'Azure.OpenAI'
-      properties: {
-        name: 'Azure.OpenAI'
-        endpointType: 'Azure.OpenAI'
-        associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
-      }
+      endpointType: 'Azure.OpenAI'
+      associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
+    }
   }
 
   #disable-next-line BCP081
   resource contentSafetyEndpoint 'endpoints@2023-08-01-preview' = {
+    name: 'Azure.ContentSafety'
+    properties: {
       name: 'Azure.ContentSafety'
-      properties: {
-        name: 'Azure.ContentSafety'
-        endpointType: 'Azure.ContentSafety'
-        associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
-      }
+      endpointType: 'Azure.ContentSafety'
+      associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
+    }
   }
 
   #disable-next-line BCP081
   resource speechEndpoint 'endpoints@2023-08-01-preview' = {
+    name: 'Azure.Speech'
+    properties: {
       name: 'Azure.Speech'
-      properties: {
-        name: 'Azure.Speech'
-        endpointType: 'Azure.Speech'
-        associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
-      }
+      endpointType: 'Azure.Speech'
+      associatedResourceId: endpointResourceId != 'null' ? endpointResourceId : null
+    }
   }
 }
 
