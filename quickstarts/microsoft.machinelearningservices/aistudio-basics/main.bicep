@@ -1,10 +1,10 @@
-// Execute this main file to configure Azure AI studio basics
+// Execute this main file to depoy Azure AI studio resources in the basic security configuraiton
 
 // Parameters
 @minLength(2)
 @maxLength(10)
-@description('Name for the deployment.')
-param deploymentName string = 'demo'
+@description('Name for the AI resource and used to derive name of dependent resources.')
+param aiResourceName string = 'demo'
 
 @description('Azure region used for the deployment of all resources.')
 param location string = resourceGroup().location
@@ -13,7 +13,7 @@ param location string = resourceGroup().location
 param tags object = {}
 
 // Variables
-var name = toLower('${deploymentName}')
+var name = toLower('${aiResourceName}')
 
 // Create a short, unique suffix, that will be unique to each resource group
 var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 4)
