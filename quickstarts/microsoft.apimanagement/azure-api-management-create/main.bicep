@@ -11,7 +11,9 @@ param publisherName string
 
 @description('The pricing tier of this API Management service')
 @allowed([
+  'Consumption'
   'Developer'
+  'Basic'
   'Standard'
   'Premium'
 ])
@@ -19,6 +21,7 @@ param sku string = 'Developer'
 
 @description('The instance size of this API Management service.')
 @allowed([
+  0
   1
   2
 ])
@@ -27,7 +30,7 @@ param skuCount int = 1
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource apiManagementService 'Microsoft.ApiManagement/service@2021-08-01' = {
+resource apiManagementService 'Microsoft.ApiManagement/service@2022-08-01' = {
   name: apiManagementServiceName
   location: location
   sku: {
