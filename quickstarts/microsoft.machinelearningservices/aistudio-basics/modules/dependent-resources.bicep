@@ -35,7 +35,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   name: containerRegistryNameCleaned
   location: location
   tags: tags
@@ -44,7 +44,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
   }
   properties: {
     adminUserEnabled: true
-    anonymousPullEnabled: false
     dataEndpointEnabled: false
     networkRuleBypassOptions: 'AzureServices'
     networkRuleSet: {
@@ -68,7 +67,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
   }
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: keyvaultName
   location: location
   tags: tags
@@ -112,7 +111,7 @@ param storageSkuName string = 'Standard_LRS'
 
 var storageNameCleaned = replace(storageName, '-', '')
 
-resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageNameCleaned
   location: location
   tags: tags
