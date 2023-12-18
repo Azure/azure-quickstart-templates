@@ -1,5 +1,18 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in December 18, 2023
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the December 2023 CU for SharePoint Subscription
+  - Add a resource `runCommands` to run a script that increases MaxEnvelopeSizeKb on SPSE, so that service WS-Management in SPSE can process the bigger DSC script
+- Configuration for SPSE
+  - Add claim type groupsid to make the switch to SPTrustedBackedByUPAClaimProvider easier. There are remaining steps needed to finalize its configuration
+- Configuration for SPSE and FESE
+  - Set registry keys to configure OneDrive NGSC for OIDC authentication
+  - Format the document
+
 ## Enhancements & bug-fixes - Published in November 16, 2023
 
 ### Changed
