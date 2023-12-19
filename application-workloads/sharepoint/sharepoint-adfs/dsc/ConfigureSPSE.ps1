@@ -180,12 +180,18 @@ configuration ConfigureSPVM
             Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" 
         }
 
-        # Allow OneDrive NGSC to connect to SharePoint Subscription / 2019 - https://learn.microsoft.com/en-us/sharepoint/install/configure-syncing-with-the-onedrive-sync-app
-        Registry SetOneDriveUrl {
-            Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Ensure = "Present" 
+        # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 1 (machine-wide)
+        Registry PrioritizeOIDCOverLegacyAuthN {
+            Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremOIDC"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
+        }
+        Registry PrioritizeSPSOverSPO {
+            Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremPrioritization"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
+        }
+        Registry SetSPSUrl {
+            Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "https://$SharePointSitesAuthority.$DomainFQDN"; Ensure = "Present" 
         }
         Registry SetOneDriveName {
-            Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "{0} - {1}" -f $DomainNetbiosName, $MySiteHostAlias; Ensure = "Present" 
+            Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "$SharePointSitesAuthority in $DomainFQDN"; Ensure = "Present" 
         }
         
         SqlAlias AddSqlAlias {
@@ -503,7 +509,18 @@ configuration ConfigureSPVM
         }
 
         Registry ShowFileExtensions {
-            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "HideFileExt"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present"; PsDscRunAsCredential = $DomainAdminCredsQualified 
+            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "HideFileExt"; ValueType = "DWORD"; ValueData = "0"; Force = $true;
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
+        }
+
+        # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 2 (user-specific settings)
+        Registry EnableOIDCForSPS {
+            Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2086"; ValueType = "DWORD"; ValueData = "1"
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
+        }
+        Registry EnableOneAuthorSPS {
+            Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2042"; ValueType = "DWORD"; ValueData = "1"
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
         }
 
         # This script is still needed
@@ -1050,6 +1067,10 @@ configuration ConfigureSPVM
                 MSFT_SPClaimTypeMapping {
                     Name              = "group"
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                }
+                MSFT_SPClaimTypeMapping {
+                    Name              = "groupsid"
+                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
                 }
             )
             SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
