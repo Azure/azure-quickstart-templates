@@ -1,0 +1,81 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appServiceWebAppName": {
+      "type": "string",
+      "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
+      "minLength": 2,
+      "metadata": {
+        "description": "Web App name."
+      }
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
+      "minLength": 2,
+      "metadata": {
+        "description": "App Service Plan name."
+      }
+    },
+    "skuTier": {
+      "type": "String",
+      "allowedValues": [
+        "P1v3",
+        "P2v3",
+        "P3v3",
+        "P1mV3",
+        "P2mV3",
+        "P3mV3",
+        "P4mV3",
+        "P5mV3"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('appServiceWebAppName')]",
+      "apiVersion": "2022-09-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "[concat('hidden-related:', subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+      },
+      "properties": {
+        "name": "[parameters('appServiceWebAppName')]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "PORT",
+              "value": "8080"
+            }
+          ],
+          "appCommandLine": "",
+          "windowsFxVersion": "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp"
+        },
+        "serverFarmId": "[concat(subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+        "hostingEnvironment": ""
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "sku": {
+        "Name": "[parameters('skuTier')]"
+      },
+      "kind": "windows",
+      "name": "[parameters('appServicePlanName')]",
+      "apiVersion": "2022-09-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "name": "[parameters('appServicePlanName')]",
+        "workerSizeId": "0",
+        "numberOfWorkers": "1",
+        "hyperv": true,
+        "hostingEnvironment": ""
+      }
+    }
+  ]
+}
