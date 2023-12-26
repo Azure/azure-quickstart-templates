@@ -1,3 +1,21 @@
+---
+description: This template creates a new FinOps hub instance, including Data Lake storage and a Data Factory.
+page_type: sample
+products:
+  - azure
+  - azure-blob-storage
+  - azure-cost-management
+  - azure-data-factory
+  - azure-data-lake
+  - azure-key-vault
+  - azure-resource-manager
+  - azure-storage-accounts
+urlFragment: finops-hub
+languages:
+  - bicep
+  - json
+---
+
 # FinOps hub template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/finops-hub/PublicLastTestDate.svg)
@@ -49,15 +67,18 @@ If you run into any issues, see [Troubleshooting FinOps hubs](https://aka.ms/fin
 3. [Create a new cost export](https://learn.microsoft.com/azure/cost-management-billing/costs/tutorial-export-acm-data?tabs=azure-portal) using the following settings:
    - **Metric** = `Amortized cost`
    - **Export type** = `Daily export of month-to-date costs`
+   - **File Partitioning** = On
    - **Storage account** = (Use subscription/resource from step 1)
    - **Container** = `msexports`
-   - **Directory** = (Use the resource ID of the scope you're exporting without the first "/")
+   - **Directory** = (Use the resource ID of the scope<sup>1</sup> you're exporting without the first "/")
 4. Run your export using the **Run now** command
    > Your data should be available within 15 minutes or so, depending on how big your account is.
 5. Connect to the data in Azure Data Lake Storage
    > Consider using [available Power BI reports](https://aka.ms/finops/hubs/reports)
 
 If you run into any issues, see [Troubleshooting FinOps hubs](https://aka.ms/finops/hubs/troubleshoot).
+
+_<sup>1) A "scope" is an Azure construct that contains resources or enables purchasing services, like a resource group, subscription, management group, or billing account. The resource ID for a scope will be the Azure Resource Manager URI that identifies the scope (e.g., "/subscriptions/###" for a subscription or "/providers/Microsoft.Billing/billingAccounts/###" for a billing account). To learn more, see [Understand and work with scopes](https://aka.ms/costmgmt/scopes).</sup>_
 
 <br>
 
