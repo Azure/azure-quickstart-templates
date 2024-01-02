@@ -22,9 +22,9 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fprivate-aks-cluster-with-public-dns-zone%2Fazuredeploy.json)
 
-This project can be used to deploy a [private AKS cluster with a Public DNS address](https://docs.microsoft.com/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address) with [Dynamic allocation of IPs and enhanced subnet support](https://docs.microsoft.com/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview), [Azure Active Directory Pod Identity](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity), and more.
+This project can be used to deploy a [private AKS cluster with a Public DNS address](https://docs.microsoft.com/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address) with [Dynamic allocation of IPs and enhanced subnet support](https://docs.microsoft.com/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview).
 
-## Architecture ##
+## Architecture
 
 This sample provides an ARM templates to deploy the following topology two node pools.
 
