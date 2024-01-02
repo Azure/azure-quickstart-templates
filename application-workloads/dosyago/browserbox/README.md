@@ -1,15 +1,14 @@
 ---
-description: This template deploys BrowserBox to Azure on either Ubuntu Server 22.04 LTS, Debian 11, or RHEL 8.7 LVM.
+description: This template deploys BrowserBox on an Azure Ubuntu Server 22.04 LTS, Debian 11, or RHEL 8.7 LVM VM.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: dosyago/browserbox
+urlFragment: browserbox
 languages:
 - json
 ---
-
-# BrowserBox on Azure
+# BrowserBox Azure Edition
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/PublicDeployment.svg)
