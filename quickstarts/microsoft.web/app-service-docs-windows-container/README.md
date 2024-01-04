@@ -8,7 +8,7 @@ urlFragment: app-service-docs-windows-container
 languages:
 - json
 ---
-# App Service Quickstart - Windows app
+# App Service Quickstart - Windows container app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-service-docs-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-service-docs-windows/PublicDeployment.svg)
