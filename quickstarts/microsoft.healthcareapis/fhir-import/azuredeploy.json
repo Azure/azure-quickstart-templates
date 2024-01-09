@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.13.1.58284",
-      "templateHash": "17241932705120126845"
+      "version": "0.24.24.22086",
+      "templateHash": "18418394575873290317"
     }
   },
   "parameters": {
@@ -18,12 +18,14 @@
     },
     "workspaceName": {
       "type": "string",
+      "minLength": 3,
       "metadata": {
         "description": "Workspace containing the Azure Health Data Services workspace"
       }
     },
     "fhirName": {
       "type": "string",
+      "minLength": 3,
       "metadata": {
         "description": "Name of FHIR service"
       }
@@ -46,25 +48,38 @@
         "description": "Name of storage account to use for import. Needs to be an existing storage account. Leave blank if this has already been configured."
       }
     },
-    "enableImport": {
-      "type": "bool",
+    "importMode": {
+      "type": "string",
+      "allowedValues": [
+        "Initial Import",
+        "Incremental Import",
+        "Disabled"
+      ],
       "metadata": {
-        "description": "Flag to enable or disable $import"
+        "description": "FHIR Service Import mode to enable (or disable import)"
       }
     },
-    "newOrExisting": {
+    "newOrExistingService": {
       "type": "string",
       "defaultValue": "existing",
       "allowedValues": [
         "new",
         "existing"
-      ]
+      ],
+      "metadata": {
+        "description": "Whether to create a new FHIR service or use an existing one"
+      }
     }
   },
   "variables": {
-    "enableConfiguration": {
+    "initialImport": {
       "enabled": true,
       "initialImportMode": true,
+      "integrationDataStore": "[parameters('storageName')]"
+    },
+    "incrementalImport": {
+      "enabled": true,
+      "initialImportMode": false,
       "integrationDataStore": "[parameters('storageName')]"
     },
     "disableConfiguration": {
@@ -84,7 +99,7 @@
       "identity": {
         "type": "SystemAssigned"
       },
-      "properties": "[union(if(equals(parameters('newOrExisting'), 'existing'), reference(resourceId('Microsoft.Resources/deployments', variables('existingDeployName')), '2020-10-01').outputs.properties.value, reference(resourceId('Microsoft.Resources/deployments', variables('newDeployName')), '2020-10-01').outputs.properties.value), createObject('importConfiguration', if(parameters('enableImport'), variables('enableConfiguration'), variables('disableConfiguration'))))]",
+      "properties": "[union(if(equals(parameters('newOrExistingService'), 'existing'), reference(resourceId('Microsoft.Resources/deployments', variables('existingDeployName')), '2022-09-01').outputs.properties.value, reference(resourceId('Microsoft.Resources/deployments', variables('newDeployName')), '2022-09-01').outputs.properties.value), createObject('importConfiguration', if(equals(parameters('importMode'), 'Initial Import'), variables('initialImport'), if(equals(parameters('importMode'), 'Incremental Import'), variables('incrementalImport'), variables('disableConfiguration')))))]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', variables('existingDeployName'))]",
         "[resourceId('Microsoft.Resources/deployments', variables('newDeployName'))]"
@@ -94,9 +109,9 @@
       }
     },
     {
-      "condition": "[equals(parameters('newOrExisting'), 'existing')]",
+      "condition": "[equals(parameters('newOrExistingService'), 'existing')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[variables('existingDeployName')]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -117,8 +132,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "8027949065940780632"
+              "version": "0.24.24.22086",
+              "templateHash": "15470609244842031773"
             }
           },
           "parameters": {
@@ -139,7 +154,7 @@
           "outputs": {
             "properties": {
               "type": "object",
-              "value": "[reference(resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('workspaceName'), parameters('fhirName')), '2022-06-01')]"
+              "value": "[reference(resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('workspaceName'), parameters('fhirName')), '2023-02-28')]"
             }
           }
         }
@@ -149,9 +164,9 @@
       }
     },
     {
-      "condition": "[equals(parameters('newOrExisting'), 'new')]",
+      "condition": "[equals(parameters('newOrExistingService'), 'new')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[variables('newDeployName')]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -175,8 +190,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "736950215381405193"
+              "version": "0.24.24.22086",
+              "templateHash": "1409666404117959436"
             }
           },
           "parameters": {
@@ -230,10 +245,10 @@
   "outputs": {
     "storageAccountName": {
       "type": "string",
-      "value": "[if(parameters('enableImport'), parameters('storageName'), '')]",
       "metadata": {
         "description": "Used to validate that the storage account exists when enabling import"
-      }
+      },
+      "value": "[if(not(equals(parameters('importMode'), 'Disabled')), parameters('storageName'), '')]"
     }
   }
 }
