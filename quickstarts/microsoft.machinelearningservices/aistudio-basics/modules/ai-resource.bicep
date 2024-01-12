@@ -49,6 +49,8 @@ resource aiResource 'Microsoft.MachineLearningServices/workspaces@2023-08-01-pre
   }
   kind: 'hub'
 
+  // TODO: use variables here to configure subresource proxy resource or not
+
   #disable-next-line BCP081
   resource azureOpenAIEndpoint 'endpoints@2023-08-01-preview' = {
     name: 'Azure.OpenAI'
