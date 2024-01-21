@@ -32,7 +32,7 @@ $env:Triggers.Split('|') `
             -Name $trigger `
             -Force
     }
-    if ($triggerOutput) { 
+    if ($triggerOutput) {
         Write-Host 'done'
     } else {
         Write-Host 'failed'

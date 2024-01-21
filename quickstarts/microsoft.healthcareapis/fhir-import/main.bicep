@@ -27,11 +27,12 @@ param storageName string = ''
 ])
 param importMode string
 
+@description('Whether to create a new FHIR service or use an existing one')
 @allowed([
   'new'
   'existing'
 ])
-param newOrExisting string = 'existing'
+param newOrExistingService string = 'existing'
 
 var initialImport = {
   enabled: true
@@ -61,13 +62,13 @@ resource fhir 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' = {
   identity: {
     type: 'SystemAssigned'
   }
-  properties: union((newOrExisting == 'existing') ? existingDeploy.outputs.properties : newDeploy.outputs.properties, {
+  properties: union((newOrExistingService == 'existing') ? existingDeploy.outputs.properties : newDeploy.outputs.properties, {
       importConfiguration: (importMode == 'Initial Import' ? initialImport : importMode == 'Incremental Import' ? incrementalImport : disableConfiguration)
     })
 }
 
 @description('Used to pull existing configuration from FHIR serviceß')
-module existingDeploy './nested_existingdeployname.bicep' = if (newOrExisting == 'existing') {
+module existingDeploy './nested_existingdeployname.bicep' = if (newOrExistingService == 'existing') {
   name: existingDeployName
   params: {
     fhirName: fhirName
@@ -76,7 +77,7 @@ module existingDeploy './nested_existingdeployname.bicep' = if (newOrExisting ==
 }
 
 @description('Used to pull existing configuration from FHIR serviceß')
-module newDeploy './nested_newdeployname.bicep' = if (newOrExisting == 'new') {
+module newDeploy './nested_newdeployname.bicep' = if (newOrExistingService == 'new') {
   name: newDeployName
   params: {
     fhirName: fhirName
