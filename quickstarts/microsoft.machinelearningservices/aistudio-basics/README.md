@@ -1,3 +1,14 @@
+---
+description: This set of templates demonstrates how to set up Azure AI Studio with the basic setup, meaning with public internet access enabled, Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aistudio-basics
+languages:
+- bicep
+- json
+---
 # Azure AI Studio basic setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-basics/PublicLastTestDate.svg)
@@ -36,4 +47,4 @@ An 'Azure AI resource' is implemented as special kind of 'Azure Machine Learning
 
 If you are new to Azure AI studio, see:
 
-- [Azure AI studio](https://aka.ms/aistudio/docs)
+- [Azure AI studio](https://aka.ms/aistudio/docs)`Tags: `
