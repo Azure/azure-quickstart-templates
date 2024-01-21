@@ -54,7 +54,4 @@ module aiResource 'modules/ai-resource.bicep' = {
     storageAccountId: aiDependencies.outputs.storageId
 
   }
-  dependsOn: [
-    aiDependencies
-  ]
 }
