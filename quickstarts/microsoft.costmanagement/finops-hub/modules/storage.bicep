@@ -164,48 +164,6 @@ resource uploadSettings 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
 }
 
-resource removeManagedIdentity_blobManager 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'removeManagedIdentity'
-  kind: 'AzurePowerShell'
-  location: location
-  tags: tags
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${identity.id}': {}
-    }
-  }
-  dependsOn: [
-    configContainer
-    identityRoleAssignments
-    uploadSettings
-  ]
-  properties: {
-    azPowerShellVersion: '8.0'
-    retentionInterval: 'PT1H'
-    environmentVariables: [
-      {
-        name: 'managedIdentityName'
-        value: identity.name
-      }
-      {
-        name: 'resourceGroupName'
-        value: resourceGroup().name
-      }
-      {
-        name: 'storageAccountName'
-        value: storageAccountName
-      }
-      {
-        name: 'containerName'
-        value: 'config'
-      }
-    ]
-    scriptContent: loadTextContent('./scripts/Remove-ManagedIdentity.ps1')
-    arguments: '-storage'
-  }
-}
-
 //==============================================================================
 // Outputs
 //==============================================================================
