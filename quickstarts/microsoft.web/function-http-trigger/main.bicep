@@ -18,6 +18,7 @@ var functionNameComputed = 'MyHttpTriggeredFunction'
 var functionRuntime = 'dotnet'
 var keyVaultName = 'kv${replace(appNameSuffix, '-', '')}'
 var functionAppKeySecretName = 'FunctionAppHostKey'
+var workspaceName = 'workspace-${appNameSuffix}'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
@@ -45,6 +46,11 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: workspaceName
+  location: location
+}
+
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
@@ -53,6 +59,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
     Application_Type: 'web'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
   }
 }
 
