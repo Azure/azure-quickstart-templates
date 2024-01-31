@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vmss-bottle-autoscale
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy VM Scale Set with Python Bottle server & AutoScale
 
