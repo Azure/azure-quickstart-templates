@@ -4,7 +4,7 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: vm-simple-windows
+urlFragment: vm-simple-hci-windows
 languages:
 - bicep
 - json
