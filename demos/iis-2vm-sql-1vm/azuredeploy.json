@@ -84,7 +84,7 @@
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
             },
             "defaultValue": ""
-        }        
+        }
     },
     "variables": {
         "virtualNetworkName": "[concat(parameters('envPrefixName'), 'Vnet')]",
@@ -108,7 +108,7 @@
         "webSrvNumbOfInstances": "[parameters('numberOfWebSrvs')]",
         "webSrvDnsNameforLBIP": "[concat(toLower(variables('webSrvName')), 'lb')]",
         "webLbName": "[concat(variables('webSrvName'), 'lb')]",
-        "vmExtensionName": "dscExtension",
+        "vmExtensionName": "AzurePolicyforWindows",
         "configurationFunction": "WebServerConfig.ps1\\WebServerConfig"
     },
     "resources": [
@@ -524,6 +524,9 @@
             "tags": {
                 "displayName": "WebSrv"
             },
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "properties": {
                 "availabilitySet": {
                     "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('webSrvAvailabilitySetName'))]"
@@ -577,14 +580,33 @@
                 "displayName": "VM Extensions"
             },
             "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "2.19",
+                "publisher": "Microsoft.GuestConfiguration",
+                "type": "ConfigurationforWindows",
+                "typeHandlerVersion": "1.0",
                 "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/WebServerConfig.ps1.zip', parameters('_artifactsLocationSasToken')))]",
-                    "ConfigurationFunction": "[variables('configurationFunction')]",
-                    "wmfVersion": "4.0"
+                "enableAutomaticUpgrade": true,
+                "settings": {},
+                "protectedSettings": {}
+            }
+        },
+        {
+            "apiVersion": "2020-06-25",
+            "type": "Microsoft.Compute/virtualMachines/providers/guestConfigurationAssignments",
+            "name": "[concat(variables('webSrvName'), copyindex(), '/Microsoft.GuestConfiguration/WebServerConfig')]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "webSrvMachineLoop",
+                "count": "[variables('webSrvNumbOfInstances')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('webSrvName'), copyindex()))]"
+            ],
+            "properties": {
+                "guestConfiguration": {
+                    "name": "WebServerConfig",
+                    "contentUri": "[uri(parameters('_artifactsLocation'), concat('scripts/WebServerConfig.zip', parameters('_artifactsLocationSasToken')))]",
+                    "contentHash": "BDD9E5A1F45DF59CAC90AB3777495354FA0DC1EACC07F4023588D219639146E1",
+                    "assignmentType": "ApplyAndMonitor"
                 }
             }
         }
