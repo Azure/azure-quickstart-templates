@@ -81,7 +81,7 @@ var linuxConfiguration = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -101,7 +101,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -112,7 +112,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   }
 }
 
-resource loadBalancer 'Microsoft.Network/loadBalancers@2022-01-01' = {
+resource loadBalancer 'Microsoft.Network/loadBalancers@2023-04-01' = {
   name: loadBalancerName
   location: location
   properties: {
@@ -245,7 +245,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
   }
 }
 
-resource autoscaleHost 'Microsoft.Insights/autoscalesettings@2021-05-01-preview' = {
+resource autoscaleHost 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
   name: 'autoscaleHost'
   location: location
   properties: {
