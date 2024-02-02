@@ -204,9 +204,9 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenP
     # now set the parameter value for the QueryString or _artifactsLocationSasToken as appropriate
     if($OptionalParameters[$ArtifactsLocationSasTokenName] -eq $null -and $useAbsolutePathStaging){
         $OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString $sasToken -AsPlainText -Force
-        $TemplateArgs.Add('TemplateUri', $ArtifactStagingLocation + (Get-ChildItem $TemplateFile).Name + $sasToken)
+        $TemplateArgs.Add('TemplateUri', $ArtifactStagingLocation + (Get-ChildItem $TemplateFile).Name + "?" + $sasToken)
     }elseif (!$useAbsolutePathStaging) {
-        $OptionalParameters['QueryString'] = $sasToken.TrimStart("?") # remove leading ? as it is not part of the QueryString
+        $OptionalParameters['QueryString'] = $sasToken
         $TemplateArgs.Add('TemplateUri', $ArtifactStagingLocation + (Get-ChildItem $TemplateFile).Name)
     }
 }
