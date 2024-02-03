@@ -17,6 +17,12 @@ param keyvaultName string
 @description('AI services name. Must be unique.')
 param aiServicesName string = 'CognitiveService-${uniqueString(resourceGroup().id)}'
 
+@description('Specifies the customer managed keyvault Resource Manager ID.')
+param cmk_keyvault_id string
+
+@description('Specifies the customer managed keyvault key uri.')
+param cmk_keyvault_key_name string
+
 var containerRegistryNameCleaned = replace(containerRegistryName, '-', '')
 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
@@ -32,6 +38,13 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
     }
 
     //add encryption
+    encryption: {
+      keySource: 'Microsoft.KeyVault'
+      keyVaultProperties: {
+        keyVaultUri: cmk_keyvault_id
+        keyName: cmk_keyvault_key_name
+      }
+    }
   }
 }
 

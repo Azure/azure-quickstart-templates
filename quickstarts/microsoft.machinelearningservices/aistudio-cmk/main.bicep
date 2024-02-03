@@ -25,8 +25,11 @@ param tags object = {}
 ])
 param encryption_status string = 'Enabled'
 
-@description('Specifies the customer managed keyvault Azure Resource Manager ID.')
+@description('Specifies the customer managed keyvault Resource Manager ID.')
 param cmk_keyvault_id string
+
+@description('Specifies the customer managed keyvault key uri.')
+param cmk_keyvault_key_name string
 
 @description('Specifies the customer managed keyvault key uri.')
 param cmk_keyvault_key_uri string
@@ -47,6 +50,8 @@ module aiDependencies 'modules/dependent-resources.bicep' = {
     applicationInsightsName: 'appi-${name}-${uniqueSuffix}'
     containerRegistryName: 'cr${name}${uniqueSuffix}'
     tags: tags
+    cmk_keyvault_id: cmk_keyvault_id
+    cmk_keyvault_key_name: cmk_keyvault_key_name
   }
 }
 
@@ -65,7 +70,7 @@ module aiResource 'modules/ai-hub.bicep' = {
     containerRegistryId: aiDependencies.outputs.containerRegistryId
     keyVaultId: aiDependencies.outputs.keyvaultId
     storageAccountId: aiDependencies.outputs.storageId
-    endpointResourceId: aiDependencies.outputs.
+    endpointResourceId: aiDependencies.outputs.aiServicesId
 
     // encryption configuration
     encryption_status: encryption_status
