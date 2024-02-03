@@ -11,8 +11,8 @@ param keyVaultSku string = 'Standard'
 param storageSku string = 'Standard_LRS'
 
 var functionAppName = 'fn-${appNameSuffix}'
-var appServicePlanName = 'FunctionPlan'
-var appInsightsName = 'AppInsights'
+var appServicePlanName = 'FunctionPlan-${appNameSuffix}'
+var appInsightsName = 'AppInsights-${appNameSuffix}'
 var storageAccountName = 'fnstor${replace(appNameSuffix, '-', '')}'
 var functionNameComputed = 'MyHttpTriggeredFunction'
 var functionRuntime = 'dotnet'
@@ -83,11 +83,11 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -112,7 +112,8 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
 }
 
 resource function 'Microsoft.Web/sites/functions@2020-12-01' = {
-  name: '${functionApp.name}/${functionNameComputed}'
+  parent: functionApp
+  name: functionNameComputed
   properties: {
     config: {
       disabled: false
@@ -153,7 +154,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 }
 
 resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${keyVault.name}/${functionAppKeySecretName}'
+  parent: keyVault
+  name: functionAppKeySecretName
   properties: {
     value: listKeys('${functionApp.id}/host/default', functionApp.apiVersion).functionKeys.default
   }
