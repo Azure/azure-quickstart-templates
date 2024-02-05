@@ -200,7 +200,7 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenP
     if ($useAbsolutePathStaging -or $OptionalParameters[$ArtifactsLocationSasTokenName] -eq $null) {
         $sasToken = (New-AzStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccount.Context -Permission r -ExpiryTime (Get-Date).AddHours(4))
     }
-     # now set the parameter value for the QueryString or _artifactsLocationSasToken as appropriate
+    # now set the parameter value for the QueryString or _artifactsLocationSasToken as appropriate
     if($OptionalParameters[$ArtifactsLocationSasTokenName] -eq $null -and $useAbsolutePathStaging){
         $OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString $sasToken -AsPlainText -Force
         $TemplateArgs.Add('TemplateUri', $ArtifactStagingLocation + (Get-ChildItem $TemplateFile).Name + $sasToken)
