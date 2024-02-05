@@ -8,7 +8,7 @@ urlFragment: iis-2vm-sql-1vm
 languages:
 - json
 ---
-# IIS VMs & SQL Server 2014 VM.
+# IIS VMs & SQL Server 2014 VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/iis-2vm-sql-1vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/iis-2vm-sql-1vm/PublicDeployment.svg)
