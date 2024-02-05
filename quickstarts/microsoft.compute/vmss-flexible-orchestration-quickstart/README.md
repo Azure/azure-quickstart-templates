@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vmss-flexible-orchestration-quickstart
 languages:
-- json
 - bicep
+- json
 ---
 # VMSS Flexible Orchestration Mode Quickstart Linux
 
