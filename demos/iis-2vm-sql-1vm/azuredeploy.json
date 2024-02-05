@@ -40,7 +40,7 @@
                 1,
                 2
             ],
-            "defaultValue": 1
+            "defaultValue": 2
         },
         "sqlVMSize": {
             "type": "string",
@@ -84,7 +84,7 @@
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
             },
             "defaultValue": ""
-        }        
+        }
     },
     "variables": {
         "virtualNetworkName": "[concat(parameters('envPrefixName'), 'Vnet')]",
@@ -98,8 +98,8 @@
         "sqlSrvDBNicName": "[concat(variables('sqlSrvDBName'), 'Nic')]",
         "sqlPublicIP": "[concat(parameters('envPrefixName'), 'SqlPip')]",
         "sqlImagePublisher": "MicrosoftSQLServer",
-        "sqlImageOffer": "SQL2014SP2-WS2012R2",
-        "sqlImageSku": "Standard",
+        "sqlImageOffer": "sql2022-ws2022",
+        "sqlImageSku": "standard-gen2",
         "webSrvName": "[concat(parameters('envPrefixName'), 'webSrv')]",
         "webSrvVMSize": "[parameters('webSrvVMSize')]",
         "webSrvNicName": "[concat(variables('webSrvName'), 'Nic')]",
@@ -108,12 +108,11 @@
         "webSrvNumbOfInstances": "[parameters('numberOfWebSrvs')]",
         "webSrvDnsNameforLBIP": "[concat(toLower(variables('webSrvName')), 'lb')]",
         "webLbName": "[concat(variables('webSrvName'), 'lb')]",
-        "vmExtensionName": "dscExtension",
-        "configurationFunction": "WebServerConfig.ps1\\WebServerConfig"
+        "vmExtensionName": "AzurePolicyforWindows"
     },
     "resources": [
         {
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[variables('feNSGName')]",
             "location": "[parameters('location')]",
@@ -122,20 +121,6 @@
             },
             "properties": {
                 "securityRules": [
-                    {
-                        "name": "rdp_rule",
-                        "properties": {
-                            "description": "Allow RDP",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "3389",
-                            "sourceAddressPrefix": "Internet",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    },
                     {
                         "name": "web_rule",
                         "properties": {
@@ -155,7 +140,7 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "name": "[variables('dbNSGName')]",
             "location": "[parameters('location')]",
             "tags": {
@@ -174,20 +159,6 @@
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "rdp_rule",
-                        "properties": {
-                            "description": "Allow RDP",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "3389",
-                            "sourceAddressPrefix": "Internet",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 110,
                             "direction": "Inbound"
                         }
                     },
@@ -223,7 +194,7 @@
             }
         },
         {
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
             "location": "[parameters('location')]",
@@ -266,7 +237,7 @@
             "name": "[variables('sqlPublicIP')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "location": "[parameters('location')]",
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "tags": {
                 "displayName": "SqlPIP"
             },
@@ -279,7 +250,7 @@
             "name": "[variables('sqlSrvDBNicName')]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[parameters('location')]",
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
@@ -307,7 +278,7 @@
             "name": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
             "type": "Microsoft.Compute/virtualMachines",
             "location": "[parameters('location')]",
-            "apiVersion": "2020-12-01",
+            "apiVersion": "2022-11-01",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces/', variables('sqlSrvDBNicName'))]",
                 "[resourceId('Microsoft.Network/publicIPAddresses/', variables('sqlPublicIP'))]"
@@ -350,7 +321,7 @@
             }
         },
         {
-            "apiVersion": "2020-12-01",
+            "apiVersion": "2022-11-01",
             "type": "Microsoft.Compute/availabilitySets",
             "location": "[parameters('location')]",
             "name": "[variables('webSrvAvailabilitySetName')]",
@@ -369,7 +340,7 @@
             "name": "[variables('webSrvPublicIP')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "location": "[parameters('location')]",
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "tags": {
                 "displayName": "WebSrvPIP for LB"
             },
@@ -382,7 +353,7 @@
             }
         },
         {
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "name": "[variables('webLbName')]",
             "type": "Microsoft.Network/loadBalancers",
             "location": "[parameters('location')]",
@@ -406,32 +377,6 @@
                 "backendAddressPools": [
                     {
                         "name": "BackendPool1"
-                    }
-                ],
-                "inboundNatRules": [
-                    {
-                        "name": "RDP-VM0",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('webLbName'),'LoadBalancerFrontEnd')]"
-                            },
-                            "protocol": "Tcp",
-                            "frontendPort": 50001,
-                            "backendPort": 3389,
-                            "enableFloatingIP": false
-                        }
-                    },
-                    {
-                        "name": "RDP-VM1",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('webLbName'),'LoadBalancerFrontEnd')]"
-                            },
-                            "protocol": "Tcp",
-                            "frontendPort": 50002,
-                            "backendPort": 3389,
-                            "enableFloatingIP": false
-                        }
                     }
                 ],
                 "loadBalancingRules": [
@@ -472,7 +417,7 @@
             "name": "[concat(variables('webSrvNicName'), copyindex())]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[parameters('location')]",
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2022-07-01",
             "copy": {
                 "name": "nicLoop",
                 "count": "[variables('webSrvNumbOfInstances')]"
@@ -497,11 +442,6 @@
                                 {
                                     "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('webLbName'),'BackendPool1')]"
                                 }
-                            ],
-                            "loadBalancerInboundNatRules": [
-                                {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('webLbName'),concat('RDP-VM',copyindex()))]"
-                                }
                             ]
                         }
                     }
@@ -512,7 +452,7 @@
             "name": "[concat(variables('webSrvName'), copyindex())]",
             "type": "Microsoft.Compute/virtualMachines",
             "location": "[parameters('location')]",
-            "apiVersion": "2020-12-01",
+            "apiVersion": "2022-11-01",
             "copy": {
                 "name": "webSrvMachineLoop",
                 "count": "[variables('webSrvNumbOfInstances')]"
@@ -523,6 +463,9 @@
             ],
             "tags": {
                 "displayName": "WebSrv"
+            },
+            "identity": {
+                "type": "SystemAssigned"
             },
             "properties": {
                 "availabilitySet": {
@@ -540,7 +483,7 @@
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "2012-R2-Datacenter",
+                        "sku": "2022-datacenter-azure-edition-core",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -564,7 +507,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('webSrvName'), copyindex(),'/', variables('vmExtensionName'))]",
-            "apiVersion": "2020-12-01",
+            "apiVersion": "2022-11-01",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "webSrvMachineLoop",
@@ -577,14 +520,32 @@
                 "displayName": "VM Extensions"
             },
             "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "2.19",
+                "publisher": "Microsoft.GuestConfiguration",
+                "type": "ConfigurationforWindows",
+                "typeHandlerVersion": "1.0",
                 "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/WebServerConfig.ps1.zip', parameters('_artifactsLocationSasToken')))]",
-                    "ConfigurationFunction": "[variables('configurationFunction')]",
-                    "wmfVersion": "4.0"
+                "enableAutomaticUpgrade": true
+            }
+        },
+        {
+            "apiVersion": "2020-06-25",
+            "type": "Microsoft.Compute/virtualMachines/providers/guestConfigurationAssignments",
+            "name": "[concat(variables('webSrvName'), copyindex(), '/Microsoft.GuestConfiguration/WebServerConfig')]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "webSrvMachineLoop",
+                "count": "[variables('webSrvNumbOfInstances')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('webSrvName'), copyindex()))]"
+            ],
+            "properties": {
+                "guestConfiguration": {
+                    "name": "WebServerConfig",
+                    "version": "1.0.0",
+                    "contentUri": "[uri(parameters('_artifactsLocation'), concat('scripts/WebServerConfig.zip', '?', parameters('_artifactsLocationSasToken')))]",
+                    "contentHash": "018652dab6e4506ea3eb1370237cde8c692a8b9358942284a9ede13130303212",
+                    "assignmentType": "ApplyAndMonitor"
                 }
             }
         }
