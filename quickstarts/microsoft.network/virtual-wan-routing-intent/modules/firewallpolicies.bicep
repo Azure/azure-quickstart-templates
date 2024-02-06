@@ -2,7 +2,7 @@ param vWANhubs array
 param sourceIPAddressSpaces array
 param destinationIPAddressSpaces array
 param firewallSNATprivateRanges string[]
-param autoLearnPrivateRanges string
+
 var NetworkRuleCollectionGroupPriority = 50000
 var DefaultNetworkRuleCollectionGroup = 'DefaultNetworkRuleCollectionGroup'
 
@@ -14,7 +14,6 @@ resource hub1FirewallPolicy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
       tier: vWANhubs[0].fwtier
     }
     snat: {
-      autoLearnPrivateRanges: autoLearnPrivateRanges
       privateRanges: firewallSNATprivateRanges
     }
 
@@ -31,7 +30,6 @@ resource hub2FirewallPolicy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
     }
     threatIntelMode: vWANhubs[1].threatintelmode
     snat: {
-      autoLearnPrivateRanges: autoLearnPrivateRanges
       privateRanges: firewallSNATprivateRanges
     }
   }
