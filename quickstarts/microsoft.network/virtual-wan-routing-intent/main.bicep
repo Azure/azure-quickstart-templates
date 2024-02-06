@@ -1,6 +1,6 @@
 @minLength(4)
 @maxLength(80)
-param vWANname string = 'vWAN'
+param vWANname string = 'vWANtest'
 
 @description('Region for the Azure Virtual WAN')
 param vWANlocation string = resourceGroup().location 
