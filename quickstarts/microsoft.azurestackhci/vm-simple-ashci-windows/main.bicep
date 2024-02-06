@@ -91,6 +91,5 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
     type: 'CustomLocation'
     name: customLocationId
   }
-  #disable-next-line BCP036
   scope: hybridComputeMachine
 }
