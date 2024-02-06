@@ -33,7 +33,7 @@ var publisherId = split(imageURN, ':')[0]
 var offerId = split(imageURN, ':')[1]
 var planId = split(imageURN, ':')[2]
 
-resource image 'microsoft.azurestackhci/marketplacegalleryimages@2023-09-01-preview' = {
+resource image 'microsoft.azurestackhci/marketplacegalleryimages@2021-09-01-preview' = {
   extendedLocation: {
     name: customLocationId
     type: 'CustomLocation'
@@ -42,6 +42,7 @@ resource image 'microsoft.azurestackhci/marketplacegalleryimages@2023-09-01-prev
   name: imageName
   properties: {
     osType: osType
+    resourceName: imageName
     hyperVGeneration: hyperVGeneration
     identifier: {
       publisher: publisherId

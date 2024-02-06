@@ -5,7 +5,7 @@ param customLocationName string
 
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName)
 
-resource storageContainer 'Microsoft.AzureStackHCI/storageContainers@2023-09-01-preview' = {
+resource storageContainer 'Microsoft.AzureStackHCI/storageContainers@2021-09-01-preview' = {
   name: storageContainerName
   location: location
   extendedLocation: {
