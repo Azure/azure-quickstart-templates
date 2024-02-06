@@ -28,6 +28,29 @@ resource hybridComputeMachine 'Microsoft.HybridCompute/machines@2023-10-03-previ
   }
 }
 
+resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
+  name: nicName
+  location: location
+  extendedLocation: {
+    type: 'CustomLocation'
+    name: customLocationId
+  }
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          // uncomment to specify an IP, otherwise an IP address is dynamically allocated from the Logical Network's address pool
+          // privateIPAddress: 'x.x.x.x'
+          subnet: {
+            id: logicalNetworkId
+          }
+        }
+      }
+    ]
+  }
+}
+
 resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09-01-preview' = {
   name: 'default' // value must be 'default' per 2023-09-01-preview
   properties: {
@@ -35,11 +58,12 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
       vmSize: 'Custom'
       processors: vCPUCount
       memoryMB: memoryMB
-      dynamicMemoryConfig: {
-        maximumMemoryMB: memoryMB
-        minimumMemoryMB: 32
-        targetMemoryBuffer: 20
-      }
+      // ### uncomment to use dymamic memory ###
+      // dynamicMemoryConfig: {
+      //   maximumMemoryMB: memoryMB
+      //   minimumMemoryMB: 512
+      //   targetMemoryBuffer: 20
+      // }
     }
     osProfile: {
       adminUsername: adminUsername
@@ -69,26 +93,4 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
   }
   #disable-next-line BCP036
   scope: hybridComputeMachine
-}
-
-resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
-  name: nicName
-  location: location
-  extendedLocation: {
-    type: 'CustomLocation'
-    name: customLocationId
-  }
-  properties: {
-    ipConfigurations: [
-      {
-        name: 'ipconfig1'
-        properties: {
-          // an IP address is dynamically allocated from the Logical Network's address pool
-          subnet: {
-            id: logicalNetworkId
-          }
-        }
-      }
-    ]
-  }
 }
