@@ -46,6 +46,9 @@ param hub2Spoke2AddressSpace string = '10.2.4.0/24'
 ])
 param firewallTier string = 'Standard' 
 
+@description('Azure Firewall SNAT private IP address ranges (default with RFC1918)')
+param firewallSNATprivateRanges string[] = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10']
+
 @description('Enable vWAN Routing Intent and Policy for Internet Traffic')
 param internetTrafficRoutingPolicy bool = true
 
@@ -69,6 +72,7 @@ var vpnGatewayScaleUnit = 1 // minimum value is 1
 var erGatewayScaleUnit = 1 // minimum value is 1
 var virtualRouterAsn = 65515 // default value is 65515 for Azure Virtual WAN
 var minRoutingInfrastructureUnit = 2 // minimum value is 2 for Azure Virtual WAN
+var autoLearnPrivateRanges = 'Disabled' // 'Disabled' or 'Enabled'
 var vWANhubs = [
   {
             name: hub1Name
@@ -133,6 +137,8 @@ module firewallPolicies './modules/firewallpolicies.bicep' = {
     vWANhubs: vWANhubs 
     sourceIPAddressSpaces: rfc1918addressSpaces
     destinationIPAddressSpaces: rfc1918addressSpaces
+    firewallSNATprivateRanges: firewallSNATprivateRanges
+    autoLearnPrivateRanges: autoLearnPrivateRanges
   }
 }
 
