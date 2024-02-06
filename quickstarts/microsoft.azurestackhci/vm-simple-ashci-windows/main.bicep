@@ -2,7 +2,7 @@
 param name string
 param location string
 param vCPUCount int = 2
-param memoryMB int = 4096
+param memoryMB int = 8192
 param adminUsername string
 @description('The name of a Marketplace Gallery Image already downloaded to the Azure Stack HCI cluster. For example: winServer2022-01')
 param imageName string
@@ -32,12 +32,12 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
   name: 'default' // value must be 'default' per 2023-09-01-preview
   properties: {
     hardwareProfile: {
-      vmSize: 'Default'
+      vmSize: 'Custom'
       processors: vCPUCount
       memoryMB: memoryMB
       dynamicMemoryConfig: {
         maximumMemoryMB: memoryMB
-        minimumMemoryMB: memoryMB
+        minimumMemoryMB: 32
         targetMemoryBuffer: 20
       }
     }
