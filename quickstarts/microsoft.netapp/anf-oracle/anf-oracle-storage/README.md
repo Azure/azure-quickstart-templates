@@ -26,7 +26,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.netapp%2Fanf-oracle%2Fanf-oracle-storage%2Fazuredeploy.json)
 
-This document covers the scenario of deploying storage for ORACLE deployments using a ORACLE storage template. Storage is provided using Azure NetApp Files, built on NetApp ONTAP storage OS.
+This document covers the scenario of deploying storage for ORACLE deployments using an ORACLE storage template. Storage is provided using Azure NetApp Files, built on NetApp ONTAP storage OS.
 
 [Azure NetApp Files application volume group for ORACLE is currently in preview](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-introduction).
 You need to submit a waitlist request for accessing the feature through the [Azure NetApp Files application volume group for ORACLE waitlist submission page](https://forms.office.com/pages/responsepage.aspx?id=v4j5cvGGr0GRqy180BHbR2Qj2eZL0mZPv1iKUrDGvc9UQzBDRUREOTc4MDdWREZaRzhOQzZGNTdFQiQlQCN0PWcu).
