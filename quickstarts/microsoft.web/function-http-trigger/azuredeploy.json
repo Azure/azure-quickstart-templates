@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.14.46.61228",
-      "templateHash": "8144842021568308071"
+      "version": "0.24.24.22086",
+      "templateHash": "7964917852063275059"
     }
   },
   "parameters": {
@@ -41,13 +41,14 @@
   "variables": {
     "$fxv#0": "#r \"Newtonsoft.Json\"\r\n\r\nusing System.Net;\r\nusing Microsoft.AspNetCore.Mvc;\r\nusing Microsoft.Extensions.Primitives;\r\nusing Newtonsoft.Json;\r\n\r\npublic static async Task<IActionResult> Run(HttpRequest req, ILogger log)\r\n{\r\n      log.LogInformation(\"C# HTTP trigger function processed a request.\");\r\n\r\n    string name = req.Query[\"name\"];\r\n\r\n    string requestBody = await new StreamReader(req.Body).ReadToEndAsync();\r\n    dynamic data = JsonConvert.DeserializeObject(requestBody);\r\n    name = name ?? data?.name;\r\n\r\n    string responseMessage = string.IsNullOrEmpty(name)\r\n        ? \"This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.\"\r\n                : $\"Hello, {name}. This HTTP triggered function executed successfully.\";\r\n\r\n            return new OkObjectResult(responseMessage);\r\n}",
     "functionAppName": "[format('fn-{0}', parameters('appNameSuffix'))]",
-    "appServicePlanName": "FunctionPlan",
-    "appInsightsName": "AppInsights",
+    "appServicePlanName": "[format('FunctionPlan-{0}', parameters('appNameSuffix'))]",
+    "appInsightsName": "[format('AppInsights-{0}', parameters('appNameSuffix'))]",
     "storageAccountName": "[format('fnstor{0}', replace(parameters('appNameSuffix'), '-', ''))]",
     "functionNameComputed": "MyHttpTriggeredFunction",
     "functionRuntime": "dotnet",
     "keyVaultName": "[format('kv{0}', replace(parameters('appNameSuffix'), '-', ''))]",
-    "functionAppKeySecretName": "FunctionAppHostKey"
+    "functionAppKeySecretName": "FunctionAppHostKey",
+    "workspaceName": "[format('workspace-{0}', parameters('appNameSuffix'))]"
   },
   "resources": [
     {
@@ -78,6 +79,12 @@
       }
     },
     {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[variables('workspaceName')]",
+      "location": "[parameters('location')]"
+    },
+    {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02",
       "name": "[variables('appInsightsName')]",
@@ -86,8 +93,12 @@
       "properties": {
         "Application_Type": "web",
         "publicNetworkAccessForIngestion": "Enabled",
-        "publicNetworkAccessForQuery": "Enabled"
-      }
+        "publicNetworkAccessForQuery": "Enabled",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+      ]
     },
     {
       "type": "Microsoft.Web/serverfarms",

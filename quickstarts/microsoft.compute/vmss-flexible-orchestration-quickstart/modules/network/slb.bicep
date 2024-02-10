@@ -16,7 +16,7 @@ var natRuleName = '${slbName}-natrule'
 var natRuleBackendPort = osType == 'ubuntulinux' ? 22 : 3389
 var feConfigName = 'FrontEndConfig'
 var bePoolName = 'bepool01'
-resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
+resource slbPIP 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
   name: slbPIPName
   location: location
   sku:{
@@ -29,7 +29,7 @@ resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
     idleTimeoutInMinutes: 4
   }
 }
-resource slb 'Microsoft.Network/loadBalancers@2021-08-01' = {
+resource slb 'Microsoft.Network/loadBalancers@2023-04-01' = {
   name: slbName
   location: location
   sku: {
@@ -91,7 +91,7 @@ resource slb 'Microsoft.Network/loadBalancers@2021-08-01' = {
     ]
   }
 }
-resource inboundNatRules 'Microsoft.Network/loadBalancers/inboundNatRules@2021-08-01' = {
+resource inboundNatRules 'Microsoft.Network/loadBalancers/inboundNatRules@2023-04-01' = {
   name: natRuleName
   parent: slb
   properties: {
