@@ -445,7 +445,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' =
   }
 }]
 
-resource configuration 'Microsoft.GuestConfiguration/guestConfigurationAssignments@2020-06-25' = [for i in range(0, webSrvNumbOfInstances): {
+resource configuration 'Microsoft.GuestConfiguration/guestConfigurationAssignments@2022-01-25' = [for i in range(0, webSrvNumbOfInstances): {
   name: 'webServerConfig'
   scope: webSrv[i]
   location: location
