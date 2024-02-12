@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.24.24.22086",
-      "templateHash": "1672050614258408459"
+      "version": "0.25.3.34343",
+      "templateHash": "15147374412004668746"
     }
   },
   "parameters": {
@@ -31,13 +31,6 @@
       ],
       "metadata": {
         "description": "Optional. Storage SKU to use. LRS = Lowest cost, ZRS = High availability. Note Standard SKUs are not available for Data Lake gen2 storage. Allowed: Premium_LRS, Premium_ZRS. Default: Premium_LRS."
-      }
-    },
-    "existingKeyVaultId": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Optional. Resource ID of the existing Key Vault resource to use. If not specified, a new Key Vault instance will be created."
       }
     },
     "tags": {
@@ -82,9 +75,6 @@
           "storageSku": {
             "value": "[parameters('storageSku')]"
           },
-          "existingKeyVaultId": {
-            "value": "[parameters('existingKeyVaultId')]"
-          },
           "tags": {
             "value": "[parameters('tags')]"
           },
@@ -101,8 +91,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "1607117603360294798"
+              "version": "0.25.3.34343",
+              "templateHash": "282905620885827739"
             }
           },
           "parameters": {
@@ -128,13 +118,6 @@
               ],
               "metadata": {
                 "description": "Optional. Storage SKU to use. LRS = Lowest cost, ZRS = High availability. Note Standard SKUs are not available for Data Lake gen2 storage. Allowed: Premium_LRS, Premium_ZRS. Default: Premium_LRS."
-              }
-            },
-            "existingKeyVaultId": {
-              "type": "string",
-              "defaultValue": "",
-              "metadata": {
-                "description": "Optional. Resource ID of the existing Key Vault resource to use. If not specified, a new Key Vault instance will be created."
               }
             },
             "tags": {
@@ -179,7 +162,7 @@
             "dataFactorySuffix": "[format('-{0}', variables('uniqueSuffix'))]",
             "dataFactoryName": "[replace(format('{0}{1}', take(variables('dataFactoryPrefix'), sub(63, length(variables('dataFactorySuffix')))), variables('dataFactorySuffix')), '--', '-')]",
             "telemetryId": "00f120b5-2007-6120-0000-40b000000000",
-            "finOpsToolkitVersion": "placeholder"
+            "finOpsToolkitVersion": "0.2"
           },
           "resources": [
             {
@@ -251,8 +234,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.24.24.22086",
-                      "templateHash": "9609675916139055971"
+                      "version": "0.25.3.34343",
+                      "templateHash": "2649304115579650703"
                     }
                   },
                   "parameters": {
@@ -308,7 +291,7 @@
                     }
                   },
                   "variables": {
-                    "$fxv#0": "placeholder",
+                    "$fxv#0": "0.2",
                     "$fxv#1": "# Copyright (c) Microsoft Corporation.\r\n# Licensed under the MIT License.\r\n\r\nWrite-Output \"Updating settings.json file...\"\r\nWrite-Output \"  Storage account: $env:storageAccountName\"\r\nWrite-Output \"  Container: $env:containerName\"\r\n\r\n$validateScopes = { $_.Length -gt 45 }\r\n\r\n# Initialize variables\r\n$fileName = 'settings.json'\r\n$filePath = Join-Path -Path . -ChildPath $fileName\r\n$newScopes = $env:exportScopes.Split('|') | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }\r\n\r\n# Get storage context\r\n$storageContext = @{\r\n    Context   = New-AzStorageContext -StorageAccountName $env:storageAccountName -UseConnectedAccount\r\n    Container = $env:containerName\r\n}\r\n\r\n# Download existing settings, if they exist\r\n$blob = Get-AzStorageBlobContent @storageContext -Blob $fileName -Destination $filePath -Force\r\nif ($blob) {\r\n    Write-Output \"Existing settings.json file found. Updating...\"\r\n    $text = Get-Content $filePath -Raw\r\n    Write-Output \"---------\"\r\n    Write-Output $text\r\n    Write-Output \"---------\"\r\n    $json = $text | ConvertFrom-Json\r\n\r\n    # Rename exportScopes to scopes + convert to object array\r\n    if ($json.exportScopes) {\r\n        Write-Output \"  Updating exportScopes...\"\r\n        if ($json.exportScopes[0] -is [string]) {\r\n            Write-Output \"    Converting string array to object array...\"\r\n            $json.exportScopes = $json.exportScopes | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }\r\n            if (-not ($json.exportScopes -is [array])) {\r\n                Write-Output \"    Converting single object to object array...\"\r\n                $json.exportScopes = @($json.exportScopes)\r\n            }\r\n        }\r\n\r\n        Write-Output \"    Renaming to 'scopes'...\"\r\n        $json | Add-Member -MemberType NoteProperty -Name scopes -Value $json.exportScopes\r\n        $json.PSObject.Properties.Remove('exportScopes')\r\n    }\r\n}\r\n\r\n# Set default if not found\r\nif (!$json) {\r\n    Write-Output \"No existing settings.json file found. Creating new file...\"\r\n    $json = [ordered]@{\r\n        '$schema' = 'https://aka.ms/finops/hubs/settings-schema'\r\n        type      = 'HubInstance'\r\n        version   = ''\r\n        learnMore = 'https://aka.ms/finops/hubs'\r\n        scopes    = @()\r\n    }\r\n}\r\n\r\n# Updating settings\r\nWrite-Output \"Updating version to $env:ftkVersion...\"\r\n$json.version = $env:ftkVersion\r\nif ($newScopes) {\r\n    Write-Output \"Merging $($newScopes.Count) scopes...\"\r\n    $json.scopes = Compare-Object -ReferenceObject $json.scopes -DifferenceObject $newScopes -Property scope -PassThru -IncludeEqual\r\n\r\n    # Remove the SideIndicator property from the Compare-Object output\r\n    $json.scopes | ForEach-Object { $_.PSObject.Properties.Remove('SideIndicator') } | ConvertTo-Json\r\n\r\n    if (-not ($json.scopes -is [array])) {\r\n        $json.scopes = @($json.scopes)\r\n    }\r\n    Write-Output \"$($json.scopes.Count) scopes found.\"\r\n}\r\n$text = $json | ConvertTo-Json\r\nWrite-Output \"---------\"\r\nWrite-Output $text\r\nWrite-Output \"---------\"\r\n$text | Out-File $filePath\r\n\r\n# Upload new/updated settings\r\nWrite-Output \"Uploading settings.json file...\"\r\nSet-AzStorageBlobContent @storageContext -File $filePath -Force\r\n",
                     "safeHubName": "[replace(replace(toLower(parameters('hubName')), '-', ''), '_', '')]",
                     "storageAccountSuffix": "[parameters('uniqueSuffix')]",
@@ -504,8 +487,8 @@
                   "convertToParquet": {
                     "value": "[parameters('convertToParquet')]"
                   },
-                  "keyVaultId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault'), '2022-09-01').outputs.resourceId.value]"
+                  "keyVaultName": {
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault'), '2022-09-01').outputs.name.value]"
                   },
                   "storageAccountName": {
                     "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2022-09-01').outputs.name.value]"
@@ -532,21 +515,21 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.24.24.22086",
-                      "templateHash": "8197671316834274442"
+                      "version": "0.25.3.34343",
+                      "templateHash": "14531450423669532898"
                     }
                   },
                   "parameters": {
                     "dataFactoryName": {
                       "type": "string",
                       "metadata": {
-                        "description": "Required. Name of the hub. Used to ensure unique resource names."
+                        "description": "Optional. Name of the hub. Used to ensure unique resource names. Default: \"finops-hub\"."
                       }
                     },
-                    "keyVaultId": {
+                    "keyVaultName": {
                       "type": "string",
                       "metadata": {
-                        "description": "Optional. The resource ID of the Azure Key Vault instance."
+                        "description": "Required. The name of the Azure Key Vault instance."
                       }
                     },
                     "storageAccountName": {
@@ -637,9 +620,9 @@
                     },
                     "safeExportContainerName": "[replace(format('{0}', parameters('exportContainerName')), '-', '_')]",
                     "safeIngestionContainerName": "[replace(format('{0}', parameters('ingestionContainerName')), '-', '_')]",
-                    "exportFileAddedTriggerName": "[format('{0}_FileAdded', variables('safeExportContainerName'))]",
+                    "extractExportTriggerName": "[parameters('exportContainerName')]",
                     "allHubTriggers": [
-                      "[variables('exportFileAddedTriggerName')]"
+                      "[variables('extractExportTriggerName')]"
                     ],
                     "autoStartRbacRoles": [
                       "673868aa-7521-48a0-acc6-0f60742d39f5",
@@ -1140,7 +1123,7 @@
                         "parameters": {},
                         "type": "AzureKeyVault",
                         "typeProperties": {
-                          "baseUrl": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', split(parameters('keyVaultId'), '/')[2], split(parameters('keyVaultId'), '/')[4]), 'Microsoft.KeyVault/vaults', last(split(parameters('keyVaultId'), '/'))), '2022-11-01').vaultUri]"
+                          "baseUrl": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2022-11-01').vaultUri]"
                         }
                       }
                     },
@@ -1225,7 +1208,7 @@
                     {
                       "type": "Microsoft.DataFactory/factories/triggers",
                       "apiVersion": "2018-06-01",
-                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), variables('exportFileAddedTriggerName'))]",
+                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_FileAdded', variables('safeExportContainerName')))]",
                       "properties": {
                         "annotations": [],
                         "pipelines": [
@@ -1336,7 +1319,7 @@
                             }
                           },
                           {
-                            "name": "Set FolderCount",
+                            "name": "Set Scope",
                             "type": "SetVariable",
                             "dependsOn": [
                               {
@@ -1346,95 +1329,11 @@
                                 ]
                               }
                             ],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "variableName": "folderCount",
-                              "value": "@length(split(pipeline().parameters.folderName, '/'))"
-                            }
-                          },
-                          {
-                            "name": "Set SecondToLastFolder",
-                            "type": "SetVariable",
-                            "dependsOn": [
-                              {
-                                "activity": "Set FolderCount",
-                                "dependencyConditions": [
-                                  "Completed"
-                                ]
-                              }
-                            ],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "variableName": "secondToLastFolder",
-                              "value": "@variables('folderArray')[sub(variables('folderCount'), 2)]"
-                            }
-                          },
-                          {
-                            "name": "Set ThirdToLastFolder",
-                            "type": "SetVariable",
-                            "dependsOn": [
-                              {
-                                "activity": "Set SecondToLastFolder",
-                                "dependencyConditions": [
-                                  "Succeeded"
-                                ]
-                              }
-                            ],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "variableName": "thirdToLastFolder",
-                              "value": "@variables('folderArray')[sub(variables('folderCount'), 3)]"
-                            }
-                          },
-                          {
-                            "name": "Set FourthToLastFolder",
-                            "type": "SetVariable",
-                            "dependsOn": [
-                              {
-                                "activity": "Set ThirdToLastFolder",
-                                "dependencyConditions": [
-                                  "Succeeded"
-                                ]
-                              }
-                            ],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "variableName": "fourthToLastFolder",
-                              "value": "@variables('folderArray')[sub(variables('folderCount'), 4)]"
-                            }
-                          },
-                          {
-                            "name": "Set Scope",
-                            "type": "SetVariable",
-                            "dependsOn": [
-                              {
-                                "activity": "Set FourthToLastFolder",
-                                "dependencyConditions": [
-                                  "Completed"
-                                ]
-                              }
-                            ],
                             "userProperties": [],
                             "typeProperties": {
                               "variableName": "scope",
                               "value": {
-                                "value": "[format('@replace(split(pipeline().parameters.folderName, if(greater(length(variables(''secondToLastFolder'')), 12), variables(''thirdToLastFolder''), variables(''fourthToLastFolder'')))[0], ''{0}'', ''{1}'')', parameters('exportContainerName'), parameters('ingestionContainerName'))]",
+                                "value": "[format('@replace(split(pipeline().parameters.folderName,variables(''folderArray'')[sub(length(variables(''folderArray'')), if(greater(length(variables(''folderArray'')[sub(length(variables(''folderArray'')), 2)]), 12), 3, 4))])[0],''{0}'',''{1}'')', parameters('exportContainerName'), parameters('ingestionContainerName'))]",
                                 "type": "Expression"
                               }
                             }
@@ -1474,7 +1373,7 @@
                             "typeProperties": {
                               "variableName": "date",
                               "value": {
-                                "value": "@substring(if(greater(length(variables('secondToLastFolder')), 12), variables('secondToLastFolder'), variables('thirdToLastFolder')), 0, 6)",
+                                "value": "@substring(variables('folderArray')[sub(length(variables('folderArray')), if(greater(length(variables('folderArray')[sub(length(variables('folderArray')), 2)]), 12), 2, 3))], 0, 6)",
                                 "type": "Expression"
                               }
                             }
@@ -1702,18 +1601,6 @@
                           "folderArray": {
                             "type": "Array"
                           },
-                          "folderCount": {
-                            "type": "Integer"
-                          },
-                          "secondToLastFolder": {
-                            "type": "String"
-                          },
-                          "thirdToLastFolder": {
-                            "type": "String"
-                          },
-                          "fourthToLastFolder": {
-                            "type": "String"
-                          },
                           "scope": {
                             "type": "String"
                           },
@@ -1771,7 +1658,7 @@
                       "dependsOn": [
                         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_triggerManager', parameters('dataFactoryName')))]",
                         "identityRoleAssignments",
-                        "[resourceId('Microsoft.DataFactory/factories/triggers', parameters('dataFactoryName'), variables('exportFileAddedTriggerName'))]"
+                        "[resourceId('Microsoft.DataFactory/factories/triggers', parameters('dataFactoryName'), format('{0}_FileAdded', variables('safeExportContainerName')))]"
                       ]
                     }
                   ],
@@ -1811,9 +1698,6 @@
                   "hubName": {
                     "value": "[parameters('hubName')]"
                   },
-                  "existingKeyVaultName": {
-                    "value": "[last(split(parameters('existingKeyVaultId'), '/'))]"
-                  },
                   "uniqueSuffix": {
                     "value": "[variables('uniqueSuffix')]"
                   },
@@ -1849,8 +1733,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.24.24.22086",
-                      "templateHash": "6271671378519848452"
+                      "version": "0.25.3.34343",
+                      "templateHash": "6638596707184386598"
                     }
                   },
                   "parameters": {
@@ -1864,12 +1748,6 @@
                       "type": "string",
                       "metadata": {
                         "description": "Required. Suffix to add to the KeyVault instance name to ensure uniqueness."
-                      }
-                    },
-                    "existingKeyVaultName": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Optional. Resource ID of the existing Key Vault resource to use."
                       }
                     },
                     "location": {
@@ -1937,61 +1815,8 @@
                   },
                   "resources": [
                     {
-                      "condition": "[and(not(equals(parameters('existingKeyVaultName'), '')), not(empty(parameters('accessPolicies'))))]",
-                      "type": "Microsoft.KeyVault/vaults/accessPolicies",
-                      "apiVersion": "2023-07-01",
-                      "name": "[format('{0}/{1}', parameters('existingKeyVaultName'), 'add')]",
-                      "properties": {
-                        "accessPolicies": "[variables('formattedAccessPolicies')]"
-                      }
-                    },
-                    {
-                      "condition": "[not(equals(parameters('existingKeyVaultName'), ''))]",
-                      "type": "Microsoft.KeyVault/vaults/secrets",
-                      "apiVersion": "2023-07-01",
-                      "name": "[format('{0}/{1}', parameters('existingKeyVaultName'), parameters('storageAccountName'))]",
-                      "properties": {
-                        "attributes": {
-                          "enabled": true,
-                          "exp": 1702648632,
-                          "nbf": 10000
-                        },
-                        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').keys[0].value]"
-                      }
-                    },
-                    {
-                      "condition": "[and(equals(parameters('existingKeyVaultName'), ''), not(empty(parameters('accessPolicies'))))]",
-                      "type": "Microsoft.KeyVault/vaults/accessPolicies",
-                      "apiVersion": "2023-07-01",
-                      "name": "[format('{0}/{1}', variables('keyVaultName'), 'add')]",
-                      "properties": {
-                        "accessPolicies": "[variables('formattedAccessPolicies')]"
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-                      ]
-                    },
-                    {
-                      "condition": "[equals(parameters('existingKeyVaultName'), '')]",
-                      "type": "Microsoft.KeyVault/vaults/secrets",
-                      "apiVersion": "2023-07-01",
-                      "name": "[format('{0}/{1}', variables('keyVaultName'), parameters('storageAccountName'))]",
-                      "properties": {
-                        "attributes": {
-                          "enabled": true,
-                          "exp": 1702648632,
-                          "nbf": 10000
-                        },
-                        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').keys[0].value]"
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-                      ]
-                    },
-                    {
-                      "condition": "[equals(parameters('existingKeyVaultName'), '')]",
                       "type": "Microsoft.KeyVault/vaults",
-                      "apiVersion": "2023-07-01",
+                      "apiVersion": "2022-11-01",
                       "name": "[variables('keyVaultName')]",
                       "location": "[parameters('location')]",
                       "tags": "[union(parameters('tags'), if(contains(parameters('tagsByResource'), 'Microsoft.KeyVault/vaults'), parameters('tagsByResource')['Microsoft.KeyVault/vaults'], createObject()))]",
@@ -2010,6 +1835,34 @@
                           "family": "A"
                         }
                       }
+                    },
+                    {
+                      "condition": "[not(empty(parameters('accessPolicies')))]",
+                      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+                      "apiVersion": "2022-11-01",
+                      "name": "[format('{0}/{1}', variables('keyVaultName'), 'add')]",
+                      "properties": {
+                        "accessPolicies": "[variables('formattedAccessPolicies')]"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.KeyVault/vaults/secrets",
+                      "apiVersion": "2022-11-01",
+                      "name": "[format('{0}/{1}', variables('keyVaultName'), parameters('storageAccountName'))]",
+                      "properties": {
+                        "attributes": {
+                          "enabled": true,
+                          "exp": 1702648632,
+                          "nbf": 10000
+                        },
+                        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').keys[0].value]"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+                      ]
                     }
                   ],
                   "outputs": {
@@ -2018,21 +1871,21 @@
                       "metadata": {
                         "description": "The resource ID of the key vault."
                       },
-                      "value": "[if(equals(parameters('existingKeyVaultName'), ''), reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01', 'full'), reference(resourceId('Microsoft.KeyVault/vaults', parameters('existingKeyVaultName')), '2023-07-01', 'full')).id]"
+                      "value": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
                     },
                     "name": {
                       "type": "string",
                       "metadata": {
                         "description": "The name of the key vault."
                       },
-                      "value": "[if(equals(parameters('existingKeyVaultName'), ''), reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01', 'full'), reference(resourceId('Microsoft.KeyVault/vaults', parameters('existingKeyVaultName')), '2023-07-01', 'full')).name]"
+                      "value": "[variables('keyVaultName')]"
                     },
                     "uri": {
                       "type": "string",
                       "metadata": {
                         "description": "The URI of the key vault."
                       },
-                      "value": "[if(equals(parameters('existingKeyVaultName'), ''), reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01', 'full'), reference(resourceId('Microsoft.KeyVault/vaults', parameters('existingKeyVaultName')), '2023-07-01', 'full')).properties.vaultUri]"
+                      "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2022-11-01').vaultUri]"
                     }
                   }
                 }
