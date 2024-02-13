@@ -84,7 +84,7 @@ var vWANhubs = [
             addressSpace: hub1AddressSpace
             location: hub1Location
             routingPreference: 'ExpressRoute' // "ASPath", "ExpressRoute", "VpnGateway" - default is "ExpressRoute"
-            fwName: '${vWANname}-${hub1Name}-AzFW'
+            fwName: take('${vWANname}-${hub1Name}-AzFW',56) //maximum length for Firewall name is 56 characters
             fwTier: firewallTier // 'Standard' or 'Premium'
             fwPublicIPs: 1 // Mininum value is 1
             fwPolicyName: '${vWANname}-${hub1Name}-FirewallPolicy'
@@ -97,7 +97,7 @@ var vWANhubs = [
             addressSpace: hub2AddressSpace
             location: hub2Location
             routingPreference: 'ExpressRoute' // "ASPath", "ExpressRoute", "VpnGateway" - default is "ExpressRoute"
-            fwName: '${vWANname}-${hub2Name}-AzFW'
+            fwName: take('${vWANname}-${hub2Name}-AzFW',56)
             fwTier: firewallTier // 'Standard' or 'Premium'
             fwPublicips: 1 // Mininum value is 1
             fwPolicyName: '${vWANname}-${hub2Name}-FirewallPolicy'
