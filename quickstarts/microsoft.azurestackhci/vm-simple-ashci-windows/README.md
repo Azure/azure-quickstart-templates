@@ -1,5 +1,5 @@
 ---
-description: This template creates a simple Windows VM from the referenced Azure Marketplace image on Azure Stack HCI version 23H2 and newer
+description: This template creates a simple Windows VM from the referenced Azure Marketplace image on Azure Stack HCI version 23H2+
 page_type: sample
 products:
 - azure
