@@ -1,0 +1,1501 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "11654229766624613976"
+    }
+  },
+  "parameters": {
+    "vWANname": {
+      "type": "string",
+      "defaultValue": "vWAN",
+      "minLength": 4,
+      "maxLength": 80
+    },
+    "vWANlocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Region for the Azure Virtual WAN"
+      }
+    },
+    "hub1Name": {
+      "type": "string",
+      "defaultValue": "Hub1",
+      "minLength": 4,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the FIRST virtual hub"
+      }
+    },
+    "hub1Location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Region for the FIRST virtual hub"
+      }
+    },
+    "hub1AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/23",
+      "metadata": {
+        "description": "Address space for the FIRST virtual hub"
+      }
+    },
+    "hub1Spoke1AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.2.0/24",
+      "metadata": {
+        "description": "Address space for the first VNet (spoke1) connected to the FIRST virtual hub"
+      }
+    },
+    "hub1Spoke2AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.4.0/24",
+      "metadata": {
+        "description": "Address space for the second VNet (spoke2) connected to the FIRST virtual hub"
+      }
+    },
+    "hub2Name": {
+      "type": "string",
+      "defaultValue": "Hub2",
+      "minLength": 4,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the SECOND virtual hub"
+      }
+    },
+    "hub2Location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Region for the SECOND virtual hub"
+      }
+    },
+    "hub2AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.2.0.0/23",
+      "metadata": {
+        "description": "Address space for the SECOND virtual hub"
+      }
+    },
+    "hub2Spoke1AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.2.2.0/24",
+      "metadata": {
+        "description": "Address space for the first VNet (spoke1) connected to the SECOND virtual hub"
+      }
+    },
+    "hub2Spoke2AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.2.4.0/24",
+      "metadata": {
+        "description": "Address space for the second VNet (spoke2) connected to the SECOND virtual hub"
+      }
+    },
+    "firewallTier": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Azure Firewall Tier"
+      }
+    },
+    "firewallSNATprivateRanges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "defaultValue": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "100.64.0.0/10"
+      ],
+      "metadata": {
+        "description": "Default with RFC1918 prefixes, to add more use comma separated list of values in CIDR notation"
+      }
+    },
+    "internetTrafficRoutingPolicy": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable vWAN Routing Intent and Policy for Internet Traffic"
+      }
+    },
+    "privateTrafficRoutingPolicy": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable vWAN Routing Intent and Policy for Private Traffic"
+      }
+    },
+    "customPrivateTrafficPrefixes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "defaultValue": [],
+      "metadata": {
+        "description": "Custom public IP prefixes to consider as internal for Virtual WAN - insert as comma-separated list of values in CIDR notation"
+      }
+    },
+    "deployS2Sgw": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Deploy VPN Site-to-Site (S2S) Gateways"
+      }
+    },
+    "deployERgw": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Deploy ExpressRoute Gateways"
+      }
+    }
+  },
+  "variables": {
+    "vWANtype": "Standard",
+    "logAnalyticsWorkspaceName": "[format('{0}-LogAnalyticsWS', parameters('vWANname'))]",
+    "logAnalyticsWorkspaceSKU": "pergb2018",
+    "rfc1918addressSpaces": [
+      "10.0.0.0",
+      "172.16.0.0",
+      "192.168.0.0"
+    ],
+    "vpnGatewayScaleUnit": 1,
+    "erGatewayScaleUnit": 1,
+    "virtualRouterAsn": 65515,
+    "minRoutingInfrastructureUnit": 2,
+    "vWANhubs": [
+      {
+        "name": "[parameters('hub1Name')]",
+        "addressSpace": "[parameters('hub1AddressSpace')]",
+        "location": "[parameters('hub1Location')]",
+        "routingPreference": "ExpressRoute",
+        "fwName": "[take(format('{0}-{1}-AzFW', parameters('vWANname'), parameters('hub1Name')), 56)]",
+        "fwTier": "[parameters('firewallTier')]",
+        "fwPublicIPs": 1,
+        "fwPolicyName": "[format('{0}-{1}-FirewallPolicy', parameters('vWANname'), parameters('hub1Name'))]",
+        "threatIntelMode": "Alert",
+        "spoke1": {
+          "name": "[format('{0}-vnet1', parameters('hub1Name'))]",
+          "addressSpace": "[parameters('hub1Spoke1AddressSpace')]"
+        },
+        "spoke2": {
+          "name": "[format('{0}-vnet2', parameters('hub1Name'))]",
+          "addressSpace": "[parameters('hub1Spoke2AddressSpace')]"
+        }
+      },
+      {
+        "name": "[parameters('hub2Name')]",
+        "addressSpace": "[parameters('hub2AddressSpace')]",
+        "location": "[parameters('hub2Location')]",
+        "routingPreference": "ExpressRoute",
+        "fwName": "[take(format('{0}-{1}-AzFW', parameters('vWANname'), parameters('hub2Name')), 56)]",
+        "fwTier": "[parameters('firewallTier')]",
+        "fwPublicips": 1,
+        "fwPolicyName": "[format('{0}-{1}-FirewallPolicy', parameters('vWANname'), parameters('hub2Name'))]",
+        "threatIntelMode": "Alert",
+        "spoke1": {
+          "name": "[format('{0}-vnet1', parameters('hub2Name'))]",
+          "addressSpace": "[parameters('hub2Spoke1AddressSpace')]"
+        },
+        "spoke2": {
+          "name": "[format('{0}-vnet2', parameters('hub2Name'))]",
+          "addressSpace": "[parameters('hub2Spoke2AddressSpace')]"
+        }
+      }
+    ]
+  },
+  "resources": {
+    "vWAN": {
+      "type": "Microsoft.Network/virtualWans",
+      "apiVersion": "2023-04-01",
+      "name": "[parameters('vWANname')]",
+      "location": "[parameters('vWANlocation')]",
+      "properties": {
+        "disableVpnEncryption": false,
+        "allowBranchToBranchTraffic": true,
+        "type": "[variables('vWANtype')]"
+      }
+    },
+    "vWANHub1": {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('vWANhubs')[0].name]",
+      "location": "[variables('vWANhubs')[0].location]",
+      "properties": {
+        "addressPrefix": "[variables('vWANhubs')[0].addressSpace]",
+        "virtualRouterAsn": "[variables('virtualRouterAsn')]",
+        "virtualRouterAutoScaleConfiguration": {
+          "minCapacity": "[variables('minRoutingInfrastructureUnit')]"
+        },
+        "virtualWan": {
+          "id": "[resourceId('Microsoft.Network/virtualWans', parameters('vWANname'))]"
+        },
+        "sku": "[variables('vWANtype')]",
+        "hubRoutingPreference": "[variables('vWANhubs')[0].routingPreference]"
+      },
+      "dependsOn": [
+        "vWAN"
+      ]
+    },
+    "vWANHub2": {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('vWANhubs')[1].name]",
+      "location": "[variables('vWANhubs')[1].location]",
+      "properties": {
+        "addressPrefix": "[variables('vWANhubs')[1].addressSpace]",
+        "virtualRouterAsn": "[variables('virtualRouterAsn')]",
+        "virtualRouterAutoScaleConfiguration": {
+          "minCapacity": "[variables('minRoutingInfrastructureUnit')]"
+        },
+        "virtualWan": {
+          "id": "[resourceId('Microsoft.Network/virtualWans', parameters('vWANname'))]"
+        },
+        "sku": "[variables('vWANtype')]",
+        "hubRoutingPreference": "[variables('vWANhubs')[1].routingPreference]"
+      },
+      "dependsOn": [
+        "vWAN"
+      ]
+    },
+    "hub1Firewall": {
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('vWANhubs')[0].fwName]",
+      "location": "[variables('vWANhubs')[0].location]",
+      "zones": "[pickZones('Microsoft.Network', 'azureFirewalls', variables('vWANhubs')[0].location, 3)]",
+      "properties": {
+        "sku": {
+          "name": "AZFW_Hub",
+          "tier": "[variables('vWANhubs')[0].fwTier]"
+        },
+        "virtualHub": {
+          "id": "[resourceId('Microsoft.Network/virtualHubs', variables('vWANhubs')[0].name)]"
+        },
+        "hubIPAddresses": {
+          "publicIPs": {
+            "count": "[variables('vWANhubs')[0].fwPublicIPs]"
+          }
+        },
+        "firewallPolicy": {
+          "id": "[reference('firewallPolicies').outputs.fwPolicyArrayIDs.value[0]]"
+        }
+      },
+      "dependsOn": [
+        "firewallPolicies",
+        "vWANHub1"
+      ]
+    },
+    "hub2Firewall": {
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('vWANhubs')[1].fwName]",
+      "location": "[variables('vWANhubs')[1].location]",
+      "zones": "[pickZones('Microsoft.Network', 'azureFirewalls', variables('vWANhubs')[1].location, 3)]",
+      "properties": {
+        "sku": {
+          "name": "AZFW_Hub",
+          "tier": "[variables('vWANhubs')[1].fwTier]"
+        },
+        "virtualHub": {
+          "id": "[resourceId('Microsoft.Network/virtualHubs', variables('vWANhubs')[1].name)]"
+        },
+        "hubIPAddresses": {
+          "publicIPs": {
+            "count": "[variables('vWANhubs')[0].fwPublicIPs]"
+          }
+        },
+        "firewallPolicy": {
+          "id": "[reference('firewallPolicies').outputs.fwPolicyArrayIDs.value[1]]"
+        }
+      },
+      "dependsOn": [
+        "firewallPolicies",
+        "vWANHub2"
+      ]
+    },
+    "logAnalyticsWsModule": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "logAnalyticsWSmodule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "logAnalyticsWorkspaceName": {
+            "value": "[variables('logAnalyticsWorkspaceName')]"
+          },
+          "location": {
+            "value": "[variables('vWANhubs')[0].location]"
+          },
+          "logAnalyticsWorkspaceSKU": {
+            "value": "[variables('logAnalyticsWorkspaceSKU')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "3591570875434594100"
+            }
+          },
+          "parameters": {
+            "logAnalyticsWorkspaceName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "logAnalyticsWorkspaceSKU": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "[parameters('logAnalyticsWorkspaceName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "name": "[parameters('logAnalyticsWorkspaceSKU')]"
+                },
+                "features": {
+                  "enableLogAccessUsingOnlyResourcePermissions": true
+                },
+                "workspaceCapping": {
+                  "dailyQuotaGb": -1
+                },
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              }
+            }
+          ],
+          "outputs": {
+            "LogAnalyticsWorkspaceID": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+            }
+          }
+        }
+      }
+    },
+    "vNetsModule": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "vNetsModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "7063963768962822328"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[0].spoke1.name]",
+              "location": "[parameters('vWANhubs')[0].location]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vWANhubs')[0].spoke1.addressSpace]"
+                  ]
+                },
+                "enableDdosProtection": false
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[0].spoke2.name]",
+              "location": "[parameters('vWANhubs')[0].location]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vWANhubs')[0].spoke2.addressSpace]"
+                  ]
+                },
+                "enableDdosProtection": false
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[1].spoke1.name]",
+              "location": "[parameters('vWANhubs')[1].location]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vWANhubs')[1].spoke1.addressSpace]"
+                  ]
+                },
+                "enableDdosProtection": false
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[1].spoke2.name]",
+              "location": "[parameters('vWANhubs')[1].location]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vWANhubs')[1].spoke2.addressSpace]"
+                  ]
+                },
+                "enableDdosProtection": false
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[0].spoke1.name, format('{0}-subnet', parameters('vWANhubs')[0].spoke1.name))]",
+              "properties": {
+                "addressPrefix": "[parameters('vWANhubs')[0].spoke1.addressSpace]",
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[0].spoke1.name)]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[0].spoke2.name, format('{0}-subnet', parameters('vWANhubs')[0].spoke2.name))]",
+              "properties": {
+                "addressPrefix": "[parameters('vWANhubs')[0].spoke2.addressSpace]",
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[0].spoke2.name)]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[1].spoke1.name, format('{0}-subnet', parameters('vWANhubs')[1].spoke1.name))]",
+              "properties": {
+                "addressPrefix": "[parameters('vWANhubs')[1].spoke1.addressSpace]",
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[1].spoke1.name)]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[1].spoke2.name, format('{0}-subnet', parameters('vWANhubs')[1].spoke2.name))]",
+              "properties": {
+                "addressPrefix": "[parameters('vWANhubs')[1].spoke2.addressSpace]",
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[1].spoke2.name)]"
+              ]
+            }
+          ],
+          "outputs": {
+            "spokeVnetsIDs": {
+              "type": "array",
+              "value": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[0].spoke1.name)]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[0].spoke2.name)]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[1].spoke1.name)]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vWANhubs')[1].spoke2.name)]"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "ipGroupsModule": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "ipGroupsModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANname": {
+            "value": "[parameters('vWANname')]"
+          },
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "8825513180805356539"
+            }
+          },
+          "parameters": {
+            "vWANname": {
+              "type": "string"
+            },
+            "vWANhubs": {
+              "type": "array"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/ipGroups",
+              "apiVersion": "2023-04-01",
+              "name": "[format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[0].spoke1.name)]",
+              "location": "[parameters('vWANhubs')[0].location]",
+              "properties": {
+                "ipAddresses": [
+                  "[parameters('vWANhubs')[0].spoke1.addressSpace]"
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/ipGroups",
+              "apiVersion": "2023-04-01",
+              "name": "[format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[0].spoke2.name)]",
+              "location": "[parameters('vWANhubs')[0].location]",
+              "properties": {
+                "ipAddresses": [
+                  "[parameters('vWANhubs')[0].spoke2.addressSpace]"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/ipGroups', format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[0].spoke1.name))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/ipGroups",
+              "apiVersion": "2023-04-01",
+              "name": "[format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[1].spoke1.name)]",
+              "location": "[parameters('vWANhubs')[1].location]",
+              "properties": {
+                "ipAddresses": [
+                  "[parameters('vWANhubs')[1].spoke1.addressSpace]"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/ipGroups', format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[0].spoke2.name))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/ipGroups",
+              "apiVersion": "2023-04-01",
+              "name": "[format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[1].spoke2.name)]",
+              "location": "[parameters('vWANhubs')[1].location]",
+              "properties": {
+                "ipAddresses": [
+                  "[parameters('vWANhubs')[1].spoke2.addressSpace]"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/ipGroups', format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[1].spoke1.name))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "IPGroupsIDs": {
+              "type": "array",
+              "value": [
+                "[resourceId('Microsoft.Network/ipGroups', format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[0].spoke1.name))]",
+                "[resourceId('Microsoft.Network/ipGroups', format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[0].spoke2.name))]",
+                "[resourceId('Microsoft.Network/ipGroups', format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[1].spoke1.name))]",
+                "[resourceId('Microsoft.Network/ipGroups', format('IPGroup-{0}-{1}', parameters('vWANname'), parameters('vWANhubs')[1].spoke2.name))]"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "firewallPolicies": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "firewallPoliciesModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          },
+          "sourceIPAddressSpaces": {
+            "value": "[variables('rfc1918addressSpaces')]"
+          },
+          "destinationIPAddressSpaces": {
+            "value": "[variables('rfc1918addressSpaces')]"
+          },
+          "firewallSNATprivateRanges": {
+            "value": "[parameters('firewallSNATprivateRanges')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "1093385591886165704"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            },
+            "sourceIPAddressSpaces": {
+              "type": "array"
+            },
+            "destinationIPAddressSpaces": {
+              "type": "array"
+            },
+            "firewallSNATprivateRanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "variables": {
+            "NetworkRuleCollectionGroupPriority": 50000,
+            "DefaultNetworkRuleCollectionGroup": "DefaultNetworkRuleCollectionGroup"
+          },
+          "resources": {
+            "hub1FirewallPolicy": {
+              "type": "Microsoft.Network/firewallPolicies",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[0].fwpolicyname]",
+              "location": "[parameters('vWANhubs')[0].location]",
+              "properties": {
+                "sku": {
+                  "tier": "[parameters('vWANhubs')[0].fwtier]"
+                },
+                "snat": {
+                  "privateRanges": "[parameters('firewallSNATprivateRanges')]"
+                },
+                "threatIntelMode": "[parameters('vWANhubs')[0].threatintelmode]"
+              }
+            },
+            "hub2FirewallPolicy": {
+              "type": "Microsoft.Network/firewallPolicies",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[1].fwpolicyname]",
+              "location": "[parameters('vWANhubs')[1].location]",
+              "properties": {
+                "sku": {
+                  "tier": "[parameters('vWANhubs')[1].fwtier]"
+                },
+                "threatIntelMode": "[parameters('vWANhubs')[1].threatintelmode]",
+                "snat": {
+                  "privateRanges": "[parameters('firewallSNATprivateRanges')]"
+                }
+              }
+            },
+            "hub2FirewallPolicyDefaultNetworkRuleCollectionGroup": {
+              "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[1].fwpolicyname, variables('DefaultNetworkRuleCollectionGroup'))]",
+              "properties": {
+                "priority": "[variables('NetworkRuleCollectionGroupPriority')]",
+                "ruleCollections": [
+                  {
+                    "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                    "action": {
+                      "type": "Allow"
+                    },
+                    "rules": [
+                      {
+                        "ruleType": "NetworkRule",
+                        "name": "DefaultAllowRule",
+                        "ipProtocols": [
+                          "TCP",
+                          "UDP",
+                          "ICMP",
+                          "Any"
+                        ],
+                        "sourceAddresses": "[parameters('sourceIPAddressSpaces')]",
+                        "destinationAddresses": "[parameters('destinationIPAddressSpaces')]",
+                        "destinationPorts": [
+                          "*"
+                        ]
+                      }
+                    ],
+                    "name": "NetworkCollectionAllowDefault",
+                    "priority": "[variables('NetworkRuleCollectionGroupPriority')]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "hub2FirewallPolicy"
+              ]
+            },
+            "hub1FirewallPolicyDefaultNetworkRuleCollectionGroup": {
+              "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[0].fwpolicyname, variables('DefaultNetworkRuleCollectionGroup'))]",
+              "properties": {
+                "priority": "[variables('NetworkRuleCollectionGroupPriority')]",
+                "ruleCollections": [
+                  {
+                    "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                    "action": {
+                      "type": "Allow"
+                    },
+                    "rules": [
+                      {
+                        "ruleType": "NetworkRule",
+                        "name": "DefaultAllowRule",
+                        "ipProtocols": [
+                          "TCP",
+                          "UDP",
+                          "ICMP",
+                          "Any"
+                        ],
+                        "sourceAddresses": "[parameters('sourceIPAddressSpaces')]",
+                        "destinationAddresses": "[parameters('destinationIPAddressSpaces')]",
+                        "destinationPorts": [
+                          "*"
+                        ]
+                      }
+                    ],
+                    "name": "NetworkCollectionAllowDefault",
+                    "priority": "[variables('NetworkRuleCollectionGroupPriority')]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "hub1FirewallPolicy"
+              ]
+            }
+          },
+          "outputs": {
+            "fwPolicyArrayIDs": {
+              "type": "array",
+              "value": [
+                "[resourceId('Microsoft.Network/firewallPolicies', parameters('vWANhubs')[0].fwpolicyname)]",
+                "[resourceId('Microsoft.Network/firewallPolicies', parameters('vWANhubs')[1].fwpolicyname)]"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "resourceIntentModule": {
+      "condition": "[or(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), true()))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "resourceIntentModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          },
+          "internetTrafficRoutingPolicy": {
+            "value": "[parameters('internetTrafficRoutingPolicy')]"
+          },
+          "privateTrafficRoutingPolicy": {
+            "value": "[parameters('privateTrafficRoutingPolicy')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "14966479074374311935"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            },
+            "internetTrafficRoutingPolicy": {
+              "type": "bool"
+            },
+            "privateTrafficRoutingPolicy": {
+              "type": "bool"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualHubs/routingIntent",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[0].name, format('{0}-RoutingIntent', parameters('vWANhubs')[0].name))]",
+              "properties": {
+                "routingPolicies": "[if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), true())), createArray(createObject('name', 'PublicTraffic', 'destinations', createArray('Internet'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname)), createObject('name', 'PrivateTraffic', 'destinations', createArray('PrivateTraffic'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname))), if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), false())), createArray(createObject('name', 'PublicTraffic', 'destinations', createArray('Internet'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname))), createArray(createObject('name', 'PrivateTraffic', 'destinations', createArray('PrivateTraffic'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname)))))]"
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualHubs/routingIntent",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[1].name, format('{0}-RoutingIntent', parameters('vWANhubs')[1].name))]",
+              "properties": {
+                "routingPolicies": "[if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), true())), createArray(createObject('name', 'PublicTraffic', 'destinations', createArray('Internet'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname)), createObject('name', 'PrivateTraffic', 'destinations', createArray('PrivateTraffic'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname))), if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), false())), createArray(createObject('name', 'PublicTraffic', 'destinations', createArray('Internet'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname))), createArray(createObject('name', 'PrivateTraffic', 'destinations', createArray('PrivateTraffic'), 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname)))))]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "hub1Firewall",
+        "hub2Firewall",
+        "vWANHub1",
+        "vWANHub2"
+      ]
+    },
+    "PrivateTrafficRouteTable": {
+      "condition": "[and(or(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), true())), not(empty(parameters('customPrivateTrafficPrefixes'))))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "PrivateTrafficRouteTable",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          },
+          "internetTrafficRoutingPolicy": {
+            "value": "[parameters('internetTrafficRoutingPolicy')]"
+          },
+          "privateTrafficRoutingPolicy": {
+            "value": "[parameters('privateTrafficRoutingPolicy')]"
+          },
+          "customPrivateTrafficPrefixes": {
+            "value": "[parameters('customPrivateTrafficPrefixes')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "10468105029962480110"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            },
+            "internetTrafficRoutingPolicy": {
+              "type": "bool"
+            },
+            "privateTrafficRoutingPolicy": {
+              "type": "bool"
+            },
+            "customPrivateTrafficPrefixes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "resources": {
+            "hub1Firewall": {
+              "existing": true,
+              "type": "Microsoft.Network/azureFirewalls",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[0].fwname]"
+            },
+            "hub2Firewall": {
+              "existing": true,
+              "type": "Microsoft.Network/azureFirewalls",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vWANhubs')[1].fwname]"
+            },
+            "virtualHubs_Hub1_defaultRouteTable": {
+              "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+              "apiVersion": "2023-06-01",
+              "name": "[format('{0}/defaultRouteTable', parameters('vWANhubs')[0].name)]",
+              "properties": {
+                "routes": "[if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), true())), createArray(createObject('name', '_policy_PublicTraffic', 'destinationType', 'CIDR', 'destinations', createArray('0.0.0.0/0'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname)), createObject('name', '_policy_PrivateTraffic', 'destinationType', 'CIDR', 'destinations', createArray('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname)), createObject('name', 'private_traffic', 'destinationType', 'CIDR', 'destinations', parameters('customPrivateTrafficPrefixes'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname))), if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), false())), createArray(createObject('name', '_policy_PublicTraffic', 'destinationType', 'CIDR', 'destinations', createArray('0.0.0.0/0'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname))), createArray(createObject('name', '_policy_PrivateTraffic', 'destinationType', 'CIDR', 'destinations', createArray('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname)), createObject('name', 'private_traffic', 'destinationType', 'CIDR', 'destinations', parameters('customPrivateTrafficPrefixes'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[0].fwname)))))]",
+                "labels": [
+                  "default"
+                ]
+              },
+              "dependsOn": [
+                "hub1Firewall"
+              ]
+            },
+            "virtualHubs_Hub2_defaultRouteTable": {
+              "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+              "apiVersion": "2023-06-01",
+              "name": "[format('{0}/defaultRouteTable', parameters('vWANhubs')[1].name)]",
+              "properties": {
+                "routes": "[if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), true())), createArray(createObject('name', '_policy_PublicTraffic', 'destinationType', 'CIDR', 'destinations', createArray('0.0.0.0/0'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname)), createObject('name', '_policy_PrivateTraffic', 'destinationType', 'CIDR', 'destinations', createArray('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname)), createObject('name', 'private_traffic', 'destinationType', 'CIDR', 'destinations', parameters('customPrivateTrafficPrefixes'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname))), if(and(equals(parameters('internetTrafficRoutingPolicy'), true()), equals(parameters('privateTrafficRoutingPolicy'), false())), createArray(createObject('name', '_policy_PublicTraffic', 'destinationType', 'CIDR', 'destinations', createArray('0.0.0.0/0'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname))), createArray(createObject('name', '_policy_PrivateTraffic', 'destinationType', 'CIDR', 'destinations', createArray('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname)), createObject('name', 'private_traffic', 'destinationType', 'CIDR', 'destinations', parameters('customPrivateTrafficPrefixes'), 'nextHopType', 'ResourceId', 'nextHop', resourceId('Microsoft.Network/azureFirewalls', parameters('vWANhubs')[1].fwname)))))]",
+                "labels": [
+                  "default"
+                ]
+              },
+              "dependsOn": [
+                "hub2Firewall"
+              ]
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "resourceIntentModule"
+      ]
+    },
+    "firewallDiagnosticsModule": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "firewallDiagnosticsModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          },
+          "logAnalyticsWorkspaceID": {
+            "value": "[reference('logAnalyticsWsModule').outputs.LogAnalyticsWorkspaceID.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "2908624690552830895"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            },
+            "logAnalyticsWorkspaceID": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/azureFirewalls/{0}', parameters('vWANhubs')[0].fwname)]",
+              "name": "[format('{0}-DiagnosticSettings', parameters('vWANhubs')[0].fwname)]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceID')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/azureFirewalls/{0}', parameters('vWANhubs')[1].fwname)]",
+              "name": "[format('{0}-DiagnosticSettings', parameters('vWANhubs')[1].fwname)]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceID')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "hub1Firewall",
+        "hub2Firewall",
+        "logAnalyticsWsModule"
+      ]
+    },
+    "vnetConnectionsModule": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "vnetConnectionsModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          },
+          "vNetsIDs": {
+            "value": "[reference('vNetsModule').outputs.spokeVnetsIDs.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "12241396178514902756"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            },
+            "vNetsIDs": {
+              "type": "array"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[0].name, format('{0}-to-{1}-connection', parameters('vWANhubs')[0].name, parameters('vWANhubs')[0].spoke1.name))]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[parameters('vNetsIDs')[0]]"
+                },
+                "allowHubToRemoteVnetTransit": true,
+                "allowRemoteVnetToUseHubVnetGateways": true,
+                "enableInternetSecurity": true
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[0].name, format('{0}-to-{1}-connection', parameters('vWANhubs')[0].name, parameters('vWANhubs')[0].spoke2.name))]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[parameters('vNetsIDs')[1]]"
+                },
+                "allowHubToRemoteVnetTransit": true,
+                "allowRemoteVnetToUseHubVnetGateways": true,
+                "enableInternetSecurity": true
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[1].name, format('{0}-to-{1}-connection', parameters('vWANhubs')[1].name, parameters('vWANhubs')[1].spoke1.name))]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[parameters('vNetsIDs')[2]]"
+                },
+                "allowHubToRemoteVnetTransit": true,
+                "allowRemoteVnetToUseHubVnetGateways": true,
+                "enableInternetSecurity": true
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vWANhubs')[1].name, format('{0}-to-{1}-connection', parameters('vWANhubs')[1].name, parameters('vWANhubs')[1].spoke2.name))]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[parameters('vNetsIDs')[3]]"
+                },
+                "allowHubToRemoteVnetTransit": true,
+                "allowRemoteVnetToUseHubVnetGateways": true,
+                "enableInternetSecurity": true
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "hub1Firewall",
+        "hub2Firewall",
+        "vNetsModule"
+      ]
+    },
+    "vpnS2Smodule": {
+      "condition": "[equals(parameters('deployS2Sgw'), true())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "vpnS2Smodule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          },
+          "vWANHub1ID": {
+            "value": "[resourceId('Microsoft.Network/virtualHubs', variables('vWANhubs')[0].name)]"
+          },
+          "vWANHub2ID": {
+            "value": "[resourceId('Microsoft.Network/virtualHubs', variables('vWANhubs')[1].name)]"
+          },
+          "vpnGatewayScaleUnit": {
+            "value": "[variables('vpnGatewayScaleUnit')]"
+          },
+          "logAnalyticsWorkspaceID": {
+            "value": "[reference('logAnalyticsWsModule').outputs.LogAnalyticsWorkspaceID.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "14673480327431076663"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            },
+            "vWANHub1ID": {
+              "type": "string"
+            },
+            "vWANHub2ID": {
+              "type": "string"
+            },
+            "vpnGatewayScaleUnit": {
+              "type": "int"
+            },
+            "logAnalyticsWorkspaceID": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "defaultASN": 65515,
+            "defaultPeerWeight": 0
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/vpnGateways",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-VPNs2sGateway', parameters('vWANhubs')[0].name)]",
+              "location": "[parameters('vWANhubs')[0].location]",
+              "properties": {
+                "virtualHub": {
+                  "id": "[parameters('vWANHub1ID')]"
+                },
+                "bgpSettings": {
+                  "asn": "[variables('defaultASN')]",
+                  "peerWeight": "[variables('defaultPeerWeight')]"
+                },
+                "vpnGatewayScaleUnit": "[parameters('vpnGatewayScaleUnit')]",
+                "enableBgpRouteTranslationForNat": false,
+                "isRoutingPreferenceInternet": false
+              }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/vpnGateways/{0}', format('{0}-VPNs2sGateway', parameters('vWANhubs')[0].name))]",
+              "name": "[format('{0}-VPNs2sGateway-DiagnosticSettings', parameters('vWANhubs')[0].name)]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceID')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/vpnGateways', format('{0}-VPNs2sGateway', parameters('vWANhubs')[0].name))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/vpnGateways",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-VPNs2sGateway', parameters('vWANhubs')[1].name)]",
+              "location": "[parameters('vWANhubs')[1].location]",
+              "properties": {
+                "virtualHub": {
+                  "id": "[parameters('vWANHub2ID')]"
+                },
+                "bgpSettings": {
+                  "asn": "[variables('defaultASN')]",
+                  "peerWeight": "[variables('defaultPeerWeight')]"
+                },
+                "vpnGatewayScaleUnit": "[parameters('vpnGatewayScaleUnit')]",
+                "enableBgpRouteTranslationForNat": false,
+                "isRoutingPreferenceInternet": false
+              }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/vpnGateways/{0}', format('{0}-VPNs2sGateway', parameters('vWANhubs')[1].name))]",
+              "name": "[format('{0}-VPNs2sGateway_DiagnosticSettings', parameters('vWANhubs')[1].name)]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceID')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/vpnGateways', format('{0}-VPNs2sGateway', parameters('vWANhubs')[1].name))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vpnGatewayConfigs": {
+              "type": "array",
+              "value": [
+                "[reference(resourceId('Microsoft.Network/vpnGateways', format('{0}-VPNs2sGateway', parameters('vWANhubs')[0].name)), '2023-04-01').ipConfigurations]",
+                "[reference(resourceId('Microsoft.Network/vpnGateways', format('{0}-VPNs2sGateway', parameters('vWANhubs')[1].name)), '2023-04-01').ipConfigurations]"
+              ]
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "logAnalyticsWsModule",
+        "resourceIntentModule",
+        "vWANHub1",
+        "vWANHub2"
+      ]
+    },
+    "erModule": {
+      "condition": "[equals(parameters('deployERgw'), true())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "erModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vWANhubs": {
+            "value": "[variables('vWANhubs')]"
+          },
+          "vWANHub1ID": {
+            "value": "[resourceId('Microsoft.Network/virtualHubs', variables('vWANhubs')[0].name)]"
+          },
+          "vWANHub2ID": {
+            "value": "[resourceId('Microsoft.Network/virtualHubs', variables('vWANhubs')[1].name)]"
+          },
+          "ErGatewayScaleUnit": {
+            "value": "[variables('erGatewayScaleUnit')]"
+          },
+          "LogAnalyticsWorkspaceID": {
+            "value": "[reference('logAnalyticsWsModule').outputs.LogAnalyticsWorkspaceID.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "12625696927471004061"
+            }
+          },
+          "parameters": {
+            "vWANhubs": {
+              "type": "array"
+            },
+            "vWANHub1ID": {
+              "type": "string"
+            },
+            "vWANHub2ID": {
+              "type": "string"
+            },
+            "ErGatewayScaleUnit": {
+              "type": "int"
+            },
+            "LogAnalyticsWorkspaceID": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/expressRouteGateways",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-ErGateway', parameters('vWANhubs')[0].name)]",
+              "location": "[parameters('vWANhubs')[0].location]",
+              "properties": {
+                "virtualHub": {
+                  "id": "[parameters('vWANHub1ID')]"
+                },
+                "allowNonVirtualWanTraffic": false,
+                "autoScaleConfiguration": {
+                  "bounds": {
+                    "min": "[parameters('ErGatewayScaleUnit')]"
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/expressRouteGateways/{0}', format('{0}-ErGateway', parameters('vWANhubs')[0].name))]",
+              "name": "[format('{0}-ErGatewayDiagnosticSettings', parameters('vWANhubs')[0].name)]",
+              "properties": {
+                "workspaceId": "[parameters('LogAnalyticsWorkspaceID')]",
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/expressRouteGateways', format('{0}-ErGateway', parameters('vWANhubs')[0].name))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/expressRouteGateways",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-ErGateway', parameters('vWANhubs')[1].name)]",
+              "location": "[parameters('vWANhubs')[1].location]",
+              "properties": {
+                "virtualHub": {
+                  "id": "[parameters('vWANHub2ID')]"
+                },
+                "allowNonVirtualWanTraffic": false,
+                "autoScaleConfiguration": {
+                  "bounds": {
+                    "min": "[parameters('ErGatewayScaleUnit')]"
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/expressRouteGateways/{0}', format('{0}-ErGateway', parameters('vWANhubs')[1].name))]",
+              "name": "[format('{0}-ErGatewayDiagnosticSettings', parameters('vWANhubs')[1].name)]",
+              "properties": {
+                "workspaceId": "[parameters('LogAnalyticsWorkspaceID')]",
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/expressRouteGateways', format('{0}-ErGateway', parameters('vWANhubs')[1].name))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "logAnalyticsWsModule",
+        "resourceIntentModule",
+        "vWANHub1",
+        "vWANHub2"
+      ]
+    }
+  },
+  "outputs": {
+    "hub1FirewallPublicIPaddresses": {
+      "type": "object",
+      "value": "[reference('hub1Firewall').hubIPAddresses.publicIPs]"
+    },
+    "hub2FirewallPublicIPaddresses": {
+      "type": "object",
+      "value": "[reference('hub2Firewall').hubIPAddresses.publicIPs]"
+    },
+    "hub1VPNs2sGatewayIPaddresses": {
+      "type": "array",
+      "value": "[if(parameters('deployS2Sgw'), reference('vpnS2Smodule').outputs.vpnGatewayConfigs.value[0], createArray(format('No VPN S2S gateway deployed in {0}.', variables('vWANhubs')[0].name)))]"
+    },
+    "hub2VPNs2sGatewayIPaddresses": {
+      "type": "array",
+      "value": "[if(parameters('deployS2Sgw'), reference('vpnS2Smodule').outputs.vpnGatewayConfigs.value[1], createArray(format('No VPN S2S gateway deployed in {0}.', variables('vWANhubs')[1].name)))]"
+    }
+  }
+}
