@@ -8,7 +8,6 @@ urlFragment: app-service-docs-windows-container
 languages:
 - bicep
 - json
-
 ---
 # App Service Quickstart - Windows container app
 
