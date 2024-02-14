@@ -68,7 +68,7 @@ resource webApp 'Microsoft.Web/sites@2023-01-01' = {
   }
 }
 
-resource webAppName_web 'Microsoft.Web/sites/sourcecontrols@2023-01-01' = if (contains(gitRepoUrl, 'http')) {
+resource site 'Microsoft.Web/sites/sourcecontrols@2023-01-01' = if (contains(gitRepoUrl, 'http')) {
   parent: webApp
   name: 'web'
   properties: {
