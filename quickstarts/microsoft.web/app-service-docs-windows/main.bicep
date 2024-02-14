@@ -79,6 +79,5 @@ resource site 'Microsoft.Web/sites/sourcecontrols@2023-01-01' = if (contains(git
     repoUrl: gitRepoUrl
     branch: 'master'
     isManualIntegration: true
-    minTlsVersion: '1.2'
   }
 }
