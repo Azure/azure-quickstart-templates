@@ -62,9 +62,13 @@ resource appServicePlanPortal 'Microsoft.Web/serverfarms@2023-01-01' = {
 resource webApp 'Microsoft.Web/sites@2023-01-01' = {
   name: webAppName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }  
   properties: {
     siteConfig: configReference[language]
     serverFarmId: appServicePlanPortal.id
+    httpsOnly: true
   }
 }
 
@@ -75,5 +79,6 @@ resource site 'Microsoft.Web/sites/sourcecontrols@2023-01-01' = if (contains(git
     repoUrl: gitRepoUrl
     branch: 'master'
     isManualIntegration: true
+    minTlsVersion: '1.2'
   }
 }
