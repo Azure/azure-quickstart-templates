@@ -128,12 +128,12 @@ module DatabricksDbfsCMKAccessPolicy './modules/DbfsCMKAccessPolicy.bicep' = {
   }
 }
 
-module DatabricksManagedDiskCMKAccessPolicy './modules/DbfsCMKAccessPolicy.bicep' = {
+module DatabricksManagedDiskCMKAccessPolicy './modules/ManagedDiskCMKAccessPolicy.bicep' = {
   name: 'DatabricksManagedDiskCMKAccessPolicy'
   scope: resourceGroup(diskCmkKeyVaultResourceGroup)
   params: {
-    workspaceStorageAccountIdentity: workspace.properties.managedDiskIdentity
-    dbfsCmkKeyVaultName: diskCmkKeyVaultName
+    workspaceManagedDiskIdentity: workspace.properties.managedDiskIdentity
+    diskCmkKeyVaultName: diskCmkKeyVaultName
   }
   dependsOn: [
     DatabricksDbfsCMKAccessPolicy
