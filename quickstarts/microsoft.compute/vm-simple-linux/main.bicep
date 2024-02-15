@@ -20,7 +20,6 @@ param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().
 
 @description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
 @allowed([
-  'Ubuntu-1804'
   'Ubuntu-2004'
   'Ubuntu-2204'
 ])
@@ -49,12 +48,6 @@ param networkSecurityGroupName string = 'SecGroupNet'
 param securityType string = 'TrustedLaunch'
 
 var imageReference = {
-  'Ubuntu-1804': {
-    publisher: 'Canonical'
-    offer: 'UbuntuServer'
-    sku: '18_04-lts-gen2'
-    version: 'latest'
-  }
   'Ubuntu-2004': {
     publisher: 'Canonical'
     offer: '0001-com-ubuntu-server-focal'
