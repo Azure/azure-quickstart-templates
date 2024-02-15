@@ -99,7 +99,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: subnet.id
+            id: virtualNetwork.properties.subnets[0].id
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
@@ -145,16 +145,16 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
         addressPrefix
       ]
     }
-  }
-}
-
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
-  parent: virtualNetwork
-  name: subnetName
-  properties: {
-    addressPrefix: subnetAddressPrefix
-    privateEndpointNetworkPolicies: 'Enabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
+    subnets: [
+      {
+        name: subnetName
+        properties: {
+          addressPrefix: subnetAddressPrefix
+          privateEndpointNetworkPolicies: 'Enabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+        }
+      }
+    ]
   }
 }
 
