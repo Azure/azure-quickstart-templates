@@ -234,6 +234,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-09-01' = {
         name: 'apim-routing-rule'
         properties: {
           ruleType: 'Basic'
+          priority: 1
           httpListener: {
             id: resourceId('Microsoft.Network/applicationGateways/httpListeners', gatewayName, 'apim-listener')
           }
