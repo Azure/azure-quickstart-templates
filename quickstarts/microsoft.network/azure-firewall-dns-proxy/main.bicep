@@ -311,12 +311,10 @@ var testVmScriptFileName = 'test-dns-and-private-endpoints.sh'
 var dnsVmScriptFileUri = uri(_artifactsLocation, 'scripts/${dnsVmScriptFileName}${_artifactsLocationSasToken}')
 var testVmScriptFileUri = uri(_artifactsLocation, 'scripts/${testVmScriptFileName}${_artifactsLocationSasToken}')
 
-var devContributorRoleAssignmentGuid_var = guid(concat('devcontributor', resourceGroup().id, devVmName))
-var prodContributorRoleAssignmentGuid_var = guid(concat('prodcontributor', resourceGroup().id, prodVmName))
-var devStorageBlobDataContributorRoleAssignmentGuid_var = guid(concat('devStorageBlobDataContributor', resourceGroup().id, devVmName))
-var prodStorageBlobDataContributorRoleAssignmentGuid_var = guid(concat('prodStorageBlobDataContributor', resourceGroup().id, prodVmName))
-
-
+var devContributorRoleAssignmentName = guid('devcontributor${resourceGroup().id}${devVmName}')
+var prodContributorRoleAssignmentName = guid('prodcontributor${resourceGroup().id}${prodVmName}')
+var devStorageBlobDataContributorRoleAssignmentName = guid('devStorageBlobDataContributor${resourceGroup().id}${devVmName}')
+var prodStorageBlobDataContributorRoleAssignmentName = guid('prodStorageBlobDataContributor${resourceGroup().id}${prodVmName}')
 
 resource adlsStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: adlsStorageAccountName
@@ -1032,7 +1030,7 @@ resource dnsVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@20
       stopOnMultipleConnections: false
     }
     protectedSettings: {
-      workspaceKey: listKeys(workspaceId, '2020-03-01-preview').primarySharedKey
+      workspaceKey: workspace.listKeys().primarySharedKey
     }
   }
   dependsOn: [
@@ -1079,7 +1077,7 @@ resource devVmNic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
 }
 
 resource devContributorRoleAssignmentGuid 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: devContributorRoleAssignmentGuid_var
+  name: devContributorRoleAssignmentName
   properties: {
     roleDefinitionId: contributorRoleId
     principalId: devVm.identity.principalId
@@ -1087,7 +1085,7 @@ resource devContributorRoleAssignmentGuid 'Microsoft.Authorization/roleAssignmen
 }
 
 resource devStorageBlobDataContributorRoleAssignmentGuid 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: devStorageBlobDataContributorRoleAssignmentGuid_var
+  name: devStorageBlobDataContributorRoleAssignmentName
   properties: {
     roleDefinitionId: storageBlobDataContributorRoleId
     principalId: devVm.identity.principalId
@@ -1226,7 +1224,7 @@ resource devVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@20
       stopOnMultipleConnections: false
     }
     protectedSettings: {
-      workspaceKey: listKeys(workspaceId, '2020-03-01-preview').primarySharedKey
+      workspaceKey: workspace.listKeys().primarySharedKey
     }
   }
   dependsOn: [
@@ -1273,7 +1271,7 @@ resource prodVmNic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
 }
 
 resource prodContributorRoleAssignmentGuid 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: prodContributorRoleAssignmentGuid_var
+  name: prodContributorRoleAssignmentName
   properties: {
     roleDefinitionId: contributorRoleId
     principalId: prodVm.identity.principalId
@@ -1281,7 +1279,7 @@ resource prodContributorRoleAssignmentGuid 'Microsoft.Authorization/roleAssignme
 }
 
 resource prodStorageBlobDataContributorRoleAssignmentGuid 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: prodStorageBlobDataContributorRoleAssignmentGuid_var
+  name: prodStorageBlobDataContributorRoleAssignmentName
   properties: {
     roleDefinitionId: storageBlobDataContributorRoleId
     principalId: prodVm.identity.principalId
@@ -1420,7 +1418,7 @@ resource prodVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2
       stopOnMultipleConnections: false
     }
     protectedSettings: {
-      workspaceKey: listKeys(workspaceId, '2020-03-01-preview').primarySharedKey
+      workspaceKey: workspace.listKeys().primarySharedKey
     }
   }
   dependsOn: [
@@ -1445,7 +1443,7 @@ resource prodVmName_DependencyAgent 'Microsoft.Compute/virtualMachines/extension
   ]
 }
 
-resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
+resource firewallPublicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
   name: ((numberOfFirewallPublicIPAddresses == 1) ? firewallPublicIPNamePrefix : '${firewallPublicIPNamePrefix}${i + 1}')
   location: location
   sku: {
@@ -1491,7 +1489,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2023-09-01' = {
   }
   dependsOn: [
     hubVnet
-    publicIpAddress
+    firewallPublicIp
   ]
 }
 
@@ -1617,12 +1615,12 @@ resource firewallPolicyDefaultNetworkRuleCollectionGroup 'Microsoft.Network/fire
 resource firewallPolicyDefaultDnatRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-09-01' = if (createDnatRuleCollection) {
   name: firewallPolicyDefaultDnatRuleCollectionGroupName
   properties: {
-    priority: '100'
+    priority: 100
     ruleCollections: [
       {
         name: 'VirtualMachineNatRules'
         ruleCollectionType: 'FirewallPolicyNatRuleCollection'
-        priority: '300'
+        priority: 300
         action: {
           type: 'Dnat'
         }
@@ -1634,7 +1632,7 @@ resource firewallPolicyDefaultDnatRuleCollectionGroup 'Microsoft.Network/firewal
               '*'
             ]
             destinationAddresses: [
-              publicIpAddress.properties.ipAddress
+              firewallPublicIp[0].properties.ipAddress
             ]
             destinationPorts: [
               '4001'
@@ -1652,7 +1650,7 @@ resource firewallPolicyDefaultDnatRuleCollectionGroup 'Microsoft.Network/firewal
               '*'
             ]
             destinationAddresses: [
-              publicIpAddress.properties.ipAddress
+              firewallPublicIp[0].properties.ipAddress
             ]
             destinationPorts: [
               '4002'
