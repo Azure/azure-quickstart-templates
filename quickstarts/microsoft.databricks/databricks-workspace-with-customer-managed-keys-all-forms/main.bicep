@@ -64,7 +64,7 @@ var msCmkKeyVaultUrl = uri('https://${msCmkKeyVaultName}${environment().suffixes
 var dbfsCmkKeyVaultUrl = uri('https://${dbfsCmkKeyVaultName}${environment().suffixes.keyvaultDns}', '/')
 var trimmedDiskCmkKeyVaultUrl = replace(diskCmkKeyVaultUrl, '.net/', '.net/')
 
-module DatabricksManagedServicesCMKAccessPolicy './nested_DatabricksManagedServicesCMKAccessPolicy.bicep' = {
+module DatabricksManagedServicesCMKAccessPolicy './modules/ManagedServicesCMKAccessPolicy.bicep' = {
   name: 'DatabricksManagedServicesCMKAccessPolicy'
   scope: resourceGroup(msCmkKeyVaultResourceGroup)
   params: {
@@ -119,7 +119,7 @@ resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
   ]
 }
 
-module DatabricksDbfsCMKAccessPolicy './nested_DatabricksDbfsCMKAccessPolicy.bicep' = {
+module DatabricksDbfsCMKAccessPolicy './modules/DbfsCMKAccessPolicy.bicep' = {
   name: 'DatabricksDbfsCMKAccessPolicy'
   scope: resourceGroup(dbfsCmkKeyVaultResourceGroup)
   params: {
@@ -128,19 +128,19 @@ module DatabricksDbfsCMKAccessPolicy './nested_DatabricksDbfsCMKAccessPolicy.bic
   }
 }
 
-module DatabricksManagedDiskCMKAccessPolicy './nested_DatabricksManagedDiskCMKAccessPolicy.bicep' = {
+module DatabricksManagedDiskCMKAccessPolicy './modules/DbfsCMKAccessPolicy.bicep' = {
   name: 'DatabricksManagedDiskCMKAccessPolicy'
   scope: resourceGroup(diskCmkKeyVaultResourceGroup)
   params: {
-    workspaceManagedDiskIdentity: workspace.properties.managedDiskIdentity
-    diskCmkKeyVaultName: diskCmkKeyVaultName
+    workspaceStorageAccountIdentity: workspace.properties.managedDiskIdentity
+    dbfsCmkKeyVaultName: diskCmkKeyVaultName
   }
   dependsOn: [
     DatabricksDbfsCMKAccessPolicy
   ]
 }
 
-module DatabricksDbfsCMKEnable './nested_DatabricksDbfsCMKEnable.bicep' = {
+module DatabricksDbfsCMKEnable './modules/DbfsCMKEnable.bicep' = {
   name: 'DatabricksDbfsCMKEnable'
   params: {
     managedResourceGroupName: managedResourceGroupName
