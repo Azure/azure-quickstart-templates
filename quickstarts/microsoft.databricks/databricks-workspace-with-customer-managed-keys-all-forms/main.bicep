@@ -123,7 +123,7 @@ module DatabricksDbfsCMKAccessPolicy './nested_DatabricksDbfsCMKAccessPolicy.bic
   name: 'DatabricksDbfsCMKAccessPolicy'
   scope: resourceGroup(dbfsCmkKeyVaultResourceGroup)
   params: {
-    workspace: workspace
+    workspaceStorageAccountIdentity: workspace.properties.storageAccountIdentity
     dbfsCmkKeyVaultName: dbfsCmkKeyVaultName
   }
 }
@@ -132,7 +132,7 @@ module DatabricksManagedDiskCMKAccessPolicy './nested_DatabricksManagedDiskCMKAc
   name: 'DatabricksManagedDiskCMKAccessPolicy'
   scope: resourceGroup(diskCmkKeyVaultResourceGroup)
   params: {
-    workspace: workspace
+    workspaceManagedDiskIdentity: workspace.properties.managedDiskIdentity
     diskCmkKeyVaultName: diskCmkKeyVaultName
   }
   dependsOn: [

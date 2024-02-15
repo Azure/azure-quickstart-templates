@@ -1,4 +1,4 @@
-param workspace object
+param workspaceStorageAccountIdentity object
 
 @description('Name of the Key Vault that contains the CMK used for DBFS encryption')
 param dbfsCmkKeyVaultName string
@@ -8,8 +8,8 @@ resource dbfsCmkKeyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2023-
   properties: {
     accessPolicies: [
       {
-        objectId: workspace.storageAccountIdentity.principalId
-        tenantId: workspace.storageAccountIdentity.tenantId
+        objectId: workspaceStorageAccountIdentity.principalId
+        tenantId: workspaceStorageAccountIdentity.tenantId
         permissions: {
           keys: [
             'get'

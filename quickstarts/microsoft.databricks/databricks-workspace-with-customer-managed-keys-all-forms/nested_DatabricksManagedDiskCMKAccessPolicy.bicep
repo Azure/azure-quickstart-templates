@@ -1,4 +1,4 @@
-param workspace object
+param workspaceManagedDiskIdentity object
 
 @description('Name of the Key Vault that contains the CMK used for managed disks encryption')
 param diskCmkKeyVaultName string
@@ -8,8 +8,8 @@ resource diskCmkKeyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2023-
   properties: {
     accessPolicies: [
       {
-        objectId: workspace.managedDiskIdentity.principalId
-        tenantId: workspace.managedDiskIdentity.tenantId
+        objectId: workspaceManagedDiskIdentity.principalId
+        tenantId: workspaceManagedDiskIdentity.tenantId
         permissions: {
           keys: [
             'get'
