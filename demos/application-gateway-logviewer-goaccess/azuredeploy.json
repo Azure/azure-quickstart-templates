@@ -1,0 +1,322 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "11293965251265882651"
+    }
+  },
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username you want to use for the VM the template creates"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2_v2",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "The DNS name (prefix) you want to use for the VM to map against its public IP"
+      }
+    },
+    "appGwAccessLogsBlobSasUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The SAS URL connection string for the storage account blog where your Application Gateway Access Logs are stored"
+      }
+    },
+    "filterRegexForAppGwAccessLogs": {
+      "type": "string",
+      "defaultValue": ".*",
+      "metadata": {
+        "description": "A regex to use to filter the Application Gateway Access Logs to a specific subset. For example, if you have multiple application gateways publishing logs to the same storage account blob, and you only want GoAccess to surface traffic stats for say one of the Application Gateways, you can provide a regex for this field to filter to just that instance."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "vmName": "[parameters('dnsNameForPublicIP')]",
+    "nicName": "[format('{0}_vmnic', parameters('dnsNameForPublicIP'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "subnetName": "DefaultSubnet",
+    "publicIPAddressName": "[format('{0}_publicip', parameters('dnsNameForPublicIP'))]",
+    "virtualNetworkName": "[format('{0}_vnet', parameters('dnsNameForPublicIP'))]",
+    "networkSecurityGroupName": "[format('{0}_nsg', parameters('dnsNameForPublicIP'))]",
+    "scriptFileUri": "[uri(parameters('_artifactsLocation'), format('scripts/setup_vm.sh{0}', parameters('_artifactsLocationSasToken')))]",
+    "appGatewayLogProcessorArtifactUri": "[uri(parameters('_artifactsLocation'), format('scripts/AppGatewayLogProcessor.zip{0}', parameters('_artifactsLocationSasToken')))]",
+    "appGwAccessLogsBlobSasUriVar": "[format('\"{0}\"', parameters('appGwAccessLogsBlobSasUri'))]",
+    "filterRegexForAppGwAccessLogsVar": "[format('\"|{0}|\"', parameters('filterRegexForAppGwAccessLogs'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 132,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 131,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "GoAccessSocket",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 129,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[format('{0}_osdisk', variables('vmName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[format('{0}_datadisk1', variables('vmName'))]",
+              "diskSizeGB": 1023,
+              "lun": 0,
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "StandardSSD_LRS"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', variables('vmName'), 'newuserscript')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('scriptFileUri')]",
+            "[variables('appGatewayLogProcessorArtifactUri')]"
+          ],
+          "commandToExecute": "[format('sh setup_vm.sh {0} {1}', variables('appGwAccessLogsBlobSasUriVar'), variables('filterRegexForAppGwAccessLogsVar'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "goAccessReportUrl": {
+      "type": "string",
+      "value": "[format('{0}/report.html', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2023-09-01').dnsSettings.fqdn)]"
+    },
+    "sshCommand": {
+      "type": "string",
+      "value": "[format('ssh {0}@{1}', parameters('adminUsername'), reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2023-09-01').dnsSettings.fqdn)]"
+    }
+  }
+}
