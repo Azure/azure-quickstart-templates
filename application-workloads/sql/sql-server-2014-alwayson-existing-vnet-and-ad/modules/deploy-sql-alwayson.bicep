@@ -31,7 +31,7 @@ var createClusterModulesURL = uri(_artifactsLocation, 'dsc/create-failover-clust
 var createClusterConfigurationFunction = 'CreateFailoverCluster.ps1\\CreateFailoverCluster'
 var clusterName = '${namePrefix}-c'
 
-resource sqlAOPrepare 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
+resource sqlAOPrepare 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   name: '${sqlNamePrefix}0/sqlAOPrepare'
   location: location
   properties: {
@@ -65,7 +65,7 @@ resource sqlAOPrepare 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' 
   }
 }
 
-resource createCluster 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
+resource createCluster 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   name: '${sqlNamePrefix}1/CreateCluster'
   location: location
   properties: {
