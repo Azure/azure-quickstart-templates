@@ -16,7 +16,7 @@ param location string
 var fswModulesURL = uri(_artifactsLocation, 'dsc/create-file-share-witness.ps1.zip${_artifactsLocationSasToken}')
 var fswConfigurationFunction = 'CreateFileShareWitness.ps1\\CreateFileShareWitness'
 
-resource createFileShareWitness 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
+resource createFileShareWitness 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   name: '${sqlWitnessVMName}/CreateFileShareWitness'
   location: location
   properties: {
