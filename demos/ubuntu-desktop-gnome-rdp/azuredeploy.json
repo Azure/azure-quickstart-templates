@@ -30,9 +30,11 @@
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "18.04-LTS",
+      "defaultValue": "Ubuntu-2204",
       "allowedValues": [
-        "18.04-LTS"
+        "Ubuntu-1804",
+        "Ubuntu-2004",
+        "Ubuntu-2204"
       ],
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.5-LTS, 15.10."
@@ -47,13 +49,13 @@
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "sshPublicKey",
+      "defaultValue": "password",
       "allowedValues": [
         "sshPublicKey",
         "password"
       ],
       "metadata": {
-        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+        "description": "Type of authentication to use on the Virtual Machine. By default xRDP expects password."
       }
     },
     "adminPasswordOrKey": {
@@ -78,15 +80,34 @@
     }
   },
   "variables": {
-    "imagePublisher": "Canonical",
-    "imageOffer": "UbuntuServer",
-    "nicName": "myVMNic",
-    "nsgName": "myNSG",
+    "imageReference": {
+      "Ubuntu-1804": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "18_04-lts-gen2",
+        "version": "latest"
+      },
+      "Ubuntu-2004": {
+        "publisher": "Canonical",
+        "offer": "0001-com-ubuntu-server-focal",
+        "sku": "20_04-lts-gen2",
+        "version": "latest"
+      },
+      "Ubuntu-2204": {
+        "publisher": "Canonical",
+        "offer": "0001-com-ubuntu-server-jammy",
+        "sku": "22_04-lts-gen2",
+        "version": "latest"
+      }
+    },
+    "nicName": "[format('{0}NetInt', parameters('vmName'))]",
+    "nsgName": "[format('{0}NSG', parameters('vmName'))]",
+    "osDiskType": "Standard_LRS",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "publicIPAddressName": "myPublicIP",
-    "virtualNetworkName": "MyVNET",
+    "publicIPAddressName": "[format('{0}PublicIP', parameters('vmName'))]",
+    "virtualNetworkName": "[format('{0}VNET', parameters('vmName'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -202,21 +223,16 @@
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('ubuntuOSVersion')]",
-            "version": "latest"
-          },
           "osDisk": {
             "osType": "Linux",
             "name": "[format('{0}_OSDisk', parameters('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "Premium_LRS"
+              "storageAccountType": "[variables('osDiskType')]"
             }
-          }
+          },
+          "imageReference": "[variables('imageReference')[parameters('ubuntuOSVersion')]]"
         },
         "networkProfile": {
           "networkInterfaces": [
