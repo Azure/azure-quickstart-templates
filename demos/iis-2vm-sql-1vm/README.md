@@ -36,9 +36,9 @@ The following resources are created by this template:
 - 1 Availability Set for IIS servers.
 - 1 Load balancer with NATing rules.
 
-<img src="images/resources.png" />
+![resources](images/resources.png)
 
 ## Architecture Diagram
-<img src="images/architecture.png" />
+![architecture](images/architecture.png)
 
 `Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/availabilitySets, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachines/extensions, DSC`
