@@ -4,45 +4,54 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.7.4.23292",
-      "templateHash": "15689099884164541808"
+      "version": "0.25.53.49325",
+      "templateHash": "9083237914224042883"
     }
   },
   "parameters": {
     "vmssName": {
       "type": "string",
-      "maxLength": 61,
       "minLength": 3,
+      "maxLength": 61,
       "metadata": {
         "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
       }
     },
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_A1_v2",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
     },
     "windowsOSVersion": {
       "type": "string",
-      "defaultValue": "2019-Datacenter",
+      "defaultValue": "2022-datacenter-azure-edition",
       "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter",
-        "2016-Datacenter",
-        "2019-Datacenter"
+        "2019-DataCenter-GenSecond",
+        "2016-DataCenter-GenSecond",
+        "2022-datacenter-azure-edition"
       ],
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter & 2016-Datacenter, 2019-Datacenter."
       }
     },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
     "instanceCount": {
       "type": "int",
       "defaultValue": 3,
-      "maxValue": 100,
       "minValue": 1,
+      "maxValue": 100,
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       }
@@ -62,7 +71,7 @@
       }
     },
     "adminPassword": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "Admin password on all VMs."
       }
@@ -75,7 +84,7 @@
       }
     },
     "_artifactsLocationSasToken": {
-      "type": "secureString",
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  If your artifacts are stored on a public repo or public storage account you can leave this blank."
@@ -143,6 +152,13 @@
       "sku": "[parameters('windowsOSVersion')]",
       "version": "latest"
     },
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "imageReference": "[variables('osType')]",
     "webDeployPackageFullPath": "[uri(parameters('_artifactsLocation'), format('{0}{1}', parameters('webDeployPackage'), parameters('_artifactsLocationSasToken')))]",
     "powershelldscZipFullPath": "[uri(parameters('_artifactsLocation'), format('{0}{1}', parameters('powershelldscZip'), parameters('_artifactsLocationSasToken')))]"
@@ -150,7 +166,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-04-01",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -222,7 +238,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2021-11-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('vmScaleSetName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -250,6 +266,7 @@
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
           },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
@@ -261,7 +278,7 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))).subnets[0].id]"
+                          "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('vNetName')), '2023-04-01').subnets[0].id]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
@@ -308,7 +325,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-04-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -320,7 +337,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-04-01",
       "name": "[variables('vNetName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -341,7 +358,7 @@
     },
     {
       "type": "Microsoft.Insights/autoscalesettings",
-      "apiVersion": "2021-05-01-preview",
+      "apiVersion": "2022-10-01",
       "name": "autoscalehost",
       "location": "[parameters('location')]",
       "properties": {
@@ -405,7 +422,7 @@
   "outputs": {
     "applicationUrl": {
       "type": "string",
-      "value": "[uri(format('http://{0}', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))).dnsSettings.fqdn), '/MyApp')]"
+      "value": "[uri(format('http://{0}', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2023-04-01').dnsSettings.fqdn), '/MyApp')]"
     }
   }
 }
