@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: web-app-github-deploy
 languages:
-- Bicep
-- Json
+- bicep
+- json
 ---
 # Web App Deployment from GitHub
 
