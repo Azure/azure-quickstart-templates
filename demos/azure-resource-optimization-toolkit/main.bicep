@@ -1,26 +1,23 @@
-@description('Enter new GUID, you can generate one from Powershell using new-guid or get one from this site: <a target=new href=https://guidgenerator.com/online-guid-generator.aspx>GUID Generator</a>')
-param newGuid string = newGuid()
-
 @description('Assign a name for the Automation account of your choosing.  Must be a unique name as Azure Automation accounts are FQDNs')
 param automationAccountName string = 'aa-${uniqueString(resourceGroup().id)}'
-
+ 
 @description('Specify the region for your Automation account')
 param location string = resourceGroup().location
-
+ 
 @description('Enter your service admin user, ex: serviceaccount@microsoft.com.  Must be owner on the subscription you\'re deploying to during template deployment.')
 param azureAdmin string
-
+ 
 @description('Enter the password for the service admin user. The pwd is encrypted during runtime and in the Automation assets')
 @secure()
 param azureAdminPwd string
-
+ 
 @description('The base URI where artifacts required by this template are located')
 param _artifactsLocation string = deployment().properties.templateLink.uri
-
+ 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated')
 @secure()
 param _artifactsLocationSasToken string = ''
-
+ 
 var AzureRM = {
   name: 'AzureRm.Profile'
   url: 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/azurerm.profile.2.8.0.nupkg'
@@ -208,7 +205,7 @@ var automationVariables = [
 ]
 var azureCredentials = 'AzureCredentials'
 var AROToolkitVersion = '1.0.0.0'
-
+ 
 resource automationAccount 'Microsoft.Automation/automationAccounts@2023-11-01' = {
   location: location
   name: automationAccountName
@@ -221,16 +218,16 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2023-11-01' 
     }
   }
 }
-
-resource automationAccountName_automationVariables_name 'Microsoft.Automation/automationAccounts/variables@2023-11-01' = [for item in automationVariables: {
+ 
+resource varItem 'Microsoft.Automation/automationAccounts/variables@2023-11-01' = [for item in automationVariables: {
   name: item.name
   properties: {
     description: item.description
     value: item.value
   }
 }]
-
-resource automationAccountName_internalAzureSubscriptionId_name 'Microsoft.Automation/automationAccounts/variables@2023-11-01' = {
+ 
+resource varSubscriptionId 'Microsoft.Automation/automationAccounts/variables@2023-11-01' = {
   parent: automationAccount
   name: internalAzureSubscriptionId.name
   properties: {
@@ -239,8 +236,8 @@ resource automationAccountName_internalAzureSubscriptionId_name 'Microsoft.Autom
     value: internalAzureSubscriptionId.value
   }
 }
-
-resource automationAccountName_azureCredentials 'Microsoft.Automation/automationAccounts/credentials@2023-11-01' = {
+ 
+resource credential 'Microsoft.Automation/automationAccounts/credentials@2023-11-01' = {
   parent: automationAccount
   name: azureCredentials
   properties: {
@@ -249,8 +246,8 @@ resource automationAccountName_azureCredentials 'Microsoft.Automation/automation
     userName: azureAdmin
   }
 }
-
-resource automationAccountName_AzureRM_Profile_name 'Microsoft.Automation/automationAccounts/modules@2023-11-01' = {
+ 
+resource moduleAzureRm 'Microsoft.Automation/automationAccounts/modules@2023-11-01' = {
   parent: automationAccount
   name: AzureRM.name
   properties: {
@@ -259,8 +256,8 @@ resource automationAccountName_AzureRM_Profile_name 'Microsoft.Automation/automa
     }
   }
 }
-
-resource automationAccountName_psModules_name 'Microsoft.Automation/automationAccounts/modules@2023-11-01' = [for item in psModules: {
+ 
+resource moduleItem 'Microsoft.Automation/automationAccounts/modules@2023-11-01' = [for item in psModules: {
   name: item.name
   properties: {
     contentLink: {
@@ -268,8 +265,8 @@ resource automationAccountName_psModules_name 'Microsoft.Automation/automationAc
     }
   }
 }]
-
-resource automationAccountName_runbooks_name 'Microsoft.Automation/automationAccounts/runbooks@2023-11-01' = [for item in runbooks: {
+ 
+resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2023-11-01' = [for item in runbooks: {
   name: item.name
   location: location
   tags: {
@@ -286,8 +283,8 @@ resource automationAccountName_runbooks_name 'Microsoft.Automation/automationAcc
     }
   }
 }]
-
-resource automationAccountName_startBootstrap 'Microsoft.Automation/automationAccounts/schedules@2023-11-01' = {
+ 
+resource startBootstrap 'Microsoft.Automation/automationAccounts/schedules@2023-11-01' = {
   parent: automationAccount
   name: 'startBootstrap'
   properties: {
@@ -297,11 +294,10 @@ resource automationAccountName_startBootstrap 'Microsoft.Automation/automationAc
     frequency: 'OneTime'
   }
 }
-
-resource automationAccountName_newGuid 'Microsoft.Automation/automationAccounts/jobSchedules@2023-11-01' = {
+ 
+resource jobSchedule 'Microsoft.Automation/automationAccounts/jobSchedules@2023-11-01' = {
   parent: automationAccount
-  name:'jobSchedule${uniqueString(resourceGroup().id)}'
-  location: location
+  name:'jbSchedule${uniqueString(resourceGroup().id)}${uniqueString(resourceGroup().id)}'
   properties: {
     schedule: {
       name: 'startBootstrap'
