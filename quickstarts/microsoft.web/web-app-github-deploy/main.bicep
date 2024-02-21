@@ -55,7 +55,7 @@ resource site 'Microsoft.Web/sites@2023-01-01' = {
   }
 }
 
-resource ssourceControl 'Microsoft.Web/sites/sourcecontrols@2023-01-01' = {
+resource sourceControl 'Microsoft.Web/sites/sourcecontrols@2023-01-01' = {
   parent: site
   name: 'web'
   properties: {
