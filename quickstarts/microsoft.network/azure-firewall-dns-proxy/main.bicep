@@ -1711,7 +1711,6 @@ resource prodVnetDefaultSubnetRouteTable 'Microsoft.Network/routeTables@2023-09-
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName
   location: 'global'
-  properties: {}
 }
 
 resource privateDnsZoneName_LinkTo_prodVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
@@ -2058,7 +2057,6 @@ resource workspaceName_SampleLinuxPerfCollection1 'Microsoft.OperationalInsights
 resource adlsPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: adlsPrivateDnsZoneName
   location: 'global'
-  properties: {}
 }
 
 resource adlsPrivateDnsZoneName_link_to_HubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
@@ -2076,7 +2074,6 @@ resource adlsPrivateDnsZoneName_link_to_HubVnet 'Microsoft.Network/privateDnsZon
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: blobPrivateDnsZoneName
   location: 'global'
-  properties: {}
 }
 
 resource blobPrivateDnsZoneName_link_to_HubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
