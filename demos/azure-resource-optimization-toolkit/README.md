@@ -6,7 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: azure-resource-optimization-toolkit
 languages:
-- json
+- Bicep
+- Json
 ---
 # Azure Resource Optimization (ARO) Toolkit
 
