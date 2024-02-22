@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: create-role-def
 languages:
-- json
 - bicep
+- json
 ---
 # Create a new role def via a subscription level deployment
 

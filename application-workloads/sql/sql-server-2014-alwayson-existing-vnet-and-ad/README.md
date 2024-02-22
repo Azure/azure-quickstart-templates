@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: sql-server-2014-alwayson-existing-vnet-and-ad
 languages:
+- bicep
 - json
 ---
 # Deploys SQL Server 2014 AG on existing VNET & AD
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/BicepVersion.svg)
 
 This template will create a SQL Server 2014 availability group using the PowerShell DSC Extension in an existing Azure Virtual Network and Active Directory environment.
 

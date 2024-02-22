@@ -1,10 +1,17 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "10193476814580854111"
+    }
+  },
   "parameters": {
     "appServiceWebAppName": {
       "type": "string",
-      "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('webApp-{0}', uniqueString(resourceGroup().id))]",
       "minLength": 2,
       "metadata": {
         "description": "Web App name."
@@ -12,28 +19,31 @@
     },
     "appServicePlanName": {
       "type": "string",
-      "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('webApp-{0}', uniqueString(resourceGroup().id))]",
       "minLength": 2,
       "metadata": {
         "description": "App Service Plan name."
       }
     },
     "skuTier": {
-      "type": "String",
+      "type": "string",
       "defaultValue": "P1v3"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
     }
   },
   "resources": [
     {
       "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('appServiceWebAppName')]",
-      "apiVersion": "2022-09-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
-        "[concat('hidden-related:', subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+        "[format('hidden-related:{0}', resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName')))]": "empty"
       },
       "properties": {
-        "name": "[parameters('appServiceWebAppName')]",
         "siteConfig": {
           "appSettings": [
             {
@@ -44,28 +54,23 @@
           "appCommandLine": "",
           "windowsFxVersion": "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp"
         },
-        "serverFarmId": "[concat(subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
-        "hostingEnvironment": ""
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
       ]
     },
     {
       "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('appServicePlanName')]",
+      "location": "[parameters('location')]",
       "sku": {
-        "Name": "[parameters('skuTier')]"
+        "name": "[parameters('skuTier')]"
       },
       "kind": "windows",
-      "name": "[parameters('appServicePlanName')]",
-      "apiVersion": "2022-09-01",
-      "location": "[resourceGroup().location]",
       "properties": {
-        "name": "[parameters('appServicePlanName')]",
-        "workerSizeId": "0",
-        "numberOfWorkers": "1",
-        "hyperv": true,
-        "hostingEnvironment": ""
+        "hyperV": true
       }
     }
   ]
