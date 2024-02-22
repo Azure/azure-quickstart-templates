@@ -296,7 +296,7 @@ module deploySqlWitnessShare 'deploy-sql-witness.bicep' = {
   ]
 }
 
-module deploySqlAlwaysOn './deploy-sql-alwayson.bicep' = {
+module deploySqlAlwaysOn 'deploy-sql-alwayson.bicep' = {
   name: deploySqlAlwaysOnName
   params: {
     sqlNamePrefix: sqlNamePrefix

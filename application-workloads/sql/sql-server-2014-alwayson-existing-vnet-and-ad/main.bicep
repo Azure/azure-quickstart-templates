@@ -58,7 +58,7 @@ param location string = resourceGroup().location
 var sqlSubnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', existingVirtualNetworkName, existingSqlSubnetName)
 var deploySqlClusterName = 'deploySqlCluster'
 
-module deploySqlCluster './modules/deploy-sql-cluster.bicep' = {
+module deploySqlCluster 'modules/deploy-sql-cluster.bicep' = {
   name: deploySqlClusterName
   params: {
     location: location
