@@ -353,7 +353,7 @@ resource hubVnetCommonSubnetNsg 'Microsoft.Network/networkSecurityGroups@2023-09
   location: location
 }
 
-resource hubVnetCommonSubnetNsgName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource hubVnetCommonSubnetNsgDiagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: hubVnetCommonSubnetNsg
   name: 'default'
   properties: {
@@ -384,7 +384,7 @@ resource devVnetDefaultSubnetNsg 'Microsoft.Network/networkSecurityGroups@2023-0
   location: location
 }
 
-resource devVnetDefaultSubnetNsgName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource devVnetDefaultSubnetNsgDiagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: devVnetDefaultSubnetNsg
   name: 'default'
   properties: {
@@ -415,7 +415,7 @@ resource prodVnetDefaultSubnetNsg 'Microsoft.Network/networkSecurityGroups@2023-
   location: location
 }
 
-resource prodVnetDefaultSubnetNsgName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource prodVnetDefaultSubnetNsgDiagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: prodVnetDefaultSubnetNsg
   name: 'default'
   properties: {
@@ -592,7 +592,7 @@ resource hubVnetBastionSubnetNsg 'Microsoft.Network/networkSecurityGroups@2023-0
   }
 }
 
-resource hubVnetBastionSubnetNsgName_Microsoft_Insights_default 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource hubVnetBastionSubnetNsgDiagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: hubVnetBastionSubnetNsg
   name: 'default'
   properties: {
@@ -768,7 +768,7 @@ resource prodVnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   }
 }
 
-resource hubVnetName_hubVnetName_To_devVnetName_Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
+resource hubVnetToDevVnetPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
   parent: hubVnet
   name: '${hubVnetName}To${devVnetName}Peering'
   properties: {
@@ -785,7 +785,7 @@ resource hubVnetName_hubVnetName_To_devVnetName_Peering 'Microsoft.Network/virtu
   ]
 }
 
-resource hubVnetName_hubVnetName_To_prodVnetName_Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
+resource hubVnetToProdVnetPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
   parent: hubVnet
   name: '${hubVnetName}To${prodVnetName}Peering'
   properties: {
@@ -802,7 +802,7 @@ resource hubVnetName_hubVnetName_To_prodVnetName_Peering 'Microsoft.Network/virt
   ]
 }
 
-resource devVnetName_devVnetName_To_hubVnetName_Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
+resource devVnetToHubVnetPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
   parent: devVnet
   name: '${devVnetName}To${hubVnetName}Peering'
   properties: {
@@ -819,7 +819,7 @@ resource devVnetName_devVnetName_To_hubVnetName_Peering 'Microsoft.Network/virtu
   ]
 }
 
-resource prodVnetName_prodVnetName_To_hubVnetName_Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
+resource prodVnetToHubVnetPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
   parent: prodVnet
   name: '${prodVnetName}To${hubVnetName}Peering'
   properties: {
@@ -972,7 +972,7 @@ resource dnsVm 'Microsoft.Compute/virtualMachines@2023-09-01' = if (deployCustom
   ]
 }
 
-resource dnsVmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder && ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true)))) {
+resource dnsVmGuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder && ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true)))) {
   parent: dnsVm
   name: 'GuestAttestation'
   location: location
@@ -999,7 +999,7 @@ resource dnsVmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extension
   }
 }
 
-resource dnsVmName_CustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
+resource dnsVmCustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
   parent: dnsVm
   name: 'CustomScript'
   location: location
@@ -1017,7 +1017,7 @@ resource dnsVmName_CustomScript 'Microsoft.Compute/virtualMachines/extensions@20
   }
 }
 
-resource dnsVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
+resource dnsVmLogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
   parent: dnsVm
   name: 'LogAnalytics'
   location: location
@@ -1034,11 +1034,11 @@ resource dnsVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@20
     }
   }
   dependsOn: [
-    dnsVmName_CustomScript
+    dnsVmCustomScript
   ]
 }
 
-resource dnsVmName_DependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
+resource dnsVmDependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
   parent: dnsVm
   name: 'DependencyAgent'
   location: location
@@ -1050,8 +1050,8 @@ resource dnsVmName_DependencyAgent 'Microsoft.Compute/virtualMachines/extensions
   }
   dependsOn: [
     workspace
-    dnsVmName_CustomScript
-    dnsVmName_LogAnalytics
+    dnsVmCustomScript
+    dnsVmLogAnalytics
   ]
 }
 
@@ -1157,7 +1157,7 @@ resource devVm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   ]
 }
 
-resource devVmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+resource devVmGuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
   parent: devVm
   name: 'GuestAttestation'
   location: location
@@ -1184,7 +1184,7 @@ resource devVmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extension
   }
 }
 
-resource devVmName_CustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource devVmCustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: devVm
   name: 'CustomScript'
   location: location
@@ -1211,7 +1211,7 @@ resource devVmName_CustomScript 'Microsoft.Compute/virtualMachines/extensions@20
   ]
 }
 
-resource devVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource devVmLogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: devVm
   name: 'LogAnalytics'
   location: location
@@ -1228,11 +1228,11 @@ resource devVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@20
     }
   }
   dependsOn: [
-    devVmName_CustomScript
+    devVmCustomScript
   ]
 }
 
-resource devVmName_DependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource devVmDependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: devVm
   name: 'DependencyAgent'
   location: location
@@ -1244,8 +1244,8 @@ resource devVmName_DependencyAgent 'Microsoft.Compute/virtualMachines/extensions
   }
   dependsOn: [
     workspace
-    devVmName_CustomScript
-    devVmName_LogAnalytics
+    devVmCustomScript
+    devVmLogAnalytics
   ]
 }
 
@@ -1351,7 +1351,7 @@ resource prodVm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   ]
 }
 
-resource prodVmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+resource prodVmGuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
   parent: prodVm
   name: 'GuestAttestation'
   location: location
@@ -1378,7 +1378,7 @@ resource prodVmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensio
   }
 }
 
-resource prodVmName_CustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource prodVmCustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: prodVm
   name: 'CustomScript'
   location: location
@@ -1405,7 +1405,7 @@ resource prodVmName_CustomScript 'Microsoft.Compute/virtualMachines/extensions@2
   ]
 }
 
-resource prodVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource prodVmLogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: prodVm
   name: 'LogAnalytics'
   location: location
@@ -1422,11 +1422,11 @@ resource prodVmName_LogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2
     }
   }
   dependsOn: [
-    prodVmName_CustomScript
+    prodVmCustomScript
   ]
 }
 
-resource prodVmName_DependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource prodVmDependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: prodVm
   name: 'DependencyAgent'
   location: location
@@ -1438,8 +1438,8 @@ resource prodVmName_DependencyAgent 'Microsoft.Compute/virtualMachines/extension
   }
   dependsOn: [
     workspace
-    prodVmName_CustomScript
-    prodVmName_LogAnalytics
+    prodVmCustomScript
+    prodVmLogAnalytics
   ]
 }
 
@@ -1713,7 +1713,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource privateDnsZoneName_LinkTo_prodVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource linkToProdVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDnsZone
   name: 'LinkTo${prodVnetName}'
   location: 'global'
@@ -1725,7 +1725,7 @@ resource privateDnsZoneName_LinkTo_prodVnet 'Microsoft.Network/privateDnsZones/v
   }
 }
 
-resource privateDnsZoneName_LinkTo_hubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource linkToHubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDnsZone
   name: 'LinkTo${hubVnetName}'
   location: 'global'
@@ -1737,7 +1737,7 @@ resource privateDnsZoneName_LinkTo_hubVnet 'Microsoft.Network/privateDnsZones/vi
   }
 }
 
-resource privateDnsZoneName_LinkTo_devVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource linkToDevVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDnsZone
   name: 'LinkTo${devVnetName}'
   location: 'global'
@@ -1759,7 +1759,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   }
 }
 
-resource workspaceName_AgentHealthAssessment_workspace 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
+resource agentHealthAssessmentWorkspace 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
   location: location
   name: 'AgentHealthAssessment(${workspaceName})'
   properties: {
@@ -1773,7 +1773,7 @@ resource workspaceName_AgentHealthAssessment_workspace 'Microsoft.OperationsMana
   }
 }
 
-resource workspaceName_InfrastructureInsights_workspace 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
+resource infrastructureInsightsWorkspace 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
   location: location
   name: 'InfrastructureInsights(${workspaceName})'
   properties: {
@@ -1787,7 +1787,7 @@ resource workspaceName_InfrastructureInsights_workspace 'Microsoft.OperationsMan
   }
 }
 
-resource workspaceName_Kern 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceKern 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'Kern'
   kind: 'LinuxSyslog'
@@ -1813,7 +1813,7 @@ resource workspaceName_Kern 'Microsoft.OperationalInsights/workspaces/dataSource
   }
 }
 
-resource workspaceName_Syslog 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceSyslog 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'Syslog'
   kind: 'LinuxSyslog'
@@ -1839,7 +1839,7 @@ resource workspaceName_Syslog 'Microsoft.OperationalInsights/workspaces/dataSour
   }
 }
 
-resource workspaceName_User 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceUser 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'User'
   kind: 'LinuxSyslog'
@@ -1865,7 +1865,7 @@ resource workspaceName_User 'Microsoft.OperationalInsights/workspaces/dataSource
   }
 }
 
-resource workspaceName_SampleSyslogCollection1 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceSampleSyslogCollection1 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'SampleSyslogCollection1'
   kind: 'LinuxSyslogCollection'
@@ -1874,7 +1874,7 @@ resource workspaceName_SampleSyslogCollection1 'Microsoft.OperationalInsights/wo
   }
 }
 
-resource workspaceName_DiskPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceDiskPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'DiskPerfCounters'
   kind: 'LinuxPerformanceObject'
@@ -1911,7 +1911,7 @@ resource workspaceName_DiskPerfCounters 'Microsoft.OperationalInsights/workspace
   }
 }
 
-resource workspaceName_ProcessorPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceProcessorPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'ProcessorPerfCounters'
   kind: 'LinuxPerformanceObject'
@@ -1942,7 +1942,7 @@ resource workspaceName_ProcessorPerfCounters 'Microsoft.OperationalInsights/work
   }
 }
 
-resource workspaceName_ProcessPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceProcessPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'ProcessPerfCounters'
   kind: 'LinuxPerformanceObject'
@@ -1967,7 +1967,7 @@ resource workspaceName_ProcessPerfCounters 'Microsoft.OperationalInsights/worksp
   }
 }
 
-resource workspaceName_SystemPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceSystemPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'SystemPerfCounters'
   kind: 'LinuxPerformanceObject'
@@ -1983,7 +1983,7 @@ resource workspaceName_SystemPerfCounters 'Microsoft.OperationalInsights/workspa
   }
 }
 
-resource workspaceName_NetworkPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceNetworkPerfCounters 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'NetworkPerfCounters'
   kind: 'LinuxPerformanceObject'
@@ -2020,7 +2020,7 @@ resource workspaceName_NetworkPerfCounters 'Microsoft.OperationalInsights/worksp
   }
 }
 
-resource workspaceName_MemorydataSources 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceMemorydataSources 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'MemorydataSources'
   kind: 'LinuxPerformanceObject'
@@ -2045,7 +2045,7 @@ resource workspaceName_MemorydataSources 'Microsoft.OperationalInsights/workspac
   }
 }
 
-resource workspaceName_SampleLinuxPerfCollection1 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource workspaceSampleLinuxPerfCollection1 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: workspace
   name: 'SampleLinuxPerfCollection1'
   kind: 'LinuxPerformanceCollection'
@@ -2059,7 +2059,7 @@ resource adlsPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource adlsPrivateDnsZoneName_link_to_HubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource adlsPrivateDnsZoneLinkToHubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: adlsPrivateDnsZone
   name: 'link_to_${toLower(hubVnetName)}'
   location: 'global'
@@ -2076,7 +2076,7 @@ resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource blobPrivateDnsZoneName_link_to_HubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource blobPrivateDnsZoneLinkToHubVnet 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: blobPrivateDnsZone
   name: 'link_to_${toLower(hubVnetName)}'
   location: 'global'
@@ -2112,7 +2112,7 @@ resource adlsStorageAccountAdlsPrivateEndpoint 'Microsoft.Network/privateEndpoin
   ]
 }
 
-resource adlsStorageAccountAdlsPrivateEndpointName_PrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
+resource adlsStorageAccountAdlsPrivateEndpointPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
   parent: adlsStorageAccountAdlsPrivateEndpoint
   name: 'PrivateDnsZoneGroup'
   properties: {
@@ -2151,7 +2151,7 @@ resource adlsStorageAccountBlobPrivateEndpoint 'Microsoft.Network/privateEndpoin
   ]
 }
 
-resource adlsStorageAccountBlobPrivateEndpointName_PrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
+resource adlsStorageAccountBlobPrivateEndpointPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
   parent: adlsStorageAccountBlobPrivateEndpoint
   name: 'PrivateDnsZoneGroup'
   properties: {
@@ -2190,7 +2190,7 @@ resource blobStorageAccountBlobPrivateEndpoint 'Microsoft.Network/privateEndpoin
   ]
 }
 
-resource blobStorageAccountBlobPrivateEndpointName_PrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
+resource blobStorageAccountBlobPrivateEndpointPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
   parent: blobStorageAccountBlobPrivateEndpoint
   name: 'PrivateDnsZoneGroup'
   properties: {
