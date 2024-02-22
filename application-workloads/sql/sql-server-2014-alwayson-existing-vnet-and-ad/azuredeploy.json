@@ -1,0 +1,900 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "11507075659522695493"
+    }
+  },
+  "parameters": {
+    "namePrefix": {
+      "type": "string",
+      "maxLength": 8,
+      "metadata": {
+        "description": "Naming prefix for each new resource created. 8-char max, lowercase alphanumeric"
+      }
+    },
+    "diskType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Type of Storage to be used for VM disks"
+      }
+    },
+    "sqlVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "Size of the SQL VMs to be created"
+      }
+    },
+    "sqlWitnessVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the Witness VM to be created"
+      }
+    },
+    "existingDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS domain name for existing Active Directory domain"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Administrator of the existing Active Directory Domain"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Administrator account of the existing Active Directory Domain"
+      }
+    },
+    "sqlServerServiceAccountUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Server Service account name"
+      }
+    },
+    "sqlServerServiceAccountPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The SQL Server Service account password"
+      }
+    },
+    "existingSqlSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing subnet in the existing VNET to which the SQL & Witness VMs should be deployed"
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET"
+      }
+    },
+    "existingAdPDCVMName": {
+      "type": "string",
+      "maxLength": 15,
+      "metadata": {
+        "description": "Computer name of the existing Primary AD domain controller & DNS server"
+      }
+    },
+    "sqlLBIPAddress": {
+      "type": "string",
+      "defaultValue": "10.0.0.9",
+      "metadata": {
+        "description": "IP address of ILB for the SQL Server availability group listener to be created"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "sqlSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSqlSubnetName'))]",
+    "deploySqlClusterName": "deploySqlCluster"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('deploySqlClusterName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "domainName": {
+            "value": "[parameters('existingDomainName')]"
+          },
+          "diskType": {
+            "value": "[parameters('diskType')]"
+          },
+          "dnsServerName": {
+            "value": "[parameters('existingAdPDCVMName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "sqlServerServiceAccountUserName": {
+            "value": "[parameters('sqlServerServiceAccountUserName')]"
+          },
+          "sqlServerServiceAccountPassword": {
+            "value": "[parameters('sqlServerServiceAccountPassword')]"
+          },
+          "nicSubnetUri": {
+            "value": "[variables('sqlSubnetRef')]"
+          },
+          "lbSubnetUri": {
+            "value": "[variables('sqlSubnetRef')]"
+          },
+          "sqlLBIPAddress": {
+            "value": "[parameters('sqlLBIPAddress')]"
+          },
+          "sqlVMSize": {
+            "value": "[parameters('sqlVMSize')]"
+          },
+          "sqlWitnessVMSize": {
+            "value": "[parameters('sqlWitnessVMSize')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "13025189152982166142"
+            }
+          },
+          "parameters": {
+            "namePrefix": {
+              "type": "string"
+            },
+            "domainName": {
+              "type": "string"
+            },
+            "dnsServerName": {
+              "type": "string"
+            },
+            "adminUsername": {
+              "type": "string"
+            },
+            "adminPassword": {
+              "type": "securestring"
+            },
+            "sqlServerServiceAccountUserName": {
+              "type": "string"
+            },
+            "sqlServerServiceAccountPassword": {
+              "type": "securestring"
+            },
+            "diskType": {
+              "type": "string",
+              "defaultValue": "StandardSSD_LRS",
+              "allowedValues": [
+                "Standard_LRS",
+                "StandardSSD_LRS",
+                "Premium_LRS"
+              ]
+            },
+            "nicSubnetUri": {
+              "type": "string"
+            },
+            "lbSubnetUri": {
+              "type": "string"
+            },
+            "sqlLBIPAddress": {
+              "type": "string"
+            },
+            "sqlVMSize": {
+              "type": "string"
+            },
+            "sqlWitnessVMSize": {
+              "type": "string"
+            },
+            "_artifactsLocation": {
+              "type": "string"
+            },
+            "_artifactsLocationSasToken": {
+              "type": "securestring"
+            },
+            "windowsImagePublisher": {
+              "type": "string",
+              "defaultValue": "MicrosoftSQLServer"
+            },
+            "windowsImageOffer": {
+              "type": "string",
+              "defaultValue": "SQL2014SP2-WS2012R2"
+            },
+            "windowsImageSKU": {
+              "type": "string",
+              "defaultValue": "Enterprise"
+            },
+            "windowsImageVersion": {
+              "type": "string",
+              "defaultValue": "latest"
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            }
+          },
+          "variables": {
+            "sqlDiskSize": 1000,
+            "sqlWitnessDiskSize": 128,
+            "sqlNamePrefix": "[format('{0}-sql-', parameters('namePrefix'))]",
+            "sqlAvailabilitySetName": "[format('{0}as', variables('sqlNamePrefix'))]",
+            "sqlLBName": "[format('{0}ilb', variables('sqlNamePrefix'))]",
+            "lbFE1": "[format('{0}ilbfe1', variables('sqlNamePrefix'))]",
+            "lbBE": "[format('{0}ilbbe', variables('sqlNamePrefix'))]",
+            "sqlLBFEConfigID1": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('sqlLBName'), variables('lbFE1'))]",
+            "sqlLBBEAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('sqlLBName'), variables('lbBE'))]",
+            "sqlAOProbe1": "[format('{0}ilbp1', variables('sqlNamePrefix'))]",
+            "sqlLBProbeID1": "[resourceId('Microsoft.Network/loadBalancers/probes/', variables('sqlLBName'), variables('sqlAOProbe1'))]",
+            "deploySqlWitnessShareName": "deploySqlWitnessShare",
+            "sqlWitnessSharePath": "[format('{0}-fsw', parameters('namePrefix'))]",
+            "sqlWitnessVMName": "[format('{0}w', variables('sqlNamePrefix'))]",
+            "deploySqlAlwaysOnName": "deploySqlAlwaysOn",
+            "sqlAOEPName": "[format('{0}-agep', parameters('namePrefix'))]",
+            "sqlAOAGName1": "[format('{0}-ag1', parameters('namePrefix'))]",
+            "sqlAOListener1": "[format('{0}-agl1', parameters('namePrefix'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Compute/availabilitySets",
+              "apiVersion": "2023-09-01",
+              "name": "[variables('sqlAvailabilitySetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "platformUpdateDomainCount": 20,
+                "platformFaultDomainCount": 2
+              },
+              "sku": {
+                "name": "Aligned"
+              }
+            },
+            {
+              "type": "Microsoft.Network/loadBalancers",
+              "apiVersion": "2023-09-01",
+              "name": "[variables('sqlLBName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "frontendIPConfigurations": [
+                  {
+                    "name": "[variables('lbFE1')]",
+                    "properties": {
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[parameters('sqlLBIPAddress')]",
+                      "subnet": {
+                        "id": "[parameters('lbSubnetUri')]"
+                      }
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "[variables('lbBE')]"
+                  }
+                ],
+                "loadBalancingRules": [
+                  {
+                    "name": "[variables('sqlAOListener1')]",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[variables('sqlLBFEConfigID1')]"
+                      },
+                      "backendAddressPool": {
+                        "id": "[variables('sqlLBBEAddressPoolID')]"
+                      },
+                      "probe": {
+                        "id": "[variables('sqlLBProbeID1')]"
+                      },
+                      "protocol": "Tcp",
+                      "frontendPort": 1433,
+                      "backendPort": 1433,
+                      "enableFloatingIP": true
+                    }
+                  }
+                ],
+                "probes": [
+                  {
+                    "name": "[variables('sqlAOProbe1')]",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "port": 59999,
+                      "intervalInSeconds": 5,
+                      "numberOfProbes": 2
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "copy": {
+                "name": "sqlNic",
+                "count": "[length(range(0, 2))]"
+              },
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}{1}-nic', variables('sqlNamePrefix'), range(0, 2)[copyIndex()])]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('nicSubnetUri')]"
+                      },
+                      "loadBalancerBackendAddressPools": [
+                        {
+                          "id": "[variables('sqlLBBEAddressPoolID')]"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('sqlLBName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}-nic', variables('sqlWitnessVMName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('nicSubnetUri')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "copy": {
+                "name": "sqlVm",
+                "count": "[length(range(0, 2))]"
+              },
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}{1}', variables('sqlNamePrefix'), range(0, 2)[copyIndex()])]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('sqlVMSize')]"
+                },
+                "availabilitySet": {
+                  "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
+                },
+                "osProfile": {
+                  "computerName": "[format('{0}{1}', variables('sqlNamePrefix'), range(0, 2)[copyIndex()])]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "[parameters('windowsImagePublisher')]",
+                    "offer": "[parameters('windowsImageOffer')]",
+                    "sku": "[parameters('windowsImageSKU')]",
+                    "version": "[parameters('windowsImageVersion')]"
+                  },
+                  "osDisk": {
+                    "name": "[format('{0}{1}_OSDisk', variables('sqlNamePrefix'), range(0, 2)[copyIndex()])]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "[parameters('diskType')]"
+                    }
+                  },
+                  "dataDisks": [
+                    {
+                      "lun": 0,
+                      "name": "[format('{0}{1}_datadisk1', variables('sqlNamePrefix'), range(0, 2)[copyIndex()])]",
+                      "createOption": "Empty",
+                      "diskSizeGB": "[variables('sqlDiskSize')]",
+                      "caching": "None",
+                      "managedDisk": {
+                        "storageAccountType": "[parameters('diskType')]"
+                      }
+                    },
+                    {
+                      "lun": 1,
+                      "name": "[format('{0}{1}_logdisk1', variables('sqlNamePrefix'), range(0, 2)[copyIndex()])]",
+                      "createOption": "Empty",
+                      "diskSizeGB": "[variables('sqlDiskSize')]",
+                      "caching": "None",
+                      "managedDisk": {
+                        "storageAccountType": "[parameters('diskType')]"
+                      }
+                    }
+                  ]
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}-nic', variables('sqlNamePrefix'), range(0, 2)[range(0, 2)[copyIndex()]]))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}-nic', variables('sqlNamePrefix'), range(0, 2)[range(0, 2)[copyIndex()]]))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2023-09-01",
+              "name": "[variables('sqlWitnessVMName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('sqlWitnessVMSize')]"
+                },
+                "availabilitySet": {
+                  "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
+                },
+                "osProfile": {
+                  "computerName": "[variables('sqlWitnessVMName')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "[parameters('windowsImagePublisher')]",
+                    "offer": "[parameters('windowsImageOffer')]",
+                    "sku": "[parameters('windowsImageSKU')]",
+                    "version": "[parameters('windowsImageVersion')]"
+                  },
+                  "osDisk": {
+                    "name": "[format('{0}_OSDisk', variables('sqlWitnessVMName'))]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "[parameters('diskType')]"
+                    }
+                  },
+                  "dataDisks": [
+                    {
+                      "name": "[format('{0}_datadisk1', variables('sqlWitnessVMName'))]",
+                      "caching": "None",
+                      "createOption": "Empty",
+                      "diskSizeGB": "[variables('sqlWitnessDiskSize')]",
+                      "lun": 0,
+                      "managedDisk": {
+                        "storageAccountType": "[parameters('diskType')]"
+                      }
+                    }
+                  ]
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('sqlWitnessVMName')))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('sqlWitnessVMName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "[variables('deploySqlWitnessShareName')]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "sqlWitnessVMName": {
+                    "value": "[variables('sqlWitnessVMName')]"
+                  },
+                  "domainName": {
+                    "value": "[parameters('domainName')]"
+                  },
+                  "sharePath": {
+                    "value": "[variables('sqlWitnessSharePath')]"
+                  },
+                  "adminUsername": {
+                    "value": "[parameters('adminUsername')]"
+                  },
+                  "adminPassword": {
+                    "value": "[parameters('adminPassword')]"
+                  },
+                  "_artifactsLocation": {
+                    "value": "[parameters('_artifactsLocation')]"
+                  },
+                  "_artifactsLocationSasToken": {
+                    "value": "[parameters('_artifactsLocationSasToken')]"
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.25.53.49325",
+                      "templateHash": "9756960383799467755"
+                    }
+                  },
+                  "parameters": {
+                    "sqlWitnessVMName": {
+                      "type": "string"
+                    },
+                    "domainName": {
+                      "type": "string"
+                    },
+                    "sharePath": {
+                      "type": "string"
+                    },
+                    "adminUsername": {
+                      "type": "string"
+                    },
+                    "adminPassword": {
+                      "type": "securestring"
+                    },
+                    "_artifactsLocation": {
+                      "type": "string"
+                    },
+                    "_artifactsLocationSasToken": {
+                      "type": "securestring"
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Location for all resources."
+                      }
+                    }
+                  },
+                  "variables": {
+                    "fswModulesURL": "[uri(parameters('_artifactsLocation'), format('dsc/create-file-share-witness.ps1.zip{0}', parameters('_artifactsLocationSasToken')))]",
+                    "fswConfigurationFunction": "CreateFileShareWitness.ps1\\CreateFileShareWitness"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Compute/virtualMachines/extensions",
+                      "apiVersion": "2023-09-01",
+                      "name": "[format('{0}/CreateFileShareWitness', parameters('sqlWitnessVMName'))]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.17",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                          "wmfVersion": "5.0",
+                          "modulesUrl": "[variables('fswModulesURL')]",
+                          "configurationFunction": "[variables('fswConfigurationFunction')]",
+                          "properties": {
+                            "domainName": "[parameters('domainName')]",
+                            "sharePath": "[parameters('sharePath')]",
+                            "adminCreds": {
+                              "userName": "[parameters('adminUsername')]",
+                              "password": "PrivateSettingsRef:adminPassword"
+                            }
+                          }
+                        },
+                        "protectedSettings": {
+                          "items": {
+                            "adminPassword": "[parameters('adminPassword')]"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('sqlWitnessVMName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "[variables('deploySqlAlwaysOnName')]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "sqlNamePrefix": {
+                    "value": "[variables('sqlNamePrefix')]"
+                  },
+                  "domainName": {
+                    "value": "[parameters('domainName')]"
+                  },
+                  "namePrefix": {
+                    "value": "[parameters('namePrefix')]"
+                  },
+                  "sharePath": {
+                    "value": "[variables('sqlWitnessSharePath')]"
+                  },
+                  "sqlWitnessVMName": {
+                    "value": "[variables('sqlWitnessVMName')]"
+                  },
+                  "sqlLBName": {
+                    "value": "[variables('sqlLBName')]"
+                  },
+                  "sqlLBIPAddress": {
+                    "value": "[parameters('sqlLBIPAddress')]"
+                  },
+                  "dnsServerName": {
+                    "value": "[parameters('dnsServerName')]"
+                  },
+                  "sqlServerServiceAccountUserName": {
+                    "value": "[parameters('sqlServerServiceAccountUserName')]"
+                  },
+                  "sqlServerServiceAccountPassword": {
+                    "value": "[parameters('sqlServerServiceAccountPassword')]"
+                  },
+                  "adminUsername": {
+                    "value": "[parameters('adminUsername')]"
+                  },
+                  "adminPassword": {
+                    "value": "[parameters('adminPassword')]"
+                  },
+                  "_artifactsLocation": {
+                    "value": "[parameters('_artifactsLocation')]"
+                  },
+                  "_artifactsLocationSasToken": {
+                    "value": "[parameters('_artifactsLocationSasToken')]"
+                  },
+                  "sqlAlwaysOnEndpointName": {
+                    "value": "[variables('sqlAOEPName')]"
+                  },
+                  "sqlAlwaysOnAvailabilityGroupName1": {
+                    "value": "[variables('sqlAOAGName1')]"
+                  },
+                  "sqlAlwaysOnAvailabilityGroupListenerName1": {
+                    "value": "[variables('sqlAOListener1')]"
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.25.53.49325",
+                      "templateHash": "14913890794262730978"
+                    }
+                  },
+                  "parameters": {
+                    "sqlNamePrefix": {
+                      "type": "string"
+                    },
+                    "domainName": {
+                      "type": "string"
+                    },
+                    "namePrefix": {
+                      "type": "string"
+                    },
+                    "sharePath": {
+                      "type": "string"
+                    },
+                    "sqlWitnessVMName": {
+                      "type": "string"
+                    },
+                    "sqlLBName": {
+                      "type": "string"
+                    },
+                    "sqlLBIPAddress": {
+                      "type": "string"
+                    },
+                    "dnsServerName": {
+                      "type": "string"
+                    },
+                    "sqlServerServiceAccountUserName": {
+                      "type": "string"
+                    },
+                    "sqlServerServiceAccountPassword": {
+                      "type": "securestring"
+                    },
+                    "adminUsername": {
+                      "type": "string"
+                    },
+                    "adminPassword": {
+                      "type": "securestring"
+                    },
+                    "sqlAlwaysOnEndpointName": {
+                      "type": "string"
+                    },
+                    "sqlAlwaysOnAvailabilityGroupName1": {
+                      "type": "string"
+                    },
+                    "sqlAlwaysOnAvailabilityGroupListenerName1": {
+                      "type": "string"
+                    },
+                    "_artifactsLocation": {
+                      "type": "string"
+                    },
+                    "_artifactsLocationSasToken": {
+                      "type": "securestring"
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Location for all resources."
+                      }
+                    }
+                  },
+                  "variables": {
+                    "sqlAOPrepareModulesURL": "[uri(parameters('_artifactsLocation'), format('dsc/prepare-sql-alwayson-server.ps1.zip{0}', parameters('_artifactsLocationSasToken')))]",
+                    "sqlAOPrepareConfigurationFunction": "PrepareAlwaysOnSqlServer.ps1\\PrepareAlwaysOnSqlServer",
+                    "createClusterModulesURL": "[uri(parameters('_artifactsLocation'), format('dsc/create-failover-cluster.ps1.zip{0}', parameters('_artifactsLocationSasToken')))]",
+                    "createClusterConfigurationFunction": "CreateFailoverCluster.ps1\\CreateFailoverCluster",
+                    "clusterName": "[format('{0}-c', parameters('namePrefix'))]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Compute/virtualMachines/extensions",
+                      "apiVersion": "2023-09-01",
+                      "name": "[format('{0}0/sqlAOPrepare', parameters('sqlNamePrefix'))]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.17",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                          "wmfVersion": "5.0",
+                          "modulesUrl": "[variables('sqlAOPrepareModulesURL')]",
+                          "configurationFunction": "[variables('sqlAOPrepareConfigurationFunction')]",
+                          "properties": {
+                            "domainName": "[parameters('domainName')]",
+                            "sqlAlwaysOnEndpointName": "[parameters('sqlAlwaysOnEndpointName')]",
+                            "adminCreds": {
+                              "userName": "[parameters('adminUsername')]",
+                              "password": "PrivateSettingsRef:adminPassword"
+                            },
+                            "sqlServiceCreds": {
+                              "userName": "[parameters('sqlServerServiceAccountUserName')]",
+                              "password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
+                            }
+                          }
+                        },
+                        "protectedSettings": {
+                          "items": {
+                            "adminPassword": "[parameters('adminPassword')]",
+                            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "Microsoft.Compute/virtualMachines/extensions",
+                      "apiVersion": "2023-09-01",
+                      "name": "[format('{0}1/CreateCluster', parameters('sqlNamePrefix'))]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.17",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                          "wmfVersion": "5.0",
+                          "modulesUrl": "[variables('createClusterModulesURL')]",
+                          "configurationFunction": "[variables('createClusterConfigurationFunction')]",
+                          "properties": {
+                            "domainName": "[parameters('domainName')]",
+                            "clusterName": "[variables('clusterName')]",
+                            "sharePath": "[format('\\\\{0}\\{1}', parameters('sqlWitnessVMName'), parameters('sharePath'))]",
+                            "nodes": [
+                              "[format('{0}0', parameters('sqlNamePrefix'))]",
+                              "[format('{0}1', parameters('sqlNamePrefix'))]"
+                            ],
+                            "sqlAlwaysOnEndpointName": "[parameters('sqlAlwaysOnEndpointName')]",
+                            "sqlAlwaysOnAvailabilityGroupName": "[parameters('sqlAlwaysOnAvailabilityGroupName1')]",
+                            "sqlAlwaysOnAvailabilityGroupListenerName": "[parameters('sqlAlwaysOnAvailabilityGroupListenerName1')]",
+                            "sqlAlwaysOnAvailabilityGroupListenerPort": 1433,
+                            "lbName": "[parameters('sqlLBName')]",
+                            "lbAddress": "[parameters('sqlLBIPAddress')]",
+                            "primaryReplica": "[format('{0}1', parameters('sqlNamePrefix'))]",
+                            "secondaryReplica": "[format('{0}0', parameters('sqlNamePrefix'))]",
+                            "dnsServerName": "[parameters('dnsServerName')]",
+                            "adminCreds": {
+                              "userName": "[parameters('adminUsername')]",
+                              "password": "PrivateSettingsRef:adminPassword"
+                            },
+                            "sqlServiceCreds": {
+                              "userName": "[parameters('sqlServerServiceAccountUserName')]",
+                              "password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
+                            }
+                          }
+                        },
+                        "protectedSettings": {
+                          "items": {
+                            "adminPassword": "[parameters('adminPassword')]",
+                            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
+                          }
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', split(format('{0}0/sqlAOPrepare', parameters('sqlNamePrefix')), '/')[0], split(format('{0}0/sqlAOPrepare', parameters('sqlNamePrefix')), '/')[1])]"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('deploySqlWitnessShareName'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}{1}', variables('sqlNamePrefix'), range(0, 2)[0]))]",
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}{1}', variables('sqlNamePrefix'), range(0, 2)[1]))]"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
