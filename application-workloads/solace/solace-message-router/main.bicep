@@ -213,7 +213,7 @@ var syslogFacilities = [
   'local7'
 ]
 
-module solaceSecurityTemplate 'nestedtemplates/security-shared-resources.bicep' = {
+module solaceSecurityTemplate 'modules/security-shared-resources.bicep' = {
   name: solaceSecurityTemplateName
   params: {
     securityGroupName: securityGroupName
@@ -222,7 +222,7 @@ module solaceSecurityTemplate 'nestedtemplates/security-shared-resources.bicep' 
   }
 }
 
-module solaceLoadBalancer 'nestedtemplates/loadbalancer-shared-resources.bicep' = {
+module solaceLoadBalancer 'modules/loadbalancer-shared-resources.bicep' = {
   name: solaceLoadBalancerName
   params: {
     exposure: vmAndLoadbalancerExposure
@@ -326,7 +326,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-04-01' = if (emp
   }
 }
 
-module solaceUpdateSubnet 'nestedtemplates/update-subnet-shared-resources.bicep' = {
+module solaceUpdateSubnet 'modules/update-subnet-shared-resources.bicep' = {
   name: solaceUpdateSubnetName
   params: {
     virtualNetworkName: virtualNetworkName
