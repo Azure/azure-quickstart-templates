@@ -97,7 +97,7 @@ var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPA
   properties: {
     subnet: ((i == 0) ? azureFirewallSubnetJSON : null)
     publicIPAddress: {
-      id: publicIPAddress[i+1].id
+      id: publicIPAddress[i].id
     }
   }
 }]
