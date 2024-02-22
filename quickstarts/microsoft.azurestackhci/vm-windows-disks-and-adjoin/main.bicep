@@ -13,6 +13,30 @@ param customLocationName string
 @secure()
 param adminPassword string
 
+@description('Optional Domain name to join - specify to join the VM to domain. example: contoso.com - If left empty, ou, username and password parameters will not be evaluated in the deployment.')
+param domainToJoin string
+
+@description('Optional domain organizational unit to join. example: ou=computers,dc=contoso,dc=com - Required if \'domainToJoin\' is secified.')
+param domainTargetOu string = ''
+
+@description('Optional User Name with permissions to join the domain. example: domain-joiner - Required if \'domainToJoin\' is secified.')
+param domainJoinUserName string
+
+@description('Optional Password of User with permissions to join the domain. - Required if \'domainToJoin\' is secified.')
+@secure()
+param domainJoinPassword string
+
+@description('The bicep array description of the dataDisks to attached to the vm. Provide an empty array for no addtional disks, or an array following the example below.')
+// param dataDiskParams array = []
+param dataDiskParams array = [ {
+    diskSizeGB: 8
+    dynamic: true
+  }
+  {
+    diskSizeGB: 16
+    dynamic: false
+  } ]
+
 var nicName = 'nic-${name}' // name of the NIC to be created
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName) // full custom location ID
 var marketplaceGalleryImageId = resourceId('microsoft.azurestackhci/marketplaceGalleryImages', imageName) // full marketplace gallery image ID
@@ -51,6 +75,19 @@ resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
   }
 }
 
+resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview' = [for (disk, i) in dataDiskParams: {
+  name: '${name}dataDisk${padLeft(i + 1, 2, '0')}'
+  location: location
+  extendedLocation: {
+    type: 'CustomLocation'
+    name: customLocationId
+  }
+  properties: {
+    diskSizeGB: disk.diskSizeGB
+    dynamic: disk.dynamic
+  }
+}]
+
 resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09-01-preview' = {
   name: 'default' // value must be 'default' per 2023-09-01-preview
   properties: {
@@ -78,6 +115,10 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
       imageReference: {
         id: marketplaceGalleryImageId
       }
+      dataDisks: [for (disk, i) in dataDiskParams: {
+        id: resourceId('Microsoft.AzureStackHCI/virtualHardDisks', '${name}dataDisk${padLeft(i + 1, 2, '0')}')
+
+      }]
     }
     networkProfile: {
       networkInterfaces: [
@@ -92,4 +133,27 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
     name: customLocationId
   }
   scope: hybridComputeMachine
+
+}
+
+resource domainJoin 'Microsoft.HybridCompute/machines/extensions@2023-10-03-preview' = if (!empty(domainToJoin)) {
+  parent: hybridComputeMachine
+  location: location
+  name: 'domainJoinExtension'
+  properties: {
+    publisher: 'Microsoft.Compute'
+    type: 'JsonADDomainExtension'
+    typeHandlerVersion: '1.3'
+    autoUpgradeMinorVersion: true
+    settings: {
+      name: domainToJoin
+      OUPath: domainTargetOu
+      User: '${domainToJoin}\\${domainJoinUserName}'
+      Restart: true
+      Options: 3
+    }
+    protectedSettings: {
+      Password: domainJoinPassword
+    }
+  }
 }
