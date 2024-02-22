@@ -1,0 +1,405 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "4559782554408825972"
+    }
+  },
+  "parameters": {
+    "serverName": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "Server name for the MySQL PaaS instance and its replicas (replicas will get a \"-\" attached to the end with the replica number)."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the MySQL PaaS components to be deployed."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator name for MySQL servers."
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the MySQL server administrator."
+      }
+    },
+    "vCPU": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of vCPUs for the MySQL Server instances to be deployed."
+      }
+    },
+    "skuFamily": {
+      "type": "string",
+      "defaultValue": "Gen5",
+      "allowedValues": [
+        "Gen4",
+        "Gen5"
+      ],
+      "metadata": {
+        "description": "Hardware generation for the MySQL Server instances to be deployed."
+      }
+    },
+    "skuSizeMB": {
+      "type": "int",
+      "defaultValue": 5120,
+      "minValue": 5120,
+      "maxValue": 10240,
+      "metadata": {
+        "description": "Storage capacity for the MySQL Server instances to be deployed."
+      }
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": "GeneralPurpose",
+      "allowedValues": [
+        "Basic",
+        "GeneralPurpose",
+        "MemoryOptimized"
+      ],
+      "metadata": {
+        "description": "Performance tier for the MySQL Server instances to be deployed."
+      }
+    },
+    "numberOfReplicas": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "metadata": {
+        "description": "Number of replica instances to be deployed."
+      }
+    },
+    "version": {
+      "type": "string",
+      "defaultValue": "5.7",
+      "allowedValues": [
+        "5.6",
+        "5.7"
+      ],
+      "metadata": {
+        "description": "MySQL version for the MySQL Server instances to be deployed."
+      }
+    },
+    "enableAzureResources": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Azure hosted resources to access the master instance."
+      }
+    },
+    "backupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "metadata": {
+        "description": "Backup retention period."
+      }
+    },
+    "geoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "Enable or disable geo redundant backups."
+      }
+    }
+  },
+  "variables": {
+    "sourceServerId": "[resourceId('Microsoft.DBforMySQL/servers', parameters('serverName'))]",
+    "skuName": "[format('{0}_{1}_{2}', if(equals(parameters('skuTier'), 'GeneralPurpose'), 'GP', if(equals(parameters('skuTier'), 'Basic'), 'B', if(equals(parameters('skuTier'), 'MemoryOptimized'), 'MO', ''))), parameters('skuFamily'), parameters('vCPU'))]",
+    "sku": {
+      "name": "[variables('skuName')]",
+      "tier": "[parameters('skuTier')]",
+      "capacity": "[parameters('vCPU')]",
+      "size": "[parameters('skuSizeMB')]",
+      "family": "[parameters('skuFamily')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "MySQLServer",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "sku": {
+            "value": "[variables('sku')]"
+          },
+          "mysqlServerName": {
+            "value": "[parameters('serverName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "version": {
+            "value": "[parameters('version')]"
+          },
+          "administratorLogin": {
+            "value": "[parameters('administratorLogin')]"
+          },
+          "administratorLoginPassword": {
+            "value": "[parameters('administratorLoginPassword')]"
+          },
+          "backupRetentionDays": {
+            "value": "[parameters('backupRetentionDays')]"
+          },
+          "geoRedundantBackup": {
+            "value": "[parameters('geoRedundantBackup')]"
+          },
+          "enableAzureResources": {
+            "value": "[parameters('enableAzureResources')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "6458541875198329898"
+            }
+          },
+          "parameters": {
+            "sku": {
+              "type": "object",
+              "metadata": {
+                "description": "SKU for the MySQL PaaS instance to be deployed."
+              }
+            },
+            "mysqlServerName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the MySQL PaaS instance to be deployed."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location where the instance should be deployed."
+              }
+            },
+            "version": {
+              "type": "string",
+              "metadata": {
+                "description": "MySQL version for the MySQL Server instances to be deployed."
+              }
+            },
+            "administratorLogin": {
+              "type": "string",
+              "metadata": {
+                "description": "Administrator name for MySQL servers."
+              }
+            },
+            "administratorLoginPassword": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Password for the MySQL server administrator."
+              }
+            },
+            "backupRetentionDays": {
+              "type": "int",
+              "metadata": {
+                "description": "Backup retention period."
+              }
+            },
+            "geoRedundantBackup": {
+              "type": "string",
+              "metadata": {
+                "description": "Enable or disable geo redundant backups."
+              }
+            },
+            "enableAzureResources": {
+              "type": "bool",
+              "metadata": {
+                "description": "Enable Azure hosted resources to access the master instance."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DBforMySQL/servers",
+              "apiVersion": "2017-12-01",
+              "name": "[parameters('mysqlServerName')]",
+              "sku": "[parameters('sku')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "version": "[parameters('version')]",
+                "createMode": "Default",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "storageProfile": {
+                  "storageMB": "[parameters('sku').size]",
+                  "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                  "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                }
+              }
+            },
+            {
+              "condition": "[parameters('enableAzureResources')]",
+              "type": "Microsoft.DBforMySQL/servers/firewallRules",
+              "apiVersion": "2017-12-01",
+              "name": "[format('{0}/{1}', parameters('mysqlServerName'), 'AllowAzureResources')]",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DBforMySQL/servers', parameters('mysqlServerName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "mysqlDetails": {
+              "type": "object",
+              "value": "[reference(resourceId('Microsoft.DBforMySQL/servers', parameters('mysqlServerName')), '2017-12-01')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "condition": "[greater(parameters('numberOfReplicas'), 0)]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "MySQLServerReplicas",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "sku": {
+            "value": "[variables('sku')]"
+          },
+          "serverName": {
+            "value": "[parameters('serverName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "numberOfReplicas": {
+            "value": "[parameters('numberOfReplicas')]"
+          },
+          "backupRetentionDays": {
+            "value": "[parameters('backupRetentionDays')]"
+          },
+          "geoRedundantBackup": {
+            "value": "[parameters('geoRedundantBackup')]"
+          },
+          "sourceServerId": {
+            "value": "[variables('sourceServerId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.25.53.49325",
+              "templateHash": "3914171842373145516"
+            }
+          },
+          "parameters": {
+            "sku": {
+              "type": "object",
+              "metadata": {
+                "description": "SKU for the MySQL PaaS instance to be deployed."
+              }
+            },
+            "serverName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the MySQL PaaS instance to be deployed."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location where the instance should be deployed."
+              }
+            },
+            "numberOfReplicas": {
+              "type": "int",
+              "metadata": {
+                "description": "Number of replica instances to be deployed."
+              }
+            },
+            "backupRetentionDays": {
+              "type": "int",
+              "metadata": {
+                "description": "Backup retention period."
+              }
+            },
+            "geoRedundantBackup": {
+              "type": "string",
+              "metadata": {
+                "description": "Enable or disable geo redundant backups."
+              }
+            },
+            "sourceServerId": {
+              "type": "string",
+              "metadata": {
+                "description": "Reference ID of the MySQL PaaS instance being deployed."
+              }
+            }
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "mysqlServer",
+                "count": "[length(range(0, if(equals(parameters('numberOfReplicas'), 0), add(parameters('numberOfReplicas'), 1), parameters('numberOfReplicas'))))]",
+                "mode": "serial",
+                "batchSize": 1
+              },
+              "type": "Microsoft.DBforMySQL/servers",
+              "apiVersion": "2017-12-01",
+              "name": "[format('{0}{1}', parameters('serverName'), add(range(0, if(equals(parameters('numberOfReplicas'), 0), add(parameters('numberOfReplicas'), 1), parameters('numberOfReplicas')))[copyIndex()], 1))]",
+              "sku": "[parameters('sku')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "createMode": "Replica",
+                "sourceServerId": "[parameters('sourceServerId')]",
+                "storageProfile": {
+                  "storageMB": "[parameters('sku').size]",
+                  "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                  "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'MySQLServer')]"
+      ]
+    }
+  ]
+}
