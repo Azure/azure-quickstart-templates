@@ -92,7 +92,7 @@ resource failoverCluster 'Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups@20
   }
 }
 
-module joincluster './modules/join-cluster.bicep' = {
+module joincluster 'modules/join-cluster.bicep' = {
   name: 'joincluster'
   params: {
     existingVirtualMachineNames: existingVMList
