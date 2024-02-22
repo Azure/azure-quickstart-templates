@@ -13,29 +13,30 @@ param customLocationName string
 @secure()
 param adminPassword string
 
+// below parameters are used to join the VM to a domain
 @description('Optional Domain name to join - specify to join the VM to domain. example: contoso.com - If left empty, ou, username and password parameters will not be evaluated in the deployment.')
-param domainToJoin string
-
+param domainToJoin string = ''
 @description('Optional domain organizational unit to join. example: ou=computers,dc=contoso,dc=com - Required if \'domainToJoin\' is secified.')
 param domainTargetOu string = ''
-
 @description('Optional User Name with permissions to join the domain. example: domain-joiner - Required if \'domainToJoin\' is secified.')
-param domainJoinUserName string
-
+param domainJoinUserName string = ''
 @description('Optional Password of User with permissions to join the domain. - Required if \'domainToJoin\' is secified.')
 @secure()
-param domainJoinPassword string
+param domainJoinPassword string = ''
 
 @description('The bicep array description of the dataDisks to attached to the vm. Provide an empty array for no addtional disks, or an array following the example below.')
 // param dataDiskParams array = []
-param dataDiskParams array = [ {
+param dataDiskParams array = [
+  {
     diskSizeGB: 8
     dynamic: true
+    //containerId: specify a container ID to target a specific CSV/storage path in your HCI cluster
   }
   {
     diskSizeGB: 16
     dynamic: false
-  } ]
+  }
+]
 
 var nicName = 'nic-${name}' // name of the NIC to be created
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName) // full custom location ID
@@ -85,6 +86,7 @@ resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview'
   properties: {
     diskSizeGB: disk.diskSizeGB
     dynamic: disk.dynamic
+    containerId: empty(disk.containerId) ? null : disk.containerId
   }
 }]
 
@@ -112,6 +114,7 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
       }
     }
     storageProfile: {
+      // vmConfigStoragePathId: specify a storage path ID to target a specific CSV/storage path in your HCI cluster
       imageReference: {
         id: marketplaceGalleryImageId
       }
