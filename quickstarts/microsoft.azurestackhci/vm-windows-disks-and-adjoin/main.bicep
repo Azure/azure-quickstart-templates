@@ -86,7 +86,7 @@ resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview'
   properties: {
     diskSizeGB: disk.diskSizeGB
     dynamic: disk.dynamic
-    containerId: empty(disk.containerId) ? null : disk.containerId
+    // containerId: uncomment if you want to target a specific CSV/storage path in your HCI cluster
   }
 }]
 
