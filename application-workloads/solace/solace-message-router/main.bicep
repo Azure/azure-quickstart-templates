@@ -331,7 +331,7 @@ module solaceUpdateSubnet 'nestedtemplates/update-subnet-shared-resources.bicep'
   params: {
     virtualNetworkName: virtualNetworkName
     subnetName: subnetName
-    subnetAddressPrefix: reference(resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName), '2023-04-01').addressPrefix
+    subnetAddressPrefix: virtualNetwork.properties.subnets[0].properties.addressPrefix
     nsgId: resourceId('Microsoft.Network/networkSecurityGroups', securityGroupName)
   }
   dependsOn: [
@@ -500,7 +500,7 @@ resource dnsLabelForVmIpConfigureSolaceContainer 'Microsoft.Compute/virtualMachi
       ]
     }
     protectedSettings: {
-      commandToExecute: 'mkdir -p -m 770 ${adminPasswordDir}; echo ${solaceAdminPassword} > ${adminPasswordFile}; bash ${solaceInstallScriptName} -c ${i} -d ${dnsLabelForVmIp} -i ${numberOfInstances} -p ${adminPasswordFile} -n ${maxNumberOfClientConnections} -q ${maxNumberOfQueueMessages} -s ${((i == monitorNodeIndex) ? '0' : dataDiskSize)}${((!useLogAnalytics) ? '' : ' -w ${reference(logAnalyticsResource.id, '2022-10-01').customerId}')} -u ${brokerDockerImageReference}'
+      commandToExecute: 'mkdir -p -m 770 ${adminPasswordDir}; echo ${solaceAdminPassword} > ${adminPasswordFile}; bash ${solaceInstallScriptName} -c ${i} -d ${dnsLabelForVmIp} -i ${numberOfInstances} -p ${adminPasswordFile} -n ${maxNumberOfClientConnections} -q ${maxNumberOfQueueMessages} -s ${((i == monitorNodeIndex) ? '0' : dataDiskSize)}${((!useLogAnalytics) ? '' : ' -w ${logAnalyticsResource.properties.customerId}')} -u ${brokerDockerImageReference}'
     }
   }
 }]
