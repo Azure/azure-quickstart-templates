@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: mysql-paas-replication
 languages:
+- bicep
 - json
 ---
 # Deploys 1 MySQL PaaS instance and up to 5 read only replicas
@@ -19,17 +20,19 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-paas-replication/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-paas-replication/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-paas-replication/BicepVersion.svg)
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmysql%2Fmysql-paas-replication%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmysql%2Fmysql-paas-replication%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmysql%2Fmysql-paas-replication%2Fazuredeploy.json)
 
 `Tags: MySQL, Replication, PaaS, Replicas, Read-Only, Microsoft.Resources/deployments, Microsoft.DBforMySQL/servers, firewallRules`
 
-# Introduction
+## Introduction
 
 This ARM template provides a solution to replicate a Azure Database for MySQL instance.
 
-# Template description
+## Template description
 
 This ARM template will deploy only MySQL PaaS instances. Depending on the information provided it might deploy from 1 to 6 instances. In the case of deploying only 1 (a master and 0 copies) and SQL Instance will be created and no read only copies will be deployed. Any other combination will deploy a master MySQL PaaS instance and between 1 to 5 read only replicas. All of them will be deployed within the same region and resource group.
 
