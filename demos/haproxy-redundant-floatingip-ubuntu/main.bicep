@@ -28,26 +28,26 @@ param vmSize string = 'Standard_D2_v3'
 param location string = resourceGroup().location
 
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 @secure()
-param artifactsLocationSasToken string = ''
+param _artifactsLocationSasToken string = ''
 
 var storageAccountName = '${uniqueString(resourceGroup().id)}haproxysa'
 var numberOfHAproxyInstances = 2
 var haproxyVmScripts = {
   fileUris: [
-    '${artifactsLocation}haproxyvm-configure.sh${artifactsLocationSasToken}'
-    '${artifactsLocation}keepalived-action.sh${artifactsLocationSasToken}'
-    '${artifactsLocation}keepalived-check-appsvc.sh${artifactsLocationSasToken}'
+    '${_artifactsLocation}haproxyvm-configure.sh${_artifactsLocationSasToken}'
+    '${_artifactsLocation}keepalived-action.sh${_artifactsLocationSasToken}'
+    '${_artifactsLocation}keepalived-check-appsvc.sh${_artifactsLocationSasToken}'
   ]
   commandToExecute: 'sudo bash -x haproxyvm-configure.sh  -a ${appVmNamePrefix}0 -a ${appVmNamePrefix}1 -p ${appVmPort} -l ${lbDNSLabelPrefix}.${location}.cloudapp.azure.com -t ${lbVIPPort} -m ${haproxyVmNamePrefix}0 -b ${haproxyVmNamePrefix}1'
 }
 var numberOfAppInstances = 2
 var appVmScripts = {
   fileUris: [
-    '${artifactsLocation}apache-setup.sh${artifactsLocationSasToken}'
+    '${_artifactsLocation}apache-setup.sh${_artifactsLocationSasToken}'
   ]
   commandToExecute: 'sudo bash apache-setup.sh'
 }
