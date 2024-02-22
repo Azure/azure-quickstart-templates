@@ -65,7 +65,7 @@ resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
       {
         name: 'ipconfig1'
         properties: {
-          // uncomment to specify an IP, otherwise an IP address is dynamically allocated from the Logical Network's address pool
+          // uncomment to specify an IP, otherwise an IP address is dynamically allocated from the Logical Network's address pool or DHCP
           // privateIPAddress: 'x.x.x.x'
           subnet: {
             id: logicalNetworkId
