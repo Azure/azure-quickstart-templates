@@ -178,6 +178,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
 resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
   name: '${publicIPNamePrefix}${i + 1}'
   location: location
+  zones: ((length(availabilityZones) == 0) ? null : availabilityZones)
   sku: {
     name: 'Standard'
   }
