@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: function-app-windows-consumption
 languages:
+- bicep
 - json
 ---
 # Azure Function App Hosted on Windows Consumption Plan
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-windows-consumption/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-windows-consumption/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-windows-consumptio/BicepVersion.svg)
 
 This sample Azure Resource Manager template deploys an Azure Function App on Windows Consumption plan and required resource including ZipDeploy extension to mount zip package for deployment.
 
