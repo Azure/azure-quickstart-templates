@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: puppet-agent-linux
 languages:
-- Bicep
-- Json
+- bicep
+- json
 ---
 # Create new Ubuntu VM pre-populated with Puppet Agent
 
