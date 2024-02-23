@@ -220,6 +220,7 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2023-11-01' 
 }
  
 resource varItem 'Microsoft.Automation/automationAccounts/variables@2023-11-01' = [for item in automationVariables: {
+  parent: automationAccount
   name: item.name
   properties: {
     description: item.description
