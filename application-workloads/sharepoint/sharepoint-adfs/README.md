@@ -1,5 +1,5 @@
 ---
-description: This template creates a SharePoint Subscription / 2019 / 2016 / 2013 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profiles service and a web application with 2 zones that contains multiple path based and host-named site collections. On the SharePoint virtual machines, Chocolatey is used to install the latest version of Notepad++, Visual Studio Code, Azure Data Studio, Fiddler, ULS Viewer and 7-Zip.
+description: This template creates a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profiles service and a web application with 2 zones that contains multiple path based and host-named site collections. On the SharePoint virtual machines, Chocolatey is used to install the latest version of Notepad++, Visual Studio Code, Azure Data Studio, Fiddler, ULS Viewer and 7-Zip.
 page_type: sample
 products:
 - azure
@@ -67,7 +67,7 @@ There are some differences in the configuration, depending on the SharePoint ver
   - `2019`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2019 bits already installed.
   - `2016`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2016 bits already installed.
 - parameters `addPublicIPAddress` and `RDPTrafficAllowed`: See [this section](#remote-access-and-security) for detailed information.
-- parameter `numberOfAdditionalFrontEnd` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/en-us/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server) (except on SharePoint 2013, which does not support MinRole).
+- parameter `numberOfAdditionalFrontEnd` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/en-us/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server).
 - parameter `enableHybridBenefitServerLicenses` allows you to enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, if you are eligible. See [this page](https://docs.microsoft.com/azure/virtual-machines/windows/hybrid-use-benefit-licensing) for more information..
 
 ### Output parameters
