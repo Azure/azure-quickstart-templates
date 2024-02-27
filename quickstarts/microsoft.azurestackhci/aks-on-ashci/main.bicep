@@ -6,7 +6,6 @@ param aksControlPlaneIP string
 param aksControlPlaneNodeCount int = 1
 param aksControlPlaneNodeSize string = 'Standard_A4_v2'
 param aksPodCidr string = '10.244.0.0/16'
-param aksVNETName string
 param aksKubernetesVersion string = 'v1.26.6'
 param aksNodePoolName string
 param aksNodePoolNodeCount int = 1
@@ -24,25 +23,6 @@ resource logicalNetwork 'Microsoft.AzureStackHCI/logicalNetworks@2023-09-01-prev
   name: hciLogicalNetworkName
 }
 
-// create the hybrid virtual network
-resource hybridVirtualNetwork 'Microsoft.HybridContainerService/virtualNetworks@2024-01-01' = {
-  name: aksVNETName
-  location: location
-  extendedLocation: {
-    type: 'CustomLocation'
-    name: customLocationId
-  }
-  properties: {
-    infraVnetProfile: {
-      hci: {
-        mocGroup: 'target-group'
-        mocLocation: 'MocLocation'
-        mocVnetName: logicalNetwork.name
-      }
-    }
-  }
-}
-
 // create the connected cluster - this is the Arc representation of the AKS cluster, used to create a Managed Identity for the provisioned cluster
 resource connectedCluster 'Microsoft.Kubernetes/ConnectedClusters@2024-01-01' = {
   name: aksClusterName
@@ -50,11 +30,12 @@ resource connectedCluster 'Microsoft.Kubernetes/ConnectedClusters@2024-01-01' = 
   identity: {
     type: 'SystemAssigned'
   }
+  kind: 'ProvisionedCluster'
   properties: {
     agentPublicKeyCertificate: ''
     aadProfile: {
       enableAzureRBAC: false
-      adminGroupObjectId: aksAdminGroupObjectId
+      adminGroupObjectIDs: [aksAdminGroupObjectId]
     }
   }
 }
@@ -103,7 +84,7 @@ resource provisionedClusterInstance 'Microsoft.HybridContainerService/provisione
     cloudProviderProfile: {
       infraNetworkProfile: {
         vnetSubnetIds: [
-          hybridVirtualNetwork.id
+          logicalNetwork.id
         ]
       }
     }

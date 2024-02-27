@@ -30,13 +30,12 @@ This template creates an Azure Kubernetes Services on an on-premises Azure Stack
 
 ## Prerequisites
 
-In order to deploy this template, there must be an operational ARC Resource Bridge associated with your Azure Stack HCI cluster. The Azure Stack HCI 23H2 and later deployment process will configure the Resource Bridge for you, but you will need to have manually created the Logical Network and Image.
+In order to deploy this template, there must be an operational Arc Resource Bridge associated with your Azure Stack HCI cluster. The Azure Stack HCI 23H2 and later deployment process will configure the Resource Bridge for you, but you will need to have manually created the Logical Network.
 
 - Custom Location: This is the custom location resource representing your Azure Stack HCI Cluster in Azure. The following Virtual Network and Image resources must be associated with this custom location.
 - Azure Stack HCI Logical Network: This resource is the Azure representation of your Hyper-v virtual switch and related network configuration used for the Network Interface created for the new VM. See [Azure Stack HCI Virtual Networks](/azure-stack/hci/manage/create-logical-networks)
-- Azure Stack HCI Image: This is a virtual machine image, created from an Azure marketplace gallery image. See [Azure Stack HCI Images](/azure-stack/hci/manage/virtual-machine-image-azure-marketplace)
 
 > [!NOTE]
-> For simplicity, this template assumes the Custom Location, Virtual Network, and Image all reside in the same Resource Group as where the Virtual Machine is being created.
+> For simplicity, this template assumes the Custom Location and Logical Network reside in the same Resource Group as where the Virtual Machine is being created.
 
-`Tags: Microsoft.AzureStackHCI/virtualmachines, hci`
+`Tags: Microsoft.HybridContainerService/provisionedClusterInstances, hci, aks, kubernetes`
