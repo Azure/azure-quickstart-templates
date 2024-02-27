@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "11979005161948509339"
+    }
+  },
   "parameters": {
     "vmSize": {
       "type": "string",
@@ -28,24 +35,24 @@
     },
     "pupmstrFQDN": {
       "type": "string",
+      "defaultValue": "pupmstr.cloudapp.net",
       "metadata": {
         "description": "FQDN of your PE box, e.g: pupmstr.cloudapp.net"
-      },
-      "defaultValue": "pupmstr.cloudapp.net"
+      }
     },
     "pupmstrIP": {
       "type": "string",
+      "defaultValue": "192.168.1.1",
       "metadata": {
         "description": "IP of your PE box, e.g: 192.168.1.1"
-      },
-      "defaultValue": "192.168.1.1"
+      }
     },
     "pupmstrInternalFQDN": {
       "type": "string",
+      "defaultValue": "pupmstr.pupmstr.d6.internal.cloudapp.net",
       "metadata": {
         "description": "Internal FQDN of your PE box, e.g: pupmstr.pupmstr.d6.internal.cloudapp.net.  Get it from node requests page in PE Console."
-      },
-      "defaultValue": "pupmstr.pupmstr.d6.internal.cloudapp.net"
+      }
     },
     "location": {
       "type": "string",
@@ -72,18 +79,18 @@
       }
     },
     "_artifactsLocation": {
-        "type": "string",
-        "metadata": {
-            "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-        },
-        "defaultValue": "[deployment().properties.templateLink.uri]"
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
     },
     "_artifactsLocationSasToken": {
-        "type": "securestring",
-        "metadata": {
-            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-        },
-        "defaultValue": ""
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
     }
   },
   "variables": {
@@ -91,24 +98,24 @@
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "18.04-LTS",
-    "nicName": "[concat(variables('scenarioPrefix'),'Nic')]",
+    "nicName": "[format('{0}Nic', variables('scenarioPrefix'))]",
     "vnetAddressPrefix": "10.0.0.0/16",
-    "subnetName": "[concat(variables('scenarioPrefix'),'Subnet')]",
+    "subnetName": "[format('{0}Subnet', variables('scenarioPrefix'))]",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "[concat(variables('scenarioPrefix'),'PublicIp')]",
+    "publicIPAddressName": "[format('{0}PublicIp', variables('scenarioPrefix'))]",
     "publicIPAddressType": "Dynamic",
-    "vmName": "[concat(variables('scenarioPrefix'),'VM')]",
-    "virtualNetworkName": "[concat(variables('scenarioPrefix'),'Vnet')]",
+    "vmName": "[format('{0}VM', variables('scenarioPrefix'))]",
+    "virtualNetworkName": "[format('{0}Vnet', variables('scenarioPrefix'))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "fileUris": "[uri(parameters('_artifactsLocation'), concat('scripts/install_puppet_agent.sh', parameters('_artifactsLocationSasToken')))]",
-    "commandToExecute": "[concat('sh install_puppet_agent.sh ', parameters('pupmstrIP'), ' ', parameters('pupmstrFQDN'), ' ', parameters('pupmstrInternalFQDN'))]",
+    "fileUris": "[uri(parameters('_artifactsLocation'), format('scripts/install_puppet_agent.sh{0}', parameters('_artifactsLocationSasToken')))]",
+    "commandToExecute": "[format('sh install_puppet_agent.sh {0} {1} {2}', parameters('pupmstrIP'), parameters('pupmstrFQDN'), parameters('pupmstrInternalFQDN'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('username'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('username'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -118,16 +125,17 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2021-01-01",
+      "kind": "StorageV2",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -138,8 +146,8 @@
       }
     },
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -159,14 +167,10 @@
       }
     },
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-09-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -174,7 +178,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -182,17 +186,17 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -201,7 +205,7 @@
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('username')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -211,7 +215,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]",
+            "name": "[format('{0}_OSDisk', variables('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -219,20 +223,21 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/installcustomscript')]",
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', variables('vmName'), 'installcustomscript')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -244,7 +249,10 @@
           ],
           "commandToExecute": "[variables('commandToExecute')]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
     }
   ]
 }
