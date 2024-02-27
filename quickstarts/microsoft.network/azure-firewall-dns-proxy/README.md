@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: azure-firewall-dns-proxy
 languages:
+- bicep
 - json
 ---
 # Use Azure Firewall as a DNS Proxy in a Hub & Spoke topology
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-firewall-dns-proxy/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-firewall-dns-proxy/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azure-firewall-dns-proxy/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazure-firewall-dns-proxy%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazure-firewall-dns-proxy%2Fazuredeploy.json)
