@@ -157,7 +157,8 @@ param timezone string = 'UTC'
 
 var hostingPlanName = functionAppName
 var storageAccountName = 'storage${uniqueString(resourceGroup().id)}'
-var insightsLocation = {
+var applicationInsightsName = 'appi${uniqueString(resourceGroup().id)}'
+var applicationInsightsLocation = {
   AzureCloud: 'eastus'
   AzureUSGovernment: 'usgovvirginia'
 }
@@ -178,7 +179,7 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, '2019-06-01').keys[0].value}'
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -186,7 +187,7 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference(insightComponent.id, '2018-05-01-preview').InstrumentationKey
+          value:  reference(applicationInsights.id, '2018-05-01-preview').InstrumentationKey
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
@@ -202,7 +203,6 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
         }
       ]
     }
-    name: functionAppName
     clientAffinityEnabled: false
     serverFarmId: hostingPlan.id
   }
@@ -211,9 +211,6 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
 resource hostingPlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: hostingPlanName
   location: location
-  properties: {
-    name: hostingPlanName
-  }
   sku: {
     name: 'Y1'
     tier: 'Dynamic'
@@ -232,15 +229,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
-resource insightComponent 'Microsoft.Insights/components@2020-02-02' = {
-  name: functionAppName
-  location: insightsLocation[environment().name]
-  tags: {
-    'hidden-link:${functionApp.id}': 'Resource'
-  }
-  properties: {
-    ApplicationId: functionAppName
-  }
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: applicationInsightsLocation[environment().name]
+  kind: 'web'
 }
 
-output principalId string = reference(functionApp.id, '2019-08-01', 'Full').identity.principalId
+output name string = functionApp.name
+output location string = functionApp.location
+output id string = functionApp.id
+output resourceGroupName string = resourceGroup().name
+output principalId string = functionApp.identity.principalId
