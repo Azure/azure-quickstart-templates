@@ -12,6 +12,7 @@ param hciLogicalNetworkName string
 param customLocationName string
 @secure()
 param adminPassword string
+param sshPublicKey string = ''
 
 var nicName = 'nic-${name}' // name of the NIC to be created
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName) // full custom location ID
@@ -68,16 +69,23 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09
     osProfile: {
       adminUsername: adminUsername
       adminPassword: adminPassword
+
       computerName: name
-// TO DO - change to Linux configuration
-      windowsConfiguration: {
+      linuxConfiguration: {
         provisionVMAgent: true // mocguestagent
         provisionVMConfigAgent: true // azure arc connected machine agent
+        ssh: empty(sshPublicKey) ? null : {
+          publicKeys: [
+            {
+              keyData: sshPublicKey
+            }
+          ]
+        }
+        disablePasswordAuthentication: empty(sshPublicKey) ? false : true
       }
     }
     storageProfile: {
       imageReference: {
-
         id: galleryImageId
       }
     }
