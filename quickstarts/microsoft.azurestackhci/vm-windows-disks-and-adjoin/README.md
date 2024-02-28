@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Create a Windows VM on Azure Stack HCI with optional data disks and domain join
+# Create a Windows VM on HCI with disks and domain join
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/vm-windows-disks-and-adjoin/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/vm-windows-disks-and-adjoin/PublicDeployment.svg)
