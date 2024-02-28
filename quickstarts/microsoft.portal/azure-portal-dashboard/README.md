@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: azure-portal-dashboard
 languages:
-- json
-- bicep
+- Bicep
+- Jason
 ---
 # Create an Azure portal dashboard
 
