@@ -240,4 +240,3 @@ output location string = location
 output name string = dashboard.name
 output resourceGroupName string = resourceGroup().name
 output resourceId string = dashboard.id
-output systemAssignedMIPrincipalId string = dashboard.identity.principalId
