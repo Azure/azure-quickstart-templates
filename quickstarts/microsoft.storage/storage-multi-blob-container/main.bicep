@@ -5,6 +5,9 @@ param storageAccountName string
 @minLength(2)
 param containerPrefix string
 
+@description('Specifies the number of blob containers to create.')
+param numberOfContainers int
+
 @description('Specifies the location in which the Azure Storage resources should be deployed.')
 param location string = resourceGroup().location
 
@@ -25,7 +28,7 @@ resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01
   name: 'default'
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = [for i in range(0, 3): {
+resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = [for i in range(0, numberOfContainers): {
   parent: blobServices
   name: '${containerPrefix}${i}'
 }]
