@@ -7,7 +7,7 @@ param containerName string = 'logs'
 @description('Specifies the location in which the Azure Storage resources should be deployed.')
 param location string = resourceGroup().location
 
-resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+resource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -19,6 +19,12 @@ resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   }
 }
 
-resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
-  name: '${sa.name}/default/${containerName}'
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
+  parent: sa
+  name: 'default'
+}
+
+resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
+  parent: blobServices
+  name: containerName
 }
