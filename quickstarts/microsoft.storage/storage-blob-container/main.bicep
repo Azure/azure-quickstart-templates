@@ -2,7 +2,7 @@
 param storageAccountName string
 
 @description('Specifies the name of the blob container.')
-param containerName string = 'logs'
+param containerName string
 
 @description('Specifies the location in which the Azure Storage resources should be deployed.')
 param location string = resourceGroup().location
