@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: traffic-manager-external-endpoint
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Traffic Manager external endpoint example
 
