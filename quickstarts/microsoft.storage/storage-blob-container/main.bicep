@@ -4,9 +4,12 @@ param storageAccountName string
 @description('Specifies the name of the blob container.')
 param containerName string = 'logs'
 
+@description('Specifies the location in which the Azure Storage resources should be deployed.')
+param location string = resourceGroup().location
+
 resource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'Standard_LRS'
   }
