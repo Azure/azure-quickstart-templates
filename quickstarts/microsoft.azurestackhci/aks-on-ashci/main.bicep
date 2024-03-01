@@ -23,6 +23,25 @@ resource logicalNetwork 'Microsoft.AzureStackHCI/logicalNetworks@2023-09-01-prev
   name: hciLogicalNetworkName
 }
 
+// create the hybrid virtual network
+resource hybridVirtualNetwork 'Microsoft.HybridContainerService/virtualNetworks@2024-01-01' = {
+  name: '${hciLogicalNetworkName}-aks'
+  location: location
+  extendedLocation: {
+    type: 'CustomLocation'
+    name: customLocationId
+  }
+  properties: {
+    infraVnetProfile: {
+      hci: {
+        mocGroup: 'target-group'
+        mocLocation: 'MocLocation'
+        mocVnetName: logicalNetwork.name
+      }
+    }
+  }
+}
+
 // create the connected cluster - this is the Arc representation of the AKS cluster, used to create a Managed Identity for the provisioned cluster
 resource connectedCluster 'Microsoft.Kubernetes/ConnectedClusters@2024-01-01' = {
   name: aksClusterName
@@ -84,7 +103,7 @@ resource provisionedClusterInstance 'Microsoft.HybridContainerService/provisione
     cloudProviderProfile: {
       infraNetworkProfile: {
         vnetSubnetIds: [
-          logicalNetwork.id
+          hybridVirtualNetwork.id
         ]
       }
     }
