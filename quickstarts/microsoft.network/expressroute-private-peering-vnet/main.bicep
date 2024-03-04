@@ -216,6 +216,10 @@ resource gateway 'Microsoft.Network/virtualNetworkGateways@2021-05-01' = {
   ]
 }
 
+output location string = location
+output name string = vnet.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = vnet.id
 output erCircuitName string = erCircuitName
 output gatewayName string = gatewayName
 output gatewaySku string = gatewaySku
