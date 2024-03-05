@@ -1,5 +1,5 @@
 ---
-description: This template deploys an Ubuntu Server with a few options for the VM. You can provide the VM Name, OS Version, VM size, and admin username and password. The default VM size is Standard_D2s_v3 and OS version is 20.04-LTS.
+description: This template deploys an Ubuntu Server with a few options for the VM. You can provide the VM Name, OS Version, VM size, and admin username and password. As default the VM size is Standard_D2s_v3 and OS version is 20.04-LTS.
 page_type: sample
 products:
 - azure
