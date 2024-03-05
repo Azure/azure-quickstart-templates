@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: customscript-extension-public-storage-on-ubuntu
 languages:
-- Bicep
-- Json
+- bicep
+- json
 ---
 # Custom Script extension on a Ubuntu VM
 
