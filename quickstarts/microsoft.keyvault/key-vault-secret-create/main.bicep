@@ -76,3 +76,8 @@ resource secrets 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' = [for s
     value: secret.secretValue
   }
 }]
+
+output location string = location
+output name string = kv.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = kv.id
