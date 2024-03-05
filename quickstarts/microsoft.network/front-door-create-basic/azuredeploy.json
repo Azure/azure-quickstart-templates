@@ -1,0 +1,136 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "3725740582931828211"
+    }
+  },
+  "parameters": {
+    "frontDoorName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the frontdoor resource."
+      }
+    },
+    "backendAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The hostname of the backend. Must be an IP address or FQDN."
+      }
+    }
+  },
+  "variables": {
+    "frontEndEndpointName": "frontEndEndpoint",
+    "loadBalancingSettingsName": "loadBalancingSettings",
+    "healthProbeSettingsName": "healthProbeSettings",
+    "routingRuleName": "routingRule",
+    "backendPoolName": "backendPool"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/frontDoors",
+      "apiVersion": "2021-06-01",
+      "name": "[parameters('frontDoorName')]",
+      "location": "global",
+      "properties": {
+        "enabledState": "Enabled",
+        "frontendEndpoints": [
+          {
+            "name": "[variables('frontEndEndpointName')]",
+            "properties": {
+              "hostName": "[format('{0}.azurefd.net', parameters('frontDoorName'))]",
+              "sessionAffinityEnabledState": "Disabled"
+            }
+          }
+        ],
+        "loadBalancingSettings": [
+          {
+            "name": "[variables('loadBalancingSettingsName')]",
+            "properties": {
+              "sampleSize": 4,
+              "successfulSamplesRequired": 2
+            }
+          }
+        ],
+        "healthProbeSettings": [
+          {
+            "name": "[variables('healthProbeSettingsName')]",
+            "properties": {
+              "path": "/",
+              "protocol": "Http",
+              "intervalInSeconds": 120
+            }
+          }
+        ],
+        "backendPools": [
+          {
+            "name": "[variables('backendPoolName')]",
+            "properties": {
+              "backends": [
+                {
+                  "address": "[parameters('backendAddress')]",
+                  "backendHostHeader": "[parameters('backendAddress')]",
+                  "httpPort": 80,
+                  "httpsPort": 443,
+                  "weight": 50,
+                  "priority": 1,
+                  "enabledState": "Enabled"
+                }
+              ],
+              "loadBalancingSettings": {
+                "id": "[resourceId('Microsoft.Network/frontDoors/loadBalancingSettings', parameters('frontDoorName'), variables('loadBalancingSettingsName'))]"
+              },
+              "healthProbeSettings": {
+                "id": "[resourceId('Microsoft.Network/frontDoors/healthProbeSettings', parameters('frontDoorName'), variables('healthProbeSettingsName'))]"
+              }
+            }
+          }
+        ],
+        "routingRules": [
+          {
+            "name": "[variables('routingRuleName')]",
+            "properties": {
+              "frontendEndpoints": [
+                {
+                  "id": "[resourceId('Microsoft.Network/frontDoors/frontEndEndpoints', parameters('frontDoorName'), variables('frontEndEndpointName'))]"
+                }
+              ],
+              "acceptedProtocols": [
+                "Http",
+                "Https"
+              ],
+              "patternsToMatch": [
+                "/*"
+              ],
+              "routeConfiguration": {
+                "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorForwardingConfiguration",
+                "forwardingProtocol": "MatchRequest",
+                "backendPool": {
+                  "id": "[resourceId('Microsoft.Network/frontDoors/backEndPools', parameters('frontDoorName'), variables('backendPoolName'))]"
+                }
+              },
+              "enabledState": "Enabled"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('frontDoorName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/frontDoors', parameters('frontDoorName'))]"
+    }
+  }
+}
