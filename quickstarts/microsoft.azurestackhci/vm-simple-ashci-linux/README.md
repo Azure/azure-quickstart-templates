@@ -1,5 +1,5 @@
 ---
-description: This template creates a simple Windows VM from the referenced Azure Marketplace image on Azure Stack HCI version 23H2+
+description: This template creates a simple Linux VM from the referenced custom image on Azure Stack HCI version 23H2+
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Create a VM from the referenced image on Azure Stack HCI
+# Create a Linux VM from a gallery image on Azure Stack HCI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/vm-simple-ashci-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/vm-simple-ashci-linux/PublicDeployment.svg)
