@@ -141,6 +141,12 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
   }
 }
 
+output location string = location
+output name string = mysqlDbServer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = mysqlDbServer.id
+output systemAssignedMIPrincipalId string = mysqlDbServer.identity.principalId
+
 output mysqlHostname string = '${serverName}.${dnszone.name}'
 output mysqlSubnetId string = mysqlSubnetId
 output vnetId string = vnet.id
