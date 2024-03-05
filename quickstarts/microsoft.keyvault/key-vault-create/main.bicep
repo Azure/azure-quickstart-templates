@@ -43,7 +43,7 @@ param secretName string
 @secure()
 param secretValue string
 
-resource kv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
+resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -74,10 +74,15 @@ resource kv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   }
 }
 
-resource secret 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
+resource secret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: kv
   name: secretName
   properties: {
     value: secretValue
   }
 }
+
+output location string = location
+output name string = kv.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = kv.id
