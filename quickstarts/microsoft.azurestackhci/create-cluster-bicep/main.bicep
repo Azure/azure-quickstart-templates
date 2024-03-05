@@ -35,7 +35,7 @@ param arbDeploymentSpnAppId string
 @secure()
 param arbDeploymentSpnPassword string
 
-@description('Entra ID object ID of the Azure Stack HCI Resource Provider in your tenant')
+@description('Entra ID object ID of the Azure Stack HCI Resource Provider in your tenant - to get, run `Get-AzADServicePrincipal -ApplicationId 1412d89f-b8a8-4111-b4fd-e82905cbd85d`')
 param hciResourceProviderObjectId string
 
 // cluster and active directory settings
