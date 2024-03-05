@@ -267,6 +267,32 @@ configuration ConfigureFEVM
         #     }
         # }
 
+        Script CreateSPLOGSFileShare {
+            SetScript  = 
+            { 
+                $foldername = "C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\16\LOGS"
+                $shareName = "SPLOGS"
+                # if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
+                $shares = [WMICLASS]"WIN32_Share"
+                if ($shares.Create($foldername, $sharename, 0).ReturnValue -ne 0) {
+                    Write-Host "Failed to create file share '$sharename' for folder '$foldername'"
+                } else {
+                    Write-Host "Created file share '$sharename' for folder '$foldername'"
+                }
+                # }
+            }
+            GetScript  = { }
+            TestScript = 
+            {
+                $shareName = "SPLOGS"
+                if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
+                    return $false
+                } else {
+                    return $true
+                }
+            }
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
