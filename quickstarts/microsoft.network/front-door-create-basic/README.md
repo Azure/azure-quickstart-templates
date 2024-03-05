@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: front-door-create-basic
 languages:
-- json
 - bicep
+- json
 ---
 # Create a basic Front Door
 
