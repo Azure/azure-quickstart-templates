@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: storage-multi-blob-container
 languages:
-- json
 - bicep
+- json
 ---
 # Create a storage account with multiple Blob containers
 
