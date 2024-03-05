@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: hdinsight-interactive-hive
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy an Interative Hive cluster in HDInsight.
 
