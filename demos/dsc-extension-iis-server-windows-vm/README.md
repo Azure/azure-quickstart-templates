@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: dsc-extension-iis-server-windows-vm
 languages:
-- Bicep
-- Json
+- bicep
+- json
 ---
 # IIS Server using DSC extension on a Windows VM
 
