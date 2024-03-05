@@ -122,9 +122,14 @@ resource mariaDbServer 'Microsoft.DBforMariaDB/servers@2018-06-01' = {
 
 @batchSize(1)
 resource firewallRules 'Microsoft.DBforMariaDB/servers/firewallRules@2018-06-01' = [for rule in firewallrules: {
-  name: '${mariaDbServer.name}/${rule.Name}'
+  name: rule.Name
   properties: {
     startIpAddress: rule.StartIpAddress
     endIpAddress: rule.EndIpAddress
   }
 }]
+
+output location string = location
+output name string = mariaDbServer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = mariaDbServer.id
