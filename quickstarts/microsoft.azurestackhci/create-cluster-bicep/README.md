@@ -1,16 +1,16 @@
 ---
-description: This template creates an Azure Stack HCI 23H2 cluster using a BICEP template.
+description: This template creates an Azure Stack HCI 23H2 cluster using a Bicep template.
 page_type: sample
 products:
 - azure
-- bicep
-urlFragment: create-cluster-bicep
+- Bicep
+urlFragment: create-cluster-Bicep
 languages:
 - json
 ---
 # Creates an Azure Stack HCI 23H2 cluster and supporting resources
 
-This template allows you to create an Azure Stack HCI cluster using version 23H2, and all of the supporting resources e.g.
+This template allows you to create an Azure Stack HCI cluster using version 23H2+, and all of the supporting resources e.g.
 
 - Key Vault - which will be named *deploymentprefix*-hcikv
 - Key Vault Diagnostic Storage Account - which will be named *deploymentprefix*diag
@@ -39,13 +39,13 @@ All additional required permissions are assigned during the deployment and these
 - Reader to each of the Managed Identities of the nodes, at the resource group level
 
 > [!NOTE]
-> The secrets are encoded using base64 as part of the deployment
+> The Key Vault secrets are encoded using base64 as part of the deployment
 > 
-> Within [azuredeploy.parameters.json](.\azuredeploy.parameters.json) the array for the storage adapter needs to include both the name of the adapter and the vlan e.g
+> Within [azuredeploy.parameters.json](.\azuredeploy.parameters.json) the storageNetworks parameter needs to include an array of at least two storage network object with both an adapterName and vlan property: e.g
 > 
 >       "storageAdapters": {"value":[
->      {"adapter":"smb1","vlan":"711"},
->      {"adapter":"smb2","vlan":"712"}
+>      {"adapterName":"smb1","vlan":"711"},
+>      {"adapterName":"smb2","vlan":"712"}
 >      ]
 >
 
