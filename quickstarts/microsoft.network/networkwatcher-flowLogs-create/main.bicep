@@ -49,7 +49,7 @@ resource networkWatcher 'Microsoft.Network/networkWatchers@2022-01-01' = {
 }
 
 resource flowLog 'Microsoft.Network/networkWatchers/flowLogs@2022-01-01' = {
-  name: '${networkWatcherName}/${flowLogName}'
+  name: flowLogName
   location: location
   properties: {
     targetResourceId: existingNSG
@@ -65,3 +65,8 @@ resource flowLog 'Microsoft.Network/networkWatchers/flowLogs@2022-01-01' = {
     }
   }
 }
+
+output location string = location
+output name string = flowLog.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = flowLog.id

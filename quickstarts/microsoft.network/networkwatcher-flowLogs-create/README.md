@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: networkwatcher-flowLogs-create
 languages:
-- json
 - bicep
+- json
 ---
 # Enable NSG Flow Logs
 
