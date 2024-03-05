@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: hdinsight-kafka
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy Kafka on HDInsight in a virtual network
 
