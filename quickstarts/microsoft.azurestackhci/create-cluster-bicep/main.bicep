@@ -35,6 +35,9 @@ param arbDeploymentSpnAppId string
 @secure()
 param arbDeploymentSpnPassword string
 
+@description('Entra ID object ID of the Azure Stack HCI Resource Provider in your tenant')
+param hciResourceProviderObjectId string
+
 // cluster and active directory settings
 @description('The name of the Azure Stack HCI cluster - this name is specified in the Active Directory preparation script')
 param clusterName string
@@ -230,7 +233,7 @@ resource SPConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorizati
   scope: resourceGroup()
   properties:  {
     roleDefinitionId: '/providers/Microsoft.Authorization/roleDefinitions/f5819b54-e033-4d82-ac66-4fec3cbf3f4c'
-    principalId: 'ceeba60a-c19b-41b0-b437-737c0b76d3ec'
+    principalId: hciResourceProviderObjectId
     principalType: 'ServicePrincipal'
   }
 }
