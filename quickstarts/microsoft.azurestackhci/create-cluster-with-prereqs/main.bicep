@@ -237,23 +237,23 @@ resource deploymentSettings 'microsoft.azurestackhci/clusters/deploymentSettings
                 {
                   adapter: managementIntentAdapterNames
                   name: 'managment'
-                  // overrideAdapterProperty: false
-                  // adapterPropertyOverrides: {
-                  //   jumboPacket: '9014'
-                  //   networkDirect: 'Enabled'
-                  //   networkDirectTechnology: 'RoCEv2'
-                  // }
-                  // overrideQosPolicy: false
-                  // qosPolicyOverrides: {
-                  //   bandwidthPercentage_SMB: '50'
-                  //   priorityValue8021Action_Cluster: '7'
-                  //   priorityValue8021Action_SMB: '3'
-                  //   }
-                  // overrideVirtualSwitchConfiguration: false
-                  // virtualSwitchConfigurationOverrides: {
-                  //   enableIov: ''
-                  //   loadBalancingAlgorithm: ''
-                  // }
+                  overrideAdapterProperty: false
+                  adapterPropertyOverrides: {
+                    jumboPacket: '9014'
+                    networkDirect: 'Enabled'
+                    networkDirectTechnology: 'RoCEv2'
+                  }
+                  overrideQosPolicy: false
+                  qosPolicyOverrides: {
+                    bandwidthPercentage_SMB: '50'
+                    priorityValue8021Action_Cluster: '7'
+                    priorityValue8021Action_SMB: '3'
+                    }
+                  overrideVirtualSwitchConfiguration: false
+                  virtualSwitchConfigurationOverrides: {
+                    enableIov: ''
+                    loadBalancingAlgorithm: ''
+                  }
                   trafficType: [
                     'Management'
                   ]
@@ -261,23 +261,23 @@ resource deploymentSettings 'microsoft.azurestackhci/clusters/deploymentSettings
                 {
                   adapter: computeIntentAdapterNames
                   name: 'compute'
-                  // overrideAdapterProperty: false
-                  // adapterPropertyOverrides: {
-                  //   jumboPacket: '9014'
-                  //   networkDirect: 'Enabled'
-                  //   networkDirectTechnology: 'RoCEv2'
-                  // }
-                  // overrideQosPolicy: false
-                  // qosPolicyOverrides: {
-                  //   bandwidthPercentage_SMB: '50'
-                  //   priorityValue8021Action_Cluster: '7'
-                  //   priorityValue8021Action_SMB: '3'
-                  //   }
-                  // overrideVirtualSwitchConfiguration: false
-                  // virtualSwitchConfigurationOverrides: {
-                  //   enableIov: ''
-                  //   loadBalancingAlgorithm: 'Dynamic'
-                  // }
+                  overrideAdapterProperty: false
+                  adapterPropertyOverrides: {
+                    jumboPacket: '9014'
+                    networkDirect: 'Enabled'
+                    networkDirectTechnology: 'RoCEv2'
+                  }
+                  overrideQosPolicy: false
+                  qosPolicyOverrides: {
+                    bandwidthPercentage_SMB: '50'
+                    priorityValue8021Action_Cluster: '7'
+                    priorityValue8021Action_SMB: '3'
+                    }
+                  overrideVirtualSwitchConfiguration: false
+                  virtualSwitchConfigurationOverrides: {
+                    enableIov: ''
+                    loadBalancingAlgorithm: 'Dynamic'
+                  }
                   trafficType: [
                     'Compute'
                   ]
