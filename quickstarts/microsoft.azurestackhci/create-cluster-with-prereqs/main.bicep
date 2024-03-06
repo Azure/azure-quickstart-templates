@@ -311,7 +311,7 @@ resource deploymentSettings 'microsoft.azurestackhci/clusters/deploymentSettings
               storageNetworks: storageNetworkList
             }
             adouPath: domainOUPath
-            secretsLocation: '${keyVaultName}${environment().suffixes.keyvaultDns}'
+            secretsLocation: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}'
             optionalServices: {
               customLocation: customLocationName
             }
