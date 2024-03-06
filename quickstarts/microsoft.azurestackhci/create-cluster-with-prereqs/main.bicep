@@ -94,36 +94,39 @@ param episodicDataUpload bool = true
 param storageConfigurationMode string = 'Express'
 
 // cluster network configuration details
-@description('The subnet mask for deploying a hci cluster')
+@description('The subnet mask for deploying a HCI cluster - ex: 255.255.252.0')
 param subnetMask string
 
-@description('The default gateway for deploying a hci cluster')
+@description('The default gateway for deploying a HCI cluster')
 param defaultGateway string
 
-@description('The starting ip address for deploying a hci cluster')
+@description('The starting IP address for the Infrastructure Network IP pool. There must be at least 6 IPs between startingIPAddress and endingIPAddress and this pool should be not include the node IPs')
 param startingIPAddress string
 
-@description('The ending ip address for deploying a hci cluster')
+@description('The ending IP address for the Infrastructure Network IP pool. There must be at least 6 IPs between startingIPAddress and endingIPAddress and this pool should be not include the node IPs')
 param endingIPAddress string
 
-@description('The dns servers for deploying a hci cluster')
+@description('The DNS servers for deploying a HCI cluster')
 param dnsServers array
 
 // define network intent for the cluster
-@description('The storage connectivity switchless value for deploying a hci cluster')
+@description('The storage connectivity switchless value for deploying a HCI cluster (less common)')
 param storageConnectivitySwitchless bool
 
+// define custom type for storage network objects
 type storageNetworksType = {
   adapterName: string
   vlan: string
 }
-
 type storageNetworksArrayType = storageNetworksType[]
 
+@description('An array of JSON objects that define the storage network configuration for the cluster. Each object should contain the adapterName and vlan properties.')
 param storageNetworks storageNetworksArrayType
 
+@description('An array of Network Adapter names present on every cluster node intended for compute traffic')
 param computeIntentAdapterNames array
 
+@description('An array of Network Adapter names present on every cluster node intended for management traffic')
 param managementIntentAdapterNames array
 
 var clusterWitnessStorageAccountName = '${deploymentPrefix}witness'
