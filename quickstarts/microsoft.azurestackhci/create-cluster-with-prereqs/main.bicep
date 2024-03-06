@@ -118,7 +118,9 @@ type storageNetworksType = {
   vlan: string
 }
 
-param storageNetworks [storageNetworksType]
+type storageNetworksArrayType = storageNetworksType[]
+
+param storageNetworks storageNetworksArrayType
 
 param computeIntentAdapterNames array
 
