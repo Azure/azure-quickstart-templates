@@ -138,10 +138,7 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
   }
 ]
 
-var arcNodeResourceIds = [for (nodeName, index) in clusterNodeNames:{
-    resourceId: resourceId('Microsoft.HybridCompute/machines', nodeName)
-  }
-]
+var arcNodeResourceIds = [for (nodeName, index) in clusterNodeNames: resourceId('Microsoft.HybridCompute/machines', nodeName)]
 
 module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode == 'Validate') {
   name: 'ashciPreReqResources'
@@ -230,8 +227,8 @@ resource deploymentSettings 'microsoft.azurestackhci/clusters/deploymentSettings
               }
             ]
             physicalNodes: [for hciNode in arcNodeResourceIds: {
-              name: reference(hciNode.resourceId,'2023-10-03-preview','Full').properties.displayName
-              ipv4Address: reference(hciNode.resourceId,'2023-10-03-preview','Full').properties.networkProfile.networkInterfaces[0].ipAddresses[0].address
+              name: reference(hciNode,'2023-10-03-preview','Full').properties.displayName
+              ipv4Address: reference(hciNode,'2023-10-03-preview','Full').properties.networkProfile.networkInterfaces[0].ipAddresses[0].address
             }
             ]
             hostNetwork: {

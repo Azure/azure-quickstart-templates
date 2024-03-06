@@ -34,17 +34,16 @@ var storageAccountType = 'Standard_LRS'
 
 var diagnosticStorageAccountName = '${deploymentPrefix}diag'
 
-var azureConnectedMachineResourceManagerRoleID = '/providers/Microsoft.Authorization/roleDefinitions/f5819b54-e033-4d82-ac66-4fec3cbf3f4c'
-var readerRoleID = '/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7'
-var azureStackHCIDeviceManagementRole = '/providers/Microsoft.Authorization/roleDefinitions/865ae368-6a45-4bd1-8fbf-0d5151f56fc1'
-var keyVaultSecretUserRoleID = '/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6'
+var azureConnectedMachineResourceManagerRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','f5819b54-e033-4d82-ac66-4fec3cbf3f4c')
+var readerRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')
+var azureStackHCIDeviceManagementRole = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','865ae368-6a45-4bd1-8fbf-0d5151f56fc1')
+var keyVaultSecretUserRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')
 
 resource diagnosticStorageAccount 'Microsoft.Storage/storageAccounts@2021-01-01' = {
   name: diagnosticStorageAccountName
   location: location
   sku: {
     name: storageAccountType
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -57,7 +56,6 @@ resource witnessStorageAccount 'Microsoft.Storage/storageAccounts@2021-01-01' = 
   location: location
   sku: {
     name: storageAccountType
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -111,47 +109,47 @@ resource SPConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorizati
   name: guid('ConnectedMachineResourceManagerRolePermissions',resourceGroup().id)
   scope: resourceGroup()
   properties:  {
-    roleDefinitionId: '/providers/Microsoft.Authorization/roleDefinitions/f5819b54-e033-4d82-ac66-4fec3cbf3f4c'
+    roleDefinitionId: azureConnectedMachineResourceManagerRoleID
     principalId: hciResourceProviderObjectId
     principalType: 'ServicePrincipal'
   }
 }
 
 resource NodeAzureConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode.resourceId, azureConnectedMachineResourceManagerRoleID)
+  name: guid(hciNode, azureConnectedMachineResourceManagerRoleID)
   properties:  {
     roleDefinitionId: azureConnectedMachineResourceManagerRoleID
-    principalId: reference(hciNode.resourceId,'2023-10-03-preview','Full').identity.principalId
+    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 ]
 resource NodeazureStackHCIDeviceManagementRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode.resourceId, azureStackHCIDeviceManagementRole)
+  name: guid(hciNode, azureStackHCIDeviceManagementRole)
   properties:  {
     roleDefinitionId: azureStackHCIDeviceManagementRole
-    principalId: reference(hciNode.resourceId,'2023-10-03-preview','Full').identity.principalId
+    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 ]
 
 resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode.resourceId, readerRoleID)
+  name: guid(hciNode, readerRoleID)
   properties:  {
     roleDefinitionId: readerRoleID
-    principalId: reference(hciNode.resourceId,'2023-10-03-preview','Full').identity.principalId
+    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 ]
 
 resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode.resourceId, keyVaultSecretUserRoleID)
+  name: guid(hciNode, keyVaultSecretUserRoleID)
   scope: keyVault
   properties:  {
     roleDefinitionId: keyVaultSecretUserRoleID
-    principalId: reference(hciNode.resourceId,'2023-10-03-preview','Full').identity.principalId
+    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
