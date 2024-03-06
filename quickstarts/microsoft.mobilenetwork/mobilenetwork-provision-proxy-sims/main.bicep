@@ -20,18 +20,18 @@ param existingUserAssignedIdentityResourceId string = ''
 param simResources array
 
 #disable-next-line BCP081
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-09-01' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-01' existing = {
   name: existingMobileNetworkName
 }
 
 #disable-next-line BCP081
-resource existingSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2023-09-01' existing = {
+resource existingSimPolicy 'Microsoft.MobileNetwork/mobileNetworks/simPolicies@2024-02-01' existing = {
   parent: existingMobileNetwork
   name: existingSimPolicyName
 }
 
 #disable-next-line BCP081
-resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2023-09-01' = {
+resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2024-02-01' = {
   name: simGroupName
   location: location
   properties: {
@@ -52,7 +52,7 @@ resource exampleSimGroupResource 'Microsoft.MobileNetwork/simGroups@2023-09-01' 
   }
 
   #disable-next-line BCP081
-  resource exampleSimResources 'sims@2023-09-01' = [for item in simResources: {
+  resource exampleSimResources 'sims@2024-02-01' = [for item in simResources: {
     name: item.simName
     properties: {
       integratedCircuitCardIdentifier: item.integratedCircuitCardIdentifier
