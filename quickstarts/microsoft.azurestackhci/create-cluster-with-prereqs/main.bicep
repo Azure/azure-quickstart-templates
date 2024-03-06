@@ -21,19 +21,19 @@ param deploymentUsername string
 @secure()
 param deploymentUserPassword string
 
-@description('The local admin username for the deployment - this is the local admin user for the nodes in the deployment')
-param localAdminUser string
+@description('The local admin username for the deployment - this is the local admin user for the nodes in the deployment - ex "deployuser"')
+param localAdminUsername string
 
 @description('The local admin password for the deployment - this is the local admin user for the nodes in the deployment')
 @secure()
 param localAdminPassword string
 
 @description('The application ID of the pre-created App Registration for the Arc Resource Bridge deployment')
-param arbDeploymentSpnAppId string
+param arbDeploymentServicePrincipalId string
 
 @description('A client secret of the pre-created App Registration for the Arc Resource Bridge deployment')
 @secure()
-param arbDeploymentSpnPassword string
+param arbDeploymentServicePrincipalSecret string
 
 @description('Entra ID object ID of the Azure Stack HCI Resource Provider in your tenant - to get, run `Get-AzADServicePrincipal -ApplicationId 1412d89f-b8a8-4111-b4fd-e82905cbd85d`')
 param hciResourceProviderObjectId string
@@ -149,10 +149,10 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
     deploymentPrefix: deploymentPrefix
     deploymentUsername: deploymentUsername
     deploymentUserPassword: deploymentUserPassword
-    localAdminUser: localAdminUser
+    localAdminUsername: localAdminUsername
     localAdminPassword: localAdminPassword
-    arbDeploymentSpnAppId: arbDeploymentSpnAppId
-    arbDeploymentSpnPassword: arbDeploymentSpnPassword
+    arbDeploymentServicePrincipalId: arbDeploymentServicePrincipalId
+    arbDeploymentServicePrincipalSecret: arbDeploymentServicePrincipalSecret
     hciResourceProviderObjectId: hciResourceProviderObjectId
     softDeleteRetentionDays: softDeleteRetentionDays
     logsRetentionInDays: logsRetentionInDays

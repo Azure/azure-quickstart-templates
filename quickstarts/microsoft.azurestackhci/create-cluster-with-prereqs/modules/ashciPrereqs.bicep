@@ -12,23 +12,23 @@ param deploymentPrefix string
 param deploymentUsername string
 @secure()
 param deploymentUserPassword string
-param localAdminUser string
+param localAdminUsername string
 @secure()
 param localAdminPassword string
-param arbDeploymentSpnAppId string
+param arbDeploymentServicePrincipalId string
 @secure()
-param arbDeploymentSpnPassword string
+param arbDeploymentServicePrincipalSecret string
 
 // secret names for the Azure Key Vault - these cannot be changed
 var localAdminSecretName = 'LocalAdminCredential'
 var domainAdminSecretName = 'AzureStackLCMUserCredential'
-var arbDeploymentSpnName = 'DefaultARBApplication'
+var arbDeploymentServicePrincipalName = 'DefaultARBApplication'
 var storageWitnessName = 'WitnessStorageKey'
 
 // create base64 encoded secret values to be stored in the Azure Key Vault
 var deploymentUserSecretValue = base64('${deploymentUsername}:${deploymentUserPassword}')
-var localAdminSecretValue = base64('${localAdminUser}:${localAdminPassword}')
-var arbDeploymentSpnValue = base64('${arbDeploymentSpnAppId}:${arbDeploymentSpnPassword}')
+var localAdminSecretValue = base64('${localAdminUsername}:${localAdminPassword}')
+var arbDeploymentServicePrincipalValue = base64('${arbDeploymentServicePrincipalId}:${arbDeploymentServicePrincipalSecret}')
 
 var storageAccountType = 'Standard_LRS'
 
@@ -181,12 +181,12 @@ resource keyVaultName_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2021-0
   }
 }
 
-resource keyVaultName_arbDeploymentSpn 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
+resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
   parent: keyVault
-  name: arbDeploymentSpnName
+  name: arbDeploymentServicePrincipalName
   properties: {
     contentType: 'Secret'
-    value: arbDeploymentSpnValue
+    value: arbDeploymentServicePrincipalValue
     attributes: {
       enabled: true
     }
