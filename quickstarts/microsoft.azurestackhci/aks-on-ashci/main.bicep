@@ -18,29 +18,11 @@ param hciCustomLocationName string
 
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', hciCustomLocationName) // full custom location ID
 
-// retrieve the existing logical network resource - ensures the logical network exists before creating the hybrid virtual network
+// retrieve the existing logical network resource - ensures the logical network exists before creating cluster
 resource logicalNetwork 'Microsoft.AzureStackHCI/logicalNetworks@2023-09-01-preview' existing = {
   name: hciLogicalNetworkName
 }
 
-// create the hybrid virtual network
-resource hybridVirtualNetwork 'Microsoft.HybridContainerService/virtualNetworks@2024-01-01' = {
-  name: '${hciLogicalNetworkName}-aks'
-  location: location
-  extendedLocation: {
-    type: 'CustomLocation'
-    name: customLocationId
-  }
-  properties: {
-    infraVnetProfile: {
-      hci: {
-        mocGroup: 'target-group'
-        mocLocation: 'MocLocation'
-        mocVnetName: logicalNetwork.name
-      }
-    }
-  }
-}
 
 // create the connected cluster - this is the Arc representation of the AKS cluster, used to create a Managed Identity for the provisioned cluster
 resource connectedCluster 'Microsoft.Kubernetes/ConnectedClusters@2024-01-01' = {
@@ -103,7 +85,7 @@ resource provisionedClusterInstance 'Microsoft.HybridContainerService/provisione
     cloudProviderProfile: {
       infraNetworkProfile: {
         vnetSubnetIds: [
-          hybridVirtualNetwork.id
+          logicalNetwork.id
         ]
       }
     }
