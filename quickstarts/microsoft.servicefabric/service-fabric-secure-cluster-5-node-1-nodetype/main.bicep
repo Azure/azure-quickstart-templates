@@ -549,4 +549,8 @@ resource cluster 'Microsoft.ServiceFabric/clusters@2021-06-01' = {
   }
 }
 
+output location string = location
+output name string = cluster.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = cluster.id
 output clusterProperties object = cluster.properties
