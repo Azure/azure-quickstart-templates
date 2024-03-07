@@ -15,7 +15,7 @@ param deploymentUserPassword string
 param localAdminUsername string
 @secure()
 param localAdminPassword string
-param arbDeploymentServicePrincipalId string
+param arbDeploymentAppId string
 @secure()
 param arbDeploymentServicePrincipalSecret string
 
@@ -28,7 +28,7 @@ var storageWitnessName = 'WitnessStorageKey'
 // create base64 encoded secret values to be stored in the Azure Key Vault
 var deploymentUserSecretValue = base64('${deploymentUsername}:${deploymentUserPassword}')
 var localAdminSecretValue = base64('${localAdminUsername}:${localAdminPassword}')
-var arbDeploymentServicePrincipalValue = base64('${arbDeploymentServicePrincipalId}:${arbDeploymentServicePrincipalSecret}')
+var arbDeploymentServicePrincipalValue = base64('${arbDeploymentAppId}:${arbDeploymentServicePrincipalSecret}')
 
 var storageAccountType = 'Standard_LRS'
 

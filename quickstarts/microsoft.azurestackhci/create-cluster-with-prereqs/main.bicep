@@ -29,7 +29,7 @@ param localAdminUsername string
 param localAdminPassword string
 
 @description('The application ID of the pre-created App Registration for the Arc Resource Bridge deployment')
-param arbDeploymentServicePrincipalId string
+param arbDeploymentAppId string
 
 @description('A client secret of the pre-created App Registration for the Arc Resource Bridge deployment')
 @secure()
@@ -153,7 +153,7 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
     deploymentUserPassword: deploymentUserPassword
     localAdminUsername: localAdminUsername
     localAdminPassword: localAdminPassword
-    arbDeploymentServicePrincipalId: arbDeploymentServicePrincipalId
+    arbDeploymentAppId: arbDeploymentAppId
     arbDeploymentServicePrincipalSecret: arbDeploymentServicePrincipalSecret
     hciResourceProviderObjectId: hciResourceProviderObjectId
     softDeleteRetentionDays: softDeleteRetentionDays
