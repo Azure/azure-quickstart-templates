@@ -66,3 +66,9 @@ resource encryption 'Microsoft.Sql/servers/databases/transparentDataEncryption@2
     state: transparentDataEncryption
   }
 }
+
+output location string = location
+output name string = sqlServer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = sqlServer.id
+output systemAssignedMIPrincipalId string = sqlServer.identity.principalId
