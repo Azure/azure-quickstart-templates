@@ -9,16 +9,34 @@
         "description": "Location for all resources."
       }
     },
+    "vmSize":{
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
     "adminUsername": {
         "type": "string",
         "metadata": {
           "description": "User name for the Virtual Machine."
         }
     },
-    "adminPassword": {
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Password for the Virtual Machine."
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     },
     "maintenanceConfigurationName": {
@@ -30,11 +48,68 @@
   },
   "variables": {
     "nicName": "myVMNic",
-    "vmName": "MyWindowsVM"  
+    "subnetName": "Subnet",
+    "vmName": "MyLinuxVM",
+    "virtualNetworkName": "MyVNET",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
-      "apiVersion": "2013-04-01",
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-04-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -48,13 +123,14 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "2019-Datacenter",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04-DAILY-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -85,7 +161,9 @@
       "tags": {
       },
       "properties": {
-        "extensionProperties": {},
+        "extensionProperties": {
+          "InGuestPatchMode":"User"
+        },
         "installPatches": {
           "linuxParameters": {
             "classificationsToInclude": [ "Critical", "Security" ] 
@@ -98,7 +176,7 @@
         "maintenanceScope": "InGuestPatch",
         "maintenanceWindow": {
           "duration": "01:55",
-          "expirationDateTime": "2023-09-16 15:00",
+          "expirationDateTime": "2024-09-16 15:00",
           "recurEvery": "1Day",
           "startDateTime": "2023-08-16 15:00",
           "timeZone": "India Standard Time"
