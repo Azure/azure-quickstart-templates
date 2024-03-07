@@ -60,8 +60,21 @@ param softDeleteRetentionDays int = 30
 param logsRetentionInDays int = 30
 
 // cluster security configuration settings
+type securityConfigurationType = {
+  hvciProtection: bool
+  drtmProtection: bool
+  driftControlEnforced: bool
+  credentialGuardEnforced: bool
+  smbSigningEnforced: bool
+  smbClusterEncryption: bool
+  sideChannelMitigationEnforced: bool
+  bitlockerBootVolume: bool
+  bitlockerDataVolumes: bool
+  wdacEnforced: bool
+}
+
 @description('Security configuration settings object')
-param securityConfiguration object = {
+param securityConfiguration securityConfigurationType = {
   hvciProtection: true
   drtmProtection: true
   driftControlEnforced: true

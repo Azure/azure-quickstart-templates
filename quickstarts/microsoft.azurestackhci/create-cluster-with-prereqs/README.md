@@ -28,7 +28,7 @@ In order to deploy this template, you must have completed the following steps:
 
 1. Arc enabled the server(s) and installed the mandatory extensions using the `invoke-AzStackHciArcInitialization` PowerShell command. 
 1. Prepared an Active Directory with the PowerShell `New-HciAdObjectsPreCreation` command to create a dedicated Organizational Unit and Deployment User
-1. Create a Service Principal for the Arc Resource Bridge. This identity needs "Contributor" and "User Access Admin" permissions to create Azure Stack HCI Virtual Machines on the target subscription. Use the Application ID as arbDeploymentAppId and a client secret for the arbDeploymentServicePrincipalSecret parameters.
+1. Create a Service Principal for the Arc Resource Bridge. This identity needs "Azure Resource Bridge Deployment Role" permissions on the target subscription to deploy the Resource Bridge. Use the Application ID as arbDeploymentAppId and a client secret for the arbDeploymentServicePrincipalSecret parameters.
 1. The user executing the Bicep or ARM deployment also needs "Contributor" and "User Access Admin" permission at resource group level
 
 To determine the Microsoft.AzureStackHCI Resource Provider's Service Principal ID for parameter `hciResourceProviderObjectId` in your tenant, run `Get-AzADServicePrincipal -ApplicationId 1412d89f-b8a8-4111-b4fd-e82905cbd85d` after having registered the resource provider with `Register-AzResourceProvider Microsoft.AzureStackHCI`.
