@@ -177,7 +177,7 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
   }
 }
 
-resource cluster 'Microsoft.AzureStackHCI/clusters@2023-08-01-preview' = if (deploymentMode == 'Validate') {
+resource cluster 'Microsoft.AzureStackHCI/clusters@2023-11-01-preview' = if (deploymentMode == 'Validate') {
   name: clusterName
   identity: {
     type: 'SystemAssigned'
@@ -189,7 +189,7 @@ resource cluster 'Microsoft.AzureStackHCI/clusters@2023-08-01-preview' = if (dep
   ]
 }
 
-resource deploymentSettings 'microsoft.azurestackhci/clusters/deploymentSettings@2023-08-01-preview' = {
+resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2023-11-01-preview' = {
   name: 'default'
   parent: cluster
   properties: {

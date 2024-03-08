@@ -39,7 +39,7 @@ var readerRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitio
 var azureStackHCIDeviceManagementRole = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','865ae368-6a45-4bd1-8fbf-0d5151f56fc1')
 var keyVaultSecretUserRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')
 
-resource diagnosticStorageAccount 'Microsoft.Storage/storageAccounts@2021-01-01' = {
+resource diagnosticStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: diagnosticStorageAccountName
   location: location
   sku: {
@@ -51,7 +51,7 @@ resource diagnosticStorageAccount 'Microsoft.Storage/storageAccounts@2021-01-01'
   }
 }
 
-resource witnessStorageAccount 'Microsoft.Storage/storageAccounts@2021-01-01' = {
+resource witnessStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: clusterWitnessStorageAccountName
   location: location
   sku: {
@@ -63,7 +63,7 @@ resource witnessStorageAccount 'Microsoft.Storage/storageAccounts@2021-01-01' = 
   }
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -86,7 +86,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   ]
 }
 
-resource keyVaultName_Microsoft_Insights_service 'Microsoft.Insights/diagnosticsettings@2016-09-01' = {
+resource keyVaultName_Microsoft_Insights_service 'microsoft.insights/diagnosticSettings@2016-09-01' = {
   name: 'service'
   location: location
   scope: keyVault
@@ -155,7 +155,7 @@ resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments
 }
 ]
 
-resource keyVaultName_domainAdminSecret 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
+resource keyVaultName_domainAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
   name: domainAdminSecretName
   properties: {
@@ -167,7 +167,7 @@ resource keyVaultName_domainAdminSecret 'Microsoft.KeyVault/vaults/secrets@2021-
   }
 }
 
-resource keyVaultName_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
+resource keyVaultName_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
   name: localAdminSecretName
   properties: {
@@ -179,7 +179,7 @@ resource keyVaultName_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2021-0
   }
 }
 
-resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
+resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
   name: arbDeploymentServicePrincipalName
   properties: {
@@ -191,7 +191,7 @@ resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/s
   }
 }
 
-resource keyVaultName_storageWitness 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
+resource keyVaultName_storageWitness 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
   name: storageWitnessName
   properties: {
