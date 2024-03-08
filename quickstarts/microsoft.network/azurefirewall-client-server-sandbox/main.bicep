@@ -131,7 +131,7 @@ resource clientVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
       imageReference: {
         publisher: 'Canonical'
         offer: 'UbuntuServer'
-        sku: '18_04-lts-gen2'
+        sku: '22_04-lts-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -177,7 +177,7 @@ resource serverVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
       imageReference: {
         publisher: 'Canonical'
         offer: 'UbuntuServer'
-        sku: '18_04-lts-gen2'
+        sku: '22_04-lts-gen2'
         version: 'latest'
       }
       osDisk: {
