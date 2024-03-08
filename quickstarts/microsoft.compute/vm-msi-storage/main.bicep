@@ -19,11 +19,7 @@ param adminPasswordOrKey string
 param dnsLabelPrefix string = toLower('vm-msi-${uniqueString(resourceGroup().id)}')
 
 @description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
-@allowed([
-  '18_04-daily-lts-gen2'
-  '18_04-lts-gen2'
-])
-param ubuntuOSVersion string = '18_04-lts-gen2'
+param ubuntuOSVersion string = '22_04-lts-gen2'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
