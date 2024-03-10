@@ -1,5 +1,5 @@
 ---
-description: This template will create a SQL Cosmos account, a natively maintained Role Definition, and a natively maintained Role Assignment for an AAD identity.
+description: This template will create a SQL Cosmos account, a natively maintained Role Definition, and a natively maintained Role Assignment for a Microsoft Entra identity.
 page_type: sample
 products:
 - azure
@@ -28,7 +28,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.documentdb%2Fcosmosdb-sql-rbac%2Fazuredeploy.json)
 
-This template will create a SQL Cosmos account, a natively maintained Role Definition, and a natively maintained Role Assignment for an AAD identity.
+This template will create a SQL Cosmos account, a natively maintained Role Definition, and a natively maintained Role Assignment for a Microsoft Entra identity.
 
 Below are the parameters which can be user configured in the parameters file including:
 
@@ -36,7 +36,7 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Account Name:** Enter a name for the new Cosmos account.
 - **Role Definition Name:** Enter a friendly name for the SQL Role Definition.
 - **Data Actions:** Enter the list of actions permitted by the SQL Role Definition.
-- **Principal ID:** Enter the object ID of the AAD identity to which the Role Assignment shall be granted.
+- **Principal ID:** Enter the object ID of the Microsoft Entra identity to which the Role Assignment shall be granted.
 
 `Tags : CosmosDB`
 

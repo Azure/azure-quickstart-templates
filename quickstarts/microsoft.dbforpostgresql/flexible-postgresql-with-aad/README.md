@@ -1,5 +1,5 @@
 ---
-description: This template provides a way to deploy a Flexible server Azure database for PostgreSQL with AAD integration.
+description: This template provides a way to deploy a Flexible server Azure database for PostgreSQL with Microsoft Entra integration.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Deploy Azure Database for PostgreSQL (flexible) with AAD
+# Deploy Azure Database for PostgreSQL (flexible) with Microsoft Entra ID
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbforpostgresql/flexible-postgresql-with-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbforpostgresql/flexible-postgresql-with-aad/PublicDeployment.svg)
