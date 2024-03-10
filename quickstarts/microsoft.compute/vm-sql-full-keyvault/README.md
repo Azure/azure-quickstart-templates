@@ -31,11 +31,11 @@ This template provisions a virtual machine with **SQL Server 2014 SP1 running on
 
 This template will also create the following resources:
 
-+	A Virtual Network
-+	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
-+ 	One public IP address
-+	One network interface
-+	One network security group
++ A Virtual Network
++ Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
++ One public IP address
++ One network interface
++ One network security group
 
 ## Azure Key Vault Integration
 
@@ -51,10 +51,9 @@ If you wish to disable this feature, you must edit *azuredeploy.json* and change
 |:---|:---------------------|:---------------|
 |sqlAkvCredentialName|AKV Integration creates a credential within SQL Server, allowing the VM to have access to the key vault. Choose a name for this credential|mycred1|
 |sqlAkvUrl|The location of the key vault|https://contosokeyvault.vault.azure.net/|
-|servicePrincipalName|Azure Active Directory service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
-|servicePrincipalSecret|Azure Active Directory service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
+|servicePrincipalName|Microsoft Entra service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
+|servicePrincipalSecret|Microsoft Entra service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
 
 ## SQL Server IaaS Agent extension
 
 Automated Patching is supported in your virtual machine through the SQL Server IaaS Agent extension. This extension must be installed on the VM to be able to use this feature. When you enable Automated Patching on your virtual machine, the extension will be automatically installed. This extension will also report back the latest status of this feature to you. More information on this extension can be found [here](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sql-server-agent-extension/).
-

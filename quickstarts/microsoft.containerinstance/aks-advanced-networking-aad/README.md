@@ -1,5 +1,5 @@
 ---
-description: This ARM template demonstrates the deployment of an AKS instance with advanced networking features into an existing virtual network and Azure AD Integeration. Additionally, the chosen Service Principal is assigned the Network Contributor role against the subnet that contains the AKS cluster.
+description: This ARM template demonstrates the deployment of an AKS instance with advanced networking features into an existing virtual network and Microsoft Entra integration. Additionally, the chosen Service Principal is assigned the Network Contributor role against the subnet that contains the AKS cluster.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: aks-advanced-networking-aad
 languages:
 - json
 ---
-# Deploy a managed Kubernetes Cluster with AAD (AKS)
+# Deploy a managed Kubernetes Cluster with Microsoft Entra ID (AKS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aks-advanced-networking-aad/PublicDeployment.svg)
@@ -30,21 +30,23 @@ languages:
 ## Solution overview and deployed resources
 
 Executing an AKS deployment using this ARM template will create an AKS instance. However, it will also assign the selected Service Principal the following roles:
+
 - 'Network Contributor' role against the pre-existing subnet.
 - 'Contributor' role against the automatically created resource group that contains the AKS cluster resources.
 
-It will also setup Azure Active Directory as the default Authentication mechanism for your cluster. This will allow you to setup Kubernetes RBAC based on users identity of group membership. There are a couple of limitations that apply to this scenario though:
+It will also setup Microsoft Entra ID as the default Authentication mechanism for your cluster. This will allow you to setup Kubernetes RBAC based on users identity of group membership. There are a couple of limitations that apply to this scenario though:
 
-- Azure AD can only be enabled when you create a new, RBAC-enabled cluster. You can't enable Azure AD on an existing AKS cluster.
-- Guest users in Azure AD, such as if you are using a federated login from a different directory, are not supported.
+- Microsoft Entra ID can only be enabled when you create a new, RBAC-enabled cluster. You can't enable Microsoft Entra ID on an existing AKS cluster.
+- Guest users in Microsoft Entra ID, such as if you are using a federated login from a different directory, are not supported.
 
 ## Prerequisites
 
 Prior to deploying AKS using this ARM template, the following resources need to exist:
+
 - Azure Vnet, including a subnet of sufficient size
 - Service Principal
-- Azure AD Server Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-server-application)
-- Azure AD Client Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-client-application)
+- Microsoft Entra Server Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-server-application)
+- Microsoft Entra Client Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-client-application)
 
 The following Azure CLI command can be used to create a Service Principal:
 
@@ -60,6 +62,6 @@ Please note that using the 'create-for-rbac' function would assign the SPN the '
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the Azure documentation:
+
 - [Deploy resources with Resource Manager templates and Azure PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy)
 - [Deploy resources with Resource Manager templates and Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli)
-

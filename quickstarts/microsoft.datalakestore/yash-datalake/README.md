@@ -44,13 +44,13 @@ The deployment also includes an optional wizard and a sample dataset that is use
 
 ## Pre-Requisites
 
-- Register application in AAD with the following steps and note the application id and app secret key:
-  1. Assign following permissions:-
+- Register application in Microsoft Entra ID with the following steps and note the application id and app secret key:
+  1. Assign the following permissions:
     -Azure Data Lake
     -Azure Analysis Services
-  2. Set Reply URL :https://your-function-app-name.azurewebsites.net/.auth/login/aad/callback
+  2. Set Reply URL: https://your-function-app-name.azurewebsites.net/.auth/login/aad/callback
     [Note = your-function-app-name : The function name which you would be giving while deploying Yash Data Lake]
-- Add following permissions to Application registered in AAD :
+- Add the following permissions to Application registered in Microsoft Entra ID:
   1. Azure Analysis Services
   2. Azure Data Lake
   3. Windows Azure Active Directory

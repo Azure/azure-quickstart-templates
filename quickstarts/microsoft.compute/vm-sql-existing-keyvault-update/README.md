@@ -43,8 +43,8 @@ If you wish to disable this feature, you must edit *azuredeploy.json* and change
 |:---|:---------------------|:---------------|
 |sqlAkvCredentialName|Specify the name of the credential that this feature will create within SQL Server, allowing the VM to have access to the key vault.|mycred1|
 |sqlAkvUrl|The URL for your key vault|https://contosokeyvault.vault.azure.net/|
-|servicePrincipalName|Azure Active Directory service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
-|servicePrincipalSecret|Azure Active Directory service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
+|servicePrincipalName|Microsoft Entra service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
+|servicePrincipalSecret|Microsoft Entra service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
 
 ## SQL Server IaaS Agent extension
 
