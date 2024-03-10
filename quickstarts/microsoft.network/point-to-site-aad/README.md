@@ -1,5 +1,5 @@
 ---
-description: This template deploys a VPN Virtual Network Gateway configured with an Azure Active Directory Point-to-Site connection
+description: This template deploys a VPN Virtual Network Gateway configured with a Microsoft Entra Point-to-Site connection
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create a Point-to-Site Gateway with Azure AD
+# Create a Point-to-Site Gateway with Microsoft Entra ID
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/point-to-site-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/point-to-site-aad/PublicDeployment.svg)
@@ -28,7 +28,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fpoint-to-site-aad%2Fazuredeploy.json)
 
-This template deploys a Virtual Network with a frontend and gateway subnet. It then creates a public IP which is used to create a VPN Gateway in the VNet. Finally, it deploys a VPN Virtual Network Gateway configured for Azure Active Directory Point-to-Site (P2S) connections.
+This template deploys a Virtual Network with a frontend and gateway subnet. It then creates a public IP which is used to create a VPN Gateway in the VNet. Finally, it deploys a VPN Virtual Network Gateway configured for Microsoft Entra Point-to-Site (P2S) connections.
 
 Modify parameters file to change default names and addresses spaces.
 

@@ -29,7 +29,7 @@ This template creates an App Service Environment with an App Service within its 
 
 The idea behind stackName so we can name all resources with similar name which is useful for identifying your resources. Feel free to pass in any name you like but it is recommanded to keep it short i.e. less than 10 characters.
 
-The aadUserObjectId parameter is your user object Id and allows you to have access to Azure SQL and Azure Key Vault with your AAD user credentials. You can use Azure CLI to get that with the following command.
+The aadUserObjectId parameter is your user object Id and allows you to have access to Azure SQL and Azure Key Vault with your Microsoft Entra user credentials. You can use Azure CLI to get that with the following command.
 
 ```
 $objectId = ((az ad user list --upn (az account list | ConvertFrom-Json).user[1].name) | ConvertFrom-Json).objectId
