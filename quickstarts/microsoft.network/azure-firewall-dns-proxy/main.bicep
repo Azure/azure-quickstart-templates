@@ -49,18 +49,14 @@ param prodVmName string = 'ProdVm'
 @description('Specifies the size of the virtual machine.')
 param vmSize string = 'Standard_D4s_v3'
 
-@description('Specifies the image publisher of the disk image used to create the virtual machine.')
+@description('The publisher of the image from which to launch the virtual machine.')
 param imagePublisher string = 'Canonical'
 
-@description('Specifies the offer of the platform image or marketplace image used to create the virtual machine.')
-param imageOffer string = 'UbuntuServer'
+@description('The offer of the image from which to launch the virtual machine.')
+param imageOffer string = '0001-com-ubuntu-server-jammy'
 
-@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
-@allowed([
-  '18_04-daily-lts-gen2'
-  '18_04-lts-gen2'
-])
-param imageSku string = '18_04-lts-gen2'
+@description('The SKU of the image from which to launch the virtual machine.')
+param imageSku string = '22_04-lts-gen2'
 
 @description('Specifies the type of authentication when accessing the Virtual Machine. SSH key is recommended.')
 @allowed([
