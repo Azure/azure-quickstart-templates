@@ -1,0 +1,138 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "principalId": {
+      "type": "string",
+      "metadata": {
+        "description": "The principal/object ID of the user to assign role assignments to"
+      }
+    },
+    "devcenterName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 26,
+      "metadata": {
+        "description": "The name of Dev Center"
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 63,
+      "metadata": {
+        "description": "The name of Dev Center project"
+      }
+    },
+    "environmentTypeName": {
+      "type": "string",
+      "defaultValue": "Sandbox",
+      "minLength": 3,
+      "maxLength": 63,
+      "metadata": {
+        "description": "The name of the Environment Type e.g. Sandbox, Dev, Prod"
+      }
+    },
+    "resourceLocation": {
+      "type": "string",
+      "allowedValues": [
+        "australiaeast",
+        "brazilsouth",
+        "canadacentral",
+        "centralindia",
+        "centraluseuap",
+        "eastasia",
+        "eastus",
+        "eastus2",
+        "japaneast",
+        "koreacentral",
+        "northeurope",
+        "southafricanorth",
+        "southcentralus",
+        "southeastasia",
+        "switzerlandnorth",
+        "uksouth",
+        "westeurope",
+        "westus2",
+        "westus3"
+      ],
+      "defaultValue": "westus3",
+      "metadata": {
+        "description": "Location to create resources in"
+      }
+    },
+    "roleAssignmentGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "GUID used as name of role assignment"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DevCenter/devcenters",
+      "apiVersion": "2023-04-01",
+      "name": "[parameters('devcenterName')]",
+      "location": "[parameters('resourceLocation')]",
+      "identity": {
+        "type": "SystemAssigned"
+      }
+    },
+    {
+      "type": "Microsoft.DevCenter/devcenters/catalogs",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('devcenterName'), '/quickstart-environment-definitions')]",
+      "dependsOn": [
+        "[parameters('devcenterName')]"
+      ],
+      "properties": {
+        "gitHub": {
+          "uri": "https://github.com/microsoft/devcenter-catalog.git",
+          "branch": "main",
+          "path": "Environment-Definitions"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DevCenter/devcenters/environmentTypes",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('devcenterName'), '/', parameters('environmentTypeName'))]",
+      "dependsOn": [
+        "[parameters('devcenterName')]"
+      ]
+    },
+    {
+      "type": "Microsoft.DevCenter/projects",
+      "apiVersion": "2023-04-01",
+      "name": "[parameters('projectName')]",
+      "location": "[parameters('resourceLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DevCenter/devcenters/environmentTypes', parameters('devcenterName'), parameters('environmentTypeName'))]"
+      ],
+      "properties": {
+        "devCenterId": "[resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName'))]"
+      }
+    },
+    {
+      "scope": "[concat('Microsoft.DevCenter/projects', '/', parameters('projectName'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid('Deployment Environment User', parameters('roleAssignmentGuid'))]",
+      "dependsOn": [
+        "[parameters('projectName')]"
+      ],
+      "properties": {
+        "description": "Provides access to manage environment resources.",
+        "principalId": "[parameters('principalId')]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '18e40d4e-8d2e-438d-97e1-9528336e149c')]"
+      }
+    }
+  ],
+  "outputs": {
+    "devcenterIdentityPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName')), '2023-04-01', 'Full').identity.principalId]"
+    }
+  }
+}

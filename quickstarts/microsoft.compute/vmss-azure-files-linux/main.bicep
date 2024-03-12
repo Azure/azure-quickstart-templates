@@ -76,8 +76,8 @@ var nicName = '${vmssName}nic'
 var ipConfigName = '${vmssName}ipconfig'
 var osType = {
   publisher: 'Canonical'
-  offer: 'UbuntuServer'
-  sku: '18_04-lts-gen2'
+  offer: '0001-com-ubuntu-server-jammy'
+  sku: '22_04-lts-gen2'
   version: 'latest'
 }
 var imageReference = osType
