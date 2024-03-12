@@ -24,7 +24,7 @@ var networkInterfaceName = 'nic'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var numberOfInstances = 2
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -33,7 +33,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   kind: 'StorageV2'
 }
 
-resource availabilitySet 'Microsoft.Compute/availabilitySets@2021-11-01' = {
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-09-01' = {
   name: availabilitySetName
   location: location
   sku: {
@@ -45,7 +45,7 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2021-11-01' = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -65,7 +65,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = [for i in range(0, numberOfInstances): {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2023-09-01' = [for i in range(0, numberOfInstances): {
   name: '${networkInterfaceName}${i}'
   location: location
   properties: {
@@ -92,7 +92,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = [fo
   ]
 }]
 
-resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
+resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
   name: loadBalancerName
   location: location
   sku: {
@@ -153,7 +153,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, numberOfInstances): {
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = [for i in range(0, numberOfInstances): {
   name: '${vmNamePrefix}${i}'
   location: location
   properties: {
@@ -194,3 +194,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, 
     }
   }
 }]
+
+output location string = location
+output name string = loadBalancer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = loadBalancer.id
