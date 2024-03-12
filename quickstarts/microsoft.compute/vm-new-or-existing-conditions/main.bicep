@@ -77,30 +77,11 @@ param publicIpResourceGroupName string = resourceGroup().name
 ])
 param securityType string = 'TrustedLaunch'
 
-@description('Windows Server and SQL Offer')
-@allowed([
-  '0001-com-ubuntu-minimal-bionic'
-  '0001-com-ubuntu-minimal-lunar-daily'
-  '0001-com-ubuntu-server-focal'
-  '0001-com-ubuntu-server-jammy'
-  '0001-com-ubuntu-server-lunar'
-  '0001-com-ubuntu-server-lunar-daily'
-  '0003-com-ubuntu-server-trusted-vm'
-])
-param imageOffer string = '0001-com-ubuntu-server-lunar'
+@description('The offer of the Ubuntu image from which to launch the Virtual Machine.')
+param imageOffer string = '0001-com-ubuntu-server-jammy'
 
-@description('SQL Server Sku')
-@allowed([
-  '22_10-minimal-gen2'
-  '18_04-lts-gen2'
-  'minimal-20_04-daily-lts-gen2'
-  'minimal-23_04-daily-gen2'
-  'minimal-23_04-gen2'
-  '20_04-daily-lts-gen2'
-  '23_04-daily-gen2'
-  '23_04-gen2'
-])
-param sqlSku string = '23_04-gen2'
+@description('The SKU of the Ubuntu image from which to launch the Virtual Machine.')
+param imageSku string = '22_04-lts-gen2'
 
 var securityProfileJson = {
   uefiSettings: {
@@ -233,7 +214,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
       imageReference: {
         publisher: 'Canonical'
         offer: imageOffer
-        sku: sqlSku
+        sku: imageSku
         version: 'latest'
       }
       osDisk: {
