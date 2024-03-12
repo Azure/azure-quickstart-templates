@@ -199,3 +199,8 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
     }
   }
 }
+
+output location string = location
+output name string = natgateway.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = natgateway.id
