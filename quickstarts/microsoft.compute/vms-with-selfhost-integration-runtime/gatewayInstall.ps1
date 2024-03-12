@@ -224,3 +224,6 @@ Write-Host "JDK installation completed successfully !"
 Write-Host "Trying to remove JDK file from temp directory..."
 rm -Force $workd\jdk*
 Write-Host "JDK file deleted successfully !"
+
+Write-Host "Adding JAVA_HOME env var"
+setx /M JAVA_HOME "C:\Program Files\Microsoft\jdk-11.0.19.7-hotspot"
