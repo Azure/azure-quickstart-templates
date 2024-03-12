@@ -1,0 +1,297 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupLocation": {
+      "type": "string",
+      "allowedValues": [
+        "australiaeast",
+        "brazilsouth",
+        "canadacentral",
+        "centralindia",
+        "centraluseuap",
+        "eastasia",
+        "eastus",
+        "eastus2",
+        "japaneast",
+        "koreacentral",
+        "northeurope",
+        "southafricanorth",
+        "southcentralus",
+        "southeastasia",
+        "switzerlandnorth",
+        "uksouth",
+        "westeurope",
+        "westus2",
+        "westus3"
+      ],
+      "defaultValue": "westus3",
+      "metadata": {
+        "description": "Location for resource group"
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "maxLength": 90,
+      "metadata": {
+        "description": "The resource group to create devcenter and project in"
+      }
+    },
+    "principalId": {
+      "type": "string",
+      "metadata": {
+        "description": "The principal/object ID of the user to assign role assignments to"
+      }
+    },
+    "devcenterName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 26,
+      "metadata": {
+        "description": "The name of Dev Center"
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 63,
+      "metadata": {
+        "description": "The name of Dev Center project"
+      }
+    },
+    "environmentTypeName": {
+      "type": "string",
+      "defaultValue": "Sandbox",
+      "minLength": 3,
+      "maxLength": 63,
+      "metadata": {
+        "description": "The name of the Environment Type e.g. Sandbox, Dev, Prod"
+      }
+    }
+  },
+  "variables": {
+    "subscriptionId": "[subscription().subscriptionId]",
+    "devcenterResourceId": "[resourceId(variables('subscriptionId'), parameters('resourceGroupName'), 'Microsoft.DevCenter/devcenters', parameters('devcenterName'))]",
+    "guidSeed": "[concat(parameters('resourceGroupLocation'), parameters('resourceGroupName'), parameters('principalId'), parameters('devcenterName'), parameters('projectName'), parameters('environmentTypeName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('resourceGroupLocation')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[guid('Deployment1', variables('guidSeed'))]",
+      "dependsOn": [
+        "[parameters('resourceGroupName')]"
+      ],
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "resourceGroupLocation": {
+            "value": "[parameters('resourceGroupLocation')]"
+          },
+          "principalId": {
+            "value": "[parameters('principalId')]"
+          },
+          "devcenterName": {
+            "value": "[parameters('devcenterName')]"
+          },
+          "projectName": {
+            "value": "[parameters('projectName')]"
+          },
+          "environmentTypeName": {
+            "value": "[parameters('environmentTypeName')]"
+          },
+          "devcenterResourceId": {
+            "value": "[variables('devcenterResourceId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "resourceGroupLocation": {
+              "type": "string"
+            },
+            "principalId": {
+              "type": "string"
+            },
+            "devcenterName": {
+              "type": "string"
+            },
+            "projectName": {
+              "type": "string"
+            },
+            "environmentTypeName": {
+              "type": "string"
+            },
+            "devcenterResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of dev center"
+              }
+            },
+            "guidSeed": {
+              "type": "string",
+              "defaultValue": "[newGuid()]",
+              "metadata": {
+                "description": "Seed to generate more unique GUID"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DevCenter/devcenters",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('devcenterName')]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "identity": {
+                "type": "SystemAssigned"
+              }
+            },
+            {
+              "type": "Microsoft.DevCenter/devcenters/catalogs",
+              "apiVersion": "2023-04-01",
+              "name": "[concat(parameters('devcenterName'), '/quickstart-environment-definitions')]",
+              "dependsOn": [
+                "[parameters('devcenterName')]"
+              ],
+              "properties": {
+                "gitHub": {
+                  "uri": "https://github.com/microsoft/devcenter-catalog.git",
+                  "branch": "main",
+                  "path": "Environment-Definitions"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.DevCenter/devcenters/environmentTypes",
+              "apiVersion": "2023-04-01",
+              "name": "[concat(parameters('devcenterName'), '/', parameters('environmentTypeName'))]",
+              "dependsOn": [
+                "[parameters('devcenterName')]"
+              ]
+            },
+            {
+              "type": "Microsoft.DevCenter/projects",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('projectName')]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/devcenters/environmentTypes', parameters('devcenterName'), parameters('environmentTypeName'))]"
+              ],
+              "properties": {
+                "devCenterId": "[parameters('devcenterResourceId')]"
+              }
+            },
+            {
+              "type": "Microsoft.DevCenter/projects/environmentTypes",
+              "apiVersion": "2023-04-01",
+              "name": "[concat(parameters('projectName'), '/', parameters('environmentTypeName'))]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "dependsOn": [
+                "[parameters('projectName')]"
+              ],
+              "properties": {
+                "status": "Enabled",
+                "deploymentTargetId": "[subscription().id]",
+                "creatorRoleAssignment": {
+                  "roles": "[createObject('8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]"
+                }
+              }
+            },
+            {
+              "scope": "[concat('Microsoft.DevCenter/projects', '/', parameters('projectName'))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid('Deployment Environment User', parameters('guidSeed'))]",
+              "dependsOn": [
+                "[parameters('projectName')]"
+              ],
+              "properties": {
+                "description": "Provides access to manage environment resources.",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "User",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '18e40d4e-8d2e-438d-97e1-9528336e149c')]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[guid('Deployment2', variables('guidSeed'))]",
+      "dependsOn": [
+        "[guid('Deployment1', variables('guidSeed'))]"
+      ],
+      "subscriptionId": "[subscription().subscriptionId]",
+      "location": "[parameters('resourceGroupLocation')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "devcenterResourceId": {
+            "value": "[variables('devcenterResourceId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "devcenterResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of dev center"
+              }
+            },
+            "guidSeed": {
+              "type": "string",
+              "defaultValue": "[newGuid()]",
+              "metadata": {
+                "description": "Seed to generate more unique GUID"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid('User Access Administrator', parameters('guidSeed'))]",
+              "properties": {
+                "description": "Lets you manage user access to Azure resources.",
+                "principalId": "[reference(parameters('devcenterResourceId'), '2023-10-01-preview', 'Full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9')]"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid('Contributor', parameters('guidSeed'))]",
+              "properties": {
+                "description": "Grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC, manage assignments in Azure Blueprints, or share image galleries.",
+                "principalId": "[reference(parameters('devcenterResourceId'), '2023-10-01-preview', 'Full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
