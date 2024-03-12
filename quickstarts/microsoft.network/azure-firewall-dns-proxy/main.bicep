@@ -49,18 +49,14 @@ param prodVmName string = 'ProdVm'
 @description('Specifies the size of the virtual machine.')
 param vmSize string = 'Standard_D4s_v3'
 
-@description('Specifies the image publisher of the disk image used to create the virtual machine.')
+@description('The publisher of the image from which to launch the virtual machine.')
 param imagePublisher string = 'Canonical'
 
-@description('Specifies the offer of the platform image or marketplace image used to create the virtual machine.')
-param imageOffer string = 'UbuntuServer'
+@description('The offer of the image from which to launch the virtual machine.')
+param imageOffer string = '0001-com-ubuntu-server-jammy'
 
-@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
-@allowed([
-  '18_04-daily-lts-gen2'
-  '18_04-lts-gen2'
-])
-param imageSku string = '18_04-lts-gen2'
+@description('The SKU of the image from which to launch the virtual machine.')
+param imageSku string = '22_04-lts-gen2'
 
 @description('Specifies the type of authentication when accessing the Virtual Machine. SSH key is recommended.')
 @allowed([
@@ -1017,42 +1013,17 @@ resource dnsVmCustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09
   }
 }
 
-resource dnsVmLogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
+resource dnsVmAzureMonitorAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
   parent: dnsVm
-  name: 'LogAnalytics'
+  name: '${dnsVmName}-AzureMonitorLinuxAgent'
   location: location
   properties: {
-    publisher: 'Microsoft.EnterpriseCloud.Monitoring'
-    type: 'OmsAgentForLinux'
-    typeHandlerVersion: '1.12'
-    settings: {
-      workspaceId: workspace.properties.customerId
-      stopOnMultipleConnections: false
-    }
-    protectedSettings: {
-      workspaceKey: workspace.listKeys().primarySharedKey
-    }
-  }
-  dependsOn: [
-    dnsVmCustomScript
-  ]
-}
-
-resource dnsVmDependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (deployCustomDnsForwarder) {
-  parent: dnsVm
-  name: 'DependencyAgent'
-  location: location
-  properties: {
-    publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
-    type: 'DependencyAgentLinux'
-    typeHandlerVersion: '9.10'
+    publisher: 'Microsoft.Azure.Monitor'
+    type: 'AzureMonitorLinuxAgent'
+    typeHandlerVersion: '1.21'
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
   }
-  dependsOn: [
-    workspace
-    dnsVmCustomScript
-    dnsVmLogAnalytics
-  ]
 }
 
 resource devVmNic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
@@ -1211,42 +1182,17 @@ resource devVmCustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-09
   ]
 }
 
-resource devVmLogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource devVmAzureMonitorAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: devVm
-  name: 'LogAnalytics'
+  name: '${devVmName}-AzureMonitorLinuxAgent'
   location: location
   properties: {
-    publisher: 'Microsoft.EnterpriseCloud.Monitoring'
-    type: 'OmsAgentForLinux'
-    typeHandlerVersion: '1.12'
-    settings: {
-      workspaceId: workspace.properties.customerId
-      stopOnMultipleConnections: false
-    }
-    protectedSettings: {
-      workspaceKey: workspace.listKeys().primarySharedKey
-    }
-  }
-  dependsOn: [
-    devVmCustomScript
-  ]
-}
-
-resource devVmDependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
-  parent: devVm
-  name: 'DependencyAgent'
-  location: location
-  properties: {
-    publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
-    type: 'DependencyAgentLinux'
-    typeHandlerVersion: '9.10'
+    publisher: 'Microsoft.Azure.Monitor'
+    type: 'AzureMonitorLinuxAgent'
+    typeHandlerVersion: '1.21'
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
   }
-  dependsOn: [
-    workspace
-    devVmCustomScript
-    devVmLogAnalytics
-  ]
 }
 
 resource prodVmNic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
@@ -1405,42 +1351,17 @@ resource prodVmCustomScript 'Microsoft.Compute/virtualMachines/extensions@2023-0
   ]
 }
 
-resource prodVmLogAnalytics 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource prodVmAzureMonitorAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: prodVm
-  name: 'LogAnalytics'
+  name: '${prodVmName}-AzureMonitorLinuxAgent'
   location: location
   properties: {
-    publisher: 'Microsoft.EnterpriseCloud.Monitoring'
-    type: 'OmsAgentForLinux'
-    typeHandlerVersion: '1.12'
-    settings: {
-      workspaceId: workspace.properties.customerId
-      stopOnMultipleConnections: false
-    }
-    protectedSettings: {
-      workspaceKey: workspace.listKeys().primarySharedKey
-    }
-  }
-  dependsOn: [
-    prodVmCustomScript
-  ]
-}
-
-resource prodVmDependencyAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
-  parent: prodVm
-  name: 'DependencyAgent'
-  location: location
-  properties: {
-    publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
-    type: 'DependencyAgentLinux'
-    typeHandlerVersion: '9.10'
+    publisher: 'Microsoft.Azure.Monitor'
+    type: 'AzureMonitorLinuxAgent'
+    typeHandlerVersion: '1.21'
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
   }
-  dependsOn: [
-    workspace
-    prodVmCustomScript
-    prodVmLogAnalytics
-  ]
 }
 
 resource firewallPublicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
