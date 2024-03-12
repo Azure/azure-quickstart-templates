@@ -6,10 +6,9 @@ products:
 - azure-resource-manager
 urlFragment: environment-sandbox
 languages:
-- bicep
 - json
 ---
-# Azure Deployment Environment (ADE)
+#  Deploy Azure Deployment Environment (ADE)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/environment-sandbox/PublicLastTestDate.svg)
 
