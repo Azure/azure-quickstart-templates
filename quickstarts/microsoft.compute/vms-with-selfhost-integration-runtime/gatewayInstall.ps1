@@ -217,7 +217,7 @@ Write-Host "Download JDK file completed !"
 
 #Install silently
 Write-Host "Trying to install JDK silently..."
-Start-Process -FilePath "$workd\jdk-13.0.2_windows-x64_bin.exe" -ArgumentList INSTALLCFG="$workd\jdkinstall.cfg" -Wait
+Start-Process -FilePath "$workd\jdk-windows-x64_bin.exe" -ArgumentList INSTALLCFG="$workd\jdkinstall.cfg" -Wait
 Write-Host "JDK installation completed successfully !"
 
 #Remove the installer
