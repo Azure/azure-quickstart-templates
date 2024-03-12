@@ -226,4 +226,8 @@ rm -Force $workd\jdk*
 Write-Host "JDK file deleted successfully !"
 
 Write-Host "Adding JAVA_HOME env var"
-setx /M JAVA_HOME "C:\Program Files\Microsoft\jdk-11.0.19.7-hotspot"
+$java_path = where.exe java
+$java_home = $java_path.TrimEnd("\bin\java.exe")
+setx /M JAVA_HOME $java_home
+Write-Host "Java Home location: " $Env:JAVA_HOME
+
