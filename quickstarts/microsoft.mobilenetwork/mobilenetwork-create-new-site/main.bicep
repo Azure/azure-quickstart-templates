@@ -59,24 +59,24 @@ param desiredState string = 'Uninstalled'
 param ueMtu int = 1440
 
 #disable-next-line BCP081
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-09-01' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-01' existing = {
   name: existingMobileNetworkName
 
   #disable-next-line BCP081
-  resource existingDataNetwork 'dataNetworks@2023-09-01' existing = {
+  resource existingDataNetwork 'dataNetworks@2024-02-01' existing = {
     name: existingDataNetworkName
   }
 }
 
 #disable-next-line BCP081
-resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2023-09-01' = {
+resource exampleSite 'Microsoft.MobileNetwork/mobileNetworks/sites@2024-02-01' = {
   name: siteName
   parent: existingMobileNetwork
   location: location
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-09-01' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2024-02-01' = {
   name: siteName
   location: location
   properties: {
@@ -110,7 +110,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
   }
 
   #disable-next-line BCP081
-  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2023-09-01' = {
+  resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2024-02-01' = {
     name: siteName
     location: location
     properties: {
@@ -120,7 +120,7 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
 
     #disable-next-line BCP081
-    resource exampleAttachedDataNetwork 'attachedDataNetworks@2023-09-01' = {
+    resource exampleAttachedDataNetwork 'attachedDataNetworks@2024-02-01' = {
       name: existingDataNetworkName
       location: location
       properties: {
