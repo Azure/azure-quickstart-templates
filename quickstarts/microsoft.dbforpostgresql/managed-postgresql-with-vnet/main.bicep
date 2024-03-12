@@ -78,7 +78,7 @@ var firewallrules = [
   }
 ]
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -90,7 +90,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   parent: vnet
   name: subnetName
   properties: {
@@ -131,9 +131,15 @@ resource server 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
 
 @batchSize(1)
 resource firewallRules 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-01' = [for rule in firewallrules: {
-  name: '${server.name}/${rule.Name}'
+  name: rule.Name
   properties: {
     startIpAddress: rule.StartIpAddress
     endIpAddress: rule.EndIpAddress
   }
 }]
+
+output location string = location
+output name string = server.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = server.id
+output systemAssignedMIPrincipalId string = server.identity.principalId
