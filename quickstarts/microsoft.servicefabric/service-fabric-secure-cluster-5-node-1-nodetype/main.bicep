@@ -96,7 +96,7 @@ var lbNatPoolID0 = resourceId('Microsoft.Network/loadBalancers/inboundNatPools',
 var vmNodeType0Name = toLower('NT1${vmName}')
 var vmNodeType0Size = nodeTypeSize
 
-resource supportLogStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+resource supportLogStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: supportLogStorageAccountName
   location: location
   sku: {
@@ -110,7 +110,7 @@ resource supportLogStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01'
   properties: {}
 }
 
-resource applicationDiagnosticsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+resource applicationDiagnosticsStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: applicationDiagnosticsStorageAccountName
   location: location
   sku: {
@@ -124,7 +124,7 @@ resource applicationDiagnosticsStorageAccount 'Microsoft.Storage/storageAccounts
   properties: {}
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   tags: {
@@ -148,7 +148,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource lbIP 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
+resource lbIP 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: lbIPName
   location: location
   tags: {
@@ -163,7 +163,7 @@ resource lbIP 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   }
 }
 
-resource lb 'Microsoft.Network/loadBalancers@2021-08-01' = {
+resource lb 'Microsoft.Network/loadBalancers@2023-09-01' = {
   name: lbName
   location: location
   tags: {
@@ -320,7 +320,7 @@ resource lb 'Microsoft.Network/loadBalancers@2021-08-01' = {
   }
 }
 
-resource vmNodeType0 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
+resource vmNodeType0 'Microsoft.Compute/virtualMachineScaleSets@2023-09-01' = {
   name: vmNodeType0Name
   location: location
   sku: {
@@ -489,7 +489,7 @@ resource vmNodeType0 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
   ]
 }
 
-resource cluster 'Microsoft.ServiceFabric/clusters@2021-06-01' = {
+resource cluster 'Microsoft.ServiceFabric/clusters@2023-11-01-preview' = {
   name: clusterName
   location: location
   tags: {
@@ -549,4 +549,8 @@ resource cluster 'Microsoft.ServiceFabric/clusters@2021-06-01' = {
   }
 }
 
+output location string = location
+output name string = cluster.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = cluster.id
 output clusterProperties object = cluster.properties
