@@ -1,5 +1,5 @@
 ---
-description: This template an AKS cluster on Azure Stack HCI version 23H2+
+description: This template creates a Kubernetes cluster on Azure Stack HCI version 23H2+
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Create an Azure Kubernetes Service cluster on an Azure Stack HCI cluster
+# Create a Kubernetes cluster on Azure Stack HCI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/aks-on-ashci/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/aks-on-ashci/PublicDeployment.svg)
