@@ -3,13 +3,11 @@ param vmName string = 'myTVM'
 
 @description('The OS for the virtual machine. This will pick the latest fully patched image of the given OS.')
 @allowed([
-  'Ubuntu-1804'
-  'Ubuntu-2004'
   'Ubuntu-2204'
   'RHEL-83'
   'SUSE-15-SP2'
 ])
-param sku string = 'Ubuntu-2004'
+param sku string = 'Ubuntu-2204'
 
 @description('The size of the virtual machine')
 param vmSize string = 'Standard_D2s_v3'
@@ -70,18 +68,6 @@ param networkSecurityGroupName string = 'nsg'
 param maaEndpoint string = ''
 
 var imageReference = {
-  'Ubuntu-1804': {
-    publisher: 'Canonical'
-    offer: 'UbuntuServer'
-    sku: '18_04-lts-gen2'
-    version: 'latest'
-  }
-  'Ubuntu-2004': {
-    publisher: 'Canonical'
-    offer: '0001-com-ubuntu-server-focal'
-    sku: '20_04-lts-gen2'
-    version: 'latest'
-  }
   'Ubuntu-2204': {
     publisher: 'Canonical'
     offer: '0001-com-ubuntu-server-jammy'
