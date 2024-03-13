@@ -8,8 +8,7 @@ urlFragment: environment-deployment-1
 languages:
 - json
 ---
-
-# Azure Deployment Environment (ADE)
+#  Deploy Azure Deployment Environment (ADE)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/environment-deployment-1/PublicLastTestDate.svg)
 
