@@ -225,6 +225,9 @@ Write-Host "Trying to remove JDK file from temp directory..."
 rm -Force $workd\jdk*
 Write-Host "JDK file deleted successfully !"
 
+# Refresh path variable so java is in the path
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
 Write-Host "Adding JAVA_HOME env var"
 $java_path = where.exe java
 $java_home = $java_path.TrimEnd("\bin\java.exe")
