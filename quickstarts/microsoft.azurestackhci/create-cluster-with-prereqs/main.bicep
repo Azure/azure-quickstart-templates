@@ -8,9 +8,9 @@ param tenantId string = subscription().tenantId
 ])
 param deploymentMode string = 'Validate'
 
-@description('The prefix for the resource for the deployment')
-@minLength(6)
-@maxLength(10)
+@description('The prefix for the resource for the deployment. This value is used in key vault and storage account names in this template, as well as for the deploymentSettings.properties.deploymentConfiguration.scaleUnits.deploymentData.namingPrefix property which requires regex pattern: ^[a-zA-Z0-9-]{1,8}$')
+@minLength(4)
+@maxLength(8)
 param deploymentPrefix string
 
 // credentials for the deployment and ongoing lifecycle management
@@ -126,6 +126,9 @@ param dnsServers array
 @description('The storage connectivity switchless value for deploying a HCI cluster (less common)')
 param storageConnectivitySwitchless bool
 
+@description('The enable storage auto IP value for deploying a HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured before deployment and this value set to false')
+param enableStorageAutoIp bool = true
+
 // define custom type for storage network objects
 type storageNetworksType = {
   adapterName: string
@@ -151,6 +154,7 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     name: 'StorageNetwork${index + 1}'
     networkAdapterName: storageAdapter.adapterName
     vlanId: storageAdapter.vlan
+    enableStorageAutoIp: enableStorageAutoIp
   }
 ]
 
