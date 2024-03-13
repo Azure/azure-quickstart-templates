@@ -8,12 +8,8 @@ urlFragment: environment-deployment-1
 languages:
 - json
 ---
-<<<<<<< Updated upstream:quickstarts/microsoft.devcenter/environment-sandbox/README.md
-#  Deploy Azure Deployment Environment (ADE)
-=======
 
 # Azure Deployment Environment (ADE)
->>>>>>> Stashed changes:quickstarts/microsoft.devcenter/environment-deployment-1/README.md
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/environment-deployment-1/PublicLastTestDate.svg)
 
@@ -29,7 +25,7 @@ languages:
 
 `Tags: Devcenter, Environment, Deployment Environment, Azure Deployment Environment, ADE, ARM Template, Microsoft.DevCenter/devcenters`
 
-This template provides a way to deploy an Environment including Dev Center, Catalog, Environment Definitions, Environment Type, and Project.
+This template provides a way to deploy the first part of the environment's infrastructure including Dev Center, Catalog, Environment Definitions, Dev Center Environment Type, and Project.
 
 If you're new to **Deployment Environment**, see:
 
