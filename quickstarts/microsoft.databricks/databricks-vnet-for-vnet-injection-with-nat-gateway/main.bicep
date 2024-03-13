@@ -2,10 +2,10 @@
 param location string = resourceGroup().location
 
 @description('Name of the NAT gateway to be attached to the workspace subnets.')
-param natGatewayName string = 'myNATgateway'
+param natGatewayName string = 'nat-gateway'
 
-@description('Name of the NAT gateway public IP.')
-param natGatewayPublicIpName string = 'myNATGatewayPublicIP'
+@description('Name of the Public IP associated with the NAT gateway.')
+param publicIpName string = 'nat-gw-public-ip'
 
 @description('The NSG id of the existing Network Security Group.')
 param nsgId string
@@ -29,7 +29,7 @@ param vnetCidr string = '10.179.0.0/16'
 param vnetName string = 'databricks-vnet'
 
 resource natGatewayPublicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
-  name: natGatewayPublicIpName
+  name: publicIpName
   location: location
   sku: {
     name: 'Standard'
