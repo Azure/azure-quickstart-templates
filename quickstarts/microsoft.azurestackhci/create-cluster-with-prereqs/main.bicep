@@ -154,7 +154,6 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     name: 'StorageNetwork${index + 1}'
     networkAdapterName: storageAdapter.adapterName
     vlanId: storageAdapter.vlan
-    enableStorageAutoIp: enableStorageAutoIp
   }
 ]
 
@@ -252,7 +251,6 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
             }
             ]
             hostNetwork: {
-              enableStorageAutoIp: true
               intents: [
                 {
                   adapter: managementIntentAdapterNames
@@ -329,6 +327,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               ]
               storageConnectivitySwitchless: storageConnectivitySwitchless
               storageNetworks: storageNetworkList
+              enableStorageAutoIp: enableStorageAutoIp
             }
             adouPath: domainOUPath
             secretsLocation: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}'
