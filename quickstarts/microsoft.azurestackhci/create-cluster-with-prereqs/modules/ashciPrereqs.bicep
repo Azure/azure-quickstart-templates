@@ -112,6 +112,7 @@ resource SPConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorizati
     roleDefinitionId: azureConnectedMachineResourceManagerRoleID
     principalId: hciResourceProviderObjectId
     principalType: 'ServicePrincipal'
+    description: 'Created by Azure Stack HCI deployment template'
   }
 }
 
@@ -121,6 +122,7 @@ resource NodeAzureConnectedMachineResourceManagerRolePermissions 'Microsoft.Auth
     roleDefinitionId: azureConnectedMachineResourceManagerRoleID
     principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
+    description: 'Created by Azure Stack HCI deployment template'
   }
 }
 ]
@@ -130,6 +132,7 @@ resource NodeazureStackHCIDeviceManagementRole 'Microsoft.Authorization/roleAssi
     roleDefinitionId: azureStackHCIDeviceManagementRole
     principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
+    description: 'Created by Azure Stack HCI deployment template'
   }
 }
 ]
@@ -140,6 +143,7 @@ resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@20
     roleDefinitionId: readerRoleID
     principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
+    description: 'Created by Azure Stack HCI deployment template'
   }
 }
 ]
@@ -151,6 +155,7 @@ resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments
     roleDefinitionId: keyVaultSecretUserRoleID
     principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
     principalType: 'ServicePrincipal'
+    description: 'Created by Azure Stack HCI deployment template'
   }
 }
 ]
