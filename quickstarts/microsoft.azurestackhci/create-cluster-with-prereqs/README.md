@@ -66,7 +66,7 @@ All additional required permissions are assigned during the deployment, includin
 
 ## Deployment
 
-When deploying Azure Stack HCI clusters using a Bicep or ARM template, the deployment goes through a validate phase followed by a deployment phase. For example, when using this template with a parameter file which has been updated to reflect your environment, the two phase deployment could look like this:
+When deploying Azure Stack HCI clusters using a Bicep, ARM, or REST API, the deployment goes through a validate phase followed by a deployment phase. To specify the phase of the deployment, use the `deploymentMode` parameter in the deploymentSettings resource. In this Bicep template, `deploymentMode` has a default value of `Validate`. The following sections demonstrate how to initiate each phase of deployment with Azure CLI or Azure Bicep.
 
 ### Validation Phase
 
