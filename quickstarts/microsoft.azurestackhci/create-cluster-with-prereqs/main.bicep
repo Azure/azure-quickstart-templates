@@ -246,8 +246,11 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               }
             ]
             physicalNodes: [for hciNode in arcNodeResourceIds: {
-              name: reference(hciNode,'2023-10-03-preview','Full').properties.displayName
-              ipv4Address: reference(hciNode,'2023-10-03-preview','Full').properties.networkProfile.networkInterfaces[0].ipAddresses[0].address
+              name: reference(hciNode,'2022-12-27','Full').properties.displayName
+              // Getting the IP from the first management NIC of the node based on the first NIC name in the managementIntentAdapterNames array parameter
+              // the edgeDevices resource is created and populated by the LCMController extension installation on the node
+              // append '/providers/microsoft.azurestackhci/edgeDevices/default' to the HCI node URL in the Portal then click 'JSON view' to debug
+              ipv4Address: (filter(reference('${hciNode}/providers/microsoft.azurestackhci/edgeDevices/default','2024-01-01','Full').properties.deviceConfiguration.nicDetails, nic => nic.adapterName == managementIntentAdapterNames[0]))[0].ip4Address
             }
             ]
             hostNetwork: {
