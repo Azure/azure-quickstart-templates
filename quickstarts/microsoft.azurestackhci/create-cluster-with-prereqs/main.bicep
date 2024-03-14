@@ -39,7 +39,9 @@ param arbDeploymentServicePrincipalSecret string
 param hciResourceProviderObjectId string
 
 // cluster and active directory settings
-@description('The name of the Azure Stack HCI cluster - this name is specified in the Active Directory preparation script')
+@description('The name of the Azure Stack HCI cluster - this must be a valid Active Directory computer name and will be the name of your cluster in Azure.')
+@maxLength(15)
+@minLength(4)
 param clusterName string
 
 @description('Names of the cluster node Arc Machine resources - ex "hci-node-1, hci-node-2"')
