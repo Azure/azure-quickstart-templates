@@ -194,19 +194,8 @@ If (!(Test-Path -Path $workd -PathType Container))
     New-Item -Path $workd  -ItemType directory 
 }
 
-#Create config file for silent install
-# Write-Host "Creating config file for silent install..."
-# $text = '
-# INSTALL_SILENT=Enable
-# AUTO_UPDATE=Enable
-# SPONSORS=Disable
-# REMOVEOUTOFDATEJRES=1
-# '
-# $text | Set-Content "$workd\jdkinstall.cfg"
-
 #Download executable file
 Write-Host "Download JDK file to temp directory..."
-# $source = "https://download.oracle.com/otn-pub/java/jdk/13.0.2+8/d4173c853231432d94f001e99d882ca7/jdk-13.0.2_windows-x64_bin.exe"
 $source = "https://aka.ms/download-jdk/microsoft-jdk-11.0.19-windows-x64.msi"
 $destination = "$workd\jdk-windows-x64_bin.msi"
 $client = New-Object System.Net.WebClient
@@ -233,4 +222,3 @@ $java_path = where.exe java
 $java_home = $java_path.TrimEnd("\bin\java.exe")
 setx /M JAVA_HOME $java_home
 Write-Host "Java Home location: " $Env:JAVA_HOME
-
