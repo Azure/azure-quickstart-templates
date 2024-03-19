@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: environment-sandbox
 languages:
+- bicep
 - json
 ---
 #  Deploy Azure Deployment Environment (ADE)
