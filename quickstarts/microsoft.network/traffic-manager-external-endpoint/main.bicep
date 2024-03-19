@@ -1,7 +1,7 @@
 @description('Relative DNS name for the traffic manager profile, must be globally unique.')
 param uniqueDnsName string
 
-resource ExternalEndpointExample 'Microsoft.Network/trafficmanagerprofiles@2018-08-01' = {
+resource ExternalEndpointExample 'Microsoft.Network/trafficmanagerprofiles@2022-04-01' = {
   name: 'ExternalEndpointExample'
   location: 'global'
   properties: {
@@ -48,3 +48,6 @@ resource ExternalEndpointExample 'Microsoft.Network/trafficmanagerprofiles@2018-
     ]
   }
 }
+output name string = ExternalEndpointExample.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = ExternalEndpointExample.id

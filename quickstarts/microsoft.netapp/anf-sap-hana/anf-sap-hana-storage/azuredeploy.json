@@ -10,20 +10,45 @@
                 "description": "SAP system ID (Three characters long alpha-numeric string)."
             }
         },
+        "AvailabilityZone": {
+            "type": "string",
+            "allowedValues": [
+                "None",
+                "1",
+                "2",
+                "3"
+            ],
+            "metadata": {
+                "description": "Availability Zone. This is None when proximity placement group is selected."
+            }
+        },
         "ProximityPlacementGroupName": {
             "type": "string",
-            "minLength": 1,
+            "minLength": 0,
             "maxLength": 80,
+            "defaultValue": "",
             "metadata": {
                 "description": "Name of proximity placement group."
             }
         },
         "ProximityPlacementGroupResourceGroup": {
             "type": "string",
-            "minLength": 1,
+            "minLength": 0,
             "maxLength": 90,
+            "defaultValue": "",
             "metadata": {
                 "description": "Resource group name for the proximity placement group"
+            }
+        },
+        "NetworkFeatures": {
+            "type": "string",
+            "allowedValues": [
+                "Basic",
+                "Standard"
+            ],
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "Basic or Standard network features available to the volume"
             }
         },
         "SAPMemoryInGibibytes": {
@@ -56,9 +81,9 @@
             "type": "int",
             "minValue": 1,
             "defaultValue": 1,
-            "maxValue": 3,
+            "maxValue": 5,
             "metadata": {
-                "description": "Total Number of SAP HANA hosts in this deployment (currently max 3 nodes can be configured)."
+                "description": "Total Number of SAP HANA hosts in this deployment (currently max 5 nodes can be configured)."
             }
         },
         "SystemRole": {
@@ -243,7 +268,6 @@
     },
     "variables": {
         "location": "[parameters('AzureNetappFilesLocation')]",
-        "SAPDeploymentSpecId": "20542149-bfca-5618-1879-9863dc6767f1",
         "SAPApplicationType": "SAP-HANA",
         "paddedLength": 5,
         "mappingSystemRole": {
@@ -269,6 +293,8 @@
         },
         "emptyTag": "[createObject()]",
         "volumeTag": "[if(equals(parameters('TagKey'),''), variables('emptyTag'), variables('tagPayload'))]",
+        "zones": "[if(empty(parameters('ProximityPlacementGroupName')), if(equals(parameters('AvailabilityZone'),'None'), createArray(), array(parameters('AvailabilityZone'))), json('null'))]",
+        "proximityPlacementGroup": "[if(empty(parameters('ProximityPlacementGroupName')), json('null'), resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName')))]",
 
         "autoDataVolumeSize": "[max(100, add(parameters('SAPMemoryInGibibytes'), int(div(mul(parameters('AdditionalCapacityForSnapshotsPercentageOfRAM'), parameters('SAPMemoryInGibibytes')), 100))))]",
         "autoDataThroughput": "[if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(1, variables('1TiBInGiB'))), 400, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(2, variables('1TiBInGiB'))), 600, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(4, variables('1TiBInGiB'))), 800, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(6, variables('1TiBInGiB'))), 1000, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(8, variables('1TiBInGiB'))), 1200, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(10, variables('1TiBInGiB'))),1400, 1500))))))]",
@@ -312,9 +338,11 @@
         "dataVolumePayload": {
             "name": "[concat(variables('dataVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
             "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
             "properties": {
                 "creationToken": "[concat(variables('dataVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
-                "proximityPlacementGroup": "[resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
                 "usageThreshold": "[mul(variables('1GiBInBytes'),variables('dataVolumeSize'))]",
                 "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
                 "kerberosEnabled": false,
@@ -349,9 +377,11 @@
         "logVolumePayload": {
             "name": "[concat(variables('logVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
             "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
             "properties": {
                 "creationToken": "[concat(variables('logVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
-                "proximityPlacementGroup": "[resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
                 "usageThreshold": "[mul(variables('1GiBInBytes'),variables('logVolumeSize'))]",
                 "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
                 "kerberosEnabled": false,
@@ -386,9 +416,11 @@
         "sharedVolumePayload": {
             "name": "[variables('sharedVolumeNamePrefix')]",
             "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
             "properties": {
                 "creationToken": "[concat(variables('sharedVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
-                "proximityPlacementGroup": "[resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
                 "usageThreshold": "[mul(variables('1GiBInBytes'),variables('sharedVolumeSize'))]",
                 "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
                 "kerberosEnabled": false,
@@ -423,9 +455,10 @@
         "dataBackupVolumePayload": {
             "name": "[variables('dataBackupVolumeNamePrefix')]",
             "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
             "properties": {
                 "creationToken": "[variables('dataBackupVolumeNamePrefix')]",
-                "proximityPlacementGroup": "[resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
                 "usageThreshold": "[mul(variables('1GiBInBytes'),variables('dataBackupVolumeSize'))]",
                 "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
                 "kerberosEnabled": false,
@@ -457,13 +490,13 @@
                 ]
             }
         },
-
         "logBackupVolumePayload": {
             "name": "[variables('logBackupVolumeNamePrefix')]",
             "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
             "properties": {
                 "creationToken": "[variables('logBackupVolumeNamePrefix')]",
-                "proximityPlacementGroup": "[resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
                 "usageThreshold": "[mul(variables('1GiBInBytes'),variables('logBackupVolumeSize'))]",
                 "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
                 "kerberosEnabled": false,
@@ -506,15 +539,14 @@
             "comments": "Volume Group creation for master Host. This will be deployed only if Starting SAP HostID ==1 i.e master Host",
             "condition": "[equals(parameters('StartingSAPHostID'), 1)]",
             "type": "Microsoft.NetApp/netAppAccounts/volumeGroups",
-            "apiVersion": "2021-06-01",
+            "apiVersion": "2023-11-01",
             "name": "[concat(variables('volumeGroupPrefix'), padLeft(1,variables('paddedLength'),'0'))]",
             "location": "[variables('location')]",
             "properties": {
                 "groupMetaData":{
                     "groupDescription": "[concat('Volume Group for ', variables('volumeGroupPrefix'), padLeft(1,variables('paddedLength'),'0'))]",
                     "applicationType": "[variables('SAPApplicationType')]",
-                    "applicationIdentifier": "[parameters('SAPSystemID')]",
-                    "deploymentSpecId": "[variables('SAPDeploymentSpecId')]"
+                    "applicationIdentifier": "[parameters('SAPSystemID')]"
                 },
                 "volumes": "[variables('masterHostVolumesPayloadArray')]"
             }
@@ -522,7 +554,7 @@
         {
             "comments":"Volume Group creation for worker Hosts, worker index starts from 2. Copy object specify how many volume groups we want to create for workers",
             "type": "Microsoft.NetApp/netAppAccounts/volumeGroups",
-            "apiVersion": "2021-06-01",
+            "apiVersion": "2023-09-01",
             "name": "[concat(variables('volumeGroupPrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
             "location": "[variables('location')]",
             "copy": {
@@ -533,16 +565,17 @@
                 "groupMetaData":{
                     "groupDescription": "[concat('Volume Group for ', variables('volumeGroupPrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
                     "applicationType": "[variables('SAPApplicationType')]",
-                    "applicationIdentifier": "[parameters('SAPSystemID')]",
-                    "deploymentSpecId": "[variables('SAPDeploymentSpecId')]"
+                    "applicationIdentifier": "[parameters('SAPSystemID')]"
                 },
                 "volumes": [
                     {
                         "name": "[concat(variables('dataVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
                         "tags": "[variables('volumeTag')]",
+                        "zones": "[if(empty(parameters('ProximityPlacementGroupName')), if(equals(parameters('AvailabilityZone'),'None'), createArray(), array(parameters('AvailabilityZone'))), json('null'))]",
                         "properties": {
                             "creationToken": "[concat(variables('dataVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
-                            "proximityPlacementGroup": "[resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                            "networkFeatures": "[parameters('NetworkFeatures')]",
+                            "proximityPlacementGroup": "[if(empty(parameters('ProximityPlacementGroupName')), json('null'), resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName')))]",
                             "usageThreshold": "[mul(variables('1GiBInBytes'), variables('dataVolumeSize'))]",
                             "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
                             "kerberosEnabled": false,
@@ -577,9 +610,11 @@
                     {
                         "name": "[concat(variables('logVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
                         "tags": "[variables('volumeTag')]",
+                        "zones": "[if(empty(parameters('ProximityPlacementGroupName')), if(equals(parameters('AvailabilityZone'),'None'), createArray(), array(parameters('AvailabilityZone'))), json('null'))]",
                         "properties": {
                             "creationToken": "[concat(variables('logVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
-                            "proximityPlacementGroup": "[resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                            "networkFeatures": "[parameters('NetworkFeatures')]",
+                            "proximityPlacementGroup": "[if(empty(parameters('ProximityPlacementGroupName')), json('null'), resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName')))]",
                             "usageThreshold": "[mul(variables('1GiBInBytes'), variables('logVolumeSize'))]",
                             "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
                             "kerberosEnabled": false,

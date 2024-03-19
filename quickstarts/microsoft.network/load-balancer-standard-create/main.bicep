@@ -417,3 +417,8 @@ resource vNet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
     }
   }
 }
+
+output location string = location
+output name string = lb.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = lb.id

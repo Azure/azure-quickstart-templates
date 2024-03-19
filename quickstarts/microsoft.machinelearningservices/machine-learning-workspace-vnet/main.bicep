@@ -53,7 +53,7 @@ param storageAccountType string = 'Standard_LRS'
   'true'
   'false'
 ])
-param storageAccountBehindVNet string = 'true'
+param storageAccountBehindVNet string = 'false'
 
 @description('Resource group name of the storage account if using existing one')
 param storageAccountResourceGroupName string = resourceGroup().name
