@@ -1,14 +1,15 @@
 ---
-description: This template creates an Azure Stack HCI 23H2 cluster using a Bicep template.
+description: This template creates an Azure Stack HCI 23H2+ cluster using a Bicep template.
 page_type: sample
 products:
 - azure
-- Bicep
+- azure-resource-manager
 urlFragment: create-cluster-with-prereqs
 languages:
+- bicep
 - json
 ---
-# Creates an Azure Stack HCI 23H2 cluster and supporting resources
+# Creates an Azure Stack HCI 23H2+ cluster using Bicep
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/PublicDeployment.svg)
