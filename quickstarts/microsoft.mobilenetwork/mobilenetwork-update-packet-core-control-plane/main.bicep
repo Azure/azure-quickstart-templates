@@ -47,7 +47,7 @@ param mobileNetworkCode string = '01'
 
 
 #disable-next-line BCP081
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-09-01' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-01' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -59,7 +59,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2023-09-01
 }
 
 #disable-next-line BCP081
-resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2023-09-01' = {
+resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2024-02-01' = {
   parent: exampleMobileNetwork
   name: existingSliceName
   location: location
@@ -71,7 +71,7 @@ resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2023-09-01
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2023-09-01' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2024-02-01' = {
   name: existingSiteName
   location: location
   dependsOn: [

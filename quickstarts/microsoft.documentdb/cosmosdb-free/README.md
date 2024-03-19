@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: cosmosdb-free
 languages:
-- json
 - bicep
+- json
 ---
 # Create a free-tier Azure Cosmos DB account
 

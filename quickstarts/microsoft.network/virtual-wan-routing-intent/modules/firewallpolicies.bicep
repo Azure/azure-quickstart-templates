@@ -1,6 +1,7 @@
 param vWANhubs array
 param sourceIPAddressSpaces array
 param destinationIPAddressSpaces array
+param firewallSNATprivateRanges string[]
 
 var NetworkRuleCollectionGroupPriority = 50000
 var DefaultNetworkRuleCollectionGroup = 'DefaultNetworkRuleCollectionGroup'
@@ -12,6 +13,10 @@ resource hub1FirewallPolicy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
     sku: {
       tier: vWANhubs[0].fwtier
     }
+    snat: {
+      privateRanges: firewallSNATprivateRanges
+    }
+
     threatIntelMode: vWANhubs[0].threatintelmode
   }
 }
@@ -24,6 +29,9 @@ resource hub2FirewallPolicy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
       tier: vWANhubs[1].fwtier
     }
     threatIntelMode: vWANhubs[1].threatintelmode
+    snat: {
+      privateRanges: firewallSNATprivateRanges
+    }
   }
 }
 

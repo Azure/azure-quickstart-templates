@@ -4,17 +4,22 @@
 param vmssName string
 
 @description('Size of VMs in the VM Scale Set.')
-param vmSku string = 'Standard_A1_v2'
+param vmSku string = 'Standard_D2s_v3'
 
 @description('The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter & 2016-Datacenter, 2019-Datacenter.')
 @allowed([
-  '2008-R2-SP1'
-  '2012-Datacenter'
-  '2012-R2-Datacenter'
-  '2016-Datacenter'
-  '2019-Datacenter'
+  '2019-DataCenter-GenSecond'
+  '2016-DataCenter-GenSecond'
+  '2022-datacenter-azure-edition'
 ])
-param windowsOSVersion string = '2019-Datacenter'
+param windowsOSVersion string = '2022-datacenter-azure-edition'
+
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
 
 @description('Number of VM instances (100 or less).')
 @minValue(1)
@@ -78,11 +83,18 @@ var osType = {
   sku: windowsOSVersion
   version: 'latest'
 }
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
 var imageReference = osType
 var webDeployPackageFullPath = uri(_artifactsLocation, '${webDeployPackage}${_artifactsLocationSasToken}')
 var powershelldscZipFullPath = uri(_artifactsLocation, '${powershelldscZip}${_artifactsLocationSasToken}')
 
-resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
+resource loadBalancer 'Microsoft.Network/loadBalancers@2023-04-01' = {
   name: loadBalancerName
   location: location
   properties: {
@@ -150,7 +162,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
   }
 }
 
-resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
+resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-09-01' = {
   name: vmScaleSetName
   location: location
   sku: {
@@ -178,6 +190,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
         adminUsername: adminUsername
         adminPassword: adminPassword
       }
+      securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
       networkProfile: {
         networkInterfaceConfigurations: [
           {
@@ -232,7 +245,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -243,7 +256,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
 }
 
-resource vNet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vNet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: vNetName
   location: location
   properties: {
@@ -263,7 +276,7 @@ resource vNet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource autoscalehost 'Microsoft.Insights/autoscalesettings@2021-05-01-preview' = {
+resource autoscalehost 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
   name: 'autoscalehost'
   location: location
   properties: {

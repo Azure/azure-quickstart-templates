@@ -19,7 +19,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
   location: location
   properties: {
     sku: {
-      name: 'Free'
+      name: 'PerGB2018'
     }
   }
 }
