@@ -4,7 +4,6 @@ param projectName string
 param environmentTypeName string
 param principalId string
 param guidSeed string
-param devcenterResourceId string
 
 resource devcenter 'Microsoft.DevCenter/devcenters@2023-04-01' = {
   name: devcenterName
@@ -38,7 +37,7 @@ resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
     devcenterEnvironmentType
   ]
   properties: {
-    devCenterId: devcenterResourceId
+    devCenterId: devcenter.id
   }
 }
 

@@ -50,8 +50,6 @@ param environmentTypeName string = 'Sandbox'
 @description('GUID used as name of role assignment')
 param guidSeed string = newGuid()
 
-var devcenterResourceId = resourceId(subscription().subscriptionId, resourceGroupName, 'Microsoft.DevCenter/devcenters', devcenterName)
-
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2022-09-01' = {
   name: resourceGroupName
   location: resourceLocation
@@ -70,7 +68,6 @@ module deployment1 './modules/deployment1.bicep' = {
     environmentTypeName: environmentTypeName
     principalId: principalId
     guidSeed: guidSeed
-    devcenterResourceId: devcenterResourceId
   }
 }
 
@@ -81,7 +78,8 @@ module deployment2 './modules/deployment2.bicep' = {
     deployment1
   ]
   params: {
+    devcenterName: devcenterName
+    resourceGroupName: resourceGroupName
     guidSeed: guidSeed
-    devcenterResourceId: devcenterResourceId
   }
 }
