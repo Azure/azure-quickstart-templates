@@ -5,6 +5,13 @@ param environmentTypeName string
 param principalId string
 param guidSeed string
 
+var roles = [
+  {
+    id: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635'
+    properties: {}
+  }
+]
+
 resource devcenter 'Microsoft.DevCenter/devcenters@2023-04-01' = {
   name: devcenterName
   location: resourceLocation
@@ -61,9 +68,7 @@ resource projectEnvironmentType 'Microsoft.DevCenter/projects/environmentTypes@2
     status: 'Enabled'
     deploymentTargetId: subscription().id
     creatorRoleAssignment: {
-      roles: {
-        '8e3af657-a8ff-443c-a75c-2fe8c4bcb635': {}
-      }
+      roles: toObject(roles, role => role.id, role => role.properties)
     }
   }
 }
