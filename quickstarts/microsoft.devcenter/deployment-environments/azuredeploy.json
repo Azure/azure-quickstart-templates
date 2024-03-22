@@ -15,38 +15,10 @@
         "description": "Name of the resource group"
       }
     },
-    "resourceLocation": {
-      "type": "string",
-      "defaultValue": "westus3",
-      "allowedValues": [
-        "australiaeast",
-        "brazilsouth",
-        "canadacentral",
-        "centralindia",
-        "centraluseuap",
-        "eastasia",
-        "eastus",
-        "eastus2",
-        "japaneast",
-        "koreacentral",
-        "northeurope",
-        "southafricanorth",
-        "southcentralus",
-        "southeastasia",
-        "switzerlandnorth",
-        "uksouth",
-        "westeurope",
-        "westus2",
-        "westus3"
-      ],
-      "metadata": {
-        "description": "Location to create resources in"
-      }
-    },
-    "principalId": {
+    "userPrincipalId": {
       "type": "string",
       "metadata": {
-        "description": "Principal/object ID of the user to assign role assignments to"
+        "description": "Principal/Object ID of the user to assign role assignments to"
       }
     },
     "devcenterName": {
@@ -73,26 +45,23 @@
       "metadata": {
         "description": "Name of Environment Type e.g. Sandbox, Dev, Prod"
       }
-    },
-    "guidSeed": {
-      "type": "string",
-      "defaultValue": "[newGuid()]",
-      "metadata": {
-        "description": "GUID used as name of role assignment"
-      }
     }
+  },
+  "variables": {
+    "location": "[deployment().location]",
+    "guidSeed": "[guid(parameters('userPrincipalId'), variables('location'), parameters('resourceGroupName'), parameters('devcenterName'), parameters('projectName'), parameters('environmentTypeName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2022-09-01",
       "name": "[parameters('resourceGroupName')]",
-      "location": "[parameters('resourceLocation')]"
+      "location": "[variables('location')]"
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[guid('Deployment 1', parameters('guidSeed'))]",
+      "name": "[guid('Deployment 1', variables('guidSeed'))]",
       "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -101,7 +70,7 @@
         "mode": "Incremental",
         "parameters": {
           "resourceLocation": {
-            "value": "[parameters('resourceLocation')]"
+            "value": "[variables('location')]"
           },
           "devcenterName": {
             "value": "[parameters('devcenterName')]"
@@ -113,10 +82,10 @@
             "value": "[parameters('environmentTypeName')]"
           },
           "principalId": {
-            "value": "[parameters('principalId')]"
+            "value": "[parameters('userPrincipalId')]"
           },
           "guidSeed": {
-            "value": "[parameters('guidSeed')]"
+            "value": "[variables('guidSeed')]"
           }
         },
         "template": {
@@ -245,9 +214,9 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[guid('Deployment 2', parameters('guidSeed'))]",
+      "name": "[guid('Deployment 2', variables('guidSeed'))]",
       "subscriptionId": "[subscription().subscriptionId]",
-      "location": "[deployment().location]",
+      "location": "[variables('location')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -261,7 +230,7 @@
             "value": "[parameters('resourceGroupName')]"
           },
           "guidSeed": {
-            "value": "[parameters('guidSeed')]"
+            "value": "[variables('guidSeed')]"
           }
         },
         "template": {
@@ -312,7 +281,7 @@
         }
       },
       "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', guid('Deployment 1', parameters('guidSeed')))]"
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', guid('Deployment 1', variables('guidSeed')))]"
       ]
     }
   ]
