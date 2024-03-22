@@ -121,7 +121,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
   sku: {
     name: 'S0'
   }
-  kind: 'OpenAI'
+  kind: 'AIServices'
   properties: {
     apiProperties: {
       statisticsEnabled: false
