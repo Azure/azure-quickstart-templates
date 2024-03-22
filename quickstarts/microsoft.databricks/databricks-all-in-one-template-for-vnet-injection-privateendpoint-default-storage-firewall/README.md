@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create a network security group, a virtual network, private endpoint, and a default storage firewall enabled Azure Databricks workspace with the virtual network and the system assigned access connector.
+description: This template allows you to create a network security group, a virtual network, private endpoint, and a default storage firewall enabled Azure Databricks workspace with the virtual network and the system-assigned access connector.
 page_type: sample
 products:
 - azure
@@ -11,21 +11,11 @@ languages:
 ---
 # Azure Databricks All-in-one Templat VNetInjection-Pvtendpt-Default-Storage-Firewall
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/PublicDeployment.svg)
-
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/FairfaxDeployment.svg)
-
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/CredScanResult.svg)
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/BicepVersion.svg)
-
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall%2Fazuredeploy.json)
 
-This template allows you to create a network security group, a virtual network, private endpoint, and a default storage firewall enabled Azure Databricks workspace with the virtual network and the system assigned access connector.
+This template allows you to create a network security group, a virtual network, private endpoint, and a default storage firewall enabled Azure Databricks workspace with the virtual network and the system-assigned access connector.
 For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/).
 
 ### What is Azure Databricks?

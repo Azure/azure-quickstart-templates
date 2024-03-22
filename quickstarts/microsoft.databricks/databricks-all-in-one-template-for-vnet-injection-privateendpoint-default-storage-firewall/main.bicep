@@ -53,8 +53,11 @@ param vnetName string = 'databricks-vnet'
 @description('The name of the subnet to create the private endpoint in.')
 param PrivateEndpointSubnetName string = 'default'
 
+@description('The name of the access connector to create.')
+param accessConnectorName string = 'default'
+
 @description('The name of the Azure Databricks workspace to create.')
-param workspaceName string = 'default'
+param workspaceName string = 'default-ckheeh'
 
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
 var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
@@ -62,6 +65,15 @@ var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGNa
 var privateEndpointName = '${workspaceName}-pvtEndpoint'
 var privateDnsZoneName = 'privatelink.azuredatabricks.net'
 var pvtEndpointDnsGroupName = '${privateEndpointName}/mydnsgroupname'
+
+resource accessConnector 'Microsoft.Databricks/accessConnectors@2023-05-01' = {
+  name: accessConnectorName
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {}
+}
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   name: nsgName
@@ -211,7 +223,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {
@@ -219,6 +231,11 @@ resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
   }
   properties: {
     managedResourceGroupId: managedResourceGroupId
+    accessConnector: {
+      id: accessConnector.id
+      identityType: 'SystemAssigned'
+    }
+    defaultStorageFirewall: 'Enabled'
     parameters: {
       customVirtualNetworkId: {
         value: vnet.id
