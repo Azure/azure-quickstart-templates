@@ -1,8 +1,8 @@
 param resourceLocation string
-param devcenterName string
+param devCenterName string
 param projectName string
 param environmentTypeName string
-param principalId string
+param userObjectID string
 param guidSeed string
 
 var roles = [
@@ -13,7 +13,7 @@ var roles = [
 ]
 
 resource devcenter 'Microsoft.DevCenter/devcenters@2023-04-01' = {
-  name: devcenterName
+  name: devCenterName
   location: resourceLocation
   identity: {
     type: 'SystemAssigned'
@@ -48,12 +48,12 @@ resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
   }
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (userObjectID != '') {
   scope: project
   name: guid('Deployment Environment User', guidSeed)
   properties: {
     description: 'Provides access to manage environment resources.'
-    principalId: principalId
+    principalId: userObjectID
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '18e40d4e-8d2e-438d-97e1-9528336e149c')
   }
 }
