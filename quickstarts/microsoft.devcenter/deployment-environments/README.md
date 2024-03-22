@@ -6,10 +6,9 @@ products:
 - azure-resource-manager
 urlFragment: deployment-environments
 languages:
-- bicep
 - json
 ---
-#  Configure Azure Deployment Environments service
+#  Configure Deployment Environments service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/deployment-environments/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/deployment-environments/PublicDeployment.svg)
