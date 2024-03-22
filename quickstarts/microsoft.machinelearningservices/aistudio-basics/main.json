@@ -5,13 +5,13 @@
     "_generator": {
       "name": "bicep",
       "version": "0.26.54.24096",
-      "templateHash": "15083221508251029014"
+      "templateHash": "4799091695766402139"
     }
   },
   "parameters": {
     "aiHubName": {
       "type": "string",
-      "defaultValue": "air-demo",
+      "defaultValue": "air6-demo",
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
@@ -77,6 +77,9 @@
           "containerRegistryName": {
             "value": "[format('cr{0}{1}', variables('name'), variables('uniqueSuffix'))]"
           },
+          "aiServicesName": {
+            "value": "[format('ais{0}{1}', variables('name'), variables('uniqueSuffix'))]"
+          },
           "tags": {
             "value": "[parameters('tags')]"
           }
@@ -88,7 +91,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.26.54.24096",
-              "templateHash": "13741350063055511350"
+              "templateHash": "18174080564083878511"
             }
           },
           "parameters": {
@@ -104,6 +107,12 @@
               "defaultValue": {},
               "metadata": {
                 "description": "Tags to add to the resources"
+              }
+            },
+            "aiServicesName": {
+              "type": "string",
+              "metadata": {
+                "description": "AI services name"
               }
             },
             "applicationInsightsName": {
@@ -233,6 +242,21 @@
               }
             },
             {
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2021-10-01",
+              "name": "[parameters('aiServicesName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "S0"
+              },
+              "kind": "AIServices",
+              "properties": {
+                "apiProperties": {
+                  "statisticsEnabled": false
+                }
+              }
+            },
+            {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2022-09-01",
               "name": "[variables('storageNameCleaned')]",
@@ -285,6 +309,14 @@
             }
           ],
           "outputs": {
+            "aiservicesID": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName'))]"
+            },
+            "aiservicesTarget": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2021-10-01').endpoint]"
+            },
             "storageId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
@@ -330,6 +362,12 @@
           "tags": {
             "value": "[parameters('tags')]"
           },
+          "aiServicesId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiservicesID.value]"
+          },
+          "aiServicesTarget": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiservicesTarget.value]"
+          },
           "applicationInsightsId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.applicationInsightsId.value]"
           },
@@ -350,7 +388,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.26.54.24096",
-              "templateHash": "1288632411834735209"
+              "templateHash": "18319324019540569041"
             }
           },
           "parameters": {
@@ -369,20 +407,20 @@
             "aiHubName": {
               "type": "string",
               "metadata": {
-                "description": "AI resource name"
+                "description": "AI hub name"
               }
             },
             "aiHubFriendlyName": {
               "type": "string",
               "defaultValue": "[parameters('aiHubName')]",
               "metadata": {
-                "description": "AI resource display name"
+                "description": "AI hub display name"
               }
             },
             "aiHubDescription": {
               "type": "string",
               "metadata": {
-                "description": "AI resource description"
+                "description": "AI hub description"
               }
             },
             "applicationInsightsId": {
@@ -408,6 +446,18 @@
               "metadata": {
                 "description": "Resource ID of the storage account resource for storing experimentation outputs"
               }
+            },
+            "aiServicesId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the AI Services resource"
+              }
+            },
+            "aiServicesTarget": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the AI Services endpoint"
+              }
             }
           },
           "resources": [
@@ -417,8 +467,13 @@
               "name": "[format('{0}/{1}', parameters('aiHubName'), format('{0}-connection-AzureOpenAI', parameters('aiHubName')))]",
               "properties": {
                 "category": "AzureOpenAI",
-                "target": "https://testlazyacr4666493982.openai.azure.com/",
-                "authType": "AAD"
+                "target": "[parameters('aiServicesTarget')]",
+                "authType": "AAD",
+                "isSharedToAll": true,
+                "metadata": {
+                  "ApiType": "Azure",
+                  "ResourceId": "[parameters('aiServicesId')]"
+                }
               },
               "dependsOn": [
                 "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
