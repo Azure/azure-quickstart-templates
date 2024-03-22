@@ -5,9 +5,6 @@ param location string = resourceGroup().location
 @description('Tags to add to the resources')
 param tags object = {}
 
-@description('AI services name')
-param aiServicesName string
-
 @description('Application Insights resource name')
 param applicationInsightsName string
 
@@ -17,7 +14,40 @@ param containerRegistryName string
 @description('The name of the Key Vault')
 param keyvaultName string
 
+@description('AI services name. Must be unique.')
+param aiServicesName string = 'CognitiveService-${uniqueString(resourceGroup().id)}'
+
+@description('Specifies the customer managed keyvault Resource Manager ID.')
+param cmk_keyvault_id string
+
+@description('Specifies the customer managed keyvault key uri.')
+param cmk_keyvault_key_name string
+
 var containerRegistryNameCleaned = replace(containerRegistryName, '-', '')
+
+resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
+  name: aiServicesName
+  location: location
+  sku: {
+    name: 'S0'
+  }
+  kind: 'AIServices'
+  properties: {
+    apiProperties: {
+      statisticsEnabled: false
+    }
+
+    //add encryption
+    encryption: {
+      keySource: 'Microsoft.KeyVault'
+      keyVaultProperties: {
+        keyVaultUri: cmk_keyvault_id
+        keyName: cmk_keyvault_key_name
+      }
+    }
+  }
+}
+
 
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
@@ -114,20 +144,6 @@ param storageSkuName string = 'Standard_LRS'
 
 var storageNameCleaned = replace(storageName, '-', '')
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
-  name: aiServicesName
-  location: location
-  sku: {
-    name: 'S0'
-  }
-  kind: 'OpenAI'
-  properties: {
-    apiProperties: {
-      statisticsEnabled: false
-    }
-  }
-}
-
 resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageNameCleaned
   location: location
@@ -178,9 +194,8 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   }
 }
 
-output aiservicesID string = aiServices.id
-output aiservicesTarget string = aiServices.properties.endpoint
 output storageId string = storage.id
 output keyvaultId string = keyVault.id
 output containerRegistryId string = containerRegistry.id
 output applicationInsightsId string = applicationInsights.id
+output aiServicesId string = aiServices.id
