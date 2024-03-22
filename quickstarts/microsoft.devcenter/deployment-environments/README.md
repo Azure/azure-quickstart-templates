@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: deployment-environments
 languages:
+- bicep
 - json
 ---
 #  Configure Deployment Environments service
