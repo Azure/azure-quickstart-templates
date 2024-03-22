@@ -16,6 +16,6 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-privateendpoint-cmk-all-forms-default-storage-firewall%2Fazuredeploy.json)
 
 
-This template allows you to create a Azure Databricks workspace with privateendpoint and all three forms of customer managed keys (CMK), and User Assigned AccessConnector. For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/).
+This template allows you to create a Azure Databricks workspace with privateendpoint, all three forms of customer managed keys (CMK), and user-assigned accessconnector. For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/).
 
 `Tags: Microsoft.Databricks/workspaces, Microsoft.Resources/deployments, Microsoft.KeyVault/vaults/accessPolicies`
