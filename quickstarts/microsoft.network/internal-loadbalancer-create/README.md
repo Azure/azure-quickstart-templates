@@ -30,6 +30,6 @@ This template creates a standard internal load balancer with the front-end conne
 
 A load-balancing rule for port 80 is configured as part of the template deployment. The template disables outbound SNAT for the backend pool.
 
-Outbound rules are not created as part of this template.  For more information on providing outbound connectivity to the backend pool see, [What is Virtual Network NAT?](https://docs.microsoft.com/azure/virtual-network/nat-overview).
+Outbound rules are not created as part of this template.  For more information on providing outbound connectivity to the backend pool see, [What is Azure NAT Gateway?](https://docs.microsoft.com/azure/virtual-network/nat-overview).
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers`
