@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: sql-data-warehouse-transparent-encryption-create
 languages:
-- json
 - bicep
+- json
 ---
 # Dedicated SQL pool with Transparent Encryption.
 
