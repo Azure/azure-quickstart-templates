@@ -107,3 +107,9 @@ resource IoTHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
     }
   }
 }
+
+output location string = location
+output name string = IoTHub.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = IoTHub.id
+output systemAssignedMIPrincipalId string = IoTHub.identity.principalId

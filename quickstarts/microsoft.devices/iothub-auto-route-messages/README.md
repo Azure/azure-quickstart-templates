@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: iothub-auto-route-messages
 languages:
-- json
 - bicep
+- json
 ---
 # Use ARM template to create IoT Hub, route and view messages.
 
