@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: recovery-services-vault-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Recovery Services vault with advanced options
 
