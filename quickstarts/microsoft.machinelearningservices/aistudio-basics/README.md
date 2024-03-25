@@ -47,4 +47,4 @@ An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that 
 
 If you are new to Azure AI studio, see:
 
-- [Azure AI studio](https://aka.ms/aistudio/docs)
+- [Azure AI studio](https://aka.ms/aistudio/docs)`Tags: `
