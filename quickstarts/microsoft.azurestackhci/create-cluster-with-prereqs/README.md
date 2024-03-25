@@ -3,16 +3,13 @@ description: This template creates an Azure Stack HCI 23H2+ cluster using a Bice
 page_type: sample
 products:
 - azure
-- Bicep
-- azure-stack-hci
 - azure-resource-manager
 urlFragment: create-cluster-with-prereqs
 languages:
 - bicep
 - json
 ---
-
-# Deploy an Azure Stack HCI version 23H2 cluster via Bicep template
+# Creates an Azure Stack HCI 23H2+ cluster using Bicep
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/PublicDeployment.svg)
@@ -176,4 +173,4 @@ New-AzResourceGroupDeployment -Name 'hcicluster' -ResourceGroupName <yourResourc
 Learn more:
 
 - [About Arc VM management](https://learn.microsoft.com/azure-stack/hci/manage/azure-arc-vm-management-overview)
-- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).
+- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: `
