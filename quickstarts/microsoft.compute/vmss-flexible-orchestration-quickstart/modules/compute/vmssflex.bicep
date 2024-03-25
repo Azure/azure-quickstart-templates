@@ -20,6 +20,12 @@ param vmCount int = 3
 ])
 param os string = 'ubuntulinux'
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
 param subnetId string
 param lbBackendPoolArray array = []
 
@@ -51,15 +57,22 @@ var linuxConfiguration = {
 
 var linuxImageReference = {
   publisher: 'Canonical'
-  offer: 'UbuntuServer'
-  sku: '18_04-LTS-Gen2'
+  offer: '0001-com-ubuntu-server-focal'
+  sku: '20_04-lts-gen2'
   version: 'latest'
 }
 var windowsImageReference = {
   publisher: 'MicrosoftWindowsServer'
   offer: 'WindowsServer'
-  sku: '2019-Datacenter'
+  sku: '2022-datacenter-azure-edition'
   version: 'latest'
+}
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
 }
 var windowsConfiguration =  {
   timeZone: 'Pacific Standard Time'
@@ -67,7 +80,7 @@ var windowsConfiguration =  {
 
 var imageReference = (os == 'ubuntulinux' ? linuxImageReference : windowsImageReference)
 
-resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
+resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2023-09-01' = {
   name: vmssname
   location: location
   zones: zones
@@ -90,6 +103,7 @@ resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
         linuxConfiguration: (os=='ubuntulinux' && authenticationType == 'sshPublicKey'? linuxConfiguration : null)
         windowsConfiguration: (os=='windowsserver' ? windowsConfiguration : null)
       }
+      securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
       networkProfile: {
         networkApiVersion: networkApiVersion
         networkInterfaceConfigurations: [

@@ -1,5 +1,5 @@
 ---
-description: This template will create a Storage account, after which it will create a API connection by dynamically retrieving the primary key of the Storage account. The API connection is then used in a Logic App as a trigger polling for blob changes. The complete scenario can be found on https&#58;//blog.eldert.net/retrieve-azure-storage-access-keys-in-arm-template.
+description: This template will create a Storage account, after which it will create a API connection by dynamically retrieving the primary key of the Storage account. The API connection is then used in a Logic App as a trigger polling for blob changes.
 page_type: sample
 products:
 - azure
@@ -19,7 +19,7 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/arm-template-retrieve-azure-storage-access-keys/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/arm-template-retrieve-azure-storage-access-keys/CredScanResult.svg)
 
-This template will create a Storage account, after which it will create a API connection by dynamically retrieving the primary key of the Storage account. The API connection is then used in a Logic App as a trigger polling for blob changes. The complete scenario can be found on <https://blog.eldert.net/retrieve-azure-storage-access-keys-in-arm-template>.
+This template will create a Storage account, after which it will create a API connection by dynamically retrieving the primary key of the Storage account. The API connection is then used in a Logic App as a trigger polling for blob changes. The complete scenario can be found on https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/arm-template-retrieve-azure-storage-access-keys/.
 
 Tags: arm, storage, security
 

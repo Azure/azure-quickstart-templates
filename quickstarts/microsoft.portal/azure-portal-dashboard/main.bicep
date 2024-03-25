@@ -236,3 +236,7 @@ resource dashboard 'Microsoft.Portal/dashboards@2020-09-01-preview' = {
     ]
   }
 }
+output location string = location
+output name string = dashboard.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = dashboard.id

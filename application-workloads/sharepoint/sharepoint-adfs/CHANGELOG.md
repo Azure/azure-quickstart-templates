@@ -1,5 +1,33 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in February 26, 2024
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2024 CU for SharePoint Subscription
+  - Remove SharePoint 2013
+- All SharePoint configurations
+  - Add network share `SPLOGS` on folder `C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\16\LOGS`
+- Configuration for SPSE
+  - Update the registry keys required to allow OneDrive on OIDC authentication
+  - Update claims provider to LDAPCPSE
+  - It is no longer needed to restart the VM to be able to create the SPTrustedIdentityTokenIssuer, which saves a few minutes
+- Configuration for SPLE
+  - Update claims provider to LDAPCPSE
+  - It is no longer needed to restart the VM to be able to create the SPTrustedIdentityTokenIssuer, which saves a few minutes
+
+## Enhancements & bug-fixes - Published in December 18, 2023
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the December 2023 CU for SharePoint Subscription
+  - Add a resource `runCommands` to run a script that increases MaxEnvelopeSizeKb on SPSE, so that service WS-Management in SPSE can process the bigger DSC script
+- Configuration for SPSE
+  - Add claim type groupsid to make the switch to SPTrustedBackedByUPAClaimProvider easier. There are remaining steps needed to finalize its configuration
+- Configuration for SPSE and FESE
+  - Set registry keys to configure OneDrive NGSC for OIDC authentication
+  - Format the document
+
 ## Enhancements & bug-fixes - Published in November 16, 2023
 
 ### Changed

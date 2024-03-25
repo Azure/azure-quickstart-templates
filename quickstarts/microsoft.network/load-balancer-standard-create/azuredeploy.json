@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.17.1.54307",
-      "templateHash": "6950672787599885905"
+      "version": "0.26.54.24096",
+      "templateHash": "14680538243429534307"
     }
   },
   "parameters": {
@@ -111,11 +111,8 @@
     "lbName": "[format('{0}-lb', parameters('projectName'))]",
     "lbSkuName": "Standard",
     "lbPublicIpAddressName": "[format('{0}-lbPublicIP', parameters('projectName'))]",
-    "lbPublicIPAddressNameOutbound": "[format('{0}-lbPublicIPOutbound', parameters('projectName'))]",
     "lbFrontEndName": "LoadBalancerFrontEnd",
-    "lbFrontEndNameOutbound": "LoadBalancerFrontEndOutbound",
     "lbBackendPoolName": "LoadBalancerBackEndPool",
-    "lbBackendPoolNameOutbound": "LoadBalancerBackEndPoolOutbound",
     "lbProbeName": "loadBalancerHealthProbe",
     "nsgName": "[format('{0}-nsg', parameters('projectName'))]",
     "vNetName": "[format('{0}-vnet', parameters('projectName'))]",
@@ -132,7 +129,9 @@
     "extensionVersion": "1.0",
     "maaTenantName": "GuestAttestation",
     "maaEndpoint": "[substring('emptyString', 0, 0)]",
-    "ascReportingEndpoint": "[substring('emptystring', 0, 0)]"
+    "ascReportingEndpoint": "[substring('emptystring', 0, 0)]",
+    "natGatewayName": "[format('{0}-natgateway', parameters('projectName'))]",
+    "natGatewayPublicIPAddressName": "[format('{0}-natPublicIP', parameters('projectName'))]"
   },
   "resources": [
     {
@@ -156,9 +155,6 @@
               "loadBalancerBackendAddressPools": [
                 {
                   "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]"
-                },
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolNameOutbound'))]"
                 }
               ]
             }
@@ -284,6 +280,40 @@
       ]
     },
     {
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('natGatewayName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIpAddresses": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayPublicIPAddressName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayPublicIPAddressName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('natGatewayPublicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2021-08-01",
       "name": "[format('{0}/{1}', variables('vNetName'), variables('bastionSubnetName'))]",
@@ -300,9 +330,13 @@
       "apiVersion": "2021-08-01",
       "name": "[format('{0}/{1}', variables('vNetName'), variables('vNetSubnetName'))]",
       "properties": {
-        "addressPrefix": "[variables('vNetSubnetAddressPrefix')]"
+        "addressPrefix": "[variables('vNetSubnetAddressPrefix')]",
+        "natGateway": {
+          "id": "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]"
+        }
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]"
       ]
     },
@@ -362,22 +396,11 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpAddressName'))]"
               }
             }
-          },
-          {
-            "name": "[variables('lbFrontEndNameOutbound')]",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIPAddressNameOutbound'))]"
-              }
-            }
           }
         ],
         "backendAddressPools": [
           {
             "name": "[variables('lbBackendPoolName')]"
-          },
-          {
-            "name": "[variables('lbBackendPoolNameOutbound')]"
           }
         ],
         "loadBalancingRules": [
@@ -415,48 +438,16 @@
             }
           }
         ],
-        "outboundRules": [
-          {
-            "name": "myOutboundRule",
-            "properties": {
-              "allocatedOutboundPorts": 10000,
-              "protocol": "All",
-              "enableTcpReset": false,
-              "idleTimeoutInMinutes": 15,
-              "backendAddressPool": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolNameOutbound'))]"
-              },
-              "frontendIPConfigurations": [
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), variables('lbFrontEndNameOutbound'))]"
-                }
-              ]
-            }
-          }
-        ]
+        "outboundRules": []
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpAddressName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIPAddressNameOutbound'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpAddressName'))]"
       ]
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2021-08-01",
       "name": "[variables('lbPublicIpAddressName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[variables('lbSkuName')]"
-      },
-      "properties": {
-        "publicIPAddressVersion": "IPv4",
-        "publicIPAllocationMethod": "Static"
-      }
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-08-01",
-      "name": "[variables('lbPublicIPAddressNameOutbound')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('lbSkuName')]"
@@ -502,5 +493,23 @@
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "name": {
+      "type": "string",
+      "value": "[variables('lbName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]"
+    }
+  }
 }
