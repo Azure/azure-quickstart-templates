@@ -34,6 +34,7 @@ This sample template creates a Front Door profile with a custom domain and a cus
 The following resources are deployed as part of the solution:
 
 ### Front Door Standard/Premium
+
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the static website.
   - Note that you can use either the standard or premium Front Door SKU for this sample. By default, the standard SKU is used.
 - Front Door secret, which refers to a Key Vault secret containing the TLS certificate to use.
@@ -57,6 +58,6 @@ You can then access the Front Door endpoint by using your custom domain name. If
 
 ## Notes
 
-- You must grant Front Door access to your key vault before it can access your certificate. [Follow the guidance here](https://docs.microsoft.com/azure/frontdoor/standard-premium/how-to-configure-https-custom-domain#using-your-own-certificate) to register the Azure Front Door application with your Azure Active Directory tenant, and grant Azure Front Door access to your key vault.
+- You must grant Front Door access to your key vault before it can access your certificate. [Follow the guidance here](https://docs.microsoft.com/azure/frontdoor/standard-premium/how-to-configure-https-custom-domain#using-your-own-certificate) to register the Azure Front Door application with your Microsoft Entra tenant, and grant Azure Front Door access to your key vault.
 
 `Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/secrets, Microsoft.Cdn/profiles/customDomains, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

@@ -1,5 +1,5 @@
 ---
-description: This template enables encryption on a running Linux VM without needing AAD application details
+description: This template enables encryption on a running Linux VM without needing Microsoft Entra application details
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: encrypt-running-linux-vm-without-aad
 languages:
 - json
 ---
-# Enable encryption on a running Linux VM without AAD
+# Enable encryption on a running Linux VM without Microsoft Entra ID
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-linux-vm-without-aad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-running-linux-vm-without-aad/PublicDeployment.svg)
