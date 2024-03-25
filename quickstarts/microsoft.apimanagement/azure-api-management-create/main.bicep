@@ -14,7 +14,9 @@ param publisherName string
   'Consumption'
   'Developer'
   'Basic'
+  'Basicv2'
   'Standard'
+  'Standardv2'
   'Premium'
 ])
 param sku string = 'Developer'
