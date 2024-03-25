@@ -31,6 +31,18 @@ By default, the template will launch a VM from an Ubuntu Pro image. If you would
 
 Once the deployment is complete, follow [these instructions](https://anbox-cloud.io/docs/tutorial/installing-appliance#initialise-the-appliance-6) to initialize the Anbox Cloud Appliance and register your Ubuntu SSO account with the Appliance. The machine (VM) IP address referenced in the instructions is available as the `virtualMachinePublicIPAddress` output from the template. Note that the SSH command presented to you in your browser during Appliance initialization reflects certain assumptions regarding the location of the VM administrator's private SSH key. If you would like to point the `ssh` command to a private key at a particular location in your filesystem, the `sshCommand` output from the template provides an example of how to do so (replace `$PATH_TO_ADMINISTRATOR_PRIVATE_SSH_KEY` with the filesystem location).
 
+### Advanced configuration
+
+The template allows users to attach a dedicated data disk for LXD to the VM and to expose both the Anbox Management Service and services running on Anbox containers to the public internet.
+
+#### Dedicated disk for LXD
+
+By default, `anbox-cloud-appliance init` (see the linked instructions in the **Deployment steps** section above) will deploy the LXD storage pool to a dedicated data disk. Users wishing to instead host the LXD storage pool on the operating system disk can override the default argument for the template's `addDedicatedDataDiskForLXD` parameter. Note that when a dedicated data disk is attached to the VM, `anbox-cloud-appliance init` will automatically detect the disk's presence and deploy the LXD storage pool to the disk, so the user need not override any of the default answers to the questions that `anbox-cloud-appliance init` presents.
+
+#### Exposing Anbox services to the public internet
+
+The template includes two parameters that allow the user to expose Anbox services running on the VM to the public internet. The first parameter, `exposeAnboxManagementService`, exposes the Anbox Management Service on port 8444. The second parameter, `exposeAnboxContainerServices`, exposes Anbox container services on the port range 10000-11000. When the default arguments for these parameters are not overriden, the Anbox Management Service and any container services will only be accessible from the VM.
+
 ## Notes
 
 ### Anbox Cloud on ARM

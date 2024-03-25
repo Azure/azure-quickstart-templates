@@ -1,9 +1,18 @@
+@description('Add a dedicated disk for the LXD storage pool')
+param addDedicatedDataDiskForLXD bool = true
+
 @description('Public SSH key of the virtual machine administrator')
 @secure()
 param administratorPublicSSHKey string
 
 @description('Virtual machine administrator username')
 param administratorUsername string
+
+@description('Expose Anbox container services to the public internet on the port range 10000-11000; when false, Anbox container services will only be accessible from the virtual machine')
+param exposeAnboxContainerServices bool = false
+
+@description('Expose the Anbox Management Service to the public internet on port 8444; when false, the Anbox Management Service will only be accessible from the virtual machine')
+param exposeAnboxManagementService bool = false
 
 @description('Location of all resources')
 param location string = resourceGroup().location
@@ -26,7 +35,7 @@ param ubuntuImageSKU string = 'pro-22_04-lts-gen2'
 @description('Ubuntu Pro token to attach to the virtual machine; will be ignored by cloud-init if the arguments provided for the ubuntuImageOffer and ubuntuImageSKU parameters correspond to a Pro image (see https://cloudinit.readthedocs.io/en/latest/reference/modules.html#ubuntu-pro)')
 param ubuntuProToken string = ''
 
-@description('Size of the virtual machine data disk; must comply with https://anbox-cloud.io/docs/reference/requirements#anbox-cloud-appliance-4')
+@description('Size of the virtual machine data disk (LXD storage pool) when applicable; see the addDedicatedDataDiskForLXD parameter; must comply with https://anbox-cloud.io/docs/reference/requirements#anbox-cloud-appliance-4')
 @minValue(100)
 @maxValue(1023)
 param virtualMachineDataDiskSizeInGB int = 100
@@ -34,7 +43,7 @@ param virtualMachineDataDiskSizeInGB int = 100
 @description('Name of the virtual machine')
 param virtualMachineName string = 'anboxVirtualMachine'
 
-@description('Size of the virtual machine data disk; must comply with https://anbox-cloud.io/docs/reference/requirements#anbox-cloud-appliance-4')
+@description('Size of the virtual machine operating system disk; must comply with https://anbox-cloud.io/docs/reference/requirements#anbox-cloud-appliance-4')
 @minValue(40)
 @maxValue(1023)
 param virtualMachineOperatingSystemDiskSizeInGB int = 40
@@ -47,6 +56,19 @@ param virtualNetworkAddressPrefix string = '10.0.0.0/16'
 
 @description('Name of the virtual network')
 param virtualNetworkName string = 'anboxVirtualNetwork'
+
+var anboxDestinationPortRangesAnboxManagementService = exposeAnboxManagementService ? ['8444'] : []
+
+var anboxDestinationPortRangesBase = [
+  '80'
+  '443'
+  '5349'
+  '60000-60100'
+]
+
+var anboxDestinationPortRangesContainers = exposeAnboxContainerServices ? ['10000-11000'] : []
+
+var anboxDestinationPortRanges = concat(anboxDestinationPortRangesAnboxManagementService, anboxDestinationPortRangesBase, anboxDestinationPortRangesContainers)
 
 var cloudConfigWithToken = '''
 #cloud-config
@@ -68,6 +90,17 @@ ubuntu_advantage:
     - anbox-cloud'''
 
 var cloudConfig = base64(empty(ubuntuProToken) ? cloudConfigWithoutToken : replace(cloudConfigWithToken, 'ubuntuProToken', ubuntuProToken))
+
+var dataDisks = addDedicatedDataDiskForLXD ? [
+  {
+    createOption: 'Empty'
+    diskSizeGB: virtualMachineDataDiskSizeInGB
+    lun: 0
+    managedDisk: {
+      storageAccountType: 'Premium_LRS'
+    }
+  }
+] : []
 
 var imagePlan = empty(ubuntuProToken) ? {
   name: ubuntuImageSKU
@@ -139,14 +172,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-09-0
           sourceAddressPrefix: '*'
           sourcePortRange: '*'
           destinationAddressPrefix: '*'
-          destinationPortRanges: [
-            '80'
-            '443'
-            '5349'
-            '8444'
-            '10000-11000'
-            '60000-60100'
-          ]
+          destinationPortRanges: anboxDestinationPortRanges
         }
       }
     ]
@@ -208,16 +234,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
         sku: ubuntuImageSKU
         version: 'latest'
       }
-      dataDisks: [
-        {
-          createOption: 'Empty'
-          diskSizeGB: virtualMachineDataDiskSizeInGB
-          lun: 0
-          managedDisk: {
-            storageAccountType: 'Premium_LRS'
-          }
-        }
-      ]
+      dataDisks: dataDisks
     }
     networkProfile: {
       networkInterfaces: [
