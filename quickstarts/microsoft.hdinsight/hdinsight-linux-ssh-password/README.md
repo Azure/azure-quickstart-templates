@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: hdinsight-linux-ssh-password
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy HDInsight cluster with Storage and SSH password
 
