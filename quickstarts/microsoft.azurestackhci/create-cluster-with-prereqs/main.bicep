@@ -345,3 +345,18 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
     }
   }
 }
+
+// create locks on critical HCI resources to prevent accidental deletion
+module lockResources 'modules/ashciLocks.bicep' = if (deploymentMode == 'Deploy') {
+  name: 'lockResources'
+  params: {
+    clusterName: clusterName
+    clusterNodeNames: clusterNodeNames
+    keyVaultName: keyVaultName
+    clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
+    customLocationName: customLocationName
+  }
+  dependsOn: [
+    deploymentSettings
+  ]
+}
