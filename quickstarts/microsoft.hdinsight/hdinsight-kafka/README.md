@@ -1,13 +1,13 @@
 ---
-description: This template allows you to create an Azure Virtual Network and a Kafka on HDInsight cluster in the virtual network. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see https&#58;//azure.microsoft.com/resources/templates/101-hdinsight-linux-ssh-publickey/
+description: This template allows you to create an Azure Virtual Network and a Kafka on HDInsight cluster in the virtual network. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see https&#58;//learn.microsoft.com/samples/azure/azure-quickstart-templates/hdinsight-linux-ssh-publickey/
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: hdinsight-kafka
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy Kafka on HDInsight in a virtual network
 
@@ -28,6 +28,6 @@ languages:
 
 This template deploys a Kafka HDInsight cluster within an Azure Virtual Network. Azure Virtual Network allows you to extend your Hadoop solutions to incorporate resources such as multiple HDInsight cluster types, or to create secure private networks between resources in the cloud. The template creates a virtual network, a Kafka on HDInsight cluster, and an Azure Storage account.
 
-To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/hdinsight/kafka/apache-kafka-quickstart-resource-manager-template) article. If you're new to template deployment, see the [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/).
+To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/hdinsight/kafka/apache-kafka-quickstart-resource-manager-template) article. If you're new to template deployment, see the [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/).
 
 `Tags: Standard_LRS, Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`
