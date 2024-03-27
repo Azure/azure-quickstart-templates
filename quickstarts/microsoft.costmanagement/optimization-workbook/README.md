@@ -2,14 +2,31 @@
 description: This template creates a new Azure Monitor workbook for cost optimization based on the Well-Architected Framework.
 page_type: sample
 products:
-- azure
-- azure-resource-manager
+  - azure
+  - azure-advisor
+  - azure-app-service
+  - azure-app-service-web
+  - azure-application-gateway
+  - azure-blob-storage
+  - azure-cost-management
+  - azure-disk-storage
+  - azure-kubernetes-service
+  - azure-load-balancer
+  - azure-monitor
+  - azure-resource-manager
+  - azure-sql-database
+  - azure-sql-managed-instance
+  - azure-storage-accounts
+  - azure-virtual-machines
+  - azure-web-apps
+  - sql-server
 urlFragment: optimization-workbook
 languages:
-- bicep
-- json
+  - bicep
+  - json
 ---
-# Cost optimization workbook
+
+# Cost optimization workbook template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/optimization-workbook/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/optimization-workbook/PublicDeployment.svg)
@@ -54,9 +71,9 @@ Once your workbook is deployed, you can use it by navigating to one of the follo
 
 ## 🧰 About the FinOps toolkit
 
-The cost optimization workbook is part of the FinOps toolkit, an open source collection of FinOps solutions that help you manage and optimize your cloud costs.
+The cost optimization workbook is part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open source collection of FinOps solutions that help you manage and optimize your cloud costs.
 
-To learn more about the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
+To contribute to the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
 
 <br>
 
