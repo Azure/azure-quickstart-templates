@@ -145,7 +145,7 @@ resource uploadSettings 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     environmentVariables: [
       {
         name: 'ftkVersion'
-        value: loadTextContent('./version.txt')
+        value: loadTextContent('./ftkver.txt')
       }
       {
         name: 'exportScopes'
