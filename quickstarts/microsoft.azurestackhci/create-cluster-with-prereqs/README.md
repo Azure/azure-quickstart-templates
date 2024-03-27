@@ -173,4 +173,4 @@ New-AzResourceGroupDeployment -Name 'hcicluster' -ResourceGroupName <yourResourc
 Learn more:
 
 - [About Arc VM management](https://learn.microsoft.com/azure-stack/hci/manage/azure-arc-vm-management-overview)
-- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: `
+- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: ``Tags: `
