@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure Databricks All-in-one Templat VNetInjection-Pvtendpt-Default-Storage-Firewall
+# AzureDatabricks Template for Default Storage Firewall
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall/PublicDeployment.svg)
