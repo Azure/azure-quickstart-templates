@@ -40,10 +40,9 @@ resource batchAccount 'Microsoft.Batch/batchAccounts@2023-11-01' = {
     }
   }
 }
+
+output storageAccountName string = storageAccount.name
+output batchAccountName string = batchAccount.name
 output location string = location
-output name string = batchAccount.name
 output resourceGroupName string = resourceGroup().name
 output resourceId string = batchAccount.id
-output systemAssignedMIPrincipalId string = batchAccount.identity.principalId
-output storageAccountName string = storageAccountName
-output batchAccountName string = batchAccountName
