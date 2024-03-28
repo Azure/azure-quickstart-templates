@@ -22,7 +22,7 @@ var virtualNetworkPrefix = '10.0.0.0/16'
 var subnetPrefix = '10.0.0.0/24'
 var backendSubnetPrefix = '10.0.1.0/24'
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for i in range(0, 2): {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = [for i in range(0, 2): {
   name: '${nsgName}${i + 1}'
   location: location
   properties: {
@@ -44,7 +44,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for i in ra
   }
 }]
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = [for i in range(0, 3): {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = [for i in range(0, 3): {
   name: '${publicIPAddressName}${i}'
   location: location
   sku: {
@@ -57,7 +57,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = [for
   }
 }]
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -89,7 +89,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, 2): {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = [for i in range(0, 2): {
   name: '${virtualMachineName}${i + 1}'
   location: location
   properties: {
@@ -136,7 +136,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i 
   ]
 }]
 
-resource virtualMachine_IIS 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = [for i in range(0, 2): {
+resource virtualMachine_IIS 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = [for i in range(0, 2): {
   name: '${virtualMachineName}${(i + 1)}/IIS'
   location: location
   properties: {
@@ -153,7 +153,7 @@ resource virtualMachine_IIS 'Microsoft.Compute/virtualMachines/extensions@2021-1
   ]
 }]
 
-resource applicationGateWay 'Microsoft.Network/applicationGateways@2021-05-01' = {
+resource applicationGateWay 'Microsoft.Network/applicationGateways@2023-09-01' = {
   name: applicationGateWayName
   location: location
   properties: {
@@ -228,6 +228,7 @@ resource applicationGateWay 'Microsoft.Network/applicationGateways@2021-05-01' =
         name: 'myRoutingRule'
         properties: {
           ruleType: 'Basic'
+          priority: 1
           httpListener: {
             id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGateWayName, 'myListener')
           }
@@ -252,7 +253,7 @@ resource applicationGateWay 'Microsoft.Network/applicationGateways@2021-05-01' =
   ]
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = [for i in range(0, 2): {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2023-09-01' = [for i in range(0, 2): {
   name: '${networkInterfaceName}${i + 1}'
   location: location
   properties: {
@@ -289,3 +290,8 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = [fo
     nsg
   ]
 }]
+
+output location string = location
+output name string = applicationGateWay.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = applicationGateWay.id
