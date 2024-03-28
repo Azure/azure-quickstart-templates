@@ -295,4 +295,3 @@ output location string = location
 output name string = applicationGateWay.name
 output resourceGroupName string = resourceGroup().name
 output resourceId string = applicationGateWay.id
-output systemAssignedMIPrincipalId string = applicationGateWay.identity.principalId
