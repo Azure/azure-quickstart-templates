@@ -93,6 +93,7 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
 }
 
 resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15' = {
+  parent: account
   name: databaseName
   properties: {
     resource: {
@@ -102,6 +103,7 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15
 }
 
 resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' = {
+  parent: database
   name: containerName
   properties: {
     resource: {
@@ -167,6 +169,7 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
     }
   }
 }
+
 output location string = location
 output name string = database.name
 output resourceGroupName string = resourceGroup().name
