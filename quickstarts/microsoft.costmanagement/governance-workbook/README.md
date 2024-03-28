@@ -1,15 +1,36 @@
 ---
-description: This template creates a new Azure Monitor workbook for governance.
+description: This template creates a new Azure Monitor workbook for governance based on the Cloud Adoption Framework.
 page_type: sample
 products:
-- azure
-- azure-resource-manager
+  - azure
+  - azure-advisor
+  - azure-app-service
+  - azure-app-service-web
+  - azure-application-gateway
+  - azure-automation
+  - azure-backup
+  - azure-database-mysql
+  - azure-database-postgresql
+  - azure-functions
+  - azure-key-vault
+  - azure-load-balancer
+  - azure-logic-apps
+  - azure-policy
+  - azure-resource-manager
+  - azure-sql-database
+  - azure-sql-managed-instance
+  - azure-storage-accounts
+  - azure-virtual-machines
+  - azure-virtual-network
+  - azure-web-apps
+  - microsoft-defender
 urlFragment: governance-workbook
 languages:
-- bicep
-- json
+  - bicep
+  - json
 ---
-# FinOps toolkit workbook
+
+# Governance workbook template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/governance-workbook/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/governance-workbook/PublicDeployment.svg)
@@ -54,9 +75,9 @@ Once your workbook is deployed, you can use it by navigating to one of the follo
 
 ## 🧰 About the FinOps toolkit
 
-The governance workbook is part of the FinOps toolkit, an open source collection of FinOps solutions that help you manage and optimize your cloud costs.
+The governance workbook is part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open source collection of FinOps solutions that help you manage and optimize your cloud costs.
 
-To learn more about the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
+To contribute to the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
 
 <br>
 
