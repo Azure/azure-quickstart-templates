@@ -6,10 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: kusto-event-grid
 languages:
-- json
 - bicep
+- json
 ---
-# Deploy Azure Data Explorer db with Event grid connection.
+# Deploy Azure Data Explorer db with Event Grid connection
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-event-grid/PublicLastTestDate.svg) 
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-event-grid/PublicDeployment.svg) 
