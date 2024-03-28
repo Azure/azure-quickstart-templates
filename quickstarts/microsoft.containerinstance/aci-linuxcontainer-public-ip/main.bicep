@@ -61,9 +61,9 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
     }
   }
 }
+
 output location string = location
 output name string = containerGroup.name
 output resourceGroupName string = resourceGroup().name
 output resourceId string = containerGroup.id
-output systemAssignedMIPrincipalId string = containerGroup.identity.principalId
 output containerIPv4Address string = containerGroup.properties.ipAddress.ip
