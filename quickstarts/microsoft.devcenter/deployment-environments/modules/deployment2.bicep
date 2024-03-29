@@ -1,12 +1,12 @@
 targetScope = 'subscription'
 
-param devcenterName string
+param devCenterName string
 param resourceGroupName string
 param guidSeed string
 
 resource devcenter 'Microsoft.DevCenter/devcenters@2023-04-01' existing = {
   scope: resourceGroup(resourceGroupName)
-  name: devcenterName
+  name: devCenterName
 }
 
 resource roleAssignment1 'Microsoft.Authorization/roleAssignments@2022-04-01' = {

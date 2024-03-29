@@ -1,5 +1,5 @@
 ---
-description: This is a common template for creating single instance CentOS 7.2/7.1/6.5 or Ubuntu Server 16.04.0-LTS with configurable number of data disks (configurable sizes). Maximum 16 disks can be mentioned in the portal parameters and maximum size of each disk should be less than 1023 GB. The MDADM RAID0 Array is automounted and survives restarts. Latest Docker 1.12(cs3) (Swarm), docker-compose 1.9.0 & docker-machine 0.8.2 is available for usage from user azure-cli is auto running as a docker container. This single instance template is an offshoot of the HPC/GPU Clusters Template @ https&#58;//aka.ms/azurebigcompute
+description: This is a common template for creating single instance CentOS 7.2/7.1/6.5 or Ubuntu Server 16.04.0-LTS with configurable number of data disks (configurable sizes). Maximum 16 disks can be mentioned in the portal parameters and maximum size of each disk should be less than 1023 GB. The MDADM RAID0 Array is automounted and survives restarts. Latest Docker 1.12(cs3) (Swarm), docker-compose 1.9.0 & docker-machine 0.8.2 is available for usage from user azure-cli is auto running as a docker container. This single instance template is an offshoot of the HPC/GPU Clusters Template @ https&#58;//github.com/azurebigcompute/BigComputeBench
 page_type: sample
 products:
 - azure
