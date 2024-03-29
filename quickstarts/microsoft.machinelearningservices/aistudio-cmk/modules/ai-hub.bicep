@@ -59,7 +59,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
 
     //encryption settings
     encryption: {
-      status: 'Disabled' //@TODO enable
+      status: 'Enabled'
       keyVaultProperties: {
         keyVaultArmId: cmk_keyvault_id
         keyIdentifier: cmk_keyvault_key_uri

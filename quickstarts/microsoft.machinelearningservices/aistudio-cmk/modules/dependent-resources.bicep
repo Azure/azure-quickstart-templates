@@ -133,13 +133,13 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
       statisticsEnabled: false
     }    
     //add encryption
-    encryption: {
-      keySource: 'Microsoft.KeyVault'
-      keyVaultProperties: {
-        keyVaultUri: cmk_keyvault_id
-        keyName: cmk_keyvault_key_name
-      }
-    }
+    // encryption: {
+    //  keySource: 'Microsoft.KeyVault'
+    //  keyVaultProperties: {
+    //    keyVaultUri: cmk_keyvault_id
+    //    keyName: cmk_keyvault_key_name
+    //  }
+    // }
   }
 }
 
