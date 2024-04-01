@@ -228,6 +228,7 @@ resource applicationGateWay 'Microsoft.Network/applicationGateways@2023-09-01' =
         name: 'myRoutingRule'
         properties: {
           ruleType: 'Basic'
+          priority: 1
           httpListener: {
             id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGateWayName, 'myListener')
           }
