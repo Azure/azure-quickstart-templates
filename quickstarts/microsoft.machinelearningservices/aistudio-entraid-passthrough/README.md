@@ -1,5 +1,5 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Studio with EntraID auth for connectings. This example shows public internet access enabled, Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
+description: This set of templates demonstrates how to set up Azure AI Studio with the basic setup, meaning with public internet access enabled, Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure AI Studio - EntraID auth for connections
+# Azure AI Studio basic setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-entraid-passthrough/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-entraid-passthrough/PublicDeployment.svg)
@@ -47,4 +47,4 @@ An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that 
 
 If you are new to Azure AI studio, see:
 
-- [Azure AI studio](https://aka.ms/aistudio/docs)
+- [Azure AI studio](https://aka.ms/aistudio/docs)`Tags: `
