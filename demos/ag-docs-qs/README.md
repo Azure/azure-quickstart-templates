@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: ag-docs-qs
 languages:
-- json
 - bicep
+- json
 ---
 # Create an Azure Application Gateway v2
 
