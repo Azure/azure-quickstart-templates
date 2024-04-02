@@ -37,6 +37,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
     administratorLoginPassword: sqlAdministratorPassword
     version: '12.0'
     publicNetworkAccess: 'Enabled'
+    minimalTlsVersion: '1.2'
     restrictOutboundNetworkAccess: 'Disabled'
   }
 }
@@ -64,6 +65,29 @@ resource encryption 'Microsoft.Sql/servers/databases/transparentDataEncryption@2
   name: 'current'
   properties: {
     state: transparentDataEncryption
+  }
+}
+
+resource securityAlertPolicy 'Microsoft.Sql/servers/securityAlertPolicies@2023-08-01-preview' = {
+  parent: sqlServer
+  name: 'default'
+  properties: {
+    state: 'Enabled'
+  }
+}
+
+resource auditingSetting 'Microsoft.Sql/servers/auditingSettings@2023-08-01-preview' = {
+  parent: sqlServer
+  name: 'default'
+  properties: {
+    isAzureMonitorTargetEnabled: true
+    state: 'Enabled'
+    retentionDays: 7
+    auditActionsAndGroups: [
+      'SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP'
+      'FAILED_DATABASE_AUTHENTICATION_GROUP'
+      'BATCH_COMPLETED_GROUP'
+    ]
   }
 }
 
