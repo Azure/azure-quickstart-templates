@@ -6,9 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: aci-linuxcontainer-public-ip
 languages:
-- json
 - bicep
+- json
 ---
+
 # Azure Container Instances - Linux container with public IP
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-linuxcontainer-public-ip/PublicLastTestDate.svg)
