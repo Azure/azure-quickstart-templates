@@ -115,6 +115,7 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/servers@2017-12-01' = {
       backupRetentionDays: backupRetentionDays
       geoRedundantBackup: geoRedundantBackup
     }
+    minimalTlsVersion: 'TLS1_2'
   }
 
   resource virtualNetworkRule 'virtualNetworkRules@2017-12-01' = {
