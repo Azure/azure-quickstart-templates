@@ -89,6 +89,7 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2024-02-15-preview' = {
     locations: locations
     databaseAccountOfferType: 'Standard'
     enableAutomaticFailover: systemManagedFailover
+    disableKeyBasedMetadataWriteAccess: true
   }
 }
 
