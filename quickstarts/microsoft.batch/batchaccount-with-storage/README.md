@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Create a Batch Account using a template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.batch/batchaccount-with-storage/PublicLastTestDate.svg)
