@@ -6,9 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: cosmosdb-sql
 languages:
-- json
 - bicep
+- json
 ---
+
 # Create an Azure Cosmos DB account for Core (SQL) API
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql/PublicLastTestDate.svg)
