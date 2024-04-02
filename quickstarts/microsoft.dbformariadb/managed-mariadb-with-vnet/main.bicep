@@ -69,7 +69,7 @@ var firewallrules = [
   }
 ]
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -81,7 +81,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   parent: vnet
   name: subnetName
   properties: {
@@ -121,10 +121,16 @@ resource mariaDbServer 'Microsoft.DBforMariaDB/servers@2018-06-01' = {
 }
 
 @batchSize(1)
-resource firewallRules 'Microsoft.DBforMariaDB/servers/firewallRules@2018-06-01' = [for rule in firewallrules: {
-  name: '${mariaDbServer.name}/${rule.Name}'
+resource firewallRules 'Microsoft.DBforMariaDB/servers/firewallRules@2018-06-01'= [for rule in firewallrules: {
+  parent: mariaDbServer
+  name: rule.Name
   properties: {
     startIpAddress: rule.StartIpAddress
     endIpAddress: rule.EndIpAddress
   }
 }]
+
+output location string = location
+output name string = mariaDbServer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = mariaDbServer.id
