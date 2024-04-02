@@ -33,3 +33,8 @@ resource streamingJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-previe
     }
   }
 }
+
+output location string = location
+output name string = streamingJob.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = streamingJob.id
