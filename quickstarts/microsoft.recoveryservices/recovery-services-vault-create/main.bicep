@@ -25,7 +25,7 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-01-01' = 
     tier: skuTier
   }
   properties: {
-    publicNetworkAccess: 'Disabled' 
+    publicNetworkAccess: 'Enabled' 
   }
 }
 
