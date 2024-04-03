@@ -75,7 +75,7 @@ var firewallrules = [
   }
 ]
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -87,7 +87,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   parent: vnet
   name: subnetName
   properties: {
@@ -115,6 +115,8 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/servers@2017-12-01' = {
       backupRetentionDays: backupRetentionDays
       geoRedundantBackup: geoRedundantBackup
     }
+    minimalTlsVersion: 'TLS1_2'
+    sslEnforcement: 'Enabled'
   }
 
   resource virtualNetworkRule 'virtualNetworkRules@2017-12-01' = {
@@ -128,9 +130,15 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/servers@2017-12-01' = {
 
 @batchSize(1)
 resource firewallRules 'Microsoft.DBforMySQL/servers/firewallRules@2017-12-01' = [for rule in firewallrules: {
-  name: '${mysqlDbServer.name}/${rule.Name}'
+  parent: mysqlDbServer
+  name: rule.Name
   properties: {
     startIpAddress: rule.StartIpAddress
     endIpAddress: rule.EndIpAddress
   }
 }]
+
+output location string = location
+output name string = mysqlDbServer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = mysqlDbServer.id

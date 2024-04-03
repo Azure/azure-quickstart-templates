@@ -6,9 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: managed-mysql-with-vnet
 languages:
-- json
 - bicep
+- json
 ---
+
 # Deploy Azure Database for MySQL with VNet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbformysql/managed-mysql-with-vnet/PublicLastTestDate.svg)
