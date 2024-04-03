@@ -9,6 +9,7 @@ languages:
 - bicep
 - json
 ---
+
 # Create a Consumption logic app using an Azure Resource Manager template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-create/PublicLastTestDate.svg)
