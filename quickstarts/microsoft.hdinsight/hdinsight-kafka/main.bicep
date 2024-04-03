@@ -75,7 +75,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
     name: defaultStorageAccount.type
   }
   kind: 'StorageV2'
-  properties: {}
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    networkAcls: {
+      defaultAction: 'Deny'
+    }
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
+  }
 }
 
 resource cluster 'Microsoft.HDInsight/clusters@2023-08-15-preview' = {
