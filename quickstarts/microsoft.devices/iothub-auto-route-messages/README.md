@@ -9,8 +9,7 @@ languages:
 - bicep
 - json
 ---
-
-# Use ARM template to create IoT Hub, route and view messages.
+# Use ARM template to create IoT Hub, route and view messages
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-auto-route-messages/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-auto-route-messages/PublicDeployment.svg)
