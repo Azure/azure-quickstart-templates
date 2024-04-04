@@ -131,10 +131,18 @@ param storageConnectivitySwitchless bool
 @description('The enable storage auto IP value for deploying a HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured before deployment and this value set to false')
 param enableStorageAutoIp bool = true
 
+// define custom type for storage adapter IP info for 3 node switchless deployments
+type storageAdapterIPInfoType = {
+  physicalNode: string
+  ipv4Address: string
+  subnetMask: string
+}
+
 // define custom type for storage network objects
 type storageNetworksType = {
   adapterName: string
   vlan: string
+  storageAdapterIPInfo: storageAdapterIPInfoType[]?
 }
 type storageNetworksArrayType = storageNetworksType[]
 
@@ -156,6 +164,7 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     name: 'StorageNetwork${index + 1}'
     networkAdapterName: storageAdapter.adapterName
     vlanId: storageAdapter.vlan
+    storageAdapterIPInfo: (empty(storageAdapter.storageAdapterIPInfo)) ? null : storageAdapter.storageAdapterIPInfo
   }
 ]
 
@@ -182,7 +191,7 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
   }
 }
 
-resource cluster 'Microsoft.AzureStackHCI/clusters@2024-01-01' = if (deploymentMode == 'Validate') {
+resource cluster 'Microsoft.AzureStackHCI/clusters@2024-02-15-preview' = if (deploymentMode == 'Validate') {
   name: clusterName
   identity: {
     type: 'SystemAssigned'
@@ -194,7 +203,7 @@ resource cluster 'Microsoft.AzureStackHCI/clusters@2024-01-01' = if (deploymentM
   ]
 }
 
-resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-01-01' = {
+resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-02-15-preview' = {
   name: 'default'
   parent: cluster
   properties: {
