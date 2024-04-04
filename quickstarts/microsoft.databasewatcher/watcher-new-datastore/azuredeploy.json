@@ -1,0 +1,388 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string",
+            "metadata": {
+                "description": "Database watcher name"
+            }
+        },
+        "identityType": {
+            "type": "string",
+            "metadata": {
+                "description": "The type of managed identity to assign to a watcher"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location (Azure region) of the watcher"
+            }
+
+        },
+        "createNewDatastore": {
+            "type": "bool",
+            "metadata": {
+                "description": "Set to true to create a new Azure Data Explorer cluster and database as the data store for the watcher"
+            }
+        },
+        "kustoOfferingType": {
+            "type": "string",
+            "defaultValue": "adx",
+            "metadata": {
+                "description": "The Kusto offering type of the data store. Supported values are: adx, free, fabric."
+            }
+        },
+        "clusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Azure Data Explorer cluster"
+            }
+        },
+        "databaseName": {
+            "type": "string",
+            "defaultValue": "database-watcher-data-store",
+            "metadata": {
+                "description": "The name of the Azure Data Explorer database"
+            }
+        },
+        "clusterSkuName": {
+            "type": "string",
+            "metadata": {
+                "description": "The SKU of the Azure Data Explorer cluster"
+            }
+        },
+        "clusterSkuTier": {
+            "type": "string",
+            "metadata": {
+                "description": "The SKU tier of the Azure Data Explorer cluster"
+            }
+        },
+        "databaseWatcherApiVersion": {
+            "type": "string",
+            "metadata": {
+                "description": "The API version to use with the Microsoft.DatabaseWatcher resource provider"
+            }
+        },
+        "targetCount": {
+            "type": "int",
+            "metadata": {
+                "description": "The total number of SQL targets to add to a watcher"
+            }
+        },
+        "targetProperties": {
+            "type": "array",
+            "metadata": {
+                "description": "The array of SQL target properties. Each element of the array defines a SQL target."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('clusterName')]",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "createNewDatastore": {
+                        "value": "[parameters('createNewDatastore')]"
+                    },
+                    "clusterName": {
+                        "value": "[parameters('clusterName')]"
+                    },
+                    "clusterSkuName": {
+                        "value": "[parameters('clusterSkuName')]"
+                    },
+                    "clusterSkuTier": {
+                        "value": "[parameters('clusterSkuTier')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "location": {
+                            "type": "string"
+                        },
+                        "createNewDatastore": {
+                            "type": "bool"
+                        },
+                        "clusterName": {
+                            "type": "string",
+                            "defaultValue": ""
+                        },
+                        "clusterSkuName": {
+                            "type": "string",
+                            "defaultValue": ""
+                        },
+                        "clusterSkuTier": {
+                            "type": "string",
+                            "defaultValue": ""
+                        }
+                    },
+                    "resources": [
+                        {
+                            "condition": "[equals(parameters('createNewDatastore'), bool('true'))]",
+                            "type": "Microsoft.Kusto/clusters",
+                            "apiVersion": "2023-05-02",
+                            "name": "[parameters('clusterName')]",
+                            "location": "[parameters('location')]",
+                            "tags": {},
+                            "sku": {
+                                "capacity": 2,
+                                "name": "[parameters('clusterSkuName')]",
+                                "tier": "[parameters('clusterSkuTier')]"
+                            },
+                            "identity": {
+                                "type": "None"
+                            },
+                            "properties": {
+                                "enableAutoStop": true,
+                                "enableDiskEncryption": true,
+                                "enableDoubleEncryption": false,
+                                "enableStreamingIngest": true,
+                                "enablePurge": true,
+                                "engineType": "V3",
+                                "optimizedAutoscale": {
+                                    "isEnabled": false,
+                                    "minimum": 2,
+                                    "maximum": 2,
+                                    "version": 1
+                                },
+                                "publicIPType": "IPv4",
+                                "publicNetworkAccess": "Enabled",
+                                "restrictOutboundNetworkAccess": "Disabled"
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "kustoDataIngestionUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2023-08-15', 'Full').properties.dataIngestionUri]"
+                        },
+                        "kustoClusterUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2023-08-15', 'Full').properties.uri]"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "dependsOn": [
+                "[parameters('clusterName')]"
+            ],
+            "name": "[parameters('name')]",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "kustoDataIngestionUri": {
+                        "value": "[reference(parameters('clusterName')).outputs.kustoDataIngestionUri.value]"
+                    },
+                    "kustoClusterUri": {
+                        "value": "[reference(parameters('clusterName')).outputs.kustoClusterUri.value]"
+                    },
+                    "identityType": {
+                        "value": "[parameters('identityType')]"
+                    },
+                    "name": {
+                        "value": "[parameters('name')]"
+                    },
+                    "databaseWatcherApiVersion": {
+                        "value": "[parameters('databaseWatcherApiVersion')]"
+                    },
+                    "kustoOfferingType": {
+                        "value": "[parameters('kustoOfferingType')]"
+                    },
+                    "clusterName": {
+                        "value": "[parameters('clusterName')]"
+                    },
+                    "databaseName": {
+                        "value": "[parameters('databaseName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "databaseWatcherApiVersion": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "clusterName": {
+                            "type": "string"
+                        },
+                        "kustoDataIngestionUri": {
+                            "type": "string"
+                        },
+                        "kustoClusterUri": {
+                            "type": "string"
+                        },
+                        "kustoOfferingType": {
+                            "type": "string"
+                        },
+                        "identityType": {
+                            "type": "string"
+                        },
+                        "databaseName": {
+                            "type": "string",
+                            "defaultValue": "DEFAULT_DATABASE_NAME"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+                            "name": "[parameters('name')]",
+                            "location": "[parameters('location')]",
+                            "type": "Microsoft.DatabaseWatcher/watchers",
+                            "identity": {
+                                "type": "[parameters('identityType')]"
+                            },
+                            "properties": {
+                                "datastore": {
+                                    "adxClusterResourceId": "[resourceId('Microsoft.Kusto/Clusters', parameters('clusterName'))]",
+                                    "kustoClusterDisplayName": "[parameters('clusterName')]",
+                                    "kustoDatabaseName": "[parameters('databaseName')]",
+                                    "kustoClusterUri": "[parameters('kustoClusterUri')]",
+                                    "kustoDataIngestionUri": "[parameters('kustoDataIngestionUri')]",
+                                    "kustoManagementUrl": "[concat(environment().portal, '/resource/subscriptions', resourceId('Microsoft.Kusto/Clusters', parameters('clusterName')) ,'/overview')]",
+                                    "kustoOfferingType": "[parameters('kustoOfferingType')]"
+                                }
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "principalId": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.DatabaseWatcher/watchers', parameters('name')), parameters('databaseWatcherApiVersion'), 'Full').identity.principalId]"
+                        },
+                        "tenantId": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.DatabaseWatcher/watchers', parameters('name')), parameters('databaseWatcherApiVersion'), 'Full').identity.tenantId]"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "name": "[parameters('databaseName')]",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "clusterName": {
+                        "value": "[parameters('clusterName')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(parameters('name')).outputs.principalId.value]"
+                    },
+                    "tenantId": {
+                        "value": "[reference(parameters('name')).outputs.tenantId.value]"
+                    },
+                    "databaseName": {
+                        "value": "[parameters('databaseName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "location": {
+                            "type": "string"
+                        },
+                        "clusterName": {
+                            "type": "string"
+                        },
+                        "principalId": {
+                            "type": "string"
+                        },
+                        "tenantId": {
+                            "type": "string"
+                        },
+                        "databaseName": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Kusto/clusters/databases",
+                            "apiVersion": "2023-05-02",
+                            "name": "[concat(parameters('clusterName'), '/', parameters('databaseName'))]",
+                            "location": "[parameters('location')]",
+                            "kind": "ReadWrite",
+                            "properties": {},
+                            "resources": [
+                                {
+                                    "type": "Microsoft.Kusto/Clusters/Databases/PrincipalAssignments",
+                                    "apiVersion": "2023-05-02",
+                                    "name": "[concat(parameters('clusterName'), '/', parameters('databaseName'), '/', guid(resourceGroup().id))]",
+                                    "dependsOn": [
+                                        "[parameters('databaseName')]"
+                                    ],
+                                    "properties": {
+                                        "tenantId": "[parameters('tenantId')]",
+                                        "principalId": "[parameters('principalId')]",
+                                        "role": "Admin",
+                                        "principalType": "App"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "copy": {
+                "name": "targetcopy",
+                "count": "[length(range(0, parameters('targetCount')))]"
+            },
+            "type": "Microsoft.DatabaseWatcher/watchers/targets",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', guid(resourceGroup().id, parameters('name'), string(copyIndex('targetcopy'))))]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "targetType": "[parameters('targetProperties')[copyIndex('targetcopy')].targetType]",
+                "sqlDbResourceId": "[resourceId('Microsoft.SQL/servers/databases', parameters('targetProperties')[copyIndex('targetcopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('targetcopy')].targetDatabaseName)]",
+                "connectionServerName": "[concat(parameters('targetProperties')[copyIndex('targetcopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('targetcopy')].targetServerDnsSuffix)]",
+                "readIntent": "[parameters('targetProperties')[copyIndex('targetcopy')].readIntent]",
+                "targetAuthenticationType": "[parameters('targetProperties')[copyIndex('targetcopy')].targetAuthenticationType]"
+            }
+        }
+    ],
+    "outputs": {}
+}
