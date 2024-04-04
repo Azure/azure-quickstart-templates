@@ -9,6 +9,7 @@ languages:
 - bicep
 - json
 ---
+
 # Deploy Kafka on HDInsight in a virtual network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-kafka/PublicLastTestDate.svg)
