@@ -1,3 +1,14 @@
+---
+description: This template deploys Anbox Cloud on an Ubuntu VM. Completing the installation of Anbox Cloud requires user interaction following the deployment; please consult the README for instructions. The template supports both launching of a VM from an Ubuntu Pro image and association of an Ubuntu Pro token with a VM launched from a non-Pro image. The former is the default behaviour; users seeking to attach a token to a VM launched from a non-Pro image must override the default arguments for the ubuntuImageOffer, ubuntuImageSKU, and ubuntuProToken parameters. The template is also parametric in the VM size and disk sizes. Non-default argument values for these parameters must comply with https&#58;//anbox-cloud.io/docs/reference/requirements#anbox-cloud-appliance-4.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: anbox
+languages:
+- bicep
+- json
+---
 # Deploy Anbox Cloud
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/canonical/anbox/PublicLastTestDate.svg)
