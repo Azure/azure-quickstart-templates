@@ -68,7 +68,7 @@ var defaultStorageAccount = {
   type: 'Standard_LRS'
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: defaultStorageAccount.name
   location: location
   sku: {
@@ -78,7 +78,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   properties: {}
 }
 
-resource cluster 'Microsoft.HDInsight/clusters@2021-06-01' = {
+resource cluster 'Microsoft.HDInsight/clusters@2023-08-15-preview' = {
   name: clusterName
   location: location
   properties: {
@@ -156,3 +156,5 @@ resource cluster 'Microsoft.HDInsight/clusters@2021-06-01' = {
 
 output storage object = storageAccount.properties
 output cluster object = cluster.properties
+output resourceGroupName string = resourceGroup().name
+output location string = location
