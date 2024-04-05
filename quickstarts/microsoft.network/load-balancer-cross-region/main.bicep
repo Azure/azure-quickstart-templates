@@ -1,3 +1,4 @@
+// Name for project
 @description('Specifies a project name that is used for generating resource names.')
 param projectName string
 
