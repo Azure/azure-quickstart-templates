@@ -178,7 +178,7 @@ param adminUsername string
 param adminPassword string
 
 @description('Size of the virtual machine')
-param vmSize string = 'Standard_DS1_v3'
+param vmSize string = 'Standard_DS1_v2'
 
 var publicIPAddressType = 'Static'
 var lbSkuName = 'Standard'
