@@ -15,7 +15,7 @@ param location string = resourceGroup().location
 
 var storageAccountName = '${uniqueString(resourceGroup().id)}storage'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -25,10 +25,17 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   tags: {
     ObjectName: storageAccountName
   }
-  properties: {}
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: false
+    networkAcls: {
+      defaultAction: 'Deny'
+    }
+    supportsHttpsTrafficOnly: true
+  }
 }
 
-resource batchAccount 'Microsoft.Batch/batchAccounts@2021-06-01' = {
+resource batchAccount 'Microsoft.Batch/batchAccounts@2024-02-01' = {
   name: batchAccountName
   location: location
   tags: {
@@ -41,5 +48,8 @@ resource batchAccount 'Microsoft.Batch/batchAccounts@2021-06-01' = {
   }
 }
 
-output storageAccountName string = storageAccountName
-output batchAccountName string = batchAccountName
+output storageAccountName string = storageAccount.name
+output batchAccountName string = batchAccount.name
+output location string = location
+output resourceGroupName string = resourceGroup().name
+output resourceId string = batchAccount.id
