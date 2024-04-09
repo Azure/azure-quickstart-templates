@@ -1,10 +1,11 @@
 param location string = resourceGroup().location
 param tenantId string = subscription().tenantId
 
-@description('First must pass Validate prior running Deploy')
+@description('First must pass with this parameter set to Validate prior running with it set to Deploy. If either Validation or Deployment phases fail, fix the issue, then resubmit the template with the same deploymentMode to retry. Use LocksOnly if the deployment was not completed by executing this template (for example, if the Re-run Deployment option from the Portal was used instead).')
 @allowed([
   'Validate'
   'Deploy'
+  'LocksOnly'
 ])
 param deploymentMode string = 'Validate'
 
@@ -164,7 +165,7 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     name: 'StorageNetwork${index + 1}'
     networkAdapterName: storageAdapter.adapterName
     vlanId: storageAdapter.vlan
-    storageAdapterIPInfo: (empty(storageAdapter.storageAdapterIPInfo)) ? null : storageAdapter.storageAdapterIPInfo
+    storageAdapterIPInfo: storageAdapter.?storageAdapterIPInfo
   }
 ]
 
@@ -203,7 +204,7 @@ resource cluster 'Microsoft.AzureStackHCI/clusters@2024-02-15-preview' = if (dep
   ]
 }
 
-resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-02-15-preview' = {
+resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-02-15-preview' = if (deploymentMode != 'LocksOnly') {
   name: 'default'
   parent: cluster
   properties: {
@@ -259,8 +260,10 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
             physicalNodes: [for hciNode in arcNodeResourceIds: {
               name: reference(hciNode,'2022-12-27','Full').properties.displayName
               // Getting the IP from the first management NIC of the node based on the first NIC name in the managementIntentAdapterNames array parameter
+              // during deployment, a management vNIC will be created with the name 'vManagement(managment)', so we look for that NIC name as well as the user-provided NIC name
               // the edgeDevices resource is created and populated by the AzureEdgeDeviceManagement extension installation on the node
               // append '/providers/microsoft.azurestackhci/edgeDevices/default' to the HCI node URL in the Portal then click 'JSON view' to debug or check logs at C:\ProgramData\GuestConfig\
+              //              ipv4Address: (filter(reference('${hciNode}/providers/microsoft.azurestackhci/edgeDevices/default','2024-01-01','Full').properties.deviceConfiguration.nicDetails, nic => nic.adapterName == 'vManagement(managment)') ?? filter(reference('${hciNode}/providers/microsoft.azurestackhci/edgeDevices/default','2024-01-01','Full').properties.deviceConfiguration.nicDetails, nic => nic.adapterName == managementIntentAdapterNames[0]))[0].ip4Address
               ipv4Address: (filter(reference('${hciNode}/providers/microsoft.azurestackhci/edgeDevices/default','2024-01-01','Full').properties.deviceConfiguration.nicDetails, nic => nic.adapterName == managementIntentAdapterNames[0]))[0].ip4Address
             }
             ]
@@ -356,7 +359,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
 }
 
 // create delete locks on critical HCI resources to prevent accidental deletion
-module lockResources 'modules/ashciLocks.bicep' = if (deploymentMode == 'Deploy') {
+module lockResources 'modules/ashciLocks.bicep' = if (deploymentMode != 'Validate') {
   name: 'lockResources'
   params: {
     clusterName: clusterName
