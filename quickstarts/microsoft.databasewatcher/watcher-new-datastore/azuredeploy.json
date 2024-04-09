@@ -77,6 +77,18 @@
             "metadata": {
                 "description": "The array of SQL target properties. Each element of the array defines a SQL target."
             }
+        },
+        "privateLinkCount": {
+            "type": "int",
+            "metadata": {
+                "description": "The total number of managed private links to add to a watcher"
+            }
+        },
+        "privateLinkProperties": {
+            "type": "array",
+            "metadata": {
+                "description": "The array of managed private link properties. Each element of the array defines a managed private link to an Azure resource."
+            }
         }
     },
     "resources": [
@@ -366,21 +378,170 @@
         },
         {
             "copy": {
-                "name": "targetcopy",
+                "name": "sqlDbAadTargetCopy",
                 "count": "[length(range(0, parameters('targetCount')))]"
             },
+            "condition": "[and(equals(parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetType, 'SqlDb'), equals(parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetAuthenticationType, 'Aad'))]",
             "type": "Microsoft.DatabaseWatcher/watchers/targets",
             "apiVersion": "[parameters('databaseWatcherApiVersion')]",
-            "name": "[concat(parameters('name'), '/', guid(resourceGroup().id, parameters('name'), string(copyIndex('targetcopy'))))]",
+            "name": "[concat(parameters('name'), '/', guid(resourceGroup().id, parameters('name'), string(copyIndex('sqlDbAadTargetCopy'))))]",
             "dependsOn": [
                 "[parameters('name')]"
             ],
             "properties": {
-                "targetType": "[parameters('targetProperties')[copyIndex('targetcopy')].targetType]",
-                "sqlDbResourceId": "[resourceId('Microsoft.SQL/servers/databases', parameters('targetProperties')[copyIndex('targetcopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('targetcopy')].targetDatabaseName)]",
-                "connectionServerName": "[concat(parameters('targetProperties')[copyIndex('targetcopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('targetcopy')].targetServerDnsSuffix)]",
-                "readIntent": "[parameters('targetProperties')[copyIndex('targetcopy')].readIntent]",
-                "targetAuthenticationType": "[parameters('targetProperties')[copyIndex('targetcopy')].targetAuthenticationType]"
+                "targetType": "[parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetType]",
+                "sqlDbResourceId": "[resourceId('Microsoft.Sql/servers/databases', parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetDatabaseName)]",
+                "connectionServerName": "[concat(parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetServerDnsSuffix)]",
+                "readIntent": "[parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].readIntent]",
+                "targetAuthenticationType": "[parameters('targetProperties')[copyIndex('sqlDbAadTargetCopy')].targetAuthenticationType]"
+            }
+        },
+        {
+            "copy": {
+                "name": "sqlDbSqlTargetCopy",
+                "count": "[length(range(0, parameters('targetCount')))]"
+            },
+            "condition": "[and(equals(parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetType, 'SqlDb'), equals(parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetAuthenticationType, 'Sql'))]",
+            "type": "Microsoft.DatabaseWatcher/watchers/targets",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', guid(resourceGroup().id, parameters('name'), string(copyIndex('sqlDbSqlTargetCopy'))))]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "targetType": "[parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetType]",
+                "sqlDbResourceId": "[resourceId('Microsoft.Sql/servers/databases', parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetDatabaseName)]",
+                "connectionServerName": "[concat(parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetLogicalServerName, parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetServerDnsSuffix)]",
+                "readIntent": "[parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].readIntent]",
+                "targetAuthenticationType": "[parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetAuthenticationType]",
+                "targetVault": {
+                    "akvResourceId": "[resourceId(parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetVaultSubscriptionId, parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].targetVaultName)]",
+                    "akvTargetUser": "[parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].akvTargetUser]",
+                    "akvTargetPassword": "[parameters('targetProperties')[copyIndex('sqlDbSqlTargetCopy')].akvTargetPassword]"
+                }
+            }
+        },
+        {
+            "copy": {
+                "name": "sqlMiAadTargetCopy",
+                "count": "[length(range(0, parameters('targetCount')))]"
+            },
+            "condition": "[and(equals(parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetType, 'SqlMi'), equals(parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetAuthenticationType, 'Aad'))]",
+            "type": "Microsoft.DatabaseWatcher/watchers/targets",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', guid(resourceGroup().id, parameters('name'), string(copyIndex('sqlMiAadTargetCopy'))))]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "targetType": "[parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetType]",
+                "sqlMiResourceId": "[resourceId('Microsoft.Sql/managedInstances', parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetManagedInstanceName)]",
+                "connectionServerName": "[concat(parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetManagedInstanceName, '.', parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetManagedInstanceDnsZone, parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetManagedInstanceDnsSuffix)]",
+                "connectionTcpPort": "[parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].connectionTcpPort]",
+                "readIntent": "[parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].readIntent]",
+                "targetAuthenticationType": "[parameters('targetProperties')[copyIndex('sqlMiAadTargetCopy')].targetAuthenticationType]"
+            }
+        },
+        {
+            "copy": {
+                "name": "sqlMiSqlTargetCopy",
+                "count": "[length(range(0, parameters('targetCount')))]"
+            },
+            "condition": "[and(equals(parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetType, 'SqlMi'), equals(parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetAuthenticationType, 'Sql'))]",
+            "type": "Microsoft.DatabaseWatcher/watchers/targets",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', guid(resourceGroup().id, parameters('name'), string(copyIndex('sqlMiSqlTargetCopy'))))]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "targetType": "[parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetType]",
+                "sqlMiResourceId": "[resourceId('Microsoft.Sql/managedInstances', parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetManagedInstanceName)]",
+                "connectionServerName": "[concat(parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetManagedInstanceName, '.', parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetManagedInstanceDnsZone, parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetManagedInstanceDnsSuffix)]",
+                "connectionTcpPort": "[parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].connectionTcpPort]",
+                "readIntent": "[parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].readIntent]",
+                "targetAuthenticationType": "[parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetAuthenticationType]",
+                "targetVault": {
+                    "akvResourceId": "[resourceId(parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetVaultSubscriptionId, parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].targetVaultName)]",
+                    "akvTargetUser": "[parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].akvTargetUser]",
+                    "akvTargetPassword": "[parameters('targetProperties')[copyIndex('sqlMiSqlTargetCopy')].akvTargetPassword]"
+                }
+            }
+        },
+        {
+            "copy": {
+                "name": "managedSqlDbPrivateLinkCopy",
+                "count": "[length(range(0, parameters('privateLinkCount')))]"
+            },
+            "condition": "[equals(parameters('privateLinkProperties')[copyIndex('managedSqlDbPrivateLinkCopy')].groupId, 'sqlServer')]",
+            "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', parameters('privateLinkProperties')[copyIndex('managedSqlDbPrivateLinkCopy')].privateLinkName)]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "privateLinkResourceId": "[resourceId('Microsoft.Sql/servers', parameters('privateLinkProperties')[copyIndex('managedSqlDbPrivateLinkCopy')].logicalServerName)]",
+                "groupId": "[parameters('privateLinkProperties')[copyIndex('managedSqlDbPrivateLinkCopy')].groupId]",
+                "requestMessage": "[parameters('privateLinkProperties')[copyIndex('managedSqlDbPrivateLinkCopy')].requestMessage]",
+                "dnsZone": "[parameters('privateLinkProperties')[copyIndex('managedSqlDbPrivateLinkCopy')].dnsZone]"
+            }
+        },
+        {
+            "copy": {
+                "name": "managedSqlMiPrivateLinkCopy",
+                "count": "[length(range(0, parameters('privateLinkCount')))]"
+            },
+            "condition": "[equals(parameters('privateLinkProperties')[copyIndex('managedSqlMiPrivateLinkCopy')].groupId, 'managedInstance')]",
+            "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', parameters('privateLinkProperties')[copyIndex('managedSqlMiPrivateLinkCopy')].privateLinkName)]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "privateLinkResourceId": "[resourceId('Microsoft.Sql/managedInstances', parameters('privateLinkProperties')[copyIndex('managedSqlMiPrivateLinkCopy')].managedInstanceName)]",
+                "groupId": "[parameters('privateLinkProperties')[copyIndex('managedSqlMiPrivateLinkCopy')].groupId]",
+                "requestMessage": "[parameters('privateLinkProperties')[copyIndex('managedSqlMiPrivateLinkCopy')].requestMessage]",
+                "dnsZone": "[parameters('privateLinkProperties')[copyIndex('managedSqlMiPrivateLinkCopy')].dnsZone]"
+            }
+        },
+        {
+            "copy": {
+                "name": "managedAdxPrivateLinkCopy",
+                "count": "[length(range(0, parameters('privateLinkCount')))]"
+            },
+            "condition": "[equals(parameters('privateLinkProperties')[copyIndex('managedAdxPrivateLinkCopy')].groupId, 'cluster')]",
+            "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', parameters('privateLinkProperties')[copyIndex('managedAdxPrivateLinkCopy')].privateLinkName)]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "privateLinkResourceId": "[resourceId('Microsoft.Kusto/clusters', parameters('privateLinkProperties')[copyIndex('managedAdxPrivateLinkCopy')].adxClusterName)]",
+                "groupId": "[parameters('privateLinkProperties')[copyIndex('managedAdxPrivateLinkCopy')].groupId]",
+                "requestMessage": "[parameters('privateLinkProperties')[copyIndex('managedAdxPrivateLinkCopy')].requestMessage]",
+                "dnsZone": "[parameters('privateLinkProperties')[copyIndex('managedAdxPrivateLinkCopy')].dnsZone]"
+            }
+        },
+        {
+            "copy": {
+                "name": "managedAkvPrivateLinkCopy",
+                "count": "[length(range(0, parameters('privateLinkCount')))]"
+            },
+            "condition": "[equals(parameters('privateLinkProperties')[copyIndex('managedAkvPrivateLinkCopy')].groupId, 'vault')]",
+            "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+            "apiVersion": "[parameters('databaseWatcherApiVersion')]",
+            "name": "[concat(parameters('name'), '/', parameters('privateLinkProperties')[copyIndex('managedAkvPrivateLinkCopy')].privateLinkName)]",
+            "dependsOn": [
+                "[parameters('name')]"
+            ],
+            "properties": {
+                "privateLinkResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('privateLinkProperties')[copyIndex('managedAkvPrivateLinkCopy')].vaultName)]",
+                "groupId": "[parameters('privateLinkProperties')[copyIndex('managedAkvPrivateLinkCopy')].groupId]",
+                "requestMessage": "[parameters('privateLinkProperties')[copyIndex('managedAkvPrivateLinkCopy')].requestMessage]",
+                "dnsZone": "[parameters('privateLinkProperties')[copyIndex('managedAkvPrivateLinkCopy')].dnsZone]"
             }
         }
     ],
