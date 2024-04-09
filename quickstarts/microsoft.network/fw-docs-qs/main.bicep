@@ -196,7 +196,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2023-09-01' = {
       name: 'AZFW_VNet'
       tier: 'Standard'
     }
-    threatIntelMode: 'Alert'
+    threatIntelMode: 'Deny'
     ipConfigurations: azureFirewallIpConfigurations
     applicationRuleCollections: [
       {
