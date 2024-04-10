@@ -22,12 +22,18 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   kind: 'StorageV2'
   properties: {
     accessTier: 'Hot'
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
   }
 }
 
 resource systemTopic 'Microsoft.EventGrid/systemTopics@2023-12-15-preview' = {
   name: systemTopicName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     source: storageAccount.id
     topicType: 'Microsoft.Storage.StorageAccounts'
