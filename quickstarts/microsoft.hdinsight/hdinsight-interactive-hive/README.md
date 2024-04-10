@@ -6,9 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: hdinsight-interactive-hive
 languages:
-- json
 - bicep
+- json
 ---
+
 # Deploy an Interative Hive cluster in HDInsight.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-interactive-hive/PublicLastTestDate.svg)
