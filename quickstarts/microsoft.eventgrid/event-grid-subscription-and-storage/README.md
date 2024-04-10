@@ -6,9 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: event-grid-subscription-and-storage
 languages:
-- json
 - bicep
+- json
 ---
+
 # Create Blob Storage and Event Grid subscription to the Blob
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.eventgrid/event-grid-subscription-and-storage/PublicLastTestDate.svg)
