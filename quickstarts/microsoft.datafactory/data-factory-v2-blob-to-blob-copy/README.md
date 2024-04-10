@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Create a V2 data factory
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-blob-copy/PublicLastTestDate.svg)
