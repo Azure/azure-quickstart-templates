@@ -41,6 +41,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
     name: storageAccountType
   }
   kind: 'Storage'
+
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
+  }
 }
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2023-01-01' = {
@@ -73,11 +79,17 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
   name: functionAppName
   location: location
   kind: 'functionapp,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     reserved: true
     serverFarmId: hostingPlan.id
+    httpsOnly: true
     siteConfig: {
       linuxFxVersion: linuxFxVersion
+      ftpsState: 'FtpsOnly'
+      minTlsVersion: '1.2'
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
