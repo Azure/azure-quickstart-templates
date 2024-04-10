@@ -138,8 +138,7 @@ resource firewallRules 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-
   }
 }]
 
-output location string = location
 output name string = server.name
-output resourceGroupName string = resourceGroup().name
 output resourceId string = server.id
-output systemAssignedMIPrincipalId string = server.identity.principalId
+output resourceGroupName string = resourceGroup().name
+output location string = location
