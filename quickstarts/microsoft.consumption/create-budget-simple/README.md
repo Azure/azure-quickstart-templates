@@ -6,9 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: create-budget-simple
 languages:
-- json
 - bicep
+- json
 ---
+
 # Create a Simple Budget
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-simple/PublicLastTestDate.svg)
