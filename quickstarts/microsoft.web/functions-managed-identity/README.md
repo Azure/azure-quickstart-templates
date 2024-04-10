@@ -9,6 +9,7 @@ languages:
 - bicep
 - json
 ---
+
 # Creates a function app with managed service identity
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/functions-managed-identity/PublicLastTestDate.svg)
