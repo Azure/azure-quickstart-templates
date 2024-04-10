@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Deploy Azure Database for PostgreSQL with VNet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbforpostgresql/managed-postgresql-with-vnet/PublicLastTestDate.svg)
