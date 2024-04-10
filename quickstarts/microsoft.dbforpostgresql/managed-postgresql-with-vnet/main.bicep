@@ -131,6 +131,7 @@ resource server 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
 
 @batchSize(1)
 resource firewallRules 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-01' = [for rule in firewallrules: {
+  parent: server
   name: rule.Name
   properties: {
     startIpAddress: rule.StartIpAddress
