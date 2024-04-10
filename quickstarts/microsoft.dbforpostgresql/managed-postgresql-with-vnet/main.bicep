@@ -118,6 +118,8 @@ resource server 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
       backupRetentionDays: backupRetentionDays
       geoRedundantBackup: geoRedundantBackup
     }
+    sslEnforcement: 'Enabled'
+    minimalTlsVersion: 'TLS1_2'
   }
 
   resource virtualNetworkRule 'virtualNetworkRules@2017-12-01' = {
