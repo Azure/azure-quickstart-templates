@@ -6,8 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: create-cluster
 languages:
+- bicep
 - json
 ---
+
 # creates an Azure Stack HCI 23H2 cluster
 
 This template allows you to create an Azure Stack HCI cluster using version 23H2. First you deploy the template in validate mode which does confirm the parameters at the device. Once passed you re-deploy the template with mode set to deploy.
@@ -26,7 +28,6 @@ In order to deploy this template, you must have Arc enabled the server(s) and in
 - Validate that managed identity for each server has "Azure Connected Machine Resource Manager" role assigned at resource group level.
 - Assign "Key Vault Secrets User" role to each managed identity for each server to the KeyVault created by the template at resource group level.
 - Assign "Azure Connected Machine Resource Manager" role to "Microsoft.AzureStackHCI Resource Provider" at resource group level.
-
 
 > [!NOTE]
 > The secrets must be entered into the template being encoded using base64. Prior encoding the format must be "username:password" for credentials,for the SPN it must be "AppID:secret". The storage account key is directly encoded to base64. Here is a sample using PowerShell to encode to base64: 
