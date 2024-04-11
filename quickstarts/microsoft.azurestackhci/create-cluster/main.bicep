@@ -269,7 +269,6 @@ resource cluster 'Microsoft.AzureStackHCI/clusters@2024-01-01' =
       type: 'SystemAssigned'
     }
     location: location
-    properties: {}
     dependsOn: [
       keyVault
     ]
