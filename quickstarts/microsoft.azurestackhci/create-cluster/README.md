@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # creates an Azure Stack HCI 23H2 cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/create-cluster/PublicLastTestDate.svg)
