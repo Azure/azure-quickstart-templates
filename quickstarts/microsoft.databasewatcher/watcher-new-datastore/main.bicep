@@ -31,53 +31,217 @@ param targetCount int
 @description('The array of SQL target properties. Each element of the array defines a SQL target.')
 param targetProperties array
 
-module cluster './nested_cluster.bicep' = {
+@description('The total number of managed private links to add to a watcher')
+param privateLinkCount int
+
+@description('The array of managed private link properties. Each element of the array defines a managed private link to an Azure resource.')
+param privateLinkProperties array
+
+resource cluster 'Microsoft.Kusto/clusters@2023-05-02' = if (createNewDatastore == bool('true')) {
   name: clusterName
-  params: {
-    location: location
-    createNewDatastore: createNewDatastore
-    clusterName: clusterName
-    clusterSkuName: clusterSkuName
-    clusterSkuTier: clusterSkuTier
+  location: location
+  tags: {}
+  sku: {
+    capacity: 2
+    name: clusterSkuName
+    tier: clusterSkuTier
+  }
+  identity: {
+    type: 'None'
+  }
+  properties: {
+    enableAutoStop: false
+    enableDiskEncryption: true
+    enableDoubleEncryption: false
+    enableStreamingIngest: true
+    enablePurge: true
+    engineType: 'V3'
+    optimizedAutoscale: {
+      isEnabled: false
+      minimum: 2
+      maximum: 2
+      version: 1
+    }
+    publicIPType: 'IPv4'
+    publicNetworkAccess: 'Enabled'
+    restrictOutboundNetworkAccess: 'Disabled'
   }
 }
 
-module watcher './nested_watcher.bicep' = {
+resource watcher 'Microsoft.DatabaseWatcher/watchers@2023-09-01-preview' = {
   name: watcherName
-  params: {
-    location: location
-    kustoDataIngestionUri: cluster.outputs.kustoDataIngestionUri
-    kustoClusterUri: cluster.outputs.kustoClusterUri
-    identityType: identityType
-    name: watcherName
-    kustoOfferingType: kustoOfferingType
-    clusterName: clusterName
-    databaseName: databaseName
+  location: location
+  identity: {
+    type: identityType
+  }
+  properties: {
+    datastore: {
+      adxClusterResourceId: resourceId('Microsoft.Kusto/Clusters', clusterName)
+      kustoClusterDisplayName: clusterName
+      kustoDatabaseName: databaseName
+      kustoClusterUri: cluster.properties.uri
+      kustoDataIngestionUri: cluster.properties.dataIngestionUri
+      kustoManagementUrl: '${environment().portal}/resource/subscriptions${resourceId('Microsoft.Kusto/Clusters', clusterName)}/overview'
+      kustoOfferingType: kustoOfferingType
+    }
   }
 }
 
-module database './nested_database.bicep' = {
+resource clusterName_database 'Microsoft.Kusto/clusters/databases@2023-05-02' = {
+  parent: cluster
   name: databaseName
-  params: {
-    location: location
-    clusterName: clusterName
-    principalId: watcher.outputs.principalId
-    tenantId: watcher.outputs.tenantId
-    databaseName: databaseName
+  location: location
+  kind: 'ReadWrite'
+  properties: {}
+}
+
+resource clusterName_databaseName_roleAssignmentId 'Microsoft.Kusto/Clusters/Databases/PrincipalAssignments@2023-05-02' = {
+  parent: clusterName_database
+  name: guid(resourceGroup().id)
+  properties: {
+    tenantId: watcher.identity.tenantId
+    principalId: watcher.identity.principalId
+    role: 'Admin'
+    principalType: 'App'
   }
 }
 
-resource target 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): {
-  name: '${watcherName}/${guid(resourceGroup().id, watcherName, string(i))}'
+resource name_id_name_sqlDbAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlDb') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
+  parent: watcher
+  name: guid(resourceGroup().id, watcherName, string(i))
   properties: {
     targetType: targetProperties[i].targetType
-    sqlDbResourceId: resourceId('Microsoft.SQL/servers/databases', targetProperties[i].targetLogicalServerName, targetProperties[i].targetDatabaseName)
+    sqlDbResourceId: resourceId(targetProperties[i].targetLogicalServerSubscriptionId, targetProperties[i].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/databases', targetProperties[i].targetLogicalServerName, targetProperties[i].targetDatabaseName)
     connectionServerName: concat(targetProperties[i].targetLogicalServerName, targetProperties[i].targetServerDnsSuffix)
     readIntent: targetProperties[i].readIntent
     targetAuthenticationType: targetProperties[i].targetAuthenticationType
   }
-  dependsOn: [
-    watcher
-  ]
 }]
 
+resource name_id_name_sqlDbSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlDb') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
+  parent: watcher
+  name: guid(resourceGroup().id, watcherName, string(i))
+  properties: {
+    targetType: targetProperties[i].targetType
+    sqlDbResourceId: resourceId(targetProperties[i].targetLogicalServerSubscriptionId, targetProperties[i].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/databases', targetProperties[i].targetLogicalServerName, targetProperties[i].targetDatabaseName)
+    connectionServerName: concat(targetProperties[i].targetLogicalServerName, targetProperties[i].targetServerDnsSuffix)
+    readIntent: targetProperties[i].readIntent
+    targetAuthenticationType: targetProperties[i].targetAuthenticationType
+    targetVault: {
+      akvResourceId: resourceId(targetProperties[i].targetVaultSubscriptionId, targetProperties[i].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', targetProperties[i].targetVaultName)
+      akvTargetUser: targetProperties[i].akvTargetUser
+      akvTargetPassword: targetProperties[i].akvTargetPassword
+    }
+  }
+}]
+
+resource name_id_name_sqlEpAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlEp') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
+  parent: watcher
+  name: guid(resourceGroup().id, watcherName, string(i))
+  properties: {
+    targetType: targetProperties[i].targetType
+    sqlEpResourceId: resourceId(targetProperties[i].targetLogicalServerSubscriptionId, targetProperties[i].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/elasticPools', targetProperties[i].targetLogicalServerName, targetProperties[i].targetElasticPoolName)
+    anchorDatabaseResourceId: resourceId('Microsoft.Sql/servers/databases', targetProperties[i].targetLogicalServerName, targetProperties[i].targetAnchorDatabaseName)
+    connectionServerName: concat(targetProperties[i].targetLogicalServerName, targetProperties[i].targetServerDnsSuffix)
+    readIntent: targetProperties[i].readIntent
+    targetAuthenticationType: targetProperties[i].targetAuthenticationType
+  }
+}]
+
+resource name_id_name_sqlEpSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlEp') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
+  parent: watcher
+  name: guid(resourceGroup().id, watcherName, string(i))
+  properties: {
+    targetType: targetProperties[i].targetType
+    sqlEpResourceId: resourceId(targetProperties[i].targetLogicalServerSubscriptionId, targetProperties[i].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/elasticPools', targetProperties[i].targetLogicalServerName, targetProperties[i].targetElasticPoolName)
+    anchorDatabaseResourceId: resourceId('Microsoft.Sql/servers/databases', targetProperties[i].targetLogicalServerName, targetProperties[i].targetAnchorDatabaseName)
+    connectionServerName: concat(targetProperties[i].targetLogicalServerName, targetProperties[i].targetServerDnsSuffix)
+    readIntent: targetProperties[i].readIntent
+    targetAuthenticationType: targetProperties[i].targetAuthenticationType
+    targetVault: {
+      akvResourceId: resourceId(targetProperties[i].targetVaultSubscriptionId, targetProperties[i].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', targetProperties[i].targetVaultName)
+      akvTargetUser: targetProperties[i].akvTargetUser
+      akvTargetPassword: targetProperties[i].akvTargetPassword
+    }
+  }
+}]
+
+resource name_id_name_sqlMiAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlMi') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
+  parent: watcher
+  name: guid(resourceGroup().id, watcherName, string(i))
+  properties: {
+    targetType: targetProperties[i].targetType
+    sqlMiResourceId: resourceId(targetProperties[i].targetManagedInstanceSubscriptionId, targetProperties[i].targetManagedInstanceResourceGroupName, 'Microsoft.Sql/managedInstances', targetProperties[i].targetManagedInstanceName)
+    connectionServerName: '${targetProperties[i].targetManagedInstanceName}.${targetProperties[i].targetManagedInstanceDnsZone}${targetProperties[i].targetManagedInstanceDnsSuffix}'
+    connectionTcpPort: targetProperties[i].connectionTcpPort
+    readIntent: targetProperties[i].readIntent
+    targetAuthenticationType: targetProperties[i].targetAuthenticationType
+  }
+}]
+
+resource name_id_name_sqlMiSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlMi') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
+  parent: watcher
+  name: guid(resourceGroup().id, watcherName, string(i))
+  properties: {
+    targetType: targetProperties[i].targetType
+    sqlMiResourceId: resourceId(targetProperties[i].targetManagedInstanceSubscriptionId, targetProperties[i].targetManagedInstanceResourceGroupName, 'Microsoft.Sql/managedInstances', targetProperties[i].targetManagedInstanceName)
+    connectionServerName: '${targetProperties[i].targetManagedInstanceName}.${targetProperties[i].targetManagedInstanceDnsZone}${targetProperties[i].targetManagedInstanceDnsSuffix}'
+    connectionTcpPort: targetProperties[i].connectionTcpPort
+    readIntent: targetProperties[i].readIntent
+    targetAuthenticationType: targetProperties[i].targetAuthenticationType
+    targetVault: {
+      akvResourceId: resourceId(targetProperties[i].targetVaultSubscriptionId, targetProperties[i].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', targetProperties[i].targetVaultName)
+      akvTargetUser: targetProperties[i].akvTargetUser
+      akvTargetPassword: targetProperties[i].akvTargetPassword
+    }
+  }
+}]
+
+resource name_privateLinkProperties_managedSqlDbPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'sqlServer') {
+  parent: watcher
+  name: '${privateLinkProperties[i].privateLinkName}'
+  properties: {
+    privateLinkResourceId: resourceId(privateLinkProperties[i].logicalServerSubscriptionId, privateLinkProperties[i].logicalServerResourceGroupName, 'Microsoft.Sql/servers', privateLinkProperties[i].logicalServerName)
+    groupId: privateLinkProperties[i].groupId
+    requestMessage: privateLinkProperties[i].requestMessage
+    dnsZone: privateLinkProperties[i].dnsZone
+  }
+}]
+
+resource name_privateLinkProperties_managedSqlMiPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'managedInstance') {
+  parent: watcher
+  name: '${privateLinkProperties[i].privateLinkName}'
+  properties: {
+    privateLinkResourceId: resourceId(privateLinkProperties[i].managedInstanceSubscriptionId, privateLinkProperties[i].managedInstanceResourceGroupName, 'Microsoft.Sql/managedInstances', privateLinkProperties[i].managedInstanceName)
+    groupId: privateLinkProperties[i].groupId
+    requestMessage: privateLinkProperties[i].requestMessage
+    dnsZone: privateLinkProperties[i].dnsZone
+  }
+}]
+
+resource name_privateLinkProperties_managedAdxPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'cluster') {
+  parent: watcher
+  name: '${privateLinkProperties[i].privateLinkName}'
+  properties: {
+    privateLinkResourceId: resourceId(privateLinkProperties[i].adxClusterSubscriptionId, privateLinkProperties[i].adxClusterResourceGroupName, 'Microsoft.Kusto/clusters', privateLinkProperties[i].adxClusterName)
+    groupId: privateLinkProperties[i].groupId
+    requestMessage: privateLinkProperties[i].requestMessage
+    dnsZone: privateLinkProperties[i].dnsZone
+  }
+}]
+
+resource name_privateLinkProperties_managedAkvPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'vault') {
+  parent: watcher
+  name: '${privateLinkProperties[i].privateLinkName}'
+  properties: {
+    privateLinkResourceId: resourceId(privateLinkProperties[i].vaultSubscriptionId, privateLinkProperties[i].vaultResourceGroupName, 'Microsoft.KeyVault/vaults', privateLinkProperties[i].vaultName)
+    groupId: privateLinkProperties[i].groupId
+    requestMessage: privateLinkProperties[i].requestMessage
+    dnsZone: privateLinkProperties[i].dnsZone
+  }
+}]
+
+output watcherName string = watcher.name
+output watcherId string = watcher.id
+output location string = watcher.location
+output resourceGroupName string = resourceGroup().name
