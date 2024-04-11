@@ -118,3 +118,8 @@ resource msDeploy 'Microsoft.Web/sites/extensions@2023-01-01' = {
     packageUri: packageUri
   }
 }
+
+output functionAppName string = functionApp.name
+output functionAppId string = functionApp.id
+output location string = functionApp.location
+output resourceGroupName string = resourceGroup().name
