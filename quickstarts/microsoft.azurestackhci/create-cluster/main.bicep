@@ -31,6 +31,7 @@ param logsRetentionInDays int = 30
 param storageAccountType string = 'Standard_LRS'
 
 @description('The fqdn of your KeyVault')
+#disable-next-line secure-secrets-in-params 
 param secretsLocation string = ''
 
 @description('The existing storage account name used for the cluster witness')
