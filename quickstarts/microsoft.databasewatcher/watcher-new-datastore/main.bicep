@@ -76,12 +76,12 @@ resource watcher 'Microsoft.DatabaseWatcher/watchers@2023-09-01-preview' = {
   }
   properties: {
     datastore: {
-      adxClusterResourceId: resourceId('Microsoft.Kusto/Clusters', clusterName)
+      adxClusterResourceId: cluster.id
       kustoClusterDisplayName: clusterName
       kustoDatabaseName: databaseName
       kustoClusterUri: cluster.properties.uri
       kustoDataIngestionUri: cluster.properties.dataIngestionUri
-      kustoManagementUrl: '${environment().portal}/resource/subscriptions${resourceId('Microsoft.Kusto/Clusters', clusterName)}/overview'
+      kustoManagementUrl: '${environment().portal}/resource/subscriptions${cluster.id}/overview'
       kustoOfferingType: kustoOfferingType
     }
   }
@@ -95,7 +95,7 @@ resource clusterName_database 'Microsoft.Kusto/clusters/databases@2023-05-02' = 
   properties: {}
 }
 
-resource clusterName_databaseName_roleAssignmentId 'Microsoft.Kusto/Clusters/Databases/PrincipalAssignments@2023-05-02' = {
+resource principalAssignment 'Microsoft.Kusto/Clusters/Databases/PrincipalAssignments@2023-05-02' = {
   parent: clusterName_database
   name: guid(resourceGroup().id)
   properties: {
@@ -106,7 +106,7 @@ resource clusterName_databaseName_roleAssignmentId 'Microsoft.Kusto/Clusters/Dat
   }
 }
 
-resource name_id_name_sqlDbAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlDb') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
+resource targetSqlDbAad 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlDb') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
   parent: watcher
   name: guid(resourceGroup().id, watcherName, string(i))
   properties: {
@@ -118,7 +118,7 @@ resource name_id_name_sqlDbAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/tar
   }
 }]
 
-resource name_id_name_sqlDbSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlDb') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
+resource targetSqlDbSql 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlDb') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
   parent: watcher
   name: guid(resourceGroup().id, watcherName, string(i))
   properties: {
@@ -135,7 +135,7 @@ resource name_id_name_sqlDbSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/tar
   }
 }]
 
-resource name_id_name_sqlEpAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlEp') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
+resource targetSqlEpAad 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlEp') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
   parent: watcher
   name: guid(resourceGroup().id, watcherName, string(i))
   properties: {
@@ -148,7 +148,7 @@ resource name_id_name_sqlEpAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/tar
   }
 }]
 
-resource name_id_name_sqlEpSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlEp') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
+resource targetSqlEpSql 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlEp') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
   parent: watcher
   name: guid(resourceGroup().id, watcherName, string(i))
   properties: {
@@ -166,7 +166,7 @@ resource name_id_name_sqlEpSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/tar
   }
 }]
 
-resource name_id_name_sqlMiAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlMi') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
+resource targetSqlMiAad 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlMi') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
   parent: watcher
   name: guid(resourceGroup().id, watcherName, string(i))
   properties: {
@@ -179,7 +179,7 @@ resource name_id_name_sqlMiAadTargetCopy 'Microsoft.DatabaseWatcher/watchers/tar
   }
 }]
 
-resource name_id_name_sqlMiSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlMi') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
+resource targetSqlMiSql 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlMi') && (targetProperties[i].targetAuthenticationType == 'Sql')) {
   parent: watcher
   name: guid(resourceGroup().id, watcherName, string(i))
   properties: {
@@ -197,7 +197,7 @@ resource name_id_name_sqlMiSqlTargetCopy 'Microsoft.DatabaseWatcher/watchers/tar
   }
 }]
 
-resource name_privateLinkProperties_managedSqlDbPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'sqlServer') {
+resource privateLinkSqlDb 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'sqlServer') {
   parent: watcher
   name: '${privateLinkProperties[i].privateLinkName}'
   properties: {
@@ -208,7 +208,7 @@ resource name_privateLinkProperties_managedSqlDbPrivateLinkCopy_privateLink 'Mic
   }
 }]
 
-resource name_privateLinkProperties_managedSqlMiPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'managedInstance') {
+resource privateLinkSqlMi 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'managedInstance') {
   parent: watcher
   name: '${privateLinkProperties[i].privateLinkName}'
   properties: {
@@ -219,7 +219,7 @@ resource name_privateLinkProperties_managedSqlMiPrivateLinkCopy_privateLink 'Mic
   }
 }]
 
-resource name_privateLinkProperties_managedAdxPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'cluster') {
+resource privateLinkAdx 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'cluster') {
   parent: watcher
   name: '${privateLinkProperties[i].privateLinkName}'
   properties: {
@@ -230,7 +230,7 @@ resource name_privateLinkProperties_managedAdxPrivateLinkCopy_privateLink 'Micro
   }
 }]
 
-resource name_privateLinkProperties_managedAkvPrivateLinkCopy_privateLink 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'vault') {
+resource privateLinkAkv 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'vault') {
   parent: watcher
   name: '${privateLinkProperties[i].privateLinkName}'
   properties: {
