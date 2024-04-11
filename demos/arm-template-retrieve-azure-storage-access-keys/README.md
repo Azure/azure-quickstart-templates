@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Retrieve Azure Storage access keys in ARM template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/arm-template-retrieve-azure-storage-access-keys/PublicLastTestDate.svg)
