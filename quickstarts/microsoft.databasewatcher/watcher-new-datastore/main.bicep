@@ -80,3 +80,4 @@ resource target 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' 
     watcher
   ]
 }]
+
