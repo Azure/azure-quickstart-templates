@@ -42,7 +42,7 @@ param location string = resourceGroup().location
 @description('Azure Management URI')
 param azureMgmtUri string = ''
 
-resource storageConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
+resource storageConnection 'Microsoft.Web/connections@2016-06-01' = {
   name: storageConnectionName
   location: location
   properties: {
