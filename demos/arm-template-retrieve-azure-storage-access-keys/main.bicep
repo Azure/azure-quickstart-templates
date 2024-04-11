@@ -51,7 +51,7 @@ resource storageConnection 'Microsoft.Web/connections@2016-06-01' = {
     }
     parameterValues: {
       accountName: storageAccountName
-      accessKey: storageAccount.listkey().keys[0].value
+      accessKey: storageAccount.listkeys().keys[0].value
     }
     testLinks: [
       {
