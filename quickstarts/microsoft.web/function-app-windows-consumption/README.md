@@ -9,6 +9,7 @@ languages:
 - bicep
 - json
 ---
+
 # Azure Function App Hosted on Windows Consumption Plan
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-windows-consumption/PublicLastTestDate.svg)

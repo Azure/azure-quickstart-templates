@@ -21,8 +21,14 @@ param location string = resourceGroup().location
 ])
 param functionWorkerRuntime string = 'node'
 
-@description('The zip content url.')
-param packageUri string
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
+param _artifactsLocation string = deployment().properties.templateLink.uri
+
+@secure()
+@description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
+param _artifactsLocationSasToken string = ''
+
+var packageUri = uri(_artifactsLocation, 'packages/nodejs.zip${_artifactsLocationSasToken}')
 
 var hostingPlanName = functionAppName
 var applicationInsightsName = functionAppName
