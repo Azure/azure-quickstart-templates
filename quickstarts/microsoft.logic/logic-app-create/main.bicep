@@ -51,3 +51,8 @@ resource stg 'Microsoft.Logic/workflows@2019-05-01' = {
     }
   }
 }
+
+output name string = stg.name
+output resourceId string = stg.id
+output resourceGroupName string = resourceGroup().name
+output location string = location

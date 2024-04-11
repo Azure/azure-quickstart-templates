@@ -59,8 +59,11 @@ configuration ConfigureSPVM
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
     [String] $SharePointIsoDriveLetter = "S"
-    [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
     [String] $AdfsDnsEntryName = "adfs"
+    [String] $LdapcpSolutionName = "LDAPCPSE"
+    [String] $LdapcpSolutionId = "ff36c8cf-e510-42fc-8ba3-18af3c316aec"
+    [String] $LdapcpReleaseId = "latest"
+    [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\$LdapcpSolutionName.wsp"
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
@@ -132,7 +135,7 @@ configuration ConfigureSPVM
         }
 
         # Enable TLS 1.2 - https://learn.microsoft.com/en-us/azure/active-directory/app-proxy/application-proxy-add-on-premises-application#tls-requirements
-        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        # This allows xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405
         Registry EnableTLS12RegKey1 {
             Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' 
         }
@@ -181,17 +184,14 @@ configuration ConfigureSPVM
         }
 
         # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 1 (machine-wide)
-        Registry PrioritizeOIDCOverLegacyAuthN {
+        Registry OneDriveOIDC_PrioritizeOIDCOverLegacyAuthN {
             Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremOIDC"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
         }
-        Registry PrioritizeSPSOverSPO {
+        Registry OneDriveOIDC_PrioritizeSPSOverSPO {
             Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremPrioritization"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
         }
-        Registry SetSPSUrl {
+        Registry OneDriveOIDC_SPSUrl {
             Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "https://$SharePointSitesAuthority.$DomainFQDN"; Ensure = "Present" 
-        }
-        Registry SetOneDriveName {
-            Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "$SharePointSitesAuthority in $DomainFQDN"; Ensure = "Present" 
         }
         
         SqlAlias AddSqlAlias {
@@ -249,7 +249,7 @@ configuration ConfigureSPVM
 
         xRemoteFile DownloadLDAPCP {
             DestinationPath = $LDAPCPFileFullPath
-            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "*.wsp" -ReleaseId "latest"
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "*.wsp" -ReleaseId $LdapcpReleaseId
             MatchSource     = $false
         }
 
@@ -437,6 +437,32 @@ configuration ConfigureSPVM
             Name = "Default Web Site"; Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; 
         }
 
+        Script CreateSPLOGSFileShare {
+            SetScript  = 
+            { 
+                $foldername = "C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\16\LOGS"
+                $shareName = "SPLOGS"
+                # if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
+                $shares = [WMICLASS]"WIN32_Share"
+                if ($shares.Create($foldername, $sharename, 0).ReturnValue -ne 0) {
+                    Write-Host "Failed to create file share '$sharename' for folder '$foldername'"
+                } else {
+                    Write-Host "Created file share '$sharename' for folder '$foldername'"
+                }
+                # }
+            }
+            GetScript  = { }
+            TestScript = 
+            {
+                $shareName = "SPLOGS"
+                if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
+                    return $false
+                } else {
+                    return $true
+                }
+            }
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -514,12 +540,16 @@ configuration ConfigureSPVM
         }
 
         # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 2 (user-specific settings)
-        Registry EnableOIDCForSPS {
+        Registry OneDriveOIDC_EnableOIDCForSPS {
             Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2086"; ValueType = "DWORD"; ValueData = "1"
             PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
         }
-        Registry EnableOneAuthorSPS {
+        Registry OneDriveOIDC_EnableOneAuthorSPS {
             Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2042"; ValueType = "DWORD"; ValueData = "1"
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
+        }
+        Registry OneDriveOIDC_IniFileNamingForEmailAndUpn {
+            Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInSettingsOverrides"; ValueName = "204"; ValueType = "String"; ValueData = "-1835"
             PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
         }
 
@@ -810,11 +840,8 @@ configuration ConfigureSPVM
         Script RestartSPTimerAfterCreateSPFarm {
             SetScript            =
             {
-                # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
-                Restart-Service SPTimerV4
-                # 2021-09: In SharePoint 2013, solution deployment failed multiple times with error "Admin SVC must be running in order to create deployment timer job."
-                # So ensure that SPAdminV4 is started
-                Restart-Service SPAdminV4
+                # Restarting both SPAdminV4 and SPTimerV4 services before deploying solution makes deployment a lot more reliable
+                Restart-Service SPTimerV4, SPAdminV4
             }
             GetScript            = { }
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -841,13 +868,38 @@ configuration ConfigureSPVM
             DependsOn            = "[File]CopyCertificatesFromDC"
         }
 
-        SPFarmSolution InstallLdapcp {
+        SPFarmSolution InstallLdapcpSolution {
             LiteralPath          = $LDAPCPFileFullPath
-            Name                 = "LDAPCP.wsp"
+            Name                 = "$LdapcpSolutionName.wsp"
             Deployed             = $true
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
+        }
+
+        Script InstallLdapcpFeatures {
+            SetScript            = 
+            {
+                $solutionId = $using:LdapcpSolutionId
+                Install-SPFeature -SolutionId $solutionId -AllExistingFeatures
+            }
+            GetScript            =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript           = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                $claimsProviderName = $using:LdapcpSolutionName
+                if ($null -eq (Get-SPClaimProvider -Identity $claimsProviderName -ErrorAction SilentlyContinue)) {
+                    return $false
+                } else {
+                    return $true
+                }
+            }
+            DependsOn            = "[SPFarmSolution]InstallLdapcpSolution"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         SPManagedAccount CreateSPSvcManagedAccount {
@@ -966,28 +1018,28 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        # Installing LDAPCP somehow updates SPClaimEncodingManager 
-        # But in SharePoint 2019 and Subscription, it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
-        # The only solution I've found is to force a reboot
-        Script ForceRebootBeforeCreatingSPTrust {
-            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            TestScript           = {
-                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust)
-            }
-            SetScript            = {
-                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust -Force
-                $global:DSCMachineStatus = 1
-            }
-            GetScript            = { }
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarmSolution]InstallLdapcp"
-        }
+        # # Installing LDAPCP somehow updates SPClaimEncodingManager 
+        # # But in SharePoint 2019 and Subscription, it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
+        # # The only solution I've found is to force a reboot
+        # Script ForceRebootBeforeCreatingSPTrust {
+        #     # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        #     TestScript           = {
+        #         return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust)
+        #     }
+        #     SetScript            = {
+        #         New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust -Force
+        #         $global:DSCMachineStatus = 1
+        #     }
+        #     GetScript            = { }
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPFarmSolution]InstallLdapcpSolution"
+        # }
 
-        PendingReboot RebootOnSignalFromForceRebootBeforeCreatingSPTrust {
-            Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[Script]ForceRebootBeforeCreatingSPTrust"
-        }
+        # PendingReboot RebootOnSignalFromForceRebootBeforeCreatingSPTrust {
+        #     Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
+        #     SkipCcmClientSDK = $true
+        #     DependsOn        = "[Script]ForceRebootBeforeCreatingSPTrust"
+        # }
 
         $apppoolUserName = $SPAppPoolCredsQualified.UserName
         $domainAdminUserName = $DomainAdminCredsQualified.UserName
@@ -1047,7 +1099,7 @@ configuration ConfigureSPVM
                     return $true
                 }
             }
-            DependsOn            = "[SPFarmSolution]InstallLdapcp"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
@@ -1074,11 +1126,11 @@ configuration ConfigureSPVM
                 }
             )
             SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
-            ClaimProviderName          = "LDAPCP"
+            ClaimProviderName          = $LdapcpSolutionName
             UseWReplyParameter         = $true
             Ensure                     = "Present" 
-            DependsOn                  = "[Script]SetFarmPropertiesForOIDC"
-            PsDscRunAsCredential       = $SPSetupCredsQualified
+            DependsOn                  = "[Script]SetFarmPropertiesForOIDC", "[Script]InstallLdapcpFeatures"
+            PsDscRunAsCredential       = $DomainAdminCredsQualified
         }
 
 
@@ -1099,28 +1151,8 @@ configuration ConfigureSPVM
         Script ConfigureLDAPCP {
             SetScript            = 
             {
-                Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-
-                # Create LDAPCP configuration
-                $config = [ldapcp.LDAPCPConfig]::CreateConfiguration([ldapcp.ClaimsProviderConstants]::CONFIG_ID, [ldapcp.ClaimsProviderConstants]::CONFIG_NAME, $using:DomainFQDN);
-
-                # LDAP://contoso.local:636/CN=Users,DC=contoso,DC=local
-
-                # Remove unused claim types
-                $config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
-                $config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
-                $config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
-                $config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
-                
-                # Configure augmentation
-                $config.EnableAugmentation = $true
-                $config.MainGroupClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-                foreach ($connection in $config.LDAPConnectionsProp) {
-                    $connection.EnableAugmentation = $true
-                }
-
-                # Save changes
-                $config.Update()
+                Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+                [Yvand.LdapClaimsProvider.LDAPCPSE]::CreateConfiguration()
             }
             GetScript            =  
             {
@@ -1130,8 +1162,8 @@ configuration ConfigureSPVM
             TestScript           = 
             {
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-                $config = [ldapcp.LDAPCPConfig]::GetConfiguration("LDAPCPConfig")
+                Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+                $config = [Yvand.LdapClaimsProvider.LDAPCPSE]::GetConfiguration()
                 if ($config -eq $null) {
                     return $false
                 }
@@ -1331,7 +1363,7 @@ configuration ConfigureSPVM
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance", "[Script]ConfigureLDAPCP"
+            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
         SPAppManagementServiceApp CreateAppManagementServiceApp {
@@ -1541,7 +1573,7 @@ configuration ConfigureSPVM
             DestinationPath = "C:\inetpub\wwwroot\addins"
             Type            = "Directory"
             Ensure          = "Present"
-            DependsOn       = "[SPFarm]CreateSPFarm", "[Script]ConfigureLDAPCP"
+            DependsOn       = "[SPFarm]CreateSPFarm"
         }
 
         WebAppPool CreateAddinsSiteApplicationPool {

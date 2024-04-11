@@ -4,28 +4,28 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.24.24.22086",
-      "templateHash": "12699066044126709827"
+      "version": "0.26.54.24096",
+      "templateHash": "14262251343491140190"
     }
   },
   "parameters": {
-    "aiResourceName": {
+    "aiHubName": {
       "type": "string",
-      "defaultValue": "air-demo",
+      "defaultValue": "demo",
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
         "description": "Name for the AI resource and used to derive name of dependent resources."
       }
     },
-    "aiResourceFriendlyName": {
+    "aiHubFriendlyName": {
       "type": "string",
       "defaultValue": "Demo AI resource",
       "metadata": {
         "description": "Friendly name for your Azure AI resource"
       }
     },
-    "aiResourceDescription": {
+    "aiHubDescription": {
       "type": "string",
       "defaultValue": "This is an example AI resource for use in Azure AI Studio.",
       "metadata": {
@@ -48,7 +48,7 @@
     }
   },
   "variables": {
-    "name": "[toLower(format('{0}', parameters('aiResourceName')))]",
+    "name": "[toLower(format('{0}', parameters('aiHubName')))]",
     "uniqueSuffix": "[substring(uniqueString(resourceGroup().id), 0, 4)]"
   },
   "resources": [
@@ -77,6 +77,9 @@
           "containerRegistryName": {
             "value": "[format('cr{0}{1}', variables('name'), variables('uniqueSuffix'))]"
           },
+          "aiServicesName": {
+            "value": "[format('ais{0}{1}', variables('name'), variables('uniqueSuffix'))]"
+          },
           "tags": {
             "value": "[parameters('tags')]"
           }
@@ -87,8 +90,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "3676750468491827210"
+              "version": "0.26.54.24096",
+              "templateHash": "18174080564083878511"
             }
           },
           "parameters": {
@@ -104,6 +107,12 @@
               "defaultValue": {},
               "metadata": {
                 "description": "Tags to add to the resources"
+              }
+            },
+            "aiServicesName": {
+              "type": "string",
+              "metadata": {
+                "description": "AI services name"
               }
             },
             "applicationInsightsName": {
@@ -233,6 +242,21 @@
               }
             },
             {
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2021-10-01",
+              "name": "[parameters('aiServicesName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "S0"
+              },
+              "kind": "AIServices",
+              "properties": {
+                "apiProperties": {
+                  "statisticsEnabled": false
+                }
+              }
+            },
+            {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2022-09-01",
               "name": "[variables('storageNameCleaned')]",
@@ -285,6 +309,14 @@
             }
           ],
           "outputs": {
+            "aiservicesID": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName'))]"
+            },
+            "aiservicesTarget": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2021-10-01').endpoint]"
+            },
             "storageId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
@@ -315,20 +347,26 @@
         },
         "mode": "Incremental",
         "parameters": {
-          "aiResourceName": {
-            "value": "[format('ai-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+          "aiHubName": {
+            "value": "[format('aih-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
           },
-          "aiResourceFriendlyName": {
-            "value": "[parameters('aiResourceFriendlyName')]"
+          "aiHubFriendlyName": {
+            "value": "[parameters('aiHubFriendlyName')]"
           },
-          "aiResourceDescription": {
-            "value": "[parameters('aiResourceDescription')]"
+          "aiHubDescription": {
+            "value": "[parameters('aiHubDescription')]"
           },
           "location": {
             "value": "[parameters('location')]"
           },
           "tags": {
             "value": "[parameters('tags')]"
+          },
+          "aiServicesId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiservicesID.value]"
+          },
+          "aiServicesTarget": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiservicesTarget.value]"
           },
           "applicationInsightsId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.applicationInsightsId.value]"
@@ -349,8 +387,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "17984142505402483667"
+              "version": "0.26.54.24096",
+              "templateHash": "12922650283028523937"
             }
           },
           "parameters": {
@@ -366,23 +404,23 @@
                 "description": "Tags to add to the resources"
               }
             },
-            "aiResourceName": {
+            "aiHubName": {
               "type": "string",
               "metadata": {
-                "description": "AI resource name"
+                "description": "AI hub name"
               }
             },
-            "aiResourceFriendlyName": {
+            "aiHubFriendlyName": {
               "type": "string",
-              "defaultValue": "[parameters('aiResourceName')]",
+              "defaultValue": "[parameters('aiHubName')]",
               "metadata": {
-                "description": "AI resource display name"
+                "description": "AI hub display name"
               }
             },
-            "aiResourceDescription": {
+            "aiHubDescription": {
               "type": "string",
               "metadata": {
-                "description": "AI resource description"
+                "description": "AI hub description"
               }
             },
             "applicationInsightsId": {
@@ -409,63 +447,53 @@
                 "description": "Resource ID of the storage account resource for storing experimentation outputs"
               }
             },
-            "endpointResourceId": {
+            "aiServicesId": {
               "type": "string",
-              "defaultValue": "null"
+              "metadata": {
+                "description": "Resource ID of the AI Services resource"
+              }
+            },
+            "aiServicesTarget": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the AI Services endpoint"
+              }
             }
           },
           "resources": [
             {
-              "type": "Microsoft.MachineLearningServices/workspaces/endpoints",
-              "apiVersion": "2023-08-01-preview",
-              "name": "[format('{0}/{1}', parameters('aiResourceName'), 'Azure.OpenAI')]",
+              "type": "Microsoft.MachineLearningServices/workspaces/connections",
+              "apiVersion": "2024-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('aiHubName'), format('{0}-connection-AzureOpenAI', parameters('aiHubName')))]",
               "properties": {
-                "name": "Azure.OpenAI",
-                "endpointType": "Azure.OpenAI",
-                "associatedResourceId": "[if(not(equals(parameters('endpointResourceId'), 'null')), parameters('endpointResourceId'), null())]"
+                "category": "AzureOpenAI",
+                "target": "[parameters('aiServicesTarget')]",
+                "authType": "ApiKey",
+                "isSharedToAll": true,
+                "credentials": {
+                  "key": "[format('{0}', listKeys(parameters('aiServicesId'), '2021-10-01').key1)]"
+                },
+                "metadata": {
+                  "ApiType": "Azure",
+                  "ResourceId": "[parameters('aiServicesId')]"
+                }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiResourceName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.MachineLearningServices/workspaces/endpoints",
-              "apiVersion": "2023-08-01-preview",
-              "name": "[format('{0}/{1}', parameters('aiResourceName'), 'Azure.ContentSafety')]",
-              "properties": {
-                "name": "Azure.ContentSafety",
-                "endpointType": "Azure.ContentSafety",
-                "associatedResourceId": "[if(not(equals(parameters('endpointResourceId'), 'null')), parameters('endpointResourceId'), null())]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiResourceName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.MachineLearningServices/workspaces/endpoints",
-              "apiVersion": "2023-08-01-preview",
-              "name": "[format('{0}/{1}', parameters('aiResourceName'), 'Azure.Speech')]",
-              "properties": {
-                "name": "Azure.Speech",
-                "endpointType": "Azure.Speech",
-                "associatedResourceId": "[if(not(equals(parameters('endpointResourceId'), 'null')), parameters('endpointResourceId'), null())]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiResourceName'))]"
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
               ]
             },
             {
               "type": "Microsoft.MachineLearningServices/workspaces",
               "apiVersion": "2023-08-01-preview",
-              "name": "[parameters('aiResourceName')]",
+              "name": "[parameters('aiHubName')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "identity": {
                 "type": "SystemAssigned"
               },
               "properties": {
-                "friendlyName": "[parameters('aiResourceFriendlyName')]",
-                "description": "[parameters('aiResourceDescription')]",
+                "friendlyName": "[parameters('aiHubFriendlyName')]",
+                "description": "[parameters('aiHubDescription')]",
                 "keyVault": "[parameters('keyVaultId')]",
                 "storageAccount": "[parameters('storageAccountId')]",
                 "applicationInsights": "[parameters('applicationInsightsId')]",
@@ -475,9 +503,9 @@
             }
           ],
           "outputs": {
-            "aiResourceID": {
+            "aiHubID": {
               "type": "string",
-              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiResourceName'))]"
+              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
             }
           }
         }
