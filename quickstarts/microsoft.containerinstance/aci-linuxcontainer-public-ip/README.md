@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: aci-linuxcontainer-public-ip
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Container Instances - Linux container with public IP
 

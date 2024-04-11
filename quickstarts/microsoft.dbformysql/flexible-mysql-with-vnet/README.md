@@ -6,9 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: flexible-mysql-with-vnet
 languages:
-- json
 - bicep
+- json
 ---
+
 # Deploy Azure Database for MySQL (flexible) with VNet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbformysql/flexible-mysql-with-vnet/PublicLastTestDate.svg)

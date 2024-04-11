@@ -13,7 +13,7 @@ param endpoint string
 @description('Provide a name for the system topic.')
 param systemTopicName string = 'mystoragesystemtopic'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -22,19 +22,25 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   kind: 'StorageV2'
   properties: {
     accessTier: 'Hot'
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
   }
 }
 
-resource systemTopic 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
+resource systemTopic 'Microsoft.EventGrid/systemTopics@2023-12-15-preview' = {
   name: systemTopicName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     source: storageAccount.id
     topicType: 'Microsoft.Storage.StorageAccounts'
   }
 }
 
-resource eventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = {
+resource eventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2023-12-15-preview' = {
   parent: systemTopic
   name: eventSubName
   properties: {
@@ -52,3 +58,8 @@ resource eventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@
     }
   }
 }
+
+output name string = eventSubscription.name
+output resourceId string = eventSubscription.id
+output resourceGroupName string = resourceGroup().name
+output location string = location
