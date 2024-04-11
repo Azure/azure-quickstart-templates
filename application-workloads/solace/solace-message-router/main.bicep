@@ -463,7 +463,6 @@ resource dnsLabelForVmIpDockerExtension 'Microsoft.Compute/virtualMachines/exten
     type: 'DockerExtension'
     typeHandlerVersion: '1.0'
     autoUpgradeMinorVersion: true
-    settings: null
   }
 }]
 
