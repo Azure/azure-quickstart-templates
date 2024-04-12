@@ -38,16 +38,16 @@ var storageAccountName = '${uniqueString(resourceGroup().id)}haproxysa'
 var numberOfHAproxyInstances = 2
 var haproxyVmScripts = {
   fileUris: [
-    '${_artifactsLocation}haproxyvm-configure.sh${_artifactsLocationSasToken}'
-    '${_artifactsLocation}keepalived-action.sh${_artifactsLocationSasToken}'
-    '${_artifactsLocation}keepalived-check-appsvc.sh${_artifactsLocationSasToken}'
+    uri(_artifactsLocation, '/scripts/haproxyvm-configure.sh${_artifactsLocationSasToken}')
+    uri(_artifactsLocation, '/scripts/keepalived-action.sh${_artifactsLocationSasToken}')
+    uri(_artifactsLocation, '/keepalived-check-appsvc.sh${_artifactsLocationSasToken}')
   ]
   commandToExecute: 'sudo bash -x haproxyvm-configure.sh  -a ${appVmNamePrefix}0 -a ${appVmNamePrefix}1 -p ${appVmPort} -l ${lbDNSLabelPrefix}.${location}.cloudapp.azure.com -t ${lbVIPPort} -m ${haproxyVmNamePrefix}0 -b ${haproxyVmNamePrefix}1'
 }
 var numberOfAppInstances = 2
 var appVmScripts = {
   fileUris: [
-    '${_artifactsLocation}apache-setup.sh${_artifactsLocationSasToken}'
+    uri(_artifactsLocation, '/scripts/apache-setup.sh${_artifactsLocationSasToken}')
   ]
   commandToExecute: 'sudo bash apache-setup.sh'
 }
