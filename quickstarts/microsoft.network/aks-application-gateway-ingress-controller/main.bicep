@@ -839,12 +839,7 @@ resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2
     settings: {
       AttestationConfig: {
         MaaSettings: {
-          maaEndpoint: ''
           maaTenantName: maaTenantName
-        }
-        AscSettings: {
-          ascReportingEndpoint: ''
-          ascReportingFrequency: ''
         }
         useCustomToken: 'false'
         disableAlerts: 'false'
@@ -866,7 +861,7 @@ resource vmName_AzureMonitorLinuxAgent 'Microsoft.Compute/virtualMachines/extens
   }
 }
 
-resource vmSubnetNsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
+resource vmSubnetNsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: vmSubnetNsgName
   location: location
   properties: {
@@ -1252,7 +1247,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-01-02-previ
       dnsServiceIP: aksClusterDnsServiceIP
       outboundType: aksClusterOutboundType
       loadBalancerSku: aksClusterLoadBalancerSku
-      loadBalancerProfile: null
     }
     aadProfile: (aadEnabled ? aadProfileConfiguration : null)
     autoScalerProfile: {
@@ -1524,7 +1518,13 @@ resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2023-01-01-p
   name: 'AllAzureAdvisorAlert'
   location: 'Global'
   properties: {
-    actions: {}
+    actions: {
+      actionGroups: [
+        {
+          actionGroupId: guid(resourceGroup().id)
+        }
+      ]
+    }
     scopes: [
       resourceGroup().id
     ]
