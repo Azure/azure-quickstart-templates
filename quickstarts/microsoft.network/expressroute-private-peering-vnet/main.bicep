@@ -100,7 +100,7 @@ resource erCircuit 'Microsoft.Network/expressRouteCircuits@2023-09-01' = {
   }
 }
 
-resource epeering 'Microsoft.Network/expressRouteCircuits/peerings@2023-09-01' = {
+resource peering 'Microsoft.Network/expressRouteCircuits/peerings@2023-09-01' = {
   parent: erCircuit
   name: 'AzurePrivatePeering'
   properties: {
@@ -178,11 +178,15 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   }
 }
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
+resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: gatewayPublicIPName
   location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
   properties: {
-    publicIPAllocationMethod: 'Dynamic'
+    publicIPAllocationMethod: 'Static'
   }
 }
 
@@ -198,7 +202,7 @@ resource gateway 'Microsoft.Network/virtualNetworkGateways@2023-09-01' = {
             id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'GatewaySubnet')
           }
           publicIPAddress: {
-            id: publicIP.id
+            id: gatewayPublicIP.id
           }
         }
         name: 'gwIPconf'
@@ -216,8 +220,6 @@ resource gateway 'Microsoft.Network/virtualNetworkGateways@2023-09-01' = {
   ]
 }
 
-output erCircuitName string = erCircuit.name
-output gatewayName string = gateway.name
-output gatewaySku string = gateway.properties.sku.tier
-output location string = location
-output resourceGroupName string = resourceGroup().name
+output erCircuitName string = erCircuitName
+output gatewayName string = gatewayName
+output gatewaySku string = gatewaySku
