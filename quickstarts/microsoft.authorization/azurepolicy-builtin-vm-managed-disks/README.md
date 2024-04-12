@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Assign built-in policy to audit VM managed disks
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.authorization/azurepolicy-builtin-vm-managed-disks/PublicLastTestDate.svg)
