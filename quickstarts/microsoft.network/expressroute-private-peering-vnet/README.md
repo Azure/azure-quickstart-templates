@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # ExpressRoute circuit with private peering and Azure VNet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/expressroute-private-peering-vnet/PublicLastTestDate.svg)
