@@ -17,7 +17,7 @@ var lbBackEndName = 'loadBalancerBackEnd'
 var lbRuleName = 'HTTPRule'
 var lbProbeName = 'TCPPort80HealthProbe'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -29,7 +29,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   name: subnetName
   parent: vnet
   properties: {
@@ -37,7 +37,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
   name: nicName
   location: location
   properties: {
@@ -60,7 +60,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   }
 }
 
-resource lb 'Microsoft.Network/loadBalancers@2021-05-01' = {
+resource lb 'Microsoft.Network/loadBalancers@2023-09-01' = {
   name: loadBalancerName
   location: location
   sku: {
