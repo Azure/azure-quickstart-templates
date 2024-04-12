@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Create a standard internal load balancer
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/internal-loadbalancer-create/PublicLastTestDate.svg)
