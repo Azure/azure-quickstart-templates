@@ -221,7 +221,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-04-01' = [for i in range(
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: networkSettings.subnetRef
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, 'default')
           }
           privateIPAllocationMethod: networkSettings.privateIPAllocationMethod
           privateIPAddress: '${networkSettings.virtualMachinesIPAddress}${(i + int('4'))}'
