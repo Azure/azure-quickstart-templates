@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # CentOS/UbuntuServer Auto Dynamic Disks & Docker 1.12(cs)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-dynamic-data-disks/PublicLastTestDate.svg)
