@@ -59,5 +59,6 @@ resource kustoDatabase 'Microsoft.Kusto/clusters/databases@2023-05-02' = {
   }
 }
 
-output kustoClusterUri string = reference(cluster.id, '2023-08-15', 'Full').properties.uri
-output kustoDataIngestionUri string = reference(cluster.id, '2023-08-15', 'Full').properties.dataIngestionUri
+output adxClusterResourceId string = cluster.id
+output adxClusterUri string = cluster.properties.uri
+output adxDataIngestionUri string = cluster.properties.dataIngestionUri
