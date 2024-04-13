@@ -24,41 +24,41 @@ param createNewDatastore bool
 ])
 param kustoOfferingType string = 'adx'
 
-@description('The subscription ID of the Azure Data Explorer cluster')
+@description('The subscription ID of the Azure Data Explorer cluster. By default, the cluster is created in the same subscription as the watcher.')
 param clusterSubscriptionId string = subscription().subscriptionId
 
-@description('The resource group name of the Azure Data Explorer cluster')
+@description('The resource group name of the Azure Data Explorer cluster. By default, the cluster is created in the same resource group as the watcher.')
 @minLength(1)
 @maxLength(90)
 param clusterResourceGroupName string = resourceGroup().name
 
-@description('The location (Azure region) of the Azure Data Explorer cluster')
+@description('The location (Azure region) of the Azure Data Explorer cluster. By default, the cluster is created in the same location as the watcher.')
 param clusterLocation string = watcherLocation
 
-@description('The name of the Azure Data Explorer cluster')
+@description('The name of the Azure Data Explorer cluster. If createNewDatastore is set to false, this must be an existing cluster.')
 @minLength(4)
 @maxLength(22)
 param clusterName string
 
-@description('The name of the Azure Data Explorer database')
+@description('The name of the Azure Data Explorer database. If createNewDatastore is set to false, this must be an existing database.')
 @minLength(1)
 @maxLength(260)
 param kustoDatabaseName string = 'database-watcher-data-store'
 
-@description('The SKU of the Azure Data Explorer cluster')
+@description('The SKU of the new Azure Data Explorer cluster. Not used if createNewDatastore is set to false.')
 param clusterSkuName string = createNewDatastore ? 'Standard_E2d_v5' : ''
 
-@description('The SKU tier of the Azure Data Explorer cluster')
+@description('The SKU tier of the Azure Data Explorer cluster. Not used if createNewDatastore is set to false.')
 param clusterSkuTier string = createNewDatastore ? 'Standard' : ''
 
-@description('The total number of SQL targets to add to the watcher')
+@description('The total number of SQL targets to add to the watcher. Must match the number of elements in the targetProperties array.')
 @minValue(0)
 param targetCount int
 
 @description('The array of SQL target properties. Each element of the array defines a SQL target.')
 param targetProperties array
 
-@description('The total number of managed private links to add to the watcher')
+@description('The total number of managed private links to add to the watcher. Must match the number of elements in the privateLinkProperties array.')
 @minValue(0)
 param privateLinkCount int
 
@@ -79,7 +79,7 @@ module newDataStore './adxDataStore.bicep' =
   }
 }
 
-// Get the created or an existing Azure Data Explorer cluster
+// If a new Azure Data Explorer cluster is not created, get an existing cluster
 resource adxCluster 'Microsoft.Kusto/clusters@2023-08-15' existing = 
   if(!createNewDatastore) {
   name: clusterName
@@ -95,11 +95,11 @@ resource watcher 'Microsoft.DatabaseWatcher/watchers@2023-09-01-preview' = {
   }
   properties: {
     datastore: {
-      adxClusterResourceId: adxCluster.id
+      adxClusterResourceId: createNewDatastore ? newDataStore.outputs.adxClusterResourceId : adxCluster.id
       kustoClusterDisplayName: clusterName
       kustoDatabaseName: kustoDatabaseName
-      kustoClusterUri: createNewDatastore ? newDataStore.outputs.kustoClusterUri : adxCluster.properties.uri
-      kustoDataIngestionUri: createNewDatastore ? newDataStore.outputs.kustoDataIngestionUri : adxCluster.properties.dataIngestionUri
+      kustoClusterUri: createNewDatastore ? newDataStore.outputs.adxClusterUri : adxCluster.properties.uri
+      kustoDataIngestionUri: createNewDatastore ? newDataStore.outputs.adxDataIngestionUri : adxCluster.properties.dataIngestionUri
       kustoManagementUrl: '${environment().portal}/resource/subscriptions${resourceId('Microsoft.Kusto/Clusters', clusterName)}/overview'
       kustoOfferingType: kustoOfferingType
     }
@@ -122,7 +122,7 @@ module dataStoreRoleAssignment './adxRoleAssignment.bicep' =
   }
 }
 
-// Add targets to the watcher. Set target properties conditionally based on target type and authentication type.
+// Add SQL targets to the watcher. Set target properties conditionally based on target type and authentication type.
 
 resource sqlDbAadTargets 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-preview' = [
   for i in range(0, length(range(0, targetCount))): if ((targetProperties[i].targetType == 'SqlDb') && (targetProperties[i].targetAuthenticationType == 'Aad')) {
@@ -297,7 +297,7 @@ resource sqlMiSqlTargets 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-
 ]
 
 // Add managed private endpoints to the watcher. Set private link properties based on the type of Azure resource targeted by the endpoint.
-// Private endpoints created here are pending until approved by an authorized principal.
+// Private endpoints created here are pending and not usable until approved by an authorized principal.
 
 resource sqlDbPrivateLinks 'Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources@2023-09-01-preview' = [
   for i in range(0, length(range(0, privateLinkCount))): if (privateLinkProperties[i].groupId == 'sqlServer') {
