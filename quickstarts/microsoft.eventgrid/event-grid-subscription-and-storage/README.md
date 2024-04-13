@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: event-grid-subscription-and-storage
 languages:
-- json
 - bicep
+- json
 ---
 # Create Blob Storage and Event Grid subscription to the Blob
 

@@ -1,5 +1,5 @@
 ---
-description: This template allows you to deploy a database watcher that uses a database on a new Azure Data Explorer cluster as its data store.
+description: This template lets you deploy a database watcher that uses a database on a new Azure Data Explorer cluster as its data store.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: watcher-new-datastore
 languages:
 - json
 ---
-# Database watcher with a new ADX data store
+# Create a database watcher with a new ADX data store
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databasewatcher/watcher-new-datastore/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databasewatcher/watcher-new-datastore/PublicDeployment.svg)
