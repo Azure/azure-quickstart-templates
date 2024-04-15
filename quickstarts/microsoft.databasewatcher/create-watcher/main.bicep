@@ -120,6 +120,9 @@ module dataStoreRoleAssignment './adxRoleAssignment.bicep' =
     watcherResourceId: watcher.id
     watcherIdentity: watcher.identity
   }
+  dependsOn: [
+    newDataStore
+  ]
 }
 
 // Add SQL targets to the watcher. Set target properties conditionally based on target type and authentication type.
