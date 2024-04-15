@@ -194,6 +194,8 @@ resource sqlEpAadTargets 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-
         targetProperties[i].targetElasticPoolName
       )
       anchorDatabaseResourceId: resourceId(
+        targetProperties[i].targetLogicalServerSubscriptionId,
+        targetProperties[i].targetLogicalServerResourceGroupName,
         'Microsoft.Sql/servers/databases',
         targetProperties[i].targetLogicalServerName,
         targetProperties[i].targetAnchorDatabaseName
@@ -222,6 +224,8 @@ resource sqlEpSqlTargets 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-
         targetProperties[i].targetElasticPoolName
       )
       anchorDatabaseResourceId: resourceId(
+        targetProperties[i].targetLogicalServerSubscriptionId,
+        targetProperties[i].targetLogicalServerResourceGroupName,
         'Microsoft.Sql/servers/databases',
         targetProperties[i].targetLogicalServerName,
         targetProperties[i].targetAnchorDatabaseName
