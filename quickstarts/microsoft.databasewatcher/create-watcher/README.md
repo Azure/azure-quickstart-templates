@@ -1,15 +1,15 @@
 ---
-description: This sample deploys a database watcher and configures its data store, SQL targets, and managed private endpoints.
+description: This sample creates a database watcher for Azure SQL and configures its data store, SQL targets, and managed private endpoints
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: create-watcher
 languages:
-- json
 - bicep
+- json
 ---
-# Create a database watcher with a new ADX data store
+# Create a database watcher
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databasewatcher/create-watcher/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databasewatcher/create-watcher/PublicDeployment.svg)
