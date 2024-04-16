@@ -49,4 +49,4 @@ output resourceGroupName string = resourceGroup().name
 output resourceId string = configStore.id
 output systemAssignedMIPrincipalId string = configStore.identity.principalId
 output reference_key_value_value string = configStoreKeyValue[0].properties.value
-output reference_key_value_object object = configStoreKeyValue[0]
+
