@@ -217,6 +217,13 @@
                 "description": "The name of the managed identity to create."
             }
         },
+        "accessConnectorName": {
+            "type": "string",
+            "defaultValue": "default",
+            "metadata": {
+                "description": "The name of the Azure access connector to create."
+            }
+        },
         "workspaceName": {
             "defaultValue": "default",
             "type": "String",
@@ -243,6 +250,22 @@
             "apiVersion": "2018-11-30",
             "name": "[parameters('managedIdentityName')]",
             "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Databricks/accessConnectors",
+            "apiVersion": "2024-05-01",
+            "name": "[parameters('accessConnectorName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]": {}
+                }
+            },
+            "properties": {}
         },
         {
             "type": "Microsoft.Resources/deployments",
@@ -439,14 +462,14 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
-                "[resourceId(parameters('msCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksManagedServicesCMKAccessPolicy')]"
+                "[resourceId(parameters('msCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksManagedServicesCMKAccessPolicy')]",
+                "[resourceId('Microsoft.Databricks/accessConnectors', parameters('accessConnectorName'))]"
             ],
             "sku": {
                 "name": "[parameters('pricingTier')]"
             },
             "properties": {
                 "managedResourceGroupId": "[variables('managedResourceGroupId')]",
-                "defaultStorageFirewall":"Enabled",
                 "parameters": {
                     "customVirtualNetworkId": {
                         "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
@@ -594,6 +617,11 @@
                             },
                             "properties": {
                                 "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
+                                "accessConnector": {
+                                    "id": "[resourceId('Microsoft.Databricks/accessConnectors', parameters('accessConnectorName'))]",
+                                    "identityType": "UserAssigned",
+                                    "userAssignedIdentityId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+                                },
                                 "defaultStorageFirewall":"Enabled",
                                 "encryption": {
                                     "entities": {
