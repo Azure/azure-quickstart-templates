@@ -81,7 +81,7 @@ resource watcher 'Microsoft.DatabaseWatcher/watchers@2023-09-01-preview' = {
       kustoDatabaseName: databaseName
       kustoClusterUri: cluster.properties.uri
       kustoDataIngestionUri: cluster.properties.dataIngestionUri
-      kustoManagementUrl: '${environment().portal}/resource/subscriptions${cluster.id}/overview'
+      kustoManagementUrl: '${environment().portal}/resource/subscriptions/${cluster.id}/overview'
       kustoOfferingType: kustoOfferingType
     }
   }
