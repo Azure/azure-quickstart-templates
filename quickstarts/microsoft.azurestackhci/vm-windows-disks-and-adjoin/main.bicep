@@ -24,19 +24,17 @@ param domainJoinUserName string = ''
 @secure()
 param domainJoinPassword string = ''
 
+//define a custom type for the dataDiskParams parameter and array of disks
+type dataDiskType = {
+  diskSizeGB: int
+  dynamic: bool?
+  //containerId: string
+}
+type dataDiskArrayType = dataDiskType[]
+
 @description('The bicep array description of the dataDisks to attached to the vm. Provide an empty array for no addtional disks, or an array following the example below.')
 // param dataDiskParams array = []
-param dataDiskParams array = [
-  {
-    diskSizeGB: 8
-    dynamic: true
-    //containerId: specify a container ID to target a specific CSV/storage path in your HCI cluster
-  }
-  {
-    diskSizeGB: 16
-    dynamic: false
-  }
-]
+param dataDiskParams dataDiskArrayType = []
 
 var nicName = 'nic-${name}' // name of the NIC to be created
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName) // full custom location ID
@@ -85,7 +83,7 @@ resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview'
   }
   properties: {
     diskSizeGB: disk.diskSizeGB
-    dynamic: disk.dynamic
+    dynamic: disk.?dynamic // dynamic is optional
     // containerId: uncomment if you want to target a specific CSV/storage path in your HCI cluster
   }
 }]
