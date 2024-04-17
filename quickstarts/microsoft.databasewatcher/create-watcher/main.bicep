@@ -53,6 +53,7 @@ param clusterSkuTier string = createNewDatastore ? 'Standard' : ''
 
 @description('The total number of SQL targets to add to the watcher. Must match the number of elements in the targetProperties array.')
 @minValue(0)
+@maxValue(50)
 param targetCount int
 
 @description('The array of SQL target properties. Each element of the array defines a SQL target.')
@@ -60,6 +61,7 @@ param targetProperties array
 
 @description('The total number of managed private links to add to the watcher. Must match the number of elements in the privateLinkProperties array.')
 @minValue(0)
+@maxValue(101)
 param privateLinkCount int
 
 @description('The array of managed private link properties. Each element of the array defines a managed private link the watcher will use to connect to an Azure resource.')
