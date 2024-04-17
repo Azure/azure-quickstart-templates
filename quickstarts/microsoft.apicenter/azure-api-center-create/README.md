@@ -1,5 +1,5 @@
 ---
-description: This template creates an instance of Azure API Center.
+description: This template creates an instance of Azure API Center and registers a sample API.
 page_type: sample
 products:
 - azure
@@ -27,6 +27,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apicenter%2Fazure-api-center-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apicenter%2Fazure-api-center-create%2Fazuredeploy.json)
 
-This template deploys an Azure API Center instance. 
+This template deploys an API center and registers a sample API in the API center. 
 
 `Tags: Microsoft.ApiCenter/service`
