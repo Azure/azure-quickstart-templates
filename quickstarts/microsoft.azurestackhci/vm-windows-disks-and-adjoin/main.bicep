@@ -6,7 +6,7 @@ param memoryMB int = 8192
 param adminUsername string
 @description('The name of a Marketplace Gallery Image already downloaded to the Azure Stack HCI cluster. For example: winServer2022-01')
 param imageName string
-@description('The name of an existing Logical Network in your HCI cluster - for example: vnet-compute-vlan240-dhcp')
+@description('The name of an existing Logical Network in your HCI cluster - for example: lnet-compute-vlan240-dhcp')
 param hciLogicalNetworkName string
 @description('The name of the custom location to use for the deployment. This name is specified during the deployment of the Azure Stack HCI cluster and can be found on the Azure Stack HCI cluster resource Overview in the Azure portal.')
 param customLocationName string
@@ -33,7 +33,7 @@ type dataDiskType = {
 type dataDiskArrayType = dataDiskType[]
 
 @description('The bicep array description of the dataDisks to attached to the vm. Provide an empty array for no addtional disks, or an array following the example below.')
-// param dataDiskParams array = []
+// param dataDiskParams array = [{"diskSizeGB" = 1024,"dynamic" = true},{"diskSizeGB" = 2048,"dynamic" = false}]
 param dataDiskParams dataDiskArrayType = []
 
 var nicName = 'nic-${name}' // name of the NIC to be created
