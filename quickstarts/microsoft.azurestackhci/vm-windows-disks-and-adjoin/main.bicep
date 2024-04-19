@@ -33,7 +33,7 @@ type dataDiskType = {
 type dataDiskArrayType = dataDiskType[]
 
 @description('The bicep array description of the dataDisks to attached to the vm. Provide an empty array for no addtional disks, or an array following the example below.')
-// param dataDiskParams array = [{"diskSizeGB" = 1024,"dynamic" = true},{"diskSizeGB" = 2048,"dynamic" = false}]
+// param dataDiskParams array = [{'diskSizeGB': 1024,'dynamic': true},{'diskSizeGB': 2048,'dynamic': false}]
 param dataDiskParams dataDiskArrayType = []
 
 var nicName = 'nic-${name}' // name of the NIC to be created
