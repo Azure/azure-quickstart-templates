@@ -4,7 +4,7 @@
 @minLength(2)
 @maxLength(12)
 @description('Name for the AI resource and used to derive name of dependent resources.')
-param aiHubName string = 'air6-demo'
+param aiHubName string = 'demo'
 
 @description('Friendly name for your Azure AI resource')
 param aiHubFriendlyName string = 'Demo AI resource'
@@ -42,7 +42,7 @@ module aiHub 'modules/ai-hub.bicep' = {
   name: 'ai-${name}-${uniqueSuffix}-deployment'
   params: {
     // workspace organization
-    aiHubName: 'ai-${name}-${uniqueSuffix}'
+    aiHubName: 'aih-${name}-${uniqueSuffix}'
     aiHubFriendlyName: aiHubFriendlyName
     aiHubDescription: aiHubDescription
     location: location

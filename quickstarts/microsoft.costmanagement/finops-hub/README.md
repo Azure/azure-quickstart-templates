@@ -60,7 +60,11 @@ If you run into any issues, see [Troubleshooting FinOps hubs](https://aka.ms/fin
 3. [Create a new cost export](https://learn.microsoft.com/azure/cost-management-billing/costs/tutorial-export-acm-data?tabs=azure-portal) using the following settings:
    - **Metric** = `Amortized cost`
    - **Export type** = `Daily export of month-to-date costs`
-   - **File Partitioning** = On
+   - **File partitioning** = On
+   - **Overwrite data** = Off
+     <blockquote class="note" markdown="1">
+       _While most settings are required, overwriting is optional. We recommend **not** overwriting files so you can monitor your ingestion pipeline using the [Data ingestion](https://aka.ms/ftk/DataIngestion) report. If you do not plan to use that report, please enable overwriting._
+     </blockquote>
    - **Storage account** = (Use subscription/resource from step 1)
    - **Container** = `msexports`
    - **Directory** = (Use the resource ID of the scope<sup>1</sup> you're exporting without the first "/")
@@ -77,9 +81,9 @@ _<sup>1) A "scope" is an Azure construct that contains resources or enables purc
 
 ## 🧰 About the FinOps toolkit
 
-FinOps hubs are part of the FinOps toolkit, an open source collection of FinOps solutions that help you manage and optimize your cloud costs.
+FinOps hubs are part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open-source collection of FinOps solutions that help you manage and optimize your cloud costs.
 
-To learn more about the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
+To contribute to the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
 
 <br>
 
