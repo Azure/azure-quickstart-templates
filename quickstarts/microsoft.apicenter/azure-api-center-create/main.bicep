@@ -1,5 +1,5 @@
 @description('Specifies the location for resources.')
-param location string = 'eastus'
+param location string = resourceGroup().location
 @description('The name of the API center.')
 param apiCenterName string = 'apicenter${uniqueString(resourceGroup().id)}'
 @description('The name of an API to register in the API center.')
@@ -18,6 +18,9 @@ param apiType string = 'rest'
 resource apiCenterService 'Microsoft.ApiCenter/services@2024-03-01' = {
   name: apiCenterName
   location: location
+  sku: {
+    name: 'Free'
+  }
   properties: {}
 }
 

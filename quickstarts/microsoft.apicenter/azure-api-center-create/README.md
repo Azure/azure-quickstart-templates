@@ -27,7 +27,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apicenter%2Fazure-api-center-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apicenter%2Fazure-api-center-create%2Fazuredeploy.json)
 
-This template deploys an API center and registers a sample API in the API center. For supported regions, see [Azure API Center overview](https://learn.microsoft.com/azure/api-center/overview#available-regions).
+This template deploys an API center and registers a sample API in the API center. For deployment, use a resource group located in one of the [supported regions](https://learn.microsoft.com/azure/api-center/overview#available-regions) for Azure API Center.
 
 ## Parameters
 
