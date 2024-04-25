@@ -118,6 +118,8 @@ resource server 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
       backupRetentionDays: backupRetentionDays
       geoRedundantBackup: geoRedundantBackup
     }
+    sslEnforcement: 'Enabled'
+    minimalTlsVersion: 'TLS1_2'
   }
 
   resource virtualNetworkRule 'virtualNetworkRules@2017-12-01' = {
@@ -131,6 +133,7 @@ resource server 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
 
 @batchSize(1)
 resource firewallRules 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-01' = [for rule in firewallrules: {
+  parent: server
   name: rule.Name
   properties: {
     startIpAddress: rule.StartIpAddress
@@ -138,8 +141,7 @@ resource firewallRules 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-
   }
 }]
 
-output location string = location
 output name string = server.name
-output resourceGroupName string = resourceGroup().name
 output resourceId string = server.id
-output systemAssignedMIPrincipalId string = server.identity.principalId
+output resourceGroupName string = resourceGroup().name
+output location string = location
