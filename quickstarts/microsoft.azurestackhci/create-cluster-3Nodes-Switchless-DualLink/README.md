@@ -4,11 +4,11 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: create-cluster
+urlFragment: create-cluster-3Nodes-Switchless-DualLink
 languages:
 - json
 ---
-# creates an Azure Stack HCI 23H2 cluster
+# creates an Azure Stack HCI 23H2 cluster in Switchless-Dual-link Networking mode
 
 This template allows you to create an Azure Stack HCI cluster using version 23H2. First you deploy the template in validate mode which does confirm the parameters at the device. Once passed you re-deploy the template with mode set to deploy.
 
