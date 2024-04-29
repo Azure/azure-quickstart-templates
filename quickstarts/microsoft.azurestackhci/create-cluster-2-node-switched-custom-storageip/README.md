@@ -1,12 +1,11 @@
 ---
-description: This template creates an Azure Stack HCI 23H2 cluster using an ARM template.
+description: This template creates an Azure Stack HCI 23H2 cluster using an ARM template, using custom storage IP
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: create-cluster
+urlFragment: create-cluster-2-node-switched-custom-storageip
 languages:
-- bicep
 - json
 ---
 # creates an Azure Stack HCI 23H2 cluster
