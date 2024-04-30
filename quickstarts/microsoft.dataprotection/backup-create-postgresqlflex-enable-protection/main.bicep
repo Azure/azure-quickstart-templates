@@ -126,13 +126,11 @@ resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2021
             repeatingTimeIntervals: [
               repeatingTimeInterval
             ]
-            timeZone: 'UTC'
           }
           taggingCriteria: [
             {
               tagInfo: {
                 tagName: 'Default'
-                id: 'Default_'
               }
               taggingPriority: 99
               isDefault: true
@@ -163,7 +161,6 @@ resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2021
         isDefault: true
         name: 'Default'
         objectType: 'AzureRetentionRule'
-        ruleType: 'Retention'
       }
     ]
     datasourceTypes: [
@@ -206,7 +203,7 @@ resource pgFlexServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
 resource roleAssignmentForPgFlex 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: roleNameGuidForPgFlex
   properties: {
-    principalId: reference(backupVault.id, '2021-01-01', 'Full').identity.principalId
+    principalId: backupVault.identity.principalId
     roleDefinitionId: roleDefinitionIdForPgFlex
   }
   dependsOn: [
@@ -219,7 +216,7 @@ resource roleAssignmentForDiscovery 'Microsoft.Authorization/roleAssignments@202
   name: roleNameGuidForDiscovery
   properties: {
     roleDefinitionId: roleDefinitionIdForDiscovery
-    principalId: reference(backupVault.id, '2021-01-01', 'Full').identity.principalId
+    principalId: backupVault.identity.principalId
   }
   dependsOn: [
     backupPolicy
@@ -243,11 +240,8 @@ resource backupInstance 'Microsoft.DataProtection/backupVaults/backupInstances@2
     }
     policyInfo: {
       policyId: backupPolicy.id
-      name: backupPolicyName
     }
   }
   dependsOn: [
-    backupPolicy
-    pgFlexServer
   ]
 }
