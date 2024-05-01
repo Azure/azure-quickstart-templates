@@ -18,9 +18,6 @@ param apiType string = 'rest'
 resource apiCenterService 'Microsoft.ApiCenter/services@2024-03-01' = {
   name: apiCenterName
   location: location
-  sku: {
-    name: 'Free'
-  }
   properties: {}
 }
 
