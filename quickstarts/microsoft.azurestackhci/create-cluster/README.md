@@ -6,7 +6,6 @@ products:
 - azure-resource-manager
 urlFragment: create-cluster
 languages:
-- bicep
 - json
 ---
 # creates an Azure Stack HCI 23H2 cluster
