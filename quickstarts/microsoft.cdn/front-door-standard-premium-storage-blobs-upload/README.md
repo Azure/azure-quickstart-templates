@@ -10,6 +10,8 @@ languages:
 ---
 # Front Door with blob origins for blobs upload
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-storage-blobs-upload/BicepVersion.svg)
+
 This template creates a Front Door with origins, routes and ruleSets, and an Azure Storage accounts with blob containers. Front Door sends traffic to the storage accounts when uploading files.
 
 ## Architecture
