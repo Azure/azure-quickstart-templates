@@ -1,10 +1,9 @@
 ---
-description: This template creates an instance of Azure API Center and registers a sample API.
+description: This template creates an API center and registers an API in the API center.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-api-center
 urlFragment: azure-api-center-create
 languages:
 - bicep
