@@ -6,11 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: backup-create-postgresqlflex-enable-protection
 languages:
-- json
 - bicep
+- json
 ---
-
-# Create PostgreSQL Flexible server & enable protection via Backup Vault
+# Create PgFlex server & enable protection via Backup Vault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dataprotection/backup-create-postgresqlflex-enable-protection/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dataprotection/backup-create-postgresqlflex-enable-protection/PublicDeployment.svg)
