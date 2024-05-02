@@ -8,7 +8,7 @@ urlFragment: front-door-standard-premium-storage-blobs-upload
 languages:
 - bicep
 ---
-# Front Door with blob origins for file upload
+# Front Door with blob origins for blobs upload
 
 This template creates a Front Door with origins, routes and ruleSets, and an Azure Storage accounts with blob containers. Front Door sends traffic to the storage accounts when uploading files.
 
@@ -29,7 +29,7 @@ Data flows through the scenario as follows:
 
 ## Sample overview and deployed resources
 
-This sample template creates an Azure Front Door profile with endpoint using *frontDoor.bicep* script.  
+This sample template creates an Azure Front Door profile with endpoint using *main.bicep* script.  
 Azure Storage blob container and a Front Door origin with route and ruleSet are created using *storageAndorigin.bicep* script.
 
 The following resources are deployed as part of the solution:
@@ -46,9 +46,9 @@ The following resources are deployed as part of the solution:
 
 ## Deployment steps
 
-Execute *frontDoor.bicep* to deploy Front Door profile and endpoint. The script is expecting input for profile name and endpoint name:
+Execute *main.bicep* to deploy Front Door profile and endpoint. The script is expecting input for profile name and endpoint name:
 
-`az deployment group create --resource-group dev --template-file .\frontDoor.bicep`
+`az deployment group create --resource-group dev --template-file .\main.bicep`
 
 `Please provide string value for 'profileName' (? for help): contosoFrontDoor`
 
@@ -62,7 +62,7 @@ Execute *frontDoor.bicep* to deploy Front Door profile and endpoint. The script 
 
 `Please enter a choice [Default choice(1)]: 2`
 
-Execute *storageAndorigin.bicep* to deploy storage account and origin group configurations. The script is expecting input for Front Door profile name and endpoint name (use the same values as you used for running *frontDoor.bicep*). You must also supply location in which storage account will be deployed:
+Execute *storageAndorigin.bicep* to deploy storage account and origin group configurations. The script is expecting input for Front Door profile name and endpoint name (use the same values as you used for running *main.bicep*). You must also supply location in which storage account will be deployed:
 
 `az deployment group create --resource-group dev --template-file .\storageAndorigin.bicep`
 `Please provide string value for 'location' (? for help): uksouth`
