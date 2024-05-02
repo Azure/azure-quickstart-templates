@@ -1,15 +1,15 @@
 @description('The name of the Front Door to create. This must be globally unique.')
-param profileName string
+param profileName string = 'cdn-${uniqueString(resourceGroup().id)}'
 
 @description('The name of the Front Door endpoint to create. This must be globally unique.')
-param endpointName string
+param endpointName string = 'endpoint-${uniqueString(resourceGroup().id)}'
 
 @description('The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`.')
 @allowed([
   'Standard_AzureFrontDoor'
   'Premium_AzureFrontDoor'
 ])
-param skuName string
+param skuName string = 'Standard_AzureFrontDoor'
 
 @description('The mode that the WAF should be deployed using. In \'Prevention\' mode, the WAF will block requests it detects as malicious. In \'Detection\' mode, the WAF will not block requests and will simply log the request.')
 param wafMode string = 'Prevention'
