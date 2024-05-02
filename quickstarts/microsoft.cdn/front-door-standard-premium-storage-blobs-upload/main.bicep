@@ -9,7 +9,7 @@ param endpointName string = 'endpoint-${uniqueString(resourceGroup().id)}'
   'Standard_AzureFrontDoor'
   'Premium_AzureFrontDoor'
 ])
-param skuName string = 'Standard_AzureFrontDoor'
+param skuName string = 'Premium_AzureFrontDoor'
 
 @description('The mode that the WAF should be deployed using. In \'Prevention\' mode, the WAF will block requests it detects as malicious. In \'Detection\' mode, the WAF will not block requests and will simply log the request.')
 param wafMode string = 'Prevention'
