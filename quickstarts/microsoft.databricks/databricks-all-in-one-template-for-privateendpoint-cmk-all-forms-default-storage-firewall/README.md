@@ -4,12 +4,11 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: databricks-all-in-one-template-for-privateendpoint-cmk-all-forms-default-storage-firewall-default-storage-firewall
+urlFragment: databricks-all-in-one-template-for-privateendpoint-cmk-all-forms-default-storage-firewall
 languages:
-- bicep
 - json
 ---
-# Deploy an Azure Databricks Workspace with user assigned identity, acess connector, private endpoint, managed svc & CMK & DBFS encryption 
+# AzureDatabricks Template with Default Storage Firewall
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-privateendpoint-cmk-all-forms-default-storage-firewall/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-privateendpoint-cmk-all-forms-default-storage-firewall/PublicDeployment.svg)
