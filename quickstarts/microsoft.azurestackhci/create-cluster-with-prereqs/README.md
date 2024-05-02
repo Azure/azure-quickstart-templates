@@ -96,6 +96,8 @@ If you haven't deployed an Azure Stack HCI cluster in this subscription previous
 
 Create a parameter file with values as described in the following table, using [the sample parameter file](https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/azuredeploy.parameters.json) as a starting place.
 
+Three node switchless deployments must disable storage auto IP assignment and specify storage IPs in the `storageNetworks` parameter. Note that all nodes must have the same NIC names and the same storage VLAN configuration for all storage NICs. See [3 node switchless sample parameter file](https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/azuredeploy.parameters.3nodeswitchlesssample.json).
+
 | Parameter | Description | Default Value | Example Value |  
 |--------------------------------|--------------------------------------------|------------------|-----------------------------------------------------|
 | `location`                     | The [supported region](https://learn.microsoft.com/azure-stack/hci/concepts/system-requirements-23h2#azure-requirements) where the resources are deployed. | | `eastus`|
@@ -126,11 +128,11 @@ Create a parameter file with values as described in the following table, using [
 | `endingIPAddress`              |The ending IP address for the Infrastructure Network IP pool. There must be at least 6 IPs between startingIPAddress and endingIPAddress and this pool should not include the node IPs||`192.168.0.19`|
 | `subnetMask`                   |The subnet mask for deploying a HCI cluster||`255.255.252.0`|
 | `storageConfigurationMode`     | The storage volume configuration mode | Express| `InfraOnly`|
-|`enableStorageAutoIp`           | The enable storage auto IP value for deploying an HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured before deployment and this value set to false| true| `false`|
+|`enableStorageAutoIp`           | The enable storage auto IP value for deploying an HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured in the `storageNetworks` parameter and this value set to false| true| `false`|
 
 ## Deploy using Bicep template
 
-Now that the prerequisites and parameter file are complete, you can start the cluster deployment. If you haven't downloaded the template files already, you can find them in the [Azure QuickStart Templates GitHub repository](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs). 
+Now that the prerequisites and parameter file are complete, you can start the cluster deployment. If you haven't downloaded the template files already, you can find them in the [Azure QuickStart Templates GitHub repository](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs).
 
 When deploying Azure Stack HCI clusters using a Bicep, ARM, or REST API, the deployment goes through a validate phase followed by a deployment phase. To specify the phase of the deployment, use the `deploymentMode` property of the deploymentSettings resource. In this Bicep template, `deploymentMode` has a default value of `Validate`. The following sections demonstrate how to initiate each phase of deployment with Azure CLI or Azure Bicep.
 
