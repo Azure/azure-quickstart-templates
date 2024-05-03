@@ -7,6 +7,7 @@ products:
 urlFragment: front-door-standard-premium-storage-blobs-upload
 languages:
 - bicep
+- json
 ---
 # Front Door with blob origins for blobs upload
 
@@ -192,3 +193,4 @@ foreach (var (blobUri, sharedAccessSignature) in serverAPIgetUploadAddresses(blo
         Console.Error.WriteLine(ex.Message);
     }
 }
+`Tags: `
