@@ -55,29 +55,29 @@ The steps are also summarized here:
 
 1. Provide a **Name** for the application, select a **Supported account type**, and then select **Register**.
 
-    ![Screenshot showing Register an application for service principal creation.](./media/deployment-azure-resource-manager-template/create-service-principal-1.png)
+    ![Screenshot showing Register an application for service principal creation.](./media/create-service-principal-1.png)
 
 1. Once the service principal is created, go to the **Overview** page. Copy the **Application (client) ID** for this service principal for use in your Bicep template parameters.
 
-   ![Screenshot showing Application (client) ID for the service principal created.](./media/deployment-azure-resource-manager-template/create-service-principal-2.png)
+   ![Screenshot showing Application (client) ID for the service principal created.](./media/create-service-principal-2.png)
 
 #### Create a client secret
 
 1. Go to the service principal that you created and browse to **Certificates & secrets > Client secrets**.
 1. Select **+ New client** secret.
 
-    ![Screenshot showing creation of a new client secret.](./media/deployment-azure-resource-manager-template/create-client-secret-1.png)
+    ![Screenshot showing creation of a new client secret.](./media/create-client-secret-1.png)
 
 1. Add a **Description** for the client secret and provide a timeframe when it **Expires**. Select **Add**.
 
-    ![Screenshot showing Add a client secret blade.](./media/deployment-azure-resource-manager-template/create-client-secret-2.png)
+    ![Screenshot showing Add a client secret blade.](./media/create-client-secret-2.png)
 
 1. Copy the **client secret value** for later use in your Bicep template parameters
 
     > [!Note]
     > For the application client ID, you will need it's secret value. Client secret values can't be viewed except for immediately after creation. Be sure to save this value when created before leaving the page.
 
-    ![Screenshot showing client secret value.](./media/deployment-azure-resource-manager-template/create-client-secret-3.png)
+    ![Screenshot showing client secret value.](./media/create-client-secret-3.png)
 
 #### Assign the Service Principal permissions on the subscription
 
@@ -95,6 +95,8 @@ If you haven't deployed an Azure Stack HCI cluster in this subscription previous
 ### Step 4: Update the deployment parameter file
 
 Create a parameter file with values as described in the following table, using [the sample parameter file](https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/azuredeploy.parameters.json) as a starting place.
+
+Three node switchless deployments must disable storage auto IP assignment and specify storage IPs in the `storageNetworks` parameter. Note that all nodes must have the same NIC names and the same storage VLAN configuration for all storage NICs. See [3 node switchless sample parameter file](https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/azuredeploy.parameters.3nodeswitchlesssample.json).
 
 | Parameter | Description | Default Value | Example Value |  
 |--------------------------------|--------------------------------------------|------------------|-----------------------------------------------------|
@@ -126,11 +128,11 @@ Create a parameter file with values as described in the following table, using [
 | `endingIPAddress`              |The ending IP address for the Infrastructure Network IP pool. There must be at least 6 IPs between startingIPAddress and endingIPAddress and this pool should not include the node IPs||`192.168.0.19`|
 | `subnetMask`                   |The subnet mask for deploying a HCI cluster||`255.255.252.0`|
 | `storageConfigurationMode`     | The storage volume configuration mode | Express| `InfraOnly`|
-|`enableStorageAutoIp`           | The enable storage auto IP value for deploying an HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured before deployment and this value set to false| true| `false`|
+|`enableStorageAutoIp`           | The enable storage auto IP value for deploying an HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured in the `storageNetworks` parameter and this value set to false| true| `false`|
 
 ## Deploy using Bicep template
 
-Now that the prerequisites and parameter file are complete, you can start the cluster deployment. If you haven't downloaded the template files already, you can find them in the [Azure QuickStart Templates GitHub repository](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs). 
+Now that the prerequisites and parameter file are complete, you can start the cluster deployment. If you haven't downloaded the template files already, you can find them in the [Azure QuickStart Templates GitHub repository](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs).
 
 When deploying Azure Stack HCI clusters using a Bicep, ARM, or REST API, the deployment goes through a validate phase followed by a deployment phase. To specify the phase of the deployment, use the `deploymentMode` property of the deploymentSettings resource. In this Bicep template, `deploymentMode` has a default value of `Validate`. The following sections demonstrate how to initiate each phase of deployment with Azure CLI or Azure Bicep.
 
@@ -173,4 +175,4 @@ New-AzResourceGroupDeployment -Name 'hcicluster' -ResourceGroupName <yourResourc
 Learn more:
 
 - [About Arc VM management](https://learn.microsoft.com/azure-stack/hci/manage/azure-arc-vm-management-overview)
-- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: `
+- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: ``Tags: ``Tags: `

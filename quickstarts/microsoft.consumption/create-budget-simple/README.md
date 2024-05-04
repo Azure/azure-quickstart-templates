@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: create-budget-simple
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Simple Budget
 
