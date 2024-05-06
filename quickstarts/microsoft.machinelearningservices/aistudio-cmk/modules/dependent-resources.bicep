@@ -127,19 +127,19 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
   sku: {
     name: 'S0'
   }
-  kind: 'AIServices' // or 'OpenAI'
+  kind: 'AIServices'
   properties: {
     apiProperties: {
       statisticsEnabled: false
     }    
     //add encryption
-    // encryption: {
-    //  keySource: 'Microsoft.KeyVault'
-    //  keyVaultProperties: {
-    //    keyVaultUri: cmk_keyvault_id
-    //    keyName: cmk_keyvault_key_name
-    //  }
-    // }
+    encryption: {
+     keySource: 'Microsoft.KeyVault'
+     keyVaultProperties: {
+       keyVaultUri: cmk_keyvault_id
+       keyName: cmk_keyvault_key_name
+     }
+    }
   }
 }
 
@@ -185,10 +185,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
     }
     largeFileSharesState: 'Disabled'
     minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Deny'
-    }
     supportsHttpsTrafficOnly: true
   }
 }
