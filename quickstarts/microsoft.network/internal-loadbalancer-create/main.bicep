@@ -32,7 +32,7 @@ var bastionSubnetName = 'AzureBastionSubnet'
 var vNetBastionSubnetAddressPrefix = '10.0.1.0/24'
 var bastionPublicIPAddressName = 'lb-bastion-ip'
 
-resource natGateway 'Microsoft.Network/natGateways@2021-05-01' = {
+resource natGateway 'Microsoft.Network/natGateways@2023-09-01' = {
   name: natGatewayName
   location: location
   sku: {
@@ -48,7 +48,7 @@ resource natGateway 'Microsoft.Network/natGateways@2021-05-01' = {
   }
 }
 
-resource natGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource natGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: natGatewayPublicIPAddressName
   location: location
   sku: {
@@ -61,7 +61,7 @@ resource natGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-
   }
 }
 
-resource vNet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource vNet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: vNetName
   location: location
   properties: {
@@ -73,7 +73,7 @@ resource vNet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   parent: vNet
   name: bastionSubnetName
   properties: {
@@ -81,7 +81,7 @@ resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-
   }
 }
 
-resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   parent: vNet
   name: vNetSubnetName
   properties: {
@@ -92,7 +92,7 @@ resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021
   }
 }
 
-resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
+resource bastion 'Microsoft.Network/bastionHosts@2023-09-01' = {
   name: bastionName
   location: location
   properties: {
@@ -113,7 +113,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
   }
 }
 
-resource bastionPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
+resource bastionPublicIPAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: bastionPublicIPAddressName
   location: location
   sku: {
