@@ -1,28 +1,28 @@
 targetScope = 'subscription'
 
 @description('Name of the resource group')
-param resourceGroupName string
-
-@description('Principal/Object ID of the user to assign role assignments to')
-param userPrincipalId string
+param resourceGroupName string = 'ade-sandbox-rg'
 
 @description('Name of Dev Center')
 @minLength(3)
 @maxLength(26)
-param devcenterName string
+param devCenterName string = 'ade-sandbox-dc'
 
 @description('Name of Project associated with Dev Center')
 @minLength(3)
 @maxLength(63)
-param projectName string
+param projectName string = 'ade-sandbox-project'
 
-@description('Name of Environment Type e.g. Sandbox, Dev, Prod')
+@description('Name of Environment Type associated with Dev Center and Project')
 @minLength(3)
 @maxLength(63)
 param environmentTypeName string = 'Sandbox'
 
+@description('User object ID is required to assign the necessary role permission to create an environment. Leave this blank if you want to do so at a later time. For more details on finding the user ID, https://learn.microsoft.com/en-us/partner-center/find-ids-and-domain-names')
+param userObjectID string = ''
+
 var location = deployment().location
-var guidSeed = guid(userPrincipalId, location, resourceGroupName, devcenterName, projectName, environmentTypeName)
+var guidSeed = guid(userObjectID, location, resourceGroupName, devCenterName, projectName, environmentTypeName)
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2022-09-01' = {
   name: resourceGroupName
@@ -37,10 +37,10 @@ module deployment1 './modules/deployment1.bicep' = {
   ]
   params: {
     resourceLocation: location
-    devcenterName: devcenterName
+    devCenterName: devCenterName
     projectName: projectName
     environmentTypeName: environmentTypeName
-    principalId: userPrincipalId
+    userObjectID: userObjectID
     guidSeed: guidSeed
   }
 }
@@ -52,7 +52,7 @@ module deployment2 './modules/deployment2.bicep' = {
     deployment1
   ]
   params: {
-    devcenterName: devcenterName
+    devCenterName: devCenterName
     resourceGroupName: resourceGroupName
     guidSeed: guidSeed
   }

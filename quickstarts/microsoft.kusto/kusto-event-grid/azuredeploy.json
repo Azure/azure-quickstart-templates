@@ -1,0 +1,327 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "6718322273014979474"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "defaultValue": "[format('kusto{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the cluster"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_D12_v2",
+      "metadata": {
+        "description": "Name of the sku"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 1000,
+      "metadata": {
+        "description": "# of nodes"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "kustodb",
+      "metadata": {
+        "description": "Name of the database"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of storage account"
+      }
+    },
+    "storageContainerName": {
+      "type": "string",
+      "defaultValue": "landing",
+      "metadata": {
+        "description": "Name of storage account"
+      }
+    },
+    "eventGridTopicName": {
+      "type": "string",
+      "defaultValue": "main-topic",
+      "metadata": {
+        "description": "Name of Event Grid topic"
+      }
+    },
+    "eventHubNamespaceName": {
+      "type": "string",
+      "defaultValue": "[format('eventHub{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of Event Hub's namespace"
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "defaultValue": "storageHub",
+      "metadata": {
+        "description": "Name of Event Hub"
+      }
+    },
+    "eventGridSubscriptionName": {
+      "type": "string",
+      "defaultValue": "toEventHub",
+      "metadata": {
+        "description": "Name of Event Grid subscription"
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": "//  Create a landing table for Event Hub's events\r\n.create-merge table People(Name:string, Department:string)\r\n\r\n//  We enable streaming on the table so ingestion should take a few seconds at most\r\n.alter-merge table People policy streamingingestion\r\n```\r\n{\r\n    \"IsEnabled\": true\r\n}\r\n```\r\n\r\n//  We modify the ingestion batching policy to make it easy to see records coming ingestion\r\n//  THIS CONFIGURATION SHOULDN'T BE USED IN PRODUCTION:  MaximumBatchingTimeSpan SHOULD BE AT LEAST 1 MINUTE\r\n.alter table People policy ingestionbatching \"{'MaximumBatchingTimeSpan': '0:0:10', 'MaximumNumberOfItems': 10000}\"\r\n"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', parameters('storageContainerName'))]",
+      "properties": {
+        "publicAccess": "None"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}/{2}', parameters('eventHubNamespaceName'), parameters('eventHubName'), 'kustoConsumerGroup')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+      "properties": {
+        "messageRetentionInDays": 2,
+        "partitionCount": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+      "apiVersion": "2023-12-15-preview",
+      "name": "[format('{0}/{1}', parameters('eventGridTopicName'), parameters('eventGridSubscriptionName'))]",
+      "properties": {
+        "deliveryWithResourceIdentity": {
+          "destination": {
+            "endpointType": "EventHub",
+            "properties": {
+              "resourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
+            }
+          },
+          "identity": {
+            "type": "SystemAssigned"
+          }
+        },
+        "eventDeliverySchema": "EventGridSchema",
+        "filter": {
+          "subjectBeginsWith": "[format('/blobServices/default/containers/{0}', parameters('storageContainerName'))]",
+          "includedEventTypes": [
+            "Microsoft.Storage.BlobCreated"
+          ],
+          "enableAdvancedFilteringOnArrays": true
+        },
+        "retryPolicy": {
+          "maxDeliveryAttempts": 30,
+          "eventTimeToLiveInMinutes": 1440
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventGrid/systemTopics', parameters('eventGridTopicName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('storageContainerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases/scripts",
+      "apiVersion": "2023-08-15",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('databaseName'), 'db-script')]",
+      "properties": {
+        "scriptContent": "[variables('$fxv#0')]",
+        "continueOnErrors": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('databaseName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases/dataConnections",
+      "apiVersion": "2023-08-15",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('databaseName'), 'eventConnection')]",
+      "location": "[parameters('location')]",
+      "kind": "EventGrid",
+      "properties": {
+        "blobStorageEventType": "Microsoft.Storage.BlobCreated",
+        "consumerGroup": "kustoConsumerGroup",
+        "dataFormat": "csv",
+        "eventGridResourceId": "[resourceId('Microsoft.EventGrid/systemTopics/eventSubscriptions', parameters('eventGridTopicName'), parameters('eventGridSubscriptionName'))]",
+        "eventHubResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "ignoreFirstRecord": true,
+        "managedIdentityResourceId": "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "tableName": "People"
+      },
+      "dependsOn": [
+        "[extensionResourceId(resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName')), 'Microsoft.Authorization/roleAssignments', guid(parameters('clusterName'), parameters('eventHubName'), 'Azure Event Hubs Data Receiver'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs/consumergroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), 'kustoConsumerGroup')]",
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.Kusto/clusters/databases/scripts', parameters('clusterName'), parameters('databaseName'), 'db-script')]",
+        "[resourceId('Microsoft.EventGrid/systemTopics/eventSubscriptions', parameters('eventGridTopicName'), parameters('eventGridSubscriptionName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases",
+      "apiVersion": "2023-08-15",
+      "name": "[format('{0}/{1}', parameters('clusterName'), parameters('databaseName'))]",
+      "location": "[parameters('location')]",
+      "kind": "ReadWrite",
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "isHnsEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2021-11-01",
+      "name": "[parameters('eventHubNamespaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": 1,
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics",
+      "apiVersion": "2023-12-15-preview",
+      "name": "[parameters('eventGridTopicName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "source": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "topicType": "Microsoft.Storage.StorageAccounts"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.EventHub/namespaces/{0}/eventhubs/{1}', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+      "name": "[guid(resourceId('Microsoft.EventGrid/systemTopics', parameters('eventGridTopicName')), resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName')), 'rbac')]",
+      "properties": {
+        "description": "Azure Event Hubs Data Sender",
+        "principalId": "[reference(resourceId('Microsoft.EventGrid/systemTopics', parameters('eventGridTopicName')), '2023-12-15-preview', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '2b629674-e913-4c01-ae53-ef4638d8f975')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventGrid/systemTopics', parameters('eventGridTopicName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters",
+      "apiVersion": "2023-08-15",
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "Standard",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "enableStreamingIngest": true
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.EventHub/namespaces/{0}/eventhubs/{1}', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+      "name": "[guid(parameters('clusterName'), parameters('eventHubName'), 'Azure Event Hubs Data Receiver')]",
+      "properties": {
+        "description": "Give \"Azure Event Hubs Data Receiver\" to the cluster",
+        "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2023-08-15', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}/blobServices/{1}', parameters('storageAccountName'), 'default')]",
+      "name": "[guid(parameters('clusterName'), parameters('storageContainerName'), 'Storage Blob Data Contributor')]",
+      "properties": {
+        "description": "Give \"Storage Blob Data Contributor\" to the cluster",
+        "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2023-08-15', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]"
+      ]
+    }
+  ]
+}

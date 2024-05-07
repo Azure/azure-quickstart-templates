@@ -82,7 +82,7 @@ var erSKU_Name = '${erSKU_Tier}_${erSKU_Family}'
 var gatewayPublicIPName = '${gatewayName}-pubIP'
 var nsgName = 'nsg'
 
-resource erCircuit 'Microsoft.Network/expressRouteCircuits@2021-05-01' = {
+resource erCircuit 'Microsoft.Network/expressRouteCircuits@2023-09-01' = {
   name: erCircuitName
   location: location
   sku: {
@@ -100,7 +100,7 @@ resource erCircuit 'Microsoft.Network/expressRouteCircuits@2021-05-01' = {
   }
 }
 
-resource epeering 'Microsoft.Network/expressRouteCircuits/peerings@2021-05-01' = {
+resource peering 'Microsoft.Network/expressRouteCircuits/peerings@2023-09-01' = {
   parent: erCircuit
   name: 'AzurePrivatePeering'
   properties: {
@@ -112,7 +112,7 @@ resource epeering 'Microsoft.Network/expressRouteCircuits/peerings@2021-05-01' =
   }
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: nsgName
   location: location
   properties: {
@@ -149,7 +149,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: vnetName
   location: location
   properties: {
@@ -178,15 +178,19 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: gatewayPublicIPName
   location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
   properties: {
-    publicIPAllocationMethod: 'Dynamic'
+    publicIPAllocationMethod: 'Static'
   }
 }
 
-resource gateway 'Microsoft.Network/virtualNetworkGateways@2021-05-01' = {
+resource gateway 'Microsoft.Network/virtualNetworkGateways@2023-09-01' = {
   name: gatewayName
   location: location
   properties: {
@@ -198,7 +202,7 @@ resource gateway 'Microsoft.Network/virtualNetworkGateways@2021-05-01' = {
             id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'GatewaySubnet')
           }
           publicIPAddress: {
-            id: publicIP.id
+            id: gatewayPublicIP.id
           }
         }
         name: 'gwIPconf'
