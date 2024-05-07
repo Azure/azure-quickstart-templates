@@ -12,6 +12,9 @@ param vmNamePrefix string = 'BackendVM'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
+@description('Size of VM')
+param vmSize string = 'Standard_D2s_v3'
+
 var natGatewayName = 'lb-nat-gateway'
 var natGatewayPublicIPAddressName = 'lb-nat-gateway-ip'
 var vNetName = 'lb-vnet'
@@ -19,7 +22,6 @@ var vNetSubnetName = 'backend-subnet'
 var vNetAddressPrefix = '10.0.0.0/16'
 var vNetSubnetAddressPrefix = '10.0.0.0/24'
 var storageAccountType = 'Standard_LRS'
-var vmSize = 'Standard_D2s_v3'
 var storageAccountName = uniqueString(resourceGroup().id)
 var loadBalancerName = 'internal-lb'
 var networkInterfaceName = 'lb-nic'
