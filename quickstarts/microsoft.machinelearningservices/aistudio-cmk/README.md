@@ -29,7 +29,7 @@ This set of templates demonstrates how to set up Azure AI Studio with customer-m
 
 Azure AI Studio is built on Azure Machine Learning as the primary resource provider and takes a dependency on the Cognitive Services (Azure AI Services) resource provider to surface model-as-a-service endpoints for Azure Speech, Azure Content Safety, And Azure OpenAI service.
 
-An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that is kind = "hub".
+An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that is its kind = "hub".
 
 For AI services CMK configuration the following constraints hold on your encryption key:
 - The selected key must be an RSA (Supported Json Web Key Types are ['RSA', 'RSA-HSM']) 2048 bit key. 
