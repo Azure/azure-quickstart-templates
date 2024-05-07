@@ -15,17 +15,28 @@ var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
   }
   kind: 'StorageV2'
+
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
+  }
+
+  resource defaultBlobService 'blobServices' = {
+    name: 'default'
+  }
 }
 
-resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
-  name: '${storageAccount.name}/default/${blobContainerName}'
+resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
+  parent: storageAccount::defaultBlobService
+  name: blobContainerName
 }
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
@@ -126,3 +137,8 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
     ]
   }
 }
+
+output name string = dataFactoryPipeline.name
+output resourceId string = dataFactoryPipeline.id
+output resourceGroupName string = resourceGroup().name
+output location string = location

@@ -29,7 +29,7 @@ param databaseCollation string = 'SQL_Latin1_General_CP1_CI_AS'
 @description('Resource location')
 param location string = resourceGroup().location
 
-resource sqlServer 'Microsoft.Sql/servers@2021-11-01-preview' = {
+resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
   name: sqlServerName
   location: location
   properties: {
@@ -37,11 +37,12 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01-preview' = {
     administratorLoginPassword: sqlAdministratorPassword
     version: '12.0'
     publicNetworkAccess: 'Enabled'
+    minimalTlsVersion: '1.2'
     restrictOutboundNetworkAccess: 'Disabled'
   }
 }
 
-resource sqlServerDatabase 'Microsoft.Sql/servers/databases@2021-11-01-preview' = {
+resource sqlServerDatabase 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
   parent: sqlServer
   name: databasesName
   location: location
@@ -59,10 +60,38 @@ resource sqlServerDatabase 'Microsoft.Sql/servers/databases@2021-11-01-preview' 
   }
 }
 
-resource encryption 'Microsoft.Sql/servers/databases/transparentDataEncryption@2021-11-01-preview' = {
+resource encryption 'Microsoft.Sql/servers/databases/transparentDataEncryption@2023-08-01-preview' = {
   parent: sqlServerDatabase
   name: 'current'
   properties: {
     state: transparentDataEncryption
   }
 }
+
+resource securityAlertPolicy 'Microsoft.Sql/servers/securityAlertPolicies@2023-08-01-preview' = {
+  parent: sqlServer
+  name: 'default'
+  properties: {
+    state: 'Enabled'
+  }
+}
+
+resource auditingSetting 'Microsoft.Sql/servers/auditingSettings@2023-08-01-preview' = {
+  parent: sqlServer
+  name: 'default'
+  properties: {
+    isAzureMonitorTargetEnabled: true
+    state: 'Enabled'
+    retentionDays: 7
+    auditActionsAndGroups: [
+      'SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP'
+      'FAILED_DATABASE_AUTHENTICATION_GROUP'
+      'BATCH_COMPLETED_GROUP'
+    ]
+  }
+}
+
+output location string = location
+output name string = sqlServer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = sqlServer.id

@@ -4,16 +4,16 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.6.18.56646",
-      "templateHash": "9942060226287533039"
+      "version": "0.26.54.24096",
+      "templateHash": "1111741482289134864"
     }
   },
   "parameters": {
     "projectName": {
       "type": "string",
       "defaultValue": "contoso",
-      "maxLength": 11,
       "minLength": 1,
+      "maxLength": 11,
       "metadata": {
         "description": "Define the project name or prefix for all objects."
       }
@@ -56,17 +56,22 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-01-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
-      "kind": "Storage"
+      "kind": "Storage",
+      "properties": {
+        "allowBlobPublicAccess": false,
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-01-01",
       "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('storageContainerName'))]",
       "properties": {
         "publicAccess": "None"
@@ -77,7 +82,7 @@
     },
     {
       "type": "Microsoft.Devices/IotHubs",
-      "apiVersion": "2021-07-02",
+      "apiVersion": "2023-06-30",
       "name": "[variables('iotHubName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -95,7 +100,7 @@
           "endpoints": {
             "storageContainers": [
               {
-                "connectionString": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-08-01').keys[0].value)]",
+                "connectionString": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').keys[0].value)]",
                 "containerName": "[variables('storageContainerName')]",
                 "fileNameFormat": "{iothub}/{partition}/{YYYY}/{MM}/{DD}/{HH}/{mm}",
                 "batchFrequencyInSeconds": 100,
@@ -148,5 +153,23 @@
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[variables('iotHubName')]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Devices/IotHubs', variables('iotHubName'))]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    }
+  }
 }
