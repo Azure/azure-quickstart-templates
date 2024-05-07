@@ -1,13 +1,13 @@
 ---
-description: Template that creates storage account and enable protection via Backup Vault
+description: Template that creates storage account and enable operational and vaulted backup via Backup Vault
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: backup-create-storage-account-enable-protection
 languages:
-- json
 - bicep
+- json
 ---
 # Create Storage Account & enable protection via Backup Vault
 
