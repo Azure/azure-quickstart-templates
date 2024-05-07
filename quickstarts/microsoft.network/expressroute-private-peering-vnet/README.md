@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: expressroute-private-peering-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # ExpressRoute circuit with private peering and Azure VNet
 

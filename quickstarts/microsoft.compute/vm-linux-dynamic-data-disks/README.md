@@ -1,11 +1,12 @@
 ---
-description: This is a common template for creating single instance CentOS 7.2/7.1/6.5 or Ubuntu Server 16.04.0-LTS with configurable number of data disks (configurable sizes). Maximum 16 disks can be mentioned in the portal parameters and maximum size of each disk should be less than 1023 GB. The MDADM RAID0 Array is automounted and survives restarts. Latest Docker 1.12(cs3) (Swarm), docker-compose 1.9.0 & docker-machine 0.8.2 is available for usage from user azure-cli is auto running as a docker container. This single instance template is an offshoot of the HPC/GPU Clusters Template @ https&#58;//aka.ms/azurebigcompute
+description: This is a common template for creating single instance CentOS 7.2/7.1/6.5 or Ubuntu Server 16.04.0-LTS with configurable number of data disks (configurable sizes). Maximum 16 disks can be mentioned in the portal parameters and maximum size of each disk should be less than 1023 GB. The MDADM RAID0 Array is automounted and survives restarts. Latest Docker 1.12(cs3) (Swarm), docker-compose 1.9.0 & docker-machine 0.8.2 is available for usage from user azure-cli is auto running as a docker container. This single instance template is an offshoot of the HPC/GPU Clusters Template @ https&#58;//github.com/azurebigcompute/BigComputeBench
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: vm-linux-dynamic-data-disks
 languages:
+- bicep
 - json
 ---
 # CentOS/UbuntuServer Auto Dynamic Disks & Docker 1.12(cs)
@@ -19,6 +20,8 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-dynamic-data-disks/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-dynamic-data-disks/CredScanResult.svg)
 ## A great Control Machine for All your Azure Automation Needs
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-dynamic-data-disks/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-linux-dynamic-data-disks%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-linux-dynamic-data-disks%2Fazuredeploy.json)

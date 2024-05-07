@@ -6,10 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: sql-data-warehouse-transparent-encryption-create
 languages:
-- json
 - bicep
+- json
 ---
-# Dedicated SQL pool with Transparent Encryption.
+# Dedicated SQL pool with Transparent Encryption
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-data-warehouse-transparent-encryption-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-data-warehouse-transparent-encryption-create/PublicDeployment.svg)

@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: fw-docs-qs
 languages:
-- json
 - bicep
+- json
 ---
 # Create an Azure Firewall with multiple IP public addresses
 
