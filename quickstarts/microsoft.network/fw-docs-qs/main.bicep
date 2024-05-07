@@ -27,14 +27,14 @@ var azureFirewallSubnetId = subnet.id
 var azureFirewallIpConfigurations = [for i in range(0, 2): {
   name: 'IpConf${(i + 1)}'
   properties: {
-    subnet: ((i == 0) ? json('{"id": "${azureFirewallSubnetId}"}') : json('null'))
+    subnet: ((i == 0) ? json('{"id": "${azureFirewallSubnetId}"}') : null)
     publicIPAddress: {
       id: publicIPAddress[i].id
     }
   }
 }]
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2022-01-01' = [for i in range(0, 2): {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = [for i in range(0, 2): {
   name: '${nsgName}${i + 1}'
   location: location
   properties: {
@@ -56,7 +56,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2022-01-01' = [for i in ra
   }
 }]
 
-resource ipprefix 'Microsoft.Network/publicIPPrefixes@2022-01-01' = {
+resource ipprefix 'Microsoft.Network/publicIPPrefixes@2023-09-01' = {
   name: ipPrefixName
   location: location
   properties: {
@@ -68,7 +68,7 @@ resource ipprefix 'Microsoft.Network/publicIPPrefixes@2022-01-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = [for i in range(0, 2): {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = [for i in range(0, 2): {
   name: '${publicIpAddressName}${i + 1}'
   location: location
   sku: {
@@ -84,7 +84,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = [for
   }
 }]
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -111,7 +111,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   parent: virtualNetwork
   name: 'AzureFirewallSubnet'
   properties: {
@@ -121,7 +121,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i in range(0, 2): {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = [for i in range(0, 2): {
   name: '${virtualMachineName}${i+1}'
   location: location
   properties: {
@@ -165,7 +165,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = [for i 
   }
 }]
 
-resource netInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [for i in range(0, 2): {
+resource netInterface 'Microsoft.Network/networkInterfaces@2023-09-01' = [for i in range(0, 2): {
   name: '${networkInterfaceName}${i + 1}'
   location: location
   properties: {
@@ -188,7 +188,7 @@ resource netInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = [for i 
   }
 }]
 
-resource firewall 'Microsoft.Network/azureFirewalls@2022-01-01' = {
+resource firewall 'Microsoft.Network/azureFirewalls@2023-09-01' = {
   name: firewallName
   location: location
   properties: {
@@ -196,7 +196,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2022-01-01' = {
       name: 'AZFW_VNet'
       tier: 'Standard'
     }
-    threatIntelMode: 'Alert'
+    threatIntelMode: 'Deny'
     ipConfigurations: azureFirewallIpConfigurations
     applicationRuleCollections: [
       {
@@ -318,7 +318,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2022-01-01' = {
   }
 }
 
-resource routeTable 'Microsoft.Network/routeTables@2022-01-01' = {
+resource routeTable 'Microsoft.Network/routeTables@2023-09-01' = {
   name: 'rt-01'
   location: location
   properties: {
@@ -335,3 +335,8 @@ resource routeTable 'Microsoft.Network/routeTables@2022-01-01' = {
     ]
   }
 }
+
+output name string = firewall.name
+output resourceId string = firewall.id
+output location string = location
+output resourceGroupName string = resourceGroup().name

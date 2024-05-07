@@ -2,7 +2,7 @@
 param serverName string
 
 @description('Name for DNS Private Zone')
-param dnsZoneName string 
+param dnsZoneName string
 
 @description('Fully Qualified DNS Private Zone')
 param dnsZoneFqdn string = '${dnsZoneName}.private.mysql.database.azure.com'
@@ -62,9 +62,9 @@ param vnetAddressPrefix string = '10.0.0.0/24'
 param mySqlSubnetPrefix string = '10.0.0.0/28'
 
 @description('Composing the subnetId')
-var mysqlSubnetId =  '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
+var mysqlSubnetId = '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -75,7 +75,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
     }
   }
 
-resource subnet 'subnets@2021-05-01' = {
+  resource subnet 'subnets@2023-09-01' = {
     name: subnetName
     properties: {
       addressPrefix: mySqlSubnetPrefix
@@ -110,7 +110,7 @@ resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06
   }
 }
 
-resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
+resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2023-12-01-preview' = {
   name: serverName
   location: location
   sku: {
@@ -141,8 +141,14 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
   }
 }
 
+output location string = location
+output name string = mysqlDbServer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = mysqlDbServer.id
 output mysqlHostname string = '${serverName}.${dnszone.name}'
 output mysqlSubnetId string = mysqlSubnetId
 output vnetId string = vnet.id
 output privateDnsId string = dnszone.id
 output privateDnsName string = dnszone.name
+
+

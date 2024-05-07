@@ -207,4 +207,3 @@ resource keyVaultName_storageWitness 'Microsoft.KeyVault/vaults/secrets@2023-07-
     }
   }
 }
-

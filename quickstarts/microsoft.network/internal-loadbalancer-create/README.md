@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: internal-loadbalancer-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a standard internal load balancer
 

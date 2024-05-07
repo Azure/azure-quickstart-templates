@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: managed-mysql-with-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy Azure Database for MySQL with VNet
 
