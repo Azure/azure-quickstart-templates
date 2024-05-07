@@ -15,12 +15,22 @@ param location string = resourceGroup().location
 @description('Size of VM')
 param vmSize string = 'Standard_D2s_v3'
 
+@description('Virtual network address prefix')
+param vNetAddressPrefix string = '10.0.0.0/16'
+
+@description('Backend subnet address prefix')
+param vNetSubnetAddressPrefix string = '10.0.2.0/24'
+
+@description('Bastion subnet address prefix')
+param vNetBastionSubnetAddressPrefix string = '10.0.0.0/24'
+
+@description('Public IP address of load balancer')
+param lbPublicIPAddress string = '10.0.0.6'
+
 var natGatewayName = 'lb-nat-gateway'
 var natGatewayPublicIPAddressName = 'lb-nat-gateway-ip'
 var vNetName = 'lb-vnet'
 var vNetSubnetName = 'backend-subnet'
-var vNetAddressPrefix = '10.0.0.0/16'
-var vNetSubnetAddressPrefix = '10.0.0.0/24'
 var storageAccountType = 'Standard_LRS'
 var storageAccountName = uniqueString(resourceGroup().id)
 var loadBalancerName = 'internal-lb'
@@ -29,7 +39,6 @@ var numberOfInstances = 2
 var lbSkuName = 'Standard'
 var bastionName = 'lb-bastion'
 var bastionSubnetName = 'AzureBastionSubnet'
-var vNetBastionSubnetAddressPrefix = '10.0.1.0/24'
 var bastionPublicIPAddressName = 'lb-bastion-ip'
 
 resource natGateway 'Microsoft.Network/natGateways@2023-09-01' = {
@@ -165,7 +174,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
           subnet: {
             id: vNetName_vNetSubnetName.id
           }
-          privateIPAddress: '10.0.0.6'
+          privateIPAddress: lbPublicIPAddress
           privateIPAllocationMethod: 'Static'
         }
         name: 'LoadBalancerFrontend'
