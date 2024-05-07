@@ -293,6 +293,7 @@ resource backupInstance 'Microsoft.DataProtection/backupVaults/backupInstances@2
   name: storageAccountName
   properties: {
     objectType: 'BackupInstance'
+    friendlyName: storageAccountName
     dataSourceInfo: {
       objectType: 'Datasource'
       resourceID: storageAccount.id
