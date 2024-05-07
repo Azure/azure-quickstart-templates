@@ -80,9 +80,9 @@ resource vault 'Microsoft.DataProtection/backupVaults@2022-05-01' = {
   }
 }
 
-resource vaultName_backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2022-05-01' = {
+resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2022-05-01' = {
   parent: vault
-  name: '${backupPolicyName}'
+  name: backupPolicyName
   properties: {
     policyRules: [
       {
@@ -274,10 +274,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
 
 resource storageContainerList 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = [
   for item in containerList: {
-    name: '${storageAccountName}/default/${item}'
-    dependsOn: [
-      storageAccount
-    ]
+    name: '${storageAccount.name}/default/${item}'
   }
 ]
 
@@ -293,7 +290,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 resource backupInstance 'Microsoft.DataProtection/backupVaults/backupInstances@2022-05-01' = {
   parent: vault
-  name: '${storageAccountName}'
+  name: storageAccountName
   properties: {
     objectType: 'BackupInstance'
     dataSourceInfo: {
@@ -315,7 +312,7 @@ resource backupInstance 'Microsoft.DataProtection/backupVaults/backupInstances@2
       datasourceType: dataSourceType
     }
     policyInfo: {
-      policyId: vaultName_backupPolicy.id
+      policyId: backupPolicy.id
       name: backupPolicyName
       policyParameters: {
         backupDatasourceParametersList: [
