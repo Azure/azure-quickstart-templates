@@ -1,4 +1,14 @@
-# Install a Kafka cluster on Ubuntu Virtual Machines using Custom Script Linux Extension
+---
+description: This template creates a Kafka cluster on Ubuntu virtual machine image, enables persistence (by default) and applies all well-known optimizations and best practices
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: kafka-on-ubuntu
+languages:
+- json
+---
+# Provisions a Kafka Cluster on Ubuntu Virtual Machines
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kafka/kafka-on-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kafka/kafka-on-ubuntu/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kafka/kafka-on-ubuntu/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kafka/kafka-on-ubuntu/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fkafka%2Fkafka-on-ubuntu%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fkafka%2Fkafka-on-ubuntu%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fkafka%2Fkafka-on-ubuntu%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fkafka%2Fkafka-on-ubuntu%2Fazuredeploy.json)
 
@@ -95,10 +105,11 @@ A static IP address will be assigned to each Zookeeper node in order to work aro
 
 To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
 
-##Known Issues and Limitations
+## Known Issues and Limitations
+
 - The deployment script is not yet handling data disks and using local storage.
 - There will be a separate checkin for persistent disks as per T shirt sizing.
 - Health monitoring of the Kafka instances is not currently enabled
 - SSH key is not yet implemented and the template currently takes a password for the admin user
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/publicIPAddresses, Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/virtualNetworks`

@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Standard/Premium, an Azure Functions app, and configures the function app to validate that traffic has come through the Front Door origin.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-function-public
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with Azure Functions origin
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-function-public/PublicLastTestDate.svg)
@@ -11,7 +22,7 @@
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-function-public/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-function-public%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-function-public%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-function-public%2Fazuredeploy.json)
 
 This template deploys a Front Door Standard/Premium with an Azure Functions (HTTP trigger) origin, using the Azure Functions public endpoint.
@@ -48,3 +59,5 @@ Once you have deployed the Azure Resource Manager template, wait a few minutes b
 You can then access the function through the Front Door endpoint. The function's URL is emitted as an output from the deployment - the output is named `frontDoorEndpointFunctionUrl`. You should get a response saying _This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response._. If you see an error page, wait a few minutes and try again.
 
 You can also attempt to access the function directly through the Azure Functions endpoint. The hostname is also emitted as an output from the deployment - the output is named `functionAppFunctionUrl`. You should see a _Forbidden_ error, since your Azure Functions instance has been configured to block requests that don't come through your Front Door profile.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/functions, httpTrigger, http`

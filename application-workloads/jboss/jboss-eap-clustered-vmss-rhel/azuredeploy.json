@@ -33,17 +33,6 @@
         "description": "Location for all resources"
       }
     },
-    "eapOnRHELVersion": {
-      "type": "string",
-      "defaultValue": "JBoss-EAP7.3-on-RHEL8.4",
-      "allowedValues": [
-        "JBoss-EAP7.3-on-RHEL8.4",
-        "JBoss-EAP7.4-on-RHEL8.4"
-      ],
-      "metadata": {
-        "description": "Version of EAP on RHEL"
-      }
-    },
     "jbossEAPUserName": {
       "type": "string",
       "metadata": {
@@ -92,6 +81,17 @@
         "description": "Red Hat Subscription Manager Pool ID (Should have RHEL entitlement). Mandartory if you select the BYOS RHEL OS License Type"
       },
       "defaultValue": ""
+    },
+    "javaVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Select the Java version to be installed"
+      },
+      "defaultValue": "JAVA_8",
+      "allowedValues": [
+        "JAVA_8",
+        "JAVA_11"
+      ]
     },
     "_artifactsLocation": {
       "type": "string",
@@ -184,7 +184,7 @@
         ]
       }
     },
-    "imageSku": "[if(equals(parameters('rhelOSLicenseType'), 'PAYG'), '8_4', 'rhel-lvm84')]",
+    "imageSku": "[if(equals(parameters('rhelOSLicenseType'), 'PAYG'), '8_6', 'rhel-lvm86')]",
     "offerMap": {
       "BYOS": "rhel-byos",
       "PAYG": "rhel"
@@ -201,11 +201,7 @@
       "publisher": "redhat",
       "product": "rhel-byos"
     },
-    "guidMap": {
-      "JBoss-EAP7.3-on-RHEL8.4": "pid-8c47eaba-ad48-4d3b-b2f8-9f69a44b57f5",
-      "JBoss-EAP7.4-on-RHEL8.4": "pid-92abde63-f331-4e50-96ca-e0e5c2339caa"
-    },
-    "guid": "[variables('guidMap')[parameters('eapOnRHELVersion')]]",
+    "guid": "pid-92abde63-f331-4e50-96ca-e0e5c2339caa",
     "storageAccountName": "[concat('jbosstrg', uniqueString(resourceGroup().id))]",
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
@@ -240,7 +236,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2022-01-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -283,7 +279,7 @@
         "QuickstartName": "JBoss EAP on RHEL (clustered, VMSS)"
       },
       "properties": {
-        "overprovision": "false",
+        "overprovision": false,
         "upgradePolicy": {
           "mode": "Manual"
         },
@@ -352,7 +348,7 @@
                     ]
                   },
                   "protectedSettings": {
-                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} {1} ''{2}'' {3} ''{4}'' {5} {6} {7} {8} {9} {10} {11}', variables('scriptArgs'), parameters('jbossEAPUserName'), parameters('jbossEAPPassword'), parameters('rhsmUserName'), parameters('rhsmPassword'), parameters('rhelOSLicenseType'), parameters('rhsmPoolEAP'), variables('storageAccountName'), variables('containerName'), base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-02-01').keys[0].value), parameters('eapOnRHELVersion'), parameters('rhsmPoolRHEL'))]"
+                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} {1} ''{2}'' {3} ''{4}'' {5} {6} {7} {8} {9} {10} {11}', variables('scriptArgs'), parameters('jbossEAPUserName'), parameters('jbossEAPPassword'), parameters('rhsmUserName'), parameters('rhsmPassword'), parameters('rhelOSLicenseType'), parameters('rhsmPoolEAP'), variables('storageAccountName'), variables('containerName'), base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-02-01').keys[0].value), parameters('javaVersion'), parameters('rhsmPoolRHEL'))]"
                   }
                 }
               }
@@ -363,7 +359,7 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2022-01-01",
       "name": "[variables('loadBalancersName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -470,7 +466,7 @@
   "outputs": {
     "appURL": {
       "type": "string",
-      "value": "[concat('http://', reference(variables('loadBalancersName')).frontendIPConfigurations[0].properties.privateIPAddress, '/eap-session-replication/')]"
+      "value": "[uri(concat('http://', reference(variables('loadBalancersName')).frontendIPConfigurations[0].properties.privateIPAddress), '/eap-session-replication/')]"
     }
   }
 }

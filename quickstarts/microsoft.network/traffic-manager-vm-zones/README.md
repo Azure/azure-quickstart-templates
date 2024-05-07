@@ -1,4 +1,14 @@
-# Azure Traffic Manager with virtual machines in Availability Zones
+---
+description: This template shows how to create an Azure Traffic Manager profile load-balancing across multiple virtual machines placed in Availability Zones.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: traffic-manager-vm-zones
+languages:
+- json
+---
+# Azure Traffic Manager VM example with Availability Zones
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-vm-zones/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-vm-zones/PublicDeployment.svg)
@@ -18,5 +28,7 @@ The accompanying PowerShell script shows how to create a resource group from the
 
 See also:
 
-- <a href="https://azure.microsoft.com/en-us/documentation/articles/traffic-manager-routing-methods/">Traffic Manager routing methods for details of the different routing methods available.
-- <a href="https://msdn.microsoft.com/en-us/library/azure/mt163581.aspx">Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
+- <a href="https://azure.microsoft.com/documentation/articles/traffic-manager-routing-methods/">Traffic Manager routing methods for details of the different routing methods available.
+- <a href="https://msdn.microsoft.com/library/azure/mt163581.aspx">Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript, Microsoft.Network/trafficManagerProfiles, Microsoft.Network/trafficManagerProfiles/azureEndpoints, Microsoft.Network/networkSecurityGroups`

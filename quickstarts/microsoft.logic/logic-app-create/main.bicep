@@ -2,7 +2,7 @@
 param logicAppName string
 
 @description('A test URI')
-param testUri string = 'https://status.azure.com/en-us/status/'
+param testUri string = 'https://azure.status.microsoft/status/'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -51,3 +51,8 @@ resource stg 'Microsoft.Logic/workflows@2019-05-01' = {
     }
   }
 }
+
+output name string = stg.name
+output resourceId string = stg.id
+output resourceGroupName string = resourceGroup().name
+output location string = location

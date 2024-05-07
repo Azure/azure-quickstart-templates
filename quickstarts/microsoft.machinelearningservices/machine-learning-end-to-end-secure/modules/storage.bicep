@@ -40,7 +40,7 @@ var blobPrivateDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}
 
 var filePrivateDnsZoneName = 'privatelink.file.${environment().suffixes.storage}'
 
-resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageNameCleaned
   location: location
   tags: tags
@@ -90,7 +90,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
-resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: storagePleBlobName
   location: location
   tags: tags
@@ -117,7 +117,7 @@ resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2020-11-
   }
 }
 
-resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: storagePleFileName
   location: location
   tags: tags
@@ -144,12 +144,12 @@ resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-
   }
 }
 
-resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: blobPrivateDnsZoneName
   location: 'global'
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
   name: '${storagePrivateEndpointBlob.name}/blob-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
@@ -163,7 +163,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   }
 }
 
-resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
+resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${blobPrivateDnsZone.name}/${uniqueString(storage.id)}'
   location: 'global'
   properties: {
@@ -174,12 +174,12 @@ resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNe
   }
 }
 
-resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
+resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: filePrivateDnsZoneName
   location: 'global'
 }
 
-resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
   name: '${storagePrivateEndpointFile.name}/flie-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
@@ -193,7 +193,7 @@ resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZo
   }
 }
 
-resource filePrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
+resource filePrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${filePrivateDnsZone.name}/${uniqueString(storage.id)}'
   location: 'global'
   properties: {

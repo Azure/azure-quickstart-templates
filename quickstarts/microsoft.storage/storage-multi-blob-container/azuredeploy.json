@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1008.15138",
-      "templateHash": "17206955797783750068"
+      "version": "0.25.53.49325",
+      "templateHash": "1024521303843295493"
     }
   },
   "parameters": {
@@ -17,9 +17,15 @@
     },
     "containerPrefix": {
       "type": "string",
-      "defaultValue": "logs",
+      "minLength": 2,
       "metadata": {
         "description": "Specifies the prefix of the blob container names."
+      }
+    },
+    "numberOfContainers": {
+      "type": "int",
+      "metadata": {
+        "description": "Specifies the number of blob containers to create."
       }
     },
     "location": {
@@ -30,31 +36,38 @@
       }
     }
   },
-  "functions": [],
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
-      "kind": "StorageV2",
       "sku": {
         "name": "Standard_LRS"
       },
+      "kind": "StorageV2",
       "properties": {
         "accessTier": "Hot"
       }
     },
     {
-      "copy": {
-        "name": "containers",
-        "count": "[length(range(0, 3))]"
-      },
-      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-      "apiVersion": "2021-04-01",
-      "name": "[format('{0}/default/{1}{2}', parameters('storageAccountName'), parameters('containerPrefix'), range(0, 3)[copyIndex()])]",
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "containers",
+        "count": "[length(range(0, parameters('numberOfContainers')))]"
+      },
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', format('{0}{1}', parameters('containerPrefix'), range(0, parameters('numberOfContainers'))[copyIndex()]))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
       ]
     }
   ]

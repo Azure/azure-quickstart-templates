@@ -27,8 +27,8 @@ Write-Host "RowKey: $RowKey"
 
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
-$cloudTablePRs = (Get-AzStorageTable –Name $tableNamePRs –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
+$cloudTablePRs = (Get-AzStorageTable -Name $tableNamePRs -Context $ctx).CloudTable
 
 #Get All Files from "prs" container and copy to the "badges" container
 $blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder.Replace("@", "/") 
@@ -46,7 +46,7 @@ if ($null -eq $r) {
 Write-Host "Result from Table: $r"
 
 # change the status before copying the row/data to the "Live" table
-if ($r.status -eq $null) {
+if ($null -eq $r.status) {
     Write-Host "Adding status column..."
     Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
 }

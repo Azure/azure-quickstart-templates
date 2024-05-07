@@ -1,4 +1,14 @@
-﻿# Call Custom APIs Hosted on an Azure App Service Protected by Azure Active Directory Using Azure Logic Apps
+---
+description: Although Logic Apps provides hundreds of connectors for various services, you might want to call APIs that run your own code. One of the easiest and most scalable ways to host your own web APIs is by using Azure App Service. This template deploys a Web app for your custom API and secures that API by using Azure Active Directory authentication.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: logic-app-custom-api
+languages:
+- json
+---
+# Call custom APIs from Azure Logic Apps
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-custom-api/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-custom-api/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-custom-api/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-custom-api/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-custom-api%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-custom-api%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-custom-api%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-custom-api%2Fazuredeploy.json)
 
@@ -25,4 +35,4 @@ You need to create an application ID for your logic app only *once* for your dir
 
 To learn how to create application IDs for your logic app and web app, see [Secure calls to custom APIs from logic app](https://docs.microsoft.com/azure/logic-apps/logic-apps-custom-api-authentication).
 
-
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, config, Microsoft.Logic/workflows, recurrence, Http, ActiveDirectoryOAuth`

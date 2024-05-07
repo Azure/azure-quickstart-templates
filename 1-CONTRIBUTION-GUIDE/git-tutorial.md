@@ -1,6 +1,6 @@
 # Azure Resource Manager QuickStart Templates
 
-This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
+This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/documentation/templates/.
 The following information is relevant to get started with contributing to this repository.
 
 + [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). Describes the minimal guidelines for contributing.
@@ -28,19 +28,20 @@ You probably heard of Git before, but it's possible that you haven't used it. Wr
 
 This guide assumes you're new to git and that you're using a Windows computer. If you're using Linux OSX, its very similar, with the exception of Windows-specifics such as installation of git.
 
-#### Table of Contents
+### Table of Content
+
 - [Git Tutorial for ARM Template Submissions](#git-tutorial-for-the-pct-arm-templates)
-    - [Get Git](#get-git)
-    - [Fork the Repository to your Account](#fork-the-repository-to-your-account)
-    - [Clone the template Repository to your Machine](#clone-the-arm-template-repository-to-your-machine)
-    - [Creating a new Branch for your template](#creating-a-new-branch-for-your-template)
-    - [Staging your Changes for a Commit](#staging-your-changes-for-a-commit)
-    - [Commit your Changes](#commit-your-changes)
-    - [Push your new Branch to Your Fork on GitHub](#push-your-new-branch-to-your-fork-on-github)
-    - [Make a Pull Request](#make-a-pull-request)
-    - [Updating Pull Requests](#updating-pull-requests)
-    - [Squashing Commits](#squashing-commits)
-    - [Syncing Your Fork](#syncing-your-fork)
+  - [Get Git](#get-git)
+  - [Fork the Repository to your Account](#fork-the-repository-to-your-account)
+  - [Clone the template Repository to your Machine](#clone-the-arm-template-repository-to-your-machine)
+  - [Creating a new Branch for your template](#creating-a-new-branch-for-your-template)
+  - [Staging your Changes for a Commit](#staging-your-changes-for-a-commit)
+  - [Commit your Changes](#commit-your-changes)
+  - [Push your new Branch to Your Fork on GitHub](#push-your-new-branch-to-your-fork-on-github)
+  - [Make a Pull Request](#make-a-pull-request)
+  - [Updating Pull Requests](#updating-pull-requests)
+  - [Squashing Commits](#squashing-commits)
+  - [Syncing Your Fork](#syncing-your-fork)
 
 ### Get Git
 If you don't have Git installed, head over to the official [Git Download page and download it](https://git-scm.com/download/win). Once installed and downloaded, you might also want to install [Posh Git](https://github.com/dahlbyk/posh-git). If you're already using Chocolatey or Windows 10's package manager to install software, you can simply run the following command from an elevated PowerShell (right click, select 'Run as Administrator'):

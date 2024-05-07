@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "15855786620646717380"
+    }
+  },
   "parameters": {
     "sqlServerName": {
       "type": "string",
-      "defaultValue": "[concat('sql', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('sql{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The SQL Logical Server name."
       }
@@ -40,11 +47,11 @@
     },
     "capacity": {
       "type": "int",
+      "minValue": 900,
+      "maxValue": 54000,
       "metadata": {
         "description": "DW Performance Level expressed in DTU (i.e. 900 DTU = DW100c)"
-      },
-      "minValue": 900,
-      "maxValue": 54000
+      }
     },
     "databaseCollation": {
       "type": "string",
@@ -61,55 +68,99 @@
       }
     }
   },
-  "variables": {},
   "resources": [
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2021-05-01-preview",
+      "apiVersion": "2023-08-01-preview",
       "name": "[parameters('sqlServerName')]",
       "location": "[parameters('location')]",
-      "kind": "v12.0",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
         "version": "12.0",
         "publicNetworkAccess": "Enabled",
+        "minimalTlsVersion": "1.2",
         "restrictOutboundNetworkAccess": "Disabled"
       }
     },
     {
       "type": "Microsoft.Sql/servers/databases",
-      "apiVersion": "2021-05-01-preview",
-      "name": "[concat(parameters('sqlServerName'), concat('/', parameters('databasesName')))]",
+      "apiVersion": "2023-08-01-preview",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), parameters('databasesName'))]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
-      ],
       "sku": {
         "name": "DataWarehouse",
         "tier": "DataWarehouse",
         "capacity": "[parameters('capacity')]"
       },
-      "kind": "v12.0,user,datawarehouse,gen2",
       "properties": {
         "collation": "[parameters('databaseCollation')]",
         "catalogCollation": "[parameters('databaseCollation')]",
         "readScale": "Disabled",
         "requestedBackupStorageRedundancy": "Geo",
         "isLedgerOn": false
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
     },
     {
       "type": "Microsoft.Sql/servers/databases/transparentDataEncryption",
-      "apiVersion": "2021-05-01-preview",
-      "name": "[concat(parameters('sqlServerName'), concat(concat('/', parameters('databasesName')), '/Current'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databasesName'))]",
-        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
-      ],
+      "apiVersion": "2023-08-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('sqlServerName'), parameters('databasesName'), 'current')]",
       "properties": {
         "state": "[parameters('transparentDataEncryption')]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databasesName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/securityAlertPolicies",
+      "apiVersion": "2023-08-01-preview",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), 'default')]",
+      "properties": {
+        "state": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/auditingSettings",
+      "apiVersion": "2023-08-01-preview",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), 'default')]",
+      "properties": {
+        "isAzureMonitorTargetEnabled": true,
+        "state": "Enabled",
+        "retentionDays": 7,
+        "auditActionsAndGroups": [
+          "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP",
+          "FAILED_DATABASE_AUTHENTICATION_GROUP",
+          "BATCH_COMPLETED_GROUP"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
     }
-  ]
+  ],
+  "outputs": {
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "name": {
+      "type": "string",
+      "value": "[parameters('sqlServerName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+    }
+  }
 }

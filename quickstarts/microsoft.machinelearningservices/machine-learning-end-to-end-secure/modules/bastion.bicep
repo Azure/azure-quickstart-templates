@@ -17,7 +17,7 @@ param bastionHostName string = 'bastion-jumpbox'
 // The Bastion Subnet is required to be named 'AzureBastionSubnet'
 var subnetName = 'AzureBastionSubnet'
 
-resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
+resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
   name: '${vnetName}/${subnetName}'
   properties: {
     addressPrefix: addressPrefix
@@ -26,7 +26,7 @@ resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = 
   }
 }
 
-resource publicIpAddressForBastion 'Microsoft.Network/publicIpAddresses@2020-08-01' = {
+resource publicIpAddressForBastion 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -37,7 +37,7 @@ resource publicIpAddressForBastion 'Microsoft.Network/publicIpAddresses@2020-08-
   }
 }
 
-resource bastionHost 'Microsoft.Network/bastionHosts@2021-03-01' = {
+resource bastionHost 'Microsoft.Network/bastionHosts@2022-01-01' = {
   name: bastionHostName
   location: location
   properties: {

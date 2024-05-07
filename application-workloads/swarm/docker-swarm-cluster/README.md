@@ -1,4 +1,14 @@
-# Docker Swarm Cluster (pre-docker 1.12)
+---
+description: This template creates a high-availability Docker Swarm cluster
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: docker-swarm-cluster
+languages:
+- json
+---
+# Docker Swarm Cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/swarm/docker-swarm-cluster/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/swarm/docker-swarm-cluster/PublicDeployment.svg)
@@ -42,17 +52,17 @@ command.
 
 The template provisions 3 Swarm manager VMs that use
 [Consul](https://consul.io/) for discovery and leader election. These VMs are in
-an [Availability Set][av-set] to achieve the highest uptime.
+an [Availability Set](https://azure.microsoft.com/documentation/articles/virtual-machines-manage-availability/) to achieve the highest uptime.
 
 Each Swarm manager VM is of size `Standard_A0` as they are not running any
 workloads except the Swarm Manager and Consul containers. Manager node VMs have
 static private IP addresses `10.0.0.4`, `10.0.0.5` and `10.0.0.6` and they are
-in the same [Virtual Network][az-vnet] as Swarm nodes.
+in the same [Virtual Network](http://azure.microsoft.com/documentation/services/virtual-network/) as Swarm nodes.
 
 Swarm managers choose a leader among themselves and coordinate through
 Consul agents running in server mode on each manager VM:
 
-> [![](img/cluster-leader-election.png)](img/cluster-leader-election.png)
+> ![cluster](img/cluster-leader-election.png)
 
 #### How to SSH into Swarm Manager Nodes
 
@@ -83,8 +93,8 @@ your development machine and directly connect to the worker VM using its private
 IP address.
 
 Virtual Machines of Swarm worker nodes have private IP addresses `192.168.0.*`
-and are in the same [Virtual Network][az-vnet] with the manager nodes. These
-nodes are in an [Availability Set][av-set] to ensure highest uptime and fault
+and are in the same [Virtual Network](http://azure.microsoft.com/documentation/services/virtual-network/) with the manager nodes. These
+nodes are in an [Availability Set](https://azure.microsoft.com/documentation/articles/virtual-machines-manage-availability/) to ensure highest uptime and fault
 domains.
 
 The swarm worker VMs node VMs have are behind a load balancer
@@ -96,7 +106,7 @@ emitted as an output of the template deployment.
 Swarm nodes join to the Swarm cluster by notifying the Consul agents running
 on master nodes:
 
-> [![](img/cluster-node-discovery.png)](img/cluster-node-discovery.png)
+![cluster](img/cluster-node-discovery.png)
 
 #### How to SSH into Swarm Worker Nodes
 
@@ -127,7 +137,7 @@ Azure Portal as well.
 Swarm manager VMs only have public address for SSH, therefore to issue Docker
 commands to Swarm Manager, you need to establish an SSH tunnel to these machines:
 
-> [![](img/cluster-management.png)](img/cluster-management.png)
+![cluster](img/cluster-management.png)
 
 If the template successfully deploys, it will have output values
 `"sshTunnelCmd"` and `"dockerCmd"`.
@@ -135,23 +145,25 @@ If the template successfully deploys, it will have output values
 The `sshTunnelCmd` command will help you create a SSH tunnel to Docker Swarm
 Manager from your machine (this command will keep running with no output):
 
-    $ ssh -L 2375:swarm-master-0:2375 -N core@swarm-<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
+```bash
+    ssh -L 2375:swarm-master-0:2375 -N core@swarm-<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
+```
 
 After this you can use `dockerCmd` command that points to localhost, just as
 Swarm managers were running on your development machine:
 
-    $ docker -H tcp://localhost:2375 info
+```bash
+    docker -H tcp://localhost:2375 info
+```
 
 This also can be executed in the shorthand form:
 
-    $ export DOCKER_HOST=:2375
-    $ docker info
+```bash
+    export DOCKER_HOST=:2375
+    docker info
     ...
-    $ docker ps
+    docker ps
     ...
+```
 
-[av-set]: https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-manage-availability/
-[az-lb]: https://azure.microsoft.com/en-us/documentation/articles/load-balancer-overview/
-[az-vnet]: http://azure.microsoft.com/en-us/documentation/services/virtual-network/
-
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers, Microsoft.Network/loadBalancers/inboundNatRules, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DockerExtension`

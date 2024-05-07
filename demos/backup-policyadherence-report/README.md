@@ -1,4 +1,14 @@
-# Create a Logic App to send information on backup policy adherence via email
+---
+description: Create a Logic App to send reports on backup policy adherence of your backup instances via email
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-policyadherence-report
+languages:
+- json
+---
+# Logic App to email reports on backup policy adherence
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-policyadherence-report/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-policyadherence-report/PublicDeployment.svg)
@@ -24,3 +34,5 @@ Using this view, you can identify the number of backup instances that had atleas
 Using this view, you can identify the days/weeks on which each backup instance did not have a successful backup. A cell containing '0' indicates that the backup instance did not have a successful backup on that day/week (depending on whether the item is configured for daily backup/weekly backup), while a cell containing '1' indicates that the item had atleast one successful backup in that period. Separate views are displayed for items with daily backup policy, and items with weekly backup policy.
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
+
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, Foreach, AppendToStringVariable, If, ApiConnection, InitializeVariable, string, array, Scope, Table, SetVariable, Microsoft.OperationalInsights/workspaces`

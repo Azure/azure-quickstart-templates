@@ -176,6 +176,8 @@ if ($ServicePrincipalObjectId) {
                               -ObjectId $ServicePrincipalObjectId `
                               -Scope $(Get-AzureRmResourceGroup -Name 'NetworkWatcherRG').ResourceId `
                               -Verbose
+                              
+    # TODO - Add the "Cognitive Services Contributor" role 25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68 to be able to deploy CS
 
 }
 

@@ -12,8 +12,8 @@ For this task you will:
 
 To register the IoT Edge you will need to use PowerShell. You can either install the PowerShell extension on Visual Code or use the Cloud PowerShell on the AzurePortal.
 
-For the extension, click [here](https://docs.microsoft.com/en-us/powershell/scripting/components/vscode/using-vscode?view=powershell-6)
-For a quick start on the Cloud PowerShell click [here](https://docs.microsoft.com/en-us/azure/cloud-shell/quickstart-powershell)
+For the extension, click [here](https://docs.microsoft.com/powershell/scripting/components/vscode/using-vscode?view=powershell-6)
+For a quick start on the Cloud PowerShell click [here](https://docs.microsoft.com/azure/cloud-shell/quickstart-powershell)
 
 Now, let's understand a bit better how **IOT Hub** and **IoT Edge Device** work.
 
@@ -121,14 +121,14 @@ Parameter | Suggested value | Description
 **networkSecurityGroupName** | SecGroupNet | Name of the Network Security Group.
 **IoTsku_name** | F1 | The name of the SKU. - F1, S1, S2, S3, B1, B2, B3. (F1 is the free tier.)
 **IoTsku_units** | 1 | The number of provisioned IoT Hub units. See [here](https://docs.microsoft.com/azure/azure-subscription-service-limits#iot-hub-limits). 1 is the free tier.
-**IoTsku_partitions** | 2 | This is linked to the SKU.For more information, click [here](https://docs.microsoft.com/en-us/azure/templates/microsoft.devices/2019-03-22/iothubs)
-**IoTfeatures** | none | This is linked to the SKU. For more information, click [here](https://docs.microsoft.com/en-us/azure/templates/microsoft.devices/2019-03-22/iothubs)
+**IoTsku_partitions** | 2 | This is linked to the SKU.For more information, click [here](https://docs.microsoft.com/azure/templates/microsoft.devices/2019-03-22/iothubs)
+**IoTfeatures** | none | This is linked to the SKU. For more information, click [here](https://docs.microsoft.com/azure/templates/microsoft.devices/2019-03-22/iothubs)
 **Resource Group**| myResourceGroup | That is the Resource Group that you need to deploy your resources.
 
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm the Visual Code with Azure CLI and PowerShell extensions. Check the Pre Steps session for more information. Or click [here](https://code.visualstudio.com/docs/azure/extensions).
 

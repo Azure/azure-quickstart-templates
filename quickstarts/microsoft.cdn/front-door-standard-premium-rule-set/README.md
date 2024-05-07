@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Standard/Premium including a rule set.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-rule-set
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with rule set
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-rule-set/PublicLastTestDate.svg)
@@ -46,3 +57,5 @@ Once you have deployed the Azure Resource Manager template, wait a few minutes b
 You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. If you access the base hostname you should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
 
 To test the rule set, try appending `/secure/123` to the URL. You should get redirected to the Microsoft website.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/ruleSets, Microsoft.Cdn/profiles/ruleSets/rules, Microsoft.Cdn/profiles/afdEndpoints/routes`

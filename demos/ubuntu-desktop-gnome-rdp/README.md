@@ -1,4 +1,15 @@
-# Deploy Ubuntu Desktop VM with VSCode, Azure CLI and RDP support
+---
+description: This template deploys an Ubuntu Server VM, then uses the Linux CustomScript extension to install the Ubuntu Gnome Desktop and Remote Desktop support (via xrdp). The final provisioned Ubuntu VM support remote connections over RDP.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: ubuntu-desktop-gnome-rdp
+languages:
+- bicep
+- json
+---
+# Linux VM with Gnome Desktop RDP VSCode and Azure CLI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/PublicDeployment.svg)
@@ -8,8 +19,9 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/CredScanResult.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome-rdp%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome-rdp%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome-rdp%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome-rdp%2Fazuredeploy.json)
 
@@ -25,7 +37,7 @@ When connected over RDP, the VM will prompt you a few times for the Password for
 
 When connected over RDP to the VM the first time, it will prompt for password a couple times. If/when prompted for the Password for a user named `Ubuntu` this first time connecting, simply select "Cancel" and the prompt will go away. Once Ubuntu is configured and able to be used to run apps and other things, then the admin password for the VM will be the password for the `Ubuntu` user it will prompt for later.
 
-# Running at terminal 
+# Running at terminal
 
 To open a terminal with Ctrl + Alt + t
 
@@ -48,7 +60,7 @@ code --list-extensions
 
 ### Getting Started with VS Code
 
-Visual Studio Code is a lightweight but powerful source code editor which runs on your desktop and is available for Windows, macOS and Linux. It comes with built-in support for JavaScript, TypeScript and Node.js and has a rich ecosystem of extensions for other languages (such as C++, C#, Java, Python, PHP, Go) and runtimes (such as .NET and Unity). 
+Visual Studio Code is a lightweight but powerful source code editor which runs on your desktop and is available for Windows, macOS and Linux. It comes with built-in support for JavaScript, TypeScript and Node.js and has a rich ecosystem of extensions for other languages (such as C++, C#, Java, Python, PHP, Go) and runtimes (such as .NET and Unity).
 
 Begin your journey with VS Code with these [introductory videos](https://code.visualstudio.com/docs/introvideos/overview)
 
@@ -56,8 +68,8 @@ Begin your journey with VS Code with these [introductory videos](https://code.vi
 
 ### Microsoft Learn - Learning Modules
 
-[Visual Studio Code](https://docs.microsoft.com/en-us/learn/browse/?term=Visual%20Studio%20Code)
-[Linux Virtual Machines on Azure](https://docs.microsoft.com/en-us/learn/browse/?term=Linux%20Virtual%20Machine)
-[Azure CLI](https://docs.microsoft.com/en-us/learn/browse/?term=Azure%20CLI)
+[Visual Studio Code](https://docs.microsoft.com/learn/browse/?term=Visual%20Studio%20Code)
+[Linux Virtual Machines on Azure](https://docs.microsoft.com/learn/browse/?term=Linux%20Virtual%20Machine)
+[Azure CLI](https://docs.microsoft.com/learn/browse/?term=Azure%20CLI)
 
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

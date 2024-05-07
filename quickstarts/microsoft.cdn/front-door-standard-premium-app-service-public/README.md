@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Standard/Premium, an App Service, and configures the App Service to validate that traffic has come through the Front Door origin.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-app-service-public
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with App Service origin
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-app-service-public/PublicLastTestDate.svg)
@@ -47,3 +58,5 @@ Once you have deployed the Azure Resource Manager template, wait a few minutes b
 You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. You should see an App Service welcome page. If you see an error page, wait a few minutes and try again.
 
 You can also attempt to access the App Service hostname directly. The hostname is also emitted as an output from the deployment - the output is named `appServiceHostName`. You should see a _Forbidden_ error, since your App Service instance has been configured to block requests that don't come through your Front Door profile.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

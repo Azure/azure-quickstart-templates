@@ -4,7 +4,7 @@ param digitalTwinsInstanceName string
 @description('Location of the Digital Twins instance')
 param digitalTwinsInstanceLocation string
 
-resource digitalTwinsInstance 'Microsoft.DigitalTwins/digitalTwinsInstances@2020-12-01' = {
+resource digitalTwinsInstance 'Microsoft.DigitalTwins/digitalTwinsInstances@2023-01-31' = {
   name: digitalTwinsInstanceName
   location: digitalTwinsInstanceLocation
   properties: {

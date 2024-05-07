@@ -1,4 +1,14 @@
-# VNET to VNET connection
+---
+description: This template allows you to connect two VNETs in different regions using Virtual Network Gateways
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vnet-to-vnet
+languages:
+- json
+---
+# Create a VNET to VNET connection across two regions
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/vnet-to-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/vnet-to-vnet/PublicDeployment.svg)
@@ -15,3 +25,5 @@
 This template creates two VNETs in two different locations, each containing a subnet and Gateway subnet. It creates two public IPs which are used to create two VPN Gateways in the two VNETs. Finally it establishes connection between the two gateways.
 
 Modify parameters file to change default values.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/connections`

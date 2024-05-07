@@ -1,4 +1,15 @@
-# Deploy an Azure SQL Server with Auditing enabled to write audit logs to Log Analytics
+---
+description: This template allows you to deploy an Azure SQL server with Auditing enabled to write audit logs to Log Analytics (OMS workspace)
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sql-auditing-server-policy-to-oms
+languages:
+- json
+- bicep
+---
+# Azure SQL Server with Auditing written to Log Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/PublicDeployment.svg)
@@ -9,7 +20,10 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-auditing-server-policy-to-oms%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-auditing-server-policy-to-oms%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-auditing-server-policy-to-oms%2Fazuredeploy.json)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/BicepVersion.svg)
+
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-auditing-server-policy-to-oms%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-auditing-server-policy-to-oms%2Fazuredeploy.json)
 
@@ -25,3 +39,5 @@ For more information on SQL database auditing, see the [official documentation](
 Enable Auditing of Microsoft support operations (isMSDevOpsAuditEnabled) to tracks Microsoft support engineers'(DevOps) operations on your server and write them to an audit log in your Log Analytics.
 
 For more information on Auditing of Microsoft support operations, see the [official documentation]( https://docs.microsoft.com/azure/azure-sql/database/auditing-overview#auditing-of-microsoft-support-operations).
+
+`Tags: Microsoft.OperationalInsights/workspaces, Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Insights/diagnosticSettings, Microsoft.Sql/servers/auditingSettings, Microsoft.Sql/servers/devOpsAuditingSettings`

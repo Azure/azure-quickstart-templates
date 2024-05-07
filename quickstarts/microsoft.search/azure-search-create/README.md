@@ -1,3 +1,14 @@
+---
+description: This template creates an Azure Cognitive Search service
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-search-create
+languages:
+- json
+- bicep
+---
 # Azure Cognitive Search service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.search/azure-search-create/PublicLastTestDate.svg)
@@ -19,3 +30,4 @@ This template creates a new Azure Cognitive Search Service. The [quickstart](htt
 
 If you are unclear as to what parameters are allowed you can check the [Microsoft.Search searchServices template reference](https://docs.microsoft.com/azure/templates/Microsoft.Search/searchServices).
 
+`Tags: Microsoft.Search/searchServices`

@@ -1,4 +1,14 @@
-# Create a Logic App to send information on your backup policies via email
+---
+description: Create a Logic App to send reports on your backup policies via email
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-policies-report
+languages:
+- json
+---
+# Logic App to email reports on backup policies
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-policies-report/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-policies-report/PublicDeployment.svg)
@@ -19,7 +29,7 @@ You can use this template to view information on all of your active policies, su
 
 Following is the information that is exported by this Logic App:
 
-* Inline 
+* Inline
   * Trend of active policy count over time
   *  Trend of total backup cloud storage consumed (GB) over time.
 * Attachment
@@ -27,3 +37,4 @@ Following is the information that is exported by this Logic App:
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
 
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, Foreach, AppendToStringVariable, If, ApiConnection, InitializeVariable, string, array, Scope, Table, SetVariable, Microsoft.OperationalInsights/workspaces`

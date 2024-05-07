@@ -1,4 +1,15 @@
-# Azure Machine Learning workspace
+---
+description: This deployment template specifies an Azure Machine Learning workspace, and its associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry. This configuration describes the minimal set of resources you require to get started with Azure Machine Learning.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-workspace
+languages:
+- json
+- bicep
+---
+# Create an Azure Machine Learning service workspace
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace/PublicDeployment.svg)
@@ -8,6 +19,9 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace/BicepVersion.svg)
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace%2Fazuredeploy.json)
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace%2Fazuredeploy.json)
@@ -41,7 +55,7 @@ If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/concept-enterprise-security).
+- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security).
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 
 If you are new to template development, see:
@@ -49,3 +63,5 @@ If you are new to template development, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.ContainerRegistry/registries, Microsoft.MachineLearningServices/workspaces, systemAssigned`

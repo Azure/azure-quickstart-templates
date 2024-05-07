@@ -1,4 +1,15 @@
-# Create a CDN Profile, a CDN Endpoint with a Storage Account as origin
+---
+description: This template creates a CDN Profile and a CDN Endpoint with origin as a Storage Account. Note that user needs to create a public container in the Storage Account in order for CDN Endpoint to serve content from the Storage Account.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cdn-with-storage-account
+languages:
+- json
+- bicep
+---
+# Create a CDN Profile, Endpoint and a Storage Account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-storage-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/cdn-with-storage-account/PublicDeployment.svg)
@@ -17,3 +28,4 @@
 
 This template creates a CDN Profile and a CDN Endpoint with origin as a Storage Account. Note that user needs to create a public container in the Storage Account in order for CDN Endpoint to serve content from the Storage Account.
 
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/endpoints`

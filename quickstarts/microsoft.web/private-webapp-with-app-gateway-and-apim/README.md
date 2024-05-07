@@ -1,3 +1,14 @@
+---
+description: Application Gateway routing Internet traffic to a virtual network (internal mode) API Management instance which services a web API hosted in an Azure Web App.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: private-webapp-with-app-gateway-and-apim
+languages:
+- json
+- bicep
+---
 # Application Gateway with internal API Management and Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim/PublicLastTestDate.svg)
@@ -132,7 +143,7 @@ The following prerequisites are required to use this quickstart:
 
 Please follow the instructions below for a command line (Azure CLI) deployment.
 
-You will need certificates to use for custom domains for Application Gateway and API Management's developer portal, management, and proxy endpoints.  The certificates will need to be Base64 encoded and the Base64 encoded text added to the appropriate parameter values when executing the template.  
+You will need certificates to use for custom domains for Application Gateway and API Management's developer portal, management, and proxy endpoints.  The certificates will need to be Base64 encoded and the Base64 encoded text added to the appropriate parameter values when executing the template.
 
 The included [create-certs.sh](./scripts/create-certs.sh) script will create a .txt file for each .PFX and .CRT file.  The .txt file includes the Base64 encoded version of the certificate.
 
@@ -172,3 +183,5 @@ An alternative approach is to read in the certificate files as part of the Azure
       apiManagementProxyCertificatePassword=$(cat ./scripts/.certs/pass) \
       apiManagementManagementCertificatePassword=$(cat ./scripts/.certs/pass)
 ```
+
+`Tags: Microsoft.Network/privateDnsZones/A, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Web/sites/config, Microsoft.ApiManagement/service/loggers, Microsoft.ApiManagement/service/diagnostics, Microsoft.KeyVault/vaults/secrets, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/privateDnsZones, Microsoft.Network/privateEndpoints, Microsoft.Insights/components, Microsoft.OperationalInsights/workspaces, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.ApiManagement/service, DeveloperPortal, Proxy, Management, Microsoft.Insights/diagnosticSettings, Microsoft.Network/applicationGateways, Microsoft.KeyVault/vaults`

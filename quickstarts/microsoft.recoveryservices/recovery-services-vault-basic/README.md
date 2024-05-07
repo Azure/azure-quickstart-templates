@@ -1,3 +1,14 @@
+---
+description: Simple template that creates a Recovery Services Vault.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: recovery-services-vault-basic
+languages:
+- json
+- bicep
+---
 # Create Recovery Services Vault with default options
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vault-basic/PublicLastTestDate.svg)
@@ -13,7 +24,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vault-basic%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vault-basic%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vault-basic%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vault-basic%2Fazuredeploy.json)
 
 ### This template creates a Recovery Services Vault with default options. Vault will be used further for Backup and SiteRecovery.
 
@@ -24,4 +35,6 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 The Site Recovery service ensures your servers, virtual machines, and apps are resilient by replicating them so that when disasters and outages occur you can easily fail over to your replicated environment and continue working. When services are resumed you simply failback to your primary location with uninterrupted access. Site Recovery helps protect a wide range of Microsoft and third-party workloads. [Learn more](http://aka.ms/asr-learn-more/).
 
 ## Delete an Azure Backup Recovery Services vault
-In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://docs.microsoft.com/en-us/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
+In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://docs.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
+
+`Tags: Microsoft.RecoveryServices/vaults`

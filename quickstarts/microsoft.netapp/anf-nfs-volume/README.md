@@ -1,4 +1,14 @@
-# Create Azure Netapp Files resource with NFSV3 or NFSv4.1 volume
+---
+description: This template allows you to create a new Azure NetApp Files resource with a single Capacity pool and single volume configured with NFSV3 or NFSv4.1 protocol. They are all deployed together with Azure Virtual Network and Delegated subnet that are required for any volume to be created
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: anf-nfs-volume
+languages:
+- json
+---
+# Create new ANF resource with NFSV3/NFSv4.1 volume
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.netapp/anf-nfs-volume/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.netapp/anf-nfs-volume/PublicDeployment.svg)
@@ -27,3 +37,5 @@ The following resources are deployed as part of the solution:
 ## Deployment steps
 
 You can click the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-netapp-files/azure-netapp-files-quickstart-set-up-account-create-volumes) article.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.NetApp/netAppAccounts, Microsoft.NetApp/netAppAccounts/capacityPools, Microsoft.NetApp/netAppAccounts/capacityPools/volumes`

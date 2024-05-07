@@ -1,4 +1,14 @@
-# Call an Azure Function from a Logic App
+---
+description: This template creates a Serverless app in Azure with Logic Apps and Functions.  The Logic App triggers on an HTTP POST, calls the Azure Function, and returns the response.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: logic-app-and-function-app
+languages:
+- json
+---
+# Azure Logic App with Function
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-and-function-app/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-and-function-app/PublicDeployment.svg)
@@ -16,3 +26,5 @@
 This template creates a Serverless app in Azure with Logic Apps and Functions.  The Logic App triggers on an HTTP POST, calls the Azure Function, and returns the response.
 
 If you wish to open this in the Visual Studio Logic App designer, be sure to deploy once to any resource group, and set the `defaultValue` for the `functionAppName` to the deployed function app.  This will allow editing within the designer in Visual Studio.  The template can still be deployed to any resource group with any `functionAppName` later.
+
+`Tags: Microsoft.Logic/workflows, Function, Response, Request, Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, sourcecontrols`

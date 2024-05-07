@@ -1,3 +1,14 @@
+---
+description: This template deploys a VPN Virtual Network Gateway configured with an Azure Active Directory Point-to-Site connection
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: point-to-site-aad
+languages:
+- json
+- bicep
+---
 # Create a Point-to-Site Gateway with Azure AD
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/point-to-site-aad/PublicLastTestDate.svg)
@@ -21,4 +32,4 @@ This template deploys a Virtual Network with a frontend and gateway subnet. It t
 
 Modify parameters file to change default names and addresses spaces.
 
-`Tags: VPN, Virtual Network Gateway, P2S, Point-to-site, AAD, Azure Active Directory`
+`Tags: VPN, Virtual Network Gateway, P2S, Point-to-site, AAD, Azure Active Directory, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/publicIPAddresses`

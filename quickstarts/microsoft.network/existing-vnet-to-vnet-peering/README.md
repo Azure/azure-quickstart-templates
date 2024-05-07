@@ -1,4 +1,15 @@
-# VNET to VNET connection
+---
+description: This template allows you to connect two VNETs from the same or different resource groups in the same region using VNet Peering 
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: existing-vnet-to-vnet-peering
+languages:
+- json
+- bicep
+---
+# Peer two existing VNets within a single region
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/existing-vnet-to-vnet-peering/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/existing-vnet-to-vnet-peering/PublicDeployment.svg)
@@ -23,5 +34,4 @@ You can modify the parameters file to change the default values to your own sett
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-
-`Tags: bicep, recoveryservices, backup, vault`
+`Tags: bicep, recoveryservices, backup, vault, Microsoft.Network/virtualNetworks/virtualNetworkPeerings, Microsoft.Network/virtualNetworks`

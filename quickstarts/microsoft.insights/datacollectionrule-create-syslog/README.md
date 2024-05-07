@@ -1,11 +1,21 @@
-# Data Collection Rule
+---
+description: This template creates a data collection rule defining the data source (Syslog) and the destination workspace.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: datacollectionrule-create-syslog
+languages:
+- json
+---
+# Data Collection Rule for Syslog
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/datacollectionrule-create-syslog/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/datacollectionrule-create-syslog/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/datacollectionrule-create-syslog/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/datacollectionrule-create-syslog/FairfaxDeployment.svg)
-    
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/datacollectionrule-create-syslog/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/datacollectionrule-create-syslog/CredScanResult.svg)
 
@@ -23,7 +33,7 @@ The following resources are deployed
 Data collection rule (DCR) - defines:
 - Data Sources: WHAT data should be collected
 - Destinations: WHERE it should be sent
-- Data flows: HOW to route data streams 
+- Data flows: HOW to route data streams
 
 **MySyslogDcr**: Defines *Microsoft-Syslog* as the data source, and the log analytics *workspaceResourceId* as the destination.
 
@@ -39,9 +49,9 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 For more information on **data collection rules**, please visit:
 
-- [Data Collection Rules overview](https://docs.microsoft.com/en-us/azure/azure-monitor/agents/data-collection-rule-overview)
-- [Data Collection Rule Associations](https://docs.microsoft.com/en-us/azure/azure-monitor/agents/data-collection-rule-azure-monitor-agent)
-- [Azure Monitor agent overview](https://docs.microsoft.com/en-us/azure/azure-monitor/agents/azure-monitor-agent-overview)
-- [Install Azure Monitor agent](https://docs.microsoft.com/en-us/azure/azure-monitor/agents/azure-monitor-agent-install)
+- [Data Collection Rules overview](https://docs.microsoft.com/azure/azure-monitor/agents/data-collection-rule-overview)
+- [Data Collection Rule Associations](https://docs.microsoft.com/azure/azure-monitor/agents/data-collection-rule-azure-monitor-agent)
+- [Azure Monitor agent overview](https://docs.microsoft.com/azure/azure-monitor/agents/azure-monitor-agent-overview)
+- [Install Azure Monitor agent](https://docs.microsoft.com/azure/azure-monitor/agents/azure-monitor-agent-install)
 
-`Tags: DCR, DCRA, Monitor, data collection, data collection rule, azure monitor`
+`Tags: DCR, DCRA, Monitor, data collection, data collection rule, azure monitor, Microsoft.Insights/dataCollectionRules, microsoft.operationalinsights/workspaces`

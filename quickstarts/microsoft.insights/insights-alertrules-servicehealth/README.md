@@ -1,4 +1,15 @@
-# Create an Azure service alert for a resource group
+---
+description: This template creates an Azure service health alert that optionally sends emails to service administrators and specified email addresses in the event of cerain Azure service outages.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: insights-alertrules-servicehealth
+languages:
+- json
+- bicep
+---
+# Creates an Azure service alert
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/insights-alertrules-servicehealth/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/insights-alertrules-servicehealth/PublicDeployment.svg)
@@ -23,4 +34,6 @@ There are 3 types of alert:
 * Resolved
 Each of them must be added separately.
 
-It is an ARM template implementation of the [Create or update an alert rule](https://msdn.microsoft.com/en-us/library/azure/dn933805.aspx) operation in the Azure Resource Manager Insights API. The creation of these alerts in C# is described in this [post](https://code.msdn.microsoft.com/How-To-Setup-Email-Alerts-c26cdc55) by Matt Loflin.
+It is an ARM template implementation of the [Create or update an alert rule](https://msdn.microsoft.com/library/azure/dn933805.aspx) operation in the Azure Resource Manager Insights API. The creation of these alerts in C# is described in this [post](https://code.msdn.microsoft.com/How-To-Setup-Email-Alerts-c26cdc55) by Matt Loflin.
+
+`Tags: Microsoft.Insights/actionGroups, Microsoft.Insights/activityLogAlerts`

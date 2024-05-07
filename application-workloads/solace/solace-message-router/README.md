@@ -1,4 +1,14 @@
-# How to Deploy Standalone or HA Clusters of Solace PubSub+ Software Event Brokers onto Azure
+---
+description: This template allows you to deploy either a standalone Solace PubSub+ message broker or a three node High Availability cluster of Solace PubSub+ message brokers onto Azure Linux VM(s).
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: solace-message-router
+languages:
+- json
+---
+# Deploy Solace PubSub+ message broker onto Azure Linux VM(s)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/solace/solace-message-router/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/solace/solace-message-router/PublicDeployment.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsolace%2Fsolace-message-router%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsolace%2Fsolace-message-router%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsolace%2Fsolace-message-router%2Fazuredeploy.json)
 
 The Solace PubSub+ software event broker meets the needs of big data, cloud migration, and Internet-of-Things initiatives, and enables microservices and event-driven architecture. Capabilities include topic-based publish/subscribe, request/reply, message queues/queueing, and data streaming for IoT devices and mobile/web apps. The event broker supports open APIs and standard protocols including AMQP, JMS, MQTT, REST, and WebSocket. As well, it can be deployed in on-premise datacenters, natively within private and public clouds, and across complex hybrid cloud environments.
 
@@ -24,18 +34,17 @@ Message brokers can be deployed in three node HA clusters or as single, standalo
 
 Note that in production, or any environment where message loss cannot be tolerated, an HA cluster is required.
 
-The following diagram shows the PubSub+ broker nodes deployed in [Azure Availability Sets](//docs.microsoft.com/en-us/azure/virtual-machines/availability#availability-sets). To meet more strict service uptime requirements the broker nodes can be deployed in [Azure Availability Zones](//docs.microsoft.com/en-us/azure/virtual-machines/availability#availability-zones) instead.
+The following diagram shows the PubSub+ broker nodes deployed in [Azure Availability Sets](//docs.microsoft.com/azure/virtual-machines/availability#availability-sets). To meet more strict service uptime requirements the broker nodes can be deployed in [Azure Availability Zones](//docs.microsoft.com/azure/virtual-machines/availability#availability-zones) instead.
 
-Also note that for production use the type of data disks mounted from Azure Block Storage shall be adjusted from the default [Standard HDD](//docs.microsoft.com/en-us/azure/virtual-machines/disks-types)
+Also note that for production use the type of data disks mounted from Azure Block Storage shall be adjusted from the default [Standard HDD](//docs.microsoft.com/azure/virtual-machines/disks-types)
 
-The Load Balancer in the diagram is exposed publicly and the VMs are also publicly accessible via SSH. This is not always desirable and an "Internal" deployment option is also provided, which will only expose these internally with no public IP addresses created. In this case the Load Balancer and the VMs are only accessible from a VM within the virtual network. 
+The Load Balancer in the diagram is exposed publicly and the VMs are also publicly accessible via SSH. This is not always desirable and an "Internal" deployment option is also provided, which will only expose these internally with no public IP addresses created. In this case the Load Balancer and the VMs are only accessible from a VM within the virtual network.
 
 ![alt text](images/ha-cluster.png "HA Cluster Deployment")
 
-
 The deployment is a two step process:
 
-### Step 1: 
+### Step 1:
 
 Obtain a reference to the Docker image of the Solace PubSub+ event broker to be deployed
 
@@ -55,11 +64,11 @@ The Docker image reference can be:
 
      * If you have purchased a Docker image of Solace PubSub+ Enterprise, Solace will give you information for how to download the compressed tar archive package from a secure Solace server. Contact Solace Support at support@solace.com if you require assistance. Then you can host this tar archive together with its MD5 on a file server and use the download URL as the image reference.
 
-### Step 2: 
+### Step 2:
 
-Hit the "Deploy to Azure" button, and in the deployment template add the link to the Solace PubSub+ software event broker. 
+Hit the "Deploy to Azure" button, and in the deployment template add the link to the Solace PubSub+ software event broker.
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsolace-message-router%2F%2Fazuredeploy.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsolace-message-router%2F%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%application-workloads%2Fsolace%2Fsolace-message-router%2Fazuredeploy.json)
 
 You need to fill in the following fields (* marks the mandatory ones):
@@ -109,7 +118,6 @@ In addition to the above resources, the deployment creates an Azure Load Balance
 
 If OMS workspace name has been specified, Microsoft OMS (Operations Management Suite) Agents are also installed on each event broker using the OMS Agent Extension. They collect and send logs to a new or existing Azure Log Analytics workspace resource that aggregates logs and diagnostics from each virtual machine in the deployment.
 
-
 # Gaining admin access to the event broker
 
 To manage the currently AD-Active event broker, you can connect to the Public IP Address associated with the Load Balancer as the 'admin' user (for the rest of the document it is assumed that the publicly exposed Load Balancer option has been deployed). From the Resource Group view for your deployment on the Azure Portal, the Load Balancer is the resource named `myLB`, and its Public IP Address is the resource named `myLBPublicIPD`, which has an IP address and a DNS name that you can connect to.
@@ -122,7 +130,7 @@ Use the Load Balacer's external Public IP at port 8080 to access these services.
 
 ### PubSub+ CLI access
 
-If you are used to working with console access to Solace PubSub+, this is available with the Azure instance. 
+If you are used to working with console access to Solace PubSub+, this is available with the Azure instance.
 
 There are two options to connect:
 * Open a CLI SSH connection on port 2222 to the active node through the Load Balancer as described above; or
@@ -132,7 +140,7 @@ The [connect] button at the upper left of the `solacetestvm0`, `solacetestvm1`, 
 
 ![alt text](images/remote_access.png "console with PubSub+ cli")
 
-The simplest way is to [create an Azure Bastion first, then use the specified "Admin Username" and "Admin Password" to log in](https://docs.microsoft.com/en-us/azure/bastion/bastion-connect-vm-ssh-linux#username). Once you have access to the base OS command line you can access the PubSub+ CLI with the following command:
+The simplest way is to [create an Azure Bastion first, then use the specified "Admin Username" and "Admin Password" to log in](https://docs.microsoft.com/azure/bastion/bastion-connect-vm-ssh-linux#username). Once you have access to the base OS command line you can access the PubSub+ CLI with the following command:
 
 ```
 sudo docker exec -it solace cli
@@ -168,12 +176,13 @@ This project is licensed under the Apache License, Version 2.0. - See the [LICEN
 
 For more information about writing Azure Resource Manager(ARM) templates and Azure Quickstart templates try these resources:
 
-- [Authoring Azure Resource Manager templates](//docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates)
-- [Azure Quickstart Templates](//azure.microsoft.com/en-us/resources/templates/)
+- [Authoring Azure Resource Manager templates](//docs.microsoft.com/azure/azure-resource-manager/resource-group-authoring-templates)
+- [Azure Quickstart Templates](//azure.microsoft.com/resources/templates/)
 
 For more information about Solace PubSub+ technology in general please visit these resources:
 
-- The Solace Developer Portal website at: [solace.dev](//solace.dev/)
-- Understanding [Solace technology](//solace.com/products/platform/)
-- Ask the [Solace community](//dev.solace.com/community/).
+- The Solace Developer Portal website at: [solace.dev](https://www.solace.dev/)
+- Understanding [Solace technology](https://solace.com/products/platform/)
+- Ask the [Solace community](https://solace.community/).
 
+`Tags: Microsoft.Resources/deployments, Microsoft.OperationalInsights/workspaces, Microsoft.OperationalInsights/workspaces/datasources, Microsoft.OperationsManagement/solutions, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/availabilitySets, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DockerExtension, OmsAgentForLinux, CustomScript, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks/subnets`

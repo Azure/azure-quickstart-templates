@@ -1,4 +1,14 @@
-# Guacamole VM in existing VNet 
+---
+description: This template deploys a VM with Guacamole, the free, open source HTML5 RDP/VNC proxy. An existing Virtual Network and a subnet are required for using this template. The base image is CoreOS Stable, and the deployment uses Docker containers.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: guacamole-rdp-vnc-gateway-existing-vnet
+languages:
+- json
+---
+# Guacamole VM in existing VNet
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/guacamole/guacamole-rdp-vnc-gateway-existing-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/guacamole/guacamole-rdp-vnc-gateway-existing-vnet/PublicDeployment.svg)
@@ -17,7 +27,7 @@ This template deploys a VM with [Guacamole](http://guac-dev.org), the open sourc
 
 You will need an existing Virtual Network, and you will need the name of the VNet and a subnet in that VNet. This template deploys Guacamole and MariaDB using Docker containers, and it's based on CoreOS (channel "stable").
 
-### SSH key
+## SSH key
 
 This template requires you to provide a **SSH RSA public key**.
 
@@ -48,7 +58,7 @@ The default credentials are:
 
 1. Consider changing the Guacamole admin account credentials as soon as possible to restrict unauthorized access.
 2. The MySQL database is configured with simple passwords (that can be seen in the scripts in this repository). However, the MariaDB (MySQL) container is not exposed on the network, so only containers directly linked to it and running on the same host can connect to the database.
-3. The web server is configured to use HTTP only. You may want to configure Tomcat to use HTTPS, or put a proxy in front which does SSL/TLS offloading (for example [Azure Application Gateway](https://azure.microsoft.com/en-us/services/application-gateway/)).
+3. The web server is configured to use HTTP only. You may want to configure Tomcat to use HTTPS, or put a proxy in front which does SSL/TLS offloading (for example [Azure Application Gateway](https://azure.microsoft.com/services/application-gateway/)).
 
 ## Debugging
 
@@ -56,3 +66,4 @@ If you're having issues starting a RDP or VNC session, you can get detailed log 
 
     $ sudo docker logs some-guacd
 
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks`

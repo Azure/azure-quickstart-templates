@@ -4,13 +4,13 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1008.15138",
-      "templateHash": "11664914416595834641"
+      "version": "0.25.53.49325",
+      "templateHash": "32460378746687250"
     }
   },
   "parameters": {
     "adminPasswordOrKey": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
@@ -35,10 +35,35 @@
     "instanceCount": {
       "type": "int",
       "defaultValue": 5,
-      "maxValue": 16,
       "minValue": 1,
+      "maxValue": 16,
       "metadata": {
         "description": "Number of VM instances (16 or less)."
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "0001-com-ubuntu-server-jammy",
+      "metadata": {
+        "description": "The offer of the Ubuntu image from which to launch the Virtual Machine."
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "22_04-lts-gen2",
+      "metadata": {
+        "description": "The SKU of the Ubuntu image from which to launch the Virtual Machine."
       }
     },
     "location": {
@@ -63,7 +88,7 @@
     },
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_D2_v3",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
@@ -77,15 +102,21 @@
     },
     "dnsName": {
       "type": "string",
-      "maxLength": 61,
       "minLength": 3,
+      "maxLength": 61,
       "metadata": {
         "description": "String used to connect to your VMSS VM using dnsName.location.cloudapp.azure.com (must be globally unique)"
       }
     }
   },
-  "functions": [],
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -99,8 +130,8 @@
     },
     "osType": {
       "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "18.04-LTS",
+      "offer": "[parameters('imageOffer')]",
+      "sku": "[parameters('imageSku')]",
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
@@ -216,7 +247,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-11-01",
       "name": "[parameters('vmssName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -241,8 +272,9 @@
             "computerNamePrefix": "[parameters('vmssName')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPasswordOrKey')]",
-            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
           },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {

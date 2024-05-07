@@ -1,0 +1,119 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "[format('workspace{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the workspace, this value must be globally unique."
+      }
+    },
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "[concat('keyvault-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the KeyVault, this value must be globally unique."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the Azure location where the key vault should be created."
+      }
+    },
+    "keyName": {
+      "type": "string",
+      "defaultValue": "[concat('keyvault8-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the encryption key."
+      }
+    }
+  },
+
+  "resources": [
+    {
+      "name": "vault-prereq",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/Microsoft.KeyVault/vaults/1.0/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vaultName": {
+            "value": "[parameters('vaultName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "enablePurgeProtection": {
+            "value": true
+          }
+        }
+      }
+    },
+    {
+      "name": "key-prereq",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "vault-prereq"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/Microsoft.KeyVault/vaults/keys/0.9/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vaultName": {
+            "value": "[parameters('vaultName')]"
+          },
+          "keyName": {
+            "value": "[parameters('keyName')]"
+          },
+
+          "kty": {
+            "value": "RSA"
+          },
+          "key_ops": {
+            "value": [
+              "encrypt",
+              "decrypt",
+              "sign",
+              "verify",
+              "wrapKey",
+              "unwrapKey"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "outWorkspaceName": {
+      "type": "string",
+      "value": "[parameters('workspaceName')]"
+    },
+    "outKeyVaultName": {
+      "type": "string",
+      "value": "[parameters('vaultName')]"
+    },
+    "outKeyName": {
+      "type": "string",
+      "value": "[parameters('keyName')]"
+    },
+    "outKeyVersion": {
+      "type": "string",
+      "value": "[split(reference('key-prereq').outputs.key.value.properties.keyUriWithVersion, '/')[5]]"
+    },
+    "outKeyVaultResourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    }
+  }
+}

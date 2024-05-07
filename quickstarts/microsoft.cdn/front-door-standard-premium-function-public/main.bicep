@@ -36,7 +36,7 @@ module functionApp 'modules/function.bicep' = {
     location: location
     appName: functionAppName
     functionPlanSkuName: functionPlanSkuName
-    frontDoorId: frontDoorProfile.properties.frontdoorId
+    frontDoorId: frontDoorProfile.properties.frontDoorId
   }
 }
 

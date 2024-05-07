@@ -1,3 +1,14 @@
+---
+description: This template creates a Recovery Services vault that will be used further for Backup and Site Recovery.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: recovery-services-vault-create
+languages:
+- json
+- bicep
+---
 # Create a Recovery Services vault with advanced options
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vault-create/PublicLastTestDate.svg)
@@ -28,7 +39,9 @@ The Site Recovery service ensures your servers, virtual machines, and apps are r
 A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).
 
 ## Cross Region Restore
-A Recovery Services vault can only change cross region restore before any backups have been configured. Once any backup is configured, cross region support setting cannot be changed. [Learn more](https://docs.microsoft.com/en-us/azure/backup/backup-create-rs-vault#set-cross-region-restore).
+A Recovery Services vault can only change cross region restore before any backups have been configured. Once any backup is configured, cross region support setting cannot be changed. [Learn more](https://docs.microsoft.com/azure/backup/backup-create-rs-vault#set-cross-region-restore).
 
 ## Delete an Azure Backup Recovery Services vault
-In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://docs.microsoft.com/en-us/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
+In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://docs.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
+
+`Tags: Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupstorageconfig`

@@ -1,4 +1,14 @@
-# Deploy a new Visual Studio Team Services (VSTS) account and project.
+---
+description: This template allows you to deploy a new Visual Studio Team Services (VSTS) account and a new project.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: visual-studio-team-services-project-create
+languages:
+- json
+---
+# Deploy a new VSTS account and project
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/visual-studio-team-services-project-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/visual-studio-team-services-project-create/PublicDeployment.svg)
@@ -17,4 +27,4 @@ This template allows you to deploy a new Visual Studio Team Services (VSTS) acco
 
 For more information about Visual Studio Team Services (VSTS), see [What is Visual Studio Team Services?](https://www.visualstudio.com/team-services/).
 
-
+`Tags: microsoft.visualstudio/account, project`

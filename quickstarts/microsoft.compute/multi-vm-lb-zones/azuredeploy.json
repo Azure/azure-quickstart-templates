@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "8852634272734254962"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -23,11 +30,11 @@
     },
     "windowsOrUbuntu": {
       "type": "string",
+      "defaultValue": "Ubuntu",
       "allowedValues": [
         "Windows",
         "Ubuntu"
       ],
-      "defaultValue": "Ubuntu",
       "metadata": {
         "description": "Operation System for the Virtual Machine."
       }
@@ -60,14 +67,54 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2_v2",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of the virtual machine"
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "OSVersion": {
+      "type": "string",
+      "defaultValue": "2022-datacenter-azure-edition",
+      "allowedValues": [
+        "2022-datacenter-azure-edition",
+        "2022-datacenter-azure-edition-core",
+        "2022-datacenter-azure-edition-core-smalldisk",
+        "2022-datacenter-azure-edition-smalldisk",
+        "2022-datacenter-core-g2",
+        "2022-datacenter-core-smalldisk-g2",
+        "2022-datacenter-g2",
+        "2022-datacenter-smalldisk-g2"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
       }
     }
   },
   "variables": {
-    "storageAccountName": "[concat('diags', uniquestring(resourceGroup().id))]",
+    "extensionName": "GuestAttestation",
+    "extensionPublisherLin": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionPublisherWin": "Microsoft.Azure.Security.WindowsAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "storageAccountName": "[format('diags{0}', uniqueString(resourceGroup().id))]",
     "nicName": "myVMNic",
     "subnetName": "Subnet-1",
     "publicIPAddressName": "myPublicIP",
@@ -80,13 +127,13 @@
     "windowsImage": {
       "publisher": "MicrosoftWindowsServer",
       "offer": "WindowsServer",
-      "sku": "2019-Datacenter",
+      "sku": "[parameters('OSVersion')]",
       "version": "latest"
     },
     "linuxImage": {
       "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "18.04-LTS",
+      "offer": "0001-com-ubuntu-server-lunar-daily",
+      "sku": "23_04-daily-gen2",
       "version": "latest"
     },
     "linuxConfiguration": {
@@ -94,7 +141,7 @@
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -104,8 +151,8 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -114,8 +161,8 @@
       "properties": {}
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -129,8 +176,8 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-09-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -141,7 +188,7 @@
               "description": "Allow RDP/SSH",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), 3389, 22)]",
+              "destinationPortRange": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), '3389', '22')]",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
@@ -153,13 +200,10 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('networkSecurityGroupName')]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -177,22 +221,20 @@
             }
           }
         ]
-      }
-    },
-    {
-      "apiVersion": "2020-05-01",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'), copyindex())]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "nicLoop",
-        "count": "[parameters('numberOfVms')]"
       },
       "dependsOn": [
-        "[variables('virtualNetworkName')]",
-        "[variables('lbName')]",
-        "lbNatLoop"
-      ],
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "nic",
+        "count": "[length(range(0, parameters('numberOfVms')))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}', variables('nicName'), range(0, parameters('numberOfVms'))[copyIndex()])]",
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
@@ -209,25 +251,27 @@
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('lbName'), concat(variables('inboundNatRuleName'), copyindex()))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('lbName'), format('{0}{1}', variables('inboundNatRuleName'), range(0, parameters('numberOfVms'))[copyIndex()]))]"
                 }
               ]
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "inboundNatRule",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
-      "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('lbName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
-      "dependsOn": [
-        "[variables('publicIPAddressName')]"
-      ],
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -244,14 +288,14 @@
             "name": "LoadBalancerBackend"
           }
         ],
-        "loadbalancingRules": [
+        "loadBalancingRules": [
           {
             "name": "port80",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontendIPConfigID')]"
+                "id": "[variables('frontEndIPConfigID')]"
               },
-              "backendaddressPool": {
+              "backendAddressPool": {
                 "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), 'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
@@ -274,52 +318,51 @@
             }
           }
         ]
-      }
-    },
-    {
-      "apiVersion": "2020-05-01",
-      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
-      "name": "[concat(variables('lbName'), '/', variables('inboundNatRuleName'), copyIndex())]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "lbNatLoop",
-        "count": "[parameters('numberOfVms')]"
       },
       "dependsOn": [
-        "[variables('lbName')]"
-      ],
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "inboundNatRule",
+        "count": "[length(range(0, parameters('numberOfVms')))]"
+      },
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', variables('lbName'), format('{0}{1}', variables('inboundNatRuleName'), range(0, parameters('numberOfVms'))[copyIndex()]))]",
       "properties": {
         "frontendIPConfiguration": {
           "id": "[variables('frontEndIPConfigID')]"
         },
         "protocol": "Tcp",
-        "frontendPort": "[copyIndex(50000)]",
+        "frontendPort": "[add(range(0, parameters('numberOfVms'))[copyIndex()], 50000)]",
         "backendPort": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), 3389, 22)]",
         "enableFloatingIP": false
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]"
+      ]
     },
     {
-      "apiVersion": "2019-12-01",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('dnsName'), copyindex())]",
-      "zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
       "copy": {
-        "name": "virtualMachineLoop",
-        "count": "[parameters('numberOfVms')]"
+        "name": "dns",
+        "count": "[length(range(0, parameters('numberOfVms')))]"
       },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}', parameters('dnsName'), range(0, parameters('numberOfVms'))[copyIndex()])]",
+      "zones": "[split(string(add(mod(range(0, parameters('numberOfVms'))[copyIndex()], 3), 1)), ',')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "nicLoop"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('dnsName'), copyIndex())]",
+          "computerName": "[format('{0}{1}', parameters('dnsName'), range(0, parameters('numberOfVms'))[copyIndex()])]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), variables('windowsImage'), variables('linuxImage'))]",
@@ -330,23 +373,63 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'),copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}', variables('nicName'), range(0, parameters('numberOfVms'))[copyIndex()]))]"
             }
           ]
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "nic",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "guestAttestation",
+        "count": "[length(range(0, parameters('numberOfVms')))]"
+      },
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', format('{0}{1}', parameters('dnsName'), range(0, parameters('numberOfVms'))[range(0, parameters('numberOfVms'))[copyIndex()]]), 'guestAttestation')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), variables('extensionPublisherWin'), variables('extensionPublisherLin'))]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}{1}', parameters('dnsName'), range(0, parameters('numberOfVms'))[range(0, parameters('numberOfVms'))[copyIndex()]]))]"
+      ]
     }
   ],
   "outputs": {
     "hostname": {
       "type": "string",
-      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2023-09-01').dnsSettings.fqdn]"
     }
   }
 }

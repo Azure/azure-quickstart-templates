@@ -1,0 +1,189 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "839429523697802952"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Region where the mobile network will be deployed (must match the resource group region)."
+      }
+    },
+    "mobileNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the mobile network."
+      }
+    },
+    "mobileCountryCode": {
+      "type": "string",
+      "defaultValue": "001",
+      "metadata": {
+        "description": "The mobile country code for the mobile network."
+      }
+    },
+    "mobileNetworkCode": {
+      "type": "string",
+      "defaultValue": "01",
+      "metadata": {
+        "description": "The mobile network code for the mobile network."
+      }
+    },
+    "sliceName": {
+      "type": "string",
+      "defaultValue": "slice-1",
+      "metadata": {
+        "description": "The name of the slice."
+      }
+    },
+    "dataNetworkName": {
+      "type": "string",
+      "defaultValue": "internet",
+      "metadata": {
+        "description": "The name of the data network."
+      }
+    },
+    "serviceName": {
+      "type": "string",
+      "defaultValue": "Allow-all-traffic",
+      "metadata": {
+        "description": "The name of the service"
+      }
+    },
+    "simPolicyName": {
+      "type": "string",
+      "defaultValue": "Default-policy",
+      "metadata": {
+        "description": "The name of the SIM policy"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/dataNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('dataNetworkName'))]",
+      "location": "[parameters('location')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/slices",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('sliceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "snssai": {
+          "sst": 1
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('mobileNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicLandMobileNetworkIdentifier": {
+          "mcc": "[parameters('mobileCountryCode')]",
+          "mnc": "[parameters('mobileNetworkCode')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/services",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('serviceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "servicePrecedence": 253,
+        "pccRules": [
+          {
+            "ruleName": "All-traffic",
+            "rulePrecedence": 253,
+            "trafficControl": "Enabled",
+            "serviceDataFlowTemplates": [
+              {
+                "templateName": "Any-traffic",
+                "protocol": ["ip"],
+                "direction": "Bidirectional",
+                "remoteIpList": ["any"]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/simPolicies",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('simPolicyName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ueAmbr": {
+          "uplink": "2 Gbps",
+          "downlink": "2 Gbps"
+        },
+        "defaultSlice": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
+        },
+        "sliceConfigurations": [
+          {
+            "slice": {
+              "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
+            },
+            "defaultDataNetwork": {
+              "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/dataNetworks', parameters('mobileNetworkName'), parameters('dataNetworkName'))]"
+            },
+            "dataNetworkConfigurations": [
+              {
+                "dataNetwork": {
+                  "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/dataNetworks', parameters('mobileNetworkName'), parameters('dataNetworkName'))]"
+                },
+                "sessionAmbr": {
+                  "uplink": "2 Gbps",
+                  "downlink": "2 Gbps"
+                },
+                "allowedServices": [
+                  {
+                    "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/services', parameters('mobileNetworkName'), parameters('serviceName'))]"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/dataNetworks', parameters('mobileNetworkName'), parameters('dataNetworkName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/services', parameters('mobileNetworkName'), parameters('serviceName'))]",
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/slices', parameters('mobileNetworkName'), parameters('sliceName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "existingMobileNetworkName": {
+      "type": "string",
+      "value": "[parameters('mobileNetworkName')]"
+    },
+    "existingSimPolicyName": {
+      "type": "string",
+      "value": "[parameters('simPolicyName')]"
+    }
+  }
+}

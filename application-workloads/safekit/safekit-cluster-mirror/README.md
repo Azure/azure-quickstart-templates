@@ -1,4 +1,14 @@
-# Evidian SafeKit - High Availability Cluster with Synchronous Real-Time Replication and Failover in Azure - Mirror Module
+---
+description: This template deploys a high availability cluster with real-time synchronous replication and failover, between 2 Windows or Linux VMs in 2 availability zones
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: safekit-cluster-mirror
+languages:
+- json
+---
+# Evidian SafeKit Mirror Cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/safekit/safekit-cluster-mirror/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/safekit/safekit-cluster-mirror/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/safekit/safekit-cluster-mirror/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/safekit/safekit-cluster-mirror/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsafekit%2Fsafekit-cluster-mirror%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsafekit%2Fsafekit-cluster-mirror%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsafekit%2Fsafekit-cluster-mirror%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsafekit%2Fsafekit-cluster-mirror%2Fazuredeploy.json)
 
@@ -64,7 +74,5 @@ After deployment, go to the resource groups's deployment ('Microsoft.Template') 
 *   [Azure: The Simplest Load Balancing Cluster with Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-load-balancing-cluster-failover/)
 *   [Azure: The Simplest High Availability Cluster with Synchronous Replication and Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-high-availability-cluster-synchronous-replication-failover/)
 
-`Tags: high availability, cluster, replication, real-time replication, synchronous replication, failover, business continuity, disaster recovery, evidian, safekit, mirror`
-
-
+`Tags: high availability, cluster, replication, real-time replication, synchronous replication, failover, business continuity, disaster recovery, evidian, safekit, mirror, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers, Microsoft.Storage/storageAccounts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, SystemAssigned, Microsoft.Authorization/roleAssignments`
 
