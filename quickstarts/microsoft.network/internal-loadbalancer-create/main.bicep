@@ -19,10 +19,10 @@ param vmSize string = 'Standard_D2s_v3'
 param vNetAddressPrefix string = '10.0.0.0/16'
 
 @description('Backend subnet address prefix')
-param vNetSubnetAddressPrefix string = '10.0.2.0/24'
+param vNetSubnetAddressPrefix string = '10.0.0.0/24'
 
 @description('Bastion subnet address prefix')
-param vNetBastionSubnetAddressPrefix string = '10.0.0.0/24'
+param vNetBastionSubnetAddressPrefix string = '10.0.2.0/24'
 
 @description('Public IP address of load balancer')
 param lbPublicIPAddress string = '10.0.0.6'
