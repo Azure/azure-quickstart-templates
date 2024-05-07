@@ -1,44 +1,130 @@
-@description('address prefix')
-param vnetAddressPrefix string = '10.0.0.0/16'
 
-@description('Subnet prefix')
-param subnetPrefix string = '10.0.0.0/24'
+@description('Admin username')
+param adminUsername string
+
+@description('Admin password')
+@secure()
+param adminPassword string
+
+@description('Prefix to use for VM names')
+param vmNamePrefix string = 'BackendVM'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-var virtualNetworkName = 'myVNet'
-var subnetName = 'myBackendSubnet'
-var loadBalancerName = 'myLoadBalancer'
-var nicName = 'myNIC1'
-var lbSku = 'Standard'
-var lbFrontEndName = 'loadBalancerFrontEnd'
-var lbBackEndName = 'loadBalancerBackEnd'
-var lbRuleName = 'HTTPRule'
-var lbProbeName = 'TCPPort80HealthProbe'
+var natGatewayName = 'lb-nat-gateway'
+var natGatewayPublicIPAddressName = 'lb-nat-gateway-ip'
+var vNetName = 'lb-vnet'
+var vNetSubnetName = 'backend-subnet'
+var vNetAddressPrefix = '10.0.0.0/16'
+var vNetSubnetAddressPrefix = '10.0.0.0/24'
+var storageAccountType = 'Standard_LRS'
+var vmSize = 'Standard_D2s_v3'
+var storageAccountName = uniqueString(resourceGroup().id)
+var loadBalancerName = 'internal-lb'
+var networkInterfaceName = 'lb-nic'
+var numberOfInstances = 2
+var lbSkuName = 'Standard'
+var bastionName = 'lb-bastion'
+var bastionSubnetName = 'AzureBastionSubnet'
+var vNetBastionSubnetAddressPrefix = '10.0.1.0/24'
+var bastionPublicIPAddressName = 'lb-bastion-ip'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
-  name: virtualNetworkName
+resource natGateway 'Microsoft.Network/natGateways@2021-05-01' = {
+  name: natGatewayName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    idleTimeoutInMinutes: 4
+    publicIpAddresses: [
+      {
+        id: natGatewayPublicIPAddress.id
+      }
+    ]
+  }
+}
+
+resource natGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+  name: natGatewayPublicIPAddressName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 4
+  }
+}
+
+resource vNet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+  name: vNetName
   location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
-        vnetAddressPrefix
+        vNetAddressPrefix
       ]
     }
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
-  name: subnetName
-  parent: vnet
+resource vNetName_bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+  parent: vNet
+  name: bastionSubnetName
   properties: {
-    addressPrefix: subnetPrefix
+    addressPrefix: vNetBastionSubnetAddressPrefix
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
-  name: nicName
+resource vNetName_vNetSubnetName 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+  parent: vNet
+  name: vNetSubnetName
+  properties: {
+    addressPrefix: vNetSubnetAddressPrefix
+    natGateway: {
+      id: natGateway.id
+    }
+  }
+}
+
+resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
+  name: bastionName
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'IpConf'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: {
+            id: bastionPublicIPAddress.id
+          }
+          subnet: {
+            id: vNetName_bastionSubnet.id
+          }
+        }
+      }
+    ]
+  }
+}
+
+resource bastionPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
+  name: bastionPublicIPAddressName
+  location: location
+  sku: {
+    name: lbSkuName
+  }
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
+  }
+}
+
+resource networkInterface 'Microsoft.Network/networkInterfaces@2023-09-01' = [for i in range(0, numberOfInstances): {
+  name: '${networkInterfaceName}${i}'
   location: location
   properties: {
     ipConfigurations: [
@@ -47,61 +133,65 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: subnet.id
+            id: vNetName_vNetSubnetName.id
           }
           loadBalancerBackendAddressPools: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lb.name, lbBackEndName)
+              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, 'BackendPool1')
             }
           ]
         }
       }
     ]
   }
-}
+  dependsOn: [
+    vNet
+    loadBalancer
+  ]
+}]
 
-resource lb 'Microsoft.Network/loadBalancers@2023-09-01' = {
+resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
   name: loadBalancerName
   location: location
   sku: {
-    name: lbSku
+    name: 'Standard'
   }
   properties: {
     frontendIPConfigurations: [
       {
-        name: lbFrontEndName
         properties: {
           subnet: {
-            id: subnet.id
+            id: vNetName_vNetSubnetName.id
           }
+          privateIPAddress: '10.0.0.6'
+          privateIPAllocationMethod: 'Static'
         }
+        name: 'LoadBalancerFrontend'
       }
     ]
     backendAddressPools: [
       {
-        name: lbBackEndName
+        name: 'BackendPool1'
       }
     ]
     loadBalancingRules: [
       {
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, lbFrontEndName)
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, 'LoadBalancerFrontend')
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, lbBackEndName)
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, 'BackendPool1')
           }
           probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, lbProbeName)
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, 'lbprobe')
           }
           protocol: 'Tcp'
           frontendPort: 80
           backendPort: 80
-          enableTcpReset: true
-          disableOutboundSnat: true
           idleTimeoutInMinutes: 15
         }
-        name: lbRuleName
+        name: 'lbrule'
       }
     ]
     probes: [
@@ -112,8 +202,61 @@ resource lb 'Microsoft.Network/loadBalancers@2023-09-01' = {
           intervalInSeconds: 15
           numberOfProbes: 2
         }
-        name: lbProbeName
+        name: 'lbprobe'
       }
     ]
   }
 }
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: storageAccountName
+  location: location
+  sku: {
+    name: storageAccountType
+  }
+  kind: 'StorageV2'
+}
+
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = [for i in range(0, numberOfInstances): {
+  name: '${vmNamePrefix}${i}'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSize
+    }
+    osProfile: {
+      computerName: '${vmNamePrefix}${i}'
+      adminUsername: adminUsername
+      adminPassword: adminPassword
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: 'MicrosoftWindowsServer'
+        offer: 'WindowsServer'
+        sku: '2019-Datacenter'
+        version: 'latest'
+      }
+      osDisk: {
+        createOption: 'FromImage'
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: networkInterface[i].id
+        }
+      ]
+    }
+    diagnosticsProfile: {
+      bootDiagnostics: {
+        enabled: true
+        storageUri: storageAccount.properties.primaryEndpoints.blob
+      }
+    }
+  }
+}]
+
+output location string = location
+output name string = loadBalancer.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = loadBalancer.id
