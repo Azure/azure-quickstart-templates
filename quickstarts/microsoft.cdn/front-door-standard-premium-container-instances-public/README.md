@@ -1,4 +1,15 @@
-# Front Door Standard/Premium with Azure Container Instances origin
+---
+description: This template creates a Front Door Standard/Premium with a container group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-container-instances-public
+languages:
+- json
+- bicep
+---
+# Front Door Standard/Premium with Azure Container Instances
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-container-instances-public/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-container-instances-public/PublicDeployment.svg)
@@ -46,3 +57,5 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 Once you have deployed the Azure Resource Manager template, wait a few minutes before you attempt to access your Front Door endpoint to allow time for Front Door to propagate the settings throughout its network.
 
 You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. If you access the base hostname you should see a page saying _Welcome to Azure Container Instances!_. If you see a different error page, wait a few minutes and try again.
+
+`Tags: Microsoft.ContainerInstance/containerGroups, Public, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

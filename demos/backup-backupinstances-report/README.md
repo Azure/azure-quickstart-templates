@@ -1,4 +1,14 @@
-# Create a Logic App to send information on backup instances protected using Azure Backup via email
+---
+description: Create a Logic App to send reports on backup instances protected using Azure Backup via email
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-backupinstances-report
+languages:
+- json
+---
+# Logic App to email reports on backup instances
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-backupinstances-report/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-backupinstances-report/PublicDeployment.svg)
@@ -17,12 +27,12 @@ This template deploys a Logic App that sends periodic reports on backup instance
 
 Following is the information that is exported by this Logic App:
 
-1. Inline 
-a. Trend of Backup Instances count over time 
+1. Inline
+a. Trend of Backup Instances count over time
 b. Trend of Backup Cloud Storage (GB) over time
 
 2. Attachment
-List of all backup instances with details on policy, backup storage consumed, storage replication type etc. 
+List of all backup instances with details on policy, backup storage consumed, storage replication type etc.
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
 
@@ -30,9 +40,4 @@ List of all backup instances with details on policy, backup storage consumed, st
 
 This template needs an existing LogAnalytics workspace to query.
 
-
-
-
-
-
-
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, Foreach, AppendToStringVariable, If, ApiConnection, InitializeVariable, string, array, Scope, Table, SetVariable, Microsoft.OperationalInsights/workspaces`

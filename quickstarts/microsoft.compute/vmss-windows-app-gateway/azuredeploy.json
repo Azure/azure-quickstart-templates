@@ -1,40 +1,78 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.19.5.34762",
+      "templateHash": "3336836635633257693"
+    }
+  },
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
     },
     "windowsOSVersion": {
       "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "2022-datacenter-azure-edition",
       "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter"
+        "2016-datacenter-gensecond",
+        "2016-datacenter-server-core-g2",
+        "2016-datacenter-server-core-smalldisk-g2",
+        "2016-datacenter-smalldisk-g2",
+        "2016-datacenter-with-containers-g2",
+        "2016-datacenter-zhcn-g2",
+        "2019-datacenter-core-g2",
+        "2019-datacenter-core-smalldisk-g2",
+        "2019-datacenter-core-with-containers-g2",
+        "2019-datacenter-core-with-containers-smalldisk-g2",
+        "2019-datacenter-gensecond",
+        "2019-datacenter-smalldisk-g2",
+        "2019-datacenter-with-containers-g2",
+        "2019-datacenter-with-containers-smalldisk-g2",
+        "2019-datacenter-zhcn-g2",
+        "2022-datacenter-azure-edition",
+        "2022-datacenter-azure-edition-core",
+        "2022-datacenter-azure-edition-core-smalldisk",
+        "2022-datacenter-azure-edition-smalldisk",
+        "2022-datacenter-core-g2",
+        "2022-datacenter-core-smalldisk-g2",
+        "2022-datacenter-g2",
+        "2022-datacenter-smalldisk-g2"
       ],
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
       }
     },
     "vmssName": {
       "type": "string",
+      "maxLength": 57,
       "metadata": {
         "description": "String used as a base for naming resources. Must be 3-57 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
-      },
-      "maxLength": 57
+      }
     },
     "instanceCount": {
       "type": "int",
+      "maxValue": 1000,
+      "minValue": 3,
       "metadata": {
         "description": "Number of VM instances (1000 or less)."
-      },
-      "minValue": 3,
-      "maxValue": 1000
+      }
     },
     "adminUsername": {
       "type": "string",
@@ -57,33 +95,40 @@
     }
   },
   "variables": {
-    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "vmScaleSetName": "[toLower(substring(format('{0}{1}', parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.8.0/21",
-    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-    "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-    "nicName": "[concat(variables('namingInfix'), 'nic')]",
-    "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
+    "virtualNetworkName": "[format('{0}vnet', variables('vmScaleSetName'))]",
+    "subnetName": "[format('{0}subnet', variables('vmScaleSetName'))]",
+    "nicName": "[format('{0}nic', variables('vmScaleSetName'))]",
+    "ipConfigName": "[format('{0}ipconfig', variables('vmScaleSetName'))]",
     "imageReference": {
       "publisher": "MicrosoftWindowsServer",
       "offer": "WindowsServer",
       "sku": "[parameters('windowsOSVersion')]",
       "version": "latest"
     },
-    "appGwPublicIPAddressName": "[concat(variables('namingInfix'), 'appGwPip')]",
-    "appGwName": "[concat(variables('namingInfix'), 'appGw')]",
-    "appGwSubnetName": "[concat(variables('namingInfix'),'appGwSubnet')]",
+    "appGwPublicIPAddressName": "[format('{0}appGwPip', variables('vmScaleSetName'))]",
+    "appGwName": "[format('{0}appGw', variables('vmScaleSetName'))]",
+    "appGwSubnetName": "[format('{0}appGwSubnet', variables('vmScaleSetName'))]",
     "appGwSubnetPrefix": "10.0.1.0/24",
     "appGwFrontendPort": 80,
     "appGwBackendPort": 80,
-    "appGwBePoolName": "[concat(variables('namingInfix'), 'appGwBepool')]"
+    "appGwBePoolName": "[format('{0}appGwBepool', variables('vmScaleSetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-08-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -108,27 +153,23 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-11-01",
       "name": "[variables('appGwPublicIPAddressName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2022-11-01",
       "name": "[variables('appGwName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGwPublicIPAddressName'))]"
-      ],
       "properties": {
         "sku": {
           "name": "Standard_Large",
           "tier": "Standard",
-          "capacity": "10"
+          "capacity": 10
         },
         "gatewayIPConfigurations": [
           {
@@ -144,8 +185,8 @@
           {
             "name": "appGwFrontendIP",
             "properties": {
-              "PublicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('appGwPublicIPAddressName'))]"
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIPAddressName'))]"
               }
             }
           }
@@ -154,7 +195,7 @@
           {
             "name": "appGwFrontendPort",
             "properties": {
-              "Port": "[variables('appGwFrontendPort')]"
+              "port": "[variables('appGwFrontendPort')]"
             }
           }
         ],
@@ -167,9 +208,9 @@
           {
             "name": "appGwBackendHttpSettings",
             "properties": {
-              "Port": "[variables('appGwBackendPort')]",
-              "Protocol": "Http",
-              "CookieBasedAffinity": "Disabled"
+              "port": "[variables('appGwBackendPort')]",
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled"
             }
           }
         ],
@@ -177,52 +218,52 @@
           {
             "name": "appGwHttpListener",
             "properties": {
-              "FrontendIPConfiguration": {
-                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations',variables('appGwName'),'appGwFrontendIP')]"
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGwName'), 'appGwFrontendIP')]"
               },
-              "FrontendPort": {
-                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts',variables('appGwName'), 'appGwFrontendPort' )]"
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGwName'), 'appGwFrontendPort')]"
               },
-              "Protocol": "Http"
+              "protocol": "Http"
             }
           }
         ],
         "requestRoutingRules": [
           {
-            "Name": "rule1",
+            "name": "rule1",
             "properties": {
-              "RuleType": "Basic",
+              "ruleType": "Basic",
               "httpListener": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners',variables('appGwName'), 'appGwHttpListener')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGwName'), 'appGwHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/',variables('appGwName'), variables('appGwBePoolName'))]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/', variables('appGwName'), variables('appGwBePoolName'))]"
               },
               "backendHttpSettings": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/',variables('appGwName'), 'appGwBackendHttpSettings')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/', variables('appGwName'), 'appGwBackendHttpSettings')]"
               }
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[variables('namingInfix')]",
+      "apiVersion": "2023-03-01",
+      "name": "[variables('vmScaleSetName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-04-30-preview",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/applicationGateways/', variables('appGwName'))]"
-      ],
       "sku": {
         "name": "[parameters('vmSku')]",
         "tier": "Standard",
         "capacity": "[parameters('instanceCount')]"
       },
       "properties": {
-        "overprovision": "true",
-        "singlePlacementGroup": "false",
+        "overprovision": true,
+        "singlePlacementGroup": false,
         "upgradePolicy": {
           "mode": "Automatic"
         },
@@ -235,10 +276,11 @@
             "imageReference": "[variables('imageReference')]"
           },
           "osProfile": {
-            "computerNamePrefix": "[variables('namingInfix')]",
+            "computerNamePrefix": "[variables('vmScaleSetName')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
           },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
@@ -252,7 +294,7 @@
                         "subnet": {
                           "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]"
                         },
-                        "ApplicationGatewayBackendAddressPools": [
+                        "applicationGatewayBackendAddressPools": [
                           {
                             "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/', variables('appGwName'), variables('appGwBePoolName'))]"
                           }
@@ -265,7 +307,11 @@
             ]
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/applicationGateways', variables('appGwName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     }
   ]
 }

@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "16268121404088471947"
+    }
+  },
   "parameters": {
     "diskType": {
       "type": "string",
@@ -54,10 +61,10 @@
     },
     "moduleFilePath": {
       "type": "string",
+      "defaultValue": "ContosoWebsite.ps1.zip",
       "metadata": {
         "description": "Relative path for the DSC configuration module."
-      },
-      "defaultValue": "ContosoWebsite.ps1.zip"
+      }
     },
     "configurationFunction": {
       "type": "string",
@@ -68,17 +75,17 @@
     },
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      },
-      "defaultValue": "[deployment().properties.templateLink.uri]"
+      }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
+      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
+      }
     },
     "location": {
       "type": "string",
@@ -104,8 +111,8 @@
   },
   "resources": [
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -114,7 +121,7 @@
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -162,13 +169,10 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -186,17 +190,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-09-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -212,16 +215,17 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -239,7 +243,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('vmName'), '_OSDisk')]",
+            "name": "[format('{0}_OSDisk', parameters('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -254,29 +258,32 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), variables('vmExtensionName'))]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
-      ],
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
         "typeHandlerVersion": "2.19",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat(parameters('moduleFilePath'), parameters('_artifactsLocationSasToken')))]",
+          "ModulesUrl": "[uri(parameters('_artifactsLocation'), format('{0}{1}', parameters('moduleFilePath'), parameters('_artifactsLocationSasToken')))]",
           "ConfigurationFunction": "[parameters('configurationFunction')]",
           "Properties": {
             "MachineName": "[parameters('vmName')]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
     }
   ]
 }

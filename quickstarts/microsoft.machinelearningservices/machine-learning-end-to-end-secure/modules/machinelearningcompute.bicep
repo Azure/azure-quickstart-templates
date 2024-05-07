@@ -25,9 +25,9 @@ param aksSubnetId string
 param amlComputePublicIp bool
 
 @description('VM size for the default compute cluster')
-param amlComputeDefaultVmSize string = 'Standard_Ds3_v2'
+param vmSizeParam string
 
-resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
+resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2022-05-01' = {
   name: '${machineLearning}/cluster001'
   location: location
   tags: tags
@@ -41,7 +41,7 @@ resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces
     disableLocalAuth: true
     properties: {
       vmPriority: 'Dedicated'
-      vmSize: amlComputeDefaultVmSize
+      vmSize: vmSizeParam
       enableNodePublicIp: amlComputePublicIp
       isolatedNetwork: false
       osType: 'Linux'
@@ -58,7 +58,7 @@ resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces
   }
 }
 
-resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
+resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/workspaces/computes@2022-05-01' = {
   name: '${machineLearning}/${prefix}-ci001'
   location: location
   tags: tags
@@ -80,7 +80,7 @@ resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/wo
       subnet: {
         id: computeSubnetId
       }
-      vmSize: amlComputeDefaultVmSize
+      vmSize: vmSizeParam
     }
   }
 }
@@ -95,5 +95,6 @@ module machineLearningAksCompute 'privateaks.bicep' = {
     computeName: aksName
     aksSubnetId: aksSubnetId
     workspaceName: machineLearning
+    vmSizeParam: vmSizeParam
   }
 }

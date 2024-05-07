@@ -65,7 +65,7 @@ param networkSecurityGroupName string = 'nsg-asev3'
 @description('Required. Array of Security Rules to deploy to the Network Security Group.')
 param networkSecurityGroupSecurityRules array = []
 
-var uniStr = '${uniqueString(resourceGroup().id)}'
+var uniStr = uniqueString(resourceGroup().id)
 var virtualNetworkId = resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks', virtualNetworkName)
 var subnetId = resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var privateDNSZoneName = asev3.properties.dnsSuffix

@@ -1,4 +1,14 @@
-# Create Azure Firewall with Firewall Policy referencing IP Groups
+---
+description: This template creates an Azure Firewall with FirewalllPolicy referencing Network Rules with IpGroups. Also, includes a Linux Jumpbox vm setup
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-create-with-firewallpolicy-ipgroups
+languages:
+- json
+---
+# Create a Firewall with FirewallPolicy and IpGroups
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-firewallpolicy-ipgroups/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-firewallpolicy-ipgroups/PublicDeployment.svg)
@@ -19,4 +29,4 @@ An IP Group can support individual or multiple IP addresses, ranges, or subnets.
 
 Learn more at https://docs.microsoft.com/azure/firewall/ip-groups.
 
-
+`Tags: Microsoft.Network/ipGroups, Microsoft.Storage/storageAccounts, Microsoft.Network/routeTables, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/firewallPolicies, ruleCollectionGroups, Deny, Microsoft.Network/azureFirewalls`

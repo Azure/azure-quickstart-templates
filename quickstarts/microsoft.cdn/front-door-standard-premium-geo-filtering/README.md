@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Standard/Premium including a web application firewall with a geo-filtering rule.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-geo-filtering
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with geo-filtering
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-geo-filtering/PublicLastTestDate.svg)
@@ -42,3 +53,5 @@ Once you have deployed the Azure Resource Manager template, wait a few minutes b
 You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. If you access the base hostname you should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
 
 As long as you are making requests from IP addresses within the specified country, your request will succeed.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes, Microsoft.Network/FrontDoorWebApplicationFirewallPolicies, Microsoft.Cdn/profiles/securityPolicies`

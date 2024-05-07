@@ -5,6 +5,8 @@ If the PR does not contain changes to a sample folder, it will currently fail bu
 pass the build in order to trigger a manual review
 #>
 
+# TODO - merge this script with Get-SampleFolder-CI.ps1, if possible
+
 # Get-ChildItem env: # debugging
 
 $GitHubRepository = $ENV:BUILD_REPOSITORY_NAME
@@ -49,6 +51,7 @@ $ChangedFile = Invoke-Restmethod "$PRUri"
 
 # Now check to make sure there is exactly one sample in this PR per repo guidelines
 $FolderArray = @()
+
 $ChangedFile | ForEach-Object {
     Write-Output $_.blob_url
     if ($_.status -ne "removed") {
@@ -87,6 +90,21 @@ $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 
+# if this is a bicep sample, is the json file in the list of changed files?  if so, flag it
+if(Test-Path -Path "$FolderString\main.bicep"){
+    $ChangedFile | ForEach-Object {
+        # Write-Output "File in PR: $f"
+        if ($_.filename.EndsWith("azuredeploy.json") -and ($_.status -ne "removed")) {
+            Write-Warning "$($_.filename) is included in the PR for a bicep sample"
+            Write-Host "##vso[task.setvariable variable=json.with.bicep]$true"
+        }
+    }
+}
+
+
 $sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "").Replace("$ENV:BUILD_SOURCESDIRECTORY/", "")
 Write-Output "Using sample name: $sampleName"
 Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"
+
+Write-Output "Using github PR#: $GitHubPRNumber"
+Write-Host "##vso[task.setvariable variable=github.pr.number]$GitHubPRNumber"

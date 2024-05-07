@@ -19,7 +19,7 @@ param location string = resourceGroup().location
   'P3'
   'P4'
 ])
-@description('App Service Plan\'s pricing tier. Details at https://azure.microsoft.com/en-us/pricing/details/app-service/')
+@description('App Service Plan\'s pricing tier. Details at https://azure.microsoft.com/pricing/details/app-service/')
 param appServicePlanTier string = 'F1'
 
 @minValue(1)
@@ -43,7 +43,7 @@ var cosmosAccountName = toLower(applicationName)
 var websiteName = applicationName
 var hostingPlanName = applicationName
 
-resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
   name: cosmosAccountName
   kind: 'GlobalDocumentDB'
   location: location
@@ -62,7 +62,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   }
 }
 
-resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
+resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: hostingPlanName
   location: location
   sku: {
@@ -71,7 +71,7 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
-resource website 'Microsoft.Web/sites@2020-06-01' = {
+resource website 'Microsoft.Web/sites@2021-03-01' = {
   name: websiteName
   location: location
   properties: {
@@ -99,7 +99,7 @@ resource website 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource srcControls 'Microsoft.Web/sites/sourcecontrols@2020-06-01' = {
+resource srcControls 'Microsoft.Web/sites/sourcecontrols@2021-03-01' = {
   name: '${website.name}/web'
   properties: {
     repoUrl: repositoryUrl

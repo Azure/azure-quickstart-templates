@@ -1,4 +1,14 @@
-# Creating a Custom Resources for templates with Custom Providers
+---
+description: This sample shows how to add custom resources to Resource Manager Templates using custom providers and logic apps.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: custom-rp-with-logicapp
+languages:
+- json
+---
+# Create a Custom Resource for templates with Custom Providers
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-with-logicapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-with-logicapp/PublicDeployment.svg)
@@ -82,4 +92,4 @@ In addition, you can navigate to the deployed Azure Logic App resource in the te
 
 Additional "customResources" can be created through deploying another Azure Resource Manager Template or directly interfacing with the Azure REST API.
 
-
+`Tags: Microsoft.Logic/workflows, Switch, Response, Request, string, object, Microsoft.CustomProviders/resourceProviders, Microsoft.CustomProviders/resourceProviders/customResources`

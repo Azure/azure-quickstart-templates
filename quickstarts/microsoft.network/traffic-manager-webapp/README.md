@@ -1,4 +1,15 @@
-# Azure Traffic Manager with web apps
+---
+description: This template shows how to create an Azure Traffic Manager profile for an App Service.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: traffic-manager-webapp
+languages:
+- json
+- bicep
+---
+# Azure Traffic Manager web app example
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-webapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/traffic-manager-webapp/PublicDeployment.svg)
@@ -21,10 +32,8 @@ The accompanying PowerShell script shows how to create a resource group from the
 
 See also:
 
-- <a href="https://azure.microsoft.com/en-us/documentation/articles/traffic-manager-routing-methods/">Traffic Manager routing methods for details of the different routing methods available.
-- <a href="https://msdn.microsoft.com/en-us/library/azure/mt163581.aspx">Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
+- <a href="https://azure.microsoft.com/documentation/articles/traffic-manager-routing-methods/">Traffic Manager routing methods for details of the different routing methods available.
+- <a href="https://msdn.microsoft.com/library/azure/mt163581.aspx">Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
 
-
-
-`Tags: Azure, Traffic Manager`
+`Tags: Azure, Traffic Manager, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Network/trafficmanagerprofiles, Microsoft.Network/trafficManagerProfiles/azureEndpoints`
 

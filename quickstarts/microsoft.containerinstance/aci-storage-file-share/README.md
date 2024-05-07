@@ -1,4 +1,14 @@
-# Create a Storage Account and a File Share
+---
+description: This template creates a storage account and a file share via azure-cli in a Container Instance
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aci-storage-file-share
+languages:
+- json
+---
+# Create a Storage Account File Share via Containers
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-storage-file-share/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerinstance/aci-storage-file-share/PublicDeployment.svg)
@@ -17,7 +27,7 @@ Create a Storage Account and a File Share via az-cli in Container Instance
 
 This template demonstrates creating a Storage File Share via az-cli and Azure Container Instance. Modify the template to create a blob or other similar storage operation. The Azure Container Instance and az-cli can be used to create services not directly available in an Azure Resource Manager Template.
 
-`Tags: Azure Container Instance, az-cli`
+`Tags: Azure Container Instance, az-cli, Microsoft.Storage/storageAccounts, Microsoft.ContainerInstance/containerGroups`
 
 ## Solution overview and deployed resources
 
@@ -25,7 +35,7 @@ The following resources are deployed as part of the solution
 
 + **Storage Account**: Storage account for the file share
 + **Azure Container Instance**: Azure Container Instance, where the az-cli is executed to create the file share
-+ **File share**: [Azure File share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction) accessiable via SMB protocol
++ **File share**: [Azure File share](https://docs.microsoft.com/azure/storage/files/storage-files-introduction) accessiable via SMB protocol
 
 ## Deployment steps
 
@@ -33,9 +43,8 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 
 #### Mount
 
-Mount via SMB protocol on [Windows](https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-windows), [Linux](https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux), [macOS](https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-mac) or [Azure Container Instance](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-volume-azure-files)
+Mount via SMB protocol on [Windows](https://docs.microsoft.com/azure/storage/files/storage-how-to-use-files-windows), [Linux](https://docs.microsoft.com/azure/storage/files/storage-how-to-use-files-linux), [macOS](https://docs.microsoft.com/azure/storage/files/storage-how-to-use-files-mac) or [Azure Container Instance](https://docs.microsoft.com/azure/container-instances/container-instances-volume-azure-files)
 
 ## Notes
-Azure Container Instance is available in selected [locations](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
-
+Azure Container Instance is available in selected [locations](https://docs.microsoft.com/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
 

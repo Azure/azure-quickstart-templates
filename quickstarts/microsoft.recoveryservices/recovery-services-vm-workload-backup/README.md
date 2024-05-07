@@ -1,4 +1,15 @@
-# Azure Backup for SQL Server in Azure Virtual Machines
+---
+description: This template creates a Recovery Services Vault and a Workload specific Backup Policy. Registers VM with Backup service and Configures Protection
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: recovery-services-vm-workload-backup
+languages:
+- json
+- bicep
+---
+# Azure Backup for Workload in Azure Virtual Machines
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vm-workload-backup/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vm-workload-backup/PublicDeployment.svg)
@@ -10,7 +21,7 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vm-workload-backup/CredScanResult.svg)
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vm-workload-backup/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-workload-backup%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-workload-backup%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-workload-backup%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-workload-backup%2Fazuredeploy.json)
 
@@ -20,7 +31,7 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 
 ### Prerequisites
 
-You need to have [VM with SQL Server](https://azure.microsoft.com/en-us/services/virtual-machines/sql-server/). Sample template for VM with SQL Server can be found under prereqs directory.
+You need to have [VM with SQL Server](https://azure.microsoft.com/services/virtual-machines/sql-server/). Sample template for VM with SQL Server can be found under prereqs directory.
 
 ### Steps (Operations performed in Template)
 
@@ -39,11 +50,11 @@ Make use of conditional property in the template to toggle between new vs existi
 In order to delete the recovery services vault, you first need to stop protection to any existing backup item (e.g. database) and unregister the virtual machine containing the workload. You may refer below documentation:
 
 <ul>
-<li>[Stop backup and delete backup data](https://docs.microsoft.com/en-us/azure/backup/backup-azure-sql-automation#delete-backup-data)</li>
-<li>[Unregister VM](https://docs.microsoft.com/en-us/azure/backup/backup-azure-sql-automation#unregister-sql-vm)</li>
-<li>[Delete Recovery Services Vault](https://docs.microsoft.com/en-us/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)</li>
+<li>[Stop backup and delete backup data](https://docs.microsoft.com/azure/backup/backup-azure-sql-automation#delete-backup-data)</li>
+<li>[Unregister VM](https://docs.microsoft.com/azure/backup/backup-azure-sql-automation#unregister-sql-vm)</li>
+<li>[Delete Recovery Services Vault](https://docs.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)</li>
 </ul>
 
-To know more about Azure Backup for SQL Server in Azure Virtual Machines [Click Here](https://azure.microsoft.com/en-us/blog/azure-backup-for-sql-server-in-azure-virtual-machines-now-generally-available/)
+To know more about Azure Backup for SQL Server in Azure Virtual Machines [Click Here](https://azure.microsoft.com/blog/azure-backup-for-sql-server-in-azure-virtual-machines-now-generally-available/)
 
-
+`Tags: Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers, Microsoft.RecoveryServices/vaults/backupPolicies, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems, Microsoft.Compute/virtualMachines, Microsoft.SqlVirtualMachine/sqlVirtualMachines, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups`

@@ -1,4 +1,15 @@
-# Create IoT Hub and Device to Cloud Consumer Group
+---
+description: This template enables you to create an IoT hub and an IoT Hub Device Provisioning Service, and link the two services together.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: iothub-device-provisioning
+languages:
+- json
+- bicep
+---
+# Create an IoT Hub Device Provisioning Service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-device-provisioning/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-device-provisioning/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-device-provisioning/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-device-provisioning/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devices/iothub-device-provisioning/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devices%2Fiothub-device-provisioning%2Fazuredeploy.json)
 
@@ -25,6 +38,8 @@ If you are new to Azure Iot Hub, see:
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
+
+`Tags: Microsoft.Devices/IotHubs, Microsoft.Devices/provisioningServices`

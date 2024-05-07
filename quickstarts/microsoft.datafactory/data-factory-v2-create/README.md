@@ -1,3 +1,14 @@
+---
+description: This template creates an empty data factory
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: data-factory-v2-create
+languages:
+- json
+- bicep
+---
 # Create an empty data factory
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-create/PublicLastTestDate.svg)
@@ -9,7 +20,6 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-create/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-create/CredScanResult.svg)
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-create/BicepVersion.svg)
-This template creates an empty data factory of version 2.  
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-create%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-create%2Fazuredeploy.json)
@@ -17,4 +27,4 @@ This template creates an empty data factory of version 2.
 
 When you deploy this Azure Resource Manager template, an empty data factory of version 2 is created.
 
-
+`Tags: Microsoft.DataFactory/factories, SystemAssigned`

@@ -1,4 +1,14 @@
-# Provide High Availability to RD Gateway and RD Web Access servers in RDS deployment
+---
+description: This template provides high availability to RD Gateway and RD Web Access servers in an existing RDS deployment
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: rds-deployment-ha-gateway
+languages:
+- json
+---
+# RDS Gateway High Availability deployment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/rds/rds-deployment-ha-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/rds/rds-deployment-ha-gateway/PublicDeployment.svg)
@@ -24,13 +34,13 @@ The template will
 
 Current Template is an extension to the Basic RDS Deployment Template, and it is mandatory to deploy any one of the template as prerequisite:
 
-* Basic RDS deployment template  
-  https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment 
+* Basic RDS deployment template
+  https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment
 
-* RDS deployment from custom RDSH image  
+* RDS deployment from custom RDSH image
   https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-custom-image-rdsh
 
-* RDS deployment on pre-existing VNET and AD  
+* RDS deployment on pre-existing VNET and AD
   https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-existing-ad
 
 This template expects the same names of resources from RDS deployment, if resource names are changed in your deployment then please edit the parameters and resources accordingly, example of such resources are below:
@@ -48,5 +58,4 @@ Click the button below to deploy
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Frds%2Frds-deployment-ha-gateway%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Frds%2Frds-deployment-ha-gateway%2Fazuredeploy.json)
 
-
-
+`Tags: Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC, CustomScriptExtension`

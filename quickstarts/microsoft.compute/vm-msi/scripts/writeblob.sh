@@ -9,16 +9,16 @@ fi
 # The default port for the MSI extension is 50342
 
 if [ -z $PORT ]; then
-    PORT=50342
+  PORT=50342
 fi
 
 for var in STORAGE_ACCOUNT RESOURCE_GROUP
 do
 
-    if [ -z ${!var} ]; then
-        echo "Argument $var is not set" >&2
-        exit 1
-    fi
+  if [ -z ${!var} ]; then
+    echo "Argument $var is not set" >&2
+    exit 1
+  fi
 
 done
 
@@ -31,8 +31,8 @@ az login --identity
 storage_account_key=`az storage account keys list -n ${STORAGE_ACCOUNT} -g ${RESOURCE_GROUP}|jq '.[0].value'`
 
 if [ `az storage container exists -n ${CONTAINER_NAME} --account-name ${STORAGE_ACCOUNT} --account-key ${storage_account_key} |jq '.exists'` = 'false' ]; then
-    echo "Creating container ${CONTAINER_NAME} in storage account ${STORAGE_ACCOUNT}"
-    az storage container create -n ${CONTAINER_NAME} --account-name ${STORAGE_ACCOUNT} --account-key ${storage_account_key}
+  echo "Creating container ${CONTAINER_NAME} in storage account ${STORAGE_ACCOUNT}"
+  az storage container create -n ${CONTAINER_NAME} --account-name ${STORAGE_ACCOUNT} --account-key ${storage_account_key}
 fi
 
 blob_name=$(hostname|tr '[:upper:]' '[:lower:]')

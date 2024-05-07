@@ -1,4 +1,14 @@
-# *Autoscaling Moodle stack for Postgres or MySQL databases*
+---
+description: Deploys an autoscaling Moodle cluster with objectfs storage, Azure redis, Azure MySQL/Postgres, and Elasticsearch. Can be configured for very small or very large sites. Deploys frontend components to a private network with a jumphost to access nodes. Requires keyed SSH access.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: moodle-scalable-cluster-ubuntu
+languages:
+- json
+---
+# Moodle autoscale with db/redis
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/moodle/moodle-scalable-cluster-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/moodle/moodle-scalable-cluster-ubuntu/PublicDeployment.svg)
@@ -15,7 +25,7 @@
 
 After deploying, these templates will provide you with a new Moodle site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability and optionally backed up through Azure. Filesystem permissions and options have also been tuned to make Moodle more secure than a default install.
 
-`Tags: cluster, ha, moodle, autoscale, linux, ubuntu`
+`Tags: cluster, ha, moodle, autoscale, linux, ubuntu, Microsoft.Resources/deployments, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Compute/availabilitySets, Microsoft.DBforMySQL/servers, firewallRules, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/loadBalancers, Microsoft.DBforPostgreSQL/servers, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupPolicies, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems, Microsoft.Cache/Redis, Microsoft.Storage/storageAccounts, Microsoft.Compute/virtualMachineScaleSets, Microsoft.Insights/autoscaleSettings, ChangeCount`
 
 ## Reporting issues and Making Contributions
 
@@ -43,7 +53,7 @@ This template set deploys the following infrastructure:
 You can click the "deploy to Azure" button at the beginning of this document or alternatively perform a deploy from the command line:
 
 ### *Command line deploys*
-Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://docs.microsoft.com/en-us/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
+Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://docs.microsoft.com/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
 
 `az group create --name <stackname> --location <location>`
 
@@ -130,7 +140,7 @@ While Azure does not currently back up Postgres/MySQL databases, by dumping it t
 
 ### *Azure Recovery Services*
 
-If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Moodle code and your sitedata. Restoring a backed up VM is outside the scope of this doc, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-first-look-arm
+If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Moodle code and your sitedata. Restoring a backed up VM is outside the scope of this doc, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/azure/backup/backup-azure-vms-first-look-arm
 
 ### *Resizing your Database*
 
@@ -170,7 +180,7 @@ As of the time of this writing, Azure supports "Basic" and "Standard" tiers for 
 - Basic: 50, 100
 - Standard: 100, 200, 400, 800
 
-This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/en-us/azure/mysql/concepts-limits
+This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/azure/mysql/concepts-limits
 
 As the Moodle database will handle cron processes as well as the website, any public facing website with more than 10 users will likely require upgrading to 100. Once the site reaches 30+ users it will require upgrading to Standard for more compute units. This depends entirely on the individual site. As MySQL databases cannot change (or be restored to a different tier) once deployed it is a good idea to slightly overspec your database.
 
@@ -185,5 +195,4 @@ The controller handles both syslog and cron duties. Depending on how big your Mo
 In general the frontend instances will not be the source of any bottlenecks unless they are severely undersized versus the rest of the cluster. More powerful instances will be needed should fpm processes spawn and exhaust memory during periods of heavy site load. This can also be mitigated against by increasing the number of VMs but spawning new VMs is slower (and potentially more expensive) than having that capacity already available.
 
 It is worth noting that the memory allowances on these instances allow for more memory than they may be able to provide with lower instance tiers. This is intentional as you can opt to run larger VMs with more memory and not require manual configuration. FPM also allows for a very large number of threads which prevents the system from failing during many small jobs.
-
 

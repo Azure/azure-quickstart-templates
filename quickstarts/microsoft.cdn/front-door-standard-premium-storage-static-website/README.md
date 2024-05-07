@@ -1,4 +1,15 @@
-# Front Door Standard/Premium with Azure Storage static website origin
+---
+description: This template creates a Front Door Standard/Premium and an Azure Storage static website, and configured Front Door to send traffic to the static website.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-storage-static-website
+languages:
+- json
+- bicep
+---
+# Front Door Standard/Premium with static website origin
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-storage-static-website/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-storage-static-website/PublicDeployment.svg)
@@ -50,3 +61,5 @@ Once you have deployed the Azure Resource Manager template, wait a few minutes b
 You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. You should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
 
 You can also attempt to access the static website hostname directly. The hostname is also emitted as an output from the deployment - the output is named `storageStaticWebsiteHostName`. This should show you the same page as when you access through Front Door, since Azure Storage static websites can't be configured to only allow traffic from Front Door.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.Resources/deploymentScripts, UserAssigned, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

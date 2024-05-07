@@ -41,7 +41,7 @@ if ($ArtifactFilePaths.Count -eq 0) {
 
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 
 # Dump table rows before the update
 $t = Get-AzTableRow -table $cloudTable

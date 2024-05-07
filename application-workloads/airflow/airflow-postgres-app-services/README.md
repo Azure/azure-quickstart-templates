@@ -1,3 +1,13 @@
+---
+description: A template for deploying Airflow Web App with PostgreSQL database on App Services
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: airflow-postgres-app-services
+languages:
+- json
+---
 # Airflow Web App with PostgreSQL database on App Services
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/airflow/airflow-postgres-app-services/PublicLastTestDate.svg)
@@ -18,3 +28,5 @@ This template deploys Airflow Web App with PostgreSQL database on App Services
 **PS:** After the deployment, Airflow starts to initialize by creating and updating the PostgreSQL database (it takes a couple of minutes), and once this process is finished, the AirFlow app is ready to be used, with the basic samples.
 
 For more information about how to use Airflow, you can check the [official tutorials](https://airflow.apache.org/docs/stable/howto/index.html).
+
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, config, Microsoft.DBforPostgreSQL/servers, firewallrules, databases`

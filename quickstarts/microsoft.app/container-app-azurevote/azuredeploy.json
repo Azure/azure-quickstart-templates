@@ -1,0 +1,187 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "5958316336517191726"
+    }
+  },
+  "parameters": {
+    "containerAppName": {
+      "type": "string",
+      "defaultValue": "[format('containerapp-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the container app."
+      }
+    },
+    "containerAppEnvName": {
+      "type": "string",
+      "defaultValue": "[format('containerapp-env-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the container app environment."
+      }
+    },
+    "containerAppLogAnalyticsName": {
+      "type": "string",
+      "defaultValue": "[format('containerapp-log-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the log analytics workspace."
+      }
+    },
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "northcentralusstage",
+        "eastus",
+        "northeurope",
+        "canadacentral"
+      ],
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    },
+    "frontendContainerImage": {
+      "type": "string",
+      "defaultValue": "mcr.microsoft.com/azuredocs/azure-vote-front:v1",
+      "metadata": {
+        "description": "Specifies the docker container image to deploy."
+      }
+    },
+    "backendContainerImage": {
+      "type": "string",
+      "defaultValue": "mcr.microsoft.com/oss/bitnami/redis:6.0.8",
+      "metadata": {
+        "description": "Specifies the docker container image to deploy for the Redis backend."
+      }
+    },
+    "minReplica": {
+      "type": "int",
+      "defaultValue": 1,
+      "maxValue": 25,
+      "minValue": 0,
+      "metadata": {
+        "description": "Minimum number of replicas that will be deployed"
+      }
+    },
+    "maxReplica": {
+      "type": "int",
+      "defaultValue": 3,
+      "maxValue": 25,
+      "minValue": 0,
+      "metadata": {
+        "description": "Maximum number of replicas that will be deployed"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2021-06-01",
+      "name": "[parameters('containerAppLogAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-01-01-preview",
+      "name": "[parameters('containerAppEnvName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))).customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2021-06-01').primarySharedKey]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2022-01-01-preview",
+      "name": "[parameters('containerAppName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": 80,
+            "allowInsecure": false,
+            "traffic": [
+              {
+                "latestRevision": true,
+                "weight": 100
+              }
+            ]
+          }
+        },
+        "template": {
+          "revisionSuffix": "firstrevision",
+          "containers": [
+            {
+              "name": "[parameters('containerAppName')]",
+              "image": "[parameters('frontendContainerImage')]",
+              "env": [
+                {
+                  "name": "REDIS",
+                  "value": "localhost"
+                }
+              ],
+              "resources": {
+                "cpu": "[json('.25')]",
+                "memory": ".5Gi"
+              }
+            },
+            {
+              "name": "redis",
+              "image": "[parameters('backendContainerImage')]",
+              "env": [
+                {
+                  "name": "ALLOW_EMPTY_PASSWORD",
+                  "value": "yes"
+                }
+              ],
+              "resources": {
+                "cpu": "[json('.25')]",
+                "memory": ".5Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": "[parameters('minReplica')]",
+            "maxReplicas": "[parameters('maxReplica')]",
+            "rules": [
+              {
+                "name": "http-requests",
+                "http": {
+                  "metadata": {
+                    "concurrentRequests": "10"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "containerAppFQDN": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn]"
+    }
+  }
+}

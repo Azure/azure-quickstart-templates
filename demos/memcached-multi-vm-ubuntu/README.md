@@ -1,4 +1,14 @@
-# Create multiple Ubuntu 14.04 VMs with memcached service and one VM with Apache and PHP test page
+---
+description: This template creates one or more memcached services on Ubuntu 14.04 VMs in a private subnet. It also creates one publicly accessible Apache VM with a PHP test page to confirm that memcached is installed and accessible.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: memcached-multi-vm-ubuntu
+languages:
+- json
+---
+# Memcached service cluster using multiple Ubuntu VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/memcached-multi-vm-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/memcached-multi-vm-ubuntu/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/memcached-multi-vm-ubuntu/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/memcached-multi-vm-ubuntu/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmemcached-multi-vm-ubuntu%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmemcached-multi-vm-ubuntu%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmemcached-multi-vm-ubuntu%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmemcached-multi-vm-ubuntu%2Fazuredeploy.json)
 
@@ -26,4 +36,4 @@ The template creates the following deployment resources:
 
 NOTE: In the current version of the template, Apache test page is dynamically configured with the IP addresses of the memcached servers by assuming that they are always deployed into an empty Subnet-Memcached and that the first server is at x.x.x.4, second at x.x.x.5, third at x.x.x.6, etc. IP addresses.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

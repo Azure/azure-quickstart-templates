@@ -1,0 +1,203 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.6.1.6515",
+      "templateHash": "9859206829285783133"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Region where the Mobile Network will be deployed (must match the resource group region)"
+      }
+    },
+    "mobileNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the private mobile network"
+      }
+    },
+    "mobileCountryCode": {
+      "type": "string",
+      "defaultValue": "001",
+      "metadata": {
+        "description": "The mobile country code for the private mobile network"
+      }
+    },
+    "mobileNetworkCode": {
+      "type": "string",
+      "defaultValue": "01",
+      "metadata": {
+        "description": "The mobile network code for the private mobile network"
+      }
+    },
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the existing site / packet core control plane"
+      }
+    },
+    "sliceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the existing slice"
+      }
+    },
+    "platformType": {
+      "type": "string",
+      "defaultValue": "AKS-HCI",
+      "allowedValues": [
+        "AKS-HCI",
+        "BaseVM"
+      ],
+      "metadata": {
+        "description": "The platform type where the packet core will be deployed."
+      }
+    },
+    "coreNetworkTechnology": {
+      "type": "string",
+      "defaultValue": "5GC",
+      "metadata": {
+        "description": "The mode in which the packet core instance will run"
+      }
+    },
+    "customLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here."
+      }
+    },
+    "controlPlaneAccessInterfaceName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine."
+      }
+    },
+    "controlPlaneAccessIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface."
+      }
+    },
+    "accessSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The network address of the access subnet in CIDR notation"
+      }
+    },
+    "accessGateway": {
+      "type": "string",
+      "metadata": {
+        "description": "The access subnet default gateway"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('mobileNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicLandMobileNetworkIdentifier": {
+          "mcc": "[parameters('mobileCountryCode')]",
+          "mnc": "[parameters('mobileNetworkCode')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/slices",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('sliceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "snssai": {
+          "sst": 1
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/mobileNetworks/sites",
+      "apiVersion": "2023-09-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('mobileNetworkName'))]"
+      ],
+      "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('siteName'))]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.MobileNetwork/packetCoreControlPlanes",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('siteName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sites": [
+          {
+            "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/sites', parameters('mobileNetworkName'), parameters('siteName'))]"
+          }
+        ],
+        "sku": "G0",
+        "localDiagnosticsAccess": {
+          "authenticationType": "Password"
+        },
+        "coreNetworkTechnology": "[parameters('coreNetworkTechnology')]",
+        "platform": {
+          "type": "[parameters('platformType')]",
+          "customLocation": "[if(empty(parameters('customLocation')), null(), createObject('id', parameters('customLocation')))]"
+        },
+        "controlPlaneAccessInterface": {
+          "ipv4Address": "[parameters('controlPlaneAccessIpAddress')]",
+          "ipv4Subnet": "[parameters('accessSubnet')]",
+          "ipv4Gateway": "[parameters('accessGateway')]",
+          "name": "[parameters('controlPlaneAccessInterfaceName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/mobileNetworks/sites', parameters('mobileNetworkName'), parameters('siteName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "existingSiteName": {
+      "type": "string",
+      "value": "[parameters('siteName')]"
+    },
+    "existingSiteId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/sites', parameters('mobileNetworkName'), parameters('siteName'))]"
+    },
+    "existingPacketCoreNetworkTechnology": {
+      "type": "string",
+      "value": "[parameters('coreNetworkTechnology')]"
+    },
+    "existingPacketCoreCustomLocationId": {
+      "type": "string",
+      "value": "[parameters('customLocation')]"
+    },
+    "controlPlaneAccessInterfaceName": {
+      "type": "string",
+      "value": "[parameters('controlPlaneAccessInterfaceName')]"
+    },
+    "controlPlaneAccessIpAddress": {
+      "type": "string",
+      "value": "[parameters('controlPlaneAccessIpAddress')]"
+    },
+    "accessSubnet": {
+      "type": "string",
+      "value": "[parameters('accessSubnet')]"
+    },
+    "accessGateway": {
+      "type": "string",
+      "value": "[parameters('accessGateway')]"
+    }
+  }
+}

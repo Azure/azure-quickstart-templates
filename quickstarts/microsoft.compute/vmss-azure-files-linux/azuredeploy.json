@@ -1,20 +1,27 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "7711941861012813138"
+    }
+  },
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_D2_v3",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
     },
     "vmssName": {
       "type": "string",
+      "maxLength": 12,
       "metadata": {
         "description": "String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended."
-      },
-      "maxLength": 12
+      }
     },
     "location": {
       "type": "string",
@@ -23,13 +30,24 @@
         "description": "Default location"
       }
     },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
     "instanceCount": {
       "type": "int",
+      "minValue": 3,
+      "maxValue": 100,
       "metadata": {
         "description": "Number of VM instances (100 or less)."
-      },
-      "minValue": 3,
-      "maxValue": 100
+      }
     },
     "adminUsername": {
       "type": "string",
@@ -81,37 +99,44 @@
     },
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-      },
-      "defaultValue": "[deployment().properties.templateLink.uri]"
+      }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
+      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-      },
-      "defaultValue": ""
-    }    
+      }
+    }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
-    "virtualNetworkName": "[concat(parameters('vmssName'), 'vnet')]",
-    "publicIPAddressName": "[concat(parameters('vmssName'), 'pip')]",
-    "subnetName": "[concat(parameters('vmssName'), 'subnet')]",
-    "loadBalancerName": "[concat(parameters('vmssName'), 'lb')]",
-    "natPoolName": "[concat(parameters('vmssName'), 'natpool')]",
-    "bePoolName": "[concat(parameters('vmssName'), 'bepool')]",
+    "virtualNetworkName": "[format('{0}vnet', parameters('vmssName'))]",
+    "publicIPAddressName": "[format('{0}pip', parameters('vmssName'))]",
+    "subnetName": "[format('{0}subnet', parameters('vmssName'))]",
+    "loadBalancerName": "[format('{0}lb', parameters('vmssName'))]",
+    "natPoolName": "[format('{0}natpool', parameters('vmssName'))]",
+    "bePoolName": "[format('{0}bepool', parameters('vmssName'))]",
     "natStartPort": 50000,
     "natEndPort": 50120,
     "natBackendPort": 22,
-    "nicName": "[concat(parameters('vmssName'), 'nic')]",
-    "ipConfigName": "[concat(parameters('vmssName'), 'ipconfig')]",
+    "nicName": "[format('{0}nic', parameters('vmssName'))]",
+    "ipConfigName": "[format('{0}ipconfig', parameters('vmssName'))]",
     "osType": {
       "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "16.04-LTS",
+      "offer": "0001-com-ubuntu-server-jammy",
+      "sku": "22_04-lts-gen2",
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
@@ -120,7 +145,7 @@
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -130,9 +155,9 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-08-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -151,9 +176,9 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-11-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-11-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -163,19 +188,16 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2022-11-01",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-11-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
-      ],
       "properties": {
         "frontendIPConfigurations": [
           {
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
@@ -190,7 +212,7 @@
             "name": "[variables('natPoolName')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('loadBalancerName'),'loadBalancerFrontEnd')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]"
               },
               "protocol": "Tcp",
               "frontendPortRangeStart": "[variables('natStartPort')]",
@@ -202,7 +224,7 @@
             "name": "natpool2",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('loadBalancerName'),'loadBalancerFrontEnd')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]"
               },
               "protocol": "Tcp",
               "frontendPortRangeStart": 9000,
@@ -211,17 +233,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2023-03-01",
       "name": "[parameters('vmssName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-12-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
       "sku": {
         "name": "[parameters('vmSku')]",
         "tier": "Standard",
@@ -244,8 +265,9 @@
             "computerNamePrefix": "[parameters('vmssName')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPasswordOrKey')]",
-            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
           },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
@@ -269,7 +291,7 @@
                             "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools/', variables('loadBalancerName'), variables('natPoolName'))]"
                           },
                           {
-                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'),'natpool2')]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), 'natpool2')]"
                           }
                         ]
                       }
@@ -290,19 +312,22 @@
                   "autoUpgradeMinorVersion": true,
                   "settings": {
                     "fileUris": [
-                      "[uri(parameters('_artifactsLocation'), concat('mountazurefiles.sh', parameters('_artifactsLocationSasToken')))]"
+                      "[uri(parameters('_artifactsLocation'), format('mountazurefiles.sh{0}', parameters('_artifactsLocationSasToken')))]"
                     ]
-                  },  
+                  },
                   "protectedSettings": {
-                      "commandToExecute": "[concat('bash mountazurefiles.sh ', parameters('storageAccountName'), ' ', parameters('storageAccountKey'), ' ', parameters('shareName'), ' ', parameters('mountpointPath'), ' ', parameters('adminUsername'))]"
+                    "commandToExecute": "[format('bash mountazurefiles.sh {0} {1} {2} {3} {4}', parameters('storageAccountName'), parameters('storageAccountKey'), parameters('shareName'), parameters('mountpointPath'), parameters('adminUsername'))]"
                   }
                 }
               }
             ]
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     }
   ]
 }
-

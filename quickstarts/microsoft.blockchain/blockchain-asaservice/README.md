@@ -1,4 +1,14 @@
-# Azure Blockchain Service
+---
+description: This template deploys a Azure Blockchain Service, that currently provides support for the Ethereum Quorum ledger using the IBFT consensus mechanism.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: blockchain-asaservice
+languages:
+- json
+---
+# Blockchain Service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.blockchain/blockchain-asaservice/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.blockchain/blockchain-asaservice/PublicDeployment.svg)
@@ -31,4 +41,4 @@ If you are new to template deployment, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create an Azure Blockchain Service member using an ARM template](https://docs.microsoft.com/azure/blockchain/service/create-member-template)
 
-`Tags: Azure4Student, Blockchain, Beginner`
+`Tags: Azure4Student, Blockchain, Beginner, Microsoft.Blockchain/blockchainMembers`

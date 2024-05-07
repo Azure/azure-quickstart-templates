@@ -58,7 +58,7 @@ foreach($c in $config.psobject.properties){
 # Do the same for prereqs
 foreach($p in $PreReqConfig.psobject.properties){
     $token = "`"GET-PREREQ-$($p.name)`""
-    $txt = $txt.Replace($token, $($p.value.value | ConvertTo-Json -Depth 30))
+    $txt = $txt.Replace($token, $($p.value.value | ConvertTo-Json -Depth 30)) #TODO - this does not work with single element arrays - it's a pwsh problem, see: https://github.com/Azure/azure-quickstart-templates/tree/master/demos/backup-policies-report
 }
 
 # Now handle the generated values, replace only the first instance since generated values are unique for each occurence

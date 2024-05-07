@@ -1,4 +1,14 @@
-# Create File Dataset in AML from Relative Path in Datastore
+---
+description: This template creates a file dataset from relative path in datastore in Azure Machine Learning workspace.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-dataset-create-file-from-relative-path
+languages:
+- json
+---
+# Create File Dataset from Relative Path in Datastore
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dataset-create-file-from-relative-path/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-dataset-create-file-from-relative-path/PublicDeployment.svg)
@@ -20,3 +30,5 @@ If you are new to Azure Machine Learning, see:
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
+
+`Tags: Microsoft.MachineLearningServices/workspaces/datasets, Microsoft.Storage/storageAccounts, blobServices/containers, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, systemAssigned, Microsoft.MachineLearningServices/workspaces/datastores`

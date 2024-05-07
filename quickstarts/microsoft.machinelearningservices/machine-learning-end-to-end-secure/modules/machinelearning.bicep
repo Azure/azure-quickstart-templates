@@ -50,8 +50,11 @@ param machineLearningPleName string
 
 @description('Enable public IP for Azure Machine Learning compute nodes')
 param amlComputePublicIp bool = true
+
+@description('VM size for the default compute cluster')
+param vmSizeParam string
  
-resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2021-04-01' = {
+resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2022-05-01' = {
   name: machineLearningName
   location: location
   tags: tags
@@ -71,7 +74,7 @@ resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2021-04-0
 
     // configuration for workspaces with private link endpoint
     imageBuildCompute: 'cluster001'
-    allowPublicAccessWhenBehindVnet: false
+    publicNetworkAccess: 'Disabled'
   }
 }
 
@@ -100,6 +103,7 @@ module machineLearningCompute 'machinelearningcompute.bicep' = {
     prefix: prefix
     tags: tags
     amlComputePublicIp: amlComputePublicIp
+    vmSizeParam: vmSizeParam
   }
   dependsOn: [
     machineLearning

@@ -1,4 +1,14 @@
-# Create a Microsoft Endpoint Configuration Manager Technical Preview Lab environment in Azure
+---
+description: This template creates new Azure VMs. It configures a new AD domain controler , a new standalone primary site with SQL Server, a remote site system server with Management Point and Distribution Point and client(options). 
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sccm-technicalpreview
+languages:
+- json
+---
+# Install Configuration Manager Tech Preview Lab in Azure
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sccm/sccm-technicalpreview/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sccm/sccm-technicalpreview/PublicDeployment.svg)
@@ -15,15 +25,17 @@
 
 ## Description
 
-This template deploys the latest Microsoft Endpoint Configuration Manager (ConfigMgr) Technical Preview with following configuration: 
+This template deploys the latest Microsoft Endpoint Configuration Manager (ConfigMgr) Technical Preview with following configuration:
 
-* a new AD domain controller. 
+* a new AD domain controller.
 * a standalone primary site with SQL Server, ADK and ConfigMgr installed. ConfigMgr is the latest Technical Preview release.
-* a remote site system server to host managemenent point and distribution point. 
+* a remote site system server to host managemenent point and distribution point.
 * sccm clients.(Options)
 
-Each VM has its own public IP address and is added to a subnet protected with a Network Security Group, which only allows RDP from the Internet. 
+Each VM has its own public IP address and is added to a subnet protected with a Network Security Group, which only allows RDP from the Internet.
 
-Each VM has a private network IP which is for ConfigMgr communication. 
+Each VM has a private network IP which is for ConfigMgr communication.
 
-For more information, Visit [Create a Configuration Manager lab in Azure](https://docs.microsoft.com/en-us/configmgr/core/get-started/azure-template)
+For more information, Visit [Create a Configuration Manager lab in Azure](https://docs.microsoft.com/configmgr/core/get-started/azure-template)
+
+`Tags: Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIpAddresses, Microsoft.Network/networkSecurityGroups`

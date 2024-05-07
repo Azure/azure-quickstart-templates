@@ -102,8 +102,9 @@ function Note-FixableError([string] $error) {
 }
 
 # EXPECTED: header on first line
-if (-not ($readme.StartsWith("# "))) {
-    Write-Error "Readme must start with # header, not: $($readme[0])"
+if (-not ($readme.StartsWith("# ")) -and
+    -not ($readme.StartsWith("---"))) {
+    Write-Error "Readme must start with # header or YAML block '---', not: $($readme[0])"
 }
 
 #proper src attribute for badges

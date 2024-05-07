@@ -10,7 +10,7 @@ var healthProbeSettingsName = 'healthProbeSettings'
 var routingRuleName = 'routingRule'
 var backendPoolName = 'backendPool'
 
-resource frontDoor 'Microsoft.Network/frontDoors@2020-05-01' = {
+resource frontDoor 'Microsoft.Network/frontDoors@2021-06-01' = {
   name: frontDoorName
   location: 'global'
   properties: {
@@ -101,3 +101,7 @@ resource frontDoor 'Microsoft.Network/frontDoors@2020-05-01' = {
     ]
   }
 }
+
+output name string = frontDoor.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = frontDoor.id

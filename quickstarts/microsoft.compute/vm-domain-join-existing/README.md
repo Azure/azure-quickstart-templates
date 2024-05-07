@@ -1,4 +1,14 @@
-# Joins an Azure virtual machine into an AD Domain by using JsonADDomainExtension extension
+---
+description: This template allows you to join an already exitsing Windows virtual machine into an existing Active Directory Domain. For this template to work you need an existing virtual machine, an AD Domain and a Domain Controller that has communication with this virtual machine and DNS settings that will allow this virtual machine to resolve the Domain DNS name.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-domain-join-existing
+languages:
+- json
+---
+# Joins an existing Windows VM to AD Domain
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-domain-join-existing/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-domain-join-existing/PublicDeployment.svg)
@@ -26,3 +36,5 @@ Details about some of the parameters:
 2. location - current location of the exising virtual machine. E.g. West US.
 3. domainJoinUserName - this parameter must be in domain\username notation, where domain is the NetBios name of the domain. E.g. contoso\myAdmin
 4. ouPath - This is an optional parameter that allows you to join this virtual machine into a specific OU instead of the default Computers container. E.g. OU=MyCorpComputers,DC=Contoso,DC=com
+
+`Tags: Microsoft.Compute/virtualMachines/extensions, JsonADDomainExtension`

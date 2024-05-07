@@ -1,3 +1,14 @@
+---
+description: This template creates an Azure Redis Cache with diagnostics data kept in a storage account.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: redis-cache
+languages:
+- json
+- bicep
+---
 # Create a Redis Cache using a template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-cache/PublicLastTestDate.svg)
@@ -17,3 +28,4 @@
 
 For information about using this template, see [Create an Azure Cache for Redis using an ARM template](https://azure.microsoft.com/documentation/articles/cache-redis-cache-arm-provision/).
 
+`Tags: Microsoft.Cache/redis, Microsoft.Insights/diagnosticSettings, Microsoft.Storage/storageAccounts`

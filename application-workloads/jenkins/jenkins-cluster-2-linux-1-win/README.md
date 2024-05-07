@@ -1,4 +1,14 @@
-# ARM Template for Deploying Jenkins Master/Slave Cluster
+---
+description: 1 Jenkins master with 1 Linux node and 1 windows node
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: jenkins-cluster-2-linux-1-win
+languages:
+- json
+---
+# Jenkins Cluster with Windows & Linux Worker
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cluster-2-linux-1-win/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cluster-2-linux-1-win/PublicDeployment.svg)
@@ -12,9 +22,9 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cluster-2-linux-1-win%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cluster-2-linux-1-win%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cluster-2-linux-1-win%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cluster-2-linux-1-win%2Fazuredeploy.json)
 
-1.  Start the Jenkins Master VM and access the the URL 
+1.  Start the Jenkins Master VM and access the the URL
 
     http://jenkins-cluster-mx.southeastasia.azure.com:8080/
 
@@ -28,7 +38,7 @@
 3.  Copy the content of file displayed by `cat` command.
     And paste this password in jenkins web-page. Click continue button and then use `Install Suggested Plugins`
 
-4.  After Plugin Installation, it should then ask for New User creation. Create a new user (Admin) for regular login into jenkins dashboard. 
+4.  After Plugin Installation, it should then ask for New User creation. Create a new user (Admin) for regular login into jenkins dashboard.
 
 5.  After User creation, continue to dashboard.
 
@@ -41,7 +51,7 @@
     $ su - jenkins
     ## No password prompt
     # Generate SSH Key Pair
-    $ ssh-keygen 
+    $ ssh-keygen
     # PRESS ENTER at ALL PROMPTS
     # Now, Copy SSH key
     $ ssh-copy-id jenkins@10.0.1.11
@@ -73,3 +83,4 @@
     Credentials: <CHOOSE SSH KeyPair Credentials>
     ```
 
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, CustomScriptExtension`

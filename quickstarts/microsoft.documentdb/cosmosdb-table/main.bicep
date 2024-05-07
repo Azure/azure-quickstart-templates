@@ -20,7 +20,7 @@ param secondaryRegion string
 ])
 param defaultConsistencyLevel string = 'Session'
 
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647.')
 @minValue(10)
 @maxValue(2147483647)
 param maxStalenessPrefix int = 100000
@@ -30,8 +30,8 @@ param maxStalenessPrefix int = 100000
 @maxValue(86400)
 param maxIntervalInSeconds int = 300
 
-@description('Enable automatic failover for regions. Ignored when Multi-Master is enabled')
-param automaticFailover bool = true
+@description('Enable system managed failover for regions')
+param systemManagedFailover bool = true
 
 @description('The name for the table')
 param tableName string
@@ -41,7 +41,6 @@ param tableName string
 @description('The throughput for the table')
 param throughput int = 400
 
-var accountName_var_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -74,8 +73,8 @@ var locations = [
   }
 ]
 
-resource accountName_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
@@ -87,12 +86,12 @@ resource accountName_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
     consistencyPolicy: consistencyPolicy[defaultConsistencyLevel]
     locations: locations
     databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: automaticFailover
+    enableAutomaticFailover: systemManagedFailover
   }
 }
 
-resource accountName_var_tableName 'Microsoft.DocumentDB/databaseAccounts/tables@2021-04-15' = {
-  parent: accountName_var
+resource table 'Microsoft.DocumentDB/databaseAccounts/tables@2022-05-15' = {
+  parent: account
   name: tableName
   properties: {
     resource: {

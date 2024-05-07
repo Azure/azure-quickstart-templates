@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "2911869422088455783"
+    }
+  },
   "parameters": {
     "adminUsername": {
       "type": "string",
@@ -30,33 +37,33 @@
     }
   },
   "variables": {
-    "virtualMachines_myVM_name": "myVM",
-    "virtualNetworks_myVNet_name": "myVNet",
-    "net_interface": "net-int",
-    "ipconfig_name": "ipconfig",
-    "publicIPAddress": "public_ip",
-    "nsg_name": "vm-nsg",
-    "applicationGateways_myAppGateway_name": "myAppGateway",
-    "vnet_prefix": "10.0.0.0/16",
-    "ag_subnet_prefix": "10.0.0.0/24",
-    "backend_subnet_prefix": "10.0.1.0/24"
+    "virtualMachineName": "myVM",
+    "virtualNetworkName": "myVNet",
+    "networkInterfaceName": "net-int",
+    "ipconfigName": "ipconfig",
+    "publicIPAddressName": "public_ip",
+    "nsgName": "vm-nsg",
+    "applicationGateWayName": "myAppGateway",
+    "virtualNetworkPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "backendSubnetPrefix": "10.0.1.0/24"
   },
   "resources": [
     {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('nsg_name'), copyIndex(1))]",
-      "location": "[parameters('location')]",
       "copy": {
-        "name": "nsg-loop",
-        "count": 2
+        "name": "nsg",
+        "count": "[length(range(0, 2))]"
       },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}', variables('nsgName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
             "name": "RDP",
             "properties": {
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "3389",
               "sourceAddressPrefix": "*",
@@ -70,16 +77,16 @@
       }
     },
     {
+      "copy": {
+        "name": "publicIPAddress",
+        "count": "[length(range(0, 3))]"
+      },
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('publicIPAddress'), copyIndex())]",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}', variables('publicIPAddressName'), range(0, 3)[copyIndex()])]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
-      },
-      "copy": {
-        "name": "publicip-loop",
-        "count": 3
       },
       "properties": {
         "publicIPAddressVersion": "IPv4",
@@ -89,20 +96,20 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('virtualNetworks_myVNet_name')]",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vnet_prefix')]"
+            "[variables('virtualNetworkPrefix')]"
           ]
         },
         "subnets": [
           {
             "name": "myAGSubnet",
             "properties": {
-              "addressPrefix": "[variables('ag_subnet_prefix')]",
+              "addressPrefix": "[variables('subnetPrefix')]",
               "privateEndpointNetworkPolicies": "Enabled",
               "privateLinkServiceNetworkPolicies": "Enabled"
             }
@@ -110,7 +117,7 @@
           {
             "name": "myBackendSubnet",
             "properties": {
-              "addressPrefix": "[variables('backend_subnet_prefix')]",
+              "addressPrefix": "[variables('backendSubnetPrefix')]",
               "privateEndpointNetworkPolicies": "Enabled",
               "privateLinkServiceNetworkPolicies": "Enabled"
             }
@@ -121,17 +128,14 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('virtualMachines_myVM_name'), copyIndex(1))]",
-      "location": "[parameters('location')]",
       "copy": {
-        "name": "vm-loop",
-        "count": 2
+        "name": "virtualMachine",
+        "count": "[length(range(0, 2))]"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('net_interface'), copyIndex(1)))]"
-      ],
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}', variables('virtualMachineName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -154,7 +158,7 @@
           }
         },
         "osProfile": {
-          "computerName": "[concat(variables('virtualMachines_myVM_name'), copyIndex(1))]",
+          "computerName": "[format('{0}{1}', variables('virtualMachineName'), add(range(0, 2)[copyIndex()], 1))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -166,24 +170,24 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('net_interface'), copyIndex(1)))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}', variables('networkInterfaceName'), add(range(0, 2)[copyIndex()], 1)))]"
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('virtualMachines_myVM_name'), copyIndex(1),'/IIS')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "ext-loop",
-        "count": 2
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('virtualMachines_myVM_name'), copyIndex(1)))]"
-      ],
+        "networkInterface"
+      ]
+    },
+    {
+      "copy": {
+        "name": "virtualMachine_IIS",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}/IIS', variables('virtualMachineName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('location')]",
       "properties": {
         "autoUpgradeMinorVersion": true,
         "publisher": "Microsoft.Compute",
@@ -192,17 +196,16 @@
         "settings": {
           "commandToExecute": "powershell Add-WindowsFeature Web-Server; powershell Add-Content -Path \"C:\\inetpub\\wwwroot\\Default.htm\" -Value $($env:computername)"
         }
-      }
+      },
+      "dependsOn": [
+        "virtualMachine"
+      ]
     },
     {
       "type": "Microsoft.Network/applicationGateways",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('applicationGateways_myAppGateway_name')]",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('applicationGateWayName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworks_myVNet_name'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddress'), '0'))]"
-      ],
       "properties": {
         "sku": {
           "name": "Standard_v2",
@@ -213,7 +216,7 @@
             "name": "appGatewayIpConfig",
             "properties": {
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworks_myVNet_name'), 'myAGSubnet')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'myAGSubnet')]"
               }
             }
           }
@@ -224,7 +227,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddress'), '0'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}0', variables('publicIPAddressName')))]"
               }
             }
           }
@@ -240,8 +243,7 @@
         "backendAddressPools": [
           {
             "name": "myBackendPool",
-            "properties": {
-            }
+            "properties": {}
           }
         ],
         "backendHttpSettingsCollection": [
@@ -261,10 +263,10 @@
             "name": "myListener",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('applicationGateways_myAppGateway_name'), 'appGwPublicFrontendIp')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('applicationGateWayName'), 'appGwPublicFrontendIp')]"
               },
               "frontendPort": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('applicationGateways_myAppGateway_name'), 'port_80')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('applicationGateWayName'), 'port_80')]"
               },
               "protocol": "Http",
               "requireServerNameIndication": false
@@ -276,14 +278,15 @@
             "name": "myRoutingRule",
             "properties": {
               "ruleType": "Basic",
+              "priority": 1,
               "httpListener": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('applicationGateways_myAppGateway_name'), 'myListener')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('applicationGateWayName'), 'myListener')]"
               },
               "backendAddressPool": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGateways_myAppGateway_name'), 'myBackendPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGateWayName'), 'myBackendPool')]"
               },
               "backendHttpSettings": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('applicationGateways_myAppGateway_name'), 'myHTTPSetting')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('applicationGateWayName'), 'myHTTPSetting')]"
               }
             }
           }
@@ -293,40 +296,38 @@
           "minCapacity": 0,
           "maxCapacity": 10
         }
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('net_interface'), copyIndex(1))]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "int-loop",
-        "count": 2
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddress'), copyIndex(1)))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworks_myVNet_name'))]",
-        "[resourceId('Microsoft.Network/applicationGateways', variables('applicationGateways_myAppGateway_name'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('nsg_name'), copyIndex(1)))]"
-      ],
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}', variables('publicIPAddressName'), range(0, 3)[0]))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "networkInterface",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}', variables('networkInterfaceName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
-            "name": "[concat(variables('ipconfig_name'), copyIndex(1))]",
+            "name": "[format('{0}{1}', variables('ipconfigName'), add(range(0, 2)[copyIndex()], 1))]",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddress'), copyIndex(1)))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}', variables('publicIPAddressName'), add(range(0, 2)[copyIndex()], 1)))]"
               },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworks_myVNet_name'), 'myBackendSubnet')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'myBackendSubnet')]"
               },
               "primary": true,
               "privateIPAddressVersion": "IPv4",
               "applicationGatewayBackendAddressPools": [
                 {
-                  "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGateways_myAppGateway_name'), 'myBackendPool')]"
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGateWayName'), 'myBackendPool')]"
                 }
               ]
             }
@@ -335,9 +336,32 @@
         "enableAcceleratedNetworking": false,
         "enableIPForwarding": false,
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('nsg_name'), copyIndex(1)))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}{1}', variables('nsgName'), add(range(0, 2)[copyIndex()], 1)))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/applicationGateways', variables('applicationGateWayName'))]",
+        "nsg",
+        "publicIPAddress"
+      ]
     }
-  ]
+  ],
+  "outputs": {
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "name": {
+      "type": "string",
+      "value": "[variables('applicationGateWayName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/applicationGateways', variables('applicationGateWayName'))]"
+    }
+  }
 }

@@ -1,4 +1,14 @@
-# Create a Storage Spaces Direct (S2D) Scale-Out File Server (SOFS) Cluster with Windows Server 2016 on an existing VNET
+---
+description: This template creates Azure VMs on an existing VNET, and it provisions them as a Windows Server 2016 Storage Spaces Direct (S2D) Scale-Out File Server (SOFS) cluster.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-spaces-direct-md-zones
+languages:
+- json
+---
+# WS2016 Storage Spaces Direct (S2D) SOFS - Availability Zones
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-spaces-direct-md-zones/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/storage-spaces-direct-md-zones/PublicDeployment.svg)
@@ -17,7 +27,7 @@ This template creates the following resources by default:
 +   A Standard Storage Account for a Cloud Witness
 +	A Windows Server 2016 cluster for storage nodes, provisioned for Storage Spaces Direct (S2D) and the Scale-Out File Server (SOFS) role
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use [this template](https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/active-directory/active-directory-new-domain-ha-2-dc-zones) to deploy the prerequisite infrastructure. 
+To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use [this template](https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/active-directory/active-directory-new-domain-ha-2-dc-zones) to deploy the prerequisite infrastructure.
 
 Click the button below to deploy
 
@@ -40,5 +50,4 @@ Click the button below to deploy
 
 + SPECIAL THANKS to [@mmarch](https://github.com/mmarch) on code contributions for dynamic data disk selection nested templates!
 
-
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Compute/virtualMachines`

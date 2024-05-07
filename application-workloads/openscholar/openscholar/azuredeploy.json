@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "13678692994848360857"
+    }
+  },
   "parameters": {
     "adminVMUsername": {
       "type": "string",
@@ -9,24 +16,24 @@
         "description": "User name for the Virtual Machine."
       }
     },
-    "dnsNameForPublicIP": {
+    "dnsNameForPublicIPName": {
       "type": "string",
+      "defaultValue": "[format('os{0}', uniqueString(resourceGroup().id))]",
       "minLength": 3,
-      "defaultValue": "[concat('os', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Globally unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
     "databaseName": {
       "type": "string",
-      "minLength": 3,
       "defaultValue": "openscholarDB",
+      "minLength": 3,
       "metadata": {
         "description": "Name for the Database."
       }
     },
     "mysqlPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "minLength": 12,
       "metadata": {
         "description": "Provide Password for the My SQL."
@@ -41,17 +48,17 @@
     },
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-      },
-      "defaultValue": "[deployment().properties.templatelink.uri]"
+      }
     },
     "_artifactsLocationSasToken": {
-      "type": "securestring",
+      "type": "secureString",
+      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-      },
-      "defaultValue": ""
+      }
     },
     "authenticationType": {
       "type": "string",
@@ -65,7 +72,7 @@
       }
     },
     "adminPasswordOrKey": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
@@ -96,7 +103,7 @@
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminVMUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminVMUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -106,9 +113,9 @@
   },
   "resources": [
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('dnsNameForPublicIP')]",
+      "apiVersion": "2022-07-01",
+      "name": "[parameters('dnsNameForPublicIPName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "PublicIPAddress"
@@ -116,14 +123,13 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+          "domainNameLabel": "[parameters('dnsNameForPublicIPName')]"
         }
       }
     },
     {
-      "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2022-07-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -158,13 +164,10 @@
       }
     },
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-07-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "tags": {
         "displayName": "VirtualNetwork"
       },
@@ -185,20 +188,19 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-07-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "NetworkInterface"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForPublicIP'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -206,7 +208,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForPublicIP'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForPublicIPName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -214,19 +216,20 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForPublicIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-08-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "VirtualMachine"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -257,16 +260,16 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/installopenScholar')]",
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2022-08-01",
+      "name": "[format('{0}/{1}', variables('vmName'), 'installopenScholar')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -274,14 +277,16 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[uri(parameters('_artifactsLocation'), concat('scripts/',variables('installScriptName'), parameters('_artifactsLocationSasToken')))]"
+            "[uri(parameters('_artifactsLocation'), format('scripts/{0}{1}', variables('installScriptName'), parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('mv *.sh /home/',parameters('adminVMUsername'),' && cd /home/',parameters('adminVMUsername'),' && sudo chmod 777 *.sh && sudo -u ',parameters('adminVMUsername'),' /bin/bash ',variables('installScriptName'),' ', parameters('mysqlPassword'),' ', parameters('databaseName'))]"
+          "commandToExecute": "[format('mv *.sh /home/{0} && cd /home/{1} && sudo chmod 777 *.sh && sudo -u {2} /bin/bash {3} {4} {5}', parameters('adminVMUsername'), parameters('adminVMUsername'), parameters('adminVMUsername'), variables('installScriptName'), parameters('mysqlPassword'), parameters('databaseName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
     }
   ]
 }
-

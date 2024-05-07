@@ -1,4 +1,14 @@
-# Create a Time Series Insights Environment and Event Hub Event Source
+---
+description: This template enables you to deploy a Time Series Insights environment that is configured to consume events from an Event Hub.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: timeseriesinsights-environment-with-eventhub
+languages:
+- json
+---
+# Create an Environment with an Event Hub Event Source
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.timeseriesinsights/timeseriesinsights-environment-with-eventhub/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.timeseriesinsights/timeseriesinsights-environment-with-eventhub/PublicDeployment.svg)
@@ -13,4 +23,4 @@
 
 This template creates a standard (S1 or S2 sku) Time Series Insights environment, a child event source configured to consume events from an Event Hub, and access policies that grant access to the environment's data. For more information, go to: <https://docs.microsoft.com/azure/time-series-insights/>.
 
-
+`Tags: Microsoft.EventHub/namespaces, eventhubs, authorizationRules, consumergroups, Microsoft.TimeSeriesInsights/environments, eventsources, Microsoft.TimeSeriesInsights/environments/accessPolicies`

@@ -1,4 +1,15 @@
-# Create an Azure Cosmos DB SQL Account with Data Plane RBAC
+---
+description: This template will create a SQL Cosmos account, a natively maintained Role Definition, and a natively maintained Role Assignment for an AAD identity.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-sql-rbac
+languages:
+- json
+- bicep
+---
+# Create an Azure Cosmos DB SQL Account with data plane RBAC
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-rbac/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-rbac/PublicDeployment.svg)
@@ -23,8 +34,10 @@ Below are the parameters which can be user configured in the parameters file inc
 
 - **Location:** Select where the resource should be created (default is target resource group's location).
 - **Account Name:** Enter a name for the new Cosmos account.
-- **Role Definition Name:** Enter a friendly name for the SQL Role Definition. 
+- **Role Definition Name:** Enter a friendly name for the SQL Role Definition.
 - **Data Actions:** Enter the list of actions permitted by the SQL Role Definition.
 - **Principal ID:** Enter the object ID of the AAD identity to which the Role Assignment shall be granted.
 
 `Tags : CosmosDB`
+
+`Tags: Microsoft.DocumentDB/databaseAccounts, Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions, CustomRole, Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments`

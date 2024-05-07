@@ -1,0 +1,97 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "TMProfileParent": {
+            "type": "string",
+            "metadata": {
+            "description": "Name of the parent profile for the nested traffic manager endpoints"
+            }
+        },
+        "existingTMProfileName1": {
+            "type": "string",
+            "metadata": {
+            "description": "Name of the existing Traffic Manager endpoint profile 1"
+            }
+        },
+        "TMProfileDNS1": {
+            "type": "string",
+            "metadata": {
+            "description": "Name of the existing Traffic Manager DNS name 1"
+            }
+        },
+         "existingTMProfileName2": {
+            "type": "string",
+            "metadata": {
+            "description": "Name of the existing Traffic Manager endpoint profile 2"
+            }
+        },
+        "TMProfileDNS2": {
+            "type": "string",
+            "metadata": {
+            "description": "Name of the existing Traffic Manager DNS name 2"
+            }
+        }
+    },
+    "variables": {
+       "targetid1":"[resourceid('Microsoft.Network/trafficManagerProfiles',parameters('existingTMProfileName1'))]",
+       "targetid2":"[resourceid('Microsoft.Network/trafficManagerProfiles',parameters('existingTMProfileName2'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/trafficManagerProfiles",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('TMProfileParent')]",
+            "location": "global",
+            "properties": {
+                "profileStatus": "Enabled",
+                "trafficRoutingMethod": "Priority",
+                "dnsConfig": {
+                    "relativeName": "[parameters('TMProfileParent')]",
+                    "ttl": 90
+                },
+                "monitorConfig": {
+                    "profileMonitorStatus": "Enabled",
+                    "protocol": "HTTP",
+                    "port": 80,
+                    "path": "/",
+                    "intervalInSeconds": 30,
+                    "toleratedNumberOfFailures": 3,
+                    "timeoutInSeconds": 10
+                },
+                "endpoints": [
+                    {
+                        "name": "multivalue",
+                        "type": "Microsoft.Network/trafficManagerProfiles/nestedEndpoints",
+                        "properties": {
+                          "endpointStatus": "Enabled",
+                          "endpointMonitorStatus": "Online",
+                          "targetResourceId": "[variables('targetid1')]",
+                          "target": "[parameters('TMProfileDNS1')]",
+                          "weight": 100,
+                          "priority": 1,
+                          "minChildEndpoints": 1,
+                          "minChildEndpointsIPv4": 3,
+                          "minChildEndpointsIPv6": 2
+                        }
+                    },
+                    {
+                        "name": "weighted",
+                        "type": "Microsoft.Network/trafficManagerProfiles/nestedEndpoints",
+                        "properties": {
+                            "endpointStatus": "Enabled",
+                            "endpointMonitorStatus": "Online",
+                            "targetResourceId": "[variables('targetid2')]",
+                            "target": "[parameters('TMProfileDNS2')]",
+                            "weight": 1,
+                            "priority": 2,
+                            "minChildEndpoints": 1
+                        }
+                    }
+                ],
+                "trafficViewEnrollmentStatus": "Disabled",
+                "maxReturn": 0
+            }
+        }
+    ]
+}

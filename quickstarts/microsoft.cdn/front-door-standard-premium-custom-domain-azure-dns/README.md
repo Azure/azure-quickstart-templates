@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Standard/Premium including a custom domain on Azure DNS and Microsoft-managed certificate.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-custom-domain-azure-dns
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with Azure DNS and custom domain
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-custom-domain-azure-dns/PublicLastTestDate.svg)
@@ -41,3 +52,5 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 ### Connect
 
 After you deploy the Azure Resource Manager template, you can then access the Front Door endpoint by using your custom domain name. If you access the hostname you should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
+
+`Tags: Microsoft.Network/dnsZones, Microsoft.Network/dnsZones/CNAME, Microsoft.Network/dnsZones/TXT, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/customDomains, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

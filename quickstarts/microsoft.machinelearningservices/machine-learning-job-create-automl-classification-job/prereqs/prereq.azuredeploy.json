@@ -1,0 +1,225 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning workspace."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location for all resources."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[concat('sa',uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name for the storage account to created and associated with the workspace."
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "defaultValue": "[concat('kv',uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name for the key vault to created and associated with the workspace."
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "defaultValue": "[subscription().tenantId]",
+            "metadata": {
+                "description": "Specifies the tenant ID of the subscription. Get using Get-AzureRmSubscription cmdlet or Get Subscription API."
+            }
+        },
+        "applicationInsightsName": {
+            "type": "string",
+            "defaultValue": "[concat('ai',uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name for the application insights to created and associated with the workspace."
+            }
+        },
+        "computeName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning compute instance to be deployed"
+            }
+        },
+        "vmSize": {
+            "defaultValue": "Standard_DS3_v2",
+            "type": "string",
+            "metadata": {
+                "description": "The VM size for compute instance"
+            }
+        },
+        "vnetResourceGroupName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the resource group which holds the VNET to which you want to inject your compute instance in."
+            }
+        },
+        "vnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the vnet which you want to inject your compute instance in."
+            }
+        },
+        "subnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet inside the VNET which you want to inject your compute instance in."
+            }
+        },
+        "objectId": {
+            "type": "string",
+            "metadata": {
+                "description": "AAD object id of the user to which compute instance is assigned to"
+            }
+        },
+        "inlineCommand": {
+            "type": "string",
+            "defaultValue": "ls",
+            "metadata": {
+                "description": "inline command"
+            }
+        },
+        "creationScript.cmdArguments": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the cmd arguments of the creation script in the storage volume of the Compute Instance."
+            }
+        },
+        "schedules": {
+            "type": "object",
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the schedule policies for the compute instance"
+            }
+        }
+    },
+    "variables": {
+        "subnet": {
+            "id": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "enabled": true
+                        },
+                        "file": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2021-10-01",
+            "name": "[parameters('keyVaultName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "tenantId": "[parameters('tenantId')]",
+                "sku": {
+                    "name": "standard",
+                    "family": "A"
+                },
+                "accessPolicies": []
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[parameters('applicationInsightsName')]",
+            "location": "[parameters('location')]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web"
+            }
+        },
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces",
+            "apiVersion": "2022-05-01",
+            "name": "[parameters('workspaceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "identity": {
+                "type": "systemAssigned"
+            },
+            "properties": {
+                "friendlyName": "[parameters('workspaceName')]",
+                "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                "applicationInsights": "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+            }
+        },
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces/computes",
+            "name": "[concat(parameters('workspaceName'), '/', parameters('computeName'))]",
+            "apiVersion": "2021-07-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]"
+            ],
+            "properties": {
+                "computeType": "ComputeInstance",
+                "properties": {
+                    "vmSize": "[parameters('vmSize')]",
+                    "subnet": "[if(and(not(empty(parameters('vnetResourceGroupName'))),not(empty(parameters('vnetName'))),not(empty(parameters('subnetName')))), variables('subnet'), json('null'))]",
+                    "personalComputeInstanceSettings": {
+                        "assignedUser": {
+                            "objectId": "[parameters('objectId')]",
+                            "tenantId": "[parameters('tenantId')]"
+                        }
+                    },
+                    "setupScripts": {
+                        "scripts": {
+                            "creationScript": {
+                                "scriptSource": "inline",
+                                "scriptData": "[base64(parameters('inlineCommand'))]",
+                                "scriptArguments": "[parameters('creationScript.cmdArguments')]"
+                            }
+                        }
+                    },
+                    "schedules": "[parameters('schedules')]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "workspaceName": {
+            "type": "string",
+            "value": "[parameters('workspaceName')]"
+        },
+        "computeName": {
+            "type": "string",
+            "value": "[parameters('computeName')]"
+        }
+    }
+}

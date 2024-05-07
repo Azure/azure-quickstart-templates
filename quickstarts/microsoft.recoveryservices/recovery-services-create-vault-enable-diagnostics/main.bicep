@@ -41,10 +41,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   properties: {}
 }
 
-resource vaultName_microsoft_insights_omsWorkspaceName 'Microsoft.RecoveryServices/vaults/providers/diagnosticSettings@2021-05-01-preview' = {
-  name: '${vaultName}/microsoft.insights/${omsWorkspaceName}'
+resource vaultName_microsoft_insights_omsWorkspaceName 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  scope: recoveryServicesVault
+  name: omsWorkspaceName
   properties: {
-    name: omsWorkspaceName
     storageAccountId: storageAccount.id
     workspaceId: omsWorkspace.id
     logs: [
@@ -58,7 +58,4 @@ resource vaultName_microsoft_insights_omsWorkspaceName 'Microsoft.RecoveryServic
       }
     ]
   }
-  dependsOn:[
-    recoveryServicesVault
-  ]
 }

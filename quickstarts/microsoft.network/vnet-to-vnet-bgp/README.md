@@ -1,4 +1,15 @@
-# VNET to VNET connection
+---
+description: This template allows you to connect two VNETs using Virtual Network Gateways and BGP
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vnet-to-vnet-bgp
+languages:
+- json
+- bicep
+---
+# Create a BGP VNET to VNET connection
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/vnet-to-vnet-bgp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/vnet-to-vnet-bgp/PublicDeployment.svg)
@@ -28,5 +39,6 @@ You can also enter a specific Gateway SKU as a parameter; choose from the follow
 * Standard (legacy)
 * HighPerformance (legacy)
 
-More info on the Gateway SKUs can be found here: https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-about-vpngateways#a-namegwskuagateway-skus
+More info on the Gateway SKUs can be found here: https://docs.microsoft.com/azure/vpn-gateway/vpn-gateway-about-vpngateways#a-namegwskuagateway-skus
 
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/connections`

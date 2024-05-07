@@ -85,7 +85,7 @@
 
 - Upgrade Azure CPI version to v35.0.0. Please see new features in [bosh-azure-cpi-release v35.0.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.0.0)
 - Bump cf-deployment to [`v1.6.0`](https://github.com/cloudfoundry/cf-deployment/tree/v1.6.0).
-- Support [Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview).
+- Support [Availability Zones](https://docs.microsoft.com/azure/availability-zones/az-overview).
 - Set the default value of `autoDeployCloudFoundry` to `disabled`
 
 # v3.2.0 (2017-12-20)

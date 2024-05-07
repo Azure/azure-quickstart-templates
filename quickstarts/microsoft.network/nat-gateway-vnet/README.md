@@ -1,3 +1,14 @@
+---
+description: Deploy a NAT gateway and virtual network
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: nat-gateway-vnet
+languages:
+- json
+- bicep
+---
 # Virtual Network NAT
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/nat-gateway-vnet/PublicLastTestDate.svg)
@@ -19,7 +30,7 @@ This template deploys a **NAT gateway** and virtual network with a single subnet
 
 ## Overview and deployed resources
 
-This template is a resource manager implementation of a quickstart for deploying a NAT gateway.  A virtual network is deployed with a single subnet. The NAT gateway resource is associated with this subnet. A single public IP resource is created for the NAT gateway.  
+This template is a resource manager implementation of a quickstart for deploying a NAT gateway.  A virtual network is deployed with a single subnet. The NAT gateway resource is associated with this subnet. A single public IP resource is created for the NAT gateway.
 
 For more information on **Virtual Network NAT** service and **NAT gateway** see:
 
@@ -38,4 +49,4 @@ Description
 + **virtualNetworks**: Virtual network for NAT gateway.
   + **subnets**: Subnet for virtual network for NAT gateway.
 
-`Tags: virtual network, vnet, nat, nat gateway`
+`Tags: virtual network, vnet, nat, nat gateway, Microsoft.Network/publicIPAddresses, Microsoft.Network/natGateways, Microsoft.Network/virtualNetworks`

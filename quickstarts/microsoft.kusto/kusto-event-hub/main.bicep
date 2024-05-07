@@ -106,7 +106,7 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
 var dataReceiverId = 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
 var fullDataReceiverId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', dataReceiverId)
 var eventHubRoleAssignmentName = '${resourceGroup().id}${cluster.name}${dataReceiverId}${eventHubNamespace::eventHub.name}'
-var roleAssignmentName='${guid(eventHubRoleAssignmentName, eventHubName, dataReceiverId, clusterName)}'
+var roleAssignmentName = guid(eventHubRoleAssignmentName, eventHubName, dataReceiverId, clusterName)
 
 resource clusterEventHubAuthorization 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
   name: roleAssignmentName

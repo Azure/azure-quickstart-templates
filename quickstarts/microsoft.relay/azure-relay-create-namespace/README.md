@@ -1,4 +1,14 @@
-# Create an Azure Relay namespace Namespace
+---
+description: This template enables you to deploy an Azure Relay namespace with a Standard SKU.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azure-relay-create-namespace
+languages:
+- json
+---
+# Create an Azure Relay namespace
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.relay/azure-relay-create-namespace/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.relay/azure-relay-create-namespace/PublicDeployment.svg)
@@ -16,3 +26,5 @@
 This template creates an Azure Relay namespace.
 
 You can access the primaryConnectionString and primaryKey using the listKeys() function in the template.
+
+`Tags: Microsoft.Relay/Namespaces`

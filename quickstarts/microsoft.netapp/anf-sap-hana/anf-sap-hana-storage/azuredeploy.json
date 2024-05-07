@@ -1,0 +1,653 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "SAPSystemID": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "metadata": {
+                "description": "SAP system ID (Three characters long alpha-numeric string)."
+            }
+        },
+        "AvailabilityZone": {
+            "type": "string",
+            "allowedValues": [
+                "None",
+                "1",
+                "2",
+                "3"
+            ],
+            "metadata": {
+                "description": "Availability Zone. This is None when proximity placement group is selected."
+            }
+        },
+        "ProximityPlacementGroupName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 80,
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of proximity placement group."
+            }
+        },
+        "ProximityPlacementGroupResourceGroup": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 90,
+            "defaultValue": "",
+            "metadata": {
+                "description": "Resource group name for the proximity placement group"
+            }
+        },
+        "NetworkFeatures": {
+            "type": "string",
+            "allowedValues": [
+                "Basic",
+                "Standard"
+            ],
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "Basic or Standard network features available to the volume"
+            }
+        },
+        "SAPMemoryInGibibytes": {
+            "type": "int",
+            "minValue": 1,
+            "maxValue": 12000,
+            "metadata": {
+                "description": "SAP HANA memory (in GiB max supported 12000 GiB), used to auto compute storage size and throughput."
+            }
+        },
+        "AdditionalCapacityForSnapshotsPercentageOfRAM": {
+            "type": "int",
+            "minValue": 0,
+            "maxValue": 200,
+            "defaultValue": 50,
+            "metadata": {
+                "description": "Additional memory to store snapshots, must be specified as % of RAM (range 0-200). This is used to auto compute storage size."
+            }
+        },
+        "StartingSAPHostID": {
+            "type": "int",
+            "minValue": 1,
+            "maxValue": 99999,
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Starting SAP HANA Host ID. Host ID 1 indicates Master Host. Shared, Data Backup and Log Backup volumes are only provisioned for Master Host."
+            }
+        },
+        "NumberOfSAPHosts": {
+            "type": "int",
+            "minValue": 1,
+            "defaultValue": 1,
+            "maxValue": 5,
+            "metadata": {
+                "description": "Total Number of SAP HANA hosts in this deployment (currently max 5 nodes can be configured)."
+            }
+        },
+        "SystemRole": {
+            "type": "string",
+            "allowedValues": [
+                "PRIMARY",
+                "HA"
+            ],
+            "defaultValue": "PRIMARY",
+            "metadata": {
+                "description": "Type of role for the storage account. Primary indicates first of a SAP HANA Replication (HSR) setup or No HSR. High Availability (HA) specifies volumes for the secondary host using HSR."
+            }
+        },
+        "Prefix": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "defaultValue": "default",
+            "metadata": {
+                "description": "All volume names will be prefixed with the given text. The default values for prefix text depends on system role. For PRIMARY it will be \"\" and for HA it will be \"HA-\"."
+            }
+        },
+        "TagKey": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 512,
+            "metadata": {
+                "description": "If a Tag Key is specified, it will be added to each volume created by this ARM template. It is recommended to add a tag for HSR deployments, with the tag name as \"HSRPartnerStorageResourceId\"."
+            }
+        },
+        "TagValue": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 256,
+            "metadata": {
+                "description": "If a Tag Value is specified, it will be added to each volume created by this ARM template. The value will only be added if Tag Key was specified. It is recommended to add a tag for HSR deployments, with Tag Value as \"Please enter the peering partner Volume ID\" and later update it for each volume from the ANF UI."
+            }
+        },
+        "AzureNetappFilesLocation": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "minLength": 1,
+            "maxLength": 1024,
+            "metadata": {
+                "description": "Azure NetApp Files (ANF) Location. If the resource group location is different than ANF location, ANF location needs to be specified."
+            }
+        },
+        "ANFNetappAccount": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "metadata": {
+                "description": "Name of Azure NetApp Files (ANF) account."
+            }
+        },
+        "CapacityPool": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "metadata": {
+                "description": "Name of Capacity Pool in Azure NetApp Files (ANF) account. All the volumes are created using this capacity pool."
+            }
+        },
+        "VirtualNetwork": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "metadata": {
+                "description": "Virtual Network name for the subnet."
+            }
+        },
+        "DelegatedSubnet": {
+            "type": "string",
+            "defaultValue": "default",
+            "minLength": 1,
+            "maxLength": 1024,
+            "metadata": {
+                "description": "Delegated Subnet name."
+            }
+        },
+        "DataSizeInGibibytes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify capacity (in GiB). Possible values can be \"auto\" or integer values (min 100 GiB) representing size."
+            }
+        },
+        "DataPerformanceInMebibytesPerSecond": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+            }
+        },
+        "LogSizeInGibibytes":{
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify capacity (in GiB). Possible values can be \"auto\" or integer values (min 100 GiB) representing size."
+            }
+        },
+        "LogPerformanceInMebibytesPerSecond": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Define throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+            }
+        },
+        "SharedSizeInGibibytes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify capacity (in GiB). Possible values can be \"auto\", none or integer values (min 100 GiB) representing size. The values are only considered if SAP HANA Host ID is 1, in other cases shared storage is not deployed."
+            }
+        },
+        "SharedPerformanceInMebibytesPerSecond": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+            }
+        },
+        "DataBackupAndLogBackupNFSVersion": {
+            "type": "string",
+            "allowedValues": [
+                "NFSv3",
+                "NFSv4.1"
+            ],
+            "defaultValue": "NFSv4.1",
+            "metadata": {
+                "description": "NFS Protocol version for data backup and log backup volumes. This option is common for the two volumes."
+            }
+        },
+        "DataBackupSizeInGibibytes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify capacity (in GiB). Possible values can be \"auto\", none or integer values (min 100 GiB) representing size. The values are only considered if SAP HANA Host ID is 1, in other cases data backup storage is not deployed."
+            }
+        },
+        "DataBackupPerformanceInMebibytesPerSecond": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+            }
+        },
+        "LogBackupSizeInGibibytes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify capacity (in GiB). Possible values can be \"auto\", none or integer values (min 100 GiB) representing size. The values are only considered if SAP HANA Host ID is 1, in other cases log backup storage is not deployed."
+            }
+        },
+        "LogBackupPerformanceInMebibytesPerSecond": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "defaultValue": "auto",
+            "metadata": {
+                "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+            }
+        }
+    },
+    "variables": {
+        "location": "[parameters('AzureNetappFilesLocation')]",
+        "SAPApplicationType": "SAP-HANA",
+        "paddedLength": 5,
+        "mappingSystemRole": {
+            "PRIMARY": {
+                "defaultPrefix": ""
+            },
+            "HA":{
+                "defaultPrefix": "HA-"
+            }
+        },
+
+        "1GiBInBytes": "[mul(1024, mul(1024, 1024))]",
+        "1TiBInGiB": 1024,
+
+        "volumeRolePrefix": "[if(equals(parameters('Prefix'), 'default'), variables('mappingSystemRole')[parameters('SystemRole')].defaultPrefix, concat(parameters('Prefix'),'-'))]",
+
+        "volumeGroupPrefix": "[concat(parameters('ANFNetappAccount'), '/SAP-HANA-', variables('volumeRolePrefix'), parameters('SAPSystemID'), '-')]",
+
+        "totalWorkerHosts": "[if(equals(parameters('StartingSAPHostID'), 1), sub(parameters('NumberOfSAPHosts'), 1), parameters('NumberOfSAPHosts'))]",
+
+        "tagPayload": {
+            "[parameters('TagKey')]" : "[parameters('TagValue')]"
+        },
+        "emptyTag": "[createObject()]",
+        "volumeTag": "[if(equals(parameters('TagKey'),''), variables('emptyTag'), variables('tagPayload'))]",
+        "zones": "[if(empty(parameters('ProximityPlacementGroupName')), if(equals(parameters('AvailabilityZone'),'None'), createArray(), array(parameters('AvailabilityZone'))), json('null'))]",
+        "proximityPlacementGroup": "[if(empty(parameters('ProximityPlacementGroupName')), json('null'), resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName')))]",
+
+        "autoDataVolumeSize": "[max(100, add(parameters('SAPMemoryInGibibytes'), int(div(mul(parameters('AdditionalCapacityForSnapshotsPercentageOfRAM'), parameters('SAPMemoryInGibibytes')), 100))))]",
+        "autoDataThroughput": "[if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(1, variables('1TiBInGiB'))), 400, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(2, variables('1TiBInGiB'))), 600, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(4, variables('1TiBInGiB'))), 800, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(6, variables('1TiBInGiB'))), 1000, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(8, variables('1TiBInGiB'))), 1200, if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(10, variables('1TiBInGiB'))),1400, 1500))))))]",
+
+        "dataVolumeSize": "[if(equals(parameters('DataSizeInGibibytes'), 'auto'), variables('autoDataVolumeSize'), int(parameters('DataSizeInGibibytes')))]",
+        "dataVolumeThroughput": "[if(equals(parameters('DataPerformanceInMebibytesPerSecond'), 'auto'), variables('autoDataThroughput'), int(parameters('DataPerformanceInMebibytesPerSecond')))]",
+        "dataVolumeNamePrefix": "[concat(variables('volumeRolePrefix'), parameters('SAPSystemID'),'-data-mnt')]",
+
+        "autoLogVolumeSize": "[max(100, int(div(mul(5, parameters('SAPMemoryInGibibytes')), 100)))]",
+        "autoLogThroughput": "[if(lessOrEquals(parameters('SAPMemoryInGibibytes'), mul(4, variables('1TiBInGiB'))), 250, 500)]",
+
+        "logVolumeSize": "[if(equals(parameters('LogSizeInGibibytes'), 'auto'), variables('autoLogVolumeSize'), int(parameters('LogSizeInGibibytes')))]",
+        "logVolumeThroughput": "[if(equals(parameters('LogPerformanceInMebibytesPerSecond'), 'auto'), variables('autoLogThroughput'), int(parameters('LogPerformanceInMebibytesPerSecond')))]",
+        "logVolumeNamePrefix": "[concat(variables('volumeRolePrefix'), parameters('SAPSystemID'), '-log-mnt')]",
+
+        "autoSharedVolumeSize": "[max(variables('1TiBInGiB'), int(mul(div(add(parameters('NumberOfSAPHosts'), 3), 4), parameters('SAPMemoryInGibibytes'))))]",
+        "autoSharedThroughput": 64,
+
+        "sharedVolumeSize": "[if(equals(parameters('SharedSizeInGibibytes'), 'auto'), variables('autoSharedVolumeSize'), if(equals(parameters('SharedSizeInGibibytes'), 'none'), 0, int(parameters('SharedSizeInGibibytes'))))]",
+        "sharedVolumeThroughput": "[if(equals(parameters('SharedPerformanceInMebibytesPerSecond'), 'auto'), variables('autoSharedThroughput'), int(parameters('SharedPerformanceInMebibytesPerSecond')))]",
+        "sharedVolumeNamePrefix": "[concat(variables('volumeRolePrefix'), parameters('SAPSystemID'), '-shared')]",
+
+        "autoDataBackupVolumeSize": "[max(100, add(variables('logVolumeSize'), variables('dataVolumeSize')))]",
+        "autoDataBackupThroughput": 128,
+
+        "dataBackupVolumeSize": "[if(equals(parameters('DataBackupSizeInGibibytes'), 'auto'), variables('autoDataBackupVolumeSize'), if(equals(parameters('DataBackupSizeInGibibytes'), 'none'), 0, int(parameters('DataBackupSizeInGibibytes'))))]",
+        "dataBackupVolumeThroughput": "[if(equals(parameters('DataBackupPerformanceInMebibytesPerSecond'), 'auto'), variables('autoDataBackupThroughput'), int(parameters('DataBackupPerformanceInMebibytesPerSecond')))]",
+        "dataBackupVolumeNamePrefix": "[concat(variables('volumeRolePrefix'), parameters('SAPSystemID'), '-data-backup')]",
+
+        "autoLogBackupVolumeSize": 512,
+        "autoLogBackupThroughput": 250,
+
+        "logBackupVolumeSize": "[if(equals(parameters('LogBackupSizeInGibibytes'), 'auto'), variables('autoLogBackupVolumeSize'), if(equals(parameters('LogBackupSizeInGibibytes'), 'none'), 0, int(parameters('LogBackupSizeInGibibytes'))))]",
+        "logBackupVolumeThroughput": "[if(equals(parameters('LogBackupPerformanceInMebibytesPerSecond'), 'auto'), variables('autoLogBackupThroughput'), int(parameters('LogBackupPerformanceInMebibytesPerSecond')))]",
+        "logBackupVolumeNamePrefix": "[concat(variables('volumeRolePrefix'), parameters('SAPSystemID'), '-log-backup')]",
+
+
+        "isNFSv3Enabled": "[if(equals(parameters('DataBackupAndLogBackupNFSVersion'), 'NFSv3'), 'true', 'false')]",
+        "isNFSv41Enabled": "[if(equals(parameters('DataBackupAndLogBackupNFSVersion'), 'NFSv4.1'), 'true', 'false')]",
+
+        "dataVolumePayload": {
+            "name": "[concat(variables('dataVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
+            "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
+            "properties": {
+                "creationToken": "[concat(variables('dataVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+                "usageThreshold": "[mul(variables('1GiBInBytes'),variables('dataVolumeSize'))]",
+                "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+                "kerberosEnabled": false,
+                "volumeSpecName": "data",
+                "throughputMibps": "[variables('dataVolumeThroughput')]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+                "exportPolicy": {
+                    "rules": [
+                        {
+                            "ruleIndex": 1,
+                            "unixReadOnly": false,
+                            "unixReadWrite": true,
+                            "cifs": false,
+                            "nfsv3": false,
+                            "nfsv41": true,
+                            "allowedClients": "0.0.0.0/0",
+                            "kerberos5ReadOnly": false,
+                            "kerberos5ReadWrite": false,
+                            "kerberos5iReadOnly": false,
+                            "kerberos5iReadWrite": false,
+                            "kerberos5pReadOnly": false,
+                            "kerberos5pReadWrite": false,
+                            "hasRootAccess": true
+                        }
+                    ]
+                },
+                "protocolTypes": [
+                    "NFSv4.1"
+                ]
+            }
+        },
+        "logVolumePayload": {
+            "name": "[concat(variables('logVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
+            "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
+            "properties": {
+                "creationToken": "[concat(variables('logVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+                "usageThreshold": "[mul(variables('1GiBInBytes'),variables('logVolumeSize'))]",
+                "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+                "kerberosEnabled": false,
+                "volumeSpecName": "log",
+                "throughputMibps": "[variables('logVolumeThroughput')]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+                "exportPolicy": {
+                    "rules": [
+                        {
+                            "ruleIndex": 1,
+                            "unixReadOnly": false,
+                            "unixReadWrite": true,
+                            "cifs": false,
+                            "nfsv3": false,
+                            "nfsv41": true,
+                            "allowedClients": "0.0.0.0/0",
+                            "kerberos5ReadOnly": false,
+                            "kerberos5ReadWrite": false,
+                            "kerberos5iReadOnly": false,
+                            "kerberos5iReadWrite": false,
+                            "kerberos5pReadOnly": false,
+                            "kerberos5pReadWrite": false,
+                            "hasRootAccess": true
+                        }
+                    ]
+                },
+                "protocolTypes": [
+                    "NFSv4.1"
+                ]
+            }
+        },
+        "sharedVolumePayload": {
+            "name": "[variables('sharedVolumeNamePrefix')]",
+            "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
+            "properties": {
+                "creationToken": "[concat(variables('sharedVolumeNamePrefix'), padLeft(1, variables('paddedLength'), '0'))]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+                "usageThreshold": "[mul(variables('1GiBInBytes'),variables('sharedVolumeSize'))]",
+                "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+                "kerberosEnabled": false,
+                "volumeSpecName": "shared",
+                "throughputMibps": "[variables('sharedVolumeThroughput')]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+                "exportPolicy": {
+                    "rules": [
+                        {
+                            "ruleIndex": 1,
+                            "unixReadOnly": false,
+                            "unixReadWrite": true,
+                            "cifs": false,
+                            "nfsv3": false,
+                            "nfsv41": true,
+                            "allowedClients": "0.0.0.0/0",
+                            "kerberos5ReadOnly": false,
+                            "kerberos5ReadWrite": false,
+                            "kerberos5iReadOnly": false,
+                            "kerberos5iReadWrite": false,
+                            "kerberos5pReadOnly": false,
+                            "kerberos5pReadWrite": false,
+                            "hasRootAccess": true
+                        }
+                    ]
+                },
+                "protocolTypes": [
+                    "NFSv4.1"
+                ]
+            }
+        },
+        "dataBackupVolumePayload": {
+            "name": "[variables('dataBackupVolumeNamePrefix')]",
+            "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
+            "properties": {
+                "creationToken": "[variables('dataBackupVolumeNamePrefix')]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "usageThreshold": "[mul(variables('1GiBInBytes'),variables('dataBackupVolumeSize'))]",
+                "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+                "kerberosEnabled": false,
+                "volumeSpecName": "data-backup",
+                "throughputMibps": "[variables('dataBackupVolumeThroughput')]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+                "exportPolicy": {
+                    "rules": [
+                        {
+                            "ruleIndex": 1,
+                            "unixReadOnly": false,
+                            "unixReadWrite": true,
+                            "cifs": false,
+                            "nfsv3":  "[variables('isNFSv3Enabled')]",
+                            "nfsv41": "[variables('isNFSv41Enabled')]",
+                            "allowedClients": "0.0.0.0/0",
+                            "kerberos5ReadOnly": false,
+                            "kerberos5ReadWrite": false,
+                            "kerberos5iReadOnly": false,
+                            "kerberos5iReadWrite": false,
+                            "kerberos5pReadOnly": false,
+                            "kerberos5pReadWrite": false,
+                            "hasRootAccess": true
+                        }
+                    ]
+                },
+                "protocolTypes": [
+                    "[parameters('DataBackupAndLogBackupNFSVersion')]"
+                ]
+            }
+        },
+        "logBackupVolumePayload": {
+            "name": "[variables('logBackupVolumeNamePrefix')]",
+            "tags": "[variables('volumeTag')]",
+            "zones": "[variables('zones')]",
+            "properties": {
+                "creationToken": "[variables('logBackupVolumeNamePrefix')]",
+                "networkFeatures": "[parameters('NetworkFeatures')]",
+                "usageThreshold": "[mul(variables('1GiBInBytes'),variables('logBackupVolumeSize'))]",
+                "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+                "kerberosEnabled": false,
+                "volumeSpecName": "log-backup",
+                "throughputMibps": "[variables('logBackupVolumeThroughput')]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+                "exportPolicy": {
+                    "rules": [
+                        {
+                            "ruleIndex": 1,
+                            "unixReadOnly": false,
+                            "unixReadWrite": true,
+                            "cifs": false,
+                            "nfsv3":  "[variables('isNFSv3Enabled')]",
+                            "nfsv41": "[variables('isNFSv41Enabled')]",
+                            "allowedClients": "0.0.0.0/0",
+                            "kerberos5ReadOnly": false,
+                            "kerberos5ReadWrite": false,
+                            "kerberos5iReadOnly": false,
+                            "kerberos5iReadWrite": false,
+                            "kerberos5pReadOnly": false,
+                            "kerberos5pReadWrite": false,
+                            "hasRootAccess": true
+                        }
+                    ]
+                },
+                "protocolTypes": [
+                    "[parameters('DataBackupAndLogBackupNFSVersion')]"
+                ]
+            }
+        },
+
+        "emptyArray": "[createArray()]",
+        "dataLogSharedPayloadArray": "[concat(array(variables('dataVolumePayload')), array(variables('logVolumePayload')),if(equals(parameters('SharedSizeInGibibytes'), 'none'), variables('emptyArray'), array(variables('sharedVolumePayload'))))]",
+        "dataLogSharedDataBackupPayloadArray": "[concat(variables('dataLogSharedPayloadArray'), if(equals(parameters('DataBackupSizeInGibibytes'), 'none'), variables('emptyArray'), array(variables('dataBackupVolumePayload'))))]",
+        "masterHostVolumesPayloadArray": "[concat(variables('dataLogSharedDataBackupPayloadArray'), if(equals(parameters('LogBackupSizeInGibibytes'), 'none'), variables('emptyArray'), array(variables('logBackupVolumePayload'))))]"
+    },
+    "resources": [
+        {
+            "comments": "Volume Group creation for master Host. This will be deployed only if Starting SAP HostID ==1 i.e master Host",
+            "condition": "[equals(parameters('StartingSAPHostID'), 1)]",
+            "type": "Microsoft.NetApp/netAppAccounts/volumeGroups",
+            "apiVersion": "2023-11-01",
+            "name": "[concat(variables('volumeGroupPrefix'), padLeft(1,variables('paddedLength'),'0'))]",
+            "location": "[variables('location')]",
+            "properties": {
+                "groupMetaData":{
+                    "groupDescription": "[concat('Volume Group for ', variables('volumeGroupPrefix'), padLeft(1,variables('paddedLength'),'0'))]",
+                    "applicationType": "[variables('SAPApplicationType')]",
+                    "applicationIdentifier": "[parameters('SAPSystemID')]"
+                },
+                "volumes": "[variables('masterHostVolumesPayloadArray')]"
+            }
+        },
+        {
+            "comments":"Volume Group creation for worker Hosts, worker index starts from 2. Copy object specify how many volume groups we want to create for workers",
+            "type": "Microsoft.NetApp/netAppAccounts/volumeGroups",
+            "apiVersion": "2023-09-01",
+            "name": "[concat(variables('volumeGroupPrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
+            "location": "[variables('location')]",
+            "copy": {
+                "name": "WorkerHosts",
+                "count": "[variables('totalWorkerHosts')]"
+            },
+            "properties": {
+                "groupMetaData":{
+                    "groupDescription": "[concat('Volume Group for ', variables('volumeGroupPrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
+                    "applicationType": "[variables('SAPApplicationType')]",
+                    "applicationIdentifier": "[parameters('SAPSystemID')]"
+                },
+                "volumes": [
+                    {
+                        "name": "[concat(variables('dataVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
+                        "tags": "[variables('volumeTag')]",
+                        "zones": "[if(empty(parameters('ProximityPlacementGroupName')), if(equals(parameters('AvailabilityZone'),'None'), createArray(), array(parameters('AvailabilityZone'))), json('null'))]",
+                        "properties": {
+                            "creationToken": "[concat(variables('dataVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
+                            "networkFeatures": "[parameters('NetworkFeatures')]",
+                            "proximityPlacementGroup": "[if(empty(parameters('ProximityPlacementGroupName')), json('null'), resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName')))]",
+                            "usageThreshold": "[mul(variables('1GiBInBytes'), variables('dataVolumeSize'))]",
+                            "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+                            "kerberosEnabled": false,
+                            "volumeSpecName": "data",
+                            "throughputMibps": "[variables('dataVolumeThroughput')]",
+                            "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+                            "exportPolicy": {
+                                "rules": [
+                                    {
+                                        "ruleIndex": 1,
+                                        "unixReadOnly": false,
+                                        "unixReadWrite": true,
+                                        "cifs": false,
+                                        "nfsv3": false,
+                                        "nfsv41": true,
+                                        "allowedClients": "0.0.0.0/0",
+                                        "kerberos5ReadOnly": false,
+                                        "kerberos5ReadWrite": false,
+                                        "kerberos5iReadOnly": false,
+                                        "kerberos5iReadWrite": false,
+                                        "kerberos5pReadOnly": false,
+                                        "kerberos5pReadWrite": false,
+                                        "hasRootAccess": true
+                                    }
+                                ]
+                            },
+                            "protocolTypes": [
+                                "NFSv4.1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('logVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
+                        "tags": "[variables('volumeTag')]",
+                        "zones": "[if(empty(parameters('ProximityPlacementGroupName')), if(equals(parameters('AvailabilityZone'),'None'), createArray(), array(parameters('AvailabilityZone'))), json('null'))]",
+                        "properties": {
+                            "creationToken": "[concat(variables('logVolumeNamePrefix'), padLeft(add(copyIndex(), 2), variables('paddedLength'), '0'))]",
+                            "networkFeatures": "[parameters('NetworkFeatures')]",
+                            "proximityPlacementGroup": "[if(empty(parameters('ProximityPlacementGroupName')), json('null'), resourceId(parameters('ProximityPlacementGroupResourceGroup'),'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName')))]",
+                            "usageThreshold": "[mul(variables('1GiBInBytes'), variables('logVolumeSize'))]",
+                            "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+                            "kerberosEnabled": false,
+                            "volumeSpecName": "log",
+                            "throughputMibps": "[variables('logVolumeThroughput')]",
+                            "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+                            "exportPolicy": {
+                                "rules": [
+                                    {
+                                        "ruleIndex": 1,
+                                        "unixReadOnly": false,
+                                        "unixReadWrite": true,
+                                        "cifs": false,
+                                        "nfsv3": false,
+                                        "nfsv41": true,
+                                        "allowedClients": "0.0.0.0/0",
+                                        "kerberos5ReadOnly": false,
+                                        "kerberos5ReadWrite": false,
+                                        "kerberos5iReadOnly": false,
+                                        "kerberos5iReadWrite": false,
+                                        "kerberos5pReadOnly": false,
+                                        "kerberos5pReadWrite": false,
+                                        "hasRootAccess": true
+                                    }
+                                ]
+                            },
+                            "protocolTypes": [
+                                "NFSv4.1"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

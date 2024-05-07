@@ -1,4 +1,14 @@
-# Deploy a HDInsight HBase replication across two regions
+---
+description: This template allows you to configure an Azure environment for HBase replication across two different regions with VPN vnet-to-vnet connection.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-hbase-replication-geo
+languages:
+- json
+---
+# Deploy HBase geo replication
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-hbase-replication-geo/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-hbase-replication-geo/PublicDeployment.svg)
@@ -21,3 +31,5 @@ This template allows you to create an Azure environment for HBase replication.  
 - [Deploy a HDInsight HBase cluster within a VNet](https://azure.microsoft.com/resources/templates/101-hdinsight-hbase-linux-vnet/)
 - [Deploy a HDInsight HBase replication with the clusters in one VNet](https://azure.microsoft.com/resources/templates/101-hdinsight-hbase-replication-one-vnet/)
 - [Deploy a HDInsight HBase replication with two VNets in one region](https://azure.microsoft.com/resources/templates/101-hdinsight-hbase-replication-two-vnets-same-region/)
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/connections, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

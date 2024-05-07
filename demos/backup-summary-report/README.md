@@ -1,4 +1,14 @@
-# Create a Logic App to send Azure Backup summary reports via email
+---
+description: Create a Logic App to send summary reports on your backups via email.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: backup-summary-report
+languages:
+- json
+---
+# Logic App to email summary reports on backups
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-summary-report/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/backup-summary-report/PublicDeployment.svg)
@@ -22,3 +32,5 @@ The Summary Views provide a high-level overview of your backup estate. You can g
 ## Prerequisites
 
 This template needs an existing LogAnalytics workspace to query.
+
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, Foreach, AppendToStringVariable, If, ApiConnection, InitializeVariable, string, Scope, Microsoft.OperationalInsights/workspaces`

@@ -1,0 +1,601 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.170.59819",
+      "templateHash": "5644247019592008823"
+    }
+  },
+  "parameters": {
+    "watcherName": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 62,
+      "metadata": {
+        "description": "Database watcher name"
+      }
+    },
+    "identityType": {
+      "type": "string",
+      "allowedValues": [
+        "SystemAssigned"
+      ],
+      "metadata": {
+        "description": "The type of managed identity to assign to the watcher"
+      }
+    },
+    "watcherLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location (Azure region) of the watcher"
+      }
+    },
+    "createNewDatastore": {
+      "type": "bool",
+      "metadata": {
+        "description": "Set to true to create a new Azure Data Explorer cluster and database as the data store for the watcher"
+      }
+    },
+    "kustoOfferingType": {
+      "type": "string",
+      "defaultValue": "adx",
+      "allowedValues": [
+        "adx"
+      ],
+      "metadata": {
+        "description": "The Kusto offering type of the data store"
+      }
+    },
+    "clusterSubscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "The subscription ID of the Azure Data Explorer cluster. By default, the cluster is created in the same subscription as the watcher."
+      }
+    },
+    "clusterResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "minLength": 1,
+      "maxLength": 90,
+      "metadata": {
+        "description": "The resource group name of the Azure Data Explorer cluster. By default, the cluster is created in the same resource group as the watcher."
+      }
+    },
+    "clusterLocation": {
+      "type": "string",
+      "defaultValue": "[parameters('watcherLocation')]",
+      "metadata": {
+        "description": "The location (Azure region) of the Azure Data Explorer cluster. By default, the cluster is created in the same location as the watcher."
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 22,
+      "metadata": {
+        "description": "The name of the Azure Data Explorer cluster. If createNewDatastore is set to false, this must be an existing cluster."
+      }
+    },
+    "kustoDatabaseName": {
+      "type": "string",
+      "defaultValue": "database-watcher-data-store",
+      "minLength": 1,
+      "maxLength": 260,
+      "metadata": {
+        "description": "The name of the Azure Data Explorer database. If createNewDatastore is set to false, this must be an existing database."
+      }
+    },
+    "clusterSkuName": {
+      "type": "string",
+      "defaultValue": "[if(parameters('createNewDatastore'), 'Standard_E2d_v5', '')]",
+      "metadata": {
+        "description": "The SKU of the new Azure Data Explorer cluster. Not used if createNewDatastore is set to false."
+      }
+    },
+    "clusterSkuTier": {
+      "type": "string",
+      "defaultValue": "[if(parameters('createNewDatastore'), 'Standard', '')]",
+      "metadata": {
+        "description": "The SKU tier of the Azure Data Explorer cluster. Not used if createNewDatastore is set to false."
+      }
+    },
+    "targetCount": {
+      "type": "int",
+      "minValue": 0,
+      "maxValue": 50,
+      "metadata": {
+        "description": "The total number of SQL targets to add to the watcher. Must match the number of elements in the targetProperties array."
+      }
+    },
+    "targetProperties": {
+      "type": "array",
+      "metadata": {
+        "description": "The array of SQL target properties. Each element of the array defines a SQL target."
+      }
+    },
+    "privateLinkCount": {
+      "type": "int",
+      "minValue": 0,
+      "maxValue": 101,
+      "metadata": {
+        "description": "The total number of managed private links to add to the watcher. Must match the number of elements in the privateLinkProperties array."
+      }
+    },
+    "privateLinkProperties": {
+      "type": "array",
+      "metadata": {
+        "description": "The array of managed private link properties. Each element of the array defines a managed private link the watcher will use to connect to an Azure resource."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DatabaseWatcher/watchers",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[parameters('watcherName')]",
+      "location": "[parameters('watcherLocation')]",
+      "identity": {
+        "type": "[parameters('identityType')]"
+      },
+      "properties": {
+        "datastore": {
+          "adxClusterResourceId": "[if(parameters('createNewDatastore'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Resources/deployments', 'watcher-data-store'), '2022-09-01').outputs.adxClusterResourceId.value, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Kusto/clusters', parameters('clusterName')))]",
+          "kustoClusterDisplayName": "[parameters('clusterName')]",
+          "kustoDatabaseName": "[parameters('kustoDatabaseName')]",
+          "kustoClusterUri": "[if(parameters('createNewDatastore'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Resources/deployments', 'watcher-data-store'), '2022-09-01').outputs.adxClusterUri.value, reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Kusto/clusters', parameters('clusterName')), '2023-08-15').uri)]",
+          "kustoDataIngestionUri": "[if(parameters('createNewDatastore'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Resources/deployments', 'watcher-data-store'), '2022-09-01').outputs.adxDataIngestionUri.value, reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Kusto/clusters', parameters('clusterName')), '2023-08-15').dataIngestionUri)]",
+          "kustoManagementUrl": "[format('{0}/resource/subscriptions{1}/overview', environment().portal, resourceId('Microsoft.Kusto/Clusters', parameters('clusterName')))]",
+          "kustoOfferingType": "[parameters('kustoOfferingType')]"
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Resources/deployments', 'watcher-data-store')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlDbAadTargets",
+        "count": "[length(range(0, length(range(0, parameters('targetCount')))))]"
+      },
+      "condition": "[and(equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType, 'SqlDb'), equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType, 'Aad'))]",
+      "type": "Microsoft.DatabaseWatcher/watchers/targets",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), guid(resourceGroup().id, parameters('watcherName'), string(range(0, length(range(0, parameters('targetCount'))))[copyIndex()])))]",
+      "properties": {
+        "targetType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType]",
+        "sqlDbResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/databases', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetDatabaseName)]",
+        "connectionServerName": "[concat(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetServerDnsSuffix)]",
+        "readIntent": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].readIntent]",
+        "targetAuthenticationType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlDbSqlTargets",
+        "count": "[length(range(0, length(range(0, parameters('targetCount')))))]"
+      },
+      "condition": "[and(equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType, 'SqlDb'), equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType, 'Sql'))]",
+      "type": "Microsoft.DatabaseWatcher/watchers/targets",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), guid(resourceGroup().id, parameters('watcherName'), string(range(0, length(range(0, parameters('targetCount'))))[copyIndex()])))]",
+      "properties": {
+        "targetType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType]",
+        "sqlDbResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/databases', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetDatabaseName)]",
+        "connectionServerName": "[concat(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetServerDnsSuffix)]",
+        "readIntent": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].readIntent]",
+        "targetAuthenticationType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType]",
+        "targetVault": {
+          "akvResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultName)]",
+          "akvTargetUser": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].akvTargetUser]",
+          "akvTargetPassword": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].akvTargetPassword]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlEpAadTargets",
+        "count": "[length(range(0, length(range(0, parameters('targetCount')))))]"
+      },
+      "condition": "[and(equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType, 'SqlEp'), equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType, 'Aad'))]",
+      "type": "Microsoft.DatabaseWatcher/watchers/targets",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), guid(resourceGroup().id, parameters('watcherName'), string(range(0, length(range(0, parameters('targetCount'))))[copyIndex()])))]",
+      "properties": {
+        "targetType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType]",
+        "sqlEpResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/elasticPools', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetElasticPoolName)]",
+        "anchorDatabaseResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/databases', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAnchorDatabaseName)]",
+        "connectionServerName": "[concat(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetServerDnsSuffix)]",
+        "readIntent": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].readIntent]",
+        "targetAuthenticationType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlEpSqlTargets",
+        "count": "[length(range(0, length(range(0, parameters('targetCount')))))]"
+      },
+      "condition": "[and(equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType, 'SqlEp'), equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType, 'Sql'))]",
+      "type": "Microsoft.DatabaseWatcher/watchers/targets",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), guid(resourceGroup().id, parameters('watcherName'), string(range(0, length(range(0, parameters('targetCount'))))[copyIndex()])))]",
+      "properties": {
+        "targetType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType]",
+        "sqlEpResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/elasticPools', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetElasticPoolName)]",
+        "anchorDatabaseResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerResourceGroupName, 'Microsoft.Sql/servers/databases', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAnchorDatabaseName)]",
+        "connectionServerName": "[concat(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetLogicalServerName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetServerDnsSuffix)]",
+        "readIntent": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].readIntent]",
+        "targetAuthenticationType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType]",
+        "targetVault": {
+          "akvResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultName)]",
+          "akvTargetUser": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].akvTargetUser]",
+          "akvTargetPassword": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].akvTargetPassword]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlMiAadTargets",
+        "count": "[length(range(0, length(range(0, parameters('targetCount')))))]"
+      },
+      "condition": "[and(equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType, 'SqlMi'), equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType, 'Aad'))]",
+      "type": "Microsoft.DatabaseWatcher/watchers/targets",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), guid(resourceGroup().id, parameters('watcherName'), string(range(0, length(range(0, parameters('targetCount'))))[copyIndex()])))]",
+      "properties": {
+        "targetType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType]",
+        "sqlMiResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceResourceGroupName, 'Microsoft.Sql/managedInstances', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceName)]",
+        "connectionServerName": "[format('{0}.{1}{2}', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceDnsZone, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceDnsSuffix)]",
+        "connectionTcpPort": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].connectionTcpPort]",
+        "readIntent": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].readIntent]",
+        "targetAuthenticationType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlMiSqlTargets",
+        "count": "[length(range(0, length(range(0, parameters('targetCount')))))]"
+      },
+      "condition": "[and(equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType, 'SqlMi'), equals(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType, 'Sql'))]",
+      "type": "Microsoft.DatabaseWatcher/watchers/targets",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), guid(resourceGroup().id, parameters('watcherName'), string(range(0, length(range(0, parameters('targetCount'))))[copyIndex()])))]",
+      "properties": {
+        "targetType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetType]",
+        "sqlMiResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceResourceGroupName, 'Microsoft.Sql/managedInstances', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceName)]",
+        "connectionServerName": "[format('{0}.{1}{2}', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceName, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceDnsZone, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetManagedInstanceDnsSuffix)]",
+        "connectionTcpPort": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].connectionTcpPort]",
+        "readIntent": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].readIntent]",
+        "targetAuthenticationType": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetAuthenticationType]",
+        "targetVault": {
+          "akvResourceId": "[resourceId(parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultSubscriptionId, parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultResourceGroup, 'Microsoft.KeyVault/vaults', parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].targetVaultName)]",
+          "akvTargetUser": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].akvTargetUser]",
+          "akvTargetPassword": "[parameters('targetProperties')[range(0, length(range(0, parameters('targetCount'))))[copyIndex()]].akvTargetPassword]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlDbPrivateLinks",
+        "count": "[length(range(0, length(range(0, parameters('privateLinkCount')))))]"
+      },
+      "condition": "[equals(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId, 'sqlServer')]",
+      "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].privateLinkName)]",
+      "properties": {
+        "privateLinkResourceId": "[resourceId(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].logicalServerSubscriptionId, parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].logicalServerResourceGroupName, 'Microsoft.Sql/servers', parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].logicalServerName)]",
+        "groupId": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId]",
+        "requestMessage": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].requestMessage]",
+        "dnsZone": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].dnsZone]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sqlMiPrivateLinks",
+        "count": "[length(range(0, length(range(0, parameters('privateLinkCount')))))]"
+      },
+      "condition": "[equals(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId, 'managedInstance')]",
+      "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].privateLinkName)]",
+      "properties": {
+        "privateLinkResourceId": "[resourceId(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].managedInstanceSubscriptionId, parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].managedInstanceResourceGroupName, 'Microsoft.Sql/managedInstances', parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].managedInstanceName)]",
+        "groupId": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId]",
+        "requestMessage": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].requestMessage]",
+        "dnsZone": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].dnsZone]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "adxPrivateLinks",
+        "count": "[length(range(0, length(range(0, parameters('privateLinkCount')))))]"
+      },
+      "condition": "[equals(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId, 'cluster')]",
+      "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].privateLinkName)]",
+      "properties": {
+        "privateLinkResourceId": "[resourceId(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].adxClusterSubscriptionId, parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].adxClusterResourceGroupName, 'Microsoft.Kusto/clusters', parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].adxClusterName)]",
+        "groupId": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId]",
+        "requestMessage": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].requestMessage]",
+        "dnsZone": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].dnsZone]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "akvPrivateLinks",
+        "count": "[length(range(0, length(range(0, parameters('privateLinkCount')))))]"
+      },
+      "condition": "[equals(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId, 'vault')]",
+      "type": "Microsoft.DatabaseWatcher/watchers/sharedPrivateLinkResources",
+      "apiVersion": "2023-09-01-preview",
+      "name": "[format('{0}/{1}', parameters('watcherName'), parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].privateLinkName)]",
+      "properties": {
+        "privateLinkResourceId": "[resourceId(parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].vaultSubscriptionId, parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].vaultResourceGroupName, 'Microsoft.KeyVault/vaults', parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].vaultName)]",
+        "groupId": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].groupId]",
+        "requestMessage": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].requestMessage]",
+        "dnsZone": "[parameters('privateLinkProperties')[range(0, length(range(0, parameters('privateLinkCount'))))[copyIndex()]].dnsZone]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    },
+    {
+      "condition": "[and(parameters('createNewDatastore'), equals(parameters('kustoOfferingType'), 'adx'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "watcher-data-store",
+      "subscriptionId": "[parameters('clusterSubscriptionId')]",
+      "resourceGroup": "[parameters('clusterResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "clusterName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "clusterLocation": {
+            "value": "[parameters('clusterLocation')]"
+          },
+          "clusterSkuName": {
+            "value": "[parameters('clusterSkuName')]"
+          },
+          "clusterSkuTier": {
+            "value": "[parameters('clusterSkuTier')]"
+          },
+          "kustoDatabaseName": {
+            "value": "[parameters('kustoDatabaseName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.26.170.59819",
+              "templateHash": "15926089518674461771"
+            }
+          },
+          "parameters": {
+            "clusterName": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 22,
+              "metadata": {
+                "description": "The name of the Azure Data Explorer cluster"
+              }
+            },
+            "clusterLocation": {
+              "type": "string",
+              "metadata": {
+                "description": "The location (Azure region) of the Azure Data Explorer cluster"
+              }
+            },
+            "clusterSkuName": {
+              "type": "string",
+              "metadata": {
+                "description": "The SKU of the Azure Data Explorer cluster"
+              }
+            },
+            "clusterSkuTier": {
+              "type": "string",
+              "metadata": {
+                "description": "The SKU tier of the Azure Data Explorer cluster"
+              }
+            },
+            "kustoDatabaseName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 260,
+              "metadata": {
+                "description": "The name of the Azure Data Explorer database"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Kusto/clusters",
+              "apiVersion": "2023-05-02",
+              "name": "[parameters('clusterName')]",
+              "location": "[parameters('clusterLocation')]",
+              "tags": {},
+              "sku": {
+                "capacity": 2,
+                "name": "[parameters('clusterSkuName')]",
+                "tier": "[parameters('clusterSkuTier')]"
+              },
+              "identity": {
+                "type": "None"
+              },
+              "properties": {
+                "enableAutoStop": false,
+                "enableDiskEncryption": true,
+                "enableDoubleEncryption": false,
+                "enableStreamingIngest": true,
+                "enablePurge": true,
+                "engineType": "V3",
+                "optimizedAutoscale": {
+                  "isEnabled": false,
+                  "minimum": 2,
+                  "maximum": 2,
+                  "version": 1
+                },
+                "publicIPType": "IPv4",
+                "publicNetworkAccess": "Enabled",
+                "restrictOutboundNetworkAccess": "Disabled"
+              }
+            },
+            {
+              "type": "Microsoft.Kusto/clusters/databases",
+              "apiVersion": "2023-05-02",
+              "name": "[format('{0}/{1}', parameters('clusterName'), parameters('kustoDatabaseName'))]",
+              "location": "[parameters('clusterLocation')]",
+              "kind": "ReadWrite",
+              "properties": {
+                "softDeletePeriod": "P365D",
+                "hotCachePeriod": "P31D"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "adxClusterResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]"
+            },
+            "adxClusterUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2023-05-02').uri]"
+            },
+            "adxDataIngestionUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2023-05-02').dataIngestionUri]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('kustoOfferingType'), 'adx')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "watcher-data-store-role-assignment",
+      "subscriptionId": "[parameters('clusterSubscriptionId')]",
+      "resourceGroup": "[parameters('clusterResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "clusterName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "kustoDatabaseName": {
+            "value": "[parameters('kustoDatabaseName')]"
+          },
+          "watcherResourceId": {
+            "value": "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+          },
+          "watcherIdentity": {
+            "value": "[reference(resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName')), '2023-09-01-preview', 'full').identity]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.26.170.59819",
+              "templateHash": "13049117726013001044"
+            }
+          },
+          "parameters": {
+            "clusterName": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 22,
+              "metadata": {
+                "description": "The name of the Azure Data Explorer cluster"
+              }
+            },
+            "kustoDatabaseName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 260,
+              "metadata": {
+                "description": "The name of the Azure Data Explorer database"
+              }
+            },
+            "watcherResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the watcher."
+              }
+            },
+            "watcherIdentity": {
+              "type": "object",
+              "metadata": {
+                "description": "The identity of the watcher."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Kusto/clusters/databases/principalAssignments",
+              "apiVersion": "2023-08-15",
+              "name": "[format('{0}/{1}/{2}', split(format('{0}/{1}', parameters('clusterName'), parameters('kustoDatabaseName')), '/')[0], split(format('{0}/{1}', parameters('clusterName'), parameters('kustoDatabaseName')), '/')[1], guid(parameters('watcherResourceId'), resourceId('Microsoft.Kusto/clusters/databases', split(format('{0}/{1}', parameters('clusterName'), parameters('kustoDatabaseName')), '/')[0], split(format('{0}/{1}', parameters('clusterName'), parameters('kustoDatabaseName')), '/')[1])))]",
+              "properties": {
+                "tenantId": "[parameters('watcherIdentity').tenantId]",
+                "principalId": "[parameters('watcherIdentity').principalId]",
+                "role": "Admin",
+                "principalType": "App"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('clusterSubscriptionId'), parameters('clusterResourceGroupName')), 'Microsoft.Resources/deployments', 'watcher-data-store')]",
+        "[resourceId('Microsoft.DatabaseWatcher/watchers', parameters('watcherName'))]"
+      ]
+    }
+  ]
+}

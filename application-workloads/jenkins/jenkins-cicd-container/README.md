@@ -1,4 +1,14 @@
-# Container CI/CD using Jenkins and Kubernetes on Azure Container Service (AKS)
+---
+description: Containers make it very easy for you to continuously build and deploy your applications. By orchestrating deployment of those containers using Kubernetes in Azure Container Service, you can achieve replicable, manageable clusters of containers. By setting up a continuous build to produce your container images and orchestration, you can increase the speed and reliability of your deployment.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: jenkins-cicd-container
+languages:
+- json
+---
+# CI/CD using Jenkins on Azure Container Service (AKS)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cicd-container/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/jenkins/jenkins-cicd-container/PublicDeployment.svg)
@@ -30,7 +40,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
 ### Create an Azure service principal
 
-1. Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) if you have not.
+1. Install [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) if you have not.
 
    > Note: Alternatively, you can also use Azure Cloud Shell from the Azure Portal.
 
@@ -65,7 +75,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
    Copy the values **appId** and **password**, they will be used later.
 
-   > Note: for more details about creating an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
+   > Note: for more details about creating an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
 
 ### Create a SSH Key for Linux VMs
 
@@ -159,7 +169,7 @@ This Jenkins instance does not support https, so logging in through a public IP 
 
    ```sh
    Warning: Permanently added 'jenkins-180131-1520.eastus.cloudapp.azure.com,40.71.20.174' (ECDSA) to the list of known hosts.
-   azureuser@jenkins-180131-1520.eastus.cloudapp.azure.com's password: 
+   azureuser@jenkins-180131-1520.eastus.cloudapp.azure.com's password:
    ```
 
 4. Input the **Linux Admin Password**
@@ -206,7 +216,7 @@ This Jenkins instance does not support https, so logging in through a public IP 
 
 After logged in, you will see the **Hello World Build & Deploy** pipline job. Please click to explore it.
 
-![](images/jenkins-pipline-job.png) 
+![](images/jenkins-pipline-job.png)
 
 ### Access the hello world web app
 
@@ -236,7 +246,7 @@ After logged in, you will see the **Hello World Build & Deploy** pipline job. Pl
 
 #### Get Kubenetes service
 
-1. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not. Or, you can install `kubectl` locally using the [az aks install-cli](https://docs.microsoft.com/en-us/cli/azure/aks#az-aks-install-cli) command:
+1. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not. Or, you can install `kubectl` locally using the [az aks install-cli](https://docs.microsoft.com/cli/azure/aks#az-aks-install-cli) command:
 
    ```sh
    az aks install-cli
@@ -295,3 +305,5 @@ After logged in, you will see the **Hello World Build & Deploy** pipline job. Pl
    ```Sh
    ssh -i <private_ssh_key>  <username>@<GRAFANAURL>
    ```
+
+`Tags: Microsoft.ContainerRegistry/registries, Microsoft.DocumentDb/databaseAccounts, Microsoft.Network/virtualNetworks, Microsoft.Resources/deployments, Microsoft.ContainerService/managedClusters, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

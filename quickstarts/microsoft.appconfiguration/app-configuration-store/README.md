@@ -1,4 +1,15 @@
-# Azure App Configuration
+---
+description: This template creates an Azure App Configuration store.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: app-configuration-store
+languages:
+- json
+- bicep
+---
+# Create an App Configuration Store
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.appconfiguration/app-configuration-store/PublicDeployment.svg)
@@ -26,4 +37,4 @@ If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Azure4Student, AppConfiguration, Beginner`
+`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.AppConfiguration/configurationStores`

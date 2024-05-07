@@ -1,3 +1,13 @@
+---
+description: This template creates an Application Gateway and configures it for Multi Hosting on port 443.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: application-gateway-multihosting
+languages:
+- json
+---
 # Application Gateway for Multi Hosting
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/application-gateway-multihosting/PublicLastTestDate.svg)
@@ -15,3 +25,4 @@
 
 This template creates an Application Gateway, Public IP address for the Application Gateway, and the Virtual Network in which Application Gateway is deployed. Also configures Application Gateway for Multi Hosting on port 443.
 
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/applicationGateways`

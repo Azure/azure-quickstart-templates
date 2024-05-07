@@ -1,4 +1,15 @@
-# Azure Digital Twins with Azure function and Private Link
+---
+description: This template creates an Azure Digital Twins service configured with a Virtual Network connected Azure Function that can communicate through a Private Link Endpoint to Digital Twins. It also creates a Private DNS Zone to allow seamless hostname resolution of the Digital Twins Endpoint from the Virtual Network to the Private Endpoint internal subnet IP address. The hostname is stored as a setting to the Azure Function with name 'ADT_ENDPOINT'.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: digitaltwins-with-function-private-link
+languages:
+- bicep
+- json
+---
+# Azure Digital Twins with Function and Private Link service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/PublicDeployment.svg)
@@ -53,3 +64,4 @@ Once the deployment is complete, you can author an Azure function to access the 
 ## Notes
 
 - If you receive a 403, Forbidden response from calls to the Azure Digital Twins endpoint, you must be accessing the service through the public network. The `PublicNetworkAccess` policy being set to `disabled` requires API calls to occur through the Private Endpoint. Only when accessed through the Private Endpoint, the request will be permitted through.
+`Tags: Microsoft.Resources/deployments, Microsoft.DigitalTwins/digitalTwinsInstances, Microsoft.Network/virtualNetworks, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Insights/components, Microsoft.Web/sites, SystemAssigned, Microsoft.Web/sites/networkConfig, Microsoft.Authorization/roleAssignments`

@@ -1,0 +1,578 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "6.4.0.1",
+  "parameters": {
+    "utcValue": {
+      "type": "string",
+      "defaultValue": "[utcNow()]"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "pro",
+      "metadata": {
+        "description": "Administrator username for the Virtual Machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      },
+      "defaultValue": "[concat('Bb1',uniqueString(newGuid()), '!')]"
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The DNS name label for the Public IP. Must be globally unique. Leave blank to be assigned a unique value."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "userEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "The email address of the user."
+      }
+    },
+    "hostname": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The fully-qualified custom domain name for your BrowserBox instance. Specify if you will add an A record for this custom domain with your DNS provider pointing to this VM's public IP address. Otherwise, leave blank to get a random cloudapp.azure.com hostname that sets up automatically."
+      }
+    },
+    "token": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "A secret for the login link."
+      }
+    },
+    "imageChoice": {
+      "type": "string",
+      "defaultValue": "Ubuntu 22.04 LTS (gen 2)",
+      "allowedValues": [
+        "CentOS 8.5 (gen 2)",
+        "Ubuntu 22.04 LTS (gen 2)",
+        "RedHat 8 LVM (gen 2)"
+      ],
+      "metadata": {
+        "description": "Choose an OS image"
+      }
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "This is the Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "installDocViewer": {
+      "type": "string",
+      "defaultValue": "false",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
+      "metadata": {
+        "description": "Install document viewer (makes install take longer)."
+      }
+    },
+    "understanding": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
+      "metadata": {
+        "description": "Acknowledgement of reading the guide and setting up DNS and firewall ports."
+      }
+    },
+    "randomGUID": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "A random GUID value hashed to construct the token if token is not provided."
+      }
+    },
+    "randomPassword": {
+      "type": "securestring",
+      "defaultValue": "[concat('Bb1',uniqueString(newGuid()), '!')]",
+      "metadata": {
+        "description": "A random GUID value hashed to construct the token if token is not provided."
+      }
+    },
+    "dnsAndPublicIpResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The resource group name of any public IP address or DNS prefix specifically configured, by default the deployment's resource group."
+      }
+    },
+    "dnsAndPublicIpNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "metadata": {
+        "description": "The mode of any public IP address specifically selected"
+      }
+    }
+  },
+  "variables": {
+    "CentOS_8.5_gen_2": {
+      "version": "latest",
+      "publisher": "OpenLogic",
+      "offer": "CentOS",
+      "sku": "8_5-gen2"
+    },
+    "Ubuntu_22.04_LTS_gen_2": {
+      "version": "latest",
+      "publisher": "Canonical",
+      "offer": "0001-com-ubuntu-server-jammy",
+      "sku": "22_04-lts-gen2"
+    },
+    "RedHat_8_LVM_gen_2": {
+      "version": "latest",
+      "publisher": "RedHat",
+      "offer": "RHEL",
+      "sku": "8-lvm-gen2"
+    },
+    "uniqueSuffix": "[uniqueString(resourceGroup().id, deployment().name, parameters('utcValue'))]",
+    "publicIPAddressNamePrefix": "BrowserBoxPublicIP",
+    "virtualNetworkNamePrefix": "BrowserBoxVNet",
+    "vmNamePrefix": "BrowserBoxVM",
+    "networkSecurityGroupNamePrefix": "BrowserBoxNSG",
+    "subnetNamePrefix": "BrowserBoxSubnet",
+    "nicNamePrefix": "BrowserBoxNIC",
+    "networkSecurityGroupName": "[concat(variables('networkSecurityGroupNamePrefix'), '-', variables('uniqueSuffix'))]",
+    "subnetName": "[concat(variables('subnetNamePrefix'), '-', variables('uniqueSuffix'))]",
+    "nicName": "[concat(variables('nicNamePrefix'), '-', variables('uniqueSuffix'))]",
+    "publicIPAddressName": "[concat(variables('publicIPAddressNamePrefix'), '-', variables('uniqueSuffix'))]",
+    "virtualNetworkName": "[concat(variables('virtualNetworkNamePrefix'), '-', variables('uniqueSuffix'))]",
+    "vmName": "[concat(variables('vmNamePrefix'), '-', variables('uniqueSuffix'))]",
+    "scriptName": "[concat(variables('vmName'), '/', 'installBrowserBox')]",
+    "dnsName": "[concat('bb', variables('uniqueSuffix'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "actualHostname": "[concat(variables('dnsName'), '.', parameters('location'), '.', 'cloudapp.azure.com')]",
+    "rolePublisher": "[guid(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')), 'MonitoringMetricsPublisher')]",
+    "roleReader": "[guid(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')), 'MonitoringReader')]",
+    "realToken": "[if(equals(parameters('token'), ''), uniqueString(parameters('randomGUID')), parameters('token'))]",
+    "realHostname": "[if(equals(parameters('hostname'), ''), variables('actualHostname'), parameters('hostname'))]",
+    "loginLink": "[concat('https://', variables('realHostname'), ':8080/login?token=', variables('realToken'))]",
+    "deploymentLink": "[concat('https://portal.azure.com/#view/HubsExtension/DeploymentDetailsBlade/~/overview/id/%2Fsubscriptions%2F', subscription().subscriptionId, '%2FresourceGroups%2F', resourceGroup().name, '%2Fproviders%2FMicrosoft.Resources%2Fdeployments%2F', deployment().name)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[concat('yourLogAnalyticsWorkspace-', variables('vmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[concat('bbNotifications-', variables('uniqueSuffix'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', concat('yourLogAnalyticsWorkspace-', variables('vmName')))]"
+      ],
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', concat('yourLogAnalyticsWorkspace-', variables('vmName')))]",
+        "Flow_Type": "Bluefield",
+        "Request_Source": "rest",
+        "RetentionInDays": 90
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "priority": 1000,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22"
+            }
+          },
+          {
+            "name": "HTTP",
+            "properties": {
+              "priority": 1010,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80"
+            }
+          },
+          {
+            "name": "BrowserBoxPorts",
+            "properties": {
+              "priority": 1020,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRanges": [
+                "8078",
+                "8079",
+                "8080",
+                "8081",
+                "8082"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[if(equals(parameters('dnsNameForPublicIP'), ''), variables('dnsName'), parameters('dnsNameForPublicIP'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('authenticationType'), 'sshPublicKey')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-11-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('adminPasswordOrKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": "[variables(replace(replace(replace(parameters('imageChoice'),' ','_'),'(',''),')',''))]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('authenticationType'), 'password')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-11-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[if(equals(parameters('adminPasswordOrKey'), ''), parameters('randomPassword'), parameters('adminPasswordOrKey'))]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          }
+        },
+        "storageProfile": {
+          "imageReference": "[variables(replace(replace(replace(parameters('imageChoice'),' ','_'),'(',''),')',''))]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('rolePublisher')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '3913510d-42f4-4e42-8a64-420c390055eb')]",
+        "principalId": "[reference(variables('vmName'), '2019-03-01', 'Full').identity.principalId]",
+        "scope": "[resourceGroup().id]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('roleReader')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '43d0d8ad-25c7-4714-9337-8ba259a9fe05')]",
+        "principalId": "[reference(variables('vmName'), '2019-03-01', 'Full').identity.principalId]",
+        "scope": "[resourceGroup().id]"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2022-06-01",
+      "name": "[concat('YourBrowserBoxEmailList',variables('uniqueSuffix'))]",
+      "location": "global",
+      "properties": {
+        "groupShortName": "BB1",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "sendToAdmin",
+            "emailAddress": "[parameters('userEmail')]",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[concat('YourBrowserBox-',variables('uniqueSuffix'))]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix')))]",
+        "[resourceId('Microsoft.Insights/actionGroups', concat('YourBrowserBoxEmailList', variables('uniqueSuffix')))]"
+      ],
+      "properties": {
+        "description": "[concat('Your BrowserBox is ready! Click your Login Link:\n', variables('loginLink'), '\n\nFor commercial closed-source use please purchase a license:\nhttps://dosyago.com\n\nFor support, sales and customizations email anytime:\n hey@dosyago.com\n\nTo shut down your BrowserBox or manage this deployment, visit:\n', variables('deploymentLink'), '\n\nThank you for choosing BrowserBox! Have a safe browse!')]",
+        "severity": 3,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT1M",
+        "scopes": [
+          "[resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix')))]"
+        ],
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "Trigger",
+              "metricName": "LoginLink",
+              "metricNamespace": "azure.applicationinsights",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Total",
+              "criteriaType": "StaticThresholdCriterion",
+              "skipMetricValidation": true
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', concat('YourBrowserBoxEmailList', variables('uniqueSuffix')))]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[variables('scriptName')]",
+      "apiVersion": "2023-03-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+        "[resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix')))]",
+        "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleReader'))]",
+        "[resourceId('Microsoft.Authorization/roleAssignments', variables('rolePublisher'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": true,
+        "enableAutomaticUpgrade": false,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('installBrowserBox_then_notify.sh', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "suppressFailures": true,
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash installBrowserBox_then_notify.sh \"', parameters('adminUsername'), '\" \"', parameters('location'), '\" \"', resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '\" \"', reference(resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix'))), '2020-02-02', 'Full').properties.connectionString, '\" \"', concat('bbNotifications-', variables('uniqueSuffix')), '\" \"', resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix'))), '\" \"', parameters('userEmail'), '\" \"', variables('realHostname'), '\" \"', variables('realToken'), '\" \"', parameters('installDocViewer'), '\" \"', parameters('understanding'), '\" \"', concat(variables('CentOS_8.5_gen_2').sku,'/',variables('Ubuntu_22.04_LTS_gen_2').sku,'/',variables('RedHat_8_LVM_gen_2').sku),'\"')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "deploymentLink": {
+      "type": "string",
+      "value": "[variables('deploymentLink')]"
+    },
+    "promisedLoginLink": {
+      "type": "string",
+      "value": "[variables('loginLink')]"
+    },
+    "chosenImage": {
+      "type": "object",
+      "value": "[variables(replace(replace(replace(parameters('imageChoice'),' ','_'),'(',''),')',''))]"
+    },
+    "azureHostname": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    },
+    "deploymentObject": {
+      "type": "object",
+      "value": "[deployment()]"
+    },
+    "customIP": {
+      "type": "object",
+      "value": {
+        "resourceGroupName": "[parameters('dnsAndPublicIpResourceGroupName')]",
+        "newOrExisting": "[parameters('dnsAndPublicIpNewOrExisting')]"
+      }
+    }
+  }
+}

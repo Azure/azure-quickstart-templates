@@ -1,4 +1,14 @@
-# Install Website Cluster
+---
+description: This template deploys a website cluster and enables Zabbix monitoring, and allows user to define the number of web servers. 
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: website-cluster-centos
+languages:
+- json
+---
+# website cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/website-cluster-centos/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/website-cluster-centos/PublicDeployment.svg)
@@ -9,10 +19,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/website-cluster-centos/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/website-cluster-centos/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fwebsite-cluster-centos%2Fazuredeploy.json) 
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fwebsite-cluster-centos%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fwebsite-cluster-centos%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fwebsite-cluster-centos%2Fazuredeploy.json)
  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fwebsite-cluster-centos%2Fazuredeploy.json)
-    
 
 <a href="
 http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fwebsite-cluster-centos%2Fazuredeploy.json" target="_blank">
@@ -36,7 +45,7 @@ The servers are under the same net 10.0.0.0/24, there are 4 subnets under this n
 Each server has dynamic private ip address. Web servers belong to web subnet, the ip addresses usually start from 10.0.0.4; MySQL servers belong to mysql subnet, the ip addresses start from 10.0.0.20; redis servers belong to redis subnet, the ip addresses start from 10.0.0.36; load balancer belongs to haproxy subnet, the ip address start from 10.0.0.52.
 
 ##Important Notice
-Each server uses raid0 to improve performance. We use 4 data disks on each server for raid0. The size of each data disk is set to 100GB. Execute the command "df -h" to find out the mount details, /dev/md0 is for the data disks. The VM size is set to Standard_A3. You can check the VM size details by clicking the URL https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ .
+Each server uses raid0 to improve performance. We use 4 data disks on each server for raid0. The size of each data disk is set to 100GB. Execute the command "df -h" to find out the mount details, /dev/md0 is for the data disks. The VM size is set to Standard_A3. You can check the VM size details by clicking the URL https://azure.microsoft.com/documentation/articles/virtual-machines-linux-sizes/ .
 
 ##After deployment, you can do below to verify if the website cluster really works or not:
 
@@ -53,7 +62,6 @@ Each server uses raid0 to improve performance. We use 4 data disks on each serve
 
   You should see some records in the test01 table.
 
-  
 3. Check redis data replication status. SSH connect to load balancer, then SSH connect to redis master(usually 10.0.0.36), then execute below:
   ```
   $/usr/local/redis/src/redis-cli
@@ -69,11 +77,11 @@ Each server uses raid0 to improve performance. We use 4 data disks on each serve
 
   get hello
   ```
-  
+
   You should get the output as same as redis master does.
 
 ##Known Limitations
 - The website uses one load balancer and the load balancer uses haproxy software. You can create more load balancers and you can even use Azure's traffic manager to do the load balancing.
 - You can add more web servers and database servers after the deployment.
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Compute/availabilitySets, Microsoft.Network/virtualNetworks`

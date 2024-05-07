@@ -12,7 +12,7 @@ param vnetIpPrefix string = '10.1.0.0/16'
 param vnetNewOrExisting string = 'new'
 
 @description('Bastion subnet IP prefix MUST be within vnet IP prefix address space')
-param bastionSubnetIpPrefix string = '10.1.1.0/27'
+param bastionSubnetIpPrefix string = '10.1.1.0/26'
 
 @description('Name of Azure Bastion resource')
 param bastionHostName string
@@ -23,7 +23,7 @@ param location string = resourceGroup().location
 var publicIpAddressName = '${bastionHostName}-pip'
 var bastionSubnetName = 'AzureBastionSubnet'
 
-resource publicIp 'Microsoft.Network/publicIpAddresses@2020-05-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   name: publicIpAddressName
   location: location
   sku: {
@@ -35,7 +35,7 @@ resource publicIp 'Microsoft.Network/publicIpAddresses@2020-05-01' = {
 }
 
 // if vnetNewOrExisting == 'new', create a new vnet and subnet
-resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = if (vnetNewOrExisting == 'new') {
+resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = if (vnetNewOrExisting == 'new') {
   name: vnetName
   location: location
   properties: {
@@ -56,10 +56,10 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = if (
 }
 
 // if vnetNewOrExisting == 'existing', reference an existing vnet and create a new subnet under it
-resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' existing = if (vnetNewOrExisting == 'existing') {
+resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' existing = if (vnetNewOrExisting == 'existing') {
   name: vnetName
 }
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-05-01' = if (vnetNewOrExisting == 'existing') {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = if (vnetNewOrExisting == 'existing') {
   parent: existingVirtualNetwork
   name: bastionSubnetName
   properties: {
@@ -67,7 +67,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-05-01' = if (vne
   }
 }
 
-resource bastionHost 'Microsoft.Network/bastionHosts@2020-05-01' = {
+resource bastionHost 'Microsoft.Network/bastionHosts@2022-01-01' = {
   name: bastionHostName
   location: location
   dependsOn: [

@@ -1,3 +1,13 @@
+---
+description: This template creates an AML dashboard on top of existing Log Analytics workspaces diagnostics data
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: machine-learning-workspace-monitoring-dashboard
+languages:
+- json
+---
 # Create an Azure ML monitoring dashboard
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-monitoring-dashboard/PublicLastTestDate.svg)
@@ -11,15 +21,15 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-monitoring-dashboard%2Fazuredeploy.json)
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-monitoring-dashboard%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-monitoring-dashboard%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-monitoring-dashboard%2Fazuredeploy.json)
 
-This template creates an Azure Machine Learning dashboard using existing Log Analytics diagnostics data. 
+This template creates an Azure Machine Learning dashboard using existing Log Analytics diagnostics data.
 
 Sample view:
 ![Sample view](Azure_Dashboard.png)
 
  If you don't have Log Analytics Data for Azure Machine Learning Workspace yet, please consider:
- - [Creating Diagnostics Settings for Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/monitor-azure-machine-learning#collection-and-routing)
+ - [Creating Diagnostics Settings for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/monitor-azure-machine-learning#collection-and-routing)
  - [Creating Diagnostics Settings for Azure Machine Learning using Azure policy](https://github.com/Azure/data-management-zone/blob/main/docs/guidance/EnterpriseScaleAnalytics-Policies.md#all-services)
 
 If you are new to Azure Machine Learning, see:
@@ -36,5 +46,4 @@ If you are new to template development, see:
 
 Tags: Azure Machine Learning, Machine Learning, Monitoring, Azure Dashboard, Azure Log Analytics, Resource Manager templates, ARM templates
 
-
- 
+`Tags: Microsoft.Portal/dashboards, Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart, datetime, long, string, Extension/Microsoft_Azure_CostManagement/PartType/CostAnalysisPinPart, ActualCost, Dimension, Budget, Forecast, decimal, real, MsPortalFx.Composition.Configuration.ValueTypes.TimeRange`

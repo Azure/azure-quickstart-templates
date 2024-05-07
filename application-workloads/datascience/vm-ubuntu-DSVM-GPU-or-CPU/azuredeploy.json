@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.8.9.13224",
+      "templateHash": "4895680407304578048"
+    }
+  },
   "parameters": {
     "adminUsername": {
       "type": "string",
@@ -22,7 +29,7 @@
         "description": "Location for all resources."
       }
     },
-    "cpu-gpu": {
+    "cpu_gpu": {
       "type": "string",
       "defaultValue": "CPU-4GB",
       "allowedValues": [
@@ -70,20 +77,20 @@
       }
     },
     "adminPasswordOrKey": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
   "variables": {
-    "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
+    "networkInterfaceName": "[format('{0}NetInt', parameters('vmName'))]",
     "virtualMachineName": "[parameters('vmName')]",
-    "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
+    "publicIpAddressName": "[format('{0}PublicIP', parameters('vmName'))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
     "osDiskType": "StandardSSD_LRS",
-    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+    "storageAccountName": "[format('storage{0}', uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_LRS",
     "storageAccountKind": "Storage",
     "vmSize": {
@@ -99,7 +106,7 @@
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -109,14 +116,9 @@
   "resources": [
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -126,8 +128,8 @@
                 "id": "[variables('subnetRef')]"
               },
               "privateIPAllocationMethod": "Dynamic",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]"
               }
             }
           }
@@ -135,11 +137,16 @@
         "networkSecurityGroup": {
           "id": "[variables('nsgId')]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2021-05-01",
       "name": "[parameters('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -148,7 +155,7 @@
             "name": "JupyterHub",
             "properties": {
               "priority": 1010,
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "access": "Allow",
               "direction": "Inbound",
               "sourceAddressPrefix": "*",
@@ -161,7 +168,7 @@
             "name": "RStudioServer",
             "properties": {
               "priority": 1020,
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "access": "Allow",
               "direction": "Inbound",
               "sourceAddressPrefix": "*",
@@ -174,7 +181,7 @@
             "name": "SSH",
             "properties": {
               "priority": 1030,
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "access": "Allow",
               "direction": "Inbound",
               "sourceAddressPrefix": "*",
@@ -188,7 +195,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2021-05-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -210,8 +217,8 @@
       }
     },
     {
-      "type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-05-01",
       "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -219,12 +226,12 @@
         "tier": "Regional"
       },
       "properties": {
-        "publicIpAllocationMethod": "Dynamic"
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-08-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -234,20 +241,16 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
-      "name": "[concat(variables('virtualMachineName'),'-', parameters('Cpu-Gpu'))]",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}-{1}', variables('virtualMachineName'), parameters('cpu_gpu'))]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')[parameters('Cpu-Gpu')]]"
+          "vmSize": "[variables('vmSize')[parameters('cpu_gpu')]]"
         },
         "storageProfile": {
           "osDisk": {
-            "createOption": "fromImage",
+            "createOption": "FromImage",
             "managedDisk": {
               "storageAccountType": "[variables('osDiskType')]"
             }
@@ -272,7 +275,10 @@
           "adminPassword": "[parameters('adminPasswordOrKey')]",
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+      ]
     }
   ],
   "outputs": {
@@ -282,4 +288,3 @@
     }
   }
 }
-

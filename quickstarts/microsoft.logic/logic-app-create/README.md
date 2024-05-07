@@ -1,4 +1,15 @@
-# Create a logic app by using a template
+---
+description: This template creates an empty logic app that you can use to define workflows.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: logic-app-create
+languages:
+- bicep
+- json
+---
+# Create a Consumption logic app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-create/PublicDeployment.svg)
@@ -15,12 +26,14 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-create%2Fazuredeploy.json)
 
-Azure Logic Apps is a cloud service that automates the execution of your business processes. You use a graphical design tool called the Logic Apps Designer to arrange pre-made components into the sequence you need. The Designer sends a definition of your workflow to the Logic Apps execution engine. The execution engine launches your app when conditions are right and manages the compute resources needed to run it.
+Azure Logic Apps is a cloud service that automates the execution of your business processes. You can create a workflow by using a visual designer to arrange prebuilt components into the sequence that you need. When you save your workflow, the designer sends the workflow's definition to the Azure Logic Apps execution engine. When the conditions for the workflow's trigger are met, the engine launches the workflow and manages the compute resources that the workflow needs to run. If you're new to Azure Logic Apps, see [What is Azure Logic Apps?](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview).
 
-This simple logic app connects to the status update of Azure services at https://status.azure.com/en-us/status/feed which is displayed at https://status.azure.com/en-us/status.
+This quickstart template creates a basic [Consumption logic app workflow](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview#resource-environment-differences) that runs in multi-tenant Azure Logic Apps and connects to the status update feed for Azure services at https://azure.status.microsoft/status/feed, which is displayed at https://azure.status.microsoft/status.
 
-For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/logic-apps/quickstart-create-deploy-azure-resource-manager-template) article.
+For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://learn.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template). To learn more about how to deploy the template, see the [quickstart article](https://learn.microsoft.com/azure/logic-apps/quickstart-create-deploy-azure-resource-manager-template).
 
-- [Microsoft Logic Apps](https://azure.microsoft.com/services/logic-apps/)
-- [Microsoft Logic Apps Documentation](https://docs.microsoft.com/azure/logic-apps/)
-- [Microsoft Learn Logic App Modules](https://docs.microsoft.com/learn/browse/?term=logic%20app)
+- [Azure Logic Apps](https://azure.microsoft.com/services/logic-apps/)
+- [Azure Logic Apps documentation](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview)
+- [Azure Logic Apps Learn modules](https://learn.microsoft.com/learn/browse/?term=logic%20app)
+
+`Tags: recurrence, Microsoft.Logic/workflows, [variables('type')], [variables('actionType')]`

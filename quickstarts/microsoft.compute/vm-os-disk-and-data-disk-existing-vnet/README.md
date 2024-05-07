@@ -1,4 +1,14 @@
-# Create a virtual machine from two disks (OS + data disk) in an existing virtual network
+---
+description: This template creates a VM from VHDs (OS + data disk) and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-os-disk-and-data-disk-existing-vnet
+languages:
+- json
+---
+# Create VM from existing VHDs and connect it to existingVNET
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-os-disk-and-data-disk-existing-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-os-disk-and-data-disk-existing-vnet/PublicDeployment.svg)
@@ -28,6 +38,6 @@ This template will create an additional Standard_LRS storage account for enablin
 
 This template creates a VM from a specialized VHD and a data disk and let you connect it to an existing VNET that can reside in another Resource Group than the virtual machine.
 
-Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine. 
+Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/disks, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks`

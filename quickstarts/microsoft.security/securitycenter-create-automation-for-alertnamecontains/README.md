@@ -1,4 +1,15 @@
-# Deploy an Azure Security Center Automation for a specific Azure Security Center alerts
+---
+description: This template allows you to create an Azure Security Center Automation which triggers an empty logic app, which will be triggered by specific Security Center Alert
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: securitycenter-create-automation-for-alertnamecontains
+languages:
+- json
+- bicep
+---
+# Create A Security Automation for specific Alerts
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.security/securitycenter-create-automation-for-alertnamecontains/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.security/securitycenter-create-automation-for-alertnamecontains/PublicDeployment.svg)
@@ -47,4 +58,4 @@ You can select the **Deploy to Azure** button at the beginning of this document.
 
 Solution notes
 
-`Tags: Security, Security Center, LogicApps, Automations`
+`Tags: Security, Security Center, LogicApps, Automations, Microsoft.Security/automations, Microsoft.Logic/workflows, request, object, string`

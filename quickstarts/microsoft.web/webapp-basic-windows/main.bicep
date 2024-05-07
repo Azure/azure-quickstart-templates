@@ -62,7 +62,7 @@ var configReference = {
   }
 }
 
-resource asp 'Microsoft.Web/serverfarms@2021-03-01' = {
+resource asp 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: appServicePlanName
   location: location
   sku: {
@@ -70,7 +70,7 @@ resource asp 'Microsoft.Web/serverfarms@2021-03-01' = {
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2021-03-01' = {
+resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   name: webAppName
   location: location
   identity: {
@@ -87,7 +87,7 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = {
   }
 }
 
-resource gitsource 'Microsoft.Web/sites/sourcecontrols@2021-03-01' = {
+resource gitsource 'Microsoft.Web/sites/sourcecontrols@2022-03-01' = {
   parent: webApp
   name: 'web'
   properties: {

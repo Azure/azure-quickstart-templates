@@ -1,4 +1,14 @@
-# Deploy a VM Scale Set based on a Linux Custom Image and a script to deploy updates
+---
+description: This template allows you to deploy a custom VM Linux image inside an Scale Set. These VMs are behind a load balancer with HTTP load balancing (by default on port 80). The example uses a custom script to do the application deployment and update, you may have to provide your custom script for your own update procedure. You will have to provide a generalized image of your VM in the same subscription and region where you create the VMSS.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vmss-linux-customimage-autoscale
+languages:
+- json
+---
+# Deploy a VM Scale Set with a Linux custom image
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-linux-customimage-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-linux-customimage-autoscale/PublicDeployment.svg)
@@ -25,7 +35,7 @@ sudo waagent -deprovision+user
 
 inside your Linux machine.
 
-Once it is generalized, you must run this commands at client side from a [CLI](https://docs.microsoft.com/en-us/azure/xplat-cli-install) command line:
+Once it is generalized, you must run this commands at client side from a [CLI](https://docs.microsoft.com/azure/xplat-cli-install) command line:
 
 ```bash
 azure login
@@ -46,3 +56,5 @@ And you will find a [templateName].json file in the same folder that will help y
 In addition to the VM Scale Set the template creates a public IP address and load balances HTTP traffic on port 80 to each VM in the scale set. It also includes a script that deploys a custom package to the image each time you call a reimage of a VM, so you will be able to script an update of your VM Scale Set without the need to create a new VM image each time.
 
 >Note: The maximum number of VMs in a storage account is 20, unless you set the "overprovision" property to false, in which case it is 40
+
+`Tags: Microsoft.Compute/images, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, CustomScript, Microsoft.Insights/autoscaleSettings, ChangeCount`

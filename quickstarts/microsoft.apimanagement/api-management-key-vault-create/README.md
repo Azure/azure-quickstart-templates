@@ -1,4 +1,15 @@
-# Create API Management service with Key Vault based SSL
+---
+description: This template deploys an API Management service configured with User Assigned Identity. It uses this identity to fetch SSL certificate from KeyVault and keeps it updated by checking every 4 hours.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: api-management-key-vault-create
+languages:
+- json
+- bicep
+---
+# Create an API Management service with SSL from KeyVault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-key-vault-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/api-management-key-vault-create/PublicDeployment.svg)
@@ -48,4 +59,4 @@ If you're new to the template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: API, API Management, Azure API Management, Azure Key Vault, Key Vault, Secret, Certificate, Managed Identity`
+`Tags: API, API Management, Azure API Management, Azure Key Vault, Key Vault, Secret, Certificate, Managed Identity, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.KeyVault/vaults, Microsoft.KeyVault/vaults/secrets, Microsoft.Authorization/roleAssignments, Microsoft.ApiManagement/service, UserAssigned, Proxy`

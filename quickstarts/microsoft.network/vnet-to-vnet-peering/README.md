@@ -1,4 +1,15 @@
-# VNET to VNET connection
+---
+description: This template allows you to connect two vNets using vNet Peering
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vnet-to-vnet-peering
+languages:
+- json
+- bicep
+---
+# Create a vNet to vNet connection using vNet Peering
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/vnet-to-vnet-peering/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/vnet-to-vnet-peering/PublicDeployment.svg)
@@ -17,3 +28,4 @@
 
 This template creates two VNETs in the same location, each containing a single subnet, and creates connections between them using VNet peering.
 
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/virtualNetworkPeerings`

@@ -1,4 +1,14 @@
-# Create a virtual machine using Managed Disks from a specialized vhd in a new or existing virtual network
+---
+description: This template creates a VM from a specialized VHD and let you connect it to a new or existing VNET that can reside in another Resource Group than the virtual machine
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-specialized-vhd-new-or-existing-vnet
+languages:
+- json
+---
+# Create a VM in a new or existing vnet from a custom VHD
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-specialized-vhd-new-or-existing-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-specialized-vhd-new-or-existing-vnet/PublicDeployment.svg)
@@ -21,6 +31,6 @@
 
 This template creates a VM from a specialized VHD and lets you connect it to a new or existing VNET that can reside in another Resource Group then the virtual machine.
 
-Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine. 
+Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine.
 
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/disks, Microsoft.Compute/virtualMachines`

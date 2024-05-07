@@ -1,4 +1,14 @@
-# Create an App Service Environment with an ILB Address
+---
+description: Creates an App Service Environment in your virtual network with a private internal load balancer address
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: web-app-ase-ilb-create
+languages:
+- json
+---
+# Create App Service Environment with an ILB Address
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-ase-ilb-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-ase-ilb-create/PublicDeployment.svg)
@@ -15,4 +25,4 @@
 
 For more details on creating an App Service Environment see [How to Create an App Service Environment](https://azure.microsoft.com/documentation/articles/app-service-web-how-to-create-an-app-service-environment/).
 
-
+`Tags: Microsoft.Web/hostingEnvironments, Microsoft.Network/virtualNetworks`

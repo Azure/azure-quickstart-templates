@@ -1,4 +1,15 @@
-# Create a Premium Redis Cache with Redis clustering
+---
+description: This template shows how to configure clustering in a premium Azure Redis Cache instance.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: redis-premium-cluster-diagnostics
+languages:
+- json
+- bicep
+---
+# Create a Premium Redis Cache with clustering
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-premium-cluster-diagnostics/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-premium-cluster-diagnostics/PublicDeployment.svg)
@@ -21,3 +32,4 @@ This template does not include Virtual Network support, but both clustering and 
 
 For information about using this template, see [How to configure Redis clustering for a Premium Azure Redis Cache](https://azure.microsoft.com/documentation/articles/cache-how-to-premium-clustering/).
 
+`Tags: Microsoft.Cache/redis, Microsoft.Insights/diagnosticSettings, Microsoft.Storage/storageAccounts`

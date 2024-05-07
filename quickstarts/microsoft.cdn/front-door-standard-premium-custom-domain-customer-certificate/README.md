@@ -1,4 +1,15 @@
-# Front Door Standard/Premium with custom domain and customer-managed TLS certificate
+---
+description: This template creates a Front Door Standard/Premium including a custom domain and customer-managed certificate.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-custom-domain-customer-certificate
+languages:
+- json
+- bicep
+---
+# Front Door Standard/Premium with domain and certificate
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-custom-domain-customer-certificate/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-custom-domain-customer-certificate/PublicDeployment.svg)
@@ -38,7 +49,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 After you deploy the Azure Resource Manager template, you need to validate your ownership of the custom domain by updating your DNS server. You must create a TXT record with the name specified in the `customDomainValidationDnsTxtRecordName` deployment output, and use the value specified in the `customDomainValidationDnsTxtRecordValue` deployment output. You must the validation before the time specified in the `customDomainValidationExpiry` deployment output.
 
-Front Door validates your domin ownership and updates the status automatically. You can monitor the validation process, or trigger an immediate validation, in the domain configuration in the Azure portal.
+Front Door validates your domain ownership and updates the status automatically. You can monitor the validation process, or trigger an immediate validation, in the domain configuration in the Azure portal.
 
 Next, you should configure your DNS server with a CNAME record to direct the traffic to Front Door. You must create a CNAME record at the host name you specified in the `customDomainName` deployment parameter, and use the value specified in the `frontDoorEndpointHostName` deployment output.
 
@@ -47,3 +58,5 @@ You can then access the Front Door endpoint by using your custom domain name. If
 ## Notes
 
 - You must grant Front Door access to your key vault before it can access your certificate. [Follow the guidance here](https://docs.microsoft.com/azure/frontdoor/standard-premium/how-to-configure-https-custom-domain#using-your-own-certificate) to register the Azure Front Door application with your Azure Active Directory tenant, and grant Azure Front Door access to your key vault.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/secrets, Microsoft.Cdn/profiles/customDomains, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

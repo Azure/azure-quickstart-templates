@@ -1,4 +1,14 @@
-# Deployment of a Premium Windows VM
+---
+description: This template allows you to deploy a Premium Windows VM using a few different options for the Windows version, using the latest patched version.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: premium-storage-windows-vm
+languages:
+- json
+---
+# Deploy a Premium Windows VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/premium-storage-windows-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/premium-storage-windows-vm/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fpremium-storage-windows-vm%2Fazuredeploy.json)
 
 This template allows you to deploy a premium Windows VM using a few different options for the Windows version, using the latest patched version.
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

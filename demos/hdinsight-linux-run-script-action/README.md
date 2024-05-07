@@ -1,4 +1,14 @@
-# Create HDInsight Linux Cluster and run Custom Script Action
+---
+description: Template creates an HDInsight Linux cluster in a virtual network and then runs a custom script action on every node and sets environment var.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-linux-run-script-action
+languages:
+- json
+---
+# Create HDInsight Linux Cluster and run a script action
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/hdinsight-linux-run-script-action/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/hdinsight-linux-run-script-action/PublicDeployment.svg)
@@ -17,4 +27,4 @@ Template creates an HDInsight Linux cluster in a virtual network.<br />
 Then custom script action is being executed on every node in the cluster.<br />
 Default custom script sets the "myNodeType" environment variable on every node.<br />
 
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`

@@ -1,4 +1,14 @@
-# Create a Windows VM with McAfee Endpoint Security extension enabled
+---
+description: This template creates a Windows VM and sets up a trial version of McAfee Endpoint Security
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mcafee-extension-windows-vm
+languages:
+- json
+---
+# McAfee Endpoint Security (trial license) on Windows VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/mcafee-extension-windows-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/mcafee-extension-windows-vm/PublicDeployment.svg)
@@ -13,4 +23,4 @@
 
 Create a Windows VM with the McAfee Endpoint Security extension enabled. This is a sample template that shows how to set up a VM with a trial version of the McAfee Endpoint Security extension.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, McAfeeEndpointSecurity`

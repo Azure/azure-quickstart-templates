@@ -1,3 +1,13 @@
+---
+description: This will deploy 2 virtual machines, OMS and other network resources. One virtual machine without endpoint protection and other with enpoint protection installed. Perform the virus attack by following the guidlines and execute the scenario for mitigation and prevention of a virus attack.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-virus-attack-prevention
+languages:
+- json
+---
 # Virus attack on Virtual Machines Scenario
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-virus-attack-prevention/PublicLastTestDate.svg)
@@ -10,8 +20,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-virus-attack-prevention/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-virus-attack-prevention%2Fazuredeploy.json)  [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-virus-attack-prevention%2Fazuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-virus-attack-prevention%2Fazuredeploy.json)
- 
- 
 
 # Table of Contents
 1. [Objectives](#objectives)
@@ -24,7 +32,7 @@
 8. [References](#references)
 
 <a name="objectives">
-# Objective of the POC 
+# Objective of the POC
 This playbook demonstrates a mock virus attack against an unprotected VM resource using a benign test virus file designed to trigger antimalware tools.  After enabling the configuration to protect the VM, the attack will be reattempted to show the protection against virus attack.
 
 <a name="overview">
@@ -32,30 +40,30 @@ This playbook demonstrates a mock virus attack against an unprotected VM resourc
 
 It showcases the following use cases:
 
-1. Perform Virus attack on a Virtual Machine --> 
+1. Perform Virus attack on a Virtual Machine -->
 
     * VM without Endpoint Protection
 
-2. Perform Virus attack on a Virtual Machine --> 
+2. Perform Virus attack on a Virtual Machine -->
 
     * VM with Endpoint Protection
 
 # Important Notes <a name="notes">
-Although the deployment takes 10-15mins, the log aggregation by Log Analytics take a few hours to get configured in the backend. You may not see attack/mitigation logs for detection and prevention events during the aggregation time window.   
+Although the deployment takes 10-15mins, the log aggregation by Log Analytics take a few hours to get configured in the backend. You may not see attack/mitigation logs for detection and prevention events during the aggregation time window.
 Subsequently logs will take 10-15 mins to reflect in Log Analtyics.
 
-Also note, the PowerShell experience in Azure Cloud Shell now runs PowerShell Core 6 in a Linux environment. With this change, there may be some differences in the [PowerShell experience in Cloud Shell](https://docs.microsoft.com/en-us/azure/cloud-shell/cloud-shell-windows-users) compared to what is expected in a Windows PowerShell experience.
+Also note, the PowerShell experience in Azure Cloud Shell now runs PowerShell Core 6 in a Linux environment. With this change, there may be some differences in the [PowerShell experience in Cloud Shell](https://docs.microsoft.com/azure/cloud-shell/cloud-shell-windows-users) compared to what is expected in a Windows PowerShell experience.
 
 <a name="prerequisites">
 # Prerequisites
 
-Access to an Azure subscription to deploy following resources 
+Access to an Azure subscription to deploy following resources
 
 1. Virtual Machine
 2. Log Analytics workspace (Monitoring)
 
 <a name="attack">
-# Perform Attack 
+# Perform Attack
 
 ## Attack on VM without an Endpoint Protection
 
@@ -107,7 +115,7 @@ However, this time when you try to download EICAR virus file, it will be immedia
 
 ## Detection using Endpoint protection client
 
-When you try to access SCEP, you will get a restricted access error. 
+When you try to access SCEP, you will get a restricted access error.
 
 ![](images/restricted-access-on-endpoint-protection.PNG)
 
@@ -119,7 +127,7 @@ To access the endpoint protection client, you need to clean SCEP Policy on the W
 
    `cd "C:\Program Files\Microsoft Security Client"`
 
-1. then run 
+1. then run
 
    `.\ConfigSecurityPolicy.exe .\CleanUpPolicy.xml`
 
@@ -132,7 +140,7 @@ To access the endpoint protection client, you need to clean SCEP Policy on the W
 ## Detection using centralised Log Analytics.
 
 1. Go to **Azure Portal** --> navigate to resource group **<case no>-virus-attack-on-vm**
-    
+
 ![](images/log-analytics.png)
 
 1. Go to **Log analytics** --> Click on **Log Search** --> Type query `search "eicar"`
@@ -154,18 +162,18 @@ You will notice events related to Quarantined items. It might take few minutes f
 # References
 
 * http://www.eicar.org/
-* https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware
-* https://docs.microsoft.com/en-us/azure/operations-management-suite/operations-management-suite-overview
+* https://docs.microsoft.com/azure/security/azure-security-antimalware
+* https://docs.microsoft.com/azure/operations-management-suite/operations-management-suite-overview
 
-## Disclaimer & Acknowledgements 
+## Disclaimer & Acknowledgements
 
 Avyan Consulting Corp conceptualized and developed the software in guidance and consultations with Microsoft Azure Security Engineering teams.
- 
+
 AVYAN MAKE NO WARRANTIES, EXPRESS, IMPLIED, OR STATUTORY, AS TO THE INFORMATION IN THIS DOCUMENT. This document is provided “as-is.” Information and views expressed in this document, including URL and other Internet website references, may change without notice. Customers reading this document bear the risk of using it. This document does not provide customers with any legal rights to any intellectual property in any AVYAN or MICROSOFT product or solutions. Customers may copy and use this document for internal reference purposes.
- 
+
 ### Note:
 *	Certain recommendations in this solution may result in increased data, network, or compute resource usage in Azure. The solution may increase a customer’s Azure license or subscription costs.
 *	The solution in this document is intended as reference samples and must not be used as-is for production purposes. Recommending that the customer’s consult with their internal SOC / Operations teams for using specific or all parts of the solutions.
-*	All customer names, transaction records, and any related data on this page are fictitious, created for the purpose of this architecture, and provided for illustration only. No real association or connection is intended, and none should be inferred. 
+*	All customer names, transaction records, and any related data on this page are fictitious, created for the purpose of this architecture, and provided for illustration only. No real association or connection is intended, and none should be inferred.
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, IaaSAntimalware, MicrosoftMonitoringAgent, Microsoft.Compute/virtualMachines, Microsoft.OperationalInsights/workspaces, Microsoft.OperationsManagement/solutions, Microsoft.OperationalInsights/workspaces/datasources, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks`

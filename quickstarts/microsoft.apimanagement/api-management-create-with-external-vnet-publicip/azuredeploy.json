@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.19.5.34762",
+      "templateHash": "17522137751154731634"
+    }
+  },
   "parameters": {
     "publisherEmail": {
       "type": "string",
@@ -20,11 +27,11 @@
     },
     "sku": {
       "type": "string",
+      "defaultValue": "Premium",
       "allowedValues": [
         "Developer",
         "Premium"
       ],
-      "defaultValue": "Premium",
       "metadata": {
         "description": "The pricing tier of this API Management service"
       }
@@ -33,14 +40,14 @@
       "type": "int",
       "defaultValue": 2,
       "metadata": {
-        "description": "The instance size of this API Management service.This should be in multiple of zones getting deployed."
+        "description": "The instance size of this API Management service. This should be a multiple of the number of availability zones getting deployed."
       }
     },
     "virtualNetworkName": {
       "type": "string",
       "defaultValue": "apimvnet",
       "metadata": {
-        "description": "Virtual Network name"
+        "description": "Virtual network name"
       }
     },
     "virtualNetworkAddressPrefix": {
@@ -54,14 +61,14 @@
       "type": "string",
       "defaultValue": "10.0.0.0/24",
       "metadata": {
-        "description": "Subnet Prefix"
+        "description": "Subnet prefix"
       }
     },
     "subnetName": {
       "type": "string",
       "defaultValue": "apim",
       "metadata": {
-        "description": "Subnet Name"
+        "description": "Subnet name"
       }
     },
     "apimSubnetServiceEndpoints": {
@@ -78,7 +85,7 @@
         }
       ],
       "metadata": {
-        "description": "Service Endpoints enabled on the APIM subnet"
+        "description": "Service endpoints enabled on the API Management subnet"
       }
     },
     "location": {
@@ -95,14 +102,14 @@
         "2"
       ],
       "metadata": {
-        "description": "Zone numbers e.g. 1,2,3."
+        "description": "Numbers for availability zones, for example, 1,2,3."
       }
     },
     "publicIpName": {
       "type": "string",
       "defaultValue": "myPublicIP",
       "metadata": {
-        "description": "Name for the Public IP used to access the api management service."
+        "description": "Name for the public IP address used to access the API Management service."
       }
     },
     "publicIpSku": {
@@ -112,7 +119,7 @@
         "Standard"
       ],
       "metadata": {
-        "description": "SKU for the Public IP used to access the api management service."
+        "description": "SKU for the public IP address used to access the API Management service."
       }
     },
     "publicIPAllocationMethod": {
@@ -122,27 +129,27 @@
         "Static"
       ],
       "metadata": {
-        "description": "Allocation method for the Public IP used to access Api Management service. Standard SKU public IP requires `Static` allocation."
+        "description": "Allocation method for the public IP address used to access the API Management service. Standard SKU public IP requires `Static` allocation."
       }
     },
     "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "[toLower(concat(parameters('publicIpName'), '-', uniqueString(resourceGroup().id)))]",
+      "defaultValue": "[toLower(format('{0}-{1}', parameters('publicIpName'), uniqueString(resourceGroup().id)))]",
       "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the api management service."
+        "description": "Unique DNS name for the public IP address used to access the API management service."
       }
     }
   },
   "variables": {
-    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+    "apiManagementName": "[format('apiservice{0}', uniqueString(resourceGroup().id))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-    "apimNsgName": "[concat('apimnsg', uniqueString(resourceGroup().id))]"
+    "nsgName": "[format('apimnsg{0}', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('apimNsgName')]",
       "apiVersion": "2020-06-01",
+      "name": "[variables('nsgName')]",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -292,7 +299,7 @@
           {
             "name": "Publish_DiagnosticLogs_And_Metrics",
             "properties": {
-              "description": "APIM Logs and Metrics for consumption by admins and your IT team are all part of the management plane",
+              "description": "API Management logs and metrics for consumption by admins and your IT team are all part of the management plane",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "sourceAddressPrefix": "VirtualNetwork",
@@ -328,7 +335,7 @@
           {
             "name": "Authenticate_To_Azure_Active_Directory",
             "properties": {
-              "description": "Connect to Azure Active Directory for Developer Portal Authentication or for Oauth2 flow during any Proxy Authentication",
+              "description": "Connect to Azure Active Directory for developer Portal authentication or for OAuth 2 flow during any proxy authentication",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "sourceAddressPrefix": "VirtualNetwork",
@@ -345,7 +352,7 @@
           {
             "name": "Dependency_on_Azure_Storage",
             "properties": {
-              "description": "APIM service dependency on Azure Blob and Azure Table Storage",
+              "description": "API Management service dependency on Azure blob and Azure table storage",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
@@ -372,7 +379,7 @@
           {
             "name": "Access_KeyVault",
             "properties": {
-              "description": "Allow APIM service control plane access to KeyVault to refresh secrets",
+              "description": "Allow API Management service control plane access to Azure Key Vault to refresh secrets",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "sourceAddressPrefix": "VirtualNetwork",
@@ -402,8 +409,8 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
       "name": "[parameters('publicIpName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -418,13 +425,10 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -437,54 +441,57 @@
             "properties": {
               "addressPrefix": "[parameters('subnetPrefix')]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               },
               "serviceEndpoints": "[parameters('apimSubnetServiceEndpoints')]"
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ]
     },
     {
-      "apiVersion": "2021-01-01-preview",
-      "name": "[variables('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('apiManagementName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]"
-      ],
       "sku": {
         "name": "[parameters('sku')]",
         "capacity": "[parameters('skuCount')]"
       },
-      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), null(), parameters('availabilityZones'))]",
       "properties": {
         "publisherEmail": "[parameters('publisherEmail')]",
         "publisherName": "[parameters('publisherName')]",
         "virtualNetworkType": "External",
-        "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]",
+        "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
         "virtualNetworkConfiguration": {
           "subnetResourceId": "[variables('subnetRef')]"
         },
         "customProperties": {
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_GCM_SHA256": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA256": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": false
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_GCM_SHA256": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA256": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "false"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     }
   ]
 }

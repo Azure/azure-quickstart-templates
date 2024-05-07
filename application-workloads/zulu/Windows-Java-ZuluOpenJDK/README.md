@@ -1,4 +1,14 @@
-# VM-Windows - Azul Zulu OpenJDK installation
+---
+description: This template allows you to create a Windows VM with the Azul Zulu OpenJDK JVM
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: Windows-Java-ZuluOpenJDK
+languages:
+- json
+---
+# Deploy a Windows VM with the Azul Zulu OpenJDK JVM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/PublicDeployment.svg)
@@ -35,8 +45,8 @@ The Zulu install script is available [here.](zulu-install.ps1)
 
 - [Azul Zulu for Azure - Enterprise Edition FAQ](https://assets.azul.com/files/Zulu-for-Azure-FAQ.pdf)
 - [Azul Zulu for Azure - Enterprise Edition](https://www.azul.com/downloads/azure-only/zulu/)
-- [Java on Azure](https://azure.microsoft.com/en-us/develop/java/)
-- [Azure for Java Developers](https://docs.microsoft.com/en-us/java/azure/?view=azure-java-stable)
+- [Java on Azure](https://azure.microsoft.com/develop/java/)
+- [Azure for Java Developers](https://docs.microsoft.com/java/azure/?view=azure-java-stable)
 - [Azul](https://www.azul.com/)
 - [Azul Zulu Enterprise](https://www.azul.com/products/zulu-enterprise/)
 - [Azul Zulu Embedded](https://www.azul.com/products/zulu-embedded/)
@@ -54,5 +64,5 @@ The Zulu install script is available [here.](zulu-install.ps1)
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Windows, Java, OpenJDK, Zulu`  
+`Tags: Windows, Java, OpenJDK, Zulu, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScriptExtension`
 

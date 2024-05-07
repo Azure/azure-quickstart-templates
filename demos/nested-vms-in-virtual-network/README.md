@@ -1,4 +1,15 @@
-# 301-nested-vms-in-virtual-network
+---
+description: Deploys a Virtual Machine to by a Hyper-V Host and all dependent resources including virtual network, public IP address and route tables.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: nested-vms-in-virtual-network
+languages:
+- bicep
+- json
+---
+# Hyper-V Host Virtual Machine with nested VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/nested-vms-in-virtual-network/PublicDeployment.svg)
@@ -13,7 +24,7 @@
 
 This template will automate the deployment of a Virtual Machine to be a Hyper-V Host to be used for nested virtualization. Nested Virtual Machines will be able to communicate out to the internet and to other resources on your network.
 
-The setup is completed based on the procedure from the article [Nested VMs in Azure Virtual Networks](https://docs.microsoft.com/en-gb/virtualization/hyper-v-on-windows/user-guide/nested-virtualization-azure-virtual-network)
+The setup is completed based on the procedure from the article [Nested VMs in Azure Virtual Networks](https://docs.microsoft.com/virtualization/hyper-v-on-windows/user-guide/nested-virtualization-azure-virtual-network)
 
 This template creates the following resources by default:
 
@@ -27,11 +38,9 @@ This template creates the following resources by default:
 
 Click the button below to deploy from the portal:
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fnested-vms-in-virtual-network%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fnested-vms-in-virtual-network%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fnested-vms-in-virtual-network%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fnested-vms-in-virtual-network%2Fazuredeploy.json)
-
-
 
 ## Final Configuration
 
@@ -101,4 +110,4 @@ Beyond this the solution does support network communication between on-premises 
 
 Tags: ``nested, hyper-v, windows server 2016, ws2016``
 
-
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC, CustomScriptExtension, Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Network/routeTables`

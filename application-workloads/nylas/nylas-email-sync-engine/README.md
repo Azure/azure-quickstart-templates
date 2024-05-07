@@ -1,4 +1,14 @@
-# Deploy Nylas email sync engine on Debian
+---
+description: This template installs and configures Nylas N1 open source sync engine on a Debian VM.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: nylas-email-sync-engine
+languages:
+- json
+---
+# Nylas N1 email sync engine on Debian
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nylas/nylas-email-sync-engine/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nylas/nylas-email-sync-engine/PublicDeployment.svg)
@@ -8,8 +18,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nylas/nylas-email-sync-engine/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nylas/nylas-email-sync-engine/CredScanResult.svg)
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fnylas%2Fnylas-email-sync-engine%2Fazuredeploy.json)  
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fnylas%2Fnylas-email-sync-engine%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fnylas%2Fnylas-email-sync-engine%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fnylas%2Fnylas-email-sync-engine%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fnylas%2Fnylas-email-sync-engine%2Fazuredeploy.json)
 
 This template deploys the Nylas Sync Engine on a Debian VM in Azure. This allows you to sync your email with the Nylas N1 email client on a Linux OS like Ubuntu.
@@ -55,4 +65,4 @@ After the sync engine is setup, you'll need to point your installation of the N1
 
 For more information on the Nylas sync engine, see https://github.com/nylas/sync-engine
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

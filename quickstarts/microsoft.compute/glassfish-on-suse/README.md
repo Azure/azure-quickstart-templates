@@ -1,3 +1,13 @@
+---
+description: This template deploys a load balanced GlassFish (v3 or v4) cluster, consisting of a user defined number of SUSE (OpenSUSE or SLES) VMs.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: glassfish-on-suse
+languages:
+- json
+---
 # GlassFish on SUSE
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/glassfish-on-suse/PublicLastTestDate.svg)
@@ -11,7 +21,7 @@
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fglassfish-on-suse%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fglassfish-on-suse%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fglassfish-on-suse%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fglassfish-on-suse%2Fazuredeploy.json)
 
 This template deploys GlassFish application server onto multiple load balanced SUSE Linux VMs. It is possible to select either OpenSUSE or SLES for the OS, and any release package associated with version 3 or 4 of GlassFish.
 
@@ -39,7 +49,7 @@ If you are using a Windows computer, then you can download puttygen.exe to creat
 4.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
 5.  adminUsername: Admin username for OS login
 6.  glassfishAdminPassword: The password given to the default GlassFish 'admin' user
-7.  sshPublicKey: The public key used to secure SSH access with each VM 
+7.  sshPublicKey: The public key used to secure SSH access with each VM
 
 ## Deploy Template
 
@@ -53,12 +63,12 @@ CLI
   ```
 azure-group-deploy.sh -a 'glassfish-on-suse' -l <Location>
   ```
-  
+
 PowerShell
   ```
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation <Location> -ArtifactStagingDirectory 'glassfish-on-suse' 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation <Location> -ArtifactStagingDirectory 'glassfish-on-suse'
   ```
- 
+
 - It is also possible to deploy this template by populating a local copy of the *azuredeploy.parameters.json* file and executing the following Resource Manager deployment commands with PowerShell or the xplat CLI.
 
 CLI
@@ -67,7 +77,7 @@ CLI
 
    azure group deployment create -f https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/glassfish-on-suse/azuredeploy.json -e <PathToParamtersFile> -g <ResourceGroupName> -n <DeploymentName>
   ```
-  
+
 PowerShell
   ```
     New-AzureRMResourceGroup -Name <ResourceGroupName> -Location <Location>
@@ -81,11 +91,11 @@ This template registers remote admin access, so post deployment it is possible t
 In addition it is possible to SSH into each VM using the public IP and the 500(VM number) port; a private key associated with the provided public ssh key is also required.
 
 ### Additional Configuration Options
- 
+
 You can configure additional settings per the official GlassFish documentation (https://glassfish.java.net/documentation.html).
 
 ### Important Note
- 
-This template only deploys a single storage account which is shared by all of the established VMs, creating a single point of failure with the storage. For critical environments, this template should be modified to use multiple storage accounts, spreading the VHDs across these extra accounts to ensure resilience. 
 
+This template only deploys a single storage account which is shared by all of the established VMs, creating a single point of failure with the storage. For critical environments, this template should be modified to use multiple storage accounts, spreading the VHDs across these extra accounts to ensure resilience.
 
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers, Microsoft.Network/loadBalancers/inboundNatRules, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, CustomScript`

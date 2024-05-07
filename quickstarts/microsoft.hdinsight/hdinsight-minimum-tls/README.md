@@ -1,4 +1,14 @@
-# Deploy an HDInsight cluster which has TLS protocol enforced to 1.2 or newer
+---
+description: This template allows you to create a HDInsight cluster with TLS protocol enforced to 1.2 or newer.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: hdinsight-minimum-tls
+languages:
+- json
+---
+# HDInsight cluster with TLS version 1.2 or newer
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-minimum-tls/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.hdinsight/hdinsight-minimum-tls/PublicDeployment.svg)
@@ -15,4 +25,4 @@
 
 This template allows you to create a HDInsight cluster with TLS protocol enforced to 1.2 or newer.
 
-
+`Tags: Microsoft.HDInsight/clusters, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks`

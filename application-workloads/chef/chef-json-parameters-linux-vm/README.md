@@ -1,4 +1,14 @@
-# Provision a Ubuntu/Centos VM and  bootstrapping the Chef Agent.
+---
+description: Deploy an Ubuntu/Centos VM With Chef with JSON parameters
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: chef-json-parameters-linux-vm
+languages:
+- json
+---
+# Chef with JSON parameters on Ubuntu/Centos
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/chef-json-parameters-linux-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/chef-json-parameters-linux-vm/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/chef-json-parameters-linux-vm/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/chef-json-parameters-linux-vm/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fchef-json-parameters-linux-vm%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fchef-json-parameters-linux-vm%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fchef-json-parameters-linux-vm%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fchef-json-parameters-linux-vm%2Fazuredeploy.json)
 
@@ -29,4 +39,4 @@ Useful Links for learning about Chef:
 
  For deploying the Chef agent on a VM, you can create a hosted Chef account or spin off Chef Server in Azure using the Marketplace image which is free up to 20 nodes. More on Marketplace image : <a href="https://docs.chef.io/azure_portal.html#azure-marketplace" target="_blank">Using Chef Server in the Azure Marketplace
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, LinuxChefClient`

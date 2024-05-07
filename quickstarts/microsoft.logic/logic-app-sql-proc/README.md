@@ -1,4 +1,14 @@
-# Run a SQL Stored Procedure on a schedule
+---
+description: This template allows you to create a Logic App that will run a SQL stored procedure on schedule. Any arguments for the procedure can be put into the body section of the template.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: logic-app-sql-proc
+languages:
+- json
+---
+# Run a SQL stored procedure on a schedule via a logic app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-sql-proc/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-sql-proc/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-sql-proc%2Fazuredeploy.json)
 
 This template allows you to create a Logic App that will run a SQL stored procedure on schedule. Any arguments for the procedure can be put into the body section of the template.
+
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, Recurrence, ApiConnection`

@@ -1,4 +1,15 @@
-# Create a standard storage account
+---
+description: This template creates a Standard Storage Account
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-account-create
+languages:
+- bicep
+- json
+---
+# Create a Standard Storage Account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-account-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-account-create/PublicDeployment.svg)
@@ -25,6 +36,6 @@ If you're new to Azure Storage account, see:
 
 If you're new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates`
+`Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates, Microsoft.Storage/storageAccounts`

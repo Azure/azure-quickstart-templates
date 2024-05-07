@@ -1,4 +1,15 @@
-# Deploy Sonarqube on a Linux web app with Azure SQL
+---
+description: This template deploys Sonarqube in an Azure App Service web app Linux container using the official Sonarqube image and backed by an Azure SQL Server.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-linux-sonarqube-azuresql
+languages:
+- bicep
+- json
+---
+# Sonarqube Docker Web App on Linux with Azure SQL
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-azuresql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-azuresql/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-azuresql/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-azuresql/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-sonarqube-azuresql/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-linux-sonarqube-azuresql%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-linux-sonarqube-azuresql%2Fazuredeploy.json)
@@ -27,3 +40,5 @@ but this requires `vm.max_map_count = 262144` to be set in the container host ke
 At this time, there is no way to configure this setting for an Azure App Service
 Web App for Containers. See [Issue #7481](https://github.com/Azure/azure-quickstart-templates/issues/7481)
 for more information.
+
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, config, Microsoft.Sql/servers, firewallrules, databases`

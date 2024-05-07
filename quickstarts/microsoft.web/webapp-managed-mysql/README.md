@@ -1,4 +1,15 @@
-# Build a Web App with Azure database for MySQL
+---
+description: This template provides a easy way to deploy web app on Azure App Service Web Apps with Azure database for MySQL.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: webapp-managed-mysql
+languages:
+- json
+- bicep
+---
+# Web App with Azure database for MySQL
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-managed-mysql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-managed-mysql/PublicDeployment.svg)
@@ -17,3 +28,4 @@
 
 This template provides a easy way to deploy web app on Azure Web Apps on Windows with Azure database for MySQL.
 
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/config, MySql, Microsoft.DBforMySQL/servers, Microsoft.DBforMySQL/servers/firewallRules, Microsoft.DBforMySQL/servers/databases`

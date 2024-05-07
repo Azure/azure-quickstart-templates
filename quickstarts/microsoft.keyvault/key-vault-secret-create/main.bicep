@@ -40,7 +40,7 @@ param skuName string = 'standard'
 @secure()
 param secretsObject object
 
-resource kv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -69,10 +69,15 @@ resource kv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   }
 }
 
-resource secrets 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' = [for secret in secretsObject.secrets: {
+resource secrets 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = [for secret in secretsObject.secrets: {
   name: secret.secretName
   parent: kv
   properties: {
     value: secret.secretValue
   }
 }]
+
+output location string = location
+output name string = kv.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = kv.id

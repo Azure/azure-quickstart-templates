@@ -1,4 +1,14 @@
-# Create a Managed Certificate (Free) for an APEX domain (aka root/naked domain)
+---
+description: Create Managed Certificate (Free) APEX (root domain) for WebApp
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: app-service-managed-certificate-apex
+languages:
+- json
+---
+# Create a App Services Managed Certificate
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-service-managed-certificate-apex/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/app-service-managed-certificate-apex/PublicDeployment.svg)
@@ -29,7 +39,7 @@ To deploy this template, you need to have the following resources:
 
     c. Add your root domain going to -> App Services => Custom Domains -> Add custom domain. (ie contoso.com).
 
-    More information can be found [here](https://docs.microsoft.com/en-us/azure/app-service/app-service-web-tutorial-custom-domain?tabs=cname).
+    More information can be found [here](https://docs.microsoft.com/azure/app-service/app-service-web-tutorial-custom-domain?tabs=cname).
 
 4. **Make sure you Web App does not have any Network restriction or redirection (such as http to https or to another url).**
 
@@ -38,3 +48,5 @@ This arm deployment will:
 1. Create a Managed Certificate (Free).
 
 The operation is expected to take some time.
+
+`Tags: Microsoft.Web/certificates, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/hostNameBindings`

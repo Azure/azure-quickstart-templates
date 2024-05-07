@@ -1,11 +1,17 @@
-@description('The location into which the resources should be deployed.')
-param location string = resourceGroup().location
-
 @description('The name of the Azure Function app.')
 param functionAppName string = 'func-${uniqueString(resourceGroup().id)}'
 
-@description('The name of the Azure Function hosting plan.')
-param functionAppPlanName string = 'plan-${uniqueString(resourceGroup().id)}'
+@description('The location into which the resources should be deployed.')
+param location string = resourceGroup().location
+
+@description('The language worker runtime to load in the function app.')
+@allowed([
+  'dotnet'
+  'node'
+  'python'
+  'java'
+])
+param functionWorkerRuntime string = 'node'
 
 @description('Specifies the OS used for the Azure Function hosting plan.')
 @allowed([
@@ -21,6 +27,9 @@ param functionPlanOS string = 'Windows'
   'EP3'
 ])
 param functionAppPlanSku string = 'EP1'
+
+@description('The name of the Azure Function hosting plan.')
+param functionAppPlanName string = 'plan-${uniqueString(resourceGroup().id)}'
 
 @description('The name of the backend Azure storage account used by the Azure Function app.')
 param functionStorageAccountName string = 'st${uniqueString(resourceGroup().id)}'
@@ -43,28 +52,22 @@ param functionSubnetAddressPrefix string = '10.100.0.0/24'
 @description('The IP address space used for the private endpoints.')
 param privateEndpointSubnetAddressPrefix string = '10.100.1.0/24'
 
+@description('Only required for Linux app to represent runtime stack in the format of \'runtime|runtimeVersion\'. For example: \'python|3.9\'')
+param linuxFxVersion string = ''
+
 var applicationInsightsName = 'appi-${uniqueString(resourceGroup().id)}'
-
 var privateStorageFileDnsZoneName = 'privatelink.file.${environment().suffixes.storage}'
-var privateEndpointStorageFileName = '${storageAccount.name}-file-private-endpoint'
-
+var privateEndpointStorageFileName = '${functionStorageAccountName}-file-private-endpoint'
 var privateStorageTableDnsZoneName = 'privatelink.table.${environment().suffixes.storage}'
-var privateEndpointStorageTableName = '${storageAccount.name}-table-private-endpoint'
-
+var privateEndpointStorageTableName = '${functionStorageAccountName}-table-private-endpoint'
 var privateStorageBlobDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
-var privateEndpointStorageBlobName = '${storageAccount.name}-blob-private-endpoint'
-
+var privateEndpointStorageBlobName = '${functionStorageAccountName}-blob-private-endpoint'
 var privateStorageQueueDnsZoneName = 'privatelink.queue.${environment().suffixes.storage}'
-var privateEndpointStorageQueueName = '${storageAccount.name}-queue-private-endpoint'
-
+var privateEndpointStorageQueueName = '${functionStorageAccountName}-queue-private-endpoint'
 var functionContentShareName = 'function-content-share'
+var isReserved = ((functionPlanOS == 'Linux') ? true : false)
 
-// The term "reserved" is used by ARM to indicate if the hosting plan is a Linux or Windows-based plan.
-// A value of true indicated Linux, while a value of false indicates Windows.
-// See https://docs.microsoft.com/en-us/azure/templates/microsoft.web/serverfarms?tabs=json#appserviceplanproperties-object.
-var isReserved = (functionPlanOS == 'Linux') ? true : false
-
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: vnetName
   location: location
   properties: {
@@ -102,150 +105,146 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
   }
 }
 
-// -- Private DNS Zones --
-resource storageFileDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource privateStorageFileDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageFileDnsZoneName
   location: 'global'
 }
 
-resource storageBlobDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource privateStorageBlobDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageBlobDnsZoneName
   location: 'global'
 }
 
-resource storageQueueDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource privateStorageQueueDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageQueueDnsZoneName
   location: 'global'
 }
 
-resource storageTableDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource privateStorageTableDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageTableDnsZoneName
   location: 'global'
 }
 
-// -- Private DNS Zone Links --
-resource storageFileDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageFileDnsZone
-  name: '${storageFileDnsZone.name}-link'
+resource privateStorageFileDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateStorageFileDnsZone
+  name: '${privateStorageFileDnsZoneName}-link'
   location: 'global'
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: virtualNetwork.id
+      id: vnet.id
     }
   }
 }
 
-resource storageBlobDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageBlobDnsZone
-  name: '${storageBlobDnsZone.name}-link'
+resource privateStorageBlobDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateStorageBlobDnsZone
+  name: '${privateStorageBlobDnsZoneName}-link'
   location: 'global'
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: virtualNetwork.id
+      id: vnet.id
     }
   }
 }
 
-resource storageTableDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageTableDnsZone
-  name: '${storageTableDnsZone.name}-link'
+resource privateStorageTableDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateStorageTableDnsZone
+  name: '${privateStorageTableDnsZoneName}-link'
   location: 'global'
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: virtualNetwork.id
+      id: vnet.id
     }
   }
 }
 
-resource storageQueueDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageQueueDnsZone
-  name: '${storageQueueDnsZone.name}-link'
+resource privateStorageQueueDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateStorageQueueDnsZone
+  name: '${privateStorageQueueDnsZoneName}-link'
   location: 'global'
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: virtualNetwork.id
+      id: vnet.id
     }
   }
 }
 
-// -- Private DNS Zone Groups --
-resource storageFilePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageFilePrivateEndpoint
+resource privateEndpointStorageFilePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: privateEndpointStorageFile
   name: 'filePrivateDnsZoneGroup'
   properties: {
     privateDnsZoneConfigs: [
       {
         name: 'config'
         properties: {
-          privateDnsZoneId: storageFileDnsZone.id
+          privateDnsZoneId: privateStorageFileDnsZone.id
         }
       }
     ]
   }
 }
 
-resource storageBlobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageBlobPrivateEndpoint
+resource privateEndpointStorageBlobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: privateEndpointStorageBlob
   name: 'blobPrivateDnsZoneGroup'
   properties: {
     privateDnsZoneConfigs: [
       {
         name: 'config'
         properties: {
-          privateDnsZoneId: storageBlobDnsZone.id
+          privateDnsZoneId: privateStorageBlobDnsZone.id
         }
       }
     ]
   }
 }
 
-resource storageTablePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageTablePrivateEndpoint
+resource privateEndpointStorageTablePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: privateEndpointStorageTable
   name: 'tablePrivateDnsZoneGroup'
   properties: {
     privateDnsZoneConfigs: [
       {
         name: 'config'
         properties: {
-          privateDnsZoneId: storageTableDnsZone.id
+          privateDnsZoneId: privateStorageTableDnsZone.id
         }
       }
     ]
   }
 }
 
-resource storageQueuePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
-  parent: storageQueuePrivateEndpoint
-  name: 'tablePrivateDnsZoneGroup'
+resource privateEndpointStorageQueuePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: privateEndpointStorageQueue
+  name: 'queuePrivateDnsZoneGroup'
   properties: {
     privateDnsZoneConfigs: [
       {
         name: 'config'
         properties: {
-          privateDnsZoneId: storageQueueDnsZone.id
+          privateDnsZoneId: privateStorageQueueDnsZone.id
         }
       }
     ]
   }
 }
 
-// -- Private Endpoints --
-resource storageFilePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+resource privateEndpointStorageFile 'Microsoft.Network/privateEndpoints@2022-05-01' = {
   name: privateEndpointStorageFileName
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, privateEndpointSubnetName)
     }
     privateLinkServiceConnections: [
       {
         name: 'MyStorageFilePrivateLinkConnection'
         properties: {
-          privateLinkServiceId: storageAccount.id
+          privateLinkServiceId: functionStorageAccount.id
           groupIds: [
             'file'
           ]
@@ -253,62 +252,23 @@ resource storageFilePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-
       }
     ]
   }
+  dependsOn: [
+    vnet
+  ]
 }
 
-resource storageTablePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
-  name: privateEndpointStorageTableName
-  location: location
-  properties: {
-    subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'MyStorageTablePrivateLinkConnection'
-        properties: {
-          privateLinkServiceId: storageAccount.id
-          groupIds: [
-            'table'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource storageQueuePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
-  name: privateEndpointStorageQueueName
-  location: location
-  properties: {
-    subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'MyStorageQueuePrivateLinkConnection'
-        properties: {
-          privateLinkServiceId: storageAccount.id
-          groupIds: [
-            'queue'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource storageBlobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+resource privateEndpointStorageBlob 'Microsoft.Network/privateEndpoints@2022-05-01' = {
   name: privateEndpointStorageBlobName
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, privateEndpointSubnetName)
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, privateEndpointSubnetName)
     }
     privateLinkServiceConnections: [
       {
         name: 'MyStorageBlobPrivateLinkConnection'
         properties: {
-          privateLinkServiceId: storageAccount.id
+          privateLinkServiceId: functionStorageAccount.id
           groupIds: [
             'blob'
           ]
@@ -316,9 +276,60 @@ resource storageBlobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-
       }
     ]
   }
+  dependsOn: [
+    vnet
+  ]
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
+resource privateEndpointStorageTable 'Microsoft.Network/privateEndpoints@2022-05-01' = {
+  name: privateEndpointStorageTableName
+  location: location
+  properties: {
+    subnet: {
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, privateEndpointSubnetName)
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'MyStorageTablePrivateLinkConnection'
+        properties: {
+          privateLinkServiceId: functionStorageAccount.id
+          groupIds: [
+            'table'
+          ]
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    vnet
+  ]
+}
+
+resource privateEndpointStorageQueue 'Microsoft.Network/privateEndpoints@2022-05-01' = {
+  name: privateEndpointStorageQueueName
+  location: location
+  properties: {
+    subnet: {
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, privateEndpointSubnetName)
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'MyStorageQueuePrivateLinkConnection'
+        properties: {
+          privateLinkServiceId: functionStorageAccount.id
+          groupIds: [
+            'queue'
+          ]
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    vnet
+  ]
+}
+
+resource functionStorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: functionStorageAccountName
   location: location
   kind: 'StorageV2'
@@ -326,6 +337,8 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
     name: 'Standard_LRS'
   }
   properties: {
+    publicNetworkAccess: 'Disabled'
+    allowBlobPublicAccess: false
     networkAcls: {
       bypass: 'None'
       defaultAction: 'Deny'
@@ -333,11 +346,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
   }
 }
 
-resource functionContentShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-04-01' = {
-  name: '${storageAccount.name}/default/${functionContentShareName}'
+resource share 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = {
+  name: '${functionStorageAccountName}/default/${functionContentShareName}'
+  dependsOn: [
+    functionStorageAccount
+  ]
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+resource applicationInsight 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
   location: location
   kind: 'web'
@@ -346,12 +362,12 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource plan 'Microsoft.Web/serverfarms@2021-01-01' = {
-  location: location
+resource functionAppPlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: functionAppPlanName
+  location: location
   sku: {
-    name: functionAppPlanSku
     tier: 'ElasticPremium'
+    name: functionAppPlanSku
     size: functionAppPlanSku
     family: 'EP'
   }
@@ -362,49 +378,44 @@ resource plan 'Microsoft.Web/serverfarms@2021-01-01' = {
   }
 }
 
-resource functionApp 'Microsoft.Web/sites@2021-01-01' = {
-  location: location
+resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   name: functionAppName
-  kind: isReserved ? 'functionapp,linux' : 'functionapp'
-  dependsOn: [
-    storageFilePrivateDnsZoneGroup
-    storageBlobPrivateDnsZoneGroup
-    storageQueuePrivateDnsZoneGroup
-    storageTablePrivateDnsZoneGroup
-
-    storageBlobDnsZoneLink
-    storageQueueDnsZoneLink
-    storageTableDnsZoneLink
-    storageQueueDnsZoneLink
-
-    functionContentShare
-  ]
+  location: location
+  kind: (isReserved ? 'functionapp,linux' : 'functionapp')
   properties: {
-    serverFarmId: plan.id
     reserved: isReserved
+    serverFarmId: functionAppPlan.id
     siteConfig: {
       functionsRuntimeScaleMonitoringEnabled: true
-      linuxFxVersion: isReserved ? 'dotnet|3.1' : json('null')
+      linuxFxVersion: (isReserved ? linuxFxVersion : json('null'))
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: '${appInsights.properties.InstrumentationKey}'
+          value: applicationInsight.properties.InstrumentationKey
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${functionStorageAccountName};AccountKey=${functionStorageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${functionStorageAccountName};AccountKey=${functionStorageAccount.listKeys().keys[0].value}'
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: functionContentShareName
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~3'
+          value: '~4'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet'
+          value: functionWorkerRuntime
+        }
+        {
+          name: 'WEBSITE_NODE_DEFAULT_VERSION'
+          value: '~14'
         }
         {
           name: 'WEBSITE_VNET_ROUTE_ALL'
@@ -414,20 +425,30 @@ resource functionApp 'Microsoft.Web/sites@2021-01-01' = {
           name: 'WEBSITE_CONTENTOVERVNET'
           value: '1'
         }
-        {
-          name: 'WEBSITE_CONTENTSHARE'
-          value: functionContentShareName
-        }
       ]
     }
   }
+  dependsOn: [
+    share
+    privateStorageFileDnsZoneLink
+    privateEndpointStorageFilePrivateDnsZoneGroup
+    privateStorageBlobDnsZoneLink
+    privateEndpointStorageBlobPrivateDnsZoneGroup
+    privateStorageTableDnsZoneLink
+    privateEndpointStorageTablePrivateDnsZoneGroup
+    privateStorageQueueDnsZoneLink
+    privateEndpointStorageQueuePrivateDnsZoneGroup
+  ]
 }
 
-resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
+resource networkConfig 'Microsoft.Web/sites/networkConfig@2022-03-01' = {
   parent: functionApp
   name: 'virtualNetwork'
   properties: {
-    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, functionSubnetName)
+    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, functionSubnetName)
     swiftSupported: true
   }
+  dependsOn: [
+    vnet
+  ]
 }

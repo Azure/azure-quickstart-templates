@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "14433491779040889275"
+    }
+  },
   "parameters": {
     "clusterName": {
       "type": "string",
@@ -62,7 +69,7 @@
     },
     "WorkerNodeVirtualMachineSize": {
       "type": "string",
-       "defaultValue": "Standard_E4_v3",
+      "defaultValue": "Standard_E4_v3",
       "allowedValues": [
         "Standard_A4_v2",
         "Standard_A8_v2",
@@ -106,23 +113,24 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2023-01-01",
       "name": "[variables('defaultStorageAccount').name]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('defaultStorageAccount').type]"
       },
       "kind": "StorageV2",
-      "properties": {}
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false
+      }
     },
     {
       "type": "Microsoft.HDInsight/clusters",
-      "apiVersion": "2018-06-01-preview",
+      "apiVersion": "2023-08-15-preview",
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts',variables('defaultStorageAccount').name)]"
-      ],
       "properties": {
         "clusterVersion": "4.0",
         "osType": "Linux",
@@ -139,10 +147,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2021-08-01').primaryEndpoints.blob), 'https:', ''), '/', '')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2021-08-01').keys[0].value]"
             }
           ]
         },
@@ -194,13 +202,32 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name)]"
+      ]
     }
   ],
   "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('clusterName')]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.HDInsight/clusters', parameters('clusterName'))]"
+    },
     "cluster": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters', parameters('clusterName')), '2023-08-15-preview')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
     }
   }
 }

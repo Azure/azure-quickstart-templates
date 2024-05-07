@@ -1,4 +1,14 @@
-# Build a DMZ with Network Security Groups (NSG)
+---
+description: This example will create a simple DMZ with four windows servers, a VNet with two subnets, and a Network Security Group.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: dmz-nsg
+languages:
+- json
+---
+# DMZ with NSG
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/dmz-nsg/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/dmz-nsg/PublicDeployment.svg)
@@ -14,3 +24,5 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fdmz-nsg%2Fazuredeploy.json)
 
 This template will create a simple DMZ with four windows servers, a VNet with two subnets, and a Network Security Group.
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/networkSecurityGroups`

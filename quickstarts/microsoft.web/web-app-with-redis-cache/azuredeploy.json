@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "11892965215623184264"
+    }
+  },
   "parameters": {
     "skuName": {
       "type": "string",
@@ -26,45 +33,38 @@
     "skuCapacity": {
       "type": "int",
       "defaultValue": 1,
+      "maxValue": 7,
       "minValue": 1,
       "metadata": {
         "description": "Describes plan's instance count"
-      },
-      "maxValue": 7
+      }
     },
     "cacheSKUName": {
       "type": "string",
+      "defaultValue": "Basic",
       "allowedValues": [
         "Basic",
         "Standard"
       ],
-      "defaultValue": "Basic",
       "metadata": {
         "description": "The pricing tier of the new Azure Redis Cache."
       }
     },
     "cacheSKUFamily": {
       "type": "string",
+      "defaultValue": "C",
       "allowedValues": [
         "C"
       ],
-      "defaultValue": "C",
       "metadata": {
         "description": "The family for the sku."
       }
     },
     "cacheSKUCapacity": {
       "type": "int",
-      "allowedValues": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6
-      ],
       "defaultValue": 0,
+      "maxValue": 6,
+      "minValue": 0,
       "metadata": {
         "description": "The size of the new Azure Redis Cache instance. "
       }
@@ -78,15 +78,15 @@
     }
   },
   "variables": {
-    "hostingPlanName": "[concat('hostingplan', uniqueString(resourceGroup().id))]",
-    "webSiteName": "[concat('webSite', uniqueString(resourceGroup().id))]",
-    "cacheName": "[concat('cache', uniqueString(resourceGroup().id))]"
+    "hostingPlanName": "[format('hostingplan{0}', uniqueString(resourceGroup().id))]",
+    "webSiteName": "[format('webSite{0}', uniqueString(resourceGroup().id))]",
+    "cacheName": "[format('cache{0}', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
-      "apiVersion": "2020-06-01",
-      "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('hostingPlanName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "HostingPlan"
@@ -95,47 +95,48 @@
         "name": "[parameters('skuName')]",
         "capacity": "[parameters('skuCapacity')]"
       },
-      "properties": {
-        "name": "[variables('hostingPlanName')]"
-      }
+      "properties": {}
     },
     {
-      "apiVersion": "2015-08-01",
-      "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('webSiteName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', variables('hostingPlanName'))]",
-        "[resourceId('Microsoft.Cache/Redis/', variables('cacheName'))]"
-      ],
       "tags": {
-        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty",
+        "[format('hidden-related:{0}', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "empty",
         "displayName": "Website"
       },
-      "properties": {
-        "name": "[variables('webSiteName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      "identity": {
+        "type": "SystemAssigned"
       },
-      "resources": [
-        {
-          "apiVersion": "2015-08-01",
-          "type": "config",
-          "name": "appsettings",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', variables('webSiteName'))]",
-            "[resourceId('Microsoft.Cache/Redis/', variables('cacheName'))]"
-          ],
-          "properties": {
-            "CacheConnection": "[concat(variables('cacheName'),'.redis.cache.windows.net,abortConnect=false,ssl=true,password=', listKeys(resourceId('Microsoft.Cache/Redis', variables('cacheName')), '2020-12-01').primaryKey)]"
-          }
-        }
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "httpsOnly": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', variables('cacheName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
       ]
     },
     {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2021-03-01",
+      "name": "[format('{0}/{1}', variables('webSiteName'), 'appsettings')]",
+      "properties": {
+        "CacheConnection": "[format('{0}.redis.cache.windows.net,abortConnect=false,ssl=true,password={1}', variables('cacheName'), listKeys(resourceId('Microsoft.Cache/redis', variables('cacheName')), '2021-06-01').primaryKey)]",
+        "minTlsVersion": "1.2",
+        "ftpsState": "FtpsOnly"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', variables('cacheName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2021-06-01",
       "name": "[variables('cacheName')]",
-      "type": "Microsoft.Cache/Redis",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-08-01",
       "tags": {
         "displayName": "cache"
       },

@@ -1,4 +1,14 @@
-# Deployment of a 3 Nodetype Service Fabric secure Cluster with NSG enabled.
+---
+description: This template allows you to deploy a secure 3 nodetype Service fabric Cluster running Windows server 2016 Data center on a Standard_D2 Size VMs. Use this template allows you ro control the inbound and outbound network traffic using Network Security Groups.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: service-fabric-secure-nsg-cluster-65-node-3-nodetype
+languages:
+- json
+---
+# Deploy a 3 Nodetype Secure Cluster with NSGs enabled
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicefabric/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicefabric/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicDeployment.svg)
@@ -9,11 +19,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicefabric/service-fabric-secure-nsg-cluster-65-node-3-nodetype/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicefabric/service-fabric-secure-nsg-cluster-65-node-3-nodetype/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.servicefabric%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.servicefabric%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.servicefabric%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.servicefabric%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json)
 
-Use this template as a sample for setting up a three nodetype secure cluster and to  control the inbound and outbound network traffic using Network Security Groups. 
+Use this template as a sample for setting up a three nodetype secure cluster and to  control the inbound and outbound network traffic using Network Security Groups.
 
 The template has a Network Security Group for each of the VMSS to control the traffic in and out of the VMSS. As a default, the rules are set up to allow all the traffic needed by the system services and the application ports specified in the template. Review those rules and make changes to fit your needs, including add any new ones for your applications.
 
@@ -21,17 +31,12 @@ Although, as a default, the parameter file is set to create 65 node cluster. So,
 
 In this template, 'SF' is the primary node type and the systems services will be running in it. When deploying applications to the cluster, Having a dedicated Nodetype for System services is a best practice when running clusters that are over 50 nodes and are packed for maximum utilization of VM resources.
 
-This template assumes that you already have certificates uploaded to your keyvault, else I strongly suggest you follow the links below on how to. The document linked to below also has instructions on how to use Azure Active Directory for securing client operations on the cluster. 
+This template assumes that you already have certificates uploaded to your keyvault, else I strongly suggest you follow the links below on how to. The document linked to below also has instructions on how to use Azure Active Directory for securing client operations on the cluster.
 
-![Picture of the cluster resources][NSG]
+![Picture of the cluster resources](./NSG1.PNG)
 
-## Deploying the ARM template to Azure using resource manager PS 
+## Deploying the ARM template to Azure using resource manager PS
 
-Refer to [Deploying ARM templates using ARM PS ](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-arm/) for detailed guidance on how to. There is detailed guidance on how to set up your certificates and Azure Active Directory for clients as well. For a successful setup of a secure cluster, make sure to read that document thoroughly. 
+Refer to [Deploying ARM templates using ARM PS](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-arm/) for detailed guidance on how to. There is detailed guidance on how to set up your certificates and Azure Active Directory for clients as well. For a successful setup of a secure cluster, make sure to read that document thoroughly.
 
-<!--Image references-->
-[DownloadTemplate]: ./DownloadTemplate.png
-[NSG]: ./NSG1.PNG
-
-
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachineScaleSets, ServiceFabricNode, Microsoft.ServiceFabric/clusters`

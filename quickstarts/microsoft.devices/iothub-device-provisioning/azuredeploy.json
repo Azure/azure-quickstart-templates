@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.12.40.16777",
+      "templateHash": "13184692430416822033"
+    }
+  },
   "parameters": {
     "iotHubName": {
       "type": "string",
@@ -29,20 +36,20 @@
       }
     },
     "skuUnits": {
-      "type": "string",
-      "defaultValue": "1",
+      "type": "int",
+      "defaultValue": 1,
       "metadata": {
         "description": "The number of IoT Hub units."
       }
     }
   },
   "variables": {
-    "iotHubKeyName": "iothubowner"    
+    "iotHubKey": "iothubowner"
   },
   "resources": [
     {
       "type": "Microsoft.Devices/IotHubs",
-      "apiVersion": "2021-03-31",
+      "apiVersion": "2021-07-02",
       "name": "[parameters('iotHubName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -53,23 +60,24 @@
     },
     {
       "type": "Microsoft.Devices/provisioningServices",
-      "apiVersion": "2020-03-01",
+      "apiVersion": "2022-02-05",
       "name": "[parameters('provisioningServiceName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('skuName')]",
         "capacity": "[parameters('skuUnits')]"
       },
-      "dependsOn": [ "[parameters('iotHubName')]" ],
       "properties": {
         "iotHubs": [
           {
-            "connectionString": "[concat('HostName=', reference(resourceId('Microsoft.Devices/Iothubs', parameters('iotHubName'))).hostName, ';SharedAccessKeyName=', variables('iotHubKeyName'), ';SharedAccessKey=', listkeys(resourceId('Microsoft.Devices/Iothubs/Iothubkeys', parameters('iotHubName'), variables('iotHubKeyName')), '2020-03-01').primaryKey)]",
-            "location": "[parameters('location')]",
-            "name": "[reference(resourceId('Microsoft.Devices/Iothubs', parameters('iotHubName'))).hostName]"
+            "connectionString": "[format('HostName={0};SharedAccessKeyName={1};SharedAccessKey={2}', reference(resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), '2021-07-02').hostName, variables('iotHubKey'), listkeys(resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), '2021-07-02').value[0].primaryKey)]",
+            "location": "[parameters('location')]"
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]"
+      ]
     }
   ]
 }

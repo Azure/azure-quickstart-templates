@@ -1,4 +1,15 @@
-# Very simple deployment of a Linux Ubuntu VM
+---
+description: This template deploys an Ubuntu Server with a few options for the VM. You can provide the VM Name, OS Version, VM size, and admin username and password. As default the VM size is Standard_D2s_v3 and OS version is 20.04-LTS.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-simple-linux
+languages:
+- bicep
+- json
+---
+# Deploy a simple Ubuntu Linux VM 20.04-LTS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-linux/PublicDeployment.svg)
@@ -15,20 +26,18 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-simple-linux%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-simple-linux%2Fazuredeploy.json)
 
-This template deploys a **Linux VM Ubuntu** using the latest patched version. This will deploy a Standard_B2s size VM and a 18.04-LTS Version as defaultValue in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.
+This template deploys a **Linux VM Ubuntu** using the latest patched version. This will deploy a Standard_B2s size VM and a 20.04-LTS as default value in the resource group location and will return the admin user name, SSH command, and FQDN.
 
 If you are new to Azure virtual machines, see:
 
 - [Azure Virtual Machines](https://azure.microsoft.com/services/virtual-machines/).
-- [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
-- [Azure Windows Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/windows/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
-- [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
+- [Azure Virtual Machines documentation](https://learn.microsoft.com/azure/virtual-machines/)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Quickstart templates](https://learn.microsoft.com/en-us/samples/browse/?expanded=azure&products=azure-resource-manager)
 
 If you are new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Quickstart: Create an Ubuntu Linux virtual machine using an ARM template](https://docs.microsoft.com/azure/virtual-machines/linux/quick-create-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Quickstart: Create an Ubuntu Linux virtual machine using an ARM template](https://learn.microsoft.com/azure/virtual-machines/linux/quick-create-template)
 
-`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner`
-
+`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/publicIPAddresses, Microsoft.Compute/virtualMachines`

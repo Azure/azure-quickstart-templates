@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "9958163071872770371"
+    }
+  },
   "parameters": {
     "disablePublicIp": {
       "type": "bool",
@@ -17,76 +24,76 @@
       }
     },
     "natGatewayName": {
-      "defaultValue": "myNATgateway",
       "type": "string",
+      "defaultValue": "myNATgateway",
       "metadata": {
         "description": "Name of the NAT gateway to be attached to the workspace subnets."
       }
     },
     "natGatewayPublicIpName": {
-      "defaultValue": "myNATGatewayPublicIP",
       "type": "string",
+      "defaultValue": "myNATGatewayPublicIP",
       "metadata": {
         "description": "Name of the NAT gateway public IP."
       }
     },
     "nsgName": {
-      "defaultValue": "databricks-nsg",
       "type": "string",
+      "defaultValue": "databricks-nsg",
       "metadata": {
         "description": "The name of the network security group to create."
       }
     },
     "pricingTier": {
+      "type": "string",
       "defaultValue": "premium",
       "allowedValues": [
         "trial",
         "standard",
         "premium"
       ],
-      "type": "string",
       "metadata": {
         "description": "The pricing tier of workspace."
       }
     },
     "privateSubnetCidr": {
-      "defaultValue": "10.179.0.0/18",
       "type": "string",
+      "defaultValue": "10.179.0.0/18",
       "metadata": {
         "description": "Cidr range for the private subnet."
       }
     },
     "privateSubnetName": {
-      "defaultValue": "private-subnet",
       "type": "string",
+      "defaultValue": "private-subnet",
       "metadata": {
         "description": "The name of the private subnet to create."
       }
     },
     "publicSubnetCidr": {
-      "defaultValue": "10.179.64.0/18",
       "type": "string",
+      "defaultValue": "10.179.64.0/18",
       "metadata": {
         "description": "Cidr range for the public subnet.."
       }
     },
     "publicSubnetName": {
-      "defaultValue": "public-subnet",
       "type": "string",
+      "defaultValue": "public-subnet",
       "metadata": {
         "description": "The name of the public subnet to create."
       }
     },
     "vnetCidr": {
-      "defaultValue": "10.179.0.0/16",
       "type": "string",
+      "defaultValue": "10.179.0.0/16",
       "metadata": {
         "description": "Cidr range for the vnet."
       }
     },
     "vnetName": {
-      "defaultValue": "databricks-vnet",
       "type": "string",
+      "defaultValue": "databricks-vnet",
       "metadata": {
         "description": "The name of the virtual network to create."
       }
@@ -99,21 +106,22 @@
     }
   },
   "variables": {
-    "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]",
-    "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
+    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+    "trimmedMRGName": "[substring(variables('managedResourceGroupName'), 0, min(length(variables('managedResourceGroupName')), 90))]",
+    "managedResourceGroupId": "[format('{0}/resourceGroups/{1}', subscription().id, variables('trimmedMRGName'))]",
     "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[parameters('location')]",
-      "name": "[parameters('nsgName')]"
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('nsgName')]",
+      "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('natGatewayPublicIpName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -127,15 +135,12 @@
     },
     {
       "type": "Microsoft.Network/natGateways",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('natGatewayName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('natGatewayPublicIpName'))]"
-      ],
       "properties": {
         "idleTimeoutInMinutes": 4,
         "publicIpAddresses": [
@@ -143,17 +148,16 @@
             "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('natGatewayPublicIpName'))]"
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('natGatewayPublicIpName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[parameters('location')]",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('vnetName')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]"
-      ],
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -202,23 +206,22 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+      ]
     },
     {
-      "apiVersion": "2018-04-01",
       "type": "Microsoft.Databricks/workspaces",
-      "location": "[parameters('location')]",
+      "apiVersion": "2023-02-01",
       "name": "[parameters('workspaceName')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
-      ],
+      "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('pricingTier')]"
       },
-      "comments": "The managed resource group specified will be locked after deployment.",
       "properties": {
-        "ManagedResourceGroupId": "[variables('managedResourceGroupId')]",
+        "managedResourceGroupId": "[variables('managedResourceGroupId')]",
         "parameters": {
           "customVirtualNetworkId": {
             "value": "[variables('vnetId')]"
@@ -233,7 +236,11 @@
             "value": "[parameters('disablePublicIp')]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     }
   ]
 }

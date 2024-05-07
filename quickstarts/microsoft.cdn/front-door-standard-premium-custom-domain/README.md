@@ -1,3 +1,14 @@
+---
+description: This template creates a Front Door Standard/Premium including a custom domain and Microsoft-managed certificate.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: front-door-standard-premium-custom-domain
+languages:
+- json
+- bicep
+---
 # Front Door Standard/Premium with custom domain
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-standard-premium-custom-domain/PublicLastTestDate.svg)
@@ -42,3 +53,5 @@ Front Door validates your domin ownership and updates the status automatically. 
 Next, you should configure your DNS server with a CNAME record to direct the traffic to Front Door. You must create a CNAME record at the host name you specified in the `customDomainName` deployment parameter, and use the value specified in the `frontDoorEndpointHostName` deployment output.
 
 You can then access the Front Door endpoint by using your custom domain name. If you access the hostname you should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
+
+`Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/customDomains, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

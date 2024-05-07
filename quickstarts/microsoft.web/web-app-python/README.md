@@ -1,4 +1,14 @@
-# Create a web app on Azure with Python 3.7 enabled
+---
+description: This template creates a web app on azure with Python enabled allowing you to run Python applications in Azure.  Template was authored by Donovan Brown of Microsoft.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: web-app-python
+languages:
+- json
+---
+# Create a web app on Azure with Python enabled
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-python/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-python/PublicDeployment.svg)
@@ -13,7 +23,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-python%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-python%2Fazuredeploy.json)
 
-This template creates a web app on azure with Python 3.7 enabled allowing you to run Python applications in Azure. 
+This template creates a web app on azure with Python 3.7 enabled allowing you to run Python applications in Azure.
 
 The web app with Python is an app service that allow you to deploy your Django or Flask website. This will deploy a free tier Linux App Service Plan where you will host your App Service.
 
@@ -35,4 +45,4 @@ If you have already a Linux App Service Plan, you will have to deploy the new we
 
 Tags: Azure4Student, appServices , flask, linux, Intermediate
 
-
+`Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites`

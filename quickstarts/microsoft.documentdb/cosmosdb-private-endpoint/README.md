@@ -1,4 +1,15 @@
-# Create an Azure Cosmos account, a virtual network and a private endpoint
+---
+description: This template will create a Cosmos account, a virtual network and a private endpoint exposing the Cosmos account to the virtual network.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: cosmosdb-private-endpoint
+languages:
+- json
+- bicep
+---
+# Create an Azure Cosmos DB Account with a private endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-private-endpoint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-private-endpoint/PublicDeployment.svg)
@@ -21,8 +32,10 @@ Below are the parameters which can be user configured in the parameters file inc
 
 - **Location:** Select where the resource should be created (default is target resource group's location).
 - **Virtual Network Name:** Enter a name for the virtual network.
-- **Account Name:** Enter a name for the new Cosmos account.
+- **Account Name:** Enter a name for the new Azure Cosmos DB account.
 - **Public Network Access:** Select whether public traffic is allowed to access the account (default is Enabled). When value is set to Disabled, public network traffic is blocked even before the private endpoint is created.
 - **Private Endpoint Name:** Enter a name for the private endpoint.
 
 `Tags : CosmosDB`
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.DocumentDB/databaseAccounts, Microsoft.Network/privateEndpoints`

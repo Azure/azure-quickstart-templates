@@ -1,4 +1,15 @@
-# Create a Data Share
+---
+description: This template creates a data share from a storage account
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: data-share-share-storage-account
+languages:
+- json
+- bicep
+---
+# Create a data share from a storage account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datashare/data-share-share-storage-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datashare/data-share-share-storage-account/PublicDeployment.svg)
@@ -19,4 +30,4 @@ When you deploy this Azure Resource Manager template, it creates a storage accou
 
 To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/data-share/share-your-data-arm) article.
 
-`Tags: data share, share, storage account`
+`Tags: data share, share, storage account, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers, Microsoft.DataShare/accounts, SystemAssigned, Microsoft.DataShare/accounts/shares, Microsoft.Authorization/roleAssignments, Microsoft.DataShare/accounts/shares/dataSets, Microsoft.DataShare/accounts/shares/invitations, Microsoft.DataShare/accounts/shares/synchronizationSettings`

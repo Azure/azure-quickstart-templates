@@ -1,0 +1,85 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "9441387902044711077"
+    }
+  },
+  "parameters": {
+    "managedIdentityName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the user-assigned managed identity that has permission to create Azure AD applications."
+      }
+    },
+    "managedIdentityResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The name of the resource group that contains the user-assigned managed identity."
+      }
+    },
+    "azureADApplicationName": {
+      "type": "string",
+      "metadata": {
+        "description": "The display name of the application to create in Azure AD."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location that the Azure resources should be deployed to."
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": "# Create the Azure AD application.\napplication=$(az ad app create --display-name $AzureADApplicationName)\napplicationObjectId=$(jq -r '.id' <<< \"$application\")\napplicationClientId=$(jq -r '.appId' <<< \"$application\")\n\n# Create a service principal for the application.\nservicePrincipal=$(az ad sp create --id $applicationObjectId)\nservicePrincipalObjectId=$(jq -r '.id' <<< \"$servicePrincipal\")\n\n# Save the important properties as depoyment script outputs.\noutputJson=$(jq -n \\\n                --arg applicationObjectId \"$applicationObjectId\" \\\n                --arg applicationClientId \"$applicationClientId\" \\\n                --arg servicePrincipalObjectId \"$servicePrincipalObjectId\" \\\n                '{applicationObjectId: $applicationObjectId, applicationClientId: $applicationClientId, servicePrincipalObjectId: $servicePrincipalObjectId}' )\necho $outputJson > $AZ_SCRIPTS_OUTPUT_PATH\n"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "createAzureADApplication",
+      "location": "[parameters('location')]",
+      "kind": "AzureCLI",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('managedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))]": {}
+        }
+      },
+      "properties": {
+        "forceUpdateTag": "1",
+        "azCliVersion": "2.40.0",
+        "environmentVariables": [
+          {
+            "name": "AzureADApplicationName",
+            "value": "[parameters('azureADApplicationName')]"
+          }
+        ],
+        "scriptContent": "[variables('$fxv#0')]",
+        "timeout": "PT30M",
+        "cleanupPreference": "OnSuccess",
+        "retentionInterval": "P1D"
+      }
+    }
+  ],
+  "outputs": {
+    "applicationObjectId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'createAzureADApplication')).outputs.applicationObjectId]"
+    },
+    "applicationClientId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'createAzureADApplication')).outputs.applicationClientId]"
+    },
+    "servicePrincipalObjectId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'createAzureADApplication')).outputs.servicePrincipalObjectId]"
+    }
+  }
+}

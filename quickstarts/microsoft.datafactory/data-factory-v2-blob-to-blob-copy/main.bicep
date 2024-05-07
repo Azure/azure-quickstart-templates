@@ -15,17 +15,28 @@ var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
   }
   kind: 'StorageV2'
+
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
+  }
+
+  resource defaultBlobService 'blobServices' = {
+    name: 'default'
+  }
 }
 
-resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
-  name: '${storageAccount.name}/default/${blobContainerName}'
+resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
+  parent: storageAccount::defaultBlobService
+  name: blobContainerName
 }
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
@@ -59,7 +70,7 @@ resource dataFactoryDataSetIn 'Microsoft.DataFactory/factories/datasets@2018-06-
     typeProperties: {
       location: {
         type: 'AzureBlobStorageLocation'
-        container: blobContainer.name
+        container: blobContainerName
         folderPath: 'input'
         fileName: 'emp.txt'
       }
@@ -79,7 +90,7 @@ resource dataFactoryDataSetOut 'Microsoft.DataFactory/factories/datasets@2018-06
     typeProperties: {
       location: {
         type: 'AzureBlobStorageLocation'
-        container: blobContainer.name
+        container: blobContainerName
         folderPath: 'output'
       }
     }
@@ -91,16 +102,9 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
   name: pipelineName
   properties: {
     activities: [
-      any({
+      {
         name: 'MyCopyActivity'
         type: 'Copy'
-        policy: {
-          timeout: '7.00:00:00'
-          retry: 0
-          retryIntervalInSeconds: 30
-          secureOutput: false
-          secureInput: false
-        }
         typeProperties: {
           source: {
             type: 'BinarySource'
@@ -112,7 +116,7 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
           sink: {
             type: 'BinarySink'
             storeSettings: {
-              type: 'AzureBlobStorageWriterSettings'
+              type: 'AzureBlobStorageWriteSettings'
             }
           }
           enableStaging: false
@@ -129,7 +133,12 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
             type: 'DatasetReference'
           }
         ]
-      })
+      }
     ]
   }
 }
+
+output name string = dataFactoryPipeline.name
+output resourceId string = dataFactoryPipeline.id
+output resourceGroupName string = resourceGroup().name
+output location string = location

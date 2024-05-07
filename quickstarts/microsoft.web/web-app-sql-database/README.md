@@ -1,4 +1,15 @@
-# Provision a web app with a SQL Database
+---
+description: This template provisions a Web App, a SQL Database, AutoScale settings, Alert rules, and App Insights. It configures a connection string in the web app for the database.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: web-app-sql-database
+languages:
+- json
+- bicep
+---
+# Provision a Web App with a SQL Database
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-sql-database/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-sql-database/PublicDeployment.svg)
@@ -17,7 +28,7 @@
 
 This sample creates a free Azure Web App and SQL Database at the "Basic" service level.  The template can support other tiers of service, details for each service can be found here:
 
-### Microsoft App Services 
+### Microsoft App Services
 
 - [App Service Pricing](https://azure.microsoft.com/pricing/details/app-service/)
 
@@ -31,5 +42,6 @@ For more information about using this template, see [Provision a web app with a 
 
 - [Learn SQL Server](https://docs.microsoft.com/learn/browse/?term=SQL)
 
-- [Learn App Services](https://docs.microsoft.com/en-us/learn/browse/?term=web%20app)
+- [Learn App Services](https://docs.microsoft.com/learn/browse/?term=web%20app)
 
+`Tags: Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Sql/servers/firewallRules, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/config, SQLAzure, Microsoft.Insights/components`

@@ -1,0 +1,312 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "7336355124455021346"
+    }
+  },
+  "parameters": {
+    "dataFactoryName": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "Data factory name"
+      }
+    },
+    "enableManagedVirtualNetwork": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Managed Virtual Network name"
+      }
+    },
+    "enableManagedVnetIntegrationRuntime": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable the integration runtime inside the managed virtual network. Only required if enableManagedVirtualNetwork is true"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Data factory location"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Object containing resource tags"
+      }
+    },
+    "publicNetworkAccess": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable or disable public network access"
+      }
+    },
+    "configureGit": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Configure git during deployment"
+      }
+    },
+    "gitRepoType": {
+      "type": "string",
+      "defaultValue": "FactoryGitHubConfiguration",
+      "metadata": {
+        "description": "Git repository type. Azure DevOps = FactoryVSTSConfiguration and GitHub = FactoryGitHubConfiguration"
+      },
+      "allowedValues": [
+        "FactoryVSTSConfiguration",
+        "FactoryGitHubConfiguration"
+      ]
+    },
+    "gitAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Git account name. Azure DevOps = Organisation name and GitHub = Username"
+      }
+    },
+    "gitProjectName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Git project name. Only relevant for Azure DevOps"
+      }
+    },
+    "gitRepositoryName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Git repository name"
+      }
+    },
+    "gitCollaborationBranch": {
+      "type": "string",
+      "defaultValue": "main",
+      "metadata": {
+        "description": "The collaboration branch name. Default is main"
+      }
+    },
+    "gitRootFolder": {
+      "type": "string",
+      "defaultValue": "/",
+      "metadata": {
+        "description": "The root folder path name. Default is /"
+      }
+    },
+    "systemAssignedIdentity": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enables system assigned managed identity on the resource"
+      }
+    },
+    "userAssignedIdentities": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "The user assigned ID(s) to assign to the resource"
+      }
+    },
+    "enableDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable diagnostic logs"
+      }
+    },
+    "diagnosticStorageAccountId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account resource id. Only required if enableDiagnostics is set to true"
+      }
+    },
+    "diagnosticLogAnalyticsWorkspaceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Log analytics workspace resource id. Only required if enableDiagnostics is set to true"
+      }
+    },
+    "diagnosticEventHubAuthorizationRuleId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Event hub authorization rule for the Event Hub namespace. Only required if enableDiagnostics is set to true"
+      }
+    },
+    "diagnosticEventHubName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Event hub name. Only required if enableDiagnostics is set to true"
+      }
+    },
+    "resourcelock": {
+      "type": "string",
+      "defaultValue": "NotSpecified",
+      "metadata": {
+        "description": "Specify the type of resource lock."
+      },
+      "allowedValues": [
+        "CanNotDelete",
+        "NotSpecified",
+        "ReadOnly"
+      ]
+    }
+  },
+  "variables": {
+    "identityType": "[if(parameters('systemAssignedIdentity'), if(not(empty(parameters('userAssignedIdentities'))), 'SystemAssigned,UserAssigned', 'SystemAssigned'), if(not(empty(parameters('userAssignedIdentities'))), 'UserAssigned', 'None'))]",
+    "managedVnetName": "default",
+    "managedVnetRuntimeName": "AutoResolveIntegrationRuntime",
+    "identity": "[if(not(equals(variables('identityType'), 'None')), createObject('type', variables('identityType'), 'userAssignedIdentities', if(not(empty(parameters('userAssignedIdentities'))), parameters('userAssignedIdentities'), null())), null())]",
+    "repoConfiguration": "[if(equals(parameters('gitRepoType'), 'FactoryVSTSConfiguration'), createObject('accountName', parameters('gitAccountName'), 'collaborationBranch', parameters('gitCollaborationBranch'), 'repositoryName', parameters('gitRepositoryName'), 'rootFolder', parameters('gitRootFolder'), 'type', 'FactoryVSTSConfiguration', 'projectName', parameters('gitProjectName')), createObject('accountName', parameters('gitAccountName'), 'collaborationBranch', parameters('gitCollaborationBranch'), 'repositoryName', parameters('gitRepositoryName'), 'rootFolder', parameters('gitRootFolder'), 'type', 'FactoryGitHubConfiguration'))]",
+    "lockName": "[toLower(format('{0}-{1}-lck', parameters('dataFactoryName'), parameters('resourcelock')))]",
+    "diagnosticsName": "[format('{0}-dgs', parameters('dataFactoryName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[parameters('dataFactoryName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "identity": "[variables('identity')]",
+      "properties": {
+        "repoConfiguration": "[if(parameters('configureGit'), variables('repoConfiguration'), null())]",
+        "publicNetworkAccess": "[if(bool(parameters('publicNetworkAccess')), 'Enabled', 'Disabled')]"
+      }
+    },
+    {
+      "condition": "[parameters('enableManagedVirtualNetwork')]",
+      "type": "Microsoft.DataFactory/factories/managedVirtualNetworks",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', parameters('dataFactoryName'), variables('managedVnetName'))]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableManagedVnetIntegrationRuntime')]",
+      "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', parameters('dataFactoryName'), variables('managedVnetRuntimeName'))]",
+      "properties": {
+        "type": "Managed",
+        "managedVirtualNetwork": {
+          "referenceName": "[variables('managedVnetName')]",
+          "type": "ManagedVirtualNetworkReference"
+        },
+        "typeProperties": {
+          "computeProperties": {
+            "location": "AutoResolve"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/managedVirtualNetworks', parameters('dataFactoryName'), variables('managedVnetName'))]"
+      ]
+    },
+    {
+      "condition": "[not(equals(parameters('resourcelock'), 'NotSpecified'))]",
+      "type": "Microsoft.Authorization/locks",
+      "apiVersion": "2017-04-01",
+      "scope": "[format('Microsoft.DataFactory/factories/{0}', parameters('dataFactoryName'))]",
+      "name": "[variables('lockName')]",
+      "properties": {
+        "level": "[parameters('resourcelock')]",
+        "notes": "[if(equals(parameters('resourcelock'), 'CanNotDelete'), 'Cannot delete resource or child resources.', 'Cannot modify the resource or child resources.')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableDiagnostics')]",
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.DataFactory/factories/{0}', parameters('dataFactoryName'))]",
+      "name": "[variables('diagnosticsName')]",
+      "properties": {
+        "workspaceId": "[if(empty(parameters('diagnosticLogAnalyticsWorkspaceId')), null(), parameters('diagnosticLogAnalyticsWorkspaceId'))]",
+        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), null(), parameters('diagnosticStorageAccountId'))]",
+        "eventHubAuthorizationRuleId": "[if(empty(parameters('diagnosticEventHubAuthorizationRuleId')), null(), parameters('diagnosticEventHubAuthorizationRuleId'))]",
+        "eventHubName": "[if(empty(parameters('diagnosticEventHubName')), null(), parameters('diagnosticEventHubName'))]",
+        "logs": [
+          {
+            "category": "ActivityRuns",
+            "enabled": true
+          },
+          {
+            "category": "PipelineRuns",
+            "enabled": true
+          },
+          {
+            "category": "TriggerRuns",
+            "enabled": true
+          },
+          {
+            "category": "SSISPackageEventMessages",
+            "enabled": true
+          },
+          {
+            "category": "SSISPackageExecutableStatistics",
+            "enabled": true
+          },
+          {
+            "category": "SSISPackageEventMessageContext",
+            "enabled": true
+          },
+          {
+            "category": "SSISPackageExecutionComponentPhases",
+            "enabled": true
+          },
+          {
+            "category": "SSISPackageExecutionDataStatistics",
+            "enabled": true
+          },
+          {
+            "category": "SSISIntegrationRuntimeLogs",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('dataFactoryName')]"
+    },
+    "id": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+    },
+    "systemAssignedPrincipalId": {
+      "type": "string",
+      "value": "[if(and(parameters('systemAssignedIdentity'), contains(reference(resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName')), '2018-06-01', 'full').identity, 'principalId')), reference(resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName')), '2018-06-01', 'full').identity.principalId, '')]"
+    }
+  }
+}

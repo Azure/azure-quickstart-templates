@@ -1,0 +1,1 @@
+Register-AzResourceProvider -ProviderNamespace Microsoft.DevCenter

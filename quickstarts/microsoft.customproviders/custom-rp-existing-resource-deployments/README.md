@@ -1,3 +1,13 @@
+---
+description: This sample will go into detail on how to extend existing Azure resources and Resource Manager templates to add in custom workloads.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: custom-rp-existing-resource-deployments
+languages:
+- json
+---
 # Extend Existing Azure Resources with Custom Providers
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-existing-resource-deployments/PublicLastTestDate.svg)
@@ -5,10 +15,10 @@
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-existing-resource-deployments/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-existing-resource-deployments/FairfaxDeployment.svg)
-    
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-existing-resource-deployments/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-existing-resource-deployments/CredScanResult.svg)
-    
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.customproviders%2Fcustom-rp-existing-resource-deployments%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.customproviders%2Fcustom-rp-existing-resource-deployments%2Fazuredeploy.json)
 
 This sample Azure Resource Manager template deploys a custom resource provider to Azure that extends the Azure Resource Manager API. This sample shows how to extend existing resources that are outside the resource group where the custom provider instance lives. In this sample, the custom resource provider is powered by an Azure Logic App, but any public API endpoint can be used.
@@ -89,4 +99,4 @@ In addition, you can navigate to the deployed Azure Logic App resource in the te
 
 Additional "associations" can be created through deploying another Azure Resource Manager Template or directly interfacing with the Azure REST API.
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Logic/workflows, Switch, Response, Request, string, object, Microsoft.CustomProviders/resourceProviders, Microsoft.CustomProviders/associations`

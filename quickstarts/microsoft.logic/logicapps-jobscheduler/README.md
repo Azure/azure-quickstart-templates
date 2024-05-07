@@ -1,4 +1,14 @@
-# Logic App job scheduler
+---
+description: This template creates a pair of Logic Apps that allows you to create scheduled timer job instances.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: logicapps-jobscheduler
+languages:
+- json
+---
+# Run timer jobs that execute on a schedule using Logic Apps.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logicapps-jobscheduler/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logicapps-jobscheduler/PublicDeployment.svg)
@@ -10,12 +20,12 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logicapps-jobscheduler/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogicapps-jobscheduler%2Fazuredeploy.json)
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogicapps-jobscheduler%2Fazuredeploy.json) 
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogicapps-jobscheduler%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogicapps-jobscheduler%2Fazuredeploy.json)
 
 This template deploys a **Logic App job scheduler**. The **Logic App job scheduler** provides a pair of logic apps that can instantiate timer jobs based on a provided recurrent schedule.
 
-`Tags: LogicApps, Scheduler`
+`Tags: LogicApps, Scheduler, Microsoft.Logic/workflows, Request, object, integer, string, If, Scope, Terminate, Response, Workflow, InitializeVariable, Microsoft.Resources/deployments, Wait, IncrementVariable, Http`
 
 ## Solution overview and deployed resources
 
@@ -123,5 +133,4 @@ Learn more about Logic Apps
 
 + **[Azure Logic Apps Overview](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)**
 + See **[Scheduling in Logic Apps](https://docs.microsoft.com/azure/connectors/connectors-native-recurrence#trigger-details)** to better understand how recurrence works
-
 

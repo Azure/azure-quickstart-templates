@@ -1,3 +1,14 @@
+---
+description: This template creates a data share account
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: data-share-account
+languages:
+- json
+- bicep
+---
 # Create a data share account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datashare/data-share-account/PublicLastTestDate.svg)
@@ -17,9 +28,7 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datashare%2Fdata-share-account%2Fazuredeploy.json)
 
-When you deploy this Azure Resource Manager template, a data share account is created. Further information please refer to this : https://docs.microsoft.com/en-us/azure/data-share/overview
+When you deploy this Azure Resource Manager template, a data share account is created. Further information please refer to this : https://docs.microsoft.com/azure/data-share/overview
 
-`Tags: data share, data share account`
-
-
+`Tags: data share, data share account, Microsoft.DataShare/accounts, SystemAssigned`
 

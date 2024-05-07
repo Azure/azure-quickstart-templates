@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.23.1.45101",
+      "templateHash": "7343143111283212555"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of all resources"
+      }
+    },
+    "redisCacheName": {
+      "type": "string",
+      "defaultValue": "[format('redisCache-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Redis Enterprise Cache"
+      }
+    },
+    "redisCacheSKU": {
+      "type": "string",
+      "defaultValue": "Enterprise_E10",
+      "metadata": {
+        "description": "SKU of the Redis Enterprise Cache"
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Capacity of the Redis Enterprise Cache"
+      }
+    },
+    "evictionPolicy": {
+      "type": "string",
+      "defaultValue": "NoEviction",
+      "metadata": {
+        "description": "Eviction Policy of the Redis Enterprise Cache"
+      }
+    },
+    "redisPort": {
+      "type": "int",
+      "defaultValue": 10000,
+      "metadata": {
+        "description": "Port of the Redis Enterprise Cache"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cache/redisEnterprise",
+      "apiVersion": "2022-01-01",
+      "name": "[parameters('redisCacheName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('redisCacheSKU')]",
+        "capacity": "[parameters('redisCacheCapacity')]"
+      }
+    },
+    {
+      "type": "Microsoft.Cache/redisEnterprise/databases",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', parameters('redisCacheName'), 'default')]",
+      "properties": {
+        "evictionPolicy": "[parameters('evictionPolicy')]",
+        "clusteringPolicy": "EnterpriseCluster",
+        "modules": [
+          {
+            "name": "RediSearch"
+          },
+          {
+            "name": "RedisJSON"
+          }
+        ],
+        "port": "[parameters('redisPort')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redisEnterprise', parameters('redisCacheName'))]"
+      ]
+    }
+  ]
+}

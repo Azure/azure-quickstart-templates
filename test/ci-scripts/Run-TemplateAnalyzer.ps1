@@ -15,8 +15,6 @@ param(
     [string] $templateAnalyzerOutputFilePath = $ENV:TEMPLATE_ANALYZER_OUTPUT_FILEPATH
 )
 
-$RULE_FAILED_MESSAGE = "Result: Failed"
-
 $templateAnalyzerFolderPath = "$ttkFolder\templateAnalyzer"
 New-Item -ItemType Directory -Path $templateAnalyzerFolderPath -Force
 Invoke-WebRequest -OutFile "$templateAnalyzerFolderPath\TemplateAnalyzer.zip" $templateAnalyzerReleaseUrl
@@ -48,9 +46,11 @@ function Analyze-Template {
     Write-Host $testOutput
     $testOutput >> $templateAnalyzerOutputFilePath
 
-    if($testOutput.length -ne 0 -and $LASTEXITCODE -eq 0)
+    if($LASTEXITCODE -eq 0)
     {
-        return !$testOutput.Contains($RULE_FAILED_MESSAGE)
+        return $true
+    } elseif ($LASTEXITCODE -eq 20) {
+        return $false
     } else {
         Write-Error "TemplateAnalyzer failed trying to analyze: $templateFilePath $parametersFilePath"
         return $false

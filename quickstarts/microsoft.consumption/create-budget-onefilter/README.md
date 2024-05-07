@@ -1,4 +1,15 @@
-# Create Budget to track cost or usage
+---
+description: This template shows how to create a budget under a subscription.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: create-budget-onefilter
+languages:
+- json
+- bicep
+---
+# Create a Budget with Filter
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-onefilter/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.consumption/create-budget-onefilter/PublicDeployment.svg)
@@ -32,3 +43,5 @@ Before running the script, edit *azuredeploy.parameters.json* and replace the sa
 - **Contact Emails**: The list of email addresses to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 - **Contact Groups**: The list of action groups to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 - **Resource Groups Filter**: The list of filters on resource groups. It accepts array of strings. This should not be an empty array.
+
+`Tags: Microsoft.Consumption/budgets`

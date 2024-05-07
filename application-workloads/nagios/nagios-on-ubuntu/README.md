@@ -1,4 +1,14 @@
-# Install Nagios Core on Ubuntu Virtual Machines using Custom Script Linux Extension
+---
+description: This template installs and configures Nagios Core, the industry standard, Open Source IT monitoring system that enables organizations to identify and resolve IT infrastructure problems before they affect critical business processes
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: nagios-on-ubuntu
+languages:
+- json
+---
+# Nagios Core on Ubuntu VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nagios/nagios-on-ubuntu/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/nagios/nagios-on-ubuntu/PublicDeployment.svg)
@@ -33,3 +43,5 @@ Known Issues and Limitations
 --------
 - A single instance installation Nagios Core is performed by the template
 - This template does not install any monitoring targets
+
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

@@ -1,4 +1,15 @@
-# Create a Premium Redis Cache with persistence
+---
+description: This template shows how to configure persistence in a premium Azure Redis Cache instance.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: redis-premium-persistence
+languages:
+- json
+- bicep
+---
+# Create Premium Redis Cache with data persistence
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-premium-persistence/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cache/redis-premium-persistence/PublicDeployment.svg)
@@ -19,3 +30,4 @@ Create and configre persistence in premium Redis Cache using a template. Redis p
 
 For information about using this template, see [How to configure data persistence for a Premium Azure Redis Cache](https://azure.microsoft.com/documentation/articles/cache-how-to-premium-persistence/).
 
+`Tags: Microsoft.Cache/redis, Microsoft.Insights/diagnosticSettings, Microsoft.Storage/storageAccounts`

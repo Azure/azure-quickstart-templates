@@ -1,6 +1,6 @@
 <# 
     .DESCRIPTION 
-        This script fails over SQL Always On Availability Group inside an Azure virtual machine  
+        This script fails over SQL Always On availability group inside an Azure virtual machine  
          
         Pre-requisites 
         1. When you create a new Automation Account, make sure you have chosen to create a run-as account with it. 

@@ -1,4 +1,15 @@
-# Virtual Machine Custom Script Using a Managed Identity for Artifacts
+---
+description: This template shows how to use a managed identity to download artifacts for the virtual machine's custom script extension.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-cse-msi
+languages:
+- json
+- bicep
+---
+# VM Using Managed Identity for Artifact Download
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-cse-msi/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-cse-msi/PublicDeployment.svg)
@@ -23,4 +34,6 @@ Note that the managed identity must be assigned to the VM as well as specified o
 
 The output of the deployment shows a directory listing of the downloaded files.
 
-For more information on this approach see [Custom Script Extension for Windows](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-windows#property-managedidentity).
+For more information on this approach see [Custom Script Extension for Windows](https://docs.microsoft.com/azure/virtual-machines/extensions/custom-script-windows#property-managedidentity).
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, UserAssigned, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension`

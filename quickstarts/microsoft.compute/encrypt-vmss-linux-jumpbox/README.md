@@ -1,4 +1,14 @@
-# This template deploys VM Scale Set of Linux VMs with a jumpbox and enables encryption on Linux VMSS
+---
+description: This template deploys a Linux VMSS using the latest Linux image, adds data volumes, and then encrypts the data volumes of each Linux VMSS instance.  It also deploys a jumpbox with a public IP address in the same virtual network as the Linux VMSS instances with private IP addresses.  This allows connecting to the jumpbox via its public IP address, and then connecting to the Linux VMSS instances via private IP addresses.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: encrypt-vmss-linux-jumpbox
+languages:
+- json
+---
+# Create and encrypt a new Linux VMSS with jumpbox
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-vmss-linux-jumpbox/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/encrypt-vmss-linux-jumpbox/PublicDeployment.svg)
@@ -15,7 +25,7 @@
 
 This template allows you to deploy a simple VM Scale Set of Linux VMs using the latest image version.  This template also deploys a jumpbox with a public IP address in the same virtual network. You can connect to the jumpbox via this public IP address, then connect from there to VMs in the scale set via private IP addresses. This template enables encryption on the VM Scale Set of Linux VMs.
 
-AzureDiskEncryption for VMSS is currently in preview. Consuming this feature requires enabling the preview feature on the subscription and setting up a key vault with 'EnabledForDiskEncryption' access policy using the Azure powershell cmdlets below 
+AzureDiskEncryption for VMSS is currently in preview. Consuming this feature requires enabling the preview feature on the subscription and setting up a key vault with 'EnabledForDiskEncryption' access policy using the Azure powershell cmdlets below
 1. Register-AzureRmProviderFeature -FeatureName "UnifiedDiskEncryption" -ProviderNamespace "Microsoft.Compute"
 2. Set-AzureRmKeyVaultAccessPolicy -ResourceGroupName <rgName> -VaultName <vaultName> -EnabledForDiskEncryption"
 
@@ -27,4 +37,4 @@ PARAMETER RESTRICTIONS
 vmssName must be 3-61 characters in length. It should also be globally unique across all of Azure. If it isn't globally unique, it is possible that this template will still deploy properly, but we don't recommend relying on this pseudo-probabilistic behavior.
 instanceCount must be 100 or less.
 
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachineScaleSets, [variables('extensionName')]`

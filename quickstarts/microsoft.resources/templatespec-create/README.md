@@ -1,4 +1,14 @@
-# Create and Deploy a TemplateSpecs
+---
+description: This sample creates and deploys a templateSpec resource within the same template.  This is not a typical pattern just meant to show how the templateSpec and the deployment resources are meant to work together.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: templatespec-create
+languages:
+- json
+---
+# Create and Deploy a templateSpec
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/templatespec-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.resources/templatespec-create/PublicDeployment.svg)
@@ -22,4 +32,6 @@ When you create the templateSpec (using the prereq template) note the name of th
 
 If you create and deploy the templateSpec in the same resourceGroup clean up will be simple, but in practice templateSpecs (create) and resources created by them (deploy) will be placed in separate resourceGroups.
 
-See the [templateSpec documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
+See the [templateSpec documentation](https://docs.microsoft.com/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Resources/templateSpecs, versions, Microsoft.Compute/disks`

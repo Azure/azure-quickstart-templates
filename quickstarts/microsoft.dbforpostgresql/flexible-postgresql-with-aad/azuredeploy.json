@@ -1,0 +1,201 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.16.1.55165",
+      "templateHash": "3491887421267101705"
+    }
+  },
+  "parameters": {
+    "serverName": {
+      "type": "string",
+      "metadata": {
+        "description": "Server Name for Azure database for PostgreSQL Flexible Server"
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": "GeneralPurpose",
+      "allowedValues": [
+        "Basic",
+        "GeneralPurpose",
+        "MemoryOptimized"
+      ],
+      "metadata": {
+        "description": "Azure database for PostgreSQL pricing tier"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_D2ds_v4",
+      "metadata": {
+        "description": "Azure database for PostgreSQL Flexible Server sku name "
+      }
+    },
+    "storageSize": {
+      "type": "int",
+      "defaultValue": 32,
+      "metadata": {
+        "description": "Azure database for PostgreSQL Flexible Server Storage Size in GB "
+      }
+    },
+    "postgresqlVersion": {
+      "type": "string",
+      "defaultValue": "14",
+      "allowedValues": [
+        "11",
+        "12",
+        "13",
+        "14"
+      ],
+      "metadata": {
+        "description": "PostgreSQL version"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "backupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "metadata": {
+        "description": "PostgreSQL Flexible Server backup retention days"
+      }
+    },
+    "geoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Geo-Redundant Backup setting"
+      }
+    },
+    "haMode": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "ZoneRedundant",
+        "SameZone"
+      ],
+      "metadata": {
+        "description": "High Availability Mode"
+      }
+    },
+    "isActiveDirectoryAuthEnabled": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Active Directory Authetication"
+      }
+    },
+    "isPostgreSQLAuthEnabled": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "PostgreSQL Authetication"
+      }
+    },
+    "aadAdminObjectid": {
+      "type": "string",
+      "metadata": {
+        "description": "The Object ID of the Azure AD admin."
+      }
+    },
+    "aadAdminName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure AD admin name."
+      }
+    },
+    "aadAdminType": {
+      "type": "string",
+      "defaultValue": "ServicePrincipal",
+      "allowedValues": [
+        "User",
+        "Group",
+        "ServicePrincipal"
+      ],
+      "metadata": {
+        "description": "Azure AD admin Type"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2022-12-01",
+      "name": "[parameters('serverName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('skuTier')]"
+      },
+      "properties": {
+        "createMode": "Default",
+        "version": "[parameters('postgresqlVersion')]",
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "authConfig": {
+          "activeDirectoryAuth": "[parameters('isActiveDirectoryAuthEnabled')]",
+          "passwordAuth": "[parameters('isPostgreSQLAuthEnabled')]",
+          "tenantId": "[subscription().tenantId]"
+        },
+        "storage": {
+          "storageSizeGB": "[parameters('storageSize')]"
+        },
+        "backup": {
+          "backupRetentionDays": "[parameters('backupRetentionDays')]",
+          "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+        },
+        "highAvailability": {
+          "mode": "[parameters('haMode')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/administrators",
+      "apiVersion": "2022-12-01",
+      "name": "[concat(parameters('serverName'), '/', parameters('aadAdminObjectid'))]",
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "principalType": "[parameters('aadAdminType')]",
+        "principalName": "[parameters('aadAdminName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName'))]"
+      ]
+    }
+  ]
+}

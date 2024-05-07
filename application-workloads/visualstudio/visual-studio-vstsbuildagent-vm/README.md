@@ -1,4 +1,14 @@
-# A Visual Studio based Visual Studio Team Services (VSTS) Build Agent VM
+---
+description: This template expands the Visual Studio Dev VM template. It creates the VM in a new vnet, storage account, nic, and public ip with the new compute stack then installs the Visual Studio Team Services build agent.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: visual-studio-vstsbuildagent-vm
+languages:
+- json
+---
+# Visual Studio and Visual Studio Team Services Build Agent VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/visual-studio-vstsbuildagent-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/visual-studio-vstsbuildagent-vm/PublicDeployment.svg)
@@ -18,8 +28,8 @@ By default, it will deploy Visual Studio 2015 Update 3 with Azure SDK 2.9 on Win
 
 ## Authentication
 In order to authenticate your agent as a member of Agent Pool Administrators group, you must use one of the following methods:
-* set up and use a <a href="https://www.visualstudio.com/en-us/get-started/setup/use-personal-access-tokens-to-authenticate">Personal Access Token, set PersonalAccessToken to the token value.
+* set up and use a <a href="https://www.visualstudio.com/get-started/setup/use-personal-access-tokens-to-authenticate">Personal Access Token, set PersonalAccessToken to the token value.
 
 You can revoke or change the credentials in Visual Studio Team Services after the VM has been created.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScriptExtension, Microsoft.Network/publicIPAddresses`

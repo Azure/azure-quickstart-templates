@@ -1,4 +1,14 @@
-# Deploy an App Service with a Private Endpoint
+---
+description: This template allows you to create a Web App and expose it through Private Endpoint
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: private-endpoint-webapp
+languages:
+- json
+---
+# Web App with Private Endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/private-endpoint-webapp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/private-endpoint-webapp/PublicDeployment.svg)
@@ -26,4 +36,4 @@ If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: appServices`
+`Tags: appServices, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/config, Microsoft.Web/sites/hostNameBindings, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`

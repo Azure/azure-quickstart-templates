@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "12728432071460698566"
+    }
+  },
   "parameters": {
     "siteName": {
       "type": "string",
@@ -55,52 +62,54 @@
   "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('hostingPlanName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('sku')]",
         "capacity": 0
       },
-      "properties": {
-        "name": "[parameters('hostingPlanName')]"
-      }
+      "properties": {}
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('siteName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
-      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {
         "serverFarmId": "[parameters('hostingPlanName')]",
+        "httpsOnly": true,
         "siteConfig": {
-          "webSocketsEnabled": true
+          "ftpsState": "FtpsOnly",
+          "webSocketsEnabled": true,
+          "minTlsVersion": "1.2"
         }
       },
-      "resources": [
-        {
-          "type": "sourcecontrols",
-          "apiVersion": "2020-06-01",
-          "name": "web",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
-          ],
-          "properties": {
-            "RepoUrl": "[parameters('repoURL')]",
-            "branch": "[parameters('branch')]",
-            "IsManualIntegration": true
-          }
-        }
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/sourcecontrols",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}', parameters('siteName'), 'web')]",
+      "properties": {
+        "repoUrl": "[parameters('repoURL')]",
+        "branch": "[parameters('branch')]",
+        "isManualIntegration": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
       ]
     }
   ],
   "outputs": {
     "siteEventUri": {
       "type": "string",
-      "value": "[concat('https://', reference(parameters('siteName')).defaultHostName, '/api/updates')]"
+      "value": "[format('https://{0}/api/updates', reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2023-01-01').defaultHostName)]"
     }
   }
 }
