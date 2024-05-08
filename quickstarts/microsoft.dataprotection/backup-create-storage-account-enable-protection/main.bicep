@@ -4,6 +4,7 @@ param vaultName string = 'vault${uniqueString(resourceGroup().id)}'
 @description('Change Vault Storage Type (not allowed if the vault has registered backups)')
 @allowed([
   'LocallyRedundant'
+  'ZoneRedundant'
   'GeoRedundant'
 ])
 param vaultStorageRedundancy string = 'GeoRedundant'
