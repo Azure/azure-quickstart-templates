@@ -1,13 +1,13 @@
 ---
-description: This template creates a standard internal Azure Load Balancer with backend pool containing two virtual machines. Also, Azure Bastion is deployed for virtual machine management, and NAT Gateway is deployed for outbound connectivity. A load-balancing rule for port 80 is configured as part of the template deployment. 
+description: This template creates a standard internal Azure Load Balancer with a rule load-balancing port 80
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: internal-loadbalancer-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a standard internal load balancer
 
