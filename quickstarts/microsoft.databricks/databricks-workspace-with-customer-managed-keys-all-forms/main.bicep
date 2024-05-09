@@ -2,7 +2,7 @@
 param location string
 
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
-param enableNoPublicIp bool = false
+param enableNoPublicIp bool = true
 
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string
@@ -73,7 +73,7 @@ module DatabricksManagedServicesCMKAccessPolicy './modules/ManagedServicesCMKAcc
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {
