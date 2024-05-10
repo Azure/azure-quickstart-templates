@@ -257,7 +257,7 @@ var encryptionUserAssignedIdentity = {
   userAssignedIdentity: cmkUserAssignedIdentity
 }
 var encryptionIdentity = ((cmkUserAssignedIdentityName != '') ? encryptionUserAssignedIdentity : json('{}'))
-var appInsightsLocation = (((location == 'westcentralus') || (location == 'eastus2euap') || (location == 'centraluseuap') || (location == 'westus3')) ? 'southcentralus' : ((location == 'canadaeast') ? 'canadacentral' : location))
+var appInsightsLocation = (((location == 'westcentralus') || (location == 'eastus2euap') || (location == 'centraluseuap') || (location == 'westus3')) ? 'southcentralus' : ((location == 'canadaeast') ? 'canadacentral' : ((location == 'qatarcentral') ? 'uaenorth' : ((location == 'spaincentral') ? 'francecentral' : location))))
 
 resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' = if (vnetOption == 'new') {
   name: vnetName
