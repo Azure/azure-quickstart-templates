@@ -139,7 +139,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
     encryption: {
      keySource: 'Microsoft.KeyVault'
      keyVaultProperties: {
-       keyVaultUri: cmk_keyvault_key_uri
+       keyVaultUri: cmk_keyvault_key_name
      }
     }
   }
