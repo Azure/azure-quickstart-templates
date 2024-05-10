@@ -7,7 +7,7 @@ param location string = resourceGroup().location
 @description('Specifies the SKU of the app configuration store.')
 param skuName string = 'standard'
 
-resource configStore 'Microsoft.AppConfiguration/configurationStores@2021-10-01-preview' = {
+resource configStore 'Microsoft.AppConfiguration/configurationStores@2023-03-01' = {
   name: configStoreName
   location: location
   sku: {
