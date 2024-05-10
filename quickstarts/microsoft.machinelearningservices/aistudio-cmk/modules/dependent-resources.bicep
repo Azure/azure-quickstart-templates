@@ -23,8 +23,11 @@ var containerRegistryNameCleaned = replace(containerRegistryName, '-', '')
 @description('Specifies the customer managed keyvault Resource Manager ID.')
 param cmk_keyvault_id string
 
-@description('Specifies the customer managed keyvault key uri.')
+@description('Specifies the customer managed keyvault key name.')
 param cmk_keyvault_key_name string
+
+@description('Specifies the customer managed keyvault key uri.')
+param cmk_keyvault_key_uri string
 
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
@@ -136,7 +139,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
     encryption: {
      keySource: 'Microsoft.KeyVault'
      keyVaultProperties: {
-       keyVaultUri: cmk_keyvault_id
+       keyVaultUri: cmk_keyvault_key_uri
        keyName: cmk_keyvault_key_name
      }
     }
