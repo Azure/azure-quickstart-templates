@@ -45,6 +45,7 @@ module aiDependencies 'modules/dependent-resources.bicep' = {
     aiServicesName: 'ais${name}${uniqueSuffix}'
     cmk_keyvault_id: cmk_keyvault_id
     cmk_keyvault_key_name: cmk_keyvault_key_name
+    cmk_keyvault_key_uri: cmk_keyvault_key_uri
     tags: tags
   }
 }
