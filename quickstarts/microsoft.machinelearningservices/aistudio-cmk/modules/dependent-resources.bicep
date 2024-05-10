@@ -140,7 +140,6 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
      keySource: 'Microsoft.KeyVault'
      keyVaultProperties: {
        keyVaultUri: cmk_keyvault_key_uri
-       keyName: cmk_keyvault_key_name
      }
     }
   }
