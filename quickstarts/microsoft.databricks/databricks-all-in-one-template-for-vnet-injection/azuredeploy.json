@@ -11,7 +11,7 @@
   "parameters": {
     "disablePublicIp": {
       "type": "bool",
-      "defaultValue": true,
+      "defaultValue": false,
       "metadata": {
         "description": "Specifies whether to deploy Azure Databricks workspace with secure cluster connectivity (SCC) enabled or not (No Public IP)"
       }
@@ -40,20 +40,6 @@
       ],
       "metadata": {
         "description": "The pricing tier of workspace."
-      }
-    },
-    "natGatewayName": {
-      "type": "string",
-      "defaultValue": "nat-gateway",
-      "metadata": {
-        "description": "Name of the NAT gateway to be attached to the workspace subnets."
-      }
-    },
-    "publicIpName": {
-      "type": "string",
-      "defaultValue": "nat-gw-public-ip",
-      "metadata": {
-        "description": "Name of the Public IP associated with the NAT gateway."
       }
     },
     "privateSubnetCidr": {
@@ -206,40 +192,6 @@
       }
     },
     {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2023-09-01",
-      "name": "[parameters('publicIpName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard"
-      },
-      "properties": {
-        "publicIPAddressVersion": "IPv4",
-        "publicIPAllocationMethod": "Static",
-        "idleTimeoutInMinutes": 4
-      }
-    },
-    {
-      "type": "Microsoft.Network/natGateways",
-      "apiVersion": "2023-09-01",
-      "name": "[parameters('natGatewayName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard"
-      },
-      "properties": {
-        "idleTimeoutInMinutes": 4,
-        "publicIpAddresses": [
-          {
-            "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
-          }
-        ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
-      ]
-    },
-    {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2022-09-01",
       "name": "[parameters('vnetName')]",
@@ -258,9 +210,6 @@
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
               },
-              "natGateway": {
-                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
-              },
               "delegations": [
                 {
                   "name": "databricks-del-public",
@@ -278,9 +227,6 @@
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
               },
-              "natGateway": {
-                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
-              },
               "delegations": [
                 {
                   "name": "databricks-del-private",
@@ -294,13 +240,12 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
-        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
       ]
     },
     {
       "type": "Microsoft.Databricks/workspaces",
-      "apiVersion": "2024-05-01",
+      "apiVersion": "2023-02-01",
       "name": "[parameters('workspaceName')]",
       "location": "[parameters('location')]",
       "sku": {
