@@ -2,7 +2,7 @@
 param workspaceName string = 'workspace${uniqueString(resourceGroup().id)}'
 
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
-param enableNoPublicIp bool = false
+param enableNoPublicIp bool = true
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -37,7 +37,7 @@ var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(wo
 var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
 var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGName}'
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-09-15-preview' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {
