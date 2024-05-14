@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create a network security group, a virtual network and an Azure Databricks workspace with the virtual network.
+description: This template allows you to create a network security group, a virtual network, a NAT gateway and an Azure Databricks workspace with the virtual network.
 page_type: sample
 products:
 - azure
@@ -51,4 +51,4 @@ DataBricks Premium
 
 [Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?term=Databricks)
 
-`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Databricks/workspaces`
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/natGateways, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Databricks/workspaces`
