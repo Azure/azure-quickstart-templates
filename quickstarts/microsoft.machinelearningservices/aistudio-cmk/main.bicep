@@ -22,16 +22,21 @@ param tags object = {}
 param cmk_keyvault_id string
 
 @description('Specifies the customer managed keyvault key uri.')
-param cmk_keyvault_key_name string
+param cmk_keyvault_vault_uri string
 
 @description('Specifies the customer managed keyvault key uri.')
-param cmk_keyvault_key_uri string
+param cmk_keyvault_key_name string
+
+@description('Specifies the customer managed keyvault key version.')
+param cmk_keyvault_key_version string
 
 // Variables
 var name = toLower('${aiHubName}')
 
 // Create a short, unique suffix, that will be unique to each resource group
 var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 4)
+
+var cmk_keyvault_key_uri = '${cmk_keyvault_vault_uri}/${cmk_keyvault_key_name}/${cmk_keyvault_key_version}'
 
 // Dependent resources for the Azure Machine Learning workspace
 module aiDependencies 'modules/dependent-resources.bicep' = {
@@ -44,8 +49,9 @@ module aiDependencies 'modules/dependent-resources.bicep' = {
     containerRegistryName: 'cr${name}${uniqueSuffix}'
     aiServicesName: 'ais${name}${uniqueSuffix}'
     cmk_keyvault_id: cmk_keyvault_id
+    cmk_keyvault_uri: cmk_keyvault_vault_uri
     cmk_keyvault_key_name: cmk_keyvault_key_name
-    cmk_keyvault_key_uri: cmk_keyvault_key_uri
+    cmk_keyvault_key_version: cmk_keyvault_key_version
     tags: tags
   }
 }

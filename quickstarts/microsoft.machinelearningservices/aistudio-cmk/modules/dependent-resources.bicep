@@ -26,8 +26,11 @@ param cmk_keyvault_id string
 @description('Specifies the customer managed keyvault key name.')
 param cmk_keyvault_key_name string
 
+@description('Specifies the customer managed keyvault key version.')
+param cmk_keyvault_key_version string
+
 @description('Specifies the customer managed keyvault key uri.')
-param cmk_keyvault_key_uri string
+param cmk_keyvault_uri string
 
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
@@ -127,6 +130,9 @@ var storageNameCleaned = replace(storageName, '-', '')
 resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
   name: aiServicesName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   sku: {
     name: 'S0'
   }
@@ -139,7 +145,9 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
     encryption: {
      keySource: 'Microsoft.KeyVault'
      keyVaultProperties: {
-       keyVaultUri: cmk_keyvault_key_name
+       keyVaultUri: cmk_keyvault_uri
+       keyName: cmk_keyvault_id
+       keyVersion: cmk_keyvault_key_version
      }
     }
   }
