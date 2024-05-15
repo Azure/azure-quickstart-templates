@@ -9,7 +9,7 @@ languages:
 - json
 - bicep
 ---
-# Create an Azure Machine Learning  workspace with service-side CMK encryption (preview)
+# Create an Azure Machine Learning workspace with service-side CMK encryption (preview)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-cmk-service-side-encryption/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-workspace-cmk-service-side-encryption/PublicDeployment.svg)
