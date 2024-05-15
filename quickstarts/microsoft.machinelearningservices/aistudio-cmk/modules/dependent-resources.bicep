@@ -141,15 +141,15 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
     apiProperties: {
       statisticsEnabled: false
     }    
-    //add encryption
-    encryption: {
-     keySource: 'Microsoft.KeyVault'
-     keyVaultProperties: {
-       keyVaultUri: cmk_keyvault_uri
-       keyName: cmk_keyvault_id
-       keyVersion: cmk_keyvault_key_version
-     }
-    }
+    //optionally enable encryption for AI Services. Either bring UAI with wrap/unwrap permissions on key vault. Or add SAI after creation to the encryption key vault.
+    // encryption: {
+  //  keySource: 'Microsoft.KeyVault'
+  //  keyVaultProperties: {
+  //    keyVaultUri: cmk_keyvault_uri
+  //    keyName: cmk_keyvault_id
+  //    keyVersion: cmk_keyvault_key_version
+  //  }
+    // }
   }
 }
 
