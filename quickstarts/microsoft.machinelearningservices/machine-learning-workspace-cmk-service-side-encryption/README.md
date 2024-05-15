@@ -1,5 +1,5 @@
 ---
-description: This deployment template specifies an Azure Machine Learning workspace, and its associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry. The example shows how to configure Azure Machine Learning for encryption with a customer-managed encryption key.
+description: This deployment template specifies how to create an Azure Machine Learning workspace with service-side encryption using your encryption keys.
 page_type: sample
 products:
 - azure
@@ -26,7 +26,7 @@ languages:
 [![Deploy To Azure Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-cmk-service-side-encryption%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-cmk-service-side-encryption%2Fazuredeploy.json)
 
-This deployment template specifies how to create an Azure Machine Learning workspace with service-side encryption using your encryption keys.
+This deployment template specifies how to create an Azure Machine Learning workspace with service-side encryption using your encryption keys. Please note that this is a preview capability without production-level support.
 
 This configuration describes the set of resources required to:
 
