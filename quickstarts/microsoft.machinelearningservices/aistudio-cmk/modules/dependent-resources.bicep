@@ -141,7 +141,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
     apiProperties: {
       statisticsEnabled: false
     }    
-    //optionally enable encryption for AI Services. Either bring UAI with wrap/unwrap permissions on key vault. Or add SAI after creation to the encryption key vault.
+    // optionally enable encryption for AI Services. Ensure the managed identity has wrap/unwrap permissions on the CMK key vault. 
     // encryption: {
   //  keySource: 'Microsoft.KeyVault'
   //  keyVaultProperties: {

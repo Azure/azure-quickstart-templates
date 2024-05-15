@@ -1,9 +1,5 @@
 ---
-<<<<<<< HEAD:quickstarts/microsoft.machinelearningservices/aistudio-cmk/README.md
 description: This set of templates demonstrates how to set up Azure AI Studio with customer-managed keys for encryption. In this example setup, public internet access is enabled, and Microsoft-managed identity is used for the AI hub resource.
-=======
-description: This set of templates demonstrates how to set up Azure AI Studio with the basic setup, meaning with public internet access enabled, Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
->>>>>>> c9eed9f79285114f579da7bf78bcf074f8321e11:quickstarts/microsoft.machinelearningservices/aistudio-entraid-passthrough/README.md
 page_type: sample
 products:
 - azure
@@ -39,6 +35,8 @@ For AI services CMK configuration the following constraints hold on your encrypt
 - The selected key must be an RSA (Supported Json Web Key Types are ['RSA', 'RSA-HSM']) 2048 bit key. 
 - No other key-size/asymmetric key-type is supported.
 - Only Azure Key vault 'access policies' permission model is supported, not Azure RBAC.
+- Encryption cannot be enforced on AI services at first template execution if AI services does not yet exist, because the system-assigned managed identity that will be created will need to be granted access to your key vault.
+- Assign wrap/unwrap permissions on the AI services managed identity after creation. Then uncomment the encryption settings to enable encryption for AI services.
 
 ## Resources
 
