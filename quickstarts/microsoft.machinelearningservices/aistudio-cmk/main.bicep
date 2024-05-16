@@ -79,3 +79,6 @@ module aiHub 'modules/ai-hub.bicep' = {
     cmk_keyvault_key_uri: cmk_keyvault_key_uri
   }
 }
+
+output vaulturi string = cmk_keyvault_vault_uri
+output keyuri string = cmk_keyvault_key_uri
