@@ -25,8 +25,6 @@ param environment string
   'westus'
   'westus2'
   'westeurope'
-  'usgovvirginia'
-  'usgovarizona'
 ])
 param location string
 
@@ -76,6 +74,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
       }
       keySource: 'Microsoft.Storage'
     }
+    minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
     allowBlobPublicAccess: false
   }
@@ -105,7 +104,7 @@ resource insight 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
+resource registry 'Microsoft.ContainerRegistry/registries@2022-12-01' = {
   name: containerRegistryName
   location: location
   sku: {
