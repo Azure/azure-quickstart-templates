@@ -1,29 +1,22 @@
 @description('Name of Azure Web App')
 param siteName string = 'sonarqube-${uniqueString(resourceGroup().id)}'
 
-@description('The version of the Sonarqube container image to use. Only versions of Sonarqube known to be compatible with Azure App Service Web App for Containers are available.')
+@description('The version of the Sonarqube container image to use. Only recent versions of Sonarqube which uses the new variables prefix and can run, as development purposes, with Azure App Service Web App for Containers.')
 @allowed([
-  '7.7-community'
-  '7.6-community'
-  '7.5-community'
-  '7.4-community'
-  '7.1'
-  '7.1-alpine'
-  '7.0'
-  '7.0-alpine'
-  '6.7.5'
-  '6.7.5-alpine'
-  '6.7.4'
-  '6.7.4-alpine'
-  '6.7.3'
-  '6.7.3-alpine'
-  '6.7.2'
-  '6.7.2-alpine'
-  '6.7.1'
-  '6.7.1-alpine'
+  '10.5-community'
+  '10.4-community'
+  '10.3-community'
+  '10.2-community'
+  '10.1-community'
+  '10.0-community'
+  '9.9-community'
+  '9.8-community'
+  '9.7-community'
+  '9.6-community'
+  '8.9-community'
   'latest'
 ])
-param sonarqubeImageVersion string = '7.7-community'
+param sonarqubeImageVersion string = '10.5-community'
 
 @description('App Service Plan Pricing Tier')
 @allowed([
@@ -161,10 +154,10 @@ resource siteAppSettings 'Microsoft.Web/sites/config@2023-01-01' = {
   parent: site
   name: 'appsettings'
   properties: {
-    SONARQUBE_JDBC_URL: 'jdbc:sqlserver://${sqlServer.properties.fullyQualifiedDomainName};databaseName=${databaseName};encrypt=true;trustServerCertificate=false;hostNameInCertificate=${replace(sqlServer.properties.fullyQualifiedDomainName, '${sqlServerName}.', '*.')};loginTimeout=30;'
-    SONARQUBE_JDBC_USERNAME: sqlServerAdministratorUsername
-    SONARQUBE_JDBC_PASSWORD: sqlServerAdministratorPassword
-    'sonar.path.data': '/home/sonarqube/data'
+    SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: 'true'
+    SONAR_JDBC_URL: 'jdbc:sqlserver://${sqlServer.properties.fullyQualifiedDomainName}:1433;databaseName=${databaseName};encrypt=true;trustServerCertificate=false;hostNameInCertificate=${replace(sqlServer.properties.fullyQualifiedDomainName, '${sqlServerName}.', '*.')};loginTimeout=30;'
+    SONAR_JDBC_USERNAME: sqlServerAdministratorUsername
+    SONAR_JDBC_PASSWORD: sqlServerAdministratorPassword
   }
 }
 
