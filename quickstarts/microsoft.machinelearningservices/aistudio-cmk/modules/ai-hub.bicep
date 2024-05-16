@@ -39,7 +39,7 @@ param cmk_keyvault_id string
 @description('Specifies the customer managed keyvault key uri.')
 param cmk_keyvault_key_uri string
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   name: aiHubName
   location: location
   tags: tags
