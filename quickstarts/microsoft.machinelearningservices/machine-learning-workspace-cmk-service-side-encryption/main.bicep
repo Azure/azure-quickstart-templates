@@ -1,6 +1,8 @@
 @description('Specifies the name of the deployment that is used to generate resource names.')
+@minLength(1)
 param name string
 
+@minLength(1)
 @description('Specifies the name of the environment that is used to generate resource names.')
 param environment string
 
