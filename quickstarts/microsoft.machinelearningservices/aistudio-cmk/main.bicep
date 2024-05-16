@@ -34,9 +34,9 @@ param cmk_keyvault_key_version string
 var name = toLower('${aiHubName}')
 
 // Create a short, unique suffix, that will be unique to each resource group
-var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 4)
+var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 4) 
 
-var cmk_keyvault_key_uri = '${cmk_keyvault_vault_uri}/${cmk_keyvault_key_name}/${cmk_keyvault_key_version}'
+var cmk_keyvault_key_uri = '${cmk_keyvault_vault_uri}/keys/${cmk_keyvault_key_name}/${cmk_keyvault_key_version}'
 
 // Dependent resources for the Azure Machine Learning workspace
 module aiDependencies 'modules/dependent-resources.bicep' = {
