@@ -55,7 +55,7 @@ var applicationInsightsName = 'appi-${name}-${environment}'
 var containerRegistryName = 'cr${name}${environment}'
 var workspaceName = 'mlw${name}${environment}'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageAccountName
   location: location
   sku: {
