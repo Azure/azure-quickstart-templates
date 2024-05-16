@@ -106,7 +106,7 @@ resource insight 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource registry 'Microsoft.ContainerRegistry/registries@2022-12-01' = {
+resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: containerRegistryName
   location: location
   sku: {
