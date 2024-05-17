@@ -28,6 +28,10 @@ languages:
 
 Create an Azure Cache for Redis instance with Microsoft Entra authentication using a template. Microsoft Entra authentication allows you to use Microsoft Entra authentication to access data in your Azure Cache for Redis instance using Microsoft Entra Service Principal, Managed Identity or User Principal based on configuration. This template also creates custom access policy and assigns two Microsoft Entra principals to a built-in access policy and the created custom access policy. Hence, to use this template, keep two different Microsoft Entra Service Principals or Managed Identities or User Principals ready which ever combination you prefer to use.
 
+> [!IMPORTANT]
+>
+> If you are applying multiple access policies, they must be deployed serially. In this sample, that is done by setting one assignment as dependent on the other with `dependsOn`. If you are using a loop to add multiple assignments, use [`@batchSize(1)`](https://learn.microsoft.com/azure/azure-resource-manager/bicep/loops#deploy-in-batches) annotation to ensure only one assignment is deployed at a time.
+
 For information about using this template, see [Create an Azure Cache for Redis using an ARM template](https://azure.microsoft.com/documentation/articles/cache-redis-cache-arm-provision/), [Configure role based data access control in Azure Ache for Redis](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-configure-role-based-access-control#permissions-for-your-data-access-policy), [Use Microsoft Entra Authentication in Azure Cache for Redis](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-azure-active-directory-for-authentication), [Create Microsoft Entra Application and Service Principal](https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal) and [Learn about Managed Identity](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/).
 
 `Tags: Microsoft.Cache/redis, Microsoft.Cache/redis/accessPolicies, Microsoft.Cache/redis/accessPolicyAssignments`
