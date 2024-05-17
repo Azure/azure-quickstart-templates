@@ -1,5 +1,5 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Studio with customer-managed keys for encryption. In this example setup, public internet access is enabled, and Microsoft-managed identity is used for the AI hub resource.
+description: This set of templates demonstrates how to set up Azure AI Studio with the basic setup, meaning with public internet access enabled, Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure AI Studio with customer-managed keys for encryption
+# Azure AI Studio basic setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk/PublicDeployment.svg)
@@ -55,3 +55,4 @@ For AI services CMK configuration the following constraints hold on your encrypt
 If you are new to Azure AI studio, see:
 
 - [Azure AI studio](https://aka.ms/aistudio/docs)`Tags: `
+`Tags: `
