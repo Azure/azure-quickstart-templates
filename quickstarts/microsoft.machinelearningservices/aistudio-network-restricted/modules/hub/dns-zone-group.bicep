@@ -7,7 +7,7 @@ param notebookDnsZoneId string
 @description('Dns Zone ID for API private link')
 param apiDnsZoneId string
 
-resource privateEndpointName_default 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
+resource privateEndpointName_default 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
   name: '${privateEndpointName}/default'
   properties: {
     privateDnsZoneConfigs: [

@@ -66,7 +66,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2022-12-01' = {
   name: containerRegistryNameCleaned
   location: location
   tags: tags
@@ -98,7 +98,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' =
   }
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyvaultName
   location: location
   tags: tags
@@ -123,7 +123,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   }
 }
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
+resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: aiServicesName
   location: location
   sku: {
@@ -148,7 +148,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
   }
 }
 
-resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageNameCleaned
   location: location
   tags: tags
@@ -199,7 +199,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   }
 }
 
-resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2021-03-01' = {
+resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: '${storageNameCleaned}-blob-pe'
   location: location
   properties: {
@@ -220,7 +220,7 @@ resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2021-03-
   }
 }
 
-resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2021-03-01' = {
+resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: '${storageNameCleaned}-file-pe'
   location: location
   properties: {
