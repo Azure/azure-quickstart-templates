@@ -26,6 +26,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         name: 'default'
         properties: {
           addressPrefix: '10.1.0.0/24'
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.CognitiveServices'
+            }
+          ]
         }
       }
     ]
