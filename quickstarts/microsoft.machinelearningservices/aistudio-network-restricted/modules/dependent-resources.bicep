@@ -27,6 +27,24 @@ param vnetRgName string
 @description('Resource Id of the virtual network to deploy the resource into.')
 param vnetResourceId string
 
+@description('Name of the storage account')
+param storageName string
+
+@allowed([
+  'Standard_LRS'
+  'Standard_ZRS'
+  'Standard_GRS'
+  'Standard_GZRS'
+  'Standard_RAGRS'
+  'Standard_RAGZRS'
+  'Premium_LRS'
+  'Premium_ZRS'
+])
+
+@description('Storage SKU')
+param storageSkuName string = 'Standard_LRS'
+
+var storageNameCleaned = replace(storageName, '-', '')
 var containerRegistryNameCleaned = replace(containerRegistryName, '-', '')
 
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
@@ -104,25 +122,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
     tenantId: subscription().tenantId
   }
 }
-
-@description('Name of the storage account')
-param storageName string
-
-@allowed([
-  'Standard_LRS'
-  'Standard_ZRS'
-  'Standard_GRS'
-  'Standard_GZRS'
-  'Standard_RAGRS'
-  'Standard_RAGZRS'
-  'Premium_LRS'
-  'Premium_ZRS'
-])
-
-@description('Storage SKU')
-param storageSkuName string = 'Standard_LRS'
-
-var storageNameCleaned = replace(storageName, '-', '')
 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
   name: aiServicesName

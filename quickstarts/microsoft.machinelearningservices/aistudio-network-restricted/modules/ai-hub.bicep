@@ -45,6 +45,11 @@ param subnetResourceId string
 @description('Unique Suffix used for name generation')
 param uniqueSuffix string
 
+var privateEndpointName = '${aiHubName}-AIHub-PE'
+var targetSubResource = [
+    'amlworkspace'
+]
+
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-10-01' = {
   name: aiHubName
   location: location
@@ -92,11 +97,6 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-10-01' = {
     }
   }
 }
-
-var privateEndpointName = '${aiHubName}-AIHub-PE'
-var targetSubResource = [
-    'amlworkspace'
-]
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: privateEndpointName
