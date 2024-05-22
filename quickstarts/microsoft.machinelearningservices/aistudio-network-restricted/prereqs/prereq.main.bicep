@@ -1,9 +1,15 @@
 // Define the parameters for the deployment
-param location string = resourceGroup().location
+@description('Name of the vm.')
 param vmName string = 'windows-bastion'
+
+@description('Name of the adminUsername')
 param adminUsername string = 'azureuser'
+
+@description('Name of the admin login password.')
 @secure()
 param adminPassword string
+
+var location = resourceGroup().location
 
 // Create the virtual network
 resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
