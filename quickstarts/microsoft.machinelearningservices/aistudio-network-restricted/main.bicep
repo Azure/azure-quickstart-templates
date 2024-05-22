@@ -12,9 +12,6 @@ param aiHubFriendlyName string = 'Demo AI resource'
 @description('Description of your Azure AI resource displayed in AI studio')
 param aiHubDescription string = 'This is an example AI resource for use in Azure AI Studio.'
 
-@description('Azure region used for the deployment of all resources.')
-param location string = resourceGroup().location
-
 @description('Set of tags to apply to all resources.')
 param tags object = {}
 
@@ -29,6 +26,7 @@ param subnetName string
 
 // Variables
 var name = toLower('${aiHubName}')
+var location = resourceGroup().location
 
 // Create a short, unique suffix, that will be unique to each resource group
 var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 7)
