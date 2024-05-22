@@ -266,10 +266,10 @@ module dnsZoneGroup './storage/dns-zone-group.bicep' = {
   name: '${storageNameCleaned}-dnsZoneGroup'
   scope: resourceGroup()
   params: {
-    vnetRgName: vnetRgName
     privateEndpointNameBlob: '${storageNameCleaned}-blob-pe'
     privateEndpointNameFile: '${storageNameCleaned}-file-pe'
-    location: location
+    fileDnsZoneId: privateDnsDeployment.outputs.fileDnsZoneId
+    blobDnsZoneId: privateDnsDeployment.outputs.blobDnsZoneId
   }
   dependsOn: [
     storagePrivateEndpointBlob
@@ -283,12 +283,12 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
   location: location
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(storage.id, managedIdentity.id, 'Storage Blob Data Contributor')
+  scope: resourceGroup()
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
     principalId: managedIdentity.properties.principalId
-    scope: resourceGroup().id
   }
 }
 

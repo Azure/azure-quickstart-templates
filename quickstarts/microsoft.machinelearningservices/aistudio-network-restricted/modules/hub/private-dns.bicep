@@ -11,3 +11,6 @@ resource privatelink_notebooks_azure_net 'Microsoft.Network/privateDnsZones@2018
   tags: {}
   properties: {}
 }
+
+output notebookDnsZoneId string = privatelink_notebooks_azure_net.id
+output apiDnsZoneId string = privatelink_api_azureml_ms.id
