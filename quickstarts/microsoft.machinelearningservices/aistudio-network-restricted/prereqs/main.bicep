@@ -67,7 +67,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-01-01' = {
 }
 
 // Create the virtual machine
-resource vm 'Microsoft.Compute/virtualMachines@2022-01-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: vmName
   location: location
   properties: {

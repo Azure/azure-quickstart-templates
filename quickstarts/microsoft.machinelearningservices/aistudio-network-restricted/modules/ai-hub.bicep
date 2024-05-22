@@ -143,9 +143,9 @@ module dnsZoneGroup './hub/dns-zone-group.bicep' = {
   name: '${aiHubName}-dnsZoneGroup'
   scope: resourceGroup()
   params: {
-    vnetRgName: vnetRgName
     privateEndpointName: privateEndpointName
-    location: location
+    apiDnsZoneId: privateDnsDeployment.outputs.apiDnsZoneId
+    notebookDnsZoneId: privateDnsDeployment.outputs.notebookDnsZoneId
   }
   dependsOn: [
     privateEndpoint
