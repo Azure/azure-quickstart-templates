@@ -17,7 +17,7 @@ param sliceName string = 'slice-1'
 param dataNetworkName string = 'internet'
 
 #disable-next-line BCP081
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-01' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-04-01' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -28,14 +28,14 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-01
   }
 
   #disable-next-line BCP081
-  resource exampleDataNetwork 'dataNetworks@2024-02-01' = {
+  resource exampleDataNetwork 'dataNetworks@2024-04-01' = {
     name: dataNetworkName
     location: location
     properties: {}
   }
 
   #disable-next-line BCP081
-  resource exampleSlice 'slices@2024-02-01' = {
+  resource exampleSlice 'slices@2024-04-01' = {
     name: sliceName
     location: location
     properties: {
