@@ -76,21 +76,21 @@ param sessionAggregateMaximumBitRateUplink string = '2 Gbps'
 param sessionAggregateMaximumBitRateDownlink string = '2 Gbps'
 
 #disable-next-line BCP081
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-01' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-04-01' existing = {
   name: existingMobileNetworkName
 
   #disable-next-line BCP081
-  resource existingDataNetwork 'dataNetworks@2024-02-01' existing = {
+  resource existingDataNetwork 'dataNetworks@2024-04-01' existing = {
     name: existingDataNetworkName
   }
 
   #disable-next-line BCP081
-  resource existingSlice 'slices@2024-02-01' existing = {
+  resource existingSlice 'slices@2024-04-01' existing = {
     name: existingSliceName
   }
 
   #disable-next-line BCP081
-  resource exampleService 'services@2024-02-01' = {
+  resource exampleService 'services@2024-04-01' = {
     name: serviceName
     location: location
     properties: {
@@ -120,7 +120,7 @@ resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-0
   }
 
   #disable-next-line BCP081
-  resource exampleSimPolicy 'simPolicies@2024-02-01' = {
+  resource exampleSimPolicy 'simPolicies@2024-04-01' = {
     name: simPolicyName
     location: location
     properties: {
