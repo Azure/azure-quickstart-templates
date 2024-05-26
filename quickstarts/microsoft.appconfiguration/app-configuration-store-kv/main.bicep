@@ -25,7 +25,7 @@ param tags object = {
   tag2: 'tag-value-2'
 }
 
-resource configStore 'Microsoft.AppConfiguration/configurationStores@2021-10-01-preview' = {
+resource configStore 'Microsoft.AppConfiguration/configurationStores@2023-08-01-preview' = {
   name: configStoreName
   location: location
   sku: {
@@ -33,7 +33,7 @@ resource configStore 'Microsoft.AppConfiguration/configurationStores@2021-10-01-
   }
 }
 
-resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = [for (item, i) in keyValueNames: {
+resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-08-01-preview' = [for (item, i) in keyValueNames: {
   parent: configStore
   name: item
   properties: {
@@ -43,5 +43,10 @@ resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/key
   }
 }]
 
+output location string = location
+output name string = configStore.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = configStore.id
+output systemAssignedMIPrincipalId string = configStore.identity.principalId
 output reference_key_value_value string = configStoreKeyValue[0].properties.value
-output reference_key_value_object object = configStoreKeyValue[1]
+
