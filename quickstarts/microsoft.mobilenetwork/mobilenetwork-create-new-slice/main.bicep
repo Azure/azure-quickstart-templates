@@ -15,10 +15,10 @@ param sst int
 @description('The SD value for the slice being deployed.')
 param sd string=''
 
-resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-02-01' existing = {
+resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-04-01' existing = {
   name: existingMobileNetworkName
 
-resource exampleSlice 'slices@2024-02-01' = {
+resource exampleSlice 'slices@2024-04-01' = {
     name: sliceName
     location: location
     properties:{
