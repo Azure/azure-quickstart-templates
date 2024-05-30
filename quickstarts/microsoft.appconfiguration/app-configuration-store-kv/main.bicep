@@ -44,4 +44,7 @@ resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/key
 }]
 
 output reference_key_value_value string = configStoreKeyValue[0].properties.value
-output reference_key_value_object object = configStoreKeyValue[1]
+output reference_key_value_object object = {
+  name: configStoreKeyValue[1].name
+  properties: configStoreKeyValue[1].properties
+}
