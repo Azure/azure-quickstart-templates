@@ -16,6 +16,7 @@ param localAdminUsername string
 @secure()
 param localAdminPassword string
 param arbDeploymentAppId string
+param arbDeploymentSPObjectId string
 @secure()
 param arbDeploymentServicePrincipalSecret string
 
@@ -38,6 +39,14 @@ var azureConnectedMachineResourceManagerRoleID = subscriptionResourceId('Microso
 var readerRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')
 var azureStackHCIDeviceManagementRole = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','865ae368-6a45-4bd1-8fbf-0d5151f56fc1')
 var keyVaultSecretUserRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')
+
+module ARBDeploymentSPNSubscriptionRoleAssignmnent 'ashciARBSPRoleAssignment.bicep' = {
+  scope: subscription()
+  name: 'ashciARBSPRoleAssignment'
+  params: {
+    arbDeploymentSPObjectId: arbDeploymentSPObjectId
+  }
+}
 
 resource diagnosticStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: diagnosticStorageAccountName

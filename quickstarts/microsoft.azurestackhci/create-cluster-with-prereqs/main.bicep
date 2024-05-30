@@ -32,6 +32,9 @@ param localAdminPassword string
 @description('The application ID of the pre-created App Registration for the Arc Resource Bridge deployment')
 param arbDeploymentAppId string
 
+@description('The service principal object ID of the pre-created App Registration for the Arc Resource Bridge deployment')
+param arbDeploymentSPObjectId string
+
 @description('A client secret of the pre-created App Registration for the Arc Resource Bridge deployment')
 @secure()
 param arbDeploymentServicePrincipalSecret string
@@ -189,6 +192,7 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
     arcNodeResourceIds: arcNodeResourceIds
     keyVaultName: keyVaultName
     clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
+    arbDeploymentSPObjectId: arbDeploymentSPObjectId
   }
 }
 
