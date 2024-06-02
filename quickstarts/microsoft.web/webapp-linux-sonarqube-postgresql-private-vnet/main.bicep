@@ -74,7 +74,7 @@ var privateDNSZoneName = '${siteName}.private.postgres.database.azure.com'
 var privateDNSZoneLinkName = '${siteName}privatelink'
 var postgresFlexibleServersName = '${siteName}postgres'
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -146,7 +146,7 @@ resource privateDNSZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
-resource postgresFlexibleServers 'Microsoft.DBforPostgreSQL/flexibleServers@2021-06-01' = {
+resource postgresFlexibleServers 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-preview' = {
   name: postgresFlexibleServersName
   location: location
   sku: {
@@ -184,7 +184,7 @@ resource postgresFlexibleServers 'Microsoft.DBforPostgreSQL/flexibleServers@2021
   ]
 }
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: appServicePlanName
   location: location
   kind: 'linux'
@@ -196,7 +196,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   }
 }
 
-resource webApplication 'Microsoft.Web/sites@2021-03-01' = {
+resource webApplication 'Microsoft.Web/sites@2023-12-01' = {
   name: siteName
   location: location
   identity: {
