@@ -16,7 +16,7 @@ param administratorLogin string
 param administratorLoginPassword string
 
 @description('Sonarqube docker tag')
-param sonarqubeDockerTag string
+param sonarqubeDockerTag string = 'latest'
 
 @description('The tier of the particular SKU, e.g. Burstable')
 @allowed([
