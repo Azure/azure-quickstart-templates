@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: webapp-linux-sonarqube-postgresql-private-vnet
 languages:
-- json
 - bicep
+- json
 ---
 # SonarQube on Web App with PostgreSQL and VNet integration
 
