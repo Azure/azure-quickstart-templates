@@ -1,0 +1,308 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.27.1.19265",
+      "templateHash": "8795390477732621107"
+    }
+  },
+  "parameters": {
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Azure Web App"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which the resources should be deployed"
+      }
+    },
+    "administratorLogin": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    },
+    "sonarqubeDockerTag": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Sonarqube docker tag"
+      }
+    },
+    "postgresFlexibleServersSkuTier": {
+      "type": "string",
+      "defaultValue": "Burstable",
+      "allowedValues": [
+        "Burstable",
+        "GeneralPurpose",
+        "MemoryOptimized"
+      ],
+      "metadata": {
+        "description": "The tier of the particular SKU, e.g. Burstable"
+      }
+    },
+    "postgresFlexibleServersSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_B1ms",
+      "metadata": {
+        "description": "The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3"
+      }
+    },
+    "postgresFlexibleServersversion": {
+      "type": "string",
+      "defaultValue": "13",
+      "allowedValues": [
+        "11",
+        "12",
+        "13"
+      ],
+      "metadata": {
+        "description": "The version of a PostgreSQL server"
+      }
+    },
+    "createMode": {
+      "type": "string",
+      "defaultValue": "Default",
+      "allowedValues": [
+        "Create",
+        "Default",
+        "PointInTimeRestore",
+        "Update"
+      ],
+      "metadata": {
+        "description": "The mode to create a new PostgreSQL server"
+      }
+    },
+    "appServicePlanSkuName": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "B1",
+        "B2",
+        "B3",
+        "D1",
+        "I1",
+        "I1v2",
+        "I2v2",
+        "I3v2",
+        "P1V2",
+        "P1V3",
+        "P2V2",
+        "P2V3",
+        "P3V2",
+        "P3V3",
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "metadata": {
+        "description": "Sku and size of App Service Plan (F1 does not support virtual network integration)"
+      }
+    }
+  },
+  "variables": {
+    "appServicePlanName": "[format('{0}serviceplan', parameters('siteName'))]",
+    "virtualNetworkName": "[format('{0}vnet', parameters('siteName'))]",
+    "privateDNSZoneName": "[format('{0}.private.postgres.database.azure.com', parameters('siteName'))]",
+    "privateDNSZoneLinkName": "[format('{0}privatelink', parameters('siteName'))]",
+    "postgresFlexibleServersName": "[format('{0}postgres', parameters('siteName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-11-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "appNet",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "delegations": [
+                {
+                  "name": "appDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverfarms"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "dbNet",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "delegations": [
+                {
+                  "name": "dbDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.DBforPostgreSQL/flexibleServers"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateDNSZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/A",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateDNSZoneName'), uniqueString(parameters('siteName')))]",
+      "properties": {
+        "ttl": 30,
+        "aRecords": [
+          {
+            "ipv4Address": "10.0.1.4"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDNSZoneName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateDNSZoneName'), variables('privateDNSZoneLinkName'))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": true,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDNSZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2023-12-01-preview",
+      "name": "[variables('postgresFlexibleServersName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('postgresFlexibleServersSkuName')]",
+        "tier": "[parameters('postgresFlexibleServersSkuTier')]"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "createMode": "[parameters('createMode')]",
+        "network": {
+          "delegatedSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'dbNet')]",
+          "privateDnsZoneArmResourceId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDNSZoneName'))]"
+        },
+        "storage": {
+          "storageSizeGB": 32
+        },
+        "backup": {
+          "backupRetentionDays": 7,
+          "geoRedundantBackup": "Disabled"
+        },
+        "highAvailability": {
+          "mode": "Disabled"
+        },
+        "maintenanceWindow": {
+          "customWindow": "Disabled",
+          "dayOfWeek": 0,
+          "startHour": 0,
+          "startMinute": 0
+        },
+        "version": "[parameters('postgresFlexibleServersversion')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDNSZoneName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateDNSZoneName'), variables('privateDNSZoneLinkName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-12-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      },
+      "sku": {
+        "name": "[parameters('appServicePlanSkuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-12-01",
+      "name": "[parameters('siteName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'appNet')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "minTlsVersion": "1.2",
+          "ftpsState": "Disabled",
+          "linuxFxVersion": "[format('DOCKER|sonarqube:{0}', parameters('sonarqubeDockerTag'))]",
+          "appSettings": [
+            {
+              "name": "WEBSITES_PORT",
+              "value": "9000"
+            },
+            {
+              "name": "SONAR_ES_BOOTSTRAP_CHECKS_DISABLE",
+              "value": "true"
+            },
+            {
+              "name": "SONAR_JDBC_URL",
+              "value": "[format('jdbc:postgresql://{0}:5432/postgres', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('postgresFlexibleServersName')), '2023-12-01-preview').fullyQualifiedDomainName)]"
+            },
+            {
+              "name": "SONAR_JDBC_USERNAME",
+              "value": "[parameters('administratorLogin')]"
+            },
+            {
+              "name": "SONAR_JDBC_PASSWORD",
+              "value": "[parameters('administratorLoginPassword')]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('postgresFlexibleServersName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    }
+  ]
+}
