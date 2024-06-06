@@ -205,7 +205,13 @@ resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' 
   }
 }
 
+resource logs 'Microsoft.Resources/deploymentScripts/logs@2020-10-01' existing = {
+  parent: imageTemplate_build
+  name: 'default'
+}
 
 output artifactsLocation string = _artifactsLocation
 output customizerScriptName string = customizerScriptName
-output imageTemplate_build object = imageTemplate_build.properties.outputs
+
+output logsStr string = logs.properties.log
+output logsArr array = split(logs.properties.log, '\n')
