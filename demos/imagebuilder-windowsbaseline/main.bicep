@@ -208,5 +208,4 @@ resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' 
 
 output artifactsLocation string = _artifactsLocation
 output customizerScriptName string = customizerScriptName
-output lastRunStatus object = imageTemplate.properties.lastRunStatus
 output imageTemplate_build object = imageTemplate_build.properties.outputs
