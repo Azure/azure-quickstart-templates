@@ -19,6 +19,13 @@
         "description": "The KeyVault name used to store the secrets."
       }
     },
+    "createNewKeyVault": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Set this value as false, if you are re-using a Keyvault"
+      }
+    },
     "softDeleteRetentionDays": {
       "type": "int",
       "defaultValue": 30
@@ -478,10 +485,15 @@
     }
   },
   "variables": {
+    "storageWitnessECEName": "WitnessStorageKey",
+    "LocalAdminCredentialECEName": "LocalAdminCredential",
+    "domainAdminCredentialECEName": "AzureStackLCMUserCredential",
+    "arbDeploymentSpnCredentialECEName": "DefaultARBApplication",
+    "storageWitnessSecretName": "[concat( parameters('clusterName'), '-', 'WitnessStorageKey')]",
+    "LocalAdminCredentialSecretName": "[concat( parameters('clusterName'), '-', 'LocalAdminCredential')]",
+    "domainAdminSecretName": "[concat( parameters('clusterName'), '-', 'AzureStackLCMUserCredential')]",
+    "arbDeploymentSpnSecretName": "[concat( parameters('clusterName'), '-', 'DefaultARBApplication')]",
     "storageWitnessNameVar": "WitnessStorageKey",
-    "LocalAdminCredentialSecretName": "LocalAdminCredential",
-    "domainAdminSecretName": "AzureStackLCMUserCredential",
-    "arbDeploymentSpnSecretName": "DefaultARBApplication",
     "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
@@ -500,6 +512,29 @@
               "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
           }
       }
+    ],
+    "deploymentSecretsList":[
+      {
+        "secretName": "[variables('storageWitnessSecretName')]",
+        "eceSecretName" : "[variables('storageWitnessECEName')]",
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('storageWitnessSecretName'))]"
+      },
+      {
+        "secretName":  "[variables('LocalAdminCredentialSecretName')]",
+        "eceSecretName" :  "[variables('LocalAdminCredentialECEName')]",
+         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('LocalAdminCredentialSecretName'))]"
+      },
+      {
+        "secretName":  "[variables('domainAdminSecretName')]",
+        "eceSecretName" :  "[variables('domainAdminCredentialECEName')]",
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('domainAdminSecretName'))]"
+      },
+      {
+        "secretName":  "[variables('arbDeploymentSpnSecretName')]",
+        "eceSecretName" :  "[variables('arbDeploymentSpnCredentialECEName')]",
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('arbDeploymentSpnSecretName'))]"
+      }
+
     ]
   },
   "resources": [
@@ -595,6 +630,7 @@
       "apiVersion": "2023-01-01",
       "name": "[parameters('diagnosticStorageAccountName')]",
       "location": "[parameters('location')]",
+      "condition": "[parameters('createNewKeyVault')]",
       "sku": {
         "name": "[parameters('storageAccountType')]",
         "tier": "Standard"
@@ -614,6 +650,7 @@
       "apiVersion": "2021-06-01-preview",
       "name": "[parameters('keyVaultName')]",
       "location": "[parameters('location')]",
+      "condition": "[parameters('createNewKeyVault')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]"
@@ -639,6 +676,7 @@
       "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
       "apiVersion": "2016-09-01",
       "Location": "[resourceGroup().location]",
+      "condition": "[parameters('createNewKeyVault')]",
       "dependsOn": [
         "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
         "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticStorageAccountName'))]"
@@ -725,7 +763,7 @@
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
-      "name": "[concat(parameters('keyVaultName'), '/', variables('storageWitnessNameVar'))]",
+      "name": "[concat(parameters('keyVaultName'), '/', variables('storageWitnessSecretName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
       ],
@@ -825,7 +863,7 @@
                   "storageConnectivitySwitchless": "[parameters('storageConnectivitySwitchless')]"
                 },
                 "adouPath": "[parameters('adouPath')]",
-                "secretsLocation": "[variables('secretsLocationVar')]",
+                "secrets": "[variables('deploymentSecretsList')]",
                 "optionalServices": {
                   "customLocation": "[parameters('customLocation')]"
                 }
