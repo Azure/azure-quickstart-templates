@@ -210,8 +210,8 @@ resource logs 'Microsoft.Resources/deploymentScripts/logs@2020-10-01' existing =
   name: 'default'
 }
 
-output artifactsLocation string = _artifactsLocation
-output customizerScriptName string = customizerScriptName
+//output artifactsLocation string = _artifactsLocation
+//output customizerScriptName string = customizerScriptName
 
-output logsStr string = logs.properties.log
-output logsArr array = split(logs.properties.log, '\n')
+output imageTemplate_build string = logs.properties.log
+//output logsArr array = split(logs.properties.log, '\n')
