@@ -35,3 +35,4 @@ You can modify the parameters file to change the default values to your own sett
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 `Tags: bicep, recoveryservices, backup, vault, Microsoft.Network/virtualNetworks/virtualNetworkPeerings, Microsoft.Network/virtualNetworks`
+
