@@ -1,25 +1,37 @@
-@description('Set the local VNet name')
-param existingLocalVirtualNetworkName string
+@description('Set the vmnet 1')
+param vmnetName1 string
 
-@description('Set the remote VNet name')
-param existingRemoteVirtualNetworkName string
+@description('Set the vmnet 2')
+param vmnetName2 string
 
-@description('Sets the remote VNet Resource group')
-param existingRemoteVirtualNetworkResourceGroupName string
+@description('Sets the vmnet 1 resource group')
+param vmnet1RG string
 
-resource existingLocalVirtualNetworkName_peering_to_remote_vnet 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-07-01' = {
-  name: '${existingLocalVirtualNetworkName}/peering-to-remote-vnet'
+@description('Sets the vmnet 2 resource group')
+param vmnet2RG string
+
+resource vmnet1 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-07-01' = {
+  name: '${vmnetName1}-${vmnetName2}-peering'
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
     allowGatewayTransit: false
     useRemoteGateways: false
     remoteVirtualNetwork: {
-      id: resourceId(
-        existingRemoteVirtualNetworkResourceGroupName,
-        'Microsoft.Network/virtualNetworks',
-        existingRemoteVirtualNetworkName
-      )
+      id: resourceId(vmnet2RG, 'Microsoft.Network/virtualNetworks', vmnetName2)
+    }
+  }
+}
+
+resource vmnet2 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-07-01' = {
+  name: '${vmnetName2}-to-${vmnetName1}-peering'
+  properties: {
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: false
+    allowGatewayTransit: false
+    useRemoteGateways: false
+    remoteVirtualNetwork: {
+      id: resourceId(vmnet1RG, 'Microsoft.Network/virtualNetworks', vmnetName1)
     }
   }
 }
