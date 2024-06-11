@@ -11,7 +11,7 @@ param vmnet1RG string
 param vmnet2RG string
 
 resource vmnet1 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-07-01' = {
-  name: '${vmnetName1}-peering'
+  name: '${vmnetName1}/peering-to-${vmnetName2}'
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
@@ -24,7 +24,7 @@ resource vmnet1 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-0
 }
 
 resource vmnet2 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-07-01' = {
-  name: '${vmnetName2}-peering'
+  name: '${vmnetName2}/peering-to-${vmnetName1}'
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
