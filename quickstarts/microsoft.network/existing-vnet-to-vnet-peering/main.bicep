@@ -10,7 +10,7 @@ param existingRemoteVirtualNetworkResourceGroupName string
 @description('Sets the local VNet Resource group')
 param existingLocalVirtualNetworkResourceGroupName string
 
-resource existingLocalVirtualNetworkName_peering_to_remote_vnet 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-11-01' = {
+resource existingLocalVirtualNetworkName_peering_to_remote_vnet 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-07-01' = {
   name: '${existingLocalVirtualNetworkName}/peering-to-remote-vnet'
   properties: {
     allowVirtualNetworkAccess: true
@@ -27,7 +27,7 @@ resource existingLocalVirtualNetworkName_peering_to_remote_vnet 'Microsoft.Netwo
   }
 }
 
-resource existingRemoteVirtualNetworkName_peering_to_local_vnet 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-11-01' = {
+resource existingRemoteVirtualNetworkName_peering_to_local_vnet 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-07-01' = {
   name: '${existingRemoteVirtualNetworkName}/peering-to-local-vnet'
   properties: {
     allowVirtualNetworkAccess: true
