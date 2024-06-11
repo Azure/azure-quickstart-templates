@@ -30,4 +30,4 @@ There are no prerequisites for the deployment.
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-`Tags: Tag1, Tag2, Tag3`
+`Tags: Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks`
