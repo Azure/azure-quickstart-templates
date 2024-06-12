@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.27.1.19265",
-      "templateHash": "11009329548488709205"
+      "templateHash": "11433293135246897306"
     }
   },
   "definitions": {
@@ -141,6 +141,12 @@
       "type": "string",
       "metadata": {
         "description": "The application ID of the pre-created App Registration for the Arc Resource Bridge deployment"
+      }
+    },
+    "arbDeploymentSPObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "The service principal object ID of the pre-created App Registration for the Arc Resource Bridge deployment"
       }
     },
     "arbDeploymentServicePrincipalSecret": {
@@ -563,6 +569,9 @@
           },
           "clusterWitnessStorageAccountName": {
             "value": "[variables('clusterWitnessStorageAccountName')]"
+          },
+          "arbDeploymentSPObjectId": {
+            "value": "[parameters('arbDeploymentSPObjectId')]"
           }
         },
         "template": {
@@ -572,7 +581,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.27.1.19265",
-              "templateHash": "9301992325832265363"
+              "templateHash": "4425425196920903570"
             }
           },
           "parameters": {
@@ -616,6 +625,9 @@
               "type": "securestring"
             },
             "arbDeploymentAppId": {
+              "type": "string"
+            },
+            "arbDeploymentSPObjectId": {
               "type": "string"
             },
             "arbDeploymentServicePrincipalSecret": {
@@ -847,6 +859,56 @@
                 "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]"
               ]
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "ashciARBSPRoleAssignment",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "arbDeploymentSPObjectId": {
+                    "value": "[parameters('arbDeploymentSPObjectId')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.27.1.19265",
+                      "templateHash": "6713618913402895520"
+                    }
+                  },
+                  "parameters": {
+                    "arbDeploymentSPObjectId": {
+                      "type": "string"
+                    }
+                  },
+                  "variables": {
+                    "ARBDeploymentRoleID": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7b1f81f9-4196-4058-8aae-762e593270df')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2022-04-01",
+                      "name": "[guid('ARBServicePrincipalResourceBridgeDeploymentRolePermissions', subscription().id, parameters('arbDeploymentSPObjectId'))]",
+                      "properties": {
+                        "roleDefinitionId": "[variables('ARBDeploymentRoleID')]",
+                        "principalId": "[parameters('arbDeploymentSPObjectId')]",
+                        "principalType": "ServicePrincipal",
+                        "description": "Created by Azure Stack HCI deployment template"
+                      }
+                    }
+                  ]
+                }
+              }
             }
           ]
         }
