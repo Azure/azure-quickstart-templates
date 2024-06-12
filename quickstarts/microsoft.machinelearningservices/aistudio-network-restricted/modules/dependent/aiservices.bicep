@@ -49,7 +49,6 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
           ignoreMissingVnetServiceEndpoint: false
         }
       ]
-      ipRules: []
     }
     customSubDomainName: aiServiceNameCleaned
   }

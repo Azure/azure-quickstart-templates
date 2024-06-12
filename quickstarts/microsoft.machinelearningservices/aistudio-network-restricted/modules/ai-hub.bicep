@@ -68,8 +68,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-10-01' = {
     // network settings
     publicNetworkAccess: 'Disabled'
     managedNetwork: {
-      isolationMode: 'AllowOnlyApprovedOutbound'
-      outboundRules: {}
+      isolationMode: 'AllowInternetOutBound'
     }
 
     // private link settings
