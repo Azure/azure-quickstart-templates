@@ -24,6 +24,9 @@ param vnetRgName string
 @description('Name of the subnet to deploy into.')
 param subnetName string
 
+@description('The location into which the resources should be deployed.')
+param location string = resourceGroup().location
+
 @minLength(2)
 @maxLength(10)
 @description('Prefix for all resource names.')
@@ -31,7 +34,6 @@ param prefix string
 
 // Variables
 var name = toLower('${aiHubName}')
-var location = resourceGroup().location
 
 // Create a short, unique suffix, that will be unique to each resource group
 var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 7)

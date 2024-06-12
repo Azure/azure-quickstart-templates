@@ -90,7 +90,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
-resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2022-01-01' = {
+resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: storagePleBlobName
   location: location
   tags: tags
@@ -117,7 +117,7 @@ resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2022-01-
   }
 }
 
-resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2022-01-01' = {
+resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: storagePleFileName
   location: location
   tags: tags
@@ -181,7 +181,7 @@ resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
   parent: storagePrivateEndpointFile
   name: 'flie-PrivateDnsZoneGroup'
   properties:{
