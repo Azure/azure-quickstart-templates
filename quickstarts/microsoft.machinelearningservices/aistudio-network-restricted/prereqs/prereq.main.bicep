@@ -30,6 +30,16 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
             {
               service: 'Microsoft.CognitiveServices'
             }
+            {
+              service: 'Microsoft.ContainerRegistry'
+            }
+            {
+              service: 'Microsoft.KeyVault'
+            }
+            {
+              service: 'Microsoft.Storage'
+            }
+            
           ]
         }
       }
