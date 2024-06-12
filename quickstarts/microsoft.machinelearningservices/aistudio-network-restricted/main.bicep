@@ -1,5 +1,3 @@
-// Execute this main file to deploy Azure AI studio resources in the basic security configuration
-
 // Parameters
 @minLength(2)
 @maxLength(12)
@@ -24,6 +22,11 @@ param vnetRgName string
 @description('Name of the subnet to deploy into.')
 param subnetName string
 
+@minLength(2)
+@maxLength(10)
+@description('Prefix for all resource names.')
+param prefix string
+
 // Variables
 var name = toLower('${aiHubName}')
 var location = resourceGroup().location
@@ -39,15 +42,10 @@ module aiDependencies 'modules/dependent-resources.bicep' = {
   name: 'dependencies-${name}-${uniqueSuffix}-deployment'
   params: {
     location: location
-    storageName: 'st${name}${uniqueSuffix}'
-    keyvaultName: 'kv-${name}-${uniqueSuffix}'
-    applicationInsightsName: 'appi-${name}-${uniqueSuffix}'
-    containerRegistryName: 'cr${name}${uniqueSuffix}'
-    aiServicesName: 'ais${name}${uniqueSuffix}'
     tags: tags
     subnetResourceId: subnetResourceId
     vnetResourceId: vnetResourceId
-    vnetRgName: vnetRgName
+    prefix: prefix
   }
 }
 
@@ -65,7 +63,6 @@ module aiHub 'modules/ai-hub.bicep' = {
     uniqueSuffix: uniqueSuffix
 
     //network related
-    vnetRgName: vnetRgName
     vnetResourceId: vnetResourceId
     subnetResourceId: subnetResourceId
 

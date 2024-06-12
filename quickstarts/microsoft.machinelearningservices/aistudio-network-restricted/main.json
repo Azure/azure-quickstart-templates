@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.27.1.19265",
-      "templateHash": "7541167691214812799"
+      "version": "0.28.1.47646",
+      "templateHash": "10942501564861112363"
     }
   },
   "parameters": {
@@ -56,6 +56,14 @@
       "metadata": {
         "description": "Name of the subnet to deploy into."
       }
+    },
+    "prefix": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 10,
+      "metadata": {
+        "description": "Prefix for all resource names."
+      }
     }
   },
   "variables": {
@@ -79,21 +87,6 @@
           "location": {
             "value": "[variables('location')]"
           },
-          "storageName": {
-            "value": "[format('st{0}{1}', variables('name'), variables('uniqueSuffix'))]"
-          },
-          "keyvaultName": {
-            "value": "[format('kv-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
-          },
-          "applicationInsightsName": {
-            "value": "[format('appi-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
-          },
-          "containerRegistryName": {
-            "value": "[format('cr{0}{1}', variables('name'), variables('uniqueSuffix'))]"
-          },
-          "aiServicesName": {
-            "value": "[format('ais{0}{1}', variables('name'), variables('uniqueSuffix'))]"
-          },
           "tags": {
             "value": "[parameters('tags')]"
           },
@@ -103,8 +96,8 @@
           "vnetResourceId": {
             "value": "[variables('vnetResourceId')]"
           },
-          "vnetRgName": {
-            "value": "[parameters('vnetRgName')]"
+          "prefix": {
+            "value": "[parameters('prefix')]"
           }
         },
         "template": {
@@ -113,11 +106,19 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "12322489406742336964"
+              "version": "0.28.1.47646",
+              "templateHash": "9783824682462461747"
             }
           },
           "parameters": {
+            "prefix": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 10,
+              "metadata": {
+                "description": "Prefix for all resource names."
+              }
+            },
             "location": {
               "type": "string",
               "defaultValue": "[resourceGroup().location]",
@@ -132,40 +133,10 @@
                 "description": "Tags to add to the resources"
               }
             },
-            "aiServicesName": {
-              "type": "string",
-              "metadata": {
-                "description": "AI services name"
-              }
-            },
-            "applicationInsightsName": {
-              "type": "string",
-              "metadata": {
-                "description": "Application Insights resource name"
-              }
-            },
-            "containerRegistryName": {
-              "type": "string",
-              "metadata": {
-                "description": "Container registry name"
-              }
-            },
-            "keyvaultName": {
-              "type": "string",
-              "metadata": {
-                "description": "The name of the Key Vault"
-              }
-            },
             "subnetResourceId": {
               "type": "string",
               "metadata": {
                 "description": "Subnet Id to deploy into."
-              }
-            },
-            "vnetRgName": {
-              "type": "string",
-              "metadata": {
-                "description": "Resource group name of the virtual network to deploy the resource into."
               }
             },
             "vnetResourceId": {
@@ -173,333 +144,142 @@
               "metadata": {
                 "description": "Resource Id of the virtual network to deploy the resource into."
               }
-            },
-            "storageName": {
-              "type": "string",
-              "metadata": {
-                "description": "Name of the storage account"
-              }
-            },
-            "storageSkuName": {
-              "type": "string",
-              "defaultValue": "Standard_LRS",
-              "allowedValues": [
-                "Standard_LRS",
-                "Standard_ZRS",
-                "Standard_GRS",
-                "Standard_GZRS",
-                "Standard_RAGRS",
-                "Standard_RAGZRS",
-                "Premium_LRS",
-                "Premium_ZRS"
-              ],
-              "metadata": {
-                "description": "Storage SKU"
-              }
             }
           },
           "variables": {
-            "storageNameCleaned": "[replace(parameters('storageName'), '-', '')]",
-            "containerRegistryNameCleaned": "[replace(parameters('containerRegistryName'), '-', '')]"
+            "name": "[toLower(format('{0}', parameters('prefix')))]",
+            "uniqueSuffix": "[substring(uniqueString(resourceGroup().id), 0, 4)]"
           },
           "resources": [
             {
-              "type": "Microsoft.Insights/components",
-              "apiVersion": "2020-02-02",
-              "name": "[parameters('applicationInsightsName')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "kind": "web",
-              "properties": {
-                "Application_Type": "web",
-                "DisableIpMasking": false,
-                "DisableLocalAuth": false,
-                "Flow_Type": "Bluefield",
-                "ForceCustomerStorageForProfiler": false,
-                "ImmediatePurgeDataOn30Days": true,
-                "IngestionMode": "ApplicationInsights",
-                "publicNetworkAccessForIngestion": "Enabled",
-                "publicNetworkAccessForQuery": "Disabled",
-                "Request_Source": "rest"
-              }
-            },
-            {
-              "type": "Microsoft.ContainerRegistry/registries",
-              "apiVersion": "2022-12-01",
-              "name": "[variables('containerRegistryNameCleaned')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "sku": {
-                "name": "Premium"
-              },
-              "properties": {
-                "adminUserEnabled": true,
-                "dataEndpointEnabled": false,
-                "networkRuleBypassOptions": "AzureServices",
-                "networkRuleSet": {
-                  "defaultAction": "Deny"
-                },
-                "policies": {
-                  "quarantinePolicy": {
-                    "status": "enabled"
-                  },
-                  "retentionPolicy": {
-                    "status": "enabled",
-                    "days": 7
-                  },
-                  "trustPolicy": {
-                    "status": "disabled",
-                    "type": "Notary"
-                  }
-                },
-                "publicNetworkAccess": "Disabled",
-                "zoneRedundancy": "Disabled"
-              }
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults",
-              "apiVersion": "2023-07-01",
-              "name": "[parameters('keyvaultName')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "properties": {
-                "createMode": "default",
-                "enabledForDeployment": false,
-                "enabledForDiskEncryption": false,
-                "enabledForTemplateDeployment": false,
-                "enableSoftDelete": true,
-                "enableRbacAuthorization": true,
-                "enablePurgeProtection": true,
-                "networkAcls": {
-                  "bypass": "AzureServices",
-                  "defaultAction": "Deny"
-                },
-                "sku": {
-                  "family": "A",
-                  "name": "standard"
-                },
-                "softDeleteRetentionInDays": 7,
-                "tenantId": "[subscription().tenantId]"
-              }
-            },
-            {
-              "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2023-05-01",
-              "name": "[parameters('aiServicesName')]",
-              "location": "[parameters('location')]",
-              "sku": {
-                "name": "S0"
-              },
-              "kind": "AIServices",
-              "properties": {
-                "apiProperties": {
-                  "statisticsEnabled": false
-                },
-                "networkAcls": {
-                  "defaultAction": "Deny",
-                  "virtualNetworkRules": [
-                    {
-                      "id": "[parameters('subnetResourceId')]",
-                      "ignoreMissingVnetServiceEndpoint": false
-                    }
-                  ],
-                  "ipRules": []
-                },
-                "customSubDomainName": "[parameters('aiServicesName')]"
-              }
-            },
-            {
-              "type": "Microsoft.Storage/storageAccounts",
-              "apiVersion": "2023-01-01",
-              "name": "[variables('storageNameCleaned')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "sku": {
-                "name": "[parameters('storageSkuName')]"
-              },
-              "kind": "StorageV2",
-              "properties": {
-                "accessTier": "Hot",
-                "allowBlobPublicAccess": false,
-                "allowCrossTenantReplication": false,
-                "allowSharedKeyAccess": true,
-                "encryption": {
-                  "keySource": "Microsoft.Storage",
-                  "requireInfrastructureEncryption": false,
-                  "services": {
-                    "blob": {
-                      "enabled": true,
-                      "keyType": "Account"
-                    },
-                    "file": {
-                      "enabled": true,
-                      "keyType": "Account"
-                    },
-                    "queue": {
-                      "enabled": true,
-                      "keyType": "Service"
-                    },
-                    "table": {
-                      "enabled": true,
-                      "keyType": "Service"
-                    }
-                  }
-                },
-                "isHnsEnabled": false,
-                "isNfsV3Enabled": false,
-                "keyPolicy": {
-                  "keyExpirationPeriodInDays": 7
-                },
-                "largeFileSharesState": "Disabled",
-                "minimumTlsVersion": "TLS1_2",
-                "networkAcls": {
-                  "bypass": "AzureServices",
-                  "defaultAction": "Deny"
-                },
-                "supportsHttpsTrafficOnly": true,
-                "publicNetworkAccess": "Disabled"
-              }
-            },
-            {
-              "type": "Microsoft.Network/privateEndpoints",
-              "apiVersion": "2023-11-01",
-              "name": "[format('{0}-blob-pe', variables('storageNameCleaned'))]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "subnet": {
-                  "id": "[parameters('subnetResourceId')]"
-                },
-                "privateLinkServiceConnections": [
-                  {
-                    "name": "blob",
-                    "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]",
-                      "groupIds": [
-                        "blob"
-                      ]
-                    }
-                  }
-                ]
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Network/privateEndpoints",
-              "apiVersion": "2023-11-01",
-              "name": "[format('{0}-file-pe', variables('storageNameCleaned'))]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "subnet": {
-                  "id": "[parameters('subnetResourceId')]"
-                },
-                "privateLinkServiceConnections": [
-                  {
-                    "name": "file",
-                    "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]",
-                      "groupIds": [
-                        "file"
-                      ]
-                    }
-                  }
-                ]
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2018-11-30",
-              "name": "[format('{0}-identity', variables('storageNameCleaned'))]",
-              "location": "[parameters('location')]"
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', variables('storageNameCleaned'))), 'Storage Blob Data Contributor')]",
-              "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', variables('storageNameCleaned'))), '2018-11-30').principalId]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', variables('storageNameCleaned')))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
-              ]
-            },
-            {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "[format('{0}-DNS', variables('storageNameCleaned'))]",
-              "subscriptionId": "[subscription().subscriptionId]",
-              "resourceGroup": "[parameters('vnetRgName')]",
+              "name": "[format('appi-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
                 },
                 "mode": "Incremental",
-                "parameters": {},
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "applicationInsightsName": {
+                    "value": "[format('appi-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "logAnalyticsWorkspaceName": {
+                    "value": "[format('ws-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  }
+                },
                 "template": {
                   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
                   "contentVersion": "1.0.0.0",
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "4660987546725795418"
+                      "version": "0.28.1.47646",
+                      "templateHash": "5742630349812923165"
+                    }
+                  },
+                  "parameters": {
+                    "location": {
+                      "type": "string",
+                      "defaultValue": "[resourceGroup().location]",
+                      "metadata": {
+                        "description": "Azure region of the deployment"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {},
+                      "metadata": {
+                        "description": "Tags to add to the resources"
+                      }
+                    },
+                    "applicationInsightsName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Application Insights resource name"
+                      }
+                    },
+                    "logAnalyticsWorkspaceName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Log Analytics resource name"
+                      }
                     }
                   },
                   "resources": [
                     {
-                      "type": "Microsoft.Network/privateDnsZones",
-                      "apiVersion": "2020-06-01",
-                      "name": "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
-                      "location": "global",
-                      "tags": {},
-                      "properties": {}
+                      "type": "Microsoft.OperationalInsights/workspaces",
+                      "apiVersion": "2021-06-01",
+                      "name": "[parameters('logAnalyticsWorkspaceName')]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "sku": {
+                          "name": "PerGB2018"
+                        },
+                        "retentionInDays": 30,
+                        "publicNetworkAccessForIngestion": "Enabled",
+                        "publicNetworkAccessForQuery": "Disabled"
+                      }
                     },
                     {
-                      "type": "Microsoft.Network/privateDnsZones",
-                      "apiVersion": "2020-06-01",
-                      "name": "[format('privatelink.file.{0}', environment().suffixes.storage)]",
-                      "location": "global",
-                      "tags": {},
-                      "properties": {}
+                      "type": "Microsoft.Insights/components",
+                      "apiVersion": "2020-02-02",
+                      "name": "[parameters('applicationInsightsName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "kind": "web",
+                      "properties": {
+                        "Application_Type": "web",
+                        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+                        "Flow_Type": "Bluefield"
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+                      ]
                     }
                   ],
                   "outputs": {
-                    "blobDnsZoneId": {
+                    "applicationInsightsId": {
                       "type": "string",
-                      "value": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]"
-                    },
-                    "fileDnsZoneId": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.file.{0}', environment().suffixes.storage))]"
+                      "value": "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
                     }
                   }
                 }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-blob-pe', variables('storageNameCleaned')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-file-pe', variables('storageNameCleaned')))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "[format('{0}-VirtualNetworkLink', variables('storageNameCleaned'))]",
-              "subscriptionId": "[subscription().subscriptionId]",
-              "resourceGroup": "[parameters('vnetRgName')]",
+              "name": "[format('kv-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
                 },
                 "mode": "Incremental",
                 "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "keyvaultName": {
+                    "value": "[format('kv-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "keyvaultPleName": {
+                    "value": "[format('ple-{0}-{1}-kv', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "subnetId": {
+                    "value": "[parameters('subnetResourceId')]"
+                  },
                   "virtualNetworkId": {
                     "value": "[parameters('vnetResourceId')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
                   }
                 },
                 "template": {
@@ -508,68 +288,184 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "13758094356879994761"
+                      "version": "0.28.1.47646",
+                      "templateHash": "1724225004147046630"
                     }
                   },
                   "parameters": {
+                    "location": {
+                      "type": "string",
+                      "defaultValue": "[resourceGroup().location]",
+                      "metadata": {
+                        "description": "The Azure Region to deploy the resources into"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {},
+                      "metadata": {
+                        "description": "Tags to apply to the Key Vault Instance"
+                      }
+                    },
+                    "keyvaultName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "The name of the Key Vault"
+                      }
+                    },
+                    "keyvaultPleName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "The name of the Key Vault private link endpoint"
+                      }
+                    },
+                    "subnetId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "The Subnet ID where the Key Vault Private Link is to be created"
+                      }
+                    },
                     "virtualNetworkId": {
-                      "type": "string"
+                      "type": "string",
+                      "metadata": {
+                        "description": "The VNet ID where the Key Vault Private Link is to be created"
+                      }
                     }
+                  },
+                  "variables": {
+                    "privateDnsZoneName": "[format('privatelink{0}', environment().suffixes.keyvaultDns)]"
                   },
                   "resources": [
                     {
-                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-                      "apiVersion": "2020-06-01",
-                      "name": "[format('privatelink.blob.{0}/{1}', environment().suffixes.storage, uniqueString(parameters('virtualNetworkId')))]",
-                      "location": "global",
+                      "type": "Microsoft.KeyVault/vaults",
+                      "apiVersion": "2021-10-01",
+                      "name": "[parameters('keyvaultName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
                       "properties": {
-                        "virtualNetwork": {
-                          "id": "[parameters('virtualNetworkId')]"
+                        "createMode": "default",
+                        "enabledForDeployment": false,
+                        "enabledForDiskEncryption": false,
+                        "enabledForTemplateDeployment": false,
+                        "enableSoftDelete": true,
+                        "enableRbacAuthorization": true,
+                        "enablePurgeProtection": true,
+                        "networkAcls": {
+                          "bypass": "AzureServices",
+                          "defaultAction": "Deny"
                         },
-                        "registrationEnabled": false
+                        "sku": {
+                          "family": "A",
+                          "name": "standard"
+                        },
+                        "softDeleteRetentionInDays": 7,
+                        "tenantId": "[subscription().tenantId]"
                       }
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints",
+                      "apiVersion": "2022-01-01",
+                      "name": "[parameters('keyvaultPleName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "properties": {
+                        "privateLinkServiceConnections": [
+                          {
+                            "name": "[parameters('keyvaultPleName')]",
+                            "properties": {
+                              "groupIds": [
+                                "vault"
+                              ],
+                              "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"
+                            }
+                          }
+                        ],
+                        "subnet": {
+                          "id": "[parameters('subnetId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2020-06-01",
+                      "name": "[variables('privateDnsZoneName')]",
+                      "location": "global"
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+                      "apiVersion": "2022-01-01",
+                      "name": "[format('{0}/{1}', parameters('keyvaultPleName'), 'vault-PrivateDnsZoneGroup')]",
+                      "properties": {
+                        "privateDnsZoneConfigs": [
+                          {
+                            "name": "[variables('privateDnsZoneName')]",
+                            "properties": {
+                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+                            }
+                          }
+                        ]
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Network/privateEndpoints', parameters('keyvaultPleName'))]"
+                      ]
                     },
                     {
                       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
                       "apiVersion": "2020-06-01",
-                      "name": "[format('privatelink.file.{0}/{1}', environment().suffixes.storage, uniqueString(parameters('virtualNetworkId')))]",
+                      "name": "[format('{0}/{1}', variables('privateDnsZoneName'), uniqueString(resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))))]",
                       "location": "global",
                       "properties": {
+                        "registrationEnabled": false,
                         "virtualNetwork": {
                           "id": "[parameters('virtualNetworkId')]"
-                        },
-                        "registrationEnabled": false
-                      }
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]",
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+                      ]
                     }
-                  ]
+                  ],
+                  "outputs": {
+                    "keyvaultId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"
+                    }
+                  }
                 }
-              },
-              "dependsOn": [
-                "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', variables('storageNameCleaned')))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "[format('{0}-dnsZoneGroup', variables('storageNameCleaned'))]",
+              "name": "[format('cr{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
                 },
                 "mode": "Incremental",
                 "parameters": {
-                  "privateEndpointNameBlob": {
-                    "value": "[format('{0}-blob-pe', variables('storageNameCleaned'))]"
+                  "location": {
+                    "value": "[parameters('location')]"
                   },
-                  "privateEndpointNameFile": {
-                    "value": "[format('{0}-file-pe', variables('storageNameCleaned'))]"
+                  "containerRegistryName": {
+                    "value": "[format('cr{0}{1}', variables('name'), variables('uniqueSuffix'))]"
                   },
-                  "fileDnsZoneId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', variables('storageNameCleaned'))), '2022-09-01').outputs.fileDnsZoneId.value]"
+                  "containerRegistryPleName": {
+                    "value": "[format('ple-{0}-{1}-cr', variables('name'), variables('uniqueSuffix'))]"
                   },
-                  "blobDnsZoneId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', variables('storageNameCleaned'))), '2022-09-01').outputs.blobDnsZoneId.value]"
+                  "subnetId": {
+                    "value": "[parameters('subnetResourceId')]"
+                  },
+                  "virtualNetworkId": {
+                    "value": "[parameters('vnetResourceId')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
                   }
                 },
                 "template": {
@@ -578,101 +474,734 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "4681944389660673857"
+                      "version": "0.28.1.47646",
+                      "templateHash": "6080788223635337382"
                     }
                   },
                   "parameters": {
-                    "privateEndpointNameBlob": {
+                    "location": {
                       "type": "string",
                       "metadata": {
-                        "description": "Name for the blob PE endpoint"
+                        "description": "Azure region of the deployment"
                       }
                     },
-                    "privateEndpointNameFile": {
-                      "type": "string",
+                    "tags": {
+                      "type": "object",
                       "metadata": {
-                        "description": "Name for the file PE endpoint"
+                        "description": "Tags to add to the resources"
                       }
                     },
-                    "fileDnsZoneId": {
+                    "containerRegistryName": {
                       "type": "string",
                       "metadata": {
-                        "description": "Dns Zone ID for File Blob Storage"
+                        "description": "Container registry name"
                       }
                     },
-                    "blobDnsZoneId": {
+                    "containerRegistryPleName": {
                       "type": "string",
                       "metadata": {
-                        "description": "Dns Zone ID for Blob Blob Storage"
+                        "description": "Container registry private link endpoint name"
+                      }
+                    },
+                    "subnetId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Resource ID of the subnet"
+                      }
+                    },
+                    "virtualNetworkId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Resource ID of the virtual network"
                       }
                     }
                   },
+                  "variables": {
+                    "containerRegistryNameCleaned": "[replace(parameters('containerRegistryName'), '-', '')]",
+                    "privateDnsZoneName": "[format('privatelink{0}', environment().suffixes.acrLoginServer)]",
+                    "groupName": "registry"
+                  },
                   "resources": [
                     {
-                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-                      "apiVersion": "2023-11-01",
-                      "name": "[format('{0}/default', parameters('privateEndpointNameBlob'))]",
+                      "type": "Microsoft.ContainerRegistry/registries",
+                      "apiVersion": "2021-09-01",
+                      "name": "[variables('containerRegistryNameCleaned')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "sku": {
+                        "name": "Premium"
+                      },
                       "properties": {
-                        "privateDnsZoneConfigs": [
-                          {
-                            "name": "privatelink-blob-core-windows-net",
-                            "properties": {
-                              "privateDnsZoneId": "[parameters('blobDnsZoneId')]"
-                            }
+                        "adminUserEnabled": true,
+                        "dataEndpointEnabled": false,
+                        "networkRuleBypassOptions": "AzureServices",
+                        "networkRuleSet": {
+                          "defaultAction": "Deny"
+                        },
+                        "policies": {
+                          "quarantinePolicy": {
+                            "status": "disabled"
+                          },
+                          "retentionPolicy": {
+                            "status": "enabled",
+                            "days": 7
+                          },
+                          "trustPolicy": {
+                            "status": "disabled",
+                            "type": "Notary"
                           }
-                        ]
+                        },
+                        "publicNetworkAccess": "Disabled",
+                        "zoneRedundancy": "Disabled"
                       }
                     },
                     {
+                      "type": "Microsoft.Network/privateEndpoints",
+                      "apiVersion": "2022-01-01",
+                      "name": "[parameters('containerRegistryPleName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "properties": {
+                        "privateLinkServiceConnections": [
+                          {
+                            "name": "[parameters('containerRegistryPleName')]",
+                            "properties": {
+                              "groupIds": [
+                                "[variables('groupName')]"
+                              ],
+                              "privateLinkServiceId": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryNameCleaned'))]"
+                            }
+                          }
+                        ],
+                        "subnet": {
+                          "id": "[parameters('subnetId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryNameCleaned'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2020-06-01",
+                      "name": "[variables('privateDnsZoneName')]",
+                      "location": "global"
+                    },
+                    {
                       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-                      "apiVersion": "2023-11-01",
-                      "name": "[format('{0}/default', parameters('privateEndpointNameFile'))]",
+                      "apiVersion": "2022-01-01",
+                      "name": "[format('{0}/{1}', parameters('containerRegistryPleName'), format('{0}-PrivateDnsZoneGroup', variables('groupName')))]",
                       "properties": {
                         "privateDnsZoneConfigs": [
                           {
-                            "name": "privatelink-file-core-windows-net",
+                            "name": "[variables('privateDnsZoneName')]",
                             "properties": {
-                              "privateDnsZoneId": "[parameters('fileDnsZoneId')]"
+                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
                             }
                           }
                         ]
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Network/privateEndpoints', parameters('containerRegistryPleName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                      "apiVersion": "2020-06-01",
+                      "name": "[format('{0}/{1}', variables('privateDnsZoneName'), uniqueString(resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryNameCleaned'))))]",
+                      "location": "global",
+                      "properties": {
+                        "registrationEnabled": false,
+                        "virtualNetwork": {
+                          "id": "[parameters('virtualNetworkId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+                        "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryNameCleaned'))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "containerRegistryId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryNameCleaned'))]"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "[format('ai{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "aiServiceName": {
+                    "value": "[format('ai{0}{1}', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "aiServicesPleName": {
+                    "value": "[format('ple-{0}-{1}-ais', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "subnetId": {
+                    "value": "[parameters('subnetResourceId')]"
+                  },
+                  "virtualNetworkId": {
+                    "value": "[parameters('vnetResourceId')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.28.1.47646",
+                      "templateHash": "4225410054772661446"
+                    }
+                  },
+                  "parameters": {
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Azure region of the deployment"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "metadata": {
+                        "description": "Tags to add to the resources"
+                      }
+                    },
+                    "aiServiceName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the AI service"
+                      }
+                    },
+                    "aiServicesPleName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the AI service private link endpoint for cognitive services"
+                      }
+                    },
+                    "subnetId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Resource ID of the subnet"
+                      }
+                    },
+                    "virtualNetworkId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Resource ID of the virtual network"
+                      }
+                    },
+                    "aiServiceSkuName": {
+                      "type": "string",
+                      "defaultValue": "S0",
+                      "allowedValues": [
+                        "S0"
+                      ],
+                      "metadata": {
+                        "description": "AI service SKU"
                       }
                     }
-                  ]
+                  },
+                  "variables": {
+                    "aiServiceNameCleaned": "[replace(parameters('aiServiceName'), '-', '')]",
+                    "cognitiveServicesPrivateDnsZoneName": "privatelink.cognitiveservices.azure.com",
+                    "openAiPrivateDnsZoneName": "privatelink.openai.azure.com"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.CognitiveServices/accounts",
+                      "apiVersion": "2023-05-01",
+                      "name": "[variables('aiServiceNameCleaned')]",
+                      "location": "[parameters('location')]",
+                      "sku": {
+                        "name": "[parameters('aiServiceSkuName')]"
+                      },
+                      "kind": "AIServices",
+                      "properties": {
+                        "publicNetworkAccess": "Enabled",
+                        "apiProperties": {
+                          "statisticsEnabled": false
+                        },
+                        "networkAcls": {
+                          "defaultAction": "Deny",
+                          "virtualNetworkRules": [
+                            {
+                              "id": "[parameters('subnetId')]",
+                              "ignoreMissingVnetServiceEndpoint": false
+                            }
+                          ],
+                          "ipRules": []
+                        },
+                        "customSubDomainName": "[variables('aiServiceNameCleaned')]"
+                      }
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints",
+                      "apiVersion": "2022-01-01",
+                      "name": "[parameters('aiServicesPleName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "properties": {
+                        "privateLinkServiceConnections": [
+                          {
+                            "name": "[parameters('aiServicesPleName')]",
+                            "properties": {
+                              "groupIds": [
+                                "account"
+                              ],
+                              "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServiceNameCleaned'))]"
+                            }
+                          }
+                        ],
+                        "subnet": {
+                          "id": "[parameters('subnetId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServiceNameCleaned'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2020-06-01",
+                      "name": "[variables('cognitiveServicesPrivateDnsZoneName')]",
+                      "location": "global"
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2020-06-01",
+                      "name": "[variables('openAiPrivateDnsZoneName')]",
+                      "location": "global"
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                      "apiVersion": "2020-06-01",
+                      "name": "[format('{0}/{1}', variables('cognitiveServicesPrivateDnsZoneName'), uniqueString(parameters('virtualNetworkId')))]",
+                      "location": "global",
+                      "properties": {
+                        "registrationEnabled": false,
+                        "virtualNetwork": {
+                          "id": "[parameters('virtualNetworkId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('cognitiveServicesPrivateDnsZoneName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                      "apiVersion": "2020-06-01",
+                      "name": "[format('{0}/{1}', variables('openAiPrivateDnsZoneName'), uniqueString(parameters('virtualNetworkId')))]",
+                      "location": "global",
+                      "properties": {
+                        "registrationEnabled": false,
+                        "virtualNetwork": {
+                          "id": "[parameters('virtualNetworkId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('openAiPrivateDnsZoneName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+                      "apiVersion": "2022-01-01",
+                      "name": "[format('{0}/{1}', parameters('aiServicesPleName'), 'default')]",
+                      "properties": {
+                        "privateDnsZoneConfigs": [
+                          {
+                            "name": "[replace(variables('openAiPrivateDnsZoneName'), '.', '-')]",
+                            "properties": {
+                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('openAiPrivateDnsZoneName'))]"
+                            }
+                          },
+                          {
+                            "name": "[replace(variables('cognitiveServicesPrivateDnsZoneName'), '.', '-')]",
+                            "properties": {
+                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('cognitiveServicesPrivateDnsZoneName'))]"
+                            }
+                          }
+                        ]
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateEndpoints', parameters('aiServicesPleName'))]",
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('cognitiveServicesPrivateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('openAiPrivateDnsZoneName'))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "aiServicesId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServiceNameCleaned'))]"
+                    },
+                    "aiServicesEndpoint": {
+                      "type": "string",
+                      "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServiceNameCleaned')), '2023-05-01').endpoint]"
+                    }
+                  }
                 }
-              },
-              "dependsOn": [
-                "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', variables('storageNameCleaned')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-blob-pe', variables('storageNameCleaned')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-file-pe', variables('storageNameCleaned')))]"
-              ]
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "[format('st{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "storageName": {
+                    "value": "[format('st{0}{1}', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "storagePleBlobName": {
+                    "value": "[format('ple-{0}-{1}-st-blob', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "storagePleFileName": {
+                    "value": "[format('ple-{0}-{1}-st-file', variables('name'), variables('uniqueSuffix'))]"
+                  },
+                  "storageSkuName": {
+                    "value": "Standard_LRS"
+                  },
+                  "subnetId": {
+                    "value": "[parameters('subnetResourceId')]"
+                  },
+                  "virtualNetworkId": {
+                    "value": "[parameters('vnetResourceId')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.28.1.47646",
+                      "templateHash": "710954160945317075"
+                    }
+                  },
+                  "parameters": {
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Azure region of the deployment"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "metadata": {
+                        "description": "Tags to add to the resources"
+                      }
+                    },
+                    "storageName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the storage account"
+                      }
+                    },
+                    "storagePleBlobName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the storage blob private link endpoint"
+                      }
+                    },
+                    "storagePleFileName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the storage file private link endpoint"
+                      }
+                    },
+                    "subnetId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Resource ID of the subnet"
+                      }
+                    },
+                    "virtualNetworkId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Resource ID of the virtual network"
+                      }
+                    },
+                    "storageSkuName": {
+                      "type": "string",
+                      "defaultValue": "Standard_LRS",
+                      "allowedValues": [
+                        "Standard_LRS",
+                        "Standard_ZRS",
+                        "Standard_GRS",
+                        "Standard_GZRS",
+                        "Standard_RAGRS",
+                        "Standard_RAGZRS",
+                        "Premium_LRS",
+                        "Premium_ZRS"
+                      ],
+                      "metadata": {
+                        "description": "Storage SKU"
+                      }
+                    }
+                  },
+                  "variables": {
+                    "storageNameCleaned": "[replace(parameters('storageName'), '-', '')]",
+                    "blobPrivateDnsZoneName": "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
+                    "filePrivateDnsZoneName": "[format('privatelink.file.{0}', environment().suffixes.storage)]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Storage/storageAccounts",
+                      "apiVersion": "2021-09-01",
+                      "name": "[variables('storageNameCleaned')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "sku": {
+                        "name": "[parameters('storageSkuName')]"
+                      },
+                      "kind": "StorageV2",
+                      "properties": {
+                        "accessTier": "Hot",
+                        "allowBlobPublicAccess": false,
+                        "allowCrossTenantReplication": false,
+                        "allowSharedKeyAccess": true,
+                        "encryption": {
+                          "keySource": "Microsoft.Storage",
+                          "requireInfrastructureEncryption": false,
+                          "services": {
+                            "blob": {
+                              "enabled": true,
+                              "keyType": "Account"
+                            },
+                            "file": {
+                              "enabled": true,
+                              "keyType": "Account"
+                            },
+                            "queue": {
+                              "enabled": true,
+                              "keyType": "Service"
+                            },
+                            "table": {
+                              "enabled": true,
+                              "keyType": "Service"
+                            }
+                          }
+                        },
+                        "isHnsEnabled": false,
+                        "isNfsV3Enabled": false,
+                        "keyPolicy": {
+                          "keyExpirationPeriodInDays": 7
+                        },
+                        "largeFileSharesState": "Disabled",
+                        "minimumTlsVersion": "TLS1_2",
+                        "networkAcls": {
+                          "bypass": "AzureServices",
+                          "defaultAction": "Deny"
+                        },
+                        "supportsHttpsTrafficOnly": true
+                      }
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints",
+                      "apiVersion": "2022-01-01",
+                      "name": "[parameters('storagePleBlobName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "properties": {
+                        "privateLinkServiceConnections": [
+                          {
+                            "name": "[parameters('storagePleBlobName')]",
+                            "properties": {
+                              "groupIds": [
+                                "blob"
+                              ],
+                              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]",
+                              "privateLinkServiceConnectionState": {
+                                "status": "Approved",
+                                "description": "Auto-Approved",
+                                "actionsRequired": "None"
+                              }
+                            }
+                          }
+                        ],
+                        "subnet": {
+                          "id": "[parameters('subnetId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints",
+                      "apiVersion": "2022-01-01",
+                      "name": "[parameters('storagePleFileName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "properties": {
+                        "privateLinkServiceConnections": [
+                          {
+                            "name": "[parameters('storagePleFileName')]",
+                            "properties": {
+                              "groupIds": [
+                                "file"
+                              ],
+                              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]",
+                              "privateLinkServiceConnectionState": {
+                                "status": "Approved",
+                                "description": "Auto-Approved",
+                                "actionsRequired": "None"
+                              }
+                            }
+                          }
+                        ],
+                        "subnet": {
+                          "id": "[parameters('subnetId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2020-06-01",
+                      "name": "[variables('blobPrivateDnsZoneName')]",
+                      "location": "global"
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+                      "apiVersion": "2022-01-01",
+                      "name": "[format('{0}/{1}', parameters('storagePleBlobName'), 'blob-PrivateDnsZoneGroup')]",
+                      "properties": {
+                        "privateDnsZoneConfigs": [
+                          {
+                            "name": "[variables('blobPrivateDnsZoneName')]",
+                            "properties": {
+                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]"
+                            }
+                          }
+                        ]
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Network/privateEndpoints', parameters('storagePleBlobName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                      "apiVersion": "2020-06-01",
+                      "name": "[format('{0}/{1}', variables('blobPrivateDnsZoneName'), uniqueString(resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))))]",
+                      "location": "global",
+                      "properties": {
+                        "registrationEnabled": false,
+                        "virtualNetwork": {
+                          "id": "[parameters('virtualNetworkId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2020-06-01",
+                      "name": "[variables('filePrivateDnsZoneName')]",
+                      "location": "global"
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+                      "apiVersion": "2022-01-01",
+                      "name": "[format('{0}/{1}', parameters('storagePleFileName'), 'flie-PrivateDnsZoneGroup')]",
+                      "properties": {
+                        "privateDnsZoneConfigs": [
+                          {
+                            "name": "[variables('filePrivateDnsZoneName')]",
+                            "properties": {
+                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('filePrivateDnsZoneName'))]"
+                            }
+                          }
+                        ]
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('filePrivateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Network/privateEndpoints', parameters('storagePleFileName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                      "apiVersion": "2020-06-01",
+                      "name": "[format('{0}/{1}', variables('filePrivateDnsZoneName'), uniqueString(resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))))]",
+                      "location": "global",
+                      "properties": {
+                        "registrationEnabled": false,
+                        "virtualNetwork": {
+                          "id": "[parameters('virtualNetworkId')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', variables('filePrivateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "storageId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                    }
+                  }
+                }
+              }
             }
           ],
           "outputs": {
             "aiservicesID": {
               "type": "string",
-              "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName'))]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServicesId.value]"
             },
             "aiservicesTarget": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2023-05-01').endpoint]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServicesEndpoint.value]"
             },
             "storageId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('st{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.storageId.value]"
             },
             "keyvaultId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('kv-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.keyvaultId.value]"
             },
             "containerRegistryId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryNameCleaned'))]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('cr{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.containerRegistryId.value]"
             },
             "applicationInsightsId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('appi-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.applicationInsightsId.value]"
             }
           }
         }
@@ -706,9 +1235,6 @@
           "uniqueSuffix": {
             "value": "[variables('uniqueSuffix')]"
           },
-          "vnetRgName": {
-            "value": "[parameters('vnetRgName')]"
-          },
           "vnetResourceId": {
             "value": "[variables('vnetResourceId')]"
           },
@@ -740,8 +1266,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "4234031374643649801"
+              "version": "0.28.1.47646",
+              "templateHash": "17862590385203822728"
             }
           },
           "parameters": {
@@ -816,12 +1342,6 @@
               "type": "string",
               "metadata": {
                 "description": "Resource Id of the virtual network to deploy the resource into."
-              }
-            },
-            "vnetRgName": {
-              "type": "string",
-              "metadata": {
-                "description": "Resource group name of the virtual network to deploy the resource into."
               }
             },
             "subnetResourceId": {
@@ -915,202 +1435,77 @@
               ]
             },
             {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
-              "name": "[format('{0}-DNS', parameters('aiHubName'))]",
-              "subscriptionId": "[subscription().subscriptionId]",
-              "resourceGroup": "[parameters('vnetRgName')]",
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.api.azureml.ms",
+              "location": "global",
+              "tags": {},
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.notebooks.azure.net",
+              "location": "global",
+              "tags": {},
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.api.azureml.ms', format('{0}-api', uniqueString(parameters('vnetResourceId'))))]",
+              "location": "global",
               "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
+                "virtualNetwork": {
+                  "id": "[parameters('vnetResourceId')]"
                 },
-                "mode": "Incremental",
-                "parameters": {},
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "6978430990670910028"
-                    }
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Network/privateDnsZones",
-                      "apiVersion": "2020-06-01",
-                      "name": "privatelink.api.azureml.ms",
-                      "location": "global",
-                      "tags": {},
-                      "properties": {}
-                    },
-                    {
-                      "type": "Microsoft.Network/privateDnsZones",
-                      "apiVersion": "2020-06-01",
-                      "name": "privatelink.notebooks.azure.net",
-                      "location": "global",
-                      "tags": {},
-                      "properties": {}
-                    }
-                  ],
-                  "outputs": {
-                    "notebookDnsZoneId": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.notebooks.azure.net')]"
-                    },
-                    "apiDnsZoneId": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.api.azureml.ms')]"
-                    }
-                  }
-                }
+                "registrationEnabled": false
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.api.azureml.ms')]"
               ]
             },
             {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
-              "name": "[format('{0}-VirtualNetworkLink', parameters('aiHubName'))]",
-              "subscriptionId": "[subscription().subscriptionId]",
-              "resourceGroup": "[parameters('vnetRgName')]",
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.notebooks.azure.net', format('{0}-notebooks', uniqueString(parameters('vnetResourceId'))))]",
+              "location": "global",
               "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
+                "virtualNetwork": {
+                  "id": "[parameters('vnetResourceId')]"
                 },
-                "mode": "Incremental",
-                "parameters": {
-                  "virtualNetworkId": {
-                    "value": "[parameters('vnetResourceId')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "13903297334220040519"
-                    }
-                  },
-                  "parameters": {
-                    "virtualNetworkId": {
-                      "type": "string"
-                    }
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-                      "apiVersion": "2020-06-01",
-                      "name": "[format('privatelink.api.azureml.ms/{0}', uniqueString(parameters('virtualNetworkId')))]",
-                      "location": "global",
-                      "properties": {
-                        "virtualNetwork": {
-                          "id": "[parameters('virtualNetworkId')]"
-                        },
-                        "registrationEnabled": false
-                      }
-                    },
-                    {
-                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-                      "apiVersion": "2020-06-01",
-                      "name": "[format('privatelink.notebooks.azure.net/{0}', uniqueString(parameters('virtualNetworkId')))]",
-                      "location": "global",
-                      "properties": {
-                        "virtualNetwork": {
-                          "id": "[parameters('virtualNetworkId')]"
-                        },
-                        "registrationEnabled": false
-                      }
-                    }
-                  ]
-                }
+                "registrationEnabled": false
               },
               "dependsOn": [
-                "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', parameters('aiHubName')))]"
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.notebooks.azure.net')]"
               ]
             },
             {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
-              "name": "[format('{0}-dnsZoneGroup', parameters('aiHubName'))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', variables('privateEndpointName'), 'default')]",
               "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "privateEndpointName": {
-                    "value": "[variables('privateEndpointName')]"
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "privatelink-api-azureml-ms",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.api.azureml.ms')]"
+                    }
                   },
-                  "apiDnsZoneId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', parameters('aiHubName'))), '2022-09-01').outputs.apiDnsZoneId.value]"
-                  },
-                  "notebookDnsZoneId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', parameters('aiHubName'))), '2022-09-01').outputs.notebookDnsZoneId.value]"
+                  {
+                    "name": "privatelink-notebooks-azure-net",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.notebooks.azure.net')]"
+                    }
                   }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "17559992792065827685"
-                    }
-                  },
-                  "parameters": {
-                    "privateEndpointName": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Name for the endpoint"
-                      }
-                    },
-                    "notebookDnsZoneId": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Dns Zone ID for notebook private link"
-                      }
-                    },
-                    "apiDnsZoneId": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Dns Zone ID for API private link"
-                      }
-                    }
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-                      "apiVersion": "2023-11-01",
-                      "name": "[format('{0}/default', parameters('privateEndpointName'))]",
-                      "properties": {
-                        "privateDnsZoneConfigs": [
-                          {
-                            "name": "privatelink-api-azureml-ms",
-                            "properties": {
-                              "privateDnsZoneId": "[parameters('apiDnsZoneId')]"
-                            }
-                          },
-                          {
-                            "name": "privatelink-notebooks-azure-net",
-                            "properties": {
-                              "privateDnsZoneId": "[parameters('notebookDnsZoneId')]"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
+                ]
               },
               "dependsOn": [
-                "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRgName')), 'Microsoft.Resources/deployments', format('{0}-DNS', parameters('aiHubName')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.api.azureml.ms')]",
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.notebooks.azure.net')]",
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', 'privatelink.api.azureml.ms', format('{0}-api', uniqueString(parameters('vnetResourceId'))))]",
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', 'privatelink.notebooks.azure.net', format('{0}-notebooks', uniqueString(parameters('vnetResourceId'))))]"
               ]
             }
           ],
