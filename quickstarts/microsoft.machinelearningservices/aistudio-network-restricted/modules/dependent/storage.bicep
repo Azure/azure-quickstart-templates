@@ -40,7 +40,7 @@ var blobPrivateDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}
 
 var filePrivateDnsZoneName = 'privatelink.file.${environment().suffixes.storage}'
 
-resource storage 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageNameCleaned
   location: location
   tags: tags
@@ -149,7 +149,7 @@ resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource blobPrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+resource blobPrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
   parent: storagePrivateEndpointBlob
   name: 'blob-PrivateDnsZoneGroup'
   properties:{
@@ -207,19 +207,5 @@ resource filePrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNe
     }
   }
 }
-
-// resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-//   name: '${storageNameCleaned}-identity'
-//   location: location
-// }
-
-// resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: guid(storage.id, managedIdentity.id, 'Storage Blob Data Contributor')
-//   scope: resourceGroup()
-//   properties: {
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-//     principalId: managedIdentity.properties.principalId
-//   }
-// }
 
 output storageId string = storage.id
