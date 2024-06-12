@@ -23,7 +23,7 @@ var privateDnsZoneName = 'privatelink${environment().suffixes.acrLoginServer}'
 
 var groupName = 'registry' 
 
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: containerRegistryNameCleaned
   location: location
   tags: tags
@@ -55,7 +55,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' =
   }
 }
 
-resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
+resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: containerRegistryPleName
   location: location
   tags: tags
@@ -82,7 +82,7 @@ resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
   parent: containerRegistryPrivateEndpoint
   name: '${groupName}-PrivateDnsZoneGroup'
   properties:{

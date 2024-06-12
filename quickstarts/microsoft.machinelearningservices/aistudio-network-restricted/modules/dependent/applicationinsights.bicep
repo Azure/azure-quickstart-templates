@@ -11,7 +11,7 @@ param applicationInsightsName string
 @description('Log Analytics resource name')
 param logAnalyticsWorkspaceName string 
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsWorkspaceName
   location: location
   properties: {

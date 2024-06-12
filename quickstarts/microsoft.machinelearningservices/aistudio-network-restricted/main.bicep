@@ -1,3 +1,5 @@
+// Execute this main file to deploy Azure AI studio resources in the basic security configuration
+
 // Parameters
 @minLength(2)
 @maxLength(12)

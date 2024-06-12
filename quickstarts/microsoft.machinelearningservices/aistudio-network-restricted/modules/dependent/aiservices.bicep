@@ -55,7 +55,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-resource aiServicesPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
+resource aiServicesPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: aiServicesPleName
   location: location
   tags: tags
@@ -111,7 +111,7 @@ resource openAiVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2
   }
 }
 
-resource aiServicesPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+resource aiServicesPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
   parent: aiServicesPrivateEndpoint
   name: 'default'
   properties:{
