@@ -9,10 +9,11 @@ param adminUsername string = 'azureuser'
 @secure()
 param adminPassword string
 
-var location = resourceGroup().location
+@description('The location into which the resources should be deployed.')
+param location string = resourceGroup().location
 
 // Create the virtual network
-resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: 'CoreVnet'
   location: location
   properties: {
@@ -48,13 +49,13 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
 }
 
 // Get the subnet reference
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' existing = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {
   parent: vnet
   name: 'default'
 }
 
 // Create a public IP address
-resource publicIp 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2023-11-01' = {
   name: 'windows-bastion-ip'
   location: location
   sku: {
@@ -66,7 +67,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
 }
 
 // Create a network interface
-resource nic 'Microsoft.Network/networkInterfaces@2022-01-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
   name: 'windows-bastion-nic'
   location: location
   properties: {
