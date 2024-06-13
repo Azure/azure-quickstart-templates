@@ -8,7 +8,7 @@ urlFragment: extended-zones-vm-create
 languages:
 - json
 ---
-# Create a virtual machine in an Extended Zone
+# Create a virtual machine in an Extended Zone 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/extended-zones-vm-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/extended-zones-vm-create/PublicDeployment.svg)
