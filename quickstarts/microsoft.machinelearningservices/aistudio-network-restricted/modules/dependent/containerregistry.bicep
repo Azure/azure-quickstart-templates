@@ -31,7 +31,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' =
     name: 'Premium'
   }
   properties: {
-    adminUserEnabled: true
+    adminUserEnabled: false
     dataEndpointEnabled: false
     networkRuleBypassOptions: 'AzureServices'
     networkRuleSet: {
@@ -46,7 +46,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' =
         days: 7
       }
       trustPolicy: {
-        status: 'disabled'
+        status: 'enabled'
         type: 'Notary'
       }
     }
