@@ -37,7 +37,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
   kind: 'AIServices'
   properties: {
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: 'Enabled'
     disableLocalAuth: true
     apiProperties: {
       statisticsEnabled: false
