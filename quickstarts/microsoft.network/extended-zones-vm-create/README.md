@@ -1,5 +1,5 @@
 ---
-description: This template allows you to deploy a simple VM in an Azure Extended Zone.
+description: This template create a virtual machine in an Extended Zone
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: extended-zones-vm-create
 languages:
 - json
 ---
-# Create a virtual machine in an Extended Zone 
+# Create a virtual machine in an Extended Zone
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/extended-zones-vm-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/extended-zones-vm-create/PublicDeployment.svg)
