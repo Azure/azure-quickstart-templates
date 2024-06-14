@@ -58,6 +58,9 @@ param desiredState string = 'Uninstalled'
 @description('The MTU (in bytes) signaled to the UE. The same MTU is set on the user plane data links for all data networks. The MTU set on the user plane access link is calculated to be 60 bytes greater than this value to allow for GTP encapsulation. ')
 param ueMtu int = 1440
 
+@description('Provide consent for Microsoft to access non-PII telemetry information from the packet core.')
+param allowSupportTelemetryAccess bool = true
+
 #disable-next-line BCP081
 resource existingMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-04-01' existing = {
   name: existingMobileNetworkName
@@ -107,6 +110,9 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       desiredState: desiredState
     }
     ueMtu: ueMtu
+    userConsent: {
+      allowSupportTelemetryAccess: allowSupportTelemetryAccess
+    }
   }
 
   #disable-next-line BCP081
