@@ -79,15 +79,6 @@ The steps are also summarized here:
 
     ![Screenshot showing client secret value.](./media/create-client-secret-3.png)
 
-#### Assign the Service Principal permissions on the subscription
-
-1. Navigate to the target Subscription in the Portal
-1. Select **Access Control (IAM)** on the left menu
-1. Click **Add > Role Assignment**
-1. Select the **Azure Resource Bridge Deployment Role**
-1. Click **Next**, then **+Select Member** and search by the Application ID copied earlier
-1. Click **Review + Assign**
-
 ### Step 3: Register the Microsoft.AzureStackHCI Resource Provider in your subscription
 
 If you haven't deployed an Azure Stack HCI cluster in this subscription previously, [register the Microsoft.AzureStackHCI Resource Provider](https://learn.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider) in your subscription.
@@ -95,6 +86,8 @@ If you haven't deployed an Azure Stack HCI cluster in this subscription previous
 ### Step 4: Update the deployment parameter file
 
 Create a parameter file with values as described in the following table, using [the sample parameter file](https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/azuredeploy.parameters.json) as a starting place.
+
+Three node switchless deployments must disable storage auto IP assignment and specify storage IPs in the `storageNetworks` parameter. Note that all nodes must have the same NIC names and the same storage VLAN configuration for all storage NICs. See [3 node switchless sample parameter file](https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs/azuredeploy.parameters.3nodeswitchlesssample.json).
 
 | Parameter | Description | Default Value | Example Value |  
 |--------------------------------|--------------------------------------------|------------------|-----------------------------------------------------|
@@ -106,6 +99,7 @@ Create a parameter file with values as described in the following table, using [
 | `localAdminUsername`           | The local admin username for the nodes in the deployment.          | | `Administrator` |
 | `localAdminPassword`           | The local admin password for the nodes in the deployment.          | | |
 | `arbDeploymentAppId`           | The application ID of the precreated App Registration for the Arc Resource Bridge deployment.          | | `5dd54f74-1eb0-46e9-8f00-c7367799c545` |
+| `arbDeploymentSPObjectId`      | The service principal object ID of the of the precreated App Registration for the Arc Resource Bridge deployment. To get this objectId property, run `Get-AzADServicePrincipal -ApplicationId <arbDeploymentAppId>` ||`d05337da-2047-441c-8d52-9fc816917325` |
 | `arbDeploymentServicePrincipalSecret` | A client secret of the precreated App Registration for the Arc Resource Bridge deployment.          | | `-q28Q~LWB_EXAMPLE_ni.XN3YSLK__hsdR4l2ZSNbMm` |
 | `hciResourceProviderObjectId`  | The object ID of the Azure Stack HCI Resource Provider in your tenant. To get this ID, run `Get-AzADServicePrincipal -ApplicationId 1412d89f-b8a8-4111-b4fd-e82905cbd85d` or search for **Azure Stack HCI Resource Provider** in Microsoft Entra and copy the object ID. This value will be unique for each Entra ID tenant   | | `1ade2a15-1da8-4c0b-9f2d-fafc353a9fb1` |
 | `clusterName`                  | The name of the Azure Stack HCI cluster - this must be a valid Active Directory computer name and will be the name of your cluster in Azure.       | | `ashci-den01` |
@@ -126,11 +120,11 @@ Create a parameter file with values as described in the following table, using [
 | `endingIPAddress`              |The ending IP address for the Infrastructure Network IP pool. There must be at least 6 IPs between startingIPAddress and endingIPAddress and this pool should not include the node IPs||`192.168.0.19`|
 | `subnetMask`                   |The subnet mask for deploying a HCI cluster||`255.255.252.0`|
 | `storageConfigurationMode`     | The storage volume configuration mode | Express| `InfraOnly`|
-|`enableStorageAutoIp`           | The enable storage auto IP value for deploying an HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured before deployment and this value set to false| true| `false`|
+|`enableStorageAutoIp`           | The enable storage auto IP value for deploying an HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured in the `storageNetworks` parameter and this value set to false| true| `false`|
 
 ## Deploy using Bicep template
 
-Now that the prerequisites and parameter file are complete, you can start the cluster deployment. If you haven't downloaded the template files already, you can find them in the [Azure QuickStart Templates GitHub repository](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs). 
+Now that the prerequisites and parameter file are complete, you can start the cluster deployment. If you haven't downloaded the template files already, you can find them in the [Azure QuickStart Templates GitHub repository](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.azurestackhci/create-cluster-with-prereqs).
 
 When deploying Azure Stack HCI clusters using a Bicep, ARM, or REST API, the deployment goes through a validate phase followed by a deployment phase. To specify the phase of the deployment, use the `deploymentMode` property of the deploymentSettings resource. In this Bicep template, `deploymentMode` has a default value of `Validate`. The following sections demonstrate how to initiate each phase of deployment with Azure CLI or Azure Bicep.
 
@@ -173,4 +167,4 @@ New-AzResourceGroupDeployment -Name 'hcicluster' -ResourceGroupName <yourResourc
 Learn more:
 
 - [About Arc VM management](https://learn.microsoft.com/azure-stack/hci/manage/azure-arc-vm-management-overview)
-- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: ``Tags: `
+- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: ``Tags: ``Tags: ``Tags: ``Tags: `

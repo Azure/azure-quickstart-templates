@@ -23,7 +23,7 @@ param customLocationName string
 
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName)
 
-resource marketplaceGalleryImage 'Microsoft.AzureStackHCI/marketplaceGalleryImages@2023-09-01-preview' = {
+resource marketplaceGalleryImage 'Microsoft.AzureStackHCI/marketplaceGalleryImages@2024-01-01' = {
   name: 'MicrosoftWindowsServer'
   location: location
   extendedLocation: {
@@ -43,7 +43,7 @@ resource marketplaceGalleryImage 'Microsoft.AzureStackHCI/marketplaceGalleryImag
   }
 }
 
-resource virtualNetwork 'Microsoft.AzureStackHCI/logicalNetworks@2023-09-01-preview' = {
+resource virtualNetwork 'Microsoft.AzureStackHCI/logicalNetworks@2024-01-01' = {
   name: logicalNetworkName
   location: location
   extendedLocation: {

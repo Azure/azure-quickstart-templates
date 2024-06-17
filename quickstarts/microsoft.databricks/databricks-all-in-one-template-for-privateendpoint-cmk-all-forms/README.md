@@ -1,15 +1,14 @@
 ---
-description: This template allows you to create an Azure Databricks workspace with Privateendpoint and all three forms of CMK.
+description: This template allows you to create an Azure Databricks workspace with PrivateEndpoint and managed services and CMK with DBFS encryption.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: databricks-all-in-one-template-for-privateendpoint-cmk-all-forms
 languages:
-- bicep
 - json
 ---
-# Deploy an Azure Databricks Workspace with privateendpoint, managed svc & CMK & DBFS encryption
+# Deploy an Azure Databricks Workspace with PE,CMK all forms
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-privateendpoint-cmk-all-forms/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-privateendpoint-cmk-all-forms/PublicDeployment.svg)

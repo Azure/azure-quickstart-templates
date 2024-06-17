@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.26.54.24096",
-      "templateHash": "14519978340827826377"
+      "version": "0.27.1.19265",
+      "templateHash": "11433293135246897306"
     }
   },
   "definitions": {
@@ -45,6 +45,20 @@
         }
       }
     },
+    "storageAdapterIPInfoType": {
+      "type": "object",
+      "properties": {
+        "physicalNode": {
+          "type": "string"
+        },
+        "ipv4Address": {
+          "type": "string"
+        },
+        "subnetMask": {
+          "type": "string"
+        }
+      }
+    },
     "storageNetworksType": {
       "type": "object",
       "properties": {
@@ -53,6 +67,13 @@
         },
         "vlan": {
           "type": "string"
+        },
+        "storageAdapterIPInfo": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/storageAdapterIPInfoType"
+          },
+          "nullable": true
         }
       }
     },
@@ -77,10 +98,11 @@
       "defaultValue": "Validate",
       "allowedValues": [
         "Validate",
-        "Deploy"
+        "Deploy",
+        "LocksOnly"
       ],
       "metadata": {
-        "description": "First must pass Validate prior running Deploy"
+        "description": "First must pass with this parameter set to Validate prior running with it set to Deploy. If either Validation or Deployment phases fail, fix the issue, then resubmit the template with the same deploymentMode to retry. Use LocksOnly if the deployment was not completed by executing this template (for example, if the Re-run Deployment option from the Portal was used instead)."
       }
     },
     "deploymentPrefix": {
@@ -119,6 +141,12 @@
       "type": "string",
       "metadata": {
         "description": "The application ID of the pre-created App Registration for the Arc Resource Bridge deployment"
+      }
+    },
+    "arbDeploymentSPObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "The service principal object ID of the pre-created App Registration for the Arc Resource Bridge deployment"
       }
     },
     "arbDeploymentServicePrincipalSecret": {
@@ -293,7 +321,8 @@
         "input": {
           "name": "[format('StorageNetwork{0}', add(copyIndex('storageNetworkList'), 1))]",
           "networkAdapterName": "[parameters('storageNetworks')[copyIndex('storageNetworkList')].adapterName]",
-          "vlanId": "[parameters('storageNetworks')[copyIndex('storageNetworkList')].vlan]"
+          "vlanId": "[parameters('storageNetworks')[copyIndex('storageNetworkList')].vlan]",
+          "storageAdapterIPInfo": "[tryGet(parameters('storageNetworks')[copyIndex('storageNetworkList')], 'storageAdapterIPInfo')]"
         }
       },
       {
@@ -310,7 +339,7 @@
     "cluster": {
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
-      "apiVersion": "2024-01-01",
+      "apiVersion": "2024-02-15-preview",
       "name": "[parameters('clusterName')]",
       "identity": {
         "type": "SystemAssigned"
@@ -322,8 +351,9 @@
       ]
     },
     "deploymentSettings": {
+      "condition": "[not(equals(parameters('deploymentMode'), 'LocksOnly'))]",
       "type": "Microsoft.AzureStackHCI/clusters/deploymentSettings",
-      "apiVersion": "2024-01-01",
+      "apiVersion": "2024-02-15-preview",
       "name": "[format('{0}/{1}', parameters('clusterName'), 'default')]",
       "properties": {
         "arcNodeResourceIds": "[variables('arcNodeResourceIds')]",
@@ -539,6 +569,9 @@
           },
           "clusterWitnessStorageAccountName": {
             "value": "[variables('clusterWitnessStorageAccountName')]"
+          },
+          "arbDeploymentSPObjectId": {
+            "value": "[parameters('arbDeploymentSPObjectId')]"
           }
         },
         "template": {
@@ -547,8 +580,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.26.54.24096",
-              "templateHash": "13663377238455056176"
+              "version": "0.27.1.19265",
+              "templateHash": "4425425196920903570"
             }
           },
           "parameters": {
@@ -592,6 +625,9 @@
               "type": "securestring"
             },
             "arbDeploymentAppId": {
+              "type": "string"
+            },
+            "arbDeploymentSPObjectId": {
               "type": "string"
             },
             "arbDeploymentServicePrincipalSecret": {
@@ -823,10 +859,180 @@
                 "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]"
               ]
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "ashciARBSPRoleAssignment",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "arbDeploymentSPObjectId": {
+                    "value": "[parameters('arbDeploymentSPObjectId')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.27.1.19265",
+                      "templateHash": "6713618913402895520"
+                    }
+                  },
+                  "parameters": {
+                    "arbDeploymentSPObjectId": {
+                      "type": "string"
+                    }
+                  },
+                  "variables": {
+                    "ARBDeploymentRoleID": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7b1f81f9-4196-4058-8aae-762e593270df')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2022-04-01",
+                      "name": "[guid('ARBServicePrincipalResourceBridgeDeploymentRolePermissions', subscription().id, parameters('arbDeploymentSPObjectId'))]",
+                      "properties": {
+                        "roleDefinitionId": "[variables('ARBDeploymentRoleID')]",
+                        "principalId": "[parameters('arbDeploymentSPObjectId')]",
+                        "principalType": "ServicePrincipal",
+                        "description": "Created by Azure Stack HCI deployment template"
+                      }
+                    }
+                  ]
+                }
+              }
             }
           ]
         }
       }
+    },
+    "lockResources": {
+      "condition": "[not(equals(parameters('deploymentMode'), 'Validate'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "lockResources",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "clusterName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "clusterNodeNames": {
+            "value": "[parameters('clusterNodeNames')]"
+          },
+          "keyVaultName": {
+            "value": "[variables('keyVaultName')]"
+          },
+          "clusterWitnessStorageAccountName": {
+            "value": "[variables('clusterWitnessStorageAccountName')]"
+          },
+          "customLocationName": {
+            "value": "[variables('customLocationName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.27.1.19265",
+              "templateHash": "7161635906461593382"
+            }
+          },
+          "parameters": {
+            "clusterName": {
+              "type": "string"
+            },
+            "customLocationName": {
+              "type": "string"
+            },
+            "clusterWitnessStorageAccountName": {
+              "type": "string"
+            },
+            "clusterNodeNames": {
+              "type": "array"
+            },
+            "keyVaultName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/locks",
+              "apiVersion": "2020-05-01",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+              "name": "DeleteLock",
+              "properties": {
+                "level": "CanNotDelete"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/locks",
+              "apiVersion": "2020-05-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('clusterWitnessStorageAccountName'))]",
+              "name": "DeleteLock",
+              "properties": {
+                "level": "CanNotDelete"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/locks",
+              "apiVersion": "2020-05-01",
+              "scope": "[format('Microsoft.ExtendedLocation/customLocations/{0}', parameters('customLocationName'))]",
+              "name": "DeleteLock",
+              "properties": {
+                "level": "CanNotDelete"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/locks",
+              "apiVersion": "2020-05-01",
+              "scope": "[format('Microsoft.AzureStackHCI/clusters/{0}', parameters('clusterName'))]",
+              "name": "DeleteLock",
+              "properties": {
+                "level": "CanNotDelete"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/locks",
+              "apiVersion": "2020-05-01",
+              "scope": "[format('Microsoft.ResourceConnector/appliances/{0}', format('{0}-arcbridge', parameters('clusterName')))]",
+              "name": "DeleteLock",
+              "properties": {
+                "level": "CanNotDelete"
+              }
+            },
+            {
+              "copy": {
+                "name": "lock_hciNodes",
+                "count": "[length(range(0, length(parameters('clusterNodeNames'))))]"
+              },
+              "type": "Microsoft.Authorization/locks",
+              "apiVersion": "2020-05-01",
+              "scope": "[format('Microsoft.HybridCompute/machines/{0}', parameters('clusterNodeNames')[range(0, length(parameters('clusterNodeNames')))[copyIndex()]])]",
+              "name": "DeleteLock",
+              "properties": {
+                "level": "CanNotDelete"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "deploymentSettings"
+      ]
     }
   }
 }

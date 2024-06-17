@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.6.18.56646",
-      "templateHash": "10059310610884959034"
+      "version": "0.27.1.19265",
+      "templateHash": "8795390477732621107"
     }
   },
   "parameters": {
@@ -23,18 +23,25 @@
       }
     },
     "administratorLogin": {
-      "type": "secureString",
+      "type": "securestring",
       "minLength": 1,
       "metadata": {
         "description": "Database administrator login name"
       }
     },
     "administratorLoginPassword": {
-      "type": "secureString",
-      "maxLength": 128,
+      "type": "securestring",
       "minLength": 8,
+      "maxLength": 128,
       "metadata": {
         "description": "Database administrator password"
+      }
+    },
+    "sonarqubeDockerTag": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Sonarqube docker tag"
       }
     },
     "postgresFlexibleServersSkuTier": {
@@ -118,7 +125,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -199,7 +206,7 @@
     },
     {
       "type": "Microsoft.DBforPostgreSQL/flexibleServers",
-      "apiVersion": "2021-06-01",
+      "apiVersion": "2023-12-01-preview",
       "name": "[variables('postgresFlexibleServersName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -240,7 +247,7 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2021-03-01",
+      "apiVersion": "2023-12-01",
       "name": "[variables('appServicePlanName')]",
       "location": "[parameters('location')]",
       "kind": "linux",
@@ -253,7 +260,7 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2021-03-01",
+      "apiVersion": "2023-12-01",
       "name": "[parameters('siteName')]",
       "location": "[parameters('location')]",
       "identity": {
@@ -266,7 +273,7 @@
         "siteConfig": {
           "minTlsVersion": "1.2",
           "ftpsState": "Disabled",
-          "linuxFxVersion": "DOCKER|sonarqube",
+          "linuxFxVersion": "[format('DOCKER|sonarqube:{0}', parameters('sonarqubeDockerTag'))]",
           "appSettings": [
             {
               "name": "WEBSITES_PORT",
@@ -278,7 +285,7 @@
             },
             {
               "name": "SONAR_JDBC_URL",
-              "value": "[format('jdbc:postgresql://{0}:5432/postgres', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('postgresFlexibleServersName'))).fullyQualifiedDomainName)]"
+              "value": "[format('jdbc:postgresql://{0}:5432/postgres', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('postgresFlexibleServersName')), '2023-12-01-preview').fullyQualifiedDomainName)]"
             },
             {
               "name": "SONAR_JDBC_USERNAME",

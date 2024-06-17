@@ -53,6 +53,7 @@ param clusterSkuTier string = createNewDatastore ? 'Standard' : ''
 
 @description('The total number of SQL targets to add to the watcher. Must match the number of elements in the targetProperties array.')
 @minValue(0)
+@maxValue(50)
 param targetCount int
 
 @description('The array of SQL target properties. Each element of the array defines a SQL target.')
@@ -60,6 +61,7 @@ param targetProperties array
 
 @description('The total number of managed private links to add to the watcher. Must match the number of elements in the privateLinkProperties array.')
 @minValue(0)
+@maxValue(101)
 param privateLinkCount int
 
 @description('The array of managed private link properties. Each element of the array defines a managed private link the watcher will use to connect to an Azure resource.')
@@ -120,6 +122,9 @@ module dataStoreRoleAssignment './adxRoleAssignment.bicep' =
     watcherResourceId: watcher.id
     watcherIdentity: watcher.identity
   }
+  dependsOn: [
+    newDataStore
+  ]
 }
 
 // Add SQL targets to the watcher. Set target properties conditionally based on target type and authentication type.
@@ -194,6 +199,8 @@ resource sqlEpAadTargets 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-
         targetProperties[i].targetElasticPoolName
       )
       anchorDatabaseResourceId: resourceId(
+        targetProperties[i].targetLogicalServerSubscriptionId,
+        targetProperties[i].targetLogicalServerResourceGroupName,
         'Microsoft.Sql/servers/databases',
         targetProperties[i].targetLogicalServerName,
         targetProperties[i].targetAnchorDatabaseName
@@ -222,6 +229,8 @@ resource sqlEpSqlTargets 'Microsoft.DatabaseWatcher/watchers/targets@2023-09-01-
         targetProperties[i].targetElasticPoolName
       )
       anchorDatabaseResourceId: resourceId(
+        targetProperties[i].targetLogicalServerSubscriptionId,
+        targetProperties[i].targetLogicalServerResourceGroupName,
         'Microsoft.Sql/servers/databases',
         targetProperties[i].targetLogicalServerName,
         targetProperties[i].targetAnchorDatabaseName
