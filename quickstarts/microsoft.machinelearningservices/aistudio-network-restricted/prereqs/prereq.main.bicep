@@ -27,21 +27,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
         name: 'default'
         properties: {
           addressPrefix: '10.1.0.0/24'
-          serviceEndpoints: [
-            {
-              service: 'Microsoft.CognitiveServices'
-            }
-            {
-              service: 'Microsoft.ContainerRegistry'
-            }
-            {
-              service: 'Microsoft.KeyVault'
-            }
-            {
-              service: 'Microsoft.Storage'
-            }
-            
-          ]
         }
       }
     ]

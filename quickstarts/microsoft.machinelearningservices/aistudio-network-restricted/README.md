@@ -59,6 +59,20 @@ This template expects that you have private VNet setup for your organization, an
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI hub (Azure Machine Learning RP workspace of kind 'hub') |
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
 
+## Deployment
+
+With Azure CLI:
+
+```sh
+# Pre-reqs, if required
+az group create --name networkRg --location westus
+az deployment group create --resource-group networkRg --template-file prereqs/prereq.main.bicep
+
+# Main Deployment
+az group create --name privateAiHub --location westus
+az deployment group create --resource-group privateAiHub --template-file main.bicep
+```
+
 ## Learn more
 
 If you are new to Azure AI Studio, see:
