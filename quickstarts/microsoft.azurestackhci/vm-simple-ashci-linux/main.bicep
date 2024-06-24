@@ -20,7 +20,7 @@ var galleryImageId = resourceId('microsoft.azurestackhci/galleryimages', imageNa
 var logicalNetworkId = resourceId('microsoft.azurestackhci/logicalnetworks', hciLogicalNetworkName) // full logical network ID
 
 // precreate an Arc Connected Machine with an identity--used for zero-touch onboarding of the Arc VM during deployment
-resource hybridComputeMachine 'Microsoft.HybridCompute/machines@2023-10-03-preview' = {
+resource hybridComputeMachine 'Microsoft.HybridCompute/machines@2024-05-20-preview' = {
   name: name
   location: location
   kind: 'HCI'
@@ -29,7 +29,7 @@ resource hybridComputeMachine 'Microsoft.HybridCompute/machines@2023-10-03-previ
   }
 }
 
-resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
+resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2024-01-01' = {
   name: nicName
   location: location
   extendedLocation: {
@@ -52,7 +52,7 @@ resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
   }
 }
 
-resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09-01-preview' = {
+resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2024-01-01' = {
   name: 'default' // value must be 'default' per 2023-09-01-preview
   properties: {
     hardwareProfile: {
