@@ -204,3 +204,15 @@ resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' 
     retentionInterval: 'P1D'
   }
 }
+
+// resource logs 'Microsoft.Resources/deploymentScripts/logs@2020-10-01' existing = {
+//   parent: imageTemplate_build
+//   name: 'default'
+// }
+
+//output artifactsLocation string = _artifactsLocation
+//output customizerScriptName string = customizerScriptName
+
+// output imageTemplate_build_logs string = logs.properties.log
+//output logsArr array = split(logs.properties.log, '\n')
+output string_ouput string = 'testing'
