@@ -88,7 +88,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
           description: 'Required for workers communication with Databricks control plane.'
           protocol: 'Tcp'
           sourcePortRange: '*'
-          destinationPortRange: '443,8443-8451,3306'
+          destinationPortRanges: ['443','8443-8451','3306']
           sourceAddressPrefix: 'VirtualNetwork'
           destinationAddressPrefix: 'AzureDatabricks'
           access: 'Allow'
