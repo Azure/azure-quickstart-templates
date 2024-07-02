@@ -61,7 +61,6 @@ Previously, when using a customer-managed key, Azure Machine Learning creates a 
 
 Before using this template, you must meet the following requirements:
 
-* The __Azure Machine Learning__ service principal must have __contributor__ access to your Azure subscription.
 * You must have an existing Azure Key Vault that contains an encryption key.
 * The Azure Key Vault must exist in the same Azure region where you will create the Azure Machine Learning workspace.
 
