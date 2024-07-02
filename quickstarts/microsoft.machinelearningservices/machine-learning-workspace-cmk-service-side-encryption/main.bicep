@@ -12,6 +12,7 @@ param environment string
   'brazilsouth'
   'canadacentral'
   'centralus'
+  'centralindia'
   'eastasia'
   'eastus'
   'eastus2'
