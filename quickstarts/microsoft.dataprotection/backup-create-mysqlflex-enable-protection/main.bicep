@@ -6,7 +6,7 @@ param vaultName string = 'vault${uniqueString(resourceGroup().id)}'
   'LocallyRedundant'
   'GeoRedundant'
 ])
-param vaultStorageRedundancy string = 'GeoRedundant'
+param vaultStorageRedundancy string = 'LocallyRedundant'
 
 @description('Name of the Backup Policy')
 param backupPolicyName string = 'policy${uniqueString(resourceGroup().id)}'
@@ -45,11 +45,11 @@ param skuName string = 'Standard_B1s'
 
 @description('Azure database for MySQL pricing tier')
 @allowed([
-  'Basic'
+  'Burstable'
   'GeneralPurpose'
   'MemoryOptimized'
 ])
-param skuTier string = 'GeneralPurpose'
+param skuTier string = 'Burstable'
 
 @description('Azure database for MySQL Flexible Server Storage Size in GB ')
 param storageSizeGB int = 20
