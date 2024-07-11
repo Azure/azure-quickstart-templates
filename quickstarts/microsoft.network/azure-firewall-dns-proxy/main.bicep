@@ -50,13 +50,13 @@ param prodVmName string = 'ProdVm'
 param vmSize string = 'Standard_D4s_v3'
 
 @description('The publisher of the image from which to launch the virtual machine.')
-param imagePublisher string = 'Canonical'
+param imagePublisher string = 'MicrosoftCBLMariner'
 
 @description('The offer of the image from which to launch the virtual machine.')
-param imageOffer string = '0001-com-ubuntu-server-jammy'
+param imageOffer string = 'cbl-mariner'
 
 @description('The SKU of the image from which to launch the virtual machine.')
-param imageSku string = '22_04-lts-gen2'
+param imageSku string = 'cbl-mariner-2-gen2'
 
 @description('Specifies the type of authentication when accessing the Virtual Machine. SSH key is recommended.')
 @allowed([
@@ -289,6 +289,9 @@ var linuxConfiguration = {
     ]
   }
   provisionVMAgent: true
+  patchSettings: {
+      patchMode: 'AutomaticByPlatform'
+  }
 }
 var adlsStorageAccountId = adlsStorageAccount.id
 var blobStorageAccountId = blobStorageAccount.id
@@ -908,6 +911,9 @@ resource dnsVmNic 'Microsoft.Network/networkInterfaces@2023-09-01' = if (deployC
 resource dnsVm 'Microsoft.Compute/virtualMachines@2023-09-01' = if (deployCustomDnsForwarder) {
   name: dnsVmName
   location: location
+  tags: {
+      AzSecPackAutoConfigReady: true
+  }
   properties: {
     availabilitySet: {
       id: dnsAvailabilitySet.id
@@ -1066,6 +1072,9 @@ resource devStorageBlobDataContributorRoleAssignmentGuid 'Microsoft.Authorizatio
 resource devVm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: devVmName
   location: location
+  tags: {
+      AzSecPackAutoConfigReady: true
+  }
   identity: {
     type: 'SystemAssigned'
   }
@@ -1235,6 +1244,9 @@ resource prodStorageBlobDataContributorRoleAssignmentGuid 'Microsoft.Authorizati
 resource prodVm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: prodVmName
   location: location
+  tags: {
+      AzSecPackAutoConfigReady: true
+  }
   identity: {
     type: 'SystemAssigned'
   }
