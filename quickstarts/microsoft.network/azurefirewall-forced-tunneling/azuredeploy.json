@@ -118,17 +118,20 @@
                 }
             }
         ],
-        "linuxConfiguration": {
-            "disablePasswordAuthentication": true,
-            "ssh": {
-                "publicKeys": [
-                    {
-                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-                        "keyData": "[parameters('adminPasswordOrKey')]"
-                    }
-                ]
+      "linuxConfiguration": {
+        "disablePasswordAuthentication": true,
+        "ssh": {
+          "publicKeys": [
+            {
+              "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+              "keyData": "[parameters('adminPasswordOrKey')]"
             }
+          ]
+        },
+        "patchSettings": {
+          "patchMode": "AutomaticByPlatform"
         }
+      }
     },
     "resources": [
         {
@@ -424,96 +427,102 @@
                 ]
             }
         },
-        {
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2020-12-01",
-            "name": "JumpBox",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "Canonical",
-                        "offer": "UbuntuServer",
-                        "sku": "18.04-LTS",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "createOption": "FromImage"
-                    }
-                },
-                "osProfile": {
-                    "computerName": "JumpBox",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPasswordOrKey')]",
-                    "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
-                        }
-                    ]
-                },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": true,
-                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
-                    }
-                }
-            }
+      {
+        "type": "Microsoft.Compute/virtualMachines",
+        "apiVersion": "2020-12-01",
+        "name": "JumpBox",
+        "location": "[parameters('location')]",
+        "tags": {
+          "AzSecPackAutoConfigReady": "true"
         },
-        {
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2020-12-01",
-            "name": "Server",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "Canonical",
-                        "offer": "UbuntuServer",
-                        "sku": "18.04-LTS",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "createOption": "FromImage"
-                    }
-                },
-                "osProfile": {
-                    "computerName": "Server",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPasswordOrKey')]",
-                    "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
-                        }
-                    ]
-                },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": true,
-                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
-                    }
-                }
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+          "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
+        ],
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[parameters('vmSize')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "MicrosoftCBLMariner",
+              "offer": "cbl-mariner",
+              "sku": "cbl-mariner-2-gen2",
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage"
             }
+          },
+          "osProfile": {
+            "computerName": "JumpBox",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
+              }
+            ]
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": true,
+              "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
+            }
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Compute/virtualMachines",
+        "apiVersion": "2020-12-01",
+        "name": "Server",
+        "location": "[parameters('location')]",
+        "tags": {
+          "AzSecPackAutoConfigReady": "true"
         },
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+          "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
+        ],
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[parameters('vmSize')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "MicrosoftCBLMariner",
+              "offer": "cbl-mariner",
+              "sku": "cbl-mariner-2-gen2",
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage"
+            }
+          },
+          "osProfile": {
+            "computerName": "Server",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
+              }
+            ]
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": true,
+              "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
+            }
+          }
+        }
+      },
         {
             "type": "Microsoft.Network/azureFirewalls",
             "apiVersion": "2020-07-01",
