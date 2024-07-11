@@ -120,6 +120,9 @@ resource routeTable 'Microsoft.Network/routeTables@2023-09-01' = {
 resource clientVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: clientVirtualMachineName
   location: location
+  tags: { 
+    AzSecPackAutoConfigReady: true 
+  }
   zones: [
     '1'
   ]
@@ -129,9 +132,9 @@ resource clientVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
     }
     storageProfile: {
       imageReference: {
-        publisher: 'Canonical'
-        offer: '0001-com-ubuntu-server-jammy'
-        sku: '22_04-lts-gen2'
+        publisher: 'MicrosoftCBLMariner'
+        offer: 'cbl-mariner'
+        sku: 'cbl-mariner-2-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -147,6 +150,11 @@ resource clientVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
       computerName: clientVirtualMachineName
       adminUsername: adminUsername
       adminPassword: adminPassword
+      linuxConfiguration:{
+          patchSettings: { 
+          patchMode: 'AutomaticByPlatform'
+          }
+      }
     }
     networkProfile: {
       networkInterfaces: [
@@ -166,6 +174,9 @@ resource clientVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
 resource serverVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: serverVirtualMachineName
   location: location
+  tags: { 
+    AzSecPackAutoConfigReady: true 
+  }
   zones: [
     '1'
   ]
@@ -175,9 +186,9 @@ resource serverVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
     }
     storageProfile: {
       imageReference: {
-        publisher: 'Canonical'
-        offer: '0001-com-ubuntu-server-jammy'
-        sku: '22_04-lts-gen2'
+        publisher: 'MicrosoftCBLMariner'
+        offer: 'cbl-mariner'
+        sku: 'cbl-mariner-2-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -193,6 +204,11 @@ resource serverVirtualMachine 'Microsoft.Compute/virtualMachines@2023-09-01' = {
       computerName: serverVirtualMachineName
       adminUsername: adminUsername
       adminPassword: adminPassword
+      linuxConfiguration:{
+          patchSettings: { 
+          patchMode: 'AutomaticByPlatform'
+          }
+      }
     }
     networkProfile: {
       networkInterfaces: [
