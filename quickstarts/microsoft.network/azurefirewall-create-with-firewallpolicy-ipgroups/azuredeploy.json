@@ -121,6 +121,9 @@
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
+      },
+      "patchSettings": {
+        "patchMode": "AutomaticByPlatform"
       }
     },
     "networkSecurityGroupName": "[concat(variables('serversSubnetName'), '-nsg')]"
@@ -128,7 +131,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "name": "[parameters('ipgroups_name1')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -141,7 +144,7 @@
     },
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "name": "[parameters('ipgroups_name2')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -154,7 +157,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-09-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -165,7 +168,7 @@
     {
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('azfwRouteTableName')]",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "disableBgpRoutePropagation": false,
@@ -184,14 +187,14 @@
     {
       "comments": "Simple Network Security Group for subnet [variables('serversSubnetName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2022-07-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -238,7 +241,7 @@
     {
       "name": "[concat(variables('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -255,7 +258,7 @@
     {
       "name": "[variables('jumpBoxPublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
@@ -264,7 +267,7 @@
     {
       "name": "[variables('jumpBoxNsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -285,7 +288,7 @@
       }
     },
     {
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('JumpBoxNicName')]",
       "location": "[parameters('location')]",
@@ -315,7 +318,7 @@
       }
     },
     {
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('ServerNicName')]",
       "location": "[parameters('location')]",
@@ -339,8 +342,11 @@
     {
       "name": "JumpBox",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2022-11-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "AzSecPackAutoConfigReady": "true"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
@@ -351,9 +357,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "MicrosoftCBLMariner",
+            "offer": "cbl-mariner",
+            "sku": "cbl-mariner-2-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -384,8 +390,11 @@
     {
       "name": "Server",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2022-11-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "AzSecPackAutoConfigReady": "true"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
@@ -396,9 +405,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "MicrosoftCBLMariner",
+            "offer": "cbl-mariner",
+            "sku": "cbl-mariner-2-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -427,60 +436,60 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/firewallPolicies",
       "name": "[parameters('firewallPolicyName')]",
       "location": "[parameters('location')]",
       "properties": {
         "threatIntelMode": "Alert"
       },
-      "resources":[
-      {
-         "apiVersion": "2020-05-01",
-         "type": "ruleCollectionGroups",
-         "name": "RuleCollectionGroup1",
-         "location": "[parameters('location')]",
-         "dependsOn": [
+      "resources": [
+        {
+          "apiVersion": "2022-07-01",
+          "type": "ruleCollectionGroups",
+          "name": "RuleCollectionGroup1",
+          "location": "[parameters('location')]",
+          "dependsOn": [
             "[resourceId('Microsoft.Network/ipGroups', parameters('ipgroups_name1'))]",
             "[resourceId('Microsoft.Network/ipGroups', parameters('ipgroups_name2'))]",
             "[resourceId('Microsoft.Network/firewallPolicies',parameters('firewallPolicyName'))]"
-         ],
-         "properties" : {
+          ],
+          "properties": {
             "priority": 100,
             "ruleCollections": [
-            {
-               "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
-               "name": "Example-Filter-Rule",
-               "action": {
+              {
+                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                "name": "Example-Filter-Rule",
+                "action": {
                   "type": "Deny"
-               },
-               "priority": 1000,
-               "rules": [
+                },
+                "priority": 1000,
+                "rules": [
                   {
-                     "ruleType": "NetworkRule",
-                     "name": "network-rule1",
-                     "ipProtocols": [
-                     "TCP"
-                     ],
-                     "destinationPorts": [
-                     "*"
-                     ],
-                     "sourceIpGroups": [
-                        "[resourceId('Microsoft.Network/ipGroups', parameters('ipgroups_name1'))]"
-                     ],
-                     "destinationIpGroups": [
-                        "[resourceId('Microsoft.Network/ipGroups', parameters('ipgroups_name2'))]"
-                     ]
+                    "ruleType": "NetworkRule",
+                    "name": "network-rule1",
+                    "ipProtocols": [
+                      "TCP"
+                    ],
+                    "destinationPorts": [
+                      "*"
+                    ],
+                    "sourceIpGroups": [
+                      "[resourceId('Microsoft.Network/ipGroups', parameters('ipgroups_name1'))]"
+                    ],
+                    "destinationIpGroups": [
+                      "[resourceId('Microsoft.Network/ipGroups', parameters('ipgroups_name2'))]"
+                    ]
                   }
-               ]
-            }
-         ]
-         }
-      }
+                ]
+              }
+            ]
+          }
+        }
       ]
     },
     {
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/azureFirewalls",
       "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",
@@ -492,8 +501,8 @@
       ],
       "properties": {
         "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
-        "firewallPolicy":{
-              "id": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
         }
       }
     }
