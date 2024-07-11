@@ -244,7 +244,7 @@ resource JumpBoxVM 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         version: 'latest'
       }
       osDisk: {
-        osType: 'Windows'
+        osType: 'Linux'
         createOption: 'FromImage'
         diskSizeGB: 127
       }
@@ -293,7 +293,7 @@ resource ServerVM 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         version: 'latest'
       }
       osDisk: {
-        osType: 'Windows'
+        osType: 'Linux'
         createOption: 'FromImage'
         diskSizeGB: 127
       }
