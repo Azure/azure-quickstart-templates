@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: azurefirewall-with-zones-sandbox
 languages:
-- json
 - bicep
+- json
 ---
 # Create a sandbox setup of Azure Firewall with Zones
 
