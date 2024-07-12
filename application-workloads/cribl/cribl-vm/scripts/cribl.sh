@@ -1,0 +1,1 @@
+export CRIBL_HOME=/opt/cribl
