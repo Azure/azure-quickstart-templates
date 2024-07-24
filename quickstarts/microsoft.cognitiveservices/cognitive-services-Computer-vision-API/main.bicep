@@ -1,5 +1,5 @@
 @description('Display name of Computer Vision API account')
-param accountName string = 'computervision'
+param aiServicesName string = 'computerVision-${uniqueString(resourceGroup().id)}'
 
 @description('SKU for Computer Vision API')
 @allowed([
@@ -11,8 +11,8 @@ param SKU string = 'F0'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
-  name: accountName
+resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: aiServicesName
   location: location
   kind: 'ComputerVision'
   sku: {

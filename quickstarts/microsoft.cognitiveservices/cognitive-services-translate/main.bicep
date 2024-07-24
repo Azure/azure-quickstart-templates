@@ -1,5 +1,5 @@
 @description('Display name of Text Translation API account')
-param accountName string = 'TextTranslation'
+param aiServicesName string = 'textTranslation-${uniqueString(resourceGroup().id)}'
 
 @description('SKU for Text Translation API')
 @allowed([
@@ -14,8 +14,8 @@ param SKU string = 'S1'
 @description('Location for the account')
 param translateLocation string
 
-resource account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
-  name: accountName
+resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: aiServicesName
   location: translateLocation
   kind: 'TextTranslation'
   sku: {
