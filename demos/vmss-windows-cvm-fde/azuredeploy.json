@@ -1,0 +1,209 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+		"virtualMachineScaleSetName": {
+            "type": "String"
+		},
+		"diskEncryptionSetId": {
+            "type": "String"
+		},
+		"storageAccountType": {
+            "type": "String",
+			"defaultValue": "Premium_LRS"
+		},
+		"windowsOSVersion": {
+            "type": "String",
+			"defaultValue": "2022-datacenter-smalldisk-g2",
+			"allowedValues": [
+				"2022-datacenter-smalldisk-g2",
+				"2022-datacenter-g2",
+				"2022-datacenter-core-smalldisk-g2",
+				"2022-datacenter-core-g2",
+				"2022-datacenter-azure-edition-smalldisk",
+				"2022-datacenter-azure-edition-hotpatch-smalldisk",
+				"2022-datacenter-azure-edition-hotpatch",
+				"2022-datacenter-azure-edition-core-smalldisk",
+				"2022-datacenter-azure-edition-core",
+				"2022-datacenter-azure-edition"
+			],
+			"metadata": {
+				"description": "Set this value for the windows os version"
+			}
+        },
+		"adminUsername": {
+            "type": "String"
+        },
+        "adminPassword": {
+            "type": "SecureString"
+        },
+        "instanceCount": {
+            "type": "String",
+			"defaultValue": "5"
+        }
+		"location": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "Default location"
+			}
+		}
+    },
+    "variables": {
+		"vmImagePublisher": "MicrosoftWindowsServer",
+		"vmImageOffer": "WindowsServer",
+		"computerNamePrefix": "[toLower(substring(concat(parameters('virtualMachineScaleSetName'), uniqueString(resourceGroup().id)), 0, 9))]",
+		"addressPrefixes": [
+			"10.4.0.0/16"
+		],
+		"subnets": [
+			{
+			  "name": "default",
+			  "properties": {
+				"addressPrefix": "10.4.0.0/20"
+			  }
+			}
+		],
+		"virtualNetworkName": "[concat(resourceGroup().name, '-vnet')]",
+		"networkSecurityGroups": [
+			{
+			  "name": "[concat(resourceGroup().name, '-nsg')]",
+			  "rules": []
+			}
+		],
+		"networkInterfaceConfigurations": [
+			{
+			  "name": "[concat(resourceGroup().name,'-nic01')]",
+			  "primary": true,
+			  "subnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/default')]", "applicationGatewayBackendAddressPools": [],
+			  "loadBalancerBackendAddressPools": [],
+			  "applicationSecurityGroups": [],
+			  "loadBalancerInboundNatPools": [],
+			  "enableAcceleratedNetworking": false,
+			  "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups')[0].name)]",
+			  "pipName": ""
+			}
+		]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2021-05-01",
+			"location": "[resourceGroup().location]",
+            "name": "[variables('virtualNetworkName')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[variables('addressPrefixes')]"
+                },
+                "subnets": "[variables('subnets')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+			"location": "[resourceGroup().location]",
+            "name": "[variables('networkSecurityGroups')[copyIndex()].name]",
+            "properties": {
+                "securityRules": "[variables('networkSecurityGroups')[copyIndex()].rules]"
+            },
+            "copy": {
+                "name": "networkSecurityGroups",
+                "count": "[length(variables('networkSecurityGroups'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "apiVersion": "2023-07-01",
+			"location": "[resourceGroup().location]",
+            "name": "[parameters('virtualMachineScaleSetName')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "networkSecurityGroups",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "sku": {
+                "name": "Standard_DC2as_v5",
+                "capacity": "[int(parameters('instanceCount'))]"
+            },
+            "properties": {
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "createOption": "fromImage",
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('storageAccountType')]",
+                                "securityProfile": {
+                                    "securityEncryptionType": "DiskWithVMGuestState",
+									"diskEncryptionSet": {
+										"id": "[parameters('diskEncryptionSetId')]"
+									}
+                                }
+                            }
+                        },
+                        "imageReference": {
+                            "publisher": "[variables('vmImagePublisher')]",
+                            "offer": "[variables('vmImageOffer')]",
+                            "sku": "[parameters('windowsOSVersion')]",
+                            "version": "latest"
+                        }
+                    },
+                    "networkProfile": {
+                        "copy": [
+                            {
+                                "name": "networkInterfaceConfigurations",
+                                "count": "[length(variables('networkInterfaceConfigurations'))]",
+                                "input": {
+                                    "name": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name]",
+                                    "properties": {
+                                        "primary": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].primary]",
+                                        "enableAcceleratedNetworking": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].enableAcceleratedNetworking]",
+                                        "ipConfigurations": [
+                                            {
+                                                "name": "[concat(take(variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name, sub(80, length('-defaultIpConfiguration'))), '-defaultIpConfiguration')]",
+                                                "properties": {
+                                                    "subnet": {
+                                                        "id": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].subnetId]"
+                                                    },
+                                                    "primary": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].primary]",
+                                                    "applicationGatewayBackendAddressPools": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].applicationGatewayBackendAddressPools]",
+                                                    "loadBalancerBackendAddressPools": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].loadBalancerBackendAddressPools]",
+                                                    "publicIPAddressConfiguration": "[if( equals( variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].pipName, ''), json('null'), union(json(concat('{\"name\": \"', variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].pipName, '\"}'))\n        ,json('{\"properties\": { \"idleTimeoutInMinutes\": 15}}')))]",
+                                                    "loadBalancerInboundNatPools": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].loadBalancerInboundNatPools]"
+                                                }
+                                            }
+                                        ],
+                                        "networkSecurityGroup": "[if( equals( variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].nsgId, ''), json('null'),json(concat('{\"id\": \"', variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].nsgId, '\"}')))]"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "osProfile": {
+						"computerNamePrefix": "[variables('computerNamePrefix')]",
+                        "adminUsername": "[parameters('adminUsername')]",
+                        "adminPassword": "[parameters('adminPassword')]"
+                    },
+                    "securityProfile": {
+                        "securityType": "ConfidentialVM",
+                        "uefiSettings": {
+                            "secureBootEnabled": true,
+                            "vTpmEnabled": true
+                        }
+                    }
+                },
+				"singlePlacementGroup": false,
+				"upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "orchestrationMode": "Uniform",
+				"platformFaultDomainCount": "1"
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "String",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}
