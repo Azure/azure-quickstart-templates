@@ -31,14 +31,20 @@ using the official Sonarqube image and backed by an Azure SQL Server.
 
 ## Compatible Versions of Sonarqube
 
-- **Compatible**: Sonarqube v7.7 and below.
-- **Not Compatible**: Sonarqube v7.8 and above.
+- **Compatible**: Sonarqube v10.5 and above v8.9.
+- **Not Compatible**: Sonarqube v8.2 and below.
 
-Sonarqube v7.8 and above does not work in Azure App Service Web App for Containers.
-This is because ElasticSearch is included by Sonarqube in version 7.8 and above
-but this requires `vm.max_map_count = 262144` to be set in the container host kernel.
-At this time, there is no way to configure this setting for an Azure App Service
-Web App for Containers. See [Issue #7481](https://github.com/Azure/azure-quickstart-templates/issues/7481)
-for more information.
+Sonarqube 7.8 and above does require extra configurations in order for 
+the embedded ElasticSearch to be reliable (as in production environment),
+so in order to run it in an Azure App Service Web App we are setting
+an explicit configuration `SONAR_ES_BOOTSTRAP_CHECKS_DISABLE` as `true`.
+
+Also, there was a breaking change in environment variables naming convention since 
+[SonarQube 8.2](https://community.sonarsource.com/t/8-2-environment-varible-docs-are-inconsistent-confusing/21805/3) 
+which makes impossible to run this template against versions below v8.2.
+
+Furthermore, there is no offical documentation being mantained for SonarQube versions
+below v8.9 which implies that there may be other breaking changes between v7.7 (last version of this template) and v8.9
+so those were removed from the template to avoid any other unknown impediments.
 
 `Tags: Microsoft.Web/serverfarms, Microsoft.Web/sites, config, Microsoft.Sql/servers, firewallrules, databases`

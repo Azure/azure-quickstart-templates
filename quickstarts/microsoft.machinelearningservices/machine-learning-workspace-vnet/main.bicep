@@ -155,6 +155,9 @@ param subnetName string = 'sn${uniqueString(resourceGroup().id, workspaceName)}'
 @description('Subnet prefix of the virtual network')
 param subnetPrefix string = '10.0.0.0/24'
 
+@description('Azure Databrick workspace to be linked to the workspace')
+param adbWorkspaceId string = ''
+
 @description('Specifies that the Azure Machine Learning workspace holds highly confidential data.')
 @allowed([
   false
@@ -257,7 +260,7 @@ var encryptionUserAssignedIdentity = {
   userAssignedIdentity: cmkUserAssignedIdentity
 }
 var encryptionIdentity = ((cmkUserAssignedIdentityName != '') ? encryptionUserAssignedIdentity : json('{}'))
-var appInsightsLocation = (((location == 'westcentralus') || (location == 'eastus2euap') || (location == 'centraluseuap') || (location == 'westus3')) ? 'southcentralus' : ((location == 'canadaeast') ? 'canadacentral' : location))
+var appInsightsLocation = (((location == 'westcentralus') || (location == 'eastus2euap') || (location == 'centraluseuap') || (location == 'westus3')) ? 'southcentralus' : ((location == 'canadaeast') ? 'canadacentral' : ((location == 'qatarcentral') ? 'uaenorth' : ((location == 'spaincentral') ? 'francecentral' : location))))
 
 resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' = if (vnetOption == 'new') {
   name: vnetName
@@ -376,6 +379,7 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-10-01' = {
     keyVault: keyVaultId
     applicationInsights: applicationInsightId
     containerRegistry: ((containerRegistryOption != 'none') ? containerRegistryId : json('null'))
+    adbWorkspace: ((adbWorkspaceId == '') ? json('null') : adbWorkspaceId)
     primaryUserAssignedIdentity: ((identityType == 'userAssigned') ? primaryUserAssignedIdentity : json('null'))
     encryption: {
       status: encryption_status

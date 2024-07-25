@@ -1,11 +1,32 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.25.53.49325",
-      "templateHash": "156223354222501723"
+      "version": "0.28.1.47646",
+      "templateHash": "7206330838944301238"
+    }
+  },
+  "definitions": {
+    "dataDiskType": {
+      "type": "object",
+      "properties": {
+        "diskSizeGB": {
+          "type": "int"
+        },
+        "dynamic": {
+          "type": "bool",
+          "nullable": true
+        }
+      }
+    },
+    "dataDiskArrayType": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/dataDiskType"
+      }
     }
   },
   "parameters": {
@@ -36,7 +57,7 @@
     "hciLogicalNetworkName": {
       "type": "string",
       "metadata": {
-        "description": "The name of an existing Logical Network in your HCI cluster - for example: vnet-compute-vlan240-dhcp"
+        "description": "The name of an existing Logical Network in your HCI cluster - for example: lnet-compute-vlan240-dhcp"
       }
     },
     "customLocationName": {
@@ -77,17 +98,8 @@
       }
     },
     "dataDiskParams": {
-      "type": "array",
-      "defaultValue": [
-        {
-          "diskSizeGB": 8,
-          "dynamic": true
-        },
-        {
-          "diskSizeGB": 16,
-          "dynamic": false
-        }
-      ],
+      "$ref": "#/definitions/dataDiskArrayType",
+      "defaultValue": [],
       "metadata": {
         "description": "The bicep array description of the dataDisks to attached to the vm. Provide an empty array for no addtional disks, or an array following the example below."
       }
@@ -99,8 +111,8 @@
     "marketplaceGalleryImageId": "[resourceId('microsoft.azurestackhci/marketplaceGalleryImages', parameters('imageName'))]",
     "logicalNetworkId": "[resourceId('microsoft.azurestackhci/logicalnetworks', parameters('hciLogicalNetworkName'))]"
   },
-  "resources": [
-    {
+  "resources": {
+    "hybridComputeMachine": {
       "type": "Microsoft.HybridCompute/machines",
       "apiVersion": "2023-10-03-preview",
       "name": "[parameters('name')]",
@@ -110,9 +122,9 @@
         "type": "SystemAssigned"
       }
     },
-    {
+    "nic": {
       "type": "Microsoft.AzureStackHCI/networkInterfaces",
-      "apiVersion": "2023-09-01-preview",
+      "apiVersion": "2024-01-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "extendedLocation": {
@@ -132,13 +144,13 @@
         ]
       }
     },
-    {
+    "dataDisks": {
       "copy": {
         "name": "dataDisks",
         "count": "[length(parameters('dataDiskParams'))]"
       },
       "type": "Microsoft.AzureStackHCI/virtualHardDisks",
-      "apiVersion": "2023-09-01-preview",
+      "apiVersion": "2024-01-01",
       "name": "[format('{0}dataDisk{1}', parameters('name'), padLeft(add(copyIndex(), 1), 2, '0'))]",
       "location": "[parameters('location')]",
       "extendedLocation": {
@@ -147,12 +159,12 @@
       },
       "properties": {
         "diskSizeGB": "[parameters('dataDiskParams')[copyIndex()].diskSizeGB]",
-        "dynamic": "[parameters('dataDiskParams')[copyIndex()].dynamic]"
+        "dynamic": "[tryGet(parameters('dataDiskParams')[copyIndex()], 'dynamic')]"
       }
     },
-    {
+    "virtualMachine": {
       "type": "Microsoft.AzureStackHCI/virtualMachineInstances",
-      "apiVersion": "2023-09-01-preview",
+      "apiVersion": "2024-01-01",
       "scope": "[format('Microsoft.HybridCompute/machines/{0}', parameters('name'))]",
       "name": "default",
       "properties": {
@@ -197,11 +209,11 @@
         "name": "[variables('customLocationId')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.HybridCompute/machines', parameters('name'))]",
-        "[resourceId('Microsoft.AzureStackHCI/networkInterfaces', variables('nicName'))]"
+        "hybridComputeMachine",
+        "nic"
       ]
     },
-    {
+    "domainJoin": {
       "condition": "[not(empty(parameters('domainToJoin')))]",
       "type": "Microsoft.HybridCompute/machines/extensions",
       "apiVersion": "2023-10-03-preview",
@@ -224,8 +236,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.HybridCompute/machines', parameters('name'))]"
+        "hybridComputeMachine"
       ]
     }
-  ]
+  }
 }
