@@ -16,7 +16,7 @@ resource account 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     type: 'SystemAssigned'
   }
   sku: {
-    name: 'S0'
+    name: sku
   }
   kind: 'AIServices'
   properties: {
