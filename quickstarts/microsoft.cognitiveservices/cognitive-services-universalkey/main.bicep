@@ -18,11 +18,11 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   kind: 'AIServices'
   properties: {
     apiProperties: {
-      "publicNetworkAccess": "Disabled",
-      "networkAcls": {
-        "defaultAction": "Deny"
-      },
-      "disableLocalAuth": true,
+      publicNetworkAccess: 'Disabled'
+      networkAcls: {
+        defaultAction: 'Deny'
+      }
+      disableLocalAuth: true
       statisticsEnabled: false
     }
   }
