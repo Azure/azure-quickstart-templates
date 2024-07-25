@@ -9,21 +9,21 @@ param location string = resourceGroup().location
 ])
 param sku string = 'S0'
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+resource account 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: aiServicesName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   sku: {
-    name: sku
+    name: 'S0'
   }
   kind: 'AIServices'
   properties: {
-    apiProperties: {
-      publicNetworkAccess: 'Disabled'
-      networkAcls: {
-        defaultAction: 'Deny'
-      }
-      disableLocalAuth: true
-      statisticsEnabled: false
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      defaultAction: 'Deny'
     }
+    disableLocalAuth: true
   }
 }
