@@ -1,5 +1,5 @@
 ---
-description: A template for creating a new Azure AI Vision resource
+description: This template deploys an Azure AI Vision resource to bring AI within reach of every developer without requiring machine learning expertise.
 page_type: sample
 products:
 - azure
