@@ -1,5 +1,5 @@
 ---
-description: This template deploys an Azure AI Translator resource. Microsoft Translator API is a neural machine translation service that developers can easily integrate into their applications websites, tools, or any solution requiring multi-language support such as website localization, e-commerce, customer support, messaging applications, internal communication, and more.
+description: This template deploys an Azure AI Translator resource to bring AI within reach of every developer without requiring machine learning expertise.
 page_type: sample
 products:
 - azure
