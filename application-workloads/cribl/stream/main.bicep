@@ -1,6 +1,9 @@
 @description('User name for the Virtual Machine.')
 param adminUsername string
 
+@description('Name of the Network Security Group')
+param nsgName string = 'criblNSG'
+
 @description('The SSH public key data for the administrator account as a string.')
 param sshKeyData string
 
@@ -17,6 +20,13 @@ param ubuntuOSVersion string = '22_04-lts-gen2'
 param CriblVersion string = '4.7.3'
 
 @description('Size of the virtual machine')
+@allowed([
+  'Standard_F4s_v2'
+  'Standard_F8s_v2'
+  'Standard_F16s_v2'
+  'Standard_F32s_v2'
+  'Standard_F48s_v2'
+])
 param vmSize string = 'Standard_F8s_v2'
 
 @description('Type of storage to be used for the VM\'s OS disk.  Diagnostics disk will use Standard_LRS.')
@@ -114,6 +124,41 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   dependsOn: [
     virtualNetwork
   ]
+}
+
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+  name: nsgName
+  location: location
+  properties: {
+    securityRules: [
+      {
+        name: 'Allow_TCP_9000'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '9000'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 100
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'Allow_TCP_4200'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '4200'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 110
+          direction: 'Inbound'
+        }
+      }
+    ]
+  }
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
