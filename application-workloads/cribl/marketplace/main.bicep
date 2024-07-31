@@ -10,12 +10,6 @@ param sshKeyData string
 @description('DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error.')
 param dnsLabelPrefix string
 
-@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 22_04-lts-gen2.')
-@allowed([
-  '22_04-lts-gen2'
-])
-param ubuntuOSVersion string = '22_04-lts-gen2'
-
 @description('The Cribl version to launch')
 param CriblVersion string = '4.7.3'
 
@@ -48,8 +42,8 @@ param _artifactsLocationSasToken string = ''
 param location string = resourceGroup().location
 
 var storageAccountName = '${uniqueString(resourceGroup().id)}cribl'
-var imagePublisher = 'Canonical'
-var imageOffer = '0001-com-ubuntu-server-jammy'
+var imagePublisher = 'criblinc1673975616879'
+var imageOffer = 'cribl_stream_vm'
 var nicName = 'CriblVMNic'
 var addressPrefix = '10.0.0.0/16'
 var subnetName = 'Subnet'
@@ -187,8 +181,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
       imageReference: {
         publisher: imagePublisher
         offer: imageOffer
-        sku: ubuntuOSVersion
-        version: 'latest'
+        sku: CriblVersion
+        version: '4.7.3'
       }
       osDisk: {
         createOption: 'FromImage'
@@ -222,11 +216,5 @@ resource vmName_initCribl 'Microsoft.Compute/virtualMachines/extensions@2022-08-
     type: 'CustomScript'
     typeHandlerVersion: '2.0'
     autoUpgradeMinorVersion: true
-    settings: {
-      fileUris: [
-        uri(_artifactsLocation, 'deploy_cribl.sh')
-      ]
-      commandToExecute: 'sh deploy_cribl.sh'
-    }
   }
 }

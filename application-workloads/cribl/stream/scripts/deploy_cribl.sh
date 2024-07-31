@@ -21,6 +21,9 @@ apt-get install -y \
 mkdir -p /opt/cribl 
 useradd cribl -d /home/cribl -m -G sudo
 chown -R cribl:cribl /home/cribl
-curl -o /tmp/cribl-stream.tgz ${STREAM_URL}
-tar xzf /tmp/cribl-stream.tgz --owner=cribl --group=cribl -C /opt
+sudo curl -Lso - $(curl https://cdn.cribl.io/dl/latest-x64) | sudo tar zxv -C /opt
 chown -R cribl:cribl /opt/cribl
+sudo /opt/cribl/bin/cribl boot-start enable -m systemd -u cribl
+sudo systemctl daemon-reload	
+sudo systemctl enable cribl
+sudo systemctl start cribl
