@@ -16,9 +16,6 @@ param dnsLabelPrefix string
 ])
 param ubuntuOSVersion string = '22_04-lts-gen2'
 
-@description('The Cribl version to launch')
-param CriblVersion string = '4.7.3'
-
 @description('Size of the virtual machine')
 @allowed([
   'Standard_F4s_v2'
@@ -38,11 +35,7 @@ param vmSize string = 'Standard_F8s_v2'
 param storageAccountType string = 'StandardSSD_LRS'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
-param _artifactsLocation string = 'https://criblscripts.blob.core.windows.net/scripts/'
-
-@description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
-@secure()
-param _artifactsLocationSasToken string = ''
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -224,7 +217,7 @@ resource vmName_initCribl 'Microsoft.Compute/virtualMachines/extensions@2022-08-
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
-        uri(_artifactsLocation, 'deploy_cribl.sh')
+        uri(_artifactsLocation, 'scripts/deploy_cribl.sh{0}')
       ]
       commandToExecute: 'sh deploy_cribl.sh'
     }
