@@ -45,7 +45,7 @@ To test the logic app workflow, copy the endpoint URL from the Request trigger i
 > security features, works offline or locally, doesn't sync your data to the cloud, and doesn't require
 > that you sign in to an online account. This way, you reduce the risk around exposing sensitive data to the public.
 
-The message to be sent in should be in the following format.
+The message that you send should use the following format:
 
 ```json
 {
