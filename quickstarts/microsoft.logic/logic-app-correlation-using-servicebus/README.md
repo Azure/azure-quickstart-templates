@@ -1,5 +1,5 @@
 ---
-description: which shows how we can correlate messages over Logic Apps using Azure Service Bus
+description: Shows how to correlate messages over Azure Logic Apps using Azure Service Bus
 page_type: sample
 products:
 - azure
@@ -8,7 +8,8 @@ urlFragment: logic-app-correlation-using-servicebus
 languages:
 - json
 ---
-# Correlating messages over Logic Apps using Service Bus
+
+# Correlate messages over Azure Logic Apps using Azure Service Bus
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-correlation-using-servicebus/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-correlation-using-servicebus/PublicDeployment.svg)
