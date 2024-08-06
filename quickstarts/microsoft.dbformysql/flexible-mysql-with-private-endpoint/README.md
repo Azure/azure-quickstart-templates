@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Deploy MySQL Flexible Server with Private Endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbformysql/flexible-mysql-with-private-endpoint/PublicLastTestDate.svg)
