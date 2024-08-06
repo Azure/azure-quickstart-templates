@@ -17,13 +17,13 @@ param administratorLogin string
 param administratorLoginPassword string
 
 @description('Azure database for MySQL sku name ')
-param skuName string = 'Standard_B1s'
+param skuName string = 'Standard_D2ads_v5'
 
 @description('Azure database for MySQL storage Size ')
 param StorageSizeGB int = 20
 
 @description('Azure database for MySQL storage Iops')
-param StorageIops int = 360
+param StorageIops int = 3200
 
 @description('Azure database for MySQL pricing tier')
 @allowed([
@@ -31,7 +31,7 @@ param StorageIops int = 360
   'MemoryOptimized'
   'Burstable'
 ])
-param SkuTier string = 'Burstable'
+param SkuTier string = 'GeneralPurpose'
 
 @description('MySQL version')
 @allowed([
