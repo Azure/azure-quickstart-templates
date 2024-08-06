@@ -34,7 +34,7 @@ var publicIpAddressName = '${vmName}PublicIP'
 var networkInterfaceName = '${vmName}NetInt'
 var osDiskType = 'StandardSSD_LRS'
 
-resource mySqlServer 'Microsoft.DBforMySQL/flexibleServers@2023-12-01-preview' = {
+resource mySqlServer 'Microsoft.DBforMySQL/flexibleServers@2024-02-01-preview' = {
   name: mySqlServerName
   location: location
   sku: {
@@ -64,7 +64,7 @@ resource mySqlServer 'Microsoft.DBforMySQL/flexibleServers@2023-12-01-preview' =
   }
 }
 
-resource mySqlDatabase 'Microsoft.DBforMySQL/flexibleServers/databases@2021-12-01-preview' = {
+resource mySqlDatabase 'Microsoft.DBforMySQL/flexibleServers/databases@2023-12-30' = {
   name: mySqlDatabaseName
   properties: {
     charset: 'utf8'
@@ -75,7 +75,7 @@ resource mySqlDatabase 'Microsoft.DBforMySQL/flexibleServers/databases@2021-12-0
   ]
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: vnetName
   location: location
   properties: {
@@ -87,7 +87,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource vnetName_subnet1 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource vnetName_subnet1 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
   parent: vnet
   name: subnet1Name
   properties: {
@@ -96,7 +96,7 @@ resource vnetName_subnet1 'Microsoft.Network/virtualNetworks/subnets@2021-05-01'
   }
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   name: privateEndpointName
   location: location
   properties: {
@@ -141,7 +141,7 @@ resource privateDnsZoneName_privateDnsZoneName_link 'Microsoft.Network/privateDn
   }
 }
 
-resource pvtEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
+resource pvtEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
   name: pvtEndpointDnsGroupName
   properties: {
     privateDnsZoneConfigs: [
@@ -158,7 +158,7 @@ resource pvtEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
   ]
 }
 
-resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2024-01-01' = {
   name: publicIpAddressName
   location: location
   tags: {
@@ -169,7 +169,7 @@ resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2024-01-01' = {
   name: networkInterfaceName
   location: location
   tags: {
@@ -196,7 +196,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   name: vmName
   location: location
   tags: {
