@@ -9,7 +9,6 @@ languages:
 - bicep
 - json
 ---
-
 # Deploy MySQL Flexible Server with Vnet Integration
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dbformysql/flexible-mysql-with-vnet/PublicLastTestDate.svg)
