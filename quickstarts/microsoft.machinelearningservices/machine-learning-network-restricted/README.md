@@ -27,7 +27,7 @@ languages:
 
 This set of templates demonstrates how to set up Azure AI Studio with a network-restricted configuration, meaning with public internet access disabled and egress disabled. It uses Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the Azure ML resource. Customization is required to create rules for the managed outbound access, and setup does not include additional rules to facilitate traffic access to the managed VNet. This template works as-is.
 
-![Architecture](https://learn.microsoft.com/en-us/azure/ai-studio/media/how-to/network/azure-ai-network-inbound.svg)
+![Architecture](./img/only-approved-outbound.svg)
 
 ## Limitations
 
