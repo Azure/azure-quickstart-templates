@@ -6,13 +6,13 @@ param location string
 @description('Tags to add to the resources')
 param tags object
 
-@description('AI hub name')
+@description('AML name')
 param amlWorkspaceName string
 
-@description('AI hub display name')
+@description('AML display name')
 param amlWorkspaceFriendlyName string = amlWorkspaceName
 
-@description('AI hub description')
+@description('AML description')
 param amlWorkspaceDescription string
 
 @description('Resource ID of the application insights resource for storing diagnostics logs')
