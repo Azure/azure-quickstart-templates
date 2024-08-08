@@ -54,7 +54,7 @@ module aiDependencies 'modules/dependent-resources.bicep' = {
 }
 
 module amlWorkspace 'modules/aml-workspace.bicep' = {
-  name: 'ai-${name}-${uniqueSuffix}-deployment'
+  name: 'aml-${name}-${uniqueSuffix}-deployment'
   params: {
     // workspace organization
     amlWorkspaceName: 'aml-${name}-${uniqueSuffix}'
