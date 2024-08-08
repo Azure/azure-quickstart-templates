@@ -15,7 +15,7 @@
         },
         "diskEncryptionSetId": {
             "type": "String",
-            "defaultValue": ""
+            "defaultValue": "GEN-DES"
         },
         "storageAccountType": {
             "type": "String",
@@ -26,7 +26,7 @@
         },
         "adminPassword": {
             "type": "SecureString",
-            "defaultValue": "password"
+            "defaultValue": "[newGuid()]"
         },
         "authenticationType": {
             "type": "string",
@@ -41,7 +41,7 @@
         },
         "adminPasswordOrKey": {
             "type": "SecureString",
-            "defaultValue": "password",
+            "defaultValue": "[newGuid()]",
             "metadata": {
                 "description": "Password or ssh key for the VMSS."
             }
@@ -114,22 +114,42 @@
         "virtualNetworkName": "[concat(parameters('virtualMachineScaleSetName'), '-vnet')]",
         "networkSecurityGroups": [
             {
-                "name": "[variables('networkSecurityGroupName')]",
-                "rules": []
+                "name": "[variables('networkSecurityGroupName')]"
             }
         ],
+        "linuxSecurityRules": [{
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+        }],
+        "windowsSecurityRules": [{
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+        }],
         "networkInterfaceConfigurations": [
             {
                 "name": "[concat(parameters('virtualMachineScaleSetName'),'-nic01')]",
                 "primary": true,
                 "subnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/default')]",
-                "applicationGatewayBackendAddressPools": [],
-                "loadBalancerBackendAddressPools": [],
-                "applicationSecurityGroups": [],
-                "loadBalancerInboundNatPools": [],
                 "enableAcceleratedNetworking": false,
-                "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups')[0].name)]",
-                "pipName": ""
+                "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups')[0].name)]"
             }
         ],
         "linuxKeyConfiguration": {
@@ -178,7 +198,7 @@
             "location": "[resourceGroup().location]",
             "name": "[variables('networkSecurityGroupName')]",
             "properties": {
-                "securityRules": "[variables('networkSecurityGroups')[copyIndex()].rules]"
+                "securityRules": "[if( equals (parameters('osType'), 'Linux'), variables('linuxSecurityRules'), variables('windowsSecurityRules'))]"
             },
             "copy": {
                 "name": "networkSecurityGroups",
