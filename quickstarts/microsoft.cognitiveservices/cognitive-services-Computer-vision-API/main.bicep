@@ -1,23 +1,31 @@
-@description('Display name of Computer Vision API account')
-param accountName string = 'computervision'
+@description('Display name of the Azure AI Vision resource')
+param aiServicesName string = 'computerVision-${uniqueString(resourceGroup().id)}'
 
 @description('SKU for Computer Vision API')
 @allowed([
   'F0'
   'S1'
 ])
-param SKU string = 'F0'
+param sku string = 'F0'
 
-@description('Location for all resources.')
+@description('Location of the resource group.')
 param location string = resourceGroup().location
 
-resource account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
-  name: accountName
+resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: aiServicesName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   kind: 'ComputerVision'
   sku: {
-    name: SKU
+    name: sku
   }
   properties: {
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      defaultAction: 'Deny'
+    }
+    disableLocalAuth: true
   }
 }
