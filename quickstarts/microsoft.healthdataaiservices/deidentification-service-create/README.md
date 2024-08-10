@@ -22,8 +22,8 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.analysisservices%2Fanalysis-services-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.analysisservices%2Fanalysis-services-create%2Fazuredeploy.json)
 
-This template allows you to deploy a new an Azure Health Data Services de-identification service. The [quickstart](https://docs.microsoft.com/azure/healthcare-apis/deidentification/quickstart) article describes how to deploy the template.
+This template allows you to deploy a new an Azure Health Data Services de-identification service. The [quickstart](/azure/healthcare-apis/deidentification/quickstart) article describes how to deploy the template.
 
-For more information about Azure Health Data Services de-identification service, see [What is Azure Analysis Services?](https://docs.microsoft.com/azure/healthcare-apis/deidentification/deidentification-overview).
+For more information about Azure Health Data Services de-identification service, see [What is Azure Analysis Services?](/azure/healthcare-apis/deidentification/overview).
 
 `Tags: Microsoft.HealthDataAIServices/deidServices`
