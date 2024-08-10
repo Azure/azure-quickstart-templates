@@ -1,16 +1,20 @@
-@description('The name of the Azure Analysis Services server to create. Server name must begin with a letter, be lowercase alphanumeric, and between 3 and 63 characters in length. Server name must be unique per region.')
+@description('The name of the Azure Health Data Services de-identification service to create. Name must be alphanumeric, between 1 and 30 characters in length, and unique per resource group.')
+@minLength(1)
+@maxLength(30)
 param deidServiceName string
 
-@description('Location of the Azure Analysis Services server. For supported regions, see https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-overview#availability-by-region')
+@description('Location of the Azure Health Data Services de-identification service.')
 param location string = resourceGroup().location
 
 @description('Whether or not to create a system-assigned managed identity.')
 param createSystemAssignedManagedIdentity bool = false
 
-var identity = if (createSystemAssignedManagedIdentity) ? { type: 'SystemAssigned' } : null
+var identity = (createSystemAssignedManagedIdentity) ? { type: 'SystemAssigned' } : {}
 
 resource deidentificationService 'Microsoft.HealthDataAIServices/deidServices@2024-02-28-preview' = {
   name: deidServiceName
   location: location
   identity: identity
 }
+
+output deidServiceName string = deidentificationService.properties.serviceUrl
