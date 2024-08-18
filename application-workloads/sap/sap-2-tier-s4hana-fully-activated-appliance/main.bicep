@@ -66,7 +66,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
         version: 'latest'
       }
       osDisk: {
-        name: '${vmName}_OSDisk'
+        name: '${vmName}_OsDisk'
         osType: 'Linux'
         createOption: 'FromImage'
         deleteOption: 'Delete'
