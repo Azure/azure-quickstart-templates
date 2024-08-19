@@ -16,6 +16,9 @@ param adminPasswordOrKey string
 @description('Subnet ID for the Virtual Machine.')
 param subnetId string
 
+@description('Storage account name containing the S/4HANA Fully Activated Appliance software media.')
+param storageAccountName string
+
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param _artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -71,7 +74,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
         createOption: 'FromImage'
         deleteOption: 'Delete'
         managedDisk: {
-          storageAccountType: 'StandardSSD_LRS'
+          storageAccountType: 'Premium_LRS'
         }
       }
       dataDisks: [
@@ -82,7 +85,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'StandardSSD_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
         {
@@ -92,7 +95,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 128
           managedDisk: {
-            storageAccountType: 'StandardSSD_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
         {
@@ -102,7 +105,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'StandardSSD_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
         {
@@ -112,7 +115,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 64
           managedDisk: {
-            storageAccountType: 'StandardSSD_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
       ]
@@ -159,7 +162,8 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       fileUris: [
         uri(_artifactsLocation, 's4hanafa-install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sh s4hanafa-install.sh'
+      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountName}'
     }
   }
 }
+
