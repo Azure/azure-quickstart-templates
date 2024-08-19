@@ -17,7 +17,7 @@ param adminPasswordOrKey string
 param subnetId string
 
 @description('User assigned managed identity ID for the Virtual Machine.')
-param managedIdentityId string
+param managedIdentityName string
 
 @description('Storage account path containing the S/4HANA Fully Activated Appliance software media.')
 param storageAccountPath string
@@ -47,6 +47,11 @@ var linuxConfiguration = {
   }
 }
 
+// Create a user-assigned managed identity
+resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+  name: managedIdentityName
+}
+
 resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   name: vmName
   location: location
@@ -57,7 +62,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      uami: {}
+      '${userAssignedIdentity.id}': {}
     }
   }
   properties: {
@@ -138,9 +143,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
       ]
     }
   }
-  dependsOn: [
-    uami
-  ]
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {
@@ -177,8 +179,4 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath}'
     }
   }
-}
-
-resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
-  name: managedIdentityId
 }
