@@ -51,6 +51,12 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
     Database: 'HANA'
     Application: 'S4HANA Fully Activated Appliance'
   }
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      uami: {}
+    }
+  }
   properties: {
     hardwareProfile: {
       vmSize: vmSize
@@ -85,7 +91,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'Premium_LRS'
           }
         }
         {
@@ -95,7 +101,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 128
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'Premium_LRS'
           }
         }
         {
@@ -105,7 +111,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'StandardSSD_LRS'
           }
         }
         {
@@ -115,7 +121,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 64
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'Premium_LRS'
           }
         }
       ]
@@ -129,8 +135,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
       ]
     }
   }
-  zones: [
-    '1'  
+  dependsOn: [
+    uami
   ]
 }
 
@@ -170,3 +176,20 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
   }
 }
 
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${vmName}ManagedIdentity'
+  location: resourceGroup().location
+}
+
+resource storage 'Microsoft.Storage/storageAccounts@2023-04-01' existing = {
+  name: storageAccountName
+}
+
+resource assignedrole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('SecretsUser', vmName)
+  scope: storage
+  properties: {
+    principalId: uami.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleAssignments', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
+  }
+}

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "2725056210904535342"
+      "templateHash": "9272500301795263085"
     }
   },
   "parameters": {
@@ -89,6 +89,12 @@
         "Database": "HANA",
         "Application": "S4HANA Fully Activated Appliance"
       },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "uami": {}
+        }
+      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
@@ -123,7 +129,7 @@
               "deleteOption": "Delete",
               "diskSizeGB": 512,
               "managedDisk": {
-                "storageAccountType": "PremiumV2_LRS"
+                "storageAccountType": "Premium_LRS"
               }
             },
             {
@@ -133,7 +139,7 @@
               "deleteOption": "Delete",
               "diskSizeGB": 128,
               "managedDisk": {
-                "storageAccountType": "PremiumV2_LRS"
+                "storageAccountType": "Premium_LRS"
               }
             },
             {
@@ -143,7 +149,7 @@
               "deleteOption": "Delete",
               "diskSizeGB": 512,
               "managedDisk": {
-                "storageAccountType": "PremiumV2_LRS"
+                "storageAccountType": "StandardSSD_LRS"
               }
             },
             {
@@ -153,7 +159,7 @@
               "deleteOption": "Delete",
               "diskSizeGB": 64,
               "managedDisk": {
-                "storageAccountType": "PremiumV2_LRS"
+                "storageAccountType": "Premium_LRS"
               }
             }
           ],
@@ -168,7 +174,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}Nic', variables('vmName')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}Nic', variables('vmName')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}ManagedIdentity', variables('vmName')))]"
       ]
     },
     {
@@ -209,6 +216,25 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[format('{0}ManagedIdentity', variables('vmName'))]",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+      "name": "[guid('SecretsUser', variables('vmName'))]",
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}ManagedIdentity', variables('vmName'))), '2023-01-31').principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleAssignments', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}ManagedIdentity', variables('vmName')))]"
       ]
     }
   ]
