@@ -129,6 +129,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
       ]
     }
   }
+  zones: [
+    '1'  
+  ]
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {

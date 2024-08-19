@@ -21,9 +21,9 @@ This template offers an alternative path to SAP Cloud Appliance Library (CAL) fo
 
 3. **Azure Virtual Network**: You must have a virtual network with at least one subnet. You can create a virtual network using the Azure portal or use the [Create a Virtual Network with two Subnets](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.network/vnet-two-subnets) quickstart template to create a virtual network with two subnets.
 
-4. **User managed identity**: You must have a user managed identity that has . You can create a user managed identity using the Azure portal or the Azure CLI.
+4. **User managed identity**: You must have a user managed identity that has access to the storage account. 
 
-
+5. **Resource Group**: You must have a resource group to deploy the resources. You can create a resource group using the Azure portal or the Azure CLI.
 
 
 
