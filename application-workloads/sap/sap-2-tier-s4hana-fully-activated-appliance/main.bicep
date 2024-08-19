@@ -16,8 +16,11 @@ param adminPasswordOrKey string
 @description('Subnet ID for the Virtual Machine.')
 param subnetId string
 
-@description('Storage account name containing the S/4HANA Fully Activated Appliance software media.')
-param storageAccountName string
+@description('User assigned managed identity ID for the Virtual Machine.')
+param managedIdentityId string
+
+@description('Storage account path containing the S/4HANA Fully Activated Appliance software media.')
+param storageAccountPath string
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param _artifactsLocation string = deployment().properties.templateLink.uri
@@ -171,25 +174,11 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       fileUris: [
         uri(_artifactsLocation, 's4hanafa-install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountName}'
+      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath}'
     }
   }
 }
 
-resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${vmName}ManagedIdentity'
-  location: resourceGroup().location
-}
-
-resource storage 'Microsoft.Storage/storageAccounts@2023-04-01' existing = {
-  name: storageAccountName
-}
-
-resource assignedrole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid('SecretsUser', vmName)
-  scope: storage
-  properties: {
-    principalId: uami.properties.principalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleAssignments', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
-  }
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+  name: managedIdentityId
 }
