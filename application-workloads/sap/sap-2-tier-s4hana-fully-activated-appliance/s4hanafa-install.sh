@@ -91,9 +91,8 @@ function getsapmedia()
     log "get sapmedia from $storagePath"
     log "get user assigned managed identity: $uami"
 
-    # Based on https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory
+    # See https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory
     export AZCOPY_AUTO_LOGIN_TYPE=MSI
-    export AZCOPY_MSI_RESOURCE_STRING="$uami"
     azcopy copy "$storagePath" '/sapmedia' --recursive
     
     # If the /sapmedia directory is empty, then the copy failed
