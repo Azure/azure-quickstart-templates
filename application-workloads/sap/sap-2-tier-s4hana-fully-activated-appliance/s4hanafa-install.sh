@@ -44,7 +44,6 @@ function addipaddress()
         log "Added $ip address to /etc/hosts"
         log "end of addipaddress"
     fi
-    
 }
 
 function addtofstab()
@@ -90,7 +89,7 @@ function getsapmedia()
     # Copy from a storage account to the local disk using azcli
     log "get sapmedia from $storagePath"
 
-    azcopy copy "$storagePath" '/sapmedia' --recursive
+    azcopy copy "$storagePath" '/sapmedia' --recursive >> /var/log/sapinstall.log 
     
     # If the /sapmedia directory is empty, then the copy failed
     if [ ! "$(ls -A /sapmedia)" ]; then
