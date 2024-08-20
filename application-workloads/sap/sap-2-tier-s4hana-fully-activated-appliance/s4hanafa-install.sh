@@ -86,10 +86,10 @@ function addtofstab()
 
 function getsapmedia()
 {
+    storagePath=$1    
     log "start of getsapmedia"
     # Copy from a storage account to the local disk using azcli
     log "get sapmedia from $storagePath"
-    log "get user assigned managed identity: $uami"
 
     azcopy copy "$storagePath" '/sapmedia' --recursive
     
