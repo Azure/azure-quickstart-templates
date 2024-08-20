@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "3866097593946256847"
+      "templateHash": "11701344384865893601"
     }
   },
   "parameters": {
@@ -37,12 +37,6 @@
       "type": "string",
       "metadata": {
         "description": "Subnet ID for the Virtual Machine."
-      }
-    },
-    "managedIdentityName": {
-      "type": "string",
-      "metadata": {
-        "description": "User assigned managed identity ID for the Virtual Machine."
       }
     },
     "storageAccountPath": {
@@ -96,10 +90,7 @@
         "Application": "S4HANA Fully Activated Appliance"
       },
       "identity": {
-        "type": "UserAssigned",
-        "userAssignedIdentities": {
-          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))]": {}
-        }
+        "type": "SystemAssigned"
       },
       "properties": {
         "hardwareProfile": {
@@ -216,8 +207,21 @@
           "fileUris": [
             "[uri(parameters('_artifactsLocation'), format('s4hanafa-install.sh{0}', parameters('_artifactsLocationSasToken')))]"
           ],
-          "commandToExecute": "[format('sh s4hanafa-install.sh {0} {1}', parameters('storageAccountPath'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))]"
+          "commandToExecute": "[format('sh s4hanafa-install.sh {0}', parameters('storageAccountPath'))]"
         }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(subscription().subscriptionId, 'roleAssignment', variables('vmName'))]",
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '2024-03-01', 'full').identity.principalId]",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
+        "principalType": "ServicePrincipal"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"

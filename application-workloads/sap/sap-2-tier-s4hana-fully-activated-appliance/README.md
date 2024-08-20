@@ -21,9 +21,7 @@ This template offers an alternative path to SAP Cloud Appliance Library (CAL) fo
 
 3. **Azure Virtual Network**: You must have a virtual network with at least one subnet. You can create a virtual network using the Azure portal or use the [Create a Virtual Network with two Subnets](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.network/vnet-two-subnets) quickstart template to create a virtual network with two subnets.
 
-4. **User managed identity**: The Storage Blob Data Reader role is required to read the SAP software media from the storage account. You can find more information about user managed identity [here](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp). 
-
-5. **Resource Group**: You must have a resource group to deploy the resources. I would recommend creating a new resource group for this deployment, so that you can easily delete all resources by deleting the resource group.
+4. **Resource Group**: You must have a resource group to deploy the resources. I would recommend creating a new resource group for this deployment, so that you can easily delete all resources by deleting the resource group.
 
 
 

@@ -16,9 +16,6 @@ param adminPasswordOrKey string
 @description('Subnet ID for the Virtual Machine.')
 param subnetId string
 
-@description('User assigned managed identity ID for the Virtual Machine.')
-param managedIdentityName string
-
 @description('Storage account path containing the S/4HANA Fully Activated Appliance software media.')
 param storageAccountPath string
 
@@ -47,10 +44,6 @@ var linuxConfiguration = {
   }
 }
 
-resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
-  name: managedIdentityName
-}
-
 resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   name: vmName
   location: location
@@ -59,10 +52,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
     Application: 'S4HANA Fully Activated Appliance'
   }
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${userAssignedIdentity.id}': {}
-    }
+    type: 'SystemAssigned'
   }
   properties: {
     hardwareProfile: {
@@ -142,9 +132,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
       ]
     }
   }
-  dependsOn: [
-    userAssignedIdentity
-  ]
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {
@@ -178,7 +165,18 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       fileUris: [
         uri(_artifactsLocation, 's4hanafa-install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath} ${userAssignedIdentity.id}'
+      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath}'
     }
+  }
+}
+
+resource assignrole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(subscription().subscriptionId, 'roleAssignment', vmName)
+  scope: resourceGroup()
+  properties: {
+    principalId: vm.identity.principalId
+    //Storage Blob Data Reader role
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
+    principalType: 'ServicePrincipal' // See https://docs.microsoft.com/azure/role-based-access-control/role-assignments-template#new-service-principal to understand why this property is included.
   }
 }
