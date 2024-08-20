@@ -91,8 +91,6 @@ function getsapmedia()
     log "get sapmedia from $storagePath"
     log "get user assigned managed identity: $uami"
 
-    # See https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory
-    export AZCOPY_AUTO_LOGIN_TYPE=MSI
     azcopy copy "$storagePath" '/sapmedia' --recursive
     
     # If the /sapmedia directory is empty, then the copy failed
@@ -118,14 +116,6 @@ function unzipmedia()
     log "end of unzipmedia"
 }
 
-# Set the variables
-if [[ $1 != */ ]]; then
-    storagePath="$1/*"
-else
-    storagePath="$1"
-fi
-uami=$2
-
 # OS-level pre-requisites 
 addipaddress
 installprequisites
@@ -138,5 +128,5 @@ addtofstab /dev/sdf /sapmnt
 mount -a
 
 # Download the SAP media
-getsapmedia "$storagePath" "$uami"
+getsapmedia "$storagePath"
 unzipmedia  
