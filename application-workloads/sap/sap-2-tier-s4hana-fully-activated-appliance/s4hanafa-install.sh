@@ -88,8 +88,9 @@ function getsapmedia()
     log "start of getsapmedia"
     # Copy from a storage account to the local disk using azcli
     log "get sapmedia from $storagePath"
+    log "get sapmedia from $storageAccountToken"
 
-    azcopy copy "$storagePath" '/sapmedia' --recursive >> /var/log/sapinstall.log 
+    azcopy copy "$storagePath?$storageAccountToken" '/sapmedia' --recursive >> /var/log/sapinstall.log 
     
     # If the /sapmedia directory is empty, then the copy failed
     if [ ! "$(ls -A /sapmedia)" ]; then
@@ -117,6 +118,7 @@ function unzipmedia()
 # Main script starts here
 log "start of s4hanafa-install.sh"
 storagePath=$1
+storageAccountToken=$2
 
 # OS-level pre-requisites 
 addipaddress
