@@ -174,7 +174,7 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
     type: 'CustomScript'
     typeHandlerVersion: '2.0'
     autoUpgradeMinorVersion: true
-    settings: {
+    protectedSettings: {
       fileUris: [
         uri(_artifactsLocation, 's4hanafa-install.sh${_artifactsLocationSasToken}')
       ]
