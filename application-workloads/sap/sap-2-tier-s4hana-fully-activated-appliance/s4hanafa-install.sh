@@ -85,8 +85,7 @@ function addtofstab()
 }
 
 function getsapmedia()
-{
-    storagePath=$1    
+{ 
     log "start of getsapmedia"
     # Copy from a storage account to the local disk using azcli
     log "get sapmedia from $storagePath"
@@ -116,6 +115,10 @@ function unzipmedia()
     log "end of unzipmedia"
 }
 
+# Main script starts here
+log "start of s4hanafa-install.sh"
+storagePath=$1
+
 # OS-level pre-requisites 
 addipaddress
 installprequisites
@@ -128,5 +131,7 @@ addtofstab /dev/sdf /sapmnt
 mount -a
 
 # Download the SAP media
-getsapmedia "$storagePath"
+getsapmedia 
 unzipmedia  
+
+log "end of s4hanafa-install.sh"
