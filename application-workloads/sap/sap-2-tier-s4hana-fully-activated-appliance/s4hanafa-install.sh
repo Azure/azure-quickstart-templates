@@ -91,7 +91,7 @@ function getsapmedia()
         storagePath="$1"
     fi
 
-    azcopy login --login-type=MSI
+    export AZCOPY_AUTO_LOGIN_TYPE=MSI
     azcopy copy "$storagePath" '/sapmedia' --recursive
     
     # If the /sapmedia directory is empty, then the copy failed
@@ -110,7 +110,7 @@ function unzipmedia()
     for file in /sapmedia/*.ZIP
     do
         log "unzipping $file"
-        unzip -o $file -d /sapmedia
+        unzip -o "$file" -d /sapmedia
     done
 }
 
@@ -127,6 +127,5 @@ addtofstab /dev/sdf /sapmnt
 mount -a
 
 # Get the SAP media
-sleep 180
 getsapmedia "$storagePath"
 unzipmedia  
