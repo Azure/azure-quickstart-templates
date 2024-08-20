@@ -91,7 +91,9 @@ function getsapmedia()
         storagePath="$1"
     fi
 
+    # Based on https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory
     export AZCOPY_AUTO_LOGIN_TYPE=MSI
+    export AZCOPY_MSI_RESOURCE_STRING="$uami"
     azcopy copy "$storagePath" '/sapmedia' --recursive
     
     # If the /sapmedia directory is empty, then the copy failed
@@ -114,18 +116,21 @@ function unzipmedia()
     done
 }
 
-# Main
+# Set the variables
 storagePath=$1
+uami=$2
+
+# OS-level pre-requisites 
 addipaddress
 installprequisites
 
-# File systesm creation
+# SAP filesystem setup
 addtofstab /dev/sdc /hana/data
 addtofstab /dev/sdd /hana/log
 addtofstab /dev/sde /sapmedia
 addtofstab /dev/sdf /sapmnt
 mount -a
 
-# Get the SAP media
-getsapmedia "$storagePath"
+# Download the SAP media
+getsapmedia "$storagePath" "$uami"
 unzipmedia  
