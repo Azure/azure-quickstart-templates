@@ -11,7 +11,7 @@ languages:
 ---
 # SAP NetWeaver 2-tier S/4HANA 2023 Fully Activated Appliance
 
-This template offers an alternative path to SAP Cloud Appliance Library (CAL) for quickly deploying a fully configured SAP S/4HANA 2023 system on Azure. The template is intended for demonstration, training, and development purposes. 
+This template offers an alternative path to SAP Cloud Appliance Library (CAL) for quickly deploying a fully configured SAP S/4HANA 2023 system on Azure. This is useful if you prefer to have more flexibility and control over the deployment process. The template is intended for demonstration, training, and development purposes. 
 
 # Prerequisites
 
@@ -21,9 +21,9 @@ This template offers an alternative path to SAP Cloud Appliance Library (CAL) fo
 
 3. **Azure Virtual Network**: You must have a virtual network with at least one subnet. You can create a virtual network using the Azure portal or use the [Create a Virtual Network with two Subnets](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.network/vnet-two-subnets) quickstart template to create a virtual network with two subnets.
 
-4. **User managed identity**: You must have a user managed identity that has access to the storage account. 
+4. **User managed identity**: The Storage Blob Data Reader role is required to read the SAP software media from the storage account. You can find more information about user managed identity [here](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp). 
 
-5. **Resource Group**: You must have a resource group to deploy the resources. You can create a resource group using the Azure portal or the Azure CLI.
+5. **Resource Group**: You must have a resource group to deploy the resources. I would recommend creating a new resource group for this deployment, so that you can easily delete all resources by deleting the resource group.
 
 
 
