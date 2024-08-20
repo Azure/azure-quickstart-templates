@@ -19,7 +19,7 @@ function installprequisites()
     zypper install -y azcopy
     if [ ! "$(azcopy --version)" ]; then
         log "Failed to install azcopy"
-        exit -1
+        exit 1
     else
         log "Successfully installed $(azcopy --version)"
     fi
@@ -38,7 +38,7 @@ function addipaddress()
     #If vhcals4hci does not return a ip address, the log failure
     if [ ! "$(getent hosts vhcals4hci)" ]; then
         log "Failed to add ip address to /etc/hosts"
-        exit -1
+        exit 1
     else
         log "Successfully added $ip address to /etc/hosts"
         log "addipaddress done"
@@ -67,22 +67,29 @@ function addtofstab()
 		mount $mountPath
 	else
 		log "no UUID found for $partPath"
-		exit -1;
+		exit 1;
 	fi
 	log "addtofstab done for $partPath"
 }
 
 function getsapmedia()
 {
-    log "getsapmedia from $1"
     # Copy from a storage account to the local disk using azcli
+    log "getsapmedia from $1"
+    # If the string does not end with / then add /* to the end
+    if [[ $1 != */ ]]; then
+        storagePath="$1/*"
+    else
+        storagePath="$1"
+    fi
+
     azcopy login --login-type=MSI
-    azcopy copy $1 '/sapmedia' --recursive
+    azcopy copy "$storagePath" '/sapmedia' --recursive
     
     # If the /sapmedia directory is empty, then the copy failed
     if [ ! "$(ls -A /sapmedia)" ]; then
         log "azcopy failed to copy the SAP media"
-        exit -1
+        exit 1
     else
         log "azcopy successfully copied the SAP media"
     fi

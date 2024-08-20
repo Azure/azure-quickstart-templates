@@ -47,7 +47,6 @@ var linuxConfiguration = {
   }
 }
 
-// Create a user-assigned managed identity
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: managedIdentityName
 }
@@ -143,6 +142,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
       ]
     }
   }
+  dependsOn: [
+    userAssignedIdentity
+  ]
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {
