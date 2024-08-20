@@ -20,10 +20,14 @@ param subnetId string
 @secure()
 param storageAccountPath string
 
+@description('Storage account SAS token required to access the storage account path.')
+@secure()
+param storageAccountSasToken string
+
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param _artifactsLocation string = deployment().properties.templateLink.uri
 
-@description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
+@description('The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
 @secure()
 param _artifactsLocationSasToken string = ''
 
@@ -166,7 +170,7 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       fileUris: [
         uri(_artifactsLocation, 's4hanafa-install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath}'
+      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath} ${storageAccountSasToken}'
     }
   }
 }
