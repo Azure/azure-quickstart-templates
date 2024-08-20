@@ -3,8 +3,9 @@
 function log()
 {
   message=$@
-  echo "$message"
-  echo "$message" >> /var/log/sapinstall.log
+  # Log to the console and to the log file with timestamp
+  echo "$(date +'%Y-%m-%d %H:%M:%S') $message"
+  echo "$(date +'%Y-%m-%d %H:%M:%S') $message" >> /var/log/sapinstall.log
 }
 
 function installprequisites()
@@ -113,14 +114,19 @@ function unzipmedia()
     done
 }
 
+# Main
 storagePath=$1
-
 addipaddress
 installprequisites
+
+# File systesm creation
 addtofstab /dev/sdc /hana/data
 addtofstab /dev/sdd /hana/log
 addtofstab /dev/sde /sapmedia
 addtofstab /dev/sdf /sapmnt
 mount -a
+
+# Get the SAP media
+sleep 180
 getsapmedia "$storagePath"
 unzipmedia  
