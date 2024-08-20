@@ -121,5 +121,6 @@ addtofstab /dev/sdc /hana/data
 addtofstab /dev/sdd /hana/log
 addtofstab /dev/sde /sapmedia
 addtofstab /dev/sdf /sapmnt
+mount -a
 getsapmedia "$storagePath"
 unzipmedia  
