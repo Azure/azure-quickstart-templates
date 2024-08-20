@@ -10,7 +10,7 @@ function log()
 
 function installprequisites()
 {
-    log "installprequisites"
+    log "start of installprequisites"
     #azcopy
     log "installing azcopy"
     curl -sSL -O https://packages.microsoft.com/config/sles/15/packages-microsoft-prod.rpm
@@ -24,12 +24,12 @@ function installprequisites()
     else
         log "Successfully installed $(azcopy --version)"
     fi
-    log "installprequisites done"
+    log "end of installprequisites"
 }
 
 function addipaddress()
 {
-    log "addipaddress"
+    log "start of addipaddress"
     # get the ip address of the host
     ip=$(hostname -I | awk '{print $1}')
     echo "$ip"
@@ -41,14 +41,16 @@ function addipaddress()
         log "Failed to add ip address to /etc/hosts"
         exit 1
     else
-        log "Successfully added $ip address to /etc/hosts"
-        log "addipaddress done"
+        log "Added $ip address to /etc/hosts"
+        log "end of addipaddress"
     fi
     
 }
 
 function addtofstab()
 {
+    log "start of addtofstab"
+
 	local partPath=$1
     local mountPath=$2
 
@@ -78,18 +80,16 @@ function addtofstab()
         log "Successfully created mount point $mountPath"
         log "addtofstab done for $partPath"
     fi
+
+    log "end of addtofstab"
 }
 
 function getsapmedia()
 {
+    log "start of getsapmedia"
     # Copy from a storage account to the local disk using azcli
-    log "getsapmedia from $1"
-    # If the string does not end with / then add /* to the end
-    if [[ $1 != */ ]]; then
-        storagePath="$1/*"
-    else
-        storagePath="$1"
-    fi
+    log "get sapmedia from $storagePath"
+    log "get user assigned managed identity: $uami"
 
     # Based on https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory
     export AZCOPY_AUTO_LOGIN_TYPE=MSI
@@ -103,21 +103,28 @@ function getsapmedia()
     else
         log "azcopy successfully copied the SAP media"
     fi
+
+    log "end of getsapmedia"
 }
 
 function unzipmedia()
 {
-    log "unzipmedia"
+    log "start of unzipmedia"
     # Unzip the media files
     for file in /sapmedia/*.ZIP
     do
         log "unzipping $file"
         unzip -o "$file" -d /sapmedia
     done
+    log "end of unzipmedia"
 }
 
 # Set the variables
-storagePath=$1
+if [[ $1 != */ ]]; then
+    storagePath="$1/*"
+else
+    storagePath="$1"
+fi
 uami=$2
 
 # OS-level pre-requisites 
