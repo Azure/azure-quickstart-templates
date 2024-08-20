@@ -17,6 +17,7 @@ param adminPasswordOrKey string
 param subnetId string
 
 @description('Storage account path containing the S/4HANA Fully Activated Appliance software media.')
+@secure()
 param storageAccountPath string
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
@@ -167,16 +168,5 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       ]
       commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath}'
     }
-  }
-}
-
-resource assignrole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().subscriptionId, 'roleAssignment', vmName)
-  scope: resourceGroup()
-  properties: {
-    principalId: vm.identity.principalId
-    //Storage Blob Data Reader role
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
-    principalType: 'ServicePrincipal' // See https://docs.microsoft.com/azure/role-based-access-control/role-assignments-template#new-service-principal to understand why this property is included.
   }
 }
