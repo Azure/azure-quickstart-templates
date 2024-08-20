@@ -178,8 +178,7 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       fileUris: [
         uri(_artifactsLocation, 's4hanafa-install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sudo bash s4hanafa-install.sh ${storageAccountPath}'
-      managedIdentity : {}
+      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath} ${userAssignedIdentity.id}'
     }
   }
 }
