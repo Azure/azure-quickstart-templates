@@ -6,7 +6,7 @@ param memoryMB int = 8192
 param adminUsername string
 @description('The name of a Marketplace Gallery Image already downloaded to the Azure Stack HCI cluster. For example: winServer2022-01')
 param imageName string
-@description('The name of an existing Logical Network in your HCI cluster - for example: vnet-compute-vlan240-dhcp')
+@description('The name of an existing Logical Network in your HCI cluster - for example: lnet-compute-vlan240-dhcp')
 param hciLogicalNetworkName string
 @description('The name of the custom location to use for the deployment. This name is specified during the deployment of the Azure Stack HCI cluster and can be found on the Azure Stack HCI cluster resource Overview in the Azure portal.')
 param customLocationName string
@@ -24,19 +24,17 @@ param domainJoinUserName string = ''
 @secure()
 param domainJoinPassword string = ''
 
+//define a custom type for the dataDiskParams parameter and array of disks
+type dataDiskType = {
+  diskSizeGB: int
+  dynamic: bool?
+  //containerId: string
+}
+type dataDiskArrayType = dataDiskType[]
+
 @description('The bicep array description of the dataDisks to attached to the vm. Provide an empty array for no addtional disks, or an array following the example below.')
-// param dataDiskParams array = []
-param dataDiskParams array = [
-  {
-    diskSizeGB: 8
-    dynamic: true
-    //containerId: specify a container ID to target a specific CSV/storage path in your HCI cluster
-  }
-  {
-    diskSizeGB: 16
-    dynamic: false
-  }
-]
+// param dataDiskParams array = [{'diskSizeGB': 1024,'dynamic': true},{'diskSizeGB': 2048,'dynamic': false}]
+param dataDiskParams dataDiskArrayType = []
 
 var nicName = 'nic-${name}' // name of the NIC to be created
 var customLocationId = resourceId('Microsoft.ExtendedLocation/customLocations', customLocationName) // full custom location ID
@@ -53,7 +51,7 @@ resource hybridComputeMachine 'Microsoft.HybridCompute/machines@2023-10-03-previ
   }
 }
 
-resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
+resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2024-01-01' = {
   name: nicName
   location: location
   extendedLocation: {
@@ -76,7 +74,7 @@ resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
   }
 }
 
-resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview' = [for (disk, i) in dataDiskParams: {
+resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2024-01-01' = [for (disk, i) in dataDiskParams: {
   name: '${name}dataDisk${padLeft(i + 1, 2, '0')}'
   location: location
   extendedLocation: {
@@ -85,12 +83,12 @@ resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview'
   }
   properties: {
     diskSizeGB: disk.diskSizeGB
-    dynamic: disk.dynamic
+    dynamic: disk.?dynamic // dynamic is optional
     // containerId: uncomment if you want to target a specific CSV/storage path in your HCI cluster
   }
 }]
 
-resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09-01-preview' = {
+resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2024-01-01' = {
   name: 'default' // value must be 'default' per 2023-09-01-preview
   properties: {
     hardwareProfile: {

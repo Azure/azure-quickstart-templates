@@ -253,7 +253,7 @@
         },
         {
             "type": "Microsoft.Databricks/accessConnectors",
-            "apiVersion": "2023-05-01",
+            "apiVersion": "2024-05-01",
             "name": "[parameters('accessConnectorName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -324,12 +324,12 @@
                         }
                     },
                     {
-                        "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp",
+                        "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-cp",
                         "properties": {
-                            "description": "Required for workers communication with Databricks Webapp.",
+                            "description": "Required for workers communication with Databricks control plane.",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
-                            "destinationPortRange": "443",
+                            "destinationPortRanges": ["443","8443-8451","3306"],
                             "sourceAddressPrefix": "VirtualNetwork",
                             "destinationAddressPrefix": "AzureDatabricks",
                             "access": "Allow",
@@ -462,20 +462,13 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
-                "[resourceId(parameters('msCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksManagedServicesCMKAccessPolicy')]",
-                "[resourceId('Microsoft.Databricks/accessConnectors', parameters('accessConnectorName'))]"
+                "[resourceId(parameters('msCmkKeyVaultResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksManagedServicesCMKAccessPolicy')]"
             ],
             "sku": {
                 "name": "[parameters('pricingTier')]"
             },
             "properties": {
                 "managedResourceGroupId": "[variables('managedResourceGroupId')]",
-                "accessConnector": {
-                    "id": "[resourceId('Microsoft.Databricks/accessConnectors', parameters('accessConnectorName'))]",
-                    "identityType": "UserAssigned",
-                    "userAssignedIdentityId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
-                },
-                "defaultStorageFirewall":"Enabled",
                 "parameters": {
                     "customVirtualNetworkId": {
                         "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
@@ -605,7 +598,8 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]",
                 "[resourceId(parameters('dbfsCmkResourceGroup'), 'Microsoft.Resources/deployments', 'DatabricksDbfsCMKAccessPolicy')]",
-                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
+                "[resourceId('Microsoft.Databricks/accessConnectors', parameters('accessConnectorName'))]"
             ],
             "properties": {
                 "mode": "Incremental",

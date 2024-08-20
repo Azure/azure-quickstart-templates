@@ -66,7 +66,7 @@ var privateEndpointName = '${workspaceName}-pvtEndpoint'
 var privateDnsZoneName = 'privatelink.azuredatabricks.net'
 var pvtEndpointDnsGroupName = '${privateEndpointName}/mydnsgroupname'
 
-resource accessConnector 'Microsoft.Databricks/accessConnectors@2023-05-01' = {
+resource accessConnector 'Microsoft.Databricks/accessConnectors@2024-05-01' = {
   name: accessConnectorName
   location: location
   identity: {
@@ -95,12 +95,12 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
         }
       }
       {
-        name: 'Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp'
+        name: 'Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-cp'
         properties: {
-          description: 'Required for workers communication with Databricks Webapp.'
+          description: 'Required for workers communication with Databricks control plane.'
           protocol: 'Tcp'
           sourcePortRange: '*'
-          destinationPortRange: '443'
+          destinationPortRanges: ['443','8443-8451','3306']
           sourceAddressPrefix: 'VirtualNetwork'
           destinationAddressPrefix: 'AzureDatabricks'
           access: 'Allow'
