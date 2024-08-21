@@ -5,7 +5,7 @@ function log()
   message=$@
   # Log to the console and to the log file with timestamp
   echo "$(date +'%Y-%m-%d %H:%M:%S') $message"
-  echo "$(date +'%Y-%m-%d %H:%M:%S') $message" >> /var/log/sapinstall.log
+  echo "$(date +'%Y-%m-%d %H:%M:%S') $message" >> /var/log/azure-quickstart-install-os.log
 }
 
 function installprequisites()
@@ -83,42 +83,27 @@ function addtofstab()
     log "end of addtofstab"
 }
 
-function getsapmedia()
-{ 
-    log "start of getsapmedia"
-    # Copy from a storage account to the local disk using azcli
-    log "get sapmedia from $storagePath"
-    log "get sapmedia from $storageAccountToken"
-
-    azcopy copy "$storagePath?$storageAccountToken" '/sapmedia' --recursive >> /var/log/sapinstall.log 
-    
-    # If the /sapmedia directory is empty, then the copy failed
-    if [ ! "$(ls -A /sapmedia)" ]; then
-        log "azcopy failed to copy the SAP media"
+function downloadscript()
+{
+    log "start of downloadscript"
+    local scriptname="s4install.sh"
+    local scripturl=$1+"/s4install.sh"
+    log "Downloading $scriptname from $scripturl"
+    curl -sSL -o /sapmedia/$scriptname $scripturl
+    if [ ! -f /sapmedia/$scriptname ]; then
+        log "Failed to download $scriptname"
         exit 1
     else
-        log "azcopy successfully copied the SAP media"
+        log "Successfully downloaded $scriptname to /sapmedia"
     fi
-
-    log "end of getsapmedia"
+    log "end of downloadscript"
 }
 
-function unzipmedia()
-{
-    log "start of unzipmedia"
-    # Unzip the media files
-    for file in /sapmedia/*.ZIP
-    do
-        log "unzipping $file"
-        unzip -o "$file" -d /sapmedia
-    done
-    log "end of unzipmedia"
-}
 
 # Main script starts here
-log "start of s4hanafa-install.sh"
-storagePath=$1
-storageAccountToken=$2
+log "start of install.sh"
+
+s4scriptlocation=$1
 
 # OS-level pre-requisites 
 addipaddress
@@ -131,8 +116,7 @@ addtofstab /dev/sde /sapmedia
 addtofstab /dev/sdf /sapmnt
 mount -a
 
-# Download the SAP media
-getsapmedia 
-unzipmedia  
+# Download the SAP install script
+downloadscript "$s4scriptlocation"
 
-log "end of s4hanafa-install.sh"
+log "end of install.sh"
