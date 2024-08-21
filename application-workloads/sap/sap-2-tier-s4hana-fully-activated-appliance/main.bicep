@@ -162,7 +162,7 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
       fileUris: [
         uri(_artifactsLocation, 'install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sh s4hanafa-install.sh ${_artifactsLocation}'
+      commandToExecute: 'sh install.sh ${_artifactsLocation}'
     }
   }
 }
