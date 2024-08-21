@@ -87,7 +87,8 @@ function downloadscript()
 {
     log "start of downloadscript"
     local scriptname="s4install.sh"
-    local scripturl=$1+"/s4install.sh"
+    local scripturl=$(echo $1 | sed 's/main.json/s4install.sh/g')
+
     log "Downloading $scriptname from $scripturl"
     curl -sSL -o /sapmedia/$scriptname $scripturl
     if [ ! -f /sapmedia/$scriptname ]; then
