@@ -2,18 +2,22 @@
 
 function log()
 {
-  message=$@
-  # Log to the console and to the log file with timestamp
+  local message="$@"
   echo "$(date +'%Y-%m-%d %H:%M:%S') $message"
   echo "$(date +'%Y-%m-%d %H:%M:%S') $message" >> /var/log/azure-quickstart-install-os.log
 }
 
 function installprequisites()
 {
-    log "start of installprequisites"
-    #azcopy
-    log "installing azcopy"
+    log "Start of installprequisites"
+    log "Installing azcopy"
+
     curl -sSL -O https://packages.microsoft.com/config/sles/15/packages-microsoft-prod.rpm
+    if [[ $? -ne 0 ]]; then
+        log "Failed to download azcopy package"
+        exit 1
+    fi
+    
     rpm -i packages-microsoft-prod.rpm
     rm -f packages-microsoft-prod.rpm
     zypper --non-interactive --gpg-auto-import-keys refresh
@@ -24,55 +28,53 @@ function installprequisites()
     else
         log "Successfully installed $(azcopy --version)"
     fi
-    log "end of installprequisites"
+    log "End of installprequisites"
 }
 
 function addipaddress()
 {
-    log "start of addipaddress"
-    # get the ip address of the host
-    ip=$(hostname -I | awk '{print $1}')
-    log "server ip address is $ip"
+    log "Start of addipaddress"
+    local ip=$(hostname -I | awk '{print $1}')
+    log "Server ip address is $ip"
     
-    # add the entry in /etc/hosts file
-    echo "$ip" sid-hdb-s4h.dummy.nodomain sid-hdb-s4h >> /etc/hosts
-    echo "$ip" vhcals4hci.dummy.nodomain vhcals4hci >> /etc/hosts
-    echo "$ip" vhcals4hcs.dummy.nodomain vhcals4hcs >> /etc/hosts
-    echo "$ip" vhcalhdbdb.dummy.nodomain vhcalhdbdb >> /etc/hosts
+    local entries=("sid-hdb-s4h.dummy.nodomain sid-hdb-s4h" 
+                   "vhcals4hci.dummy.nodomain vhcals4hci" 
+                   "vhcals4hcs.dummy.nodomain vhcals4hcs" 
+                   "vhcalhdbdb.dummy.nodomain vhcalhdbdb")
+    for entry in "${entries[@]}"; do
+        echo "$ip $entry" >> /etc/hosts
+    done
 
-    #If vhcals4hci does not return a ip address, the log failure
     if [ ! "$(getent hosts vhcals4hci)" ]; then
         log "Failed to add ip address to /etc/hosts"
         exit 1
     else
         log "Added $ip address to /etc/hosts"
-        log "end of addipaddress"
+        log "End of addipaddress"
     fi
 }
 
 function addtofstab()
 {
-    log "start of addtofstab"
-
+    log "Start of addtofstab"
 	local partPath=$1
     local mountPath=$2
 
-    log "addtofstab $partPath $mountPath"
+    log "End of addtofstab $partPath $mountPath"
 
 	mkfs -t xfs "$partPath"
 	mkdir -p "$mountPath"
 
-	local blkid=$(/sbin/blkid "$partPath")
+	local blkid="$(/sbin/blkid "$partPath")"
 	if [[ $blkid =~  UUID=\"(.{36})\" ]]
 	then
 		log "Adding fstab entry for $partPath"
 		local uuid=${BASH_REMATCH[1]};
 		local mountCmd=""
-		mountCmd="/dev/disk/by-uuid/$uuid $mountPath xfs  defaults,nofail  0  2"
-		echo "$mountCmd" >> /etc/fstab
-		mount "$mountPath"
+        echo "/dev/disk/by-uuid/$uuid $mountPath xfs defaults,nofail 0 2" >> /etc/fstab
+        mount "$mountPath"
 	else
-		log "no UUID found for $partPath"
+		log "No UUID found for $partPath"
 		exit 1;
 	fi
     # Check if mount point exist, if not log failure
@@ -80,49 +82,49 @@ function addtofstab()
         log "Failed to create mount point $mountPath"
         exit 1
     else
-        log "Successfully created mount point $mountPath"
-        log "addtofstab done for $partPath"
+        log "Created mount point $mountPath"
     fi
-
-    log "end of addtofstab"
+    log "End of addtofstab"
 }
 
 function downloadscript()
 {
-    log "start of downloadscript"
+    log "Start of downloadscript"
     local scriptname=$2
-    local scripturl=$(echo $1 | sed 's/main.json/$(scriptname)/g')
+    local scripturl=$1//main.json/"$scriptname"
 
     log "Downloading $scriptname from $scripturl"
-    curl -sSL -o /sapmedia/$scriptname $scripturl
-    chmod +x /sapmedia/$scriptname
-    if [ ! -f /sapmedia/$scriptname ]; then
+    curl -sSL -o /sapmedia/"$scriptname" "$scripturl"
+    chmod +x /sapmedia/"$scriptname"
+    
+    if [[ ! -f "/sapmedia/$scriptname" ]]; then
         log "Failed to download $scriptname"
         exit 1
     else
-        log "Successfully downloaded $scriptname to /sapmedia"
+        log "Downloaded $scriptname to /sapmedia"
     fi
-    log "end of downloadscript"
+    log "End of downloadscript"
 }
 
 # Main script starts here
-log "start of install.sh"
+log "Start of install.sh"
 
 s4scriptlocation=$1
+if [[ -z "$s4scriptlocation" ]]; then
+    log "Script location not provided. Exiting."
+    exit 1
+fi
 
-# OS-level pre-requisites 
 addipaddress
 installprequisites
 
-# SAP filesystem setup
 addtofstab /dev/sdc /hana/data
 addtofstab /dev/sdd /hana/log
 addtofstab /dev/sde /sapmedia
 addtofstab /dev/sdf /sapmnt
 mount -a
 
-# Download the SAP install script
 downloadscript "$s4scriptlocation" "s4install.sh"
 downloadscript "$s4scriptlocation" "inifile.params"
 
-log "end of install.sh"
+log "End of install.sh"
