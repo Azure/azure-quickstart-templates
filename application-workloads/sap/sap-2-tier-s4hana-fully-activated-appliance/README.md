@@ -15,13 +15,13 @@ This template offers an alternative path to SAP Cloud Appliance Library (CAL) fo
 
 # Prerequisites
 
-1. **SAP Software**: You must have the SAP S/4HANA 2023 Fully Activated Appliance software. Download the software media from the [SAP Software Centre](https://me.sap.com/softwarecenter).
+1. **Azure Virtual Network**: A virtual network with at least one subnet is required. Create one using the Azure portal or follow [Create a Virtual Network with two Subnets](https://docs.microsoft.com/azure/virtual-network/quick-create-portal).
 
-2. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal).
+2. **SAP Software**: You must have the SAP S/4HANA 2023 Fully Activated Appliance software. Download the software media from the [SAP Software Centre](https://me.sap.com/softwarecenter).
 
-3. **Azure Virtual Network**: A virtual network with at least one subnet is required. Create one using the Azure portal or follow [Create a Virtual Network with two Subnets](https://docs.microsoft.com/azure/virtual-network/quick-create-portal).
+3. **Resource Group**: A resource group is needed to deploy the resources. It's recommended to create a new resource group for this deployment to easily delete all resources later.
 
-4. **Resource Group**: A resource group is needed to deploy the resources. It's recommended to create a new resource group for this deployment to easily delete all resources later.
+4. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal).
 
 # Deployment Steps
 
