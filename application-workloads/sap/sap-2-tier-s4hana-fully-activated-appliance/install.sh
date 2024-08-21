@@ -91,6 +91,7 @@ function downloadscript()
 
     log "Downloading $scriptname from $scripturl"
     curl -sSL -o /sapmedia/$scriptname $scripturl
+    chmod +x /sapmedia/$scriptname
     if [ ! -f /sapmedia/$scriptname ]; then
         log "Failed to download $scriptname"
         exit 1

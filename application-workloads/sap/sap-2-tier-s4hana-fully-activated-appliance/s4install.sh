@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 function log()
 {
@@ -12,9 +13,6 @@ function getsapmedia()
 { 
     log "start of getsapmedia"
     # Copy from a storage account to the local disk using azcli
-    log "get sapmedia from $1"
-    log "get sapmedia from $2"
-
     azcopy copy "$1?$2" '/sapmedia' --recursive >> /var/log/azure-quickstart-install-s4.log
     
     # If the /sapmedia directory is empty, then the copy failed
@@ -42,10 +40,10 @@ function unzipmedia()
 
 # Main script starts here
 log "start of s4hanafa-install.sh"
-gloal storagePath="$1"
-global storageAccountToken="$2"
+storagePath="$1"
+storageAccountToken="$2"
 
-getsapmedia storagePath storageAccountToken
+getsapmedia "$storagePath" "$storageAccountToken"
 unzipmedia  
 
 log "end of s4hanafa-install.sh"
