@@ -1,5 +1,5 @@
 ---
-description: This template deploy a simplified version of the **SAP S/4HANA 2023 Fully Activated Appliance**. 
+description: This template deploys an SAP S/4HANA 2023 Fully Activated Appliance system. 
 page_type: sample
 products:
 - azure
@@ -11,21 +11,22 @@ languages:
 ---
 # SAP NetWeaver 2-tier S/4HANA 2023 Fully Activated Appliance
 
-This template offers an alternative path to SAP Cloud Appliance Library (CAL) for quickly deploying a fully configured SAP S/4HANA 2023 system on Azure. This is useful if you prefer to have more flexibility over the deployment process. The template is intended for demonstration, training, and development purposes only. 
+This template offers an alternative path to SAP Cloud Appliance Library (CAL) for quickly deploying a fully configured SAP S/4HANA 2023 system on Azure. This is useful if you prefer more flexibility compared to CAL. 
 
 # Prerequisites
 
-1. **SAP Software**: You must have the SAP S/4HANA 2023 Fully Activated Appliance software. You can download the software media from [SAP Software Centre](https://me.sap.com/softwarecenter). You can find the ZIP files under INSTALLATIONS & UPGRADES => By Alphabetical Index (A-Z) => S => SAP S/4HANA => SAP S/4HANA 2022 => S/4HANA FULLY-ACTIVATED APPLIANCE => SAP S/4HANA 2023 FPS01 FA APPL.
+1. **SAP Software**: You must have the SAP S/4HANA 2023 Fully Activated Appliance software. Download the software media from the [SAP Software Centre](https://me.sap.com/softwarecenter).
 
-2. **Storage Account**: You must have a storage account to store the SAP software media. You can create a storage account using the Azure portal or use the [Create an Azure Storage Account and Blob Container on Azure](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.storage/storage-blob-container) quickstart template to create a storage account and a blob container.
+2. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal).
 
-3. **Azure Virtual Network**: You must have a virtual network with at least one subnet. You can create a virtual network using the Azure portal or use the [Create a Virtual Network with two Subnets](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.network/vnet-two-subnets) quickstart template to create a virtual network with two subnets.
+3. **Azure Virtual Network**: A virtual network with at least one subnet is required. Create one using the Azure portal or follow [Create a Virtual Network with two Subnets](https://docs.microsoft.com/azure/virtual-network/quick-create-portal).
 
-4. **Resource Group**: You must have a resource group to deploy the resources. I would recommend creating a new resource group for this deployment, so that you can easily delete all resources by deleting the resource group. To create the Resource group, type the command:
+4. **Resource Group**: A resource group is needed to deploy the resources. It's recommended to create a new resource group for this deployment to easily delete all resources later.
 
 # Deployment Steps
 
 1. Launch Azure Cloud Shell
+Follow the instructions in [Azure Cloud Shell](https://docs.microsoft.com/azure/cloud-shell/overview) to launch Azure Cloud Shell.
 
 2. Deploy the template
 
@@ -37,15 +38,17 @@ az group deployment create --name "name of your deployment" --template-uri "URI 
 
 3. Run the SAP S/4HANA 2023 Fully Activated Appliance installation 
 
-Login to the VM and run the following command. Note that I have send the installation process to the background using the `&` operator. This is to ensure that the installation process continues to run even if you disconnect from the Azure Cloud Shell.
+Log in to the VM and run the following command. The installation process is sent to the background using the & operator to ensure it continues running even if the session is interrupted:
 
 ```bash
 ./s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/*' 'SAS Token' &
 ```
 
-4. Go for a long coffee or tea break and wait for the installation to complete. The installation process will take a few hours to complete.
+4. Wait for Installation to Complete 
+Go for a long coffee or tea break. The installation process will take a few hours to complete.
 
-5. Access the SAP S/4HANA system and have fun! 
+5. Access the SAP S/4HANA system 
+Once the installation is complete, access the SAP S/4HANA system and have fun! 
 
 # Clean up deployment
 
@@ -54,6 +57,3 @@ Run the following command to delete the resource group and all resources:
 ```bash
 az group delete --name "name of your resource group"
 ``` 
-
-
-
