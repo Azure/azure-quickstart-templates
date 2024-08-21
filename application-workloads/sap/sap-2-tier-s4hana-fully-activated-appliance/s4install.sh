@@ -7,17 +7,6 @@ function log()
   echo "$(date +'%Y-%m-%d %H:%M:%S') $message" >> /var/log/azure-quickstart-install-s4.log
 }
 
-function checksapmedia()
-{
-    log "Checking if /sapmedia is empty"
-    if [ ! "$(ls -A /sapmedia)" ]; then
-        log "/sapmedia is empty, proceed with the installation"
-    else 
-        log "The /sapmedia directory is not empty"
-        exit 1
-    fi
-}
-
 function getsapmedia()
 { 
     log "Start of getsapmedia"
@@ -101,7 +90,6 @@ if [[ -z "$storagePath" || -z "$storageAccountToken" ]]; then
   exit 1
 fi
 
-checksapmedia
 getsapmedia "$storagePath" "$storageAccountToken"
 
 unzipmedia  

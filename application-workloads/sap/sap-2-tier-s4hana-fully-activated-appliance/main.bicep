@@ -169,12 +169,3 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
   }
 }
 
-resource assignedrole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(vmName,'Storage Blob Data Reader')
-  scope: resourceGroup()
-  properties: {
-    principalId: vm.identity.principalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleAssignments', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
-  }
-}
-
