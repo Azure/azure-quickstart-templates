@@ -32,10 +32,14 @@ function addipaddress()
     log "start of addipaddress"
     # get the ip address of the host
     ip=$(hostname -I | awk '{print $1}')
-    echo "$ip"
+    log "server ip address is $ip"
+    
     # add the entry in /etc/hosts file
     echo "$ip" sid-hdb-s4h.dummy.nodomain sid-hdb-s4h >> /etc/hosts
     echo "$ip" vhcals4hci.dummy.nodomain vhcals4hci >> /etc/hosts
+    echo "$ip" vhcals4hcs.dummy.nodomain vhcals4hcs >> /etc/hosts
+    echo "$ip" vhcalhdbdb.dummy.nodomain vhcalhdbdb >> /etc/hosts
+
     #If vhcals4hci does not return a ip address, the log failure
     if [ ! "$(getent hosts vhcals4hci)" ]; then
         log "Failed to add ip address to /etc/hosts"
@@ -86,8 +90,8 @@ function addtofstab()
 function downloadscript()
 {
     log "start of downloadscript"
-    local scriptname="s4install.sh"
-    local scripturl=$(echo $1 | sed 's/main.json/s4install.sh/g')
+    local scriptname=$2
+    local scripturl=$(echo $1 | sed 's/main.json/$(scriptname)/g')
 
     log "Downloading $scriptname from $scripturl"
     curl -sSL -o /sapmedia/$scriptname $scripturl
@@ -100,7 +104,6 @@ function downloadscript()
     fi
     log "end of downloadscript"
 }
-
 
 # Main script starts here
 log "start of install.sh"
@@ -119,6 +122,7 @@ addtofstab /dev/sdf /sapmnt
 mount -a
 
 # Download the SAP install script
-downloadscript "$s4scriptlocation"
+downloadscript "$s4scriptlocation" "s4install.sh"
+downloadscript "$s4scriptlocation" "inifile.params"
 
 log "end of install.sh"
