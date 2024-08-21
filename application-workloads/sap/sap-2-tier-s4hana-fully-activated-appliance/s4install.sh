@@ -45,7 +45,7 @@ function unzipmedia()
 function copybinaries()
 {
     log "Start of copybinaries"
-    cd /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_1
+    cd /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_1 || exit
     mv /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_2/*.tgz-* .
     mv /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_3/*.tgz-* .
     mv /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_4/*.tgz-* .    
@@ -79,10 +79,10 @@ function renamesap()
 {
     log "Start of renamesap"
     local swpmfile=$(ls /sapmedia | grep SWPM20)
-    cd /sapmedia
+    cd /sapmedia || exit
     /sapmnt/S4H/exe/uc/linuxx86_64/SAPCAR -xvf /sapmedia/$swpmfile
     mkdir /sapmedia/sapinstdir
-    cd /sapmedia/sapinstdir
+    cd /sapmedia/sapinstdir || exit
     mv /sapmedia/inifile.params /sapmedia/sapinstdir/inifile.params
     local xmlFile=/sapmedia/SAPS4HANA2023FPS00SAPHANADB20_4/SAP_Software_Appliance.xml
     local pwvalue=$(xmllint --xpath "string(//Password)" $xmlFile)

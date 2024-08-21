@@ -70,7 +70,6 @@ function addtofstab()
 	then
 		log "Adding fstab entry for $partPath"
 		local uuid=${BASH_REMATCH[1]};
-		local mountCmd=""
         echo "/dev/disk/by-uuid/$uuid $mountPath xfs defaults,nofail 0 2" >> /etc/fstab
         mount "$mountPath"
 	else
@@ -91,7 +90,7 @@ function downloadscript()
 {
     log "Start of downloadscript"
     local scriptname=$2
-    local scripturl=$1//main.json/"$scriptname"
+    local scripturl=$(echo $1 | sed "s/main.json/${scriptname}/")
 
     log "Downloading $scriptname from $scripturl"
     curl -sSL -o /sapmedia/"$scriptname" "$scripturl"
