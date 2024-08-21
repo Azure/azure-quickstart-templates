@@ -11,7 +11,7 @@ languages:
 ---
 # SAP NetWeaver 2-tier S/4HANA 2023 Fully Activated Appliance
 
-This template offers an alternative path to SAP Cloud Appliance Library (CAL) for quickly deploying a fully configured SAP S/4HANA 2023 system on Azure. This is useful if you prefer to have more flexibility and control over the deployment process. The template is intended for demonstration, training, and development purposes. 
+This template offers an alternative path to SAP Cloud Appliance Library (CAL) for quickly deploying a fully configured SAP S/4HANA 2023 system on Azure. This is useful if you prefer to have more flexibility over the deployment process. The template is intended for demonstration, training, and development purposes. 
 
 # Prerequisites
 

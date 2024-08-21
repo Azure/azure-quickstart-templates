@@ -16,14 +16,6 @@ param adminPasswordOrKey string
 @description('Subnet ID for the Virtual Machine.')
 param subnetId string
 
-@description('Storage account path containing the S/4HANA Fully Activated Appliance software media.')
-@secure()
-param storageAccountPath string
-
-@description('Storage account SAS token required to access the storage account path.')
-@secure()
-param storageAccountSasToken string
-
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param _artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -168,9 +160,9 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
     autoUpgradeMinorVersion: true
     protectedSettings: {
       fileUris: [
-        uri(_artifactsLocation, 's4hanafa-install.sh${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sh s4hanafa-install.sh ${storageAccountPath} ${storageAccountSasToken}'
+      commandToExecute: 'sh s4hanafa-install.sh ${_artifactsLocation}'
     }
   }
 }
