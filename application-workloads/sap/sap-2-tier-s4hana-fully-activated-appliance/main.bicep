@@ -85,7 +85,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'Premium_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
         {
@@ -95,7 +95,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 128
           managedDisk: {
-            storageAccountType: 'Premium_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
         {
@@ -105,7 +105,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'Premium_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
         {
@@ -115,7 +115,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 64
           managedDisk: {
-            storageAccountType: 'Premium_LRS'
+            storageAccountType: 'PremiumV2_LRS'
           }
         }
       ]
