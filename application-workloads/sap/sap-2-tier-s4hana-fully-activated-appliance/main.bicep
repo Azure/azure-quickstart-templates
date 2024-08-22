@@ -28,7 +28,6 @@ var imageOffer = 'sles-sap-15-sp3'
 var imageSku = 'gen2'
 var vmName = 'vhcals4hci'
 var vmSize = 'Standard_E16-4ds_v5'
-//var vmSize = 'Standard_E4ds_v4'
 var location = resourceGroup().location
 var linuxConfiguration = {
   disablePasswordAuthentication: true
