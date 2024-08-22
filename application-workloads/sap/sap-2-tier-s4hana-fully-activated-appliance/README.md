@@ -13,7 +13,7 @@ languages:
 
 Explore the latest and greatest features of SAP S/4HANA 2023 with this fully activated appliance on Azure! This template deploys a fully configured SAP S/4HANA 2023 system on Azure. You can find more information about this type of deployment method in this excellent [SAP blog post by Mahesh Sardesai](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947).
 
-# Prerequisites
+## Prerequisites
 
 1. **Azure Virtual Network**: A virtual network with at least one subnet is required. Create one using the Azure portal or follow [Create a Virtual Network with two Subnets](https://docs.microsoft.com/azure/virtual-network/quick-create-portal).
 
