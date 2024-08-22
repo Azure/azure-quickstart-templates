@@ -40,10 +40,16 @@ az group deployment create --name "name of your deployment" --template-uri "URI 
 
 3. Run the SAP S/4HANA 2023 Fully Activated Appliance installation 
 
-Log in to the VM and run the following command. Run this command in a jump server to ensure that the installation process is not interrupted.
+Log in to the VM and run the following command. Run this command in a jump server to ensure that the installation process is not interrupted. You can set up a managed system identity or use a temporary storage account SAS token to download the SAP software.  
 
 ```bash
 ./s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/' 'SAS Token' 
+```
+
+or 
+
+```bash
+./s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/'
 ```
 
 4. Wait for Installation to Complete 

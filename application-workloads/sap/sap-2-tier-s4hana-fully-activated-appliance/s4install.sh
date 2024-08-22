@@ -10,7 +10,14 @@ function log()
 function getsapmedia()
 { 
     log "Start of getsapmedia"
-    azcopy sync "$1?$2" '/sapmedia' --exclude-pattern 51057501_5.ZIP 
+    if $2 '==' "null"; then
+        log "Use managed identity to access the storage account"
+        export AZCOPY_AUTO_LOGIN_TYPE=MSI
+        azcopy sync "$1" '/sapmedia' --exclude-pattern 51057501_5.ZIP
+    else
+        log "Using Storage account SAS token"
+        azcopy sync "$1?$2" '/sapmedia' --exclude-pattern 51057501_5.ZIP 
+    fi
     #count the number of zip files in the /sapmedia directory
     local zipcount=$(find /sapmedia -name "*.ZIP" 2>/dev/null | wc -l)
     if [ "$zipcount" -lt 4 ]; then
