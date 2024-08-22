@@ -10,8 +10,10 @@ function log()
 function getsapmedia()
 { 
     log "Start of getsapmedia"
-    azcopy copy "$1?$2" '/sapmedia' --recursive 
-    if [ -z "$(ls -A /sapmedia)" ]; then
+    azcopy sync "$1?$2" '/sapmedia' --exclude-pattern 51057501_5.ZIP 
+    #count the number of zip files in the /sapmedia directory
+    local zipcount=$(find /sapmedia -name "*.ZIP" 2>/dev/null | wc -l)
+    if [ "$zipcount" -lt 4 ]; then
         log "azcopy failed to copy the SAP media"
         exit 1
     else
@@ -26,8 +28,16 @@ function unzipmedia()
     for file in /sapmedia/*.ZIP
     do
         log "unzipping $file"
-        unzip -o "$file" -d /sapmedia
+        unzip -q -o "$file" -d /sapmedia
     done
+
+    if [ ! -f /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_1/dbdata.tgz-ah ]; then
+        log "Failed to unzip the media"
+        exit 1
+    else
+        log "Media unzipped successfully"
+    fi    
+
     log "End of unzipmedia"
 }
 
@@ -44,14 +54,20 @@ function copybinaries()
 function extractbinaries()
 {
     log "Start of extractbinaries"
-    # Extract the binaries
     local tar_files=("dbdata.tgz-*" "dblog.tgz-*" "dbexe.tgz-*" "sapmnt_s4h.tgz-*" "usrsap_s4h.tgz-*")
-  
+                      
     for tar_file in "${tar_files[@]}"; do
-        cat "$tar_file" | tar -zpxvf - -C /
+        cd /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_1 || exit
+        cat $tar_file | tar -zpxvf - -C /
         log "$tar_file extracted"
     done
 
+    if [ ! -f /sapmnt/S4H/exe/uc/linuxx86_64/SAPCAR ]; then
+        log "Failed to extract the binaries"
+        exit 1
+    else
+        log "Binaries extracted successfully"
+    fi
     log "End of extractbinaries"
 }
 
@@ -91,11 +107,10 @@ if [[ -z "$storagePath" || -z "$storageAccountToken" ]]; then
 fi
 
 getsapmedia "$storagePath" "$storageAccountToken"
-
 unzipmedia  
 copybinaries
 extractbinaries
 renamedb
-renamesap
+#renamesap
 
 log "end of s4hanafa-install.sh"

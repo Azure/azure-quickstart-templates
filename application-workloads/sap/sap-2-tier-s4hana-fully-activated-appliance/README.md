@@ -41,7 +41,7 @@ az group deployment create --name "name of your deployment" --template-uri "URI 
 Log in to the VM and run the following command. The installation process is sent to the background using the & operator to ensure it continues running even if the session is interrupted:
 
 ```bash
-./s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/*' 'SAS Token' &
+./s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/' 'SAS Token' &
 ```
 
 4. Wait for Installation to Complete 
