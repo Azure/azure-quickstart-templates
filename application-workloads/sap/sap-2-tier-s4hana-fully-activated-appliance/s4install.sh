@@ -83,6 +83,12 @@ function renamedb()
 function renamesap()
 {
     log "Start of renamesap"
+
+    #Bug fix for the issue where the SAP system is not starting after the rename
+    export LD_LIBRARY_PATH=/usr/sap/S4H/SYS/exe/run:/usr/sap/S4H/SYS/exe/uc/linuxx86_64:/usr/sap/S4H/SYS/exe/uc/linuxx86_64/hdbclient
+    /usr/sap/S4H/ASCS01/exe/sapstartsrv -reg pf=/sapmnt/S4H/profile/S4H_ASCS01_vhcals4hcs
+    systemctl start SAPS4H_01
+
     local swpmfile=$(ls /sapmedia | grep SWPM20)
     cd /sapmedia || exit
     /sapmnt/S4H/exe/uc/linuxx86_64/SAPCAR -xvf /sapmedia/$swpmfile
@@ -111,6 +117,6 @@ unzipmedia
 copybinaries
 extractbinaries
 renamedb
-#renamesap
+renamesap
 
 log "end of s4hanafa-install.sh"
