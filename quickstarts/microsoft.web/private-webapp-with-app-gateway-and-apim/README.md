@@ -1,4 +1,3 @@
-
 # Application Gateway with internal API Management and Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim/PublicLastTestDate.svg)
