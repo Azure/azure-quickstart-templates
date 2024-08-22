@@ -41,7 +41,7 @@ var linuxConfiguration = {
   }
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   name: vmName
   location: location
   tags: {
@@ -125,10 +125,16 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
       networkInterfaces: [
         {
           id: nic.id
+          properties: {
+            deleteOption: 'Delete'
+          }
         }
       ]
     }
   }
+  zones: [
+    '1' 
+  ]
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {
