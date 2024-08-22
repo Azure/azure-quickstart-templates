@@ -1,14 +1,4 @@
----
-description: Application Gateway routing Internet traffic to a virtual network (internal mode) API Management instance which services a web API hosted in an Azure Web App.
-page_type: sample
-products:
-- azure
-- azure-resource-manager
-urlFragment: private-webapp-with-app-gateway-and-apim
-languages:
-- json
-- bicep
----
+
 # Application Gateway with internal API Management and Web App
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim/PublicLastTestDate.svg)
