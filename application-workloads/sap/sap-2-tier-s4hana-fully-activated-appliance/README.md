@@ -65,4 +65,6 @@ A number of factors can affect the performance of the SAP S/4HANA system. The fo
 * The storage are based on Azure Premium SSD disk v2 without any LVM. You can adjust the IOPS, throughput and size based on your requirements. 
 * This template is design for a proof of concept or training environment. For production deployments of your SAP S/4HANA system, it is recommended to use [Azure Centre for SAP Solutions](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview) or the [SAP on Azure Deployment Automation Framework](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview).
 
+# Clean up
+When you no longer need the resources, you can delete the delete VM. The template is configured to delete the VM and the associated disks and nic when the VM is deleted, but will not delete the storage account or the resource group. 
 
