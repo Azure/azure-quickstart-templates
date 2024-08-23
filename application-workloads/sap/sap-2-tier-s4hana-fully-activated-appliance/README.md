@@ -11,7 +11,7 @@ languages:
 ---
 # SAP NetWeaver 2-tier S/4HANA 2023 Fully Activated Appliance
 
-Explore the latest and greatest features of SAP S/4HANA 2023 with this fully activated appliance on Azure! This template deploys a fully configured SAP S/4HANA 2023 system on Azure. You can find more information about this type of deployment method in this excellent [SAP blog post by Mahesh Sardesai](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947).
+Explore the latest and greatest features of SAP S/4HANA 2023 with this fully activated appliance on Azure! This template deploys a fully configured SAP S/4HANA 2023 system on Azure. You can find more information about this type of deployment method in this excellent [SAP blog post by Mahesh Sardesai](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947). 
 
 ## Prerequisites
 
@@ -53,7 +53,7 @@ or
 ```
 
 4. Wait for Installation to Complete 
-Go for a long coffee or tea break. The installation process typically takes around 4 hours to complete from start to finish.
+Go for a long coffee or tea break. Or better yet, take read the latest [SAP blog post](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947). The installation process typically takes around 4 hours to complete from start to finish.
 
 5. Access the SAP S/4HANA system 
 Once the installation is complete, access the SAP S/4HANA system and have fun! 
@@ -62,13 +62,7 @@ Once the installation is complete, access the SAP S/4HANA system and have fun!
 A number of factors can affect the performance of the SAP S/4HANA system. The following are some of the key factors to consider:
 
 * This template deploys a Standard_E16-4ds_v5 VM for the SAP S/4HANA system. You can adjust the VM size based on your requirements. 
-* The storage is a Azure Premium SSD disk v2 without any LVM. You can adjust the disk size based on your requirements. 
+* The storage are based on Azure Premium SSD disk v2 without any LVM. You can adjust the IOPS, throughput and size based on your requirements. 
 * This template is design for a proof of concept or training environment. For production deployments of your SAP S/4HANA system, it is recommended to use [Azure Centre for SAP Solutions](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview) or the [SAP on Azure Deployment Automation Framework](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview).
 
-# Clean up deployment
 
-Run the following command to delete the resource group and all resources:
-
-```bash
-az group delete --name "name of your resource group"
-``` 
