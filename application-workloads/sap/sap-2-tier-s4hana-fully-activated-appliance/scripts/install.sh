@@ -90,7 +90,7 @@ function downloadscript()
 {
     log "Start of downloadscript"
     local scriptname=$2
-    local scripturl=$(echo $1 | sed "s/main.json/${scriptname}/")
+    local scripturl=$1
 
     log "Downloading $scriptname from $scripturl"
     curl -sSL -o /sapmedia/"$scriptname" "$scripturl"
@@ -114,6 +114,12 @@ if [[ -z "$s4scriptlocation" ]]; then
     exit 1
 fi
 
+s4inifilelocation=$2
+if [[ -z "$s4inifilelocation" ]]; then
+    log "Ini file location not provided. Exiting."
+    exit 1
+fi
+
 addipaddress
 installprequisites
 
@@ -124,6 +130,6 @@ addtofstab /dev/sdf /sapmnt
 mount -a
 
 downloadscript "$s4scriptlocation" "s4install.sh"
-downloadscript "$s4scriptlocation" "inifile.params"
+downloadscript "$s4inifilelocation" "inifile.params"
 
 log "End of install.sh"
