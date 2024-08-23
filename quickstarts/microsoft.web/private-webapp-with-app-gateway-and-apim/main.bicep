@@ -826,6 +826,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
         name: 'gatewayrule'
         properties: {
           ruleType: 'Basic'
+          priority: 1
           httpListener: {
             id: resourceId(
               'Microsoft.Network/applicationGateways/httpListeners',
@@ -853,6 +854,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
         name: 'portalrule'
         properties: {
           ruleType: 'Basic'
+          priority: 2
           httpListener: {
             id: resourceId(
               'Microsoft.Network/applicationGateways/httpListeners',
@@ -880,6 +882,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
         name: 'managementrule'
         properties: {
           ruleType: 'Basic'
+          priority: 3
           httpListener: {
             id: resourceId(
               'Microsoft.Network/applicationGateways/httpListeners',
