@@ -1,6 +1,6 @@
 // This Bicep file is used to deploy a virtual machine with S/4HANA Fully Activated Appliance. 
 @description('User name for the Virtual Machine.')
-param adminUsername string = 'azureuser'
+param adminUsername string
 
 @description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
 @allowed([
@@ -13,8 +13,20 @@ param authenticationType string = 'sshPublicKey'
 @secure()
 param adminPasswordOrKey string
 
-@description('Subnet ID for the Virtual Machine.')
-param subnetId string
+@description('The resource group of the existing Virtual Network.')
+param existingVirtualNetworkResourceGroupName string = resourceGroup().name
+
+@description('The name of the existing Virtual Network.')
+param existingVirtualNetworkName string
+
+@description('The name of the existing subnet.')
+param existingSubnetName string
+
+@description('The VM size for the Virtual Machine.')
+param vmSize string = 'Standard_E16-4ds_v5'
+
+@description('The location where the Virtual Machine will be created.')
+param location string = resourceGroup().location
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param _artifactsLocation string = deployment().properties.templateLink.uri
@@ -27,8 +39,6 @@ var imagePublisher = 'SUSE'
 var imageOffer = 'sles-sap-15-sp3'
 var imageSku = 'gen2'
 var vmName = 'vhcals4hci'
-var vmSize = 'Standard_E16-4ds_v5'
-var location = resourceGroup().location
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -39,6 +49,13 @@ var linuxConfiguration = {
       }
     ]
   }
+}
+var s4ScriptFileUri = uri(_artifactsLocation, 'scripts/s4install.sh${_artifactsLocationSasToken}')
+var s4InifileUri = uri(_artifactsLocation, 'scripts/inifile.params${_artifactsLocationSasToken}')
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-03-01' existing = {
+  name: '${existingVirtualNetworkName}/${existingSubnetName}'
+  scope: resourceGroup(existingVirtualNetworkResourceGroupName)
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
@@ -109,7 +126,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
           }
         }
         {
-          name: '${vmName}_sapmnt'
+          name: '${vmName}_sapMnt'
           lun: 3
           createOption: 'Empty'
           deleteOption: 'Delete'
@@ -139,14 +156,14 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
 
 resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {
   name: '${vmName}Nic'
-  location: resourceGroup().location
+  location: location
   properties: {
     ipConfigurations: [
       {
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: subnetId
+            id: subnet.id
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -166,9 +183,9 @@ resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01'
     autoUpgradeMinorVersion: true
     protectedSettings: {
       fileUris: [
-        uri(_artifactsLocation, 'install.sh${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/install.sh${_artifactsLocationSasToken}')
       ]
-      commandToExecute: 'sh install.sh ${_artifactsLocation}'
+      commandToExecute: 'sh install.sh ${s4ScriptFileUri} ${s4InifileUri}'
     }
   }
 }
