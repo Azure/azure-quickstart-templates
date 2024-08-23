@@ -53,7 +53,7 @@ or
 ```
 
 4. Wait for Installation to Complete 
-Go for a long coffee or tea break. Or better yet, take read the latest [SAP blog post](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947). The installation process typically takes around 4 hours to complete from start to finish.
+Go for a long coffee or tea break. Or better yet, read the latest [SAP on Azure blog posts](https://techcommunity.microsoft.com/t5/sap-on-microsoft/ct-p/SAPonMicrosoft). The installation process typically takes around 4 hours to complete from start to finish.
 
 5. Access the SAP S/4HANA system 
 Once the installation is complete, access the SAP S/4HANA system and have fun! 
