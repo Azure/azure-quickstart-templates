@@ -457,7 +457,7 @@ resource webAppPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   properties: {}
 }
 
-resource webApp 'Microsoft.Web/sites@2020-12-01' = {
+resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   name: webAppName
   location: location
   kind: 'app'
@@ -591,7 +591,7 @@ resource apiManagementDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@
 }
 
 // ---- Azure Application Gateway ----
-resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' = {
+resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' = {
   name: applicationGatewayName
   location: location
   dependsOn: [
