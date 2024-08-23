@@ -21,7 +21,7 @@ Explore the latest and greatest features of SAP S/4HANA 2023 with this fully act
 
 3. **Resource Group**: A resource group is needed to deploy the resources. It's recommended to create a new resource group for this deployment to easily delete all resources later.
 
-4. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal). 
+4. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal). Upload the SAP software media to a blob container in the storage account. An example of the uploaded files is shown below:
 
 <img src="./images/container.png">
 
@@ -53,10 +53,17 @@ or
 ```
 
 4. Wait for Installation to Complete 
-Go for a long coffee or tea break. The installation process will take a few hours to complete.
+Go for a long coffee or tea break. The installation process typically takes around 4 hours to complete from start to finish.
 
 5. Access the SAP S/4HANA system 
 Once the installation is complete, access the SAP S/4HANA system and have fun! 
+
+# Performance Considerations
+A number of factors can affect the performance of the SAP S/4HANA system. The following are some of the key factors to consider:
+
+* This template deploys a Standard_E16-4ds_v5 VM for the SAP S/4HANA system. You can adjust the VM size based on your requirements. 
+* The storage is a Azure Premium SSD disk v2 without any LVM. You can adjust the disk size based on your requirements. 
+* This template is design for a proof of concept or training environment. For production deployments of your SAP S/4HANA system, it is recommended to use [Azure Centre for SAP Solutions](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview) or the [SAP on Azure Deployment Automation Framework](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview).
 
 # Clean up deployment
 
