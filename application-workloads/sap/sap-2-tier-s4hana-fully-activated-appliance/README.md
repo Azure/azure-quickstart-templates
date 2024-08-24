@@ -31,18 +31,18 @@ Explore the latest and greatest features of SAP S/4HANA 2023 with this fully act
 
 4. Run the SAP S/4HANA 2023 Fully Activated Appliance installation 
 
-Log in to the VM and run the following commands. Run this command in a jump server to ensure that the installation process is not interrupted. You can set up a managed system identity or use a temporary storage account SAS token to download the SAP software.  
-
-```bash
-sudo su -
-/sapmedia/s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/' 'SAS Token' 
-```
-
-or 
+Log in to the VM and run the following commands. Run this command in a jump server to ensure that the installation process is not interrupted. As a prerequisite, you must have set up a [Managed Identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) or use a temporary storage account SAS token to retrieve the SAP software from the storage account. Note that for optimal security, Microsoft recommends using managed identities to authorize requests.  
 
 ```bash
 sudo su -
 /sapmedia/s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/'
+```
+
+or
+
+```bash
+sudo su -
+/sapmedia/s4install.sh 'https://<storage account name>.blob.core.windows.net/<container name>/' 'SAS Token' 
 ```
 
 5. Wait for Installation to Complete 
