@@ -106,6 +106,14 @@ function renamesap()
     local pwvalue=$(xmllint --xpath "string(//Password)" $xmlFile)
     sed -i "s/<REPLACE>/$pwvalue/g" /sapmedia/sapinstdir/inifile.params
     /sapmedia/sapinst SAPINST_INPUT_PARAMETERS_URL=/sapmedia/sapinstdir/inifile.params SAPINST_EXECUTE_PRODUCT_ID=NW_StorageBasedCopy SAPINST_SKIP_DIALOGS=true SAPINST_START_GUISERVER=false
+    
+    if [ ! -f /tmp/sapinst_instdir/NW73/SBC/STANDARD/installationSuccesfullyFinished.dat ]; then
+        log "Failed to rename the SAP system"
+        exit 1
+    else
+        log "SAP system installed successfully"
+    fi
+    
     log "End of renamesap"
 }
 
