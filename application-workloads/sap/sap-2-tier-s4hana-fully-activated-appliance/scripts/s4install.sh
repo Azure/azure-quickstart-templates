@@ -128,8 +128,8 @@ storagePath="$1"
 storageAccountToken="$2"
 sapdir="SAPS4HANA2023FPS00SAPHANADB20"
 
-if [[ -z "$storagePath" || -z "$storageAccountToken" ]]; then
-  log "Storage path or account token not provided. Exiting."
+if [[ -z "$storagePath" ]]; then
+  log "Storage path not provided. Exiting."
   exit 1
 fi
 

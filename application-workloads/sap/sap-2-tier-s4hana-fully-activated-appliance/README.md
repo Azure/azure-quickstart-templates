@@ -1,4 +1,4 @@
-# SAP S/4HANA 2023 Fully Activated Appliance
+# SAP S/4HANA Fully Activated Appliance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-2-tier-s4hana-fully-activated-appliance/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-2-tier-s4hana-fully-activated-appliance/PublicDeployment.svg)
@@ -16,7 +16,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-2-tier-s4hana-fully-activated-appliance%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-2-tier-s4hana-fully-activated-appliance%2Fazuredeploy.json)
 
-## SAP S/4HANA 2023 Fully Activated Appliance Overview 
+## SAP S/4HANA Fully Activated Appliance Overview 
 
 Explore the latest and greatest features of SAP S/4HANA with this fully activated appliance on Azure! This template deploy the ABAP stack of a **Fully activated SAP S/4HANA system**. You can find more information about this type of deployment method in this excellent [SAP blog post by Mahesh Sardesai](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947). 
 
@@ -47,13 +47,31 @@ sudo su -
 ```
 
 5. Wait for Installation to Complete 
-Go for a long coffee or tea break. Or better yet, read the latest [SAP on Azure blog posts](https://techcommunity.microsoft.com/t5/sap-on-microsoft/ct-p/SAPonMicrosoft). You can follow the installation progress in the log file located at `/var/log/azure-quickstart-install-s4.log`.
+Go for a long coffee or tea break. Or better yet, read the latest [SAP on Azure blog posts](https://techcommunity.microsoft.com/t5/sap-on-microsoft/ct-p/SAPonMicrosoft). Installation typically takes 2-3 hours and you can follow the installation progress in the log file located at `/var/log/azure-quickstart-install-s4.log`.
 
 ## Usage
 
 ### Connect
 
 You will need a SAPGUI to connect to the SAP S/4HANA system. You can download the SAPGUI from the [SAP Software Centre](https://me.sap.com/softwarecenter).
+
+### Stop and Start
+As s4hadm user, you can stop and start the SAP system using the following commands:
+
+```bash
+sapcontrol -nr 00 -function StopSystem
+sapcontrol -nr 01 -function StopSystem
+
+sapcontrol -nr 00 -function StartSystem
+sapcontrol -nr 01 -function StartSystem
+```
+
+As hdbadm, you can stop and start the HANA database using the following commands:
+
+```bash
+HDB stop
+HDB start
+```
 
 ## Notes
 This template is design for a proof of concept or training environment. For production deployments of your SAP S/4HANA system, it is recommended to use [Azure Centre for SAP Solutions](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview) or the [SAP on Azure Deployment Automation Framework](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/overview).

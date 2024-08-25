@@ -102,7 +102,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'Premium_LRS'
           }
         }
         {
@@ -112,7 +112,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 128
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'Premium_LRS'
           }
         }
         {
@@ -122,7 +122,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 512
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'Premium_LRS'
           }
         }
         {
@@ -132,7 +132,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
           deleteOption: 'Delete'
           diskSizeGB: 64
           managedDisk: {
-            storageAccountType: 'PremiumV2_LRS'
+            storageAccountType: 'Premium_LRS'
           }
         }
       ]
@@ -149,9 +149,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
       ]
     }
   }
-  zones: [
-    '1' 
-  ]
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2023-06-01' = {
