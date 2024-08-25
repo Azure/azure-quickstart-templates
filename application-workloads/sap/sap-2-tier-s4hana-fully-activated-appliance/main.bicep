@@ -58,7 +58,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-03-01' existing 
   scope: resourceGroup(existingVirtualNetworkResourceGroupName)
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: vmName
   location: location
   tags: {
@@ -154,7 +154,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   ]
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2023-06-01' = {
   name: '${vmName}Nic'
   location: location
   properties: {
@@ -172,7 +172,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2024-01-01' = {
   }
 }
 
-resource installscript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = {
+resource installscript 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   parent: vm
   name: '${vmName}Installscript'
   location: location
