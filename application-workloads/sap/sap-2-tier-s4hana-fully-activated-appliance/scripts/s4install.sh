@@ -38,7 +38,7 @@ function unzipmedia()
         unzip -q -o "$file" -d /sapmedia
     done
 
-    if [ ! -f /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_1/dbdata.tgz-ah ]; then
+    if [ ! -f /sapmedia/"$1"_1/dbdata.tgz-ah ]; then
         log "Failed to unzip the media"
         exit 1
     else
@@ -51,10 +51,10 @@ function unzipmedia()
 function copybinaries()
 {
     log "Start of copybinaries"
-    cd /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_1 || exit
-    mv /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_2/*.tgz-* .
-    mv /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_3/*.tgz-* .
-    mv /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_4/*.tgz-* .    
+    cd /sapmedia/"$1"_1 || exit
+    mv /sapmedia/"$1"_2/*.tgz-* .
+    mv /sapmedia/"$1"_3/*.tgz-* .
+    mv /sapmedia/"$1"_4/*.tgz-* . 
     log "End of copybinaries"
 }
 
@@ -63,8 +63,9 @@ function extractbinaries()
     log "Start of extractbinaries"
     local tar_files=("dbdata.tgz-*" "dblog.tgz-*" "dbexe.tgz-*" "sapmnt_s4h.tgz-*" "usrsap_s4h.tgz-*")
                       
-    for tar_file in "${tar_files[@]}"; do
-        cd /sapmedia/SAPS4HANA2023FPS00SAPHANADB20_1 || exit
+    for tar_file in "${tar_files[@]}"; 
+    do
+        cd /sapmedia/"$1"_1 || exit
         cat $tar_file | tar -zpxvf - -C /
         log "$tar_file extracted"
     done
@@ -81,7 +82,7 @@ function extractbinaries()
 function renamedb()
 {   
     log "Start of renamedb"
-    local xmlFile=/sapmedia/SAPS4HANA2023FPS00SAPHANADB20_4/SAP_Software_Appliance.xml
+    local xmlFile=/sapmedia/"$1"_4/SAP_Software_Appliance.xml
     local pwvalue=$(xmllint --xpath "string(//Password)" $xmlFile)
     /hana/shared/HDB/hdblcm/hdblcm --batch --action=register_rename_system --sapadm_password="$pwvalue" --target_password="$pwvalue"
     log "End of renamedb"
@@ -102,7 +103,7 @@ function renamesap()
     mkdir /sapmedia/sapinstdir
     cd /sapmedia/sapinstdir || exit
     mv /sapmedia/inifile.params /sapmedia/sapinstdir/inifile.params
-    local xmlFile=/sapmedia/SAPS4HANA2023FPS00SAPHANADB20_4/SAP_Software_Appliance.xml
+    local xmlFile=/sapmedia/"$1"_4/SAP_Software_Appliance.xml
     local pwvalue=$(xmllint --xpath "string(//Password)" $xmlFile)
     sed -i "s/<REPLACE>/$pwvalue/g" /sapmedia/sapinstdir/inifile.params
     /sapmedia/sapinst SAPINST_INPUT_PARAMETERS_URL=/sapmedia/sapinstdir/inifile.params SAPINST_EXECUTE_PRODUCT_ID=NW_StorageBasedCopy SAPINST_SKIP_DIALOGS=true SAPINST_START_GUISERVER=false
@@ -121,6 +122,7 @@ function renamesap()
 log "start of s4hanafa-install.sh"
 storagePath="$1"
 storageAccountToken="$2"
+sapdir="SAPS4HANA2023FPS00SAPHANADB20"
 
 if [[ -z "$storagePath" || -z "$storageAccountToken" ]]; then
   log "Storage path or account token not provided. Exiting."
@@ -128,10 +130,10 @@ if [[ -z "$storagePath" || -z "$storageAccountToken" ]]; then
 fi
 
 getsapmedia "$storagePath" "$storageAccountToken"
-unzipmedia  
-copybinaries
-extractbinaries
-renamedb
-renamesap
+unzipmedia  "$sapdir"
+copybinaries "$sapdir"
+extractbinaries "$sapdir"
+renamedb "$sapdir"
+renamesap "$sapdir"
 
 log "end of s4hanafa-install.sh"
