@@ -17,11 +17,11 @@
 
 ## SAP S/4HANA 2023 Fully Activated Appliance Overview 
 
-Explore the latest and greatest features of SAP S/4HANA 2023 with this fully activated appliance on Azure! This template deploys a **Fully configured SAP S/4HANA 2023 system**. You can find more information about this type of deployment method in this excellent [SAP blog post by Mahesh Sardesai](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947). 
+Explore the latest and greatest features of SAP S/4HANA with this fully activated appliance on Azure! This template deploy the ABAP stack of a **Fully activated SAP S/4HANA system**. You can find more information about this type of deployment method in this excellent [SAP blog post by Mahesh Sardesai](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947). 
 
 ## Deployment steps
 
-1. **SAP Software**: You must have the SAP S/4HANA 2023 Fully Activated Appliance software. Download the software media from the [SAP Software Centre](https://me.sap.com/softwarecenter). This deployment was build on the SAP software 51057501_1.ZIP, 51057501_2.ZIP, 51057501_3.ZIP, 51057501_4.ZIP and SWPM20SP1880003424.SAR. You might need to adjust the scripts if you are using a different version. 
+1. **SAP Software**: You must have the SAP S/4HANA Fully Activated Appliance software. Download the software media from the [SAP Software Centre](https://me.sap.com/softwarecenter). This deployment was build on the SAP software for the S/4HANA 2023 version, which are 51057501_1.ZIP, 51057501_2.ZIP, 51057501_3.ZIP, 51057501_4.ZIP and SWPM20SP1880003424.SAR. You might need to adjust the scripts if you are using a different version. 
 
 2. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal). Upload the SAP software media to a blob container in the storage account. An example of the uploaded files is shown below:
 
@@ -29,7 +29,7 @@ Explore the latest and greatest features of SAP S/4HANA 2023 with this fully act
 
 3. You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-4. Run the SAP S/4HANA 2023 Fully Activated Appliance installation 
+4. Run the SAP S/4HANA Fully Activated Appliance installation 
 
 Log in to the VM and run the following commands. Run this command in a jump server to ensure that the installation process is not interrupted. As a prerequisite, you must have set up a [Managed Identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) or use a temporary storage account SAS token to retrieve the SAP software from the storage account. Note that for optimal security, Microsoft recommends using managed identities to authorize requests.  
 
