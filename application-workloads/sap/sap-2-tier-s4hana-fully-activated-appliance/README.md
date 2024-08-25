@@ -25,7 +25,7 @@ Explore the latest and greatest features of SAP S/4HANA with this fully activate
 
 2. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal). Upload the SAP software media to a blob container in the storage account. An example of the uploaded files is shown below:
 
-<img src="./images/container.png">
+![alt text](images/container.png "SAP Files, folders and naming conventions")
 
 3. You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
@@ -46,7 +46,7 @@ sudo su -
 ```
 
 5. Wait for Installation to Complete 
-Go for a long coffee or tea break. Or better yet, read the latest [SAP on Azure blog posts](https://techcommunity.microsoft.com/t5/sap-on-microsoft/ct-p/SAPonMicrosoft). The installation process typically takes around 4 hours to complete from start to finish.
+Go for a long coffee or tea break. Or better yet, read the latest [SAP on Azure blog posts](https://techcommunity.microsoft.com/t5/sap-on-microsoft/ct-p/SAPonMicrosoft). You can follow the installation progress in the log file located at `/var/log/azure-quickstart-install-s4.log`.
 
 ## Usage
 
