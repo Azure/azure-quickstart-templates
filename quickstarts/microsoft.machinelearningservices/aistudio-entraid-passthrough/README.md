@@ -2,14 +2,13 @@
 description: This set of templates demonstrates how to set up Azure AI Studio with Microsoft Entra ID authentication for dependent resources, such as Azure AI Services and Azure Storage.
 page_type: sample
 products:
-  - azure
-  - azure-resource-manager
+- azure
+- azure-resource-manager
 urlFragment: aistudio-entraid-passthrough
 languages:
-  - bicep
-  - json
+- bicep
+- json
 ---
-
 # Azure AI Studio with Microsoft Entra ID Authentication
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-entraid-passthrough/PublicLastTestDate.svg)
