@@ -35,10 +35,8 @@ function unzipmedia()
     for file in /sapmedia/*.ZIP
     do
         log "unzipping $file"
-        unzip -q -o "$file" -d /sapmedia & 
+        unzip -q -o "$file" -d /sapmedia 
     done
-
-    while wait -n; do : ; done;
 
     if [ ! -f /sapmedia/"$1"_1/dbdata.tgz-ah ]; then
         log "Failed to unzip the media"
@@ -68,11 +66,9 @@ function extractbinaries()
     for tar_file in "${tar_files[@]}"; 
     do
         cd /sapmedia/"$1"_1 || exit
-        cat $tar_file | tar -zpxvf - -C / &
+        cat $tar_file | tar -zpxvf - -C / 
         log "$tar_file extracted"
     done
-
-    while wait -n; do : ; done;
 
     if [ ! -f /sapmnt/S4H/exe/uc/linuxx86_64/SAPCAR ]; then
         log "Failed to extract the binaries"
