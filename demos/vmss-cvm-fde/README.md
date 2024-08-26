@@ -1,5 +1,5 @@
 ---
-description: This template allows you to deploy a confidential VM Scale Set with confidential OS disk encryption enabled.
+description: This template allows you to deploy a confidential VM Scale Set with confidential OS disk encryption enabled using the latest patched version of several Windows and Linux image versions.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: vmss-cvm-fde
 languages:
 - json
 ---
-# Deploy a confidential VM Scale Set with confidential OS disk encryption
+# Confidential VM Scale Set with confidential disk encryption
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-cvm-fde/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vmss-cvm-fde/PublicDeployment.svg)
