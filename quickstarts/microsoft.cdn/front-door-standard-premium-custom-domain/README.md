@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: front-door-standard-premium-custom-domain
 languages:
-- json
 - bicep
+- json
 ---
 # Front Door Standard/Premium with custom domain
 
