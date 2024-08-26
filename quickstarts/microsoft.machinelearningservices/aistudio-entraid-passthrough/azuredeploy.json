@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.26.54.24096",
-      "templateHash": "16917545243890178029"
+      "version": "0.29.47.4906",
+      "templateHash": "8384572391356121984"
     }
   },
   "parameters": {
@@ -15,21 +15,28 @@
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
-        "description": "Name for the AI resource and used to derive name of dependent resources."
+        "description": "Name for the Azure AI Hub resource and used to derive names of dependent resources."
       }
     },
     "aiHubFriendlyName": {
       "type": "string",
       "defaultValue": "Demo AI resource",
       "metadata": {
-        "description": "Friendly name for your Azure AI resource"
+        "description": "Friendly name for your Azure AI Hub resource, displayed in the Studio UI."
       }
     },
     "aiHubDescription": {
       "type": "string",
       "defaultValue": "This is an example AI resource for use in Azure AI Studio.",
       "metadata": {
-        "description": "Description of your Azure AI resource dispayed in AI studio"
+        "description": "Description of your Azure AI Hub resource, displayed in the Studio UI."
+      }
+    },
+    "userObjectId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub."
       }
     },
     "location": {
@@ -68,7 +75,7 @@
           "storageName": {
             "value": "[format('st{0}{1}', variables('name'), variables('uniqueSuffix'))]"
           },
-          "keyvaultName": {
+          "keyVaultName": {
             "value": "[format('kv-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
           },
           "applicationInsightsName": {
@@ -80,6 +87,9 @@
           "aiServicesName": {
             "value": "[format('ais{0}{1}', variables('name'), variables('uniqueSuffix'))]"
           },
+          "userObjectId": {
+            "value": "[parameters('userObjectId')]"
+          },
           "tags": {
             "value": "[parameters('tags')]"
           }
@@ -90,8 +100,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.26.54.24096",
-              "templateHash": "18174080564083878511"
+              "version": "0.29.47.4906",
+              "templateHash": "13823317828105471013"
             }
           },
           "parameters": {
@@ -99,44 +109,44 @@
               "type": "string",
               "defaultValue": "[resourceGroup().location]",
               "metadata": {
-                "description": "Azure region of the deployment"
+                "description": "Azure region used for the deployment of dependent resources."
               }
             },
             "tags": {
               "type": "object",
               "defaultValue": {},
               "metadata": {
-                "description": "Tags to add to the resources"
+                "description": "Set of tags to apply to dependent resources."
               }
             },
             "aiServicesName": {
               "type": "string",
               "metadata": {
-                "description": "AI services name"
+                "description": "Name for the Azure AI Services resource."
               }
             },
             "applicationInsightsName": {
               "type": "string",
               "metadata": {
-                "description": "Application Insights resource name"
+                "description": "Name of the Azure Application Insights resource."
               }
             },
             "containerRegistryName": {
               "type": "string",
               "metadata": {
-                "description": "Container registry name"
+                "description": "Name of the Azure Container Registry resource."
               }
             },
-            "keyvaultName": {
+            "keyVaultName": {
               "type": "string",
               "metadata": {
-                "description": "The name of the Key Vault"
+                "description": "Name of the Azure Key Vault resource."
               }
             },
             "storageName": {
               "type": "string",
               "metadata": {
-                "description": "Name of the storage account"
+                "description": "Name of the Azure Storage Account resource."
               }
             },
             "storageSkuName": {
@@ -153,7 +163,14 @@
                 "Premium_ZRS"
               ],
               "metadata": {
-                "description": "Storage SKU"
+                "description": "SKU name for the Azure Storage Account resource."
+              }
+            },
+            "userObjectId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the dependent resources."
               }
             }
           },
@@ -218,7 +235,7 @@
             {
               "type": "Microsoft.KeyVault/vaults",
               "apiVersion": "2022-07-01",
-              "name": "[parameters('keyvaultName')]",
+              "name": "[parameters('keyVaultName')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -242,19 +259,54 @@
               }
             },
             {
+              "condition": "[not(equals(parameters('userObjectId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), parameters('userObjectId'), resourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483'))]",
+              "properties": {
+                "principalId": "[parameters('userObjectId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')]",
+                "principalType": "User"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ]
+            },
+            {
               "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2021-10-01",
+              "apiVersion": "2024-04-01-preview",
               "name": "[parameters('aiServicesName')]",
               "location": "[parameters('location')]",
               "sku": {
                 "name": "S0"
               },
               "kind": "AIServices",
+              "identity": {
+                "type": "SystemAssigned"
+              },
               "properties": {
+                "customSubDomainName": "[parameters('aiServicesName')]",
+                "disableLocalAuth": true,
                 "apiProperties": {
                   "statisticsEnabled": false
                 }
               }
+            },
+            {
+              "condition": "[not(equals(parameters('userObjectId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), parameters('userObjectId'), resourceId('Microsoft.Authorization/roleDefinitions', '64702f94-c441-49e6-a78b-ef80e0188fee'))]",
+              "properties": {
+                "principalId": "[parameters('userObjectId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '64702f94-c441-49e6-a78b-ef80e0188fee')]",
+                "principalType": "User"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName'))]"
+              ]
             },
             {
               "type": "Microsoft.Storage/storageAccounts",
@@ -270,7 +322,7 @@
                 "accessTier": "Hot",
                 "allowBlobPublicAccess": false,
                 "allowCrossTenantReplication": false,
-                "allowSharedKeyAccess": true,
+                "allowSharedKeyAccess": false,
                 "encryption": {
                   "keySource": "Microsoft.Storage",
                   "requireInfrastructureEncryption": false,
@@ -306,24 +358,84 @@
                 },
                 "supportsHttpsTrafficOnly": true
               }
+            },
+            {
+              "condition": "[not(equals(parameters('userObjectId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageNameCleaned'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned')), parameters('userObjectId'), resourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab'))]",
+              "properties": {
+                "principalId": "[parameters('userObjectId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')]",
+                "principalType": "User"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+              ]
+            },
+            {
+              "condition": "[not(equals(parameters('userObjectId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageNameCleaned'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned')), parameters('userObjectId'), resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'))]",
+              "properties": {
+                "principalId": "[parameters('userObjectId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                "principalType": "User"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+              ]
+            },
+            {
+              "condition": "[not(equals(parameters('userObjectId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageNameCleaned'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned')), parameters('userObjectId'), resourceId('Microsoft.Authorization/roleDefinitions', '69566ab7-960f-475b-8e7c-b3118f30c6bd'))]",
+              "properties": {
+                "principalId": "[parameters('userObjectId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '69566ab7-960f-475b-8e7c-b3118f30c6bd')]",
+                "principalType": "User"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+              ]
+            },
+            {
+              "condition": "[not(equals(parameters('userObjectId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageNameCleaned'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned')), parameters('userObjectId'), resourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'))]",
+              "properties": {
+                "principalId": "[parameters('userObjectId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')]",
+                "principalType": "User"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+              ]
             }
           ],
           "outputs": {
-            "aiservicesID": {
+            "aiServicesId": {
               "type": "string",
               "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName'))]"
             },
-            "aiservicesTarget": {
+            "aiServicesTarget": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2021-10-01').endpoint]"
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2024-04-01-preview').endpoint]"
             },
             "storageId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
             },
-            "keyvaultId": {
+            "keyVaultId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"
+              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
             },
             "containerRegistryId": {
               "type": "string",
@@ -356,6 +468,9 @@
           "aiHubDescription": {
             "value": "[parameters('aiHubDescription')]"
           },
+          "userObjectId": {
+            "value": "[parameters('userObjectId')]"
+          },
           "location": {
             "value": "[parameters('location')]"
           },
@@ -363,10 +478,10 @@
             "value": "[parameters('tags')]"
           },
           "aiServicesId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiservicesID.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServicesId.value]"
           },
           "aiServicesTarget": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiservicesTarget.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServicesTarget.value]"
           },
           "applicationInsightsId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.applicationInsightsId.value]"
@@ -375,7 +490,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.containerRegistryId.value]"
           },
           "keyVaultId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.keyvaultId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.keyVaultId.value]"
           },
           "storageAccountId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.storageId.value]"
@@ -387,86 +502,93 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.26.54.24096",
-              "templateHash": "18319324019540569041"
+              "version": "0.29.47.4906",
+              "templateHash": "3126605432823714423"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
               "metadata": {
-                "description": "Azure region of the deployment"
+                "description": "Azure region used for the deployment of the Azure AI Hub."
               }
             },
             "tags": {
               "type": "object",
               "metadata": {
-                "description": "Tags to add to the resources"
+                "description": "Set of tags to apply to the Azure AI Hub."
               }
             },
             "aiHubName": {
               "type": "string",
               "metadata": {
-                "description": "AI hub name"
+                "description": "Name for the Azure AI Hub resource."
               }
             },
             "aiHubFriendlyName": {
               "type": "string",
               "defaultValue": "[parameters('aiHubName')]",
               "metadata": {
-                "description": "AI hub display name"
+                "description": "Friendly name for your Azure AI Hub resource, displayed in the Studio UI."
               }
             },
             "aiHubDescription": {
               "type": "string",
               "metadata": {
-                "description": "AI hub description"
+                "description": "Description of your Azure AI Hub resource, displayed in the Studio UI."
               }
             },
             "applicationInsightsId": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID of the application insights resource for storing diagnostics logs"
+                "description": "Resource ID of the Azure Application Insights resource for storing diagnostics logs."
               }
             },
             "containerRegistryId": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID of the container registry resource for storing docker images"
+                "description": "Resource ID of the Azure Container Registry resource for storing Docker images for models."
               }
             },
             "keyVaultId": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID of the key vault resource for storing connection strings"
+                "description": "Resource ID of the Azure Key Vault resource for storing connection strings."
               }
             },
             "storageAccountId": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID of the storage account resource for storing experimentation outputs"
+                "description": "Resource ID of the Azure Storage Account resource for storing workspace data."
               }
             },
             "aiServicesId": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID of the AI Services resource"
+                "description": "Resource ID of the Azure AI Services resource for connecting AI capabilities."
               }
             },
             "aiServicesTarget": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID of the AI Services endpoint"
+                "description": "Target endpoint for the Azure AI Services resource to link to the Azure AI Hub."
+              }
+            },
+            "userObjectId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub."
               }
             }
           },
           "resources": [
             {
               "type": "Microsoft.MachineLearningServices/workspaces/connections",
-              "apiVersion": "2024-01-01-preview",
-              "name": "[format('{0}/{1}', parameters('aiHubName'), format('{0}-connection-AzureOpenAI', parameters('aiHubName')))]",
+              "apiVersion": "2024-04-01-preview",
+              "name": "[format('{0}/{1}', parameters('aiHubName'), format('{0}-connection', parameters('aiHubName')))]",
               "properties": {
-                "category": "AzureOpenAI",
+                "category": "AIServices",
                 "target": "[parameters('aiServicesTarget')]",
                 "authType": "AAD",
                 "isSharedToAll": true,
@@ -481,10 +603,11 @@
             },
             {
               "type": "Microsoft.MachineLearningServices/workspaces",
-              "apiVersion": "2023-08-01-preview",
+              "apiVersion": "2024-04-01-preview",
               "name": "[parameters('aiHubName')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
+              "kind": "Hub",
               "identity": {
                 "type": "SystemAssigned"
               },
@@ -494,13 +617,28 @@
                 "keyVault": "[parameters('keyVaultId')]",
                 "storageAccount": "[parameters('storageAccountId')]",
                 "applicationInsights": "[parameters('applicationInsightsId')]",
-                "containerRegistry": "[parameters('containerRegistryId')]"
+                "containerRegistry": "[parameters('containerRegistryId')]",
+                "systemDatastoresAuthMode": "identity"
+              }
+            },
+            {
+              "condition": "[not(equals(parameters('userObjectId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.MachineLearningServices/workspaces/{0}', parameters('aiHubName'))]",
+              "name": "[guid(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName')), parameters('userObjectId'), resourceId('Microsoft.Authorization/roleDefinitions', 'f6c7c914-8db3-469d-8ca1-694a8f32e121'))]",
+              "properties": {
+                "principalId": "[parameters('userObjectId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'f6c7c914-8db3-469d-8ca1-694a8f32e121')]",
+                "principalType": "User"
               },
-              "kind": "hub"
+              "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
+              ]
             }
           ],
           "outputs": {
-            "aiHubID": {
+            "aiHubId": {
               "type": "string",
               "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
             }
