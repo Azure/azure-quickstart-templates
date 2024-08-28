@@ -30,6 +30,23 @@
       "type": "int",
       "defaultValue": 30
     },
+	  "backupSecretskeyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The KeyVault name used to store the Backup secrets."
+      }
+    },
+    "createNewBackupSecretsKeyVault": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Set this value as false, if you are re-using a Keyvault"
+      }
+    },
+	 "backupSecretskeyVaultsoftDeleteRetentionDays": {
+      "type": "int",
+      "defaultValue": 30
+    },
     "diagnosticStorageAccountName": {
       "type": "string",
       "metadata": {
@@ -502,6 +519,7 @@
     "arbDeploymentSpnSecretName": "[concat( parameters('clusterName'), '-', 'DefaultARBApplication')]",
     "storageWitnessNameVar": "WitnessStorageKey",
     "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
+	  "backupsecretsLocationVar": "[concat('https://',parameters('backupSecretskeyVaultName'), '.vault.azure.net')]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
     "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', 'core.windows.net')]",
@@ -718,19 +736,65 @@
         ]
       }
     },
+	{
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[parameters('backupSecretskeyVaultName')]",
+      "location": "[parameters('location')]",
+      "condition": "[parameters('createNewBackupSecretsKeyVault')]",
+      "properties": {
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true,
+        "enabledForDiskEncryption": true,
+        "enableSoftDelete": false,
+        "softDeleteRetentionInDays": "[parameters('backupSecretskeyVaultsoftDeleteRetentionDays')]",
+        "enableRbacAuthorization": true,
+        "publicNetworkAccess": "Enabled",
+        "accessPolicies": [],
+        "tenantId": "[parameters('tenantId')]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "roleAssignmentCopy",
+        "count": "[length(parameters('arcNodeResourceIds'))]"
+      },
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(concat('AKV-', parameters('arcNodeResourceIds')[copyIndex()]))]",
+      "properties": {
+        "mode": "Incremental",
+        "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a4417e6f-fecd-4de8-b567-7b0420556985')]",
+        "principalId": "[reference(parameters('arcNodeResourceIds')[copyIndex()], '2023-10-03-preview', 'full').identity.principalId]",
+        "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('backupSecretskeyVaultName'))]",
+        "description": "[concat(substring(parameters('arcNodeResourceIds')[copyIndex()],lastIndexOf(parameters('arcNodeResourceIds')[copyIndex()],'/')),'- Key Vault Secrets Officer role')]"
+      }
+    },
     {
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
       "apiVersion": "[parameters('apiVersion')]",
       "name": "[parameters('clusterName')]",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+		    "[resourceId('Microsoft.KeyVault/vaults', parameters('backupSecretskeyVaultName'))]"
       ],
       "identity": {
         "type": "SystemAssigned"
       },
       "location": "[parameters('location')]",
-      "properties": {}
+      "properties": {
+        "secretLocations": [
+          {
+            "secretsType": "BackupSecrets",
+            "SecretsLocation": "[variables('backupsecretsLocationVar')]"
+          }
+        ]
+      }
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
