@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: storage-sftp
 languages:
-- json
 - bicep
+- json
 ---
 # Create Storage Account with SFTP enabled
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-sftp/PublicLastTestDate.svg)
