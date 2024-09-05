@@ -22,9 +22,6 @@ param subnetName string
 @description('Private Endpoint Subnet Address Prefix.')
 param subnetAddressPrefix string
 
-@description('Private DNS Zone name for Private Endpoint dns integration.')
-param privateDnsZoneName string
-
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: privateLinkResourceName
   location: location
@@ -56,23 +53,6 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
   }
 }
 
-resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: privateDnsZoneName
-  location: location
-}
-
-resource virtualNetworkLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: privateDNSZone
-  name: virtualNetworkName
-  location: location
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetwork.id
-    }
-  }
-}
-
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   location: location
   name: '${privateLinkResourceName}-pe'
@@ -93,19 +73,4 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
     ]
   }
   tags: {}
-}
-
-resource symbolicname 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
-  name: replace(privateDnsZoneName, '.', '_')
-  parent: privateEndpoint
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: split(keyVault.id, '/')[8]
-        properties: {
-          privateDnsZoneId: privateDNSZone.id
-        }
-      }
-    ]
-  }
 }
