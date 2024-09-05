@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "8290012891613570827"
+      "templateHash": "2508549466468763139"
     }
   },
   "parameters": {
@@ -40,10 +40,22 @@
         "description": "Private Endpoint VNet Name."
       }
     },
+    "virtualNetworkAddressSpace": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Endpoint VNet Address Space."
+      }
+    },
     "subnetName": {
       "type": "string",
       "metadata": {
-        "description": "Private Endpoint Subnet name."
+        "description": "Private Endpoint Subnet Name."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Endpoint Subnet Address Prefix."
       }
     },
     "privateDnsZoneName": {
@@ -53,52 +65,96 @@
       }
     }
   },
-  "variables": {
-    "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
-    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-    "privateLinkResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('privateLinkResourceName'))]",
-    "privateEndpointName": "[format('{0}-pe', parameters('privateLinkResourceName'))]"
-  },
   "resources": [
     {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[parameters('privateLinkResourceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "tenantId": "[tenant().tenantId]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressSpace')]"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetAddressPrefix')]",
+        "privateEndpointNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('privateDnsZoneName')]",
+      "location": "[parameters('location')]"
+    },
+    {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2023-11-01",
-      "name": "[parameters('privateEndpointName')]",
-      "location": "[variables('location')]",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}-pe', parameters('privateLinkResourceName'))]",
+      "location": "[parameters('location')]",
       "properties": {
         "subnet": {
-          "id": "[variables('subnetId')]"
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
         },
-        "customNetworkInterfaceName": "[format('{0}-nic', split(variables('privateLinkResourceId'), '/')[8])]",
+        "customNetworkInterfaceName": "[format('{0}-nic', split(resourceId('Microsoft.KeyVault/vaults', parameters('privateLinkResourceName')), '/')[8])]",
         "manualPrivateLinkServiceConnections": [
           {
-            "name": "[variables('privateEndpointName')]",
+            "name": "[format('{0}-pe', parameters('privateLinkResourceName'))]",
             "properties": {
-              "privateLinkServiceId": "[variables('privateLinkResourceId')]",
+              "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('privateLinkResourceName'))]",
               "groupIds": "[parameters('targetSubResource')]",
               "requestMessage": "[parameters('requestMessage')]"
             }
           }
         ]
       },
-      "tags": {}
+      "tags": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('privateLinkResourceName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-      "apiVersion": "2023-11-01",
-      "name": "[format('{0}/{1}', variables('privateEndpointName'), replace(parameters('privateDnsZoneName'), '.', '_'))]",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', format('{0}-pe', parameters('privateLinkResourceName')), replace(parameters('privateDnsZoneName'), '.', '_'))]",
       "properties": {
         "privateDnsZoneConfigs": [
           {
-            "name": "[split(variables('privateLinkResourceId'), '/')[8]]",
+            "name": "[split(resourceId('Microsoft.KeyVault/vaults', parameters('privateLinkResourceName')), '/')[8]]",
             "properties": {
-              "privateDnsZoneId": "[variables('privateDnsZoneId')]"
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
             }
           }
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('privateLinkResourceName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-pe', parameters('privateLinkResourceName')))]"
       ]
     }
   ]
