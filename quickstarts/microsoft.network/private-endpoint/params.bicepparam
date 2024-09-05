@@ -1,6 +1,5 @@
 using 'main.bicep'
 
-param privateEndpointName = 'GEN-PRIVATE-ENDPOINT-NAME'
 param privateLinkResourceName = 'GEN-KEYVAULT-NAME'
 param targetSubResource = ['vault']
 param requestMessage = 'Please approve my private endpoint request'

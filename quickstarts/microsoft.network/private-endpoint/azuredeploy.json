@@ -16,12 +16,6 @@
         "description": "Location for all resources."
       }
     },
-    "privateEndpointName": {
-      "type": "string",
-      "metadata": {
-        "description": "Private Endpoint Name."
-      }
-    },
     "privateLinkResourceName": {
       "type": "string",
       "metadata": {
@@ -68,14 +62,15 @@
   "variables": {
     "privateDnsZoneId": "[resourceId(parameters('virtualNetworkRG'), 'Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
     "subnetId": "[resourceId(parameters('virtualNetworkRG'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-    "privateLinkResourceId": "[resourceId(parameters('virtualNetworkRG'), 'Microsoft.KeyVault/vaults', parameters('privateLinkResourceName'))]"
+    "privateLinkResourceId": "[resourceId(parameters('virtualNetworkRG'), 'Microsoft.KeyVault/vaults', parameters('privateLinkResourceName'))]",
+    "privateEndpointName": "[format('{0}-pe', parameters('privateLinkResourceName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/privateEndpoints",
       "apiVersion": "2023-11-01",
       "name": "[parameters('privateEndpointName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "subnet": {
           "id": "[variables('subnetId')]"
@@ -83,7 +78,7 @@
         "customNetworkInterfaceName": "[format('{0}-nic', split(variables('privateLinkResourceId'), '/')[8])]",
         "manualPrivateLinkServiceConnections": [
           {
-            "name": "[parameters('privateEndpointName')]",
+            "name": "[variables('privateEndpointName')]",
             "properties": {
               "privateLinkServiceId": "[variables('privateLinkResourceId')]",
               "groupIds": "[parameters('targetSubResource')]",
@@ -97,7 +92,7 @@
     {
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
       "apiVersion": "2023-11-01",
-      "name": "[format('{0}/{1}', parameters('privateEndpointName'), replace(parameters('privateDnsZoneName'), '.', '_'))]",
+      "name": "[format('{0}/{1}', variables('privateEndpointName'), replace(parameters('privateDnsZoneName'), '.', '_'))]",
       "properties": {
         "privateDnsZoneConfigs": [
           {
@@ -109,7 +104,7 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName'))]"
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
       ]
     }
   ]

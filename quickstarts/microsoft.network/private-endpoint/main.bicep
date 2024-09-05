@@ -1,9 +1,6 @@
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-@description('Private Endpoint Name.')
-param privateEndpointName string
-
 @description('Private Link resource name from same tenant or cross-tenant.')
 param privateLinkResourceName string
 
@@ -47,7 +44,7 @@ resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing 
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   location: location
-  name: privateEndpointName
+  name: '${privateLinkResourceName}-pe'
   properties: {
     subnet: {
       id: subnet.id
@@ -55,7 +52,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
     customNetworkInterfaceName: '${split(keyVault.id, '/')[8]}-nic'
     manualPrivateLinkServiceConnections: [
       {
-        name: privateEndpointName
+        name: '${privateLinkResourceName}-pe'
         properties: {
           privateLinkServiceId: keyVault.id
           groupIds: targetSubResource
