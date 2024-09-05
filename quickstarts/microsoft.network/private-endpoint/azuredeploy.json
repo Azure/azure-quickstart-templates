@@ -22,10 +22,10 @@
         "description": "Private Endpoint Name."
       }
     },
-    "privateLinkResourceId": {
+    "privateLinkResourceName": {
       "type": "string",
       "metadata": {
-        "description": "Private Link resource ID from same tenant or cross-tenant."
+        "description": "Private Link resource name from same tenant or cross-tenant."
       }
     },
     "targetSubResource": {
@@ -40,21 +40,35 @@
         "description": "Request message for the Private Link approval."
       }
     },
-    "subnetId": {
+    "virtualNetworkRG": {
       "type": "string",
       "metadata": {
-        "description": "Private Endpoint Subnet ID."
+        "description": "Private Endpoint VNet RG Name."
       }
     },
-    "privateDnsZoneId": {
+    "virtualNetworkName": {
       "type": "string",
       "metadata": {
-        "description": "Private DNS Zone ID for Private Endpoint dns integration."
+        "description": "Private Endpoint VNet Name."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Endpoint Subnet name."
+      }
+    },
+    "privateDnsZoneName": {
+      "type": "string",
+      "metadata": {
+        "description": "Private DNS Zone name for Private Endpoint dns integration."
       }
     }
   },
   "variables": {
-    "privateDnsZoneName": "[split(parameters('privateDnsZoneId'), '/')[8]]"
+    "privateDnsZoneId": "[resourceId(parameters('virtualNetworkRG'), 'Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
+    "subnetId": "[resourceId(parameters('virtualNetworkRG'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "privateLinkResourceId": "[resourceId(parameters('virtualNetworkRG'), 'Microsoft.KeyVault/vaults', parameters('privateLinkResourceName'))]"
   },
   "resources": [
     {
@@ -64,14 +78,14 @@
       "location": "[parameters('location')]",
       "properties": {
         "subnet": {
-          "id": "[parameters('subnetId')]"
+          "id": "[variables('subnetId')]"
         },
-        "customNetworkInterfaceName": "[format('{0}-nic', split(parameters('privateLinkResourceId'), '/')[8])]",
+        "customNetworkInterfaceName": "[format('{0}-nic', split(variables('privateLinkResourceId'), '/')[8])]",
         "manualPrivateLinkServiceConnections": [
           {
             "name": "[parameters('privateEndpointName')]",
             "properties": {
-              "privateLinkServiceId": "[parameters('privateLinkResourceId')]",
+              "privateLinkServiceId": "[variables('privateLinkResourceId')]",
               "groupIds": "[parameters('targetSubResource')]",
               "requestMessage": "[parameters('requestMessage')]"
             }
@@ -83,13 +97,13 @@
     {
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
       "apiVersion": "2023-11-01",
-      "name": "[format('{0}/{1}', parameters('privateEndpointName'), replace(variables('privateDnsZoneName'), '.', '_'))]",
+      "name": "[format('{0}/{1}', parameters('privateEndpointName'), replace(parameters('privateDnsZoneName'), '.', '_'))]",
       "properties": {
         "privateDnsZoneConfigs": [
           {
-            "name": "[split(parameters('privateLinkResourceId'), '/')[8]]",
+            "name": "[split(variables('privateLinkResourceId'), '/')[8]]",
             "properties": {
-              "privateDnsZoneId": "[parameters('privateDnsZoneId')]"
+              "privateDnsZoneId": "[variables('privateDnsZoneId')]"
             }
           }
         ]
