@@ -30,4 +30,4 @@ This template allows you to create Priavate Endpoint resource within the same or
 
 [Private Endpoint Service](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview)
 
-`Tags:network, private endpoint, private dns zone groups, Microsoft.Network/privateEndpoints, Microsoft.Network privateEndpoints/privateDnsZoneGroups`
+`Tags:network, virtual network, subnet, key vault, private dns zone, private dns zone virtual network link private endpoint, private dns zone groups, Microsoft.KeyVault/vaults, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateDnsZones Microsoft.Network/privateEndpoints, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`

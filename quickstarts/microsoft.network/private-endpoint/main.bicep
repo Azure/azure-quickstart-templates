@@ -61,6 +61,17 @@ resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: location
 }
 
+resource virtualNetworkLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: virtualNetworkName
+  location: location
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
+}
+
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   location: location
   name: '${privateLinkResourceName}-pe'
