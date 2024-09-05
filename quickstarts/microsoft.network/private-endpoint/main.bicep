@@ -30,6 +30,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       name: 'standard'
       family: 'A'
     }
+    accessPolicies: []
     tenantId: tenant().tenantId
   }
 }
