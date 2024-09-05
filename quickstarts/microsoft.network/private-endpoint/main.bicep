@@ -13,27 +13,52 @@ param requestMessage string
 @description('Private Endpoint VNet Name.')
 param virtualNetworkName string
 
+@description('Private Endpoint VNet Address Space.')
+param virtualNetworkAddressSpace string
+
 @description('Private Endpoint Subnet Name.')
 param subnetName string
+
+@description('Private Endpoint Subnet Address Prefix.')
+param subnetAddressPrefix string
 
 @description('Private DNS Zone name for Private Endpoint dns integration.')
 param privateDnsZoneName string
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: privateLinkResourceName
+  location: location
+  properties: {
+    sku: {
+      name: 'standard'
+      family: 'A'
+    }
+    tenantId: tenant().tenantId
+  }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: virtualNetworkName
+  location: location
+  properties: {
+    addressSpace: {
+      addressPrefixes: [virtualNetworkAddressSpace]
+    }
+  }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' existing = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
   parent: virtualNetwork
   name: subnetName
+  properties: {
+    addressPrefix: subnetAddressPrefix
+    privateEndpointNetworkPolicies: 'Enabled'
+  }
 }
 
-resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName
+  location: location
 }
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
