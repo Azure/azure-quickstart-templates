@@ -10,9 +10,6 @@ param targetSubResource array
 @description('Request message for the Private Link approval.')
 param requestMessage string
 
-@description('Private Endpoint VNet RG Name.')
-param virtualNetworkRG string
-
 @description('Private Endpoint VNet Name.')
 param virtualNetworkName string
 
@@ -24,11 +21,9 @@ param privateDnsZoneName string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: privateLinkResourceName
-  scope: resourceGroup(virtualNetworkRG )
 }
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = {
-  scope: resourceGroup(virtualNetworkRG)
   name: virtualNetworkName
 }
 
@@ -39,7 +34,6 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' existing 
 
 resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
   name: privateDnsZoneName
-  scope: resourceGroup(virtualNetworkRG )
 }
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
