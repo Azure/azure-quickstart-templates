@@ -1,8 +1,10 @@
 using 'main.bicep'
 
 param privateEndpointName = 'GEN-PRIVATE-ENDPOINT-NAME'
-param privateLinkResourceId = 'GEN-PRIVATE-LINK-RESOURCE-ID'
-param targetSubResource = [ 'GEN-PRIVATE-ENDPOINT-SUBRESOURCE' ]
+param privateLinkResourceName = 'GEN-KEYVAULT-NAME'
+param targetSubResource = ['vault']
 param requestMessage = 'Please approve my private endpoint request'
-param subnetId = 'GEN-SUBNET-RESOURCE-ID'
-param privateDnsZoneId = 'GEN-PRIVATEDNSZONE-RESOURCE-ID'
+param virtualNetworkRG = 'GEN-VIRTUAL-NETWORK-RESOURCE-GROUP-NAME'
+param virtualNetworkName = 'GEN-VIRTUAL-NETWORK-RESOURCE-NAME'
+param subnetName = 'GEN-SUBNET-RESOURCE-NAME'
+param privateDnsZoneName = 'privatelink.vaultcore.azure.net'
