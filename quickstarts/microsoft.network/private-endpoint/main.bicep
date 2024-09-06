@@ -23,7 +23,7 @@ param subnetName string
 param subnetAddressPrefix string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: privateLinkResourceName
+  name: '${privateLinkResourceName}-mifal'
   location: location
   properties: {
     sku: {
@@ -56,7 +56,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   location: location
-  name: '${privateLinkResourceName}-pe'
+  name: '${keyVault.name}-pe'
   properties: {
     subnet: {
       id: subnet.id
@@ -64,7 +64,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
     customNetworkInterfaceName: '${split(keyVault.id, '/')[8]}-nic'
     manualPrivateLinkServiceConnections: [
       {
-        name: '${privateLinkResourceName}-pe'
+        name: '${keyVault.name}-pe'
         properties: {
           privateLinkServiceId: keyVault.id
           groupIds: targetSubResource
