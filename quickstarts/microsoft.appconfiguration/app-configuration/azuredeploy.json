@@ -42,9 +42,20 @@
     },
     "appConfigStoreName": {
       "type": "string",
-      "defaultValue": "[format('appconfig{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "App configuration store name."
+      }
+    },
+    "vmSkuKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the name of the key in the app config store for the VM windows sku."
+      }
+    },
+    "diskSizeKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the name of the key in the app config store for the VM disk size"
       }
     }
   },
@@ -58,48 +69,15 @@
     "virtualNetworkName": "MyVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "windowsOSVersionParameters": {
-      "key": "windowsOS",
-      "label": "template",
-      "value": "2019-Datacenter"
+      "key": "[parameters('vmSkuKey')]",
+      "label": "template"
     },
     "diskSizeGBParameters": {
-      "key": "diskSize",
-      "label": "template",
-      "value": "1023"
+      "key": "[parameters('diskSizeKey')]",
+      "label": "template"
     }
   },
   "resources": [
-    {
-      "type": "Microsoft.AppConfiguration/configurationStores",
-      "apiVersion": "2024-05-01",
-      "name": "[parameters('appConfigStoreName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "standard"
-      }
-    },
-    {
-      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
-      "apiVersion": "2024-05-01",
-      "name": "[format('{0}/{1}', parameters('appConfigStoreName'), format('{0}${1}', variables('windowsOSVersionParameters').key, variables('windowsOSVersionParameters').label))]",
-      "properties": {
-        "value": "[string(variables('windowsOSVersionParameters').value)]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfigStoreName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
-      "apiVersion": "2024-05-01",
-      "name": "[format('{0}/{1}', parameters('appConfigStoreName'), format('{0}${1}', variables('diskSizeGBParameters').key, variables('diskSizeGBParameters').label))]",
-      "properties": {
-        "value": "[string(variables('diskSizeGBParameters').value)]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfigStoreName'))]"
-      ]
-    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
@@ -193,7 +171,7 @@
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('appConfigStoreName'), variables('windowsOSVersionParameters').key), '2024-05-01').value]",
+            "sku": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('appConfigStoreName'), format('{0}${1}',variables('windowsOSVersionParameters').key,variables('windowsOSVersionParameters').label)), '2024-05-01').value]",
             "version": "latest"
           },
           "osDisk": {
@@ -201,7 +179,7 @@
           },
           "dataDisks": [
             {
-              "diskSizeGB": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('appConfigStoreName'), variables('diskSizeGBParameters').key), '2024-05-01').value]",
+              "diskSizeGB": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('appConfigStoreName'), format('{0}${1}',variables('diskSizeGBParameters').key,variables('diskSizeGBParameters').label)), '2024-05-01').value]",
               "lun": 0,
               "createOption": "Empty"
             }
