@@ -14,7 +14,7 @@ var keyVaultRef = {
   uri: keyVaultSecretURL
 }
 
-resource configStore 'Microsoft.AppConfiguration/configurationStores@2023-03-01' = {
+resource configStore 'Microsoft.AppConfiguration/configurationStores@2024-05-01' = {
   name: configStoreName
   location: location
   sku: {
@@ -22,7 +22,7 @@ resource configStore 'Microsoft.AppConfiguration/configurationStores@2023-03-01'
   }
 }
 
-resource configStorekeyValue 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
+resource configStorekeyValue 'Microsoft.AppConfiguration/configurationStores/keyValues@2024-05-01' = {
   parent: configStore
   name: keyValue
   properties: {

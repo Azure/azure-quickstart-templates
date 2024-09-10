@@ -25,7 +25,7 @@ param tags object = {
   tag2: 'tag-value-2'
 }
 
-resource configStore 'Microsoft.AppConfiguration/configurationStores@2023-03-01' = {
+resource configStore 'Microsoft.AppConfiguration/configurationStores@2024-05-01' = {
   name: configStoreName
   location: location
   sku: {
@@ -33,7 +33,7 @@ resource configStore 'Microsoft.AppConfiguration/configurationStores@2023-03-01'
   }
 }
 
-resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = [for (item, i) in keyValueNames: {
+resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/keyValues@2024-05-01' = [for (item, i) in keyValueNames: {
   parent: configStore
   name: item
   properties: {
