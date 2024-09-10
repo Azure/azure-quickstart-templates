@@ -17,11 +17,11 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.0.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.1.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.3.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.5.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.5.0
@@ -128,21 +128,10 @@ configuration ConfigureFEVM
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
-        Script EnableFileSharing
-        {
-            TestScript = {
-                # Test if firewall rules for file sharing already exist
-                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
-                if ($null -eq $rulesSet) {
-                    return $false   # Run SetScript
-                } else {
-                    return $true    # Rules already set
-                }
-            }
-            SetScript = {
-                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
-            }
-            GetScript = { }
+        Script EnableFileSharing {
+            GetScript  = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain }
         }
 
         # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
