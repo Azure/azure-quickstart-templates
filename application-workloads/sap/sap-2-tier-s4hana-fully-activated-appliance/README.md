@@ -1,4 +1,15 @@
-# SAP S/4HANA Fully Activated Appliance
+---
+description: This template deploys an SAP S/4HANA Fully Activated Appliance system. 
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sap-2-tier-s4hana-fully-activated-appliance
+languages:
+- bicep
+- json
+---
+# SAP 2-tier S/4HANA Fully Activated Appliance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-2-tier-s4hana-fully-activated-appliance/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sap/sap-2-tier-s4hana-fully-activated-appliance/PublicDeployment.svg)
@@ -16,7 +27,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-2-tier-s4hana-fully-activated-appliance%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsap%2Fsap-2-tier-s4hana-fully-activated-appliance%2Fazuredeploy.json)
 
-## SAP S/4HANA Fully Activated Appliance Overview 
+## SAP 2-tier S/4HANA Fully Activated Appliance Overview 
 
 Explore the latest and greatest features of SAP S/4HANA with this fully activated appliance on Azure! This template deploy the ABAP stack of a **Fully activated SAP S/4HANA system**. You can find more information about this type of deployment method in this excellent [SAP blog post by Mahesh Sardesai](https://community.sap.com/t5/enterprise-resource-planning-blogs-by-sap/s-4hana-2022-fps1-fully-activated-appliance-standard-installation/ba-p/13547947). 
 
