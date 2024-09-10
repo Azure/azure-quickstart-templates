@@ -1,8 +1,14 @@
 @description('Specifies whether to deploy Azure Databricks workspace with secure cluster connectivity (SCC) enabled or not (No Public IP)')
-param disablePublicIp bool = false
+param disablePublicIp bool = true
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
+
+@description('Name of the NAT gateway to be attached to the workspace subnets.')
+param natGatewayName string = 'nat-gateway'
+
+@description('Name of the Public IP associated with the NAT gateway.')
+param publicIpName string = 'nat-gw-public-ip'
 
 @description('The name of the network security group to create.')
 param nsgName string = 'databricks-nsg'
@@ -40,6 +46,35 @@ var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(wo
 var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
 var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGName}'
 
+resource natGatewayPublicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
+  name: publicIpName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 4
+  }
+}
+
+resource natGateway 'Microsoft.Network/natGateways@2023-09-01' = {
+  name: natGatewayName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    idleTimeoutInMinutes: 4
+    publicIpAddresses: [
+      {
+        id: natGatewayPublicIp.id
+      }
+    ]
+  }
+}
+
 resource nsg 'Microsoft.Network/networkSecurityGroups@2022-09-01' = {
   name: nsgName
   location: location
@@ -60,12 +95,12 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2022-09-01' = {
         }
       }
       {
-        name: 'Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp'
+        name: 'Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-cp'
         properties: {
-          description: 'Required for workers communication with Databricks Webapp.'
+          description: 'Required for workers communication with Databricks control plane.'
           protocol: 'Tcp'
           sourcePortRange: '*'
-          destinationPortRange: '443'
+          destinationPortRanges: ['443','8443-8451','3306']
           sourceAddressPrefix: 'VirtualNetwork'
           destinationAddressPrefix: 'AzureDatabricks'
           access: 'Allow'
@@ -150,6 +185,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' = {
           networkSecurityGroup: {
             id: nsg.id
           }
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'databricks-del-public'
@@ -167,6 +205,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' = {
           networkSecurityGroup: {
             id: nsg.id
           }
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'databricks-del-private'
@@ -181,7 +222,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' = {
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {

@@ -1,5 +1,5 @@
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
-param disablePublicIp bool = false
+param disablePublicIp bool = true
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -136,7 +136,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   location: location
   name: workspaceName
   sku: {

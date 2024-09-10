@@ -51,7 +51,7 @@ resource hybridComputeMachine 'Microsoft.HybridCompute/machines@2023-10-03-previ
   }
 }
 
-resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
+resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2024-01-01' = {
   name: nicName
   location: location
   extendedLocation: {
@@ -74,7 +74,7 @@ resource nic 'Microsoft.AzureStackHCI/networkInterfaces@2023-09-01-preview' = {
   }
 }
 
-resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview' = [for (disk, i) in dataDiskParams: {
+resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2024-01-01' = [for (disk, i) in dataDiskParams: {
   name: '${name}dataDisk${padLeft(i + 1, 2, '0')}'
   location: location
   extendedLocation: {
@@ -88,7 +88,7 @@ resource dataDisks 'Microsoft.AzureStackHCI/virtualHardDisks@2023-09-01-preview'
   }
 }]
 
-resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2023-09-01-preview' = {
+resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2024-01-01' = {
   name: 'default' // value must be 'default' per 2023-09-01-preview
   properties: {
     hardwareProfile: {

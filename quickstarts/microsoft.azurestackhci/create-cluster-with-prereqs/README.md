@@ -79,15 +79,6 @@ The steps are also summarized here:
 
     ![Screenshot showing client secret value.](./media/create-client-secret-3.png)
 
-#### Assign the Service Principal permissions on the subscription
-
-1. Navigate to the target Subscription in the Portal
-1. Select **Access Control (IAM)** on the left menu
-1. Click **Add > Role Assignment**
-1. Select the **Azure Resource Bridge Deployment Role**
-1. Click **Next**, then **+Select Member** and search by the Application ID copied earlier
-1. Click **Review + Assign**
-
 ### Step 3: Register the Microsoft.AzureStackHCI Resource Provider in your subscription
 
 If you haven't deployed an Azure Stack HCI cluster in this subscription previously, [register the Microsoft.AzureStackHCI Resource Provider](https://learn.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider) in your subscription.
@@ -108,6 +99,7 @@ Three node switchless deployments must disable storage auto IP assignment and sp
 | `localAdminUsername`           | The local admin username for the nodes in the deployment.          | | `Administrator` |
 | `localAdminPassword`           | The local admin password for the nodes in the deployment.          | | |
 | `arbDeploymentAppId`           | The application ID of the precreated App Registration for the Arc Resource Bridge deployment.          | | `5dd54f74-1eb0-46e9-8f00-c7367799c545` |
+| `arbDeploymentSPObjectId`      | The service principal object ID of the of the precreated App Registration for the Arc Resource Bridge deployment. To get this objectId property, run `Get-AzADServicePrincipal -ApplicationId <arbDeploymentAppId>` ||`d05337da-2047-441c-8d52-9fc816917325` |
 | `arbDeploymentServicePrincipalSecret` | A client secret of the precreated App Registration for the Arc Resource Bridge deployment.          | | `-q28Q~LWB_EXAMPLE_ni.XN3YSLK__hsdR4l2ZSNbMm` |
 | `hciResourceProviderObjectId`  | The object ID of the Azure Stack HCI Resource Provider in your tenant. To get this ID, run `Get-AzADServicePrincipal -ApplicationId 1412d89f-b8a8-4111-b4fd-e82905cbd85d` or search for **Azure Stack HCI Resource Provider** in Microsoft Entra and copy the object ID. This value will be unique for each Entra ID tenant   | | `1ade2a15-1da8-4c0b-9f2d-fafc353a9fb1` |
 | `clusterName`                  | The name of the Azure Stack HCI cluster - this must be a valid Active Directory computer name and will be the name of your cluster in Azure.       | | `ashci-den01` |
@@ -175,4 +167,4 @@ New-AzResourceGroupDeployment -Name 'hcicluster' -ResourceGroupName <yourResourc
 Learn more:
 
 - [About Arc VM management](https://learn.microsoft.com/azure-stack/hci/manage/azure-arc-vm-management-overview)
-- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: ``Tags: ``Tags: ``Tags: `
+- About how to [Deploy Azure Arc VMs on Azure Stack HCI](https://learn.microsoft.com/azure-stack/hci/manage/create-arc-virtual-machines).`Tags: ``Tags: ``Tags: ``Tags: ``Tags: `
