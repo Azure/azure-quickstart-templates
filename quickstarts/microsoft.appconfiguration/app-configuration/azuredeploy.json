@@ -40,13 +40,6 @@
         "description": "Specify the storage account name."
       }
     },
-      "appConfigStoreResourceGroup": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().name]",
-      "metadata": {
-        "description": "Name of the resource group for the app config store."
-      }
-    },
     "appConfigStoreName": {
       "type": "string",
       "defaultValue": "[format('appconfig{0}', uniqueString(resourceGroup().id))]",
@@ -56,12 +49,14 @@
     },
     "vmSkuKey": {
       "type": "string",
+      "defaultValue": "vmSku",
       "metadata": {
         "description": "Specify the name of the key in the app config store for the VM windows sku."
       }
     },
     "diskSizeKey": {
       "type": "string",
+      "defaultValue": "diskSize",
       "metadata": {
         "description": "Specify the name of the key in the app config store for the VM disk size"
       }
@@ -78,14 +73,45 @@
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "windowsOSVersionParameters": {
       "key": "[parameters('vmSkuKey')]",
-      "label": "template"
+      "value": "2012-R2-Datacenter"
     },
     "diskSizeGBParameters": {
       "key": "[parameters('diskSizeKey')]",
-      "label": "template"
+      "value": "100"
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('appConfigStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "standard"
+      }
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('appConfigStoreName'), string(variables('windowsOSVersionParameters').key))]",
+      "properties": {
+        "value": "[string(variables('windowsOSVersionParameters').value)]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfigStoreName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('appConfigStoreName'), string(variables('diskSizeGBParameters').key))]",
+      "properties": {
+        "value": "[string(variables('diskSizeGBParameters').value)]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfigStoreName'))]"
+      ]
+    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
