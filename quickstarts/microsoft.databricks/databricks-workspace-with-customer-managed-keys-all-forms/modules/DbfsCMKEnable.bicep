@@ -39,7 +39,7 @@ param dbfsCmkKeyVersion string
 param enableNoPublicIp bool
 param requireInfrastructureEncryption bool
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {
