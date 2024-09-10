@@ -21,7 +21,14 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appconfiguration%2Fapp-configuration%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appconfiguration%2Fapp-configuration%2Fazuredeploy.json)
 
-This template creates a config store and writes key-value configuration. It then references (reads) key-value configurations from the created config store from the Azure Resource Manager template. The retrieved values are used to set properties of other resources created by the template.
+This template creates a config store and writes key-value configuration. It then references (reads) key-value configurations from the created config store from the Azure Resource Manager template. The retrieved values are used to set properties of virtual machine resource created by the template.
+
+Following key-values configuration will be added to the config store:
+
+|Key|Value|
+|-|-|
+|windowsOSVersion|2019-Datacenter|
+|diskSizeGB|1023|
 
 NOTE: The principal deploying the template must have contributor access to the App Configuration Store.
 
