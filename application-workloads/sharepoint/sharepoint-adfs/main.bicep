@@ -1,4 +1,4 @@
-metadata description = 'Create a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration that would take ages to perform manually, and install useful softwares like Fiddler, vscode, np++, 7zip, ULS Viewer to get ready to use'
+metadata description = 'Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).'
 metadata author = 'Yvand'
 
 @description('Location for all the resources.')
@@ -7,6 +7,8 @@ param location string = resourceGroup().location
 @description('Version of the SharePoint farm to create.')
 @allowed([
   'Subscription-Latest'
+  'Subscription-24H2'
+  'Subscription-24H1'
   'Subscription-23H2'
   'Subscription-23H1'
   'Subscription-22H2'
@@ -335,10 +337,18 @@ var sharePointSettings = {
       ]
     }
     {
+      Label: '24H2'
+      Packages: [
+        {
+          DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
+        }
+      ]
+    }
+    {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/9/0/b/90b9d2b0-0f76-408d-950f-b3b2f3c50c83/uber-subscription-kb5002629-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
         }
       ]
     }
