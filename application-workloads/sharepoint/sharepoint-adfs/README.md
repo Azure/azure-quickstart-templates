@@ -1,14 +1,15 @@
 ---
-description: This template creates a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profiles service and a web application with 2 zones that contains multiple path based and host-named site collections. On the SharePoint virtual machines, Chocolatey is used to install the latest version of Notepad++, Visual Studio Code, Azure Data Studio, Fiddler, ULS Viewer and 7-Zip.
+description: This template creates a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...)..
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: sharepoint-adfs
 languages:
+- bicep
 - json
 ---
-# SharePoint Subscription / 2019 / 2016 all configured
+# SharePoint Subscription / 2019 / 2016 fully configured
 
 ## Deploy the template
 
@@ -58,7 +59,26 @@ There are some differences in the configuration, depending on the SharePoint ver
 - The HTTPS site certificate is positioned by the DSC script.
 - Federated authentication with ADFS is configured using SAML 1.1.
 
-## Key parameters
+## Outbound access to internet
+
+During the provisionning, virtual machines require an outbound access to internet to be able to download and apply their configuration.  
+The outbound access method depends on variable `outboundAccessMethod`:
+- `PublicIPAddress`: Virtual machines use a [Public IP](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/virtual-network-public-ip-address), associated to their network card.
+- `AzureFirewallProxy`: Virtual machines use [Azure Firewall](https://azure.microsoft.com/en-us/products/azure-firewall/) as an [HTTP proxy](https://learn.microsoft.com/en-us/azure/firewall/explicit-proxy).
+
+## Remote access
+
+The remote access to the virtual machines depends on the following parameters:
+
+- Parameter `rdpTrafficRule` specifies if a rule in the network security groups should allow the inbound RDP traffic:
+    - `No` (default): No rule is created, RDP traffic is blocked.
+    - `*` or `Internet`: RDP traffic is allowed from everywhere.
+    - CIDR notation (e.g. `192.168.99.0/24` or `2001:1234::/64`) or an IP address (e.g. `192.168.99.0` or `2001:1234::`): RDP traffic is allowed from the IP address / pattern specified.
+- parameter `enable_azure_bastion`:
+  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
+  - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
+
+IMPORTANT: If you set variable `outboundAccessMethod` to `AzureFirewallProxy`, you have to either enable Azure Bastion, or manually add a public IP address later, to be able to connect to a virtual machine.
 
 ### Input parameters
 
@@ -72,29 +92,12 @@ There are some differences in the configuration, depending on the SharePoint ver
   - `Subscription-RTM`: Uses a fresh Windows Server 2022 image, on which SharePoint Subscription RTM is downloaded and installed.
   - `2019`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2019 bits already installed.
   - `2016`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2016 bits already installed.
-- parameters `outboundAccessMethod` and `rdpTrafficRule`: See [this section](#remote-access-and-security) for detailed information.
-- parameter `frontEndServersCount` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/en-us/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server).
-- parameter `enableHybridBenefitServerLicenses` allows you to enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, if you are eligible. See [this page](https://docs.microsoft.com/azure/virtual-machines/windows/hybrid-use-benefit-licensing) for more information..
-- Parameters `adminPassword` and `otherAccountsPassword` require a [strong password](https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-).
+- Variable `frontEndServersCount` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/en-us/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server).
+- Variable `enableHybridBenefitServerLicenses` allows you to enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, if you are eligible. See [this page](https://docs.microsoft.com/azure/virtual-machines/windows/hybrid-use-benefit-licensing) for more information..
 
-### Output parameters
+## Outputs
 
-The template returns multiple variables to record the logins, passwords and the public IP address of virtual machines.
-
-## Remote access and security
-
-The options for the remote access and the security of the virtual machines is determined by the following parameters:
-
-- Parameter `outboundAccessMethod` specifies how the virtual machines connect to internet:
-    - `PublicIPAddress`: Using a Public IP resource, added to each virtual machine. The DNS name format of virtual machines is `"[resourceGroupName]-[vm_name].[region].cloudapp.azure.com"` and is recorded as an output.
-    - `AzureFirewallProxy`: Using Azure Firewall as an HTTP proxy IMPORTANT: You need to either enable Azure Bastion, or manually add a public IP address to a virtual machine, to be able to connect to it.
-- Parameter `rdpTrafficRule` specifies if a rule in the network security groups should allow the inbound RDP traffic:
-    - `No` (default): No rule is created, RDP traffic is blocked.
-    - `*` or "Internet": RDP traffic is allowed from everywhere.
-    - CIDR notation (e.g. `192.168.99.0/24` or `2001:1234::/64`) or an IP address (e.g. `192.168.99.0` or `2001:1234::`): RDP traffic is allowed from the IP address / pattern specified.
-- parameter `enableAzureBastion`:
-  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
-  - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
+The template returns multiple values to record the logins and the public IP address of virtual machines.
 
 ## Cost of the resources deployed
 
@@ -105,11 +108,11 @@ Here is the default size and storage type per virtual machine role:
 - SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
 - SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is either a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint Subscription and 2019), or a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint 2016).
 
-You can visit <https://azure.com/e/c494029b0b034b8ca356c926dfd2688a> to estimate the monthly cost of the template in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
+You can visit <https://azure.com/e/ec984bb923214cd1b8ee36d7ffc54e8e> to estimate the monthly cost of the template in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
 
 ## Known issues
 
-- The password of the directory synchronization connection (set in parameter `serviceAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise SharePoint is somehow unable to decrypt it and the import fails.
+- The password for the User Profile directory synchronization connection (value of parameter `otherAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise the import fails (password decryption error).
 
 ## More information
 
