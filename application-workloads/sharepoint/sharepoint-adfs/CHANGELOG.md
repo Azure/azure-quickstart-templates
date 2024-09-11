@@ -6,7 +6,8 @@
 
 - Template
   - Add parameter `outboundAccessMethod`, to choose how the virtual machines connect to internet. Now, they can connect through either a public IP, or using Azure Firewall as an HTTP proxy
-  - Added value `Subscription-24H1` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H1 update
+  - Add value `Subscription-24H1` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H1 update
+  - Add value `Subscription-24H2` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H2 update
 
 ### Changed
 
@@ -14,7 +15,7 @@
   - Convert the template to Bicep
   - [BREAKING CHANGE] Rename most of the parameters
   - Update the display name of most of the resources to be more consistent and reflect their relationship with each other
-  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the August 2024 CU for SharePoint Subscription
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the September 2024 CU for SharePoint Subscription
 - All DSC configurations
   - Add a firewall rule to all virtual machines to allow remote event viewer connections
   - Updated DSC module `ActiveDirectoryDsc` to 6.4.0
