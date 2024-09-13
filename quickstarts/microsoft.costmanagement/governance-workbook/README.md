@@ -2,35 +2,35 @@
 description: This template creates a new Azure Monitor workbook for governance based on the Cloud Adoption Framework.
 page_type: sample
 products:
-  - azure
-  - azure-advisor
-  - azure-app-service
-  - azure-app-service-web
-  - azure-application-gateway
-  - azure-automation
-  - azure-backup
-  - azure-database-mysql
-  - azure-database-postgresql
-  - azure-functions
-  - azure-key-vault
-  - azure-load-balancer
-  - azure-logic-apps
-  - azure-policy
-  - azure-resource-manager
-  - azure-sql-database
-  - azure-sql-managed-instance
-  - azure-storage-accounts
-  - azure-virtual-machines
-  - azure-virtual-network
-  - azure-web-apps
-  - microsoft-defender
+- azure
+- azure-advisor
+- azure-app-service
+- azure-app-service-web
+- azure-application-gateway
+- azure-automation
+- azure-backup
+- azure-database-mysql
+- azure-database-postgresql
+- azure-functions
+- azure-key-vault
+- azure-load-balancer
+- azure-logic-apps
+- azure-policy
+- azure-resource-manager
+- azure-sql-database
+- azure-sql-managed-instance
+- azure-storage-accounts
+- azure-virtual-machines
+- azure-virtual-network
+- azure-web-apps
+- microsoft-defender
 urlFragment: governance-workbook
 languages:
-  - bicep
-  - json
+- bicep
+- json
 ---
 
-# Governance workbook template
+# FinOps governance workbook
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/governance-workbook/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/governance-workbook/PublicDeployment.svg)
