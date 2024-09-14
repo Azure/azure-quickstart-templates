@@ -6,10 +6,10 @@ products:
 - azure-resource-manager
 urlFragment: private-endpoint
 languages:
-- json
 - bicep
+- json
 ---
-# Creates Priavate Endpoint resources
+# Creates a Cross-tenant Private Endpoint resource
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/private-endpoint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/private-endpoint/PublicDeployment.svg)
@@ -30,4 +30,4 @@ This template allows you to create Priavate Endpoint resource within the same or
 
 [Private Endpoint Service](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview)
 
-`Tags:network, virtual network, subnet, key vault, private endpoint, Microsoft.KeyVault/vaults, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/privateEndpoints`
+`Tags: network, virtual network, subnet, key vault, private endpoint, Microsoft.KeyVault/vaults, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/privateEndpoints`
