@@ -25,7 +25,7 @@ param tags object = {
   tag2: 'tag-value-2'
 }
 
-resource configStore 'Microsoft.AppConfiguration/configurationStores@2021-10-01-preview' = {
+resource configStore 'Microsoft.AppConfiguration/configurationStores@2024-05-01' = {
   name: configStoreName
   location: location
   sku: {
