@@ -1,6 +1,8 @@
-param GITLAB_ROOT_EMAIL string = 'weekendsprints@outlook.com'
+@description('GitLab root user email')
+param GITLAB_ROOT_EMAIL string = 'example@test.com'
 
 @secure()
+@description('GitLab root user password')
 param GITLAB_ROOT_PASSWORD string
 
 @description('GitLab version to install')
