@@ -1,5 +1,5 @@
 @description('Specifies the name of the app configuration store.')
-param configStoreName string
+param configStoreName string = 'appconfig${uniqueString(resourceGroup().id)}'
 
 @description('Specifies the Azure location where the app configuration store should be created.')
 param location string = resourceGroup().location
