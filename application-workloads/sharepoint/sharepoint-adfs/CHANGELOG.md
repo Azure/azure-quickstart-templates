@@ -1,6 +1,32 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+### Added
+
+- Template
+  - Add parameter `outboundAccessMethod`, to choose how the virtual machines connect to internet. Now, they can connect through either a public IP, or using Azure Firewall as an HTTP proxy
+  - Add value `Subscription-24H1` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H1 update
+  - Add value `Subscription-24H2` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H2 update
+
+### Changed
+
+- Template
+  - Convert the template to Bicep
+  - [BREAKING CHANGE] Rename most of the parameters
+  - Update the display name of most of the resources to be more consistent and reflect their relationship with each other
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the September 2024 CU for SharePoint Subscription
+- All DSC configurations
+  - Add a firewall rule to all virtual machines to allow remote event viewer connections
+  - Updated DSC module `ActiveDirectoryDsc` to 6.4.0
+  - Updated DSC module `ComputerManagementDsc` to 9.1.0
+  - Updated DSC module `SharePointDSC` to 5.5.0
+- DSC Configuration for DC
+  - Updated DSC module `AdfsDsc` to 1.4.0
+
 ## Enhancements & bug-fixes - Published in February 26, 2024
+
+### Changed
 
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2024 CU for SharePoint Subscription
