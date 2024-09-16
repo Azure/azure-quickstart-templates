@@ -40,8 +40,9 @@
         "description": "Specify the storage account name."
       }
     },
-    "appConfigStoreName": {
+    "configStoreName": {
       "type": "string",
+      "defaultValue": "[format('appconfig{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "App configuration store name."
       }
@@ -70,14 +71,47 @@
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "windowsOSVersionParameters": {
       "key": "[parameters('vmSkuKey')]",
-      "label": "template"
+      "label": "template",
+      "value": "2012-R2-Datacenter"
     },
     "diskSizeGBParameters": {
       "key": "[parameters('diskSizeKey')]",
-      "label": "template"
+      "label": "template",
+      "value": "128"
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('configStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "standard"
+      }
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}${2}', parameters('configStoreName'), string(variables('windowsOSVersionParameters').key), string(variables('windowsOSVersionParameters').label))]",
+      "properties": {
+        "value": "[string(variables('windowsOSVersionParameters').value)]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('configStoreName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}${2}', parameters('configStoreName'), string(variables('diskSizeGBParameters').key), string(variables('diskSizeGBParameters').label))]",
+      "properties": {
+        "value": "[string(variables('diskSizeGBParameters').value)]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('configStoreName'))]"
+      ]
+    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
@@ -171,7 +205,7 @@
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('appConfigStoreName'), format('{0}${1}',variables('windowsOSVersionParameters').key,variables('windowsOSVersionParameters').label)), '2024-05-01').value]",
+            "sku": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('configStoreName'), format('{0}${1}',variables('windowsOSVersionParameters').key,variables('windowsOSVersionParameters').label)), '2024-05-01').value]",
             "version": "latest"
           },
           "osDisk": {
@@ -179,7 +213,7 @@
           },
           "dataDisks": [
             {
-              "diskSizeGB": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('appConfigStoreName'), format('{0}${1}',variables('diskSizeGBParameters').key,variables('diskSizeGBParameters').label)), '2024-05-01').value]",
+              "diskSizeGB": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('configStoreName'), format('{0}${1}',variables('diskSizeGBParameters').key,variables('diskSizeGBParameters').label)), '2024-05-01').value]",
               "lun": 0,
               "createOption": "Empty"
             }
