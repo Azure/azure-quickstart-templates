@@ -3,7 +3,13 @@ param GITLAB_ROOT_EMAIL string = 'weekendsprints@outlook.com'
 @secure()
 param GITLAB_ROOT_PASSWORD string
 
+@description('GitLab version to install')
 param GITLAB_VERSION string = '17.3.2'
+@description('GitLab edition to instance')
+@allowed([
+  'ee'
+  'ce'
+])
 param GITLAB_EDITION string = 'ee'
 var GITLAB_PACKAGE = 'gitlab-${GITLAB_EDITION}=${GITLAB_VERSION}-${GITLAB_EDITION}.0'
 
@@ -15,7 +21,7 @@ param adminUsername string
   'password'
   'sshPublicKey'
 ])
-param authenticationType string = 'password'
+param authenticationType string = 'sshPublicKey'
 
 @description('Password or SSH key for the Virtual Machine.')
 @secure()
@@ -203,7 +209,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   }
 }
 
-resource deploymentscript 'Microsoft.Compute/virtualMachines/runCommands@2024-03-01' = {
+resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2024-03-01' = {
   parent: vm
   name: 'linuxscript'
   location: location
