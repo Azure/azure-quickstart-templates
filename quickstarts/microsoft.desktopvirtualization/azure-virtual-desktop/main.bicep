@@ -26,7 +26,9 @@ param applicationGroupName string
 @description('Workspace resource name')
 param workspaceName string
 @description('Virtual machine resource name')
-param virtualMachines array
+param virtualMachine object
+
+@secure()
 @description('Virtual machine resource admin username')
 param adminUsername string
 
@@ -100,7 +102,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = if(newV
   }
 }
 
-resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2021-01-14-preview' = {
+resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2024-04-08-preview' = {
   location: location
   name: hostPoolName
   properties: hostPoolProperties
@@ -118,9 +120,9 @@ resource workspace 'Microsoft.DesktopVirtualization/workspaces@2024-04-08-previe
   properties: union(workspaceProperties, {applicationGroupReferences: [applicationGroups.id]})
 }
 
-resource networkinterface 'Microsoft.Network/networkInterfaces@2024-01-01' = [for (vm, ind) in virtualMachines: {
+resource networkinterface 'Microsoft.Network/networkInterfaces@2024-01-01' = {
   location: location
-  name: '${vm.name}${ind}-nic'
+  name: '${virtualMachine.name}-nic'
   properties: {
     enableAcceleratedNetworking: true
     ipConfigurations: [
@@ -135,35 +137,35 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2024-01-01' = [fo
       }
     ]
   }
-}]
+}
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-03-01' = [for (vm, ind) in virtualMachines: {
+resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   location: location
-  name: '${vm.name}${ind}'
+  name: virtualMachine.name
   properties: {
-    licenseType: vm.licenseType
+    licenseType: virtualMachine.licenseType
     hardwareProfile: {
-      vmSize: vm.vmSize
+      vmSize: virtualMachine.vmSize
     }
     storageProfile: {
       osDisk: {
-        createOption: 'FromImage'
+        createOption: virtualMachine.osDisk.createOption
         managedDisk: {
-          storageAccountType: 'Premium_LRS'
+          storageAccountType: virtualMachine.osDisk.storageAccountType
         }
-        deleteOption: 'Delete'
+        deleteOption: virtualMachine.osDisk.deleteOption
       }
       imageReference: {
-        publisher: 'microsoftwindowsdesktop'
-        offer: 'windows-11'
-        sku: 'win11-22h2-pro'
-        version: 'latest'
+        publisher: virtualMachine.imageReference.publisher
+        offer: virtualMachine.imageReference.offer
+        sku: virtualMachine.imageReference.sku
+        version: virtualMachine.imageReference.version
       }
     }
     networkProfile: {
       networkInterfaces: [
         {
-          id: networkinterface[ind].id
+          id: networkinterface.id
           properties: {
             deleteOption: 'Delete'
           }
@@ -181,7 +183,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-03-01' = [for (v
       hibernationEnabled: false
     }
     osProfile: {
-      computerName: '${vm.name}${ind}'
+      computerName: virtualMachine.name
       adminUsername: adminUsername
       adminPassword: adminPassword
     }
@@ -191,10 +193,10 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-03-01' = [for (v
       }
     }
   }
-}]
+}
 
-resource entraIdJoin 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = [for (vm, ind) in virtualMachines: {
-  parent: virtualMachine[ind]
+resource entraIdJoin 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = {
+  parent: vm
   name: 'AADLoginForWindows'
   location: location
   properties: {
@@ -204,10 +206,10 @@ resource entraIdJoin 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' =
     autoUpgradeMinorVersion: true
     enableAutomaticUpgrade: false
   }
-}]
+}
 
-resource dcs 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = [for (vm, ind) in virtualMachines: {
-  parent: virtualMachine[ind]
+resource dcs 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = {
+  parent: vm
   name: 'MicrosoftPowershellDSC'
   location: location
   properties: {
@@ -231,6 +233,6 @@ resource dcs 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = [for (v
   dependsOn: [
     entraIdJoin
   ]
-}]
+}
 
 //output registrationInfo1 string = reference(hostPool.id).registrationInfo.token

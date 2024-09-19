@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "8365212341831036368"
+      "templateHash": "14687467904701869073"
     }
   },
   "parameters": {
@@ -70,14 +70,14 @@
         "description": "Workspace resource name"
       }
     },
-    "virtualMachines": {
-      "type": "array",
+    "virtualMachine": {
+      "type": "object",
       "metadata": {
         "description": "Virtual machine resource name"
       }
     },
     "adminUsername": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "Virtual machine resource admin username"
       }
@@ -172,7 +172,7 @@
     },
     {
       "type": "Microsoft.DesktopVirtualization/hostPools",
-      "apiVersion": "2021-01-14-preview",
+      "apiVersion": "2024-04-08-preview",
       "name": "[parameters('hostPoolName')]",
       "location": "[parameters('location')]",
       "properties": "[parameters('hostPoolProperties')]"
@@ -198,13 +198,9 @@
       ]
     },
     {
-      "copy": {
-        "name": "networkinterface",
-        "count": "[length(parameters('virtualMachines'))]"
-      },
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2024-01-01",
-      "name": "[format('{0}{1}-nic', parameters('virtualMachines')[copyIndex()].name, copyIndex())]",
+      "name": "[format('{0}-nic', parameters('virtualMachine').name)]",
       "location": "[parameters('location')]",
       "properties": {
         "enableAcceleratedNetworking": true,
@@ -225,38 +221,34 @@
       ]
     },
     {
-      "copy": {
-        "name": "virtualMachine",
-        "count": "[length(parameters('virtualMachines'))]"
-      },
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2024-03-01",
-      "name": "[format('{0}{1}', parameters('virtualMachines')[copyIndex()].name, copyIndex())]",
+      "name": "[parameters('virtualMachine').name]",
       "location": "[parameters('location')]",
       "properties": {
-        "licenseType": "[parameters('virtualMachines')[copyIndex()].licenseType]",
+        "licenseType": "[parameters('virtualMachine').licenseType]",
         "hardwareProfile": {
-          "vmSize": "[parameters('virtualMachines')[copyIndex()].vmSize]"
+          "vmSize": "[parameters('virtualMachine').vmSize]"
         },
         "storageProfile": {
           "osDisk": {
-            "createOption": "FromImage",
+            "createOption": "[parameters('virtualMachine').osDisk.createOption]",
             "managedDisk": {
-              "storageAccountType": "Premium_LRS"
+              "storageAccountType": "[parameters('virtualMachine').osDisk.storageAccountType]"
             },
-            "deleteOption": "Delete"
+            "deleteOption": "[parameters('virtualMachine').osDisk.deleteOption]"
           },
           "imageReference": {
-            "publisher": "microsoftwindowsdesktop",
-            "offer": "windows-11",
-            "sku": "win11-22h2-pro",
-            "version": "latest"
+            "publisher": "[parameters('virtualMachine').imageReference.publisher]",
+            "offer": "[parameters('virtualMachine').imageReference.offer]",
+            "sku": "[parameters('virtualMachine').imageReference.sku]",
+            "version": "[parameters('virtualMachine').imageReference.version]"
           }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}-nic', parameters('virtualMachines')[copyIndex()].name, copyIndex()))]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('virtualMachine').name))]",
               "properties": {
                 "deleteOption": "Delete"
               }
@@ -274,7 +266,7 @@
           "hibernationEnabled": false
         },
         "osProfile": {
-          "computerName": "[format('{0}{1}', parameters('virtualMachines')[copyIndex()].name, copyIndex())]",
+          "computerName": "[parameters('virtualMachine').name]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -285,17 +277,13 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}-nic', parameters('virtualMachines')[copyIndex()].name, copyIndex()))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('virtualMachine').name))]"
       ]
     },
     {
-      "copy": {
-        "name": "entraIdJoin",
-        "count": "[length(parameters('virtualMachines'))]"
-      },
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2024-03-01",
-      "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachines')[copyIndex()].name, copyIndex()), 'AADLoginForWindows')]",
+      "name": "[format('{0}/{1}', parameters('virtualMachine').name, 'AADLoginForWindows')]",
       "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Azure.ActiveDirectory",
@@ -305,17 +293,13 @@
         "enableAutomaticUpgrade": false
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}{1}', parameters('virtualMachines')[copyIndex()].name, copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachine').name)]"
       ]
     },
     {
-      "copy": {
-        "name": "dcs",
-        "count": "[length(parameters('virtualMachines'))]"
-      },
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2024-03-01",
-      "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachines')[copyIndex()].name, copyIndex()), 'MicrosoftPowershellDSC')]",
+      "name": "[format('{0}/{1}', parameters('virtualMachine').name, 'MicrosoftPowershellDSC')]",
       "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -336,9 +320,9 @@
         }
       },
       "dependsOn": [
-        "entraIdJoin",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachine').name, 'AADLoginForWindows')]",
         "[resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))]",
-        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}{1}', parameters('virtualMachines')[copyIndex()].name, copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachine').name)]"
       ]
     }
   ]
