@@ -56,7 +56,7 @@ param hostPoolProperties object = {
   relayUDP: 'Default'
   startVMOnConnect: false
   registrationInfo: {
-    expirationTime: dateTimeAdd('2024-09-17 00:00:00Z', 'P2D')
+    expirationTime: dateTimeAdd('2024-09-20 00:00:00Z', 'P2D')
     registrationTokenOperation: 'Update'
   }
 }
