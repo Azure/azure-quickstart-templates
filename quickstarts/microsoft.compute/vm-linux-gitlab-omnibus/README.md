@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# GitLab Omnibus on a Virtual Machine with a public DNS
+# GitLab Omnibus
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-gitlab-omnibus/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-linux-gitlab-omnibus/PublicDeployment.svg)
