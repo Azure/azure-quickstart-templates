@@ -1,4 +1,4 @@
-ARM template usage to create 2 circuits:
+# ARM template usage to create 2 circuits:
 
 # parameters to create 2 circuits on provider
 $parameters = @{
@@ -39,14 +39,11 @@ $parameters = @{
     circuit2BandwidthInGbps      = 1
     circuit2DirectEnableRateLimiting = $true
 }
-# Deploy the ARM template using the hashtable
+
 New-AzResourceGroupDeployment -Name "circuitdeployment" `
                               -ResourceGroupName "<rgName>" `
                               -TemplateFile .\NewAzHighAvailabilityExpressRouteCircuitsARMTemplate.json `
                               -TemplateParameterObject $parameters
-
-
-
 
 # Usage of arm template to deploy 2 connections
 $parameters = @{
@@ -65,10 +62,7 @@ $parameters = @{
     expressRouteId2                = "/subscriptions/<subId>/resourceGroups/<rgName>/providers/Microsoft.Network/expressRouteCircuits/providercircuit2"  
 }
 
-# Define resource group name
-$resourceGroupName = "<rgName>"  # Replace with your resource group name
-
-# Deploy the ARM template using the hashtable
+$resourceGroupName = "<rgName>"
 New-AzResourceGroupDeployment -Name "connectiondeployment" `
                               -ResourceGroupName "<rgName>" `
                               -TemplateFile .\NewHighAvailabilityVirtualNetworkGatewayConnectionsARMTemplate.json `
