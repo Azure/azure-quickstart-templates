@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create Azure Virtual Desktop resources such as host pool, application group, workspace, a test session host and its extensions with Microsoft Entra ID join.
+description: This template allows you to create Azure Virtual Desktop resources such as host pool, application group, workspace, a test session host and its extensions with Microsoft Entra ID join
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure Virtual Dekstop
+# Creates AVD with Microsoft Entra ID Join
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.desktopvirtualization/azure-virtual-desktop/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.desktopvirtualization/azure-virtual-desktop/PublicDeployment.svg)
