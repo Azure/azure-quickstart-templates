@@ -3,30 +3,13 @@ description: This template creates a new Azure Monitor workbook for cost optimiz
 page_type: sample
 products:
 - azure
-- azure-advisor
-- azure-app-service
-- azure-app-service-web
-- azure-application-gateway
-- azure-blob-storage
-- azure-cost-management
-- azure-disk-storage
-- azure-kubernetes-service
-- azure-load-balancer
-- azure-monitor
 - azure-resource-manager
-- azure-sql-database
-- azure-sql-managed-instance
-- azure-storage-accounts
-- azure-virtual-machines
-- azure-web-apps
-- sql-server
 urlFragment: optimization-workbook
 languages:
 - bicep
 - json
 ---
-
-# FinOps cost optimization workbook
+# Cost optimization workbook
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/optimization-workbook/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/optimization-workbook/PublicDeployment.svg)

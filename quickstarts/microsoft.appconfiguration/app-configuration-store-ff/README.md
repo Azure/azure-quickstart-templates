@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: app-configuration-store-ff
 languages:
-- json
 - bicep
+- json
 ---
 # Create an App Configuration Store with Feature Flag
 
