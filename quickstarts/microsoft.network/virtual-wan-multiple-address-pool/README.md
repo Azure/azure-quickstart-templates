@@ -16,6 +16,8 @@ languages:
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-multiple-address-pool/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-multiple-address-pool/FairfaxDeployment.svg)
 
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-multiple-address-pool/BestPracticeResult.svg)
+
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-multiple-address-pool/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fvirtual-wan-multiple-address-pool%2Fazuredeploy.json)
@@ -77,6 +79,8 @@ More details about multiple address pools and user groups can be found in the do
 
 [About client address pools for Virtual WAN point-to-site configurations](https://learn.microsoft.com/azure/virtual-wan/about-client-address-pools) <br>
 [Configure user groups and IP address pools for P2S User VPNs](https://learn.microsoft.com/azure/virtual-wan/user-groups-create)
+
+For simplicity, the ARM template in **Microsoft.Network/vpnServerConfigurations** does not include the **vpnClientRevokedCertificates** property, as it assumes there are no revoked digital certificates. However, this property should be included if you need to revoke any certificates.
 
 To create the digital certificates for test environments, you can use the powershell script **create-root-and-clients-certificates.ps1** from the root of this repo:
 
