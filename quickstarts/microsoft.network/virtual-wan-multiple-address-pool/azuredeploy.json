@@ -2,11 +2,11 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "hub1location": {
+        "location": {
             "type": "string",
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Location where all resources will be created."
+                "description": "Azure region where all resources will be created."
             }
         },
         "vwanName": {
@@ -16,42 +16,32 @@
                 "description": "Name of the Virtual Wan."
             }
         },
-        "vwanSKU": {
-            "type": "string",
-            "defaultValue": "Standard",
-            "metadata": {
-                "description": "Sku of the Virtual Wan."
-            },
-            "allowedValues": [
-                "Standard",
-                "Basic"
-            ]
-        },
         "hub1Name": {
             "type": "string",
             "defaultValue": "hub1",
             "metadata": {
-                "description": "Name of the Virtual Hub. A virtual hub is created inside a virtual wan."
+                "description": "Name of the Virtual hub. A virtual hub is created inside a virtual wan."
             }
         },
         "hub1_PublicCertificate1DataForP2S": {
             "type": "string",
             "metadata": {
-                "description": "Sample Public Certificate content for Point-to-Site (P2S) authentication in the first Hub (please provide your own once deployment is completed) "
+                "description": "Sample Public Certificate content for Point-to-Site (P2S) authentication in the hub1 (please provide your own value)."
             }
         },
         "hub1_P2SvpnGatewayScaleUnit": {
             "type": "int",
             "defaultValue": 1,
             "metadata": {
-                "description": "Scale Units for Point-to-Site (S2S) VPN Gateway in the hub1"
+                "description": "Scale Units for Point-to-Site (S2S) VPN Gateway in the hub1."
             }
         }
     },
     "variables": {
+        "vwanSKU": "Standard",
         "vwanName": "[parameters('vwanName')]",
         "hub1Name": "[parameters('hub1Name')]",
-        "hub1location": "[parameters('hub1location')]",
+        "hub1location": "[parameters('location')]",
         "hub1addressPrefix": "10.255.0.0/23",
         "spoke1vnetName": "spoke1",
         "spoke2vnetName": "spoke2",
@@ -135,7 +125,7 @@
             "name": "[variables('vwanName')]",
             "location": "[variables('hub1location')]",
             "properties": {
-                "type": "[parameters('vwanSKU')]",
+                "type": "[variables('vwanSKU')]",
                 "allowVnetToVnetTraffic": true,
                 "allowBranchToBranchTraffic": true
             }
@@ -168,7 +158,6 @@
                 "labels": [ "default" ]
             }
         },
-
         {
             "comments": "create a route table for the Spoke vnets",
             "type": "Microsoft.Network/virtualHubs/hubRouteTables",
@@ -253,7 +242,7 @@
             "type": "Microsoft.Network/vpnServerConfigurations",
             "apiVersion": "2023-11-01",
             "name": "[format('{0}_P2SvpnServerConfiguration', variables('hub1Name'))]",
-            "location": "[parameters('hub1location')]",
+            "location": "[variables('hub1location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualWans', variables('vwanName'))]",
                 "[resourceId('Microsoft.Network/virtualHubs', variables('hub1Name'))]"
@@ -348,7 +337,7 @@
             "type": "Microsoft.Network/p2sVpnGateways",
             "apiVersion": "2023-11-01",
             "name": "[format('{0}_P2Sgateway', variables('hub1Name'))]",
-            "location": "[parameters('hub1location')]",
+            "location": "[variables('hub1location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualHubs', variables('hub1Name'))]",
                 "[resourceId('Microsoft.Network/vpnServerConfigurations', format('{0}_P2SvpnServerConfiguration', variables('hub1Name')))]",
@@ -392,7 +381,6 @@
                             },
                             "configurationPolicyGroupAssociations": [
                                 {
-
                                     "id": "[resourceId('Microsoft.Network/vpnServerConfigurations/configurationPolicyGroups', format('{0}_P2SvpnServerConfiguration', variables('hub1Name')), variables('policyGroup1Name'))]"
                                 }
                             ],
@@ -427,7 +415,6 @@
                             },
                             "configurationPolicyGroupAssociations": [
                                 {
-
                                     "id": "[resourceId('Microsoft.Network/vpnServerConfigurations/configurationPolicyGroups', format('{0}_P2SvpnServerConfiguration', variables('hub1Name')), variables('policyGroup2Name'))]"
                                 }
                             ],
@@ -462,7 +449,6 @@
                             },
                             "configurationPolicyGroupAssociations": [
                                 {
-
                                     "id": "[resourceId('Microsoft.Network/vpnServerConfigurations/configurationPolicyGroups', format('{0}_P2SvpnServerConfiguration', variables('hub1Name')), variables('policyGroup3Name'))]"
                                 }
                             ],
