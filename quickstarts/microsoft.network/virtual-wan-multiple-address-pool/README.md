@@ -63,7 +63,7 @@ If there is no match between the **Subject** in the client's digital certificate
 <br>
 
 IP addressing scheme is specified by variables within the template. <br>
-In P2S with authetication with digital certificate, the root certificate is used to sign the client certificates.  <br>
+In P2S with authentication with digital certificate, the root certificate is used to sign the client certificates.  <br>
 The ARM template requires the mandatory specification of public certificate data of the root certificate. Without the root certificate data, the deployment will fail. 
 After the provisioning, checking the Point-to-Site configuration requires three different P2S clients. <br>
 The steps to connect in P2S the clients to vWAN:
