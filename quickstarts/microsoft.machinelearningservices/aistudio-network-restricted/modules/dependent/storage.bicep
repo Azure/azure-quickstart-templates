@@ -209,3 +209,4 @@ resource filePrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNe
 }
 
 output storageId string = storage.id
+output storageName string = storage.name
