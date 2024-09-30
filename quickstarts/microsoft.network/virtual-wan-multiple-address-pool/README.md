@@ -1,14 +1,14 @@
 ---
-description: This template allows you to create an Azure Virtual WAN (vWAN) with Point-To-Site connections to demonstrate the usage multi pool address and user groups.
+description: This template deploys Azure Virtual WAN (vWAN) with a P2S configured with multiple address pool and user groups
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: virtual-wan-with-multiple-address-pool
+urlFragment: virtual-wan-multiple-address-pool
 languages:
 - json
 ---
-# Azure vWAN with Point-To-Site connections configured with user groups and multiple address pool
+# vWAN P2S deployment with multi address pool and user groups
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-multiple-address-pool/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/virtual-wan-multiple-address-pool/PublicDeployment.svg)
