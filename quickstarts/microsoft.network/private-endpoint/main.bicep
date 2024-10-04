@@ -23,7 +23,7 @@ param subnetName string
 param subnetAddressPrefix string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: '${privateLinkResourceName}-mifal'
+  name: '${privateLinkResourceName}-mif'
   location: location
   properties: {
     sku: {
