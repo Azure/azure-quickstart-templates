@@ -25,7 +25,7 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faistudio-cmk-service-side-encryption%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faistudio-cmk-service-side-encryption%2Fazuredeploy.json)
 
-This set of templates demonstrates how to create a hub workspace with customer-managed keys for encryption, and its data stored service-side. In this setup, public internet access is enabled, and _Microsoft_-managed identity is used. 
+This set of templates demonstrates how to create a hub workspace with customer-managed keys for encryption, and its data stored service-side. In this setup, public internet access is enabled, and _Microsoft_-managed identity is used. This preview capability overcomes the previous requirement for creating additional Azure Storage, Azure CosmosDB and Azure Search resources in your subscription when using customer-managed key encryption.
 
 > [!IMPORTANT]
 > This preview is provided without a service-level agreement, and we don't recommend it for production workloads. 
@@ -71,5 +71,6 @@ For AI services CMK configuration the following constraints hold on your encrypt
 
 If you are new to Azure AI studio, see:
 
-- [Azure AI studio](https://aka.ms/aistudio/docs)`Tags: `
+- [Azure AI studio](https://aka.ms/aistudio/docs)
+
 `Tags: `
