@@ -120,6 +120,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
 
 resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {
   name: workspaceName
+  location: location
   identity: {
     type: 'SystemAssigned'
   }
