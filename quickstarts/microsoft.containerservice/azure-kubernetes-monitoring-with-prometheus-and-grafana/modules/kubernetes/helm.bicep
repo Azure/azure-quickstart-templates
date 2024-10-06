@@ -7,7 +7,7 @@ param location string = resourceGroup().location
 //param _artifactsLocationSasToken string = ''
 
 
-param clusterName string = ''
+param clusterName string
 
 param utcValue string = utcNow()
 
@@ -26,12 +26,12 @@ param helmAppName string = 'prometheus'
 var helmRoleDefinitionId   = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var helmRoleAssignmentName = guid(helmRoleDefinitionId, helmManagedIdentity.id, resourceGroup().id)
 
-resource helmManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource helmManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
   name: 'helmIdentityName'
   location: location
 }
 
-resource helmIdentityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource helmIdentityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: resourceGroup()
   name: helmRoleAssignmentName
   properties: {
@@ -41,7 +41,7 @@ resource helmIdentityRoleAssignDeployment 'Microsoft.Authorization/roleAssignmen
   }
 }
 
-resource helmCustomScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource helmCustomScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'helmCustomScript'
   location: location
   dependsOn: [

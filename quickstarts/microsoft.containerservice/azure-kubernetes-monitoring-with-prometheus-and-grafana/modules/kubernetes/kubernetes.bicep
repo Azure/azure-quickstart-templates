@@ -2,6 +2,7 @@ param location string
 param prefix string
 param subnetId string
 param userAssignedIdentities string
+param vmSize string
 @description('Public Helm Repo Name')
 param helmRepo string
 
@@ -56,17 +57,12 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-04-02-preview' = {
         enableAutoScaling: true
         minCount: 1
         maxCount: 2
-        vmSize: 'Standard_D2as_v4'
+        vmSize: vmSize
         osType: 'Linux'
         osSKU: 'Ubuntu'
         type: 'VirtualMachineScaleSets'
         mode: 'System'
         maxPods: 110
-        availabilityZones: []
-        //nodeLabels: {
-        //  system_pool: 'pool1'
-        //}
-        nodeTaints: []
         enableNodePublicIP: false
         vnetSubnetID: subnetId
       }

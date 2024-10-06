@@ -1,7 +1,7 @@
 param location string
 param prefix string
 
-resource aksManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource aksManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
   name: '${prefix}-aks'
   location: location
 }
