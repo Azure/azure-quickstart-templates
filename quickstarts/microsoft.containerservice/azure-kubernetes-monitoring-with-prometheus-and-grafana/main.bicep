@@ -52,7 +52,6 @@ module network 'modules/network/network.bicep' = {
     subnetName2: subnetName2
     virtualNetworkAddressSpace: virtualNetworkAddressSpace
     virtualNetworkName: virtualNetworkName
-    kubernetesPrincipalId: aksManagedIdentity.outputs.aksManagedIdentityPrincipalId
   }
 }
 

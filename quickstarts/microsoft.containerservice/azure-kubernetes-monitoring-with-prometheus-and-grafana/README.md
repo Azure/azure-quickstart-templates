@@ -33,7 +33,7 @@ This will create an Azure grafana, AKS and install Prometheus, an open-source mo
 
 ## Description
 
-A popular way of installing Prometheus is through the prometheus-operator, which provides Kubernetes native deployment and management of Prometheus and related monitoring components. this will use kube-prometheus-stack Helm charts to deploy the prometheus-operator. Azure Private Link service enables the consumption of your Kubernetes service through private link across different Azure virtual networks. AKS has a native integration with Azure Private Link Service and helps you annotate a Kubernetes service object to create a corresponding private link service within Azure.
+A popular way of installing Prometheus is through the [**prometheus-operator**](https://prometheus-operator.dev/), which provides Kubernetes native deployment and management of [**Prometheus**](https://prometheus.io/) and related monitoring components. this will use [**kube-prometheus-stack**](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack). Helm charts to deploy the prometheus-operator. Azure [**Private Link**](https://learn.microsoft.com/en-us/azure/private-link/private-link-service-overview) service enables the consumption of your Kubernetes service through private link across different Azure virtual networks. AKS has a [**native integration with Azure Private Link Service**](https://cloud-provider-azure.sigs.k8s.io/topics/pls-integration/) and helps you annotate a Kubernetes service object to create a corresponding private link service within Azure.
 
 ## Architecture
 
@@ -45,7 +45,7 @@ The architecture of this solution will be similar to the picture below:
 > Prometheus monitoring workloads and services will be created in the kubernetes cluster under the monitoring namespace. This will also deploy a PLS service with an internal load balancer for private access from grafana.
 
 
-For more information on **Azure Kubernetes Monitoring with Prometheus and Grafana** see article[Connect to a self-hosted Prometheus service on an AKS cluster using a managed private endpoint](https://learn.microsoft.com/en-us/azure/managed-grafana/tutorial-mpe-oss-prometheus)
+For more information on **Azure Kubernetes Monitoring with Prometheus and Grafana** see article [**Connect to a self-hosted Prometheus service on an AKS cluster using a managed private endpoint**](https://learn.microsoft.com/en-us/azure/managed-grafana/tutorial-mpe-oss-prometheus)
 
 ### Deployed Resources
 
@@ -68,7 +68,7 @@ The following resource types will be created as part of this template deployment
 Run az cli command from the root of the microsoft.containerservice directory.
 
 ### Post deployment grafana configuration
-Add the Prometheus data source to Grafana from your Grafana portal. For more information, go to Add a data source. Use Prometheus URL provided when creating grafana managed private endpoint 'bicep attribute: **privateLinkServiceUrl**' my example is http://test-prom.promedemo.com.com:9090
+Add the Prometheus data source to Grafana from your Grafana portal. For more information, go to [**Add a data source**](https://learn.microsoft.com/en-us/azure/managed-grafana/how-to-data-source-plugins-managed-identity#add-a-data-source). Use Prometheus URL provided when creating grafana managed private endpoint 'bicep attribute: **privateLinkServiceUrl**' my example is http://test-prom.promedemo.com.com:9090
 
 ![Figure 2](images/configure-grafana-dashboard.png)
 
