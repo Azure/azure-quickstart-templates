@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "8622926571442836874"
+      "templateHash": "6600496060525420024"
     }
   },
   "parameters": {
@@ -99,7 +99,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "1689022800172724614"
+              "templateHash": "13073528429041580465"
             }
           },
           "parameters": {
@@ -116,6 +116,18 @@
               "apiVersion": "2018-11-30",
               "name": "[format('{0}-aks', parameters('prefix'))]",
               "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(subscription().id, resourceGroup().id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix'))), '2018-11-30').principalId]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix')))]"
+              ]
             }
           ],
           "outputs": {
@@ -161,9 +173,6 @@
           },
           "virtualNetworkName": {
             "value": "[parameters('virtualNetworkName')]"
-          },
-          "kubernetesPrincipalId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-aks', parameters('prefix'))), '2022-09-01').outputs.aksManagedIdentityPrincipalId.value]"
           }
         },
         "template": {
@@ -173,7 +182,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "1213497142649428713"
+              "templateHash": "9848907850998151436"
             }
           },
           "parameters": {
@@ -208,9 +217,6 @@
               }
             },
             "subnetAddressPrefix2": {
-              "type": "string"
-            },
-            "kubernetesPrincipalId": {
               "type": "string"
             }
           },
@@ -250,19 +256,6 @@
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName1'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
               ]
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.Network/virtualNetworks/{0}', parameters('virtualNetworkName'))]",
-              "name": "[guid(subscription().id, resourceGroup().id, resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')))]",
-              "properties": {
-                "principalId": "[parameters('kubernetesPrincipalId')]",
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-              ]
             }
           ],
           "outputs": {
@@ -288,10 +281,7 @@
             }
           }
         }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', format('{0}-aks', parameters('prefix')))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -335,7 +325,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "30278055578493756"
+              "templateHash": "12199739290485766257"
             }
           },
           "parameters": {
@@ -470,7 +460,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.29.47.4906",
-                      "templateHash": "2936396397225535116"
+                      "templateHash": "7840345226767730583"
                     }
                   },
                   "parameters": {
@@ -519,7 +509,7 @@
                     }
                   },
                   "variables": {
-                    "$fxv#0": "#!/bin/bash\nset -e\n\n# Download and install Helm\nwget -O helm.tgz https://get.helm.sh/helm-v3.15.4-linux-amd64.tar.gz\ntar -zxvf helm.tgz\nmv linux-amd64/helm /usr/local/bin/helm\n# Install kubectl\naz aks install-cli\n\n# Get cluster credentials\naz aks get-credentials -g $RESOURCEGROUP -n $CLUSTER_NAME\n\n# Install Simple Helm Chart https://github.com/bitnami/azure-marketplace-charts\n\nhelm repo add \\\n    $HELM_REPO \\\n    $HELM_REPO_URL\n\nhelm repo update\n\nhelm install $HELM_APP_NAME \\\n    $HELM_APP \\\n    --namespace monitoring \\\n    --create-namespace\n\nRESOURCEGROUP='AKSDemo'\nkubectlcontent='apiVersion: v1\nkind: Service\nmetadata:\n  name: prom-pls-svc\n  annotations:\n    service.beta.kubernetes.io/azure-load-balancer-internal: \"true\" # Use an internal LB with PLS\n    service.beta.kubernetes.io/azure-pls-create: \"true\"\n    service.beta.kubernetes.io/azure-pls-name: prometheusManagedPls\n    service.beta.kubernetes.io/azure-pls-resource-group: '\"$RESOURCEGROUP\"'\n    service.beta.kubernetes.io/azure-pls-proxy-protocol: \"false\"\n    service.beta.kubernetes.io/azure-pls-visibility: \"*\"\nspec:\n  type: LoadBalancer\n  selector:\n    # app: myApp\n    app.kubernetes.io/name: prometheus\n    prometheus: prometheus-kube-prometheus-prometheus # note that this is related to the release name\n  ports:\n    - name: http-web\n      protocol: TCP\n      port: 9090\n      targetPort: 9090\n'\n\necho \"$kubectlcontent\" | kubectl --namespace monitoring apply -f -\n\necho \\{\\\"plsName\\\":\\\"prometheusManagedPls\\\"\\} > $AZ_SCRIPTS_OUTPUT_PATH",
+                    "$fxv#0": "#!/bin/bash\nset -e\n\n# Download and install Helm\nwget -O helm.tgz https://get.helm.sh/helm-v3.15.4-linux-amd64.tar.gz\ntar -zxvf helm.tgz\nmv linux-amd64/helm /usr/local/bin/helm\n# Install kubectl\naz aks install-cli\n\n# Get cluster credentials\naz aks get-credentials -g $RESOURCEGROUP -n $CLUSTER_NAME\n\n# Install Simple Helm Chart https://github.com/bitnami/azure-marketplace-charts\n\nhelm repo add \\\n    $HELM_REPO \\\n    $HELM_REPO_URL\n\nhelm repo update\n\nhelm install $HELM_APP_NAME \\\n    $HELM_APP \\\n    --namespace monitoring \\\n    --create-namespace\n\nkubectlcontent='apiVersion: v1\nkind: Service\nmetadata:\n  name: prom-pls-svc\n  annotations:\n    service.beta.kubernetes.io/azure-load-balancer-internal: \"true\" # Use an internal LB with PLS\n    service.beta.kubernetes.io/azure-pls-create: \"true\"\n    service.beta.kubernetes.io/azure-pls-name: prometheusManagedPls\n    service.beta.kubernetes.io/azure-pls-resource-group: '\"$RESOURCEGROUP\"'\n    service.beta.kubernetes.io/azure-pls-proxy-protocol: \"false\"\n    service.beta.kubernetes.io/azure-pls-visibility: \"*\"\nspec:\n  type: LoadBalancer\n  selector:\n    # app: myApp\n    app.kubernetes.io/name: prometheus\n    prometheus: prometheus-kube-prometheus-prometheus # note that this is related to the release name\n  ports:\n    - name: http-web\n      protocol: TCP\n      port: 9090\n      targetPort: 9090\n'\n\necho \"$kubectlcontent\" | kubectl --namespace monitoring apply -f -\n\necho \\{\\\"plsName\\\":\\\"prometheusManagedPls\\\"\\} > $AZ_SCRIPTS_OUTPUT_PATH",
                     "helmRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
                     "helmRoleAssignmentName": "[guid(variables('helmRoleDefinitionId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'), resourceGroup().id)]"
                   },
@@ -683,7 +673,7 @@
             "value": "[parameters('grafanaObject').privateLinkServiceUrl]"
           },
           "virtualNetworkName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Network'), '2022-09-01').outputs.virtualNetworkName.value]"
+            "value": "[parameters('virtualNetworkName')]"
           },
           "virtualNetworkId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Network'), '2022-09-01').outputs.virtualNetworkId.value]"
@@ -692,7 +682,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Network'), '2022-09-01').outputs.subnet1Id.value]"
           },
           "helmOutput": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Kubernetes'), '2022-09-01').outputs.helmOutput.value]"
+            "value": "prometheusManagedPls"
           }
         },
         "template": {
@@ -702,7 +692,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "4463418212390702912"
+              "templateHash": "8356635594726548086"
             }
           },
           "parameters": {
@@ -803,7 +793,7 @@
             },
             {
               "type": "Microsoft.Network/privateDnsZones",
-              "apiVersion": "2024-06-01",
+              "apiVersion": "2020-06-01",
               "name": "[parameters('privateDnsZoneName')]",
               "location": "global",
               "properties": {}
@@ -1041,7 +1031,6 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'Kubernetes')]",
         "[resourceId('Microsoft.Resources/deployments', 'Network')]"
       ]
     }
