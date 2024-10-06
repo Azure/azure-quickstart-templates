@@ -85,10 +85,10 @@ module grafana 'modules/grafana/grafana.bicep' = {
     zoneRedundancy: grafanaObject.zoneRedundancy
     privateDnsZoneName: grafanaObject.privateDnsZoneName
     privateLinkServiceUrl: grafanaObject.privateLinkServiceUrl
-    virtualNetworkName: network.outputs.virtualNetworkName
+    virtualNetworkName: virtualNetworkName
     virtualNetworkId: network.outputs.virtualNetworkId
     subnetId: network.outputs.subnet1Id
-    helmOutput: kubernetes.outputs.helmOutput
+    helmOutput: 'prometheusManagedPls'
   }
 }
 

@@ -61,7 +61,7 @@ resource grafana1RoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04
   }
 }
 
-resource privateDNSZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
   name: privateDnsZoneName
   properties: {}
