@@ -15,12 +15,12 @@ var identityName       = 'scratch${uniqueString(resourceGroup().id)}'
 var roleDefinitionId   = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var roleAssignmentName = guid(roleDefinitionId, managedIdentity.id, resourceGroup().id)
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
   name: identityName
   location: location
 }
 
-resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: resourceGroup()
   name: roleAssignmentName
   properties: {
@@ -30,7 +30,7 @@ resource identityRoleAssignDeployment 'Microsoft.Authorization/roleAssignments@2
   }
 }
 
-resource customScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource customScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'customScript'
   location: location
   dependsOn: [

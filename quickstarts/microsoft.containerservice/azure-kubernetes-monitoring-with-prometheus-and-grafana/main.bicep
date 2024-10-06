@@ -20,6 +20,8 @@ param subnetAddressPrefix2 string
 //var installScriptUri = uri(_artifactsLocation, 'scripts/helm.sh${_artifactsLocationSasToken}')
 //param _artifactsLocationSasToken string = ''
 
+param clusterVmSize string
+
 @description('Public Helm Repo Name')
 param helmRepo string
 
@@ -62,6 +64,7 @@ module kubernetes 'modules/kubernetes/kubernetes.bicep' = {
     prefix: prefix
     subnetId: network.outputs.subnet2Id
     userAssignedIdentities: aksManagedIdentity.outputs.aksManagedIdentityId
+    vmSize: clusterVmSize
     helmRepo: helmRepo
     helmRepoURL: helmRepoURL
     helmApp: helmApp
@@ -81,7 +84,6 @@ module grafana 'modules/grafana/grafana.bicep' = {
     grafanaSkuName: grafanaObject.grafanaSkuName
     publicNetworkAccess: grafanaObject.publicNetworkAccess
     smtp: grafanaObject.grafanaConfigurations.smtp
-    grafanaIntegrations: grafanaObject.grafanaIntegrations
     zoneRedundancy: grafanaObject.zoneRedundancy
     privateDnsZoneName: grafanaObject.privateDnsZoneName
     privateLinkServiceUrl: grafanaObject.privateLinkServiceUrl

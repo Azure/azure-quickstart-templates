@@ -8,7 +8,6 @@ param grafanaMajorVersion string
 param grafanaSkuName string
 param publicNetworkAccess string
 param smtp bool
-param grafanaIntegrations object
 param zoneRedundancy string
 param privateDnsZoneName string
 param privateLinkServiceUrl string
@@ -22,7 +21,7 @@ param  privateLinkResourceId string = resourceId('Microsoft.Network/privateLinkS
 
 
 
-resource grafana 'Microsoft.Dashboard/grafana@2022-10-01-preview' = {
+resource grafana 'Microsoft.Dashboard/grafana@2023-09-01' = {
   name: '${prefix}-grafana'
   location: location
   sku: {
@@ -40,7 +39,6 @@ resource grafana 'Microsoft.Dashboard/grafana@2022-10-01-preview' = {
         enabled: smtp
       }
     }
-    grafanaIntegrations: grafanaIntegrations
     grafanaMajorVersion: grafanaMajorVersion
     publicNetworkAccess: publicNetworkAccess
     zoneRedundancy: zoneRedundancy
@@ -83,10 +81,6 @@ resource grafanaPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' 
   location: location
   name: '${grafana.name}-pe'
   properties: {
-    customDnsConfigs: []
-    customNetworkInterfaceName: ''
-    ipConfigurations: []
-    manualPrivateLinkServiceConnections: []
     privateLinkServiceConnections: [
       {
         name: '${grafana.name}-pe'
@@ -96,7 +90,6 @@ resource grafanaPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' 
             split(split(grafana.type, '/')[1], '@')[0]
           ]
           privateLinkServiceConnectionState: {
-            actionsRequired: ''
             description: 'Auto-Approved'
             status: 'Approved'
           }
@@ -124,7 +117,7 @@ resource privateDnsZoneGroups 'Microsoft.Network/privateEndpoints/privateDnsZone
   }
 }
 
-resource grafanaManagedEndpoint 'Microsoft.Dashboard/grafana/managedPrivateEndpoints@2022-10-01-preview' = {
+resource grafanaManagedEndpoint 'Microsoft.Dashboard/grafana/managedPrivateEndpoints@2023-09-01' = {
   parent: grafana
   location: location
   name: helmOutput
