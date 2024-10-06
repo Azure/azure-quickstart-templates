@@ -127,7 +127,7 @@ resource privateDnsZoneGroups 'Microsoft.Network/privateEndpoints/privateDnsZone
 resource grafanaManagedEndpoint 'Microsoft.Dashboard/grafana/managedPrivateEndpoints@2022-10-01-preview' = {
   parent: grafana
   location: location
-  name: 'MPETo${helmOutput}'
+  name: helmOutput
   properties: {
     privateLinkResourceId: privateLinkResourceId
     privateLinkServiceUrl: privateLinkServiceUrl
