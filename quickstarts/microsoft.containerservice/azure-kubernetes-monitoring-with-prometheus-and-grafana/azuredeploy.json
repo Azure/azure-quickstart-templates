@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.30.23.60470",
-      "templateHash": "7624506194110765650"
+      "version": "0.29.47.4906",
+      "templateHash": "14188540714557959690"
     }
   },
   "parameters": {
@@ -76,10 +76,60 @@
   },
   "resources": [
     {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2018-11-30",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-aks', parameters('prefix'))]",
-      "location": "[parameters('location')]"
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "prefix": {
+            "value": "[parameters('prefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.29.47.4906",
+              "templateHash": "1689022800172724614"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "prefix": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[format('{0}-aks', parameters('prefix'))]",
+              "location": "[parameters('location')]"
+            }
+          ],
+          "outputs": {
+            "aksManagedIdentityId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix')))]"
+            },
+            "aksManagedIdentityPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix'))), '2018-11-30').principalId]"
+            }
+          }
+        }
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -113,7 +163,7 @@
             "value": "[parameters('virtualNetworkName')]"
           },
           "kubernetesPrincipalId": {
-            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix'))), '2018-11-30').principalId]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-aks', parameters('prefix'))), '2022-09-01').outputs.aksManagedIdentityPrincipalId.value]"
           }
         },
         "template": {
@@ -122,8 +172,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "6333572520889372182"
+              "version": "0.29.47.4906",
+              "templateHash": "1213497142649428713"
             }
           },
           "parameters": {
@@ -240,7 +290,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix')))]"
+        "[resourceId('Microsoft.Resources/deployments', format('{0}-aks', parameters('prefix')))]"
       ]
     },
     {
@@ -263,7 +313,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Network'), '2022-09-01').outputs.subnet2Id.value]"
           },
           "userAssignedIdentities": {
-            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix')))]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-aks', parameters('prefix'))), '2022-09-01').outputs.aksManagedIdentityId.value]"
           },
           "helmRepo": {
             "value": "[parameters('helmRepo')]"
@@ -284,8 +334,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "2059164969088560186"
+              "version": "0.29.47.4906",
+              "templateHash": "30278055578493756"
             }
           },
           "parameters": {
@@ -419,8 +469,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.30.23.60470",
-                      "templateHash": "17548642533730619739"
+                      "version": "0.29.47.4906",
+                      "templateHash": "2936396397225535116"
                     }
                   },
                   "parameters": {
@@ -466,15 +516,10 @@
                       "metadata": {
                         "description": "Public Helm App Name"
                       }
-                    },
-                    "kubectlcontent": {
-                      "type": "string",
-                      "defaultValue": "[variables('$fxv#0')]"
                     }
                   },
                   "variables": {
-                    "$fxv#0": "apiVersion: v1\r\nkind: Service\r\nmetadata:\r\n  name: prom-pls-svc\r\n  annotations:\r\n    service.beta.kubernetes.io/azure-load-balancer-internal: \"true\" # Use an internal LB with PLS\r\n    service.beta.kubernetes.io/azure-pls-create: \"true\"\r\n    service.beta.kubernetes.io/azure-pls-name: promManagedPls\r\n    service.beta.kubernetes.io/azure-pls-proxy-protocol: \"false\"\r\n    service.beta.kubernetes.io/azure-pls-visibility: \"*\"\r\nspec:\r\n  type: LoadBalancer\r\n  selector:\r\n    # app: myApp\r\n    app.kubernetes.io/name: prometheus\r\n    prometheus: prometheus-kube-prometheus-prometheus # note that this is related to the release name\r\n  ports:\r\n    - name: http-web\r\n      protocol: TCP\r\n      port: 9090\r\n      targetPort: 9090\r\n",
-                    "$fxv#1": "#!/bin/bash\nset -e\n\n# Download and install Helm\nwget -O helm.tgz https://get.helm.sh/helm-v3.15.4-linux-amd64.tar.gz\ntar -zxvf helm.tgz\nmv linux-amd64/helm /usr/local/bin/helm\n# Install kubectl\naz aks install-cli\n\n# Get cluster credentials\naz aks get-credentials -g $RESOURCEGROUP -n $CLUSTER_NAME\n\n# Install Simple Helm Chart https://github.com/bitnami/azure-marketplace-charts\n\nhelm repo add \\\n    $HELM_REPO \\\n    $HELM_REPO_URL\n\nhelm repo update\n\nhelm install $HELM_APP_NAME \\\n    $HELM_APP \\\n    --namespace monitoring \\\n    --create-namespace\n\necho \"$KUBECTL_CONTENT\" | kubectl --namespace monitoring apply -f -\n\necho \\{\\\"plsName\\\":\\\"promManagedPls\\\"\\} > $AZ_SCRIPTS_OUTPUT_PATH",
+                    "$fxv#0": "#!/bin/bash\nset -e\n\n# Download and install Helm\nwget -O helm.tgz https://get.helm.sh/helm-v3.15.4-linux-amd64.tar.gz\ntar -zxvf helm.tgz\nmv linux-amd64/helm /usr/local/bin/helm\n# Install kubectl\naz aks install-cli\n\n# Get cluster credentials\naz aks get-credentials -g $RESOURCEGROUP -n $CLUSTER_NAME\n\n# Install Simple Helm Chart https://github.com/bitnami/azure-marketplace-charts\n\nhelm repo add \\\n    $HELM_REPO \\\n    $HELM_REPO_URL\n\nhelm repo update\n\nhelm install $HELM_APP_NAME \\\n    $HELM_APP \\\n    --namespace monitoring \\\n    --create-namespace\n\nRESOURCEGROUP='AKSDemo'\nkubectlcontent='apiVersion: v1\nkind: Service\nmetadata:\n  name: prom-pls-svc\n  annotations:\n    service.beta.kubernetes.io/azure-load-balancer-internal: \"true\" # Use an internal LB with PLS\n    service.beta.kubernetes.io/azure-pls-create: \"true\"\n    service.beta.kubernetes.io/azure-pls-name: prometheusManagedPls\n    service.beta.kubernetes.io/azure-pls-resource-group: '\"$RESOURCEGROUP\"'\n    service.beta.kubernetes.io/azure-pls-proxy-protocol: \"false\"\n    service.beta.kubernetes.io/azure-pls-visibility: \"*\"\nspec:\n  type: LoadBalancer\n  selector:\n    # app: myApp\n    app.kubernetes.io/name: prometheus\n    prometheus: prometheus-kube-prometheus-prometheus # note that this is related to the release name\n  ports:\n    - name: http-web\n      protocol: TCP\n      port: 9090\n      targetPort: 9090\n'\n\necho \"$kubectlcontent\" | kubectl --namespace monitoring apply -f -\n\necho \\{\\\"plsName\\\":\\\"prometheusManagedPls\\\"\\} > $AZ_SCRIPTS_OUTPUT_PATH",
                     "helmRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
                     "helmRoleAssignmentName": "[guid(variables('helmRoleDefinitionId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'), resourceGroup().id)]"
                   },
@@ -538,13 +583,9 @@
                           {
                             "name": "HELM_APP_NAME",
                             "secureValue": "[parameters('helmAppName')]"
-                          },
-                          {
-                            "name": "KUBECTL_CONTENT",
-                            "secureValue": "[parameters('kubectlcontent')]"
                           }
                         ],
-                        "scriptContent": "[variables('$fxv#1')]",
+                        "scriptContent": "[variables('$fxv#0')]",
                         "cleanupPreference": "OnSuccess",
                         "retentionInterval": "P1D"
                       },
@@ -588,7 +629,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks', parameters('prefix')))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}-aks', parameters('prefix')))]",
         "[resourceId('Microsoft.Resources/deployments', 'Network')]"
       ]
     },
@@ -650,9 +691,6 @@
           "subnetId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Network'), '2022-09-01').outputs.subnet1Id.value]"
           },
-          "aksNodeResourceGroup": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Kubernetes'), '2022-09-01').outputs.nodeResourceGroup.value]"
-          },
           "helmOutput": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Kubernetes'), '2022-09-01').outputs.helmOutput.value]"
           }
@@ -663,8 +701,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "3534532164711537610"
+              "version": "0.29.47.4906",
+              "templateHash": "1821140418021379876"
             }
           },
           "parameters": {
@@ -707,9 +745,6 @@
             "privateLinkServiceUrl": {
               "type": "string"
             },
-            "aksNodeResourceGroup": {
-              "type": "string"
-            },
             "virtualNetworkId": {
               "type": "string"
             },
@@ -724,7 +759,7 @@
             },
             "privateLinkResourceId": {
               "type": "string",
-              "defaultValue": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateLinkServices/promManagedPls', subscription().subscriptionId, parameters('aksNodeResourceGroup'))]"
+              "defaultValue": "[resourceId('Microsoft.Network/privateLinkServices', 'prometheusManagedPls')]"
             }
           },
           "resources": [
@@ -761,19 +796,6 @@
               "properties": {
                 "principalId": "[reference(resourceId('Microsoft.Dashboard/grafana', format('{0}-grafana', parameters('prefix'))), '2022-10-01-preview', 'full').identity.principalId]",
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '43d0d8ad-25c7-4714-9337-8ba259a9fe05')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Dashboard/grafana', format('{0}-grafana', parameters('prefix')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.Dashboard/grafana/{0}', format('{0}-grafana', parameters('prefix')))]",
-              "name": "[guid(subscription().id, resourceGroup().id, resourceId('Microsoft.Dashboard/grafana', format('{0}-grafana', parameters('prefix'))), '2')]",
-              "properties": {
-                "principalId": "2233bdf1-7422-4814-aa5f-916c7b799107",
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '22926164-76b3-42b3-bc55-97df8dab3e41')]"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Dashboard/grafana', format('{0}-grafana', parameters('prefix')))]"
@@ -874,7 +896,6 @@
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
               "name": "PrivateLinkApprovalScripts",
-              "resourceGroup": "[parameters('aksNodeResourceGroup')]",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -885,7 +906,7 @@
                     "value": "[parameters('location')]"
                   },
                   "privateLinkServicenName": {
-                    "value": "promManagedPls"
+                    "value": "prometheusManagedPls"
                   },
                   "helmOutput": {
                     "value": "[parameters('helmOutput')]"
@@ -897,8 +918,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.30.23.60470",
-                      "templateHash": "4383830218197194095"
+                      "version": "0.29.47.4906",
+                      "templateHash": "11482189040203818182"
                     }
                   },
                   "parameters": {
@@ -931,7 +952,7 @@
                     }
                   },
                   "variables": {
-                    "$fxv#0": "#!/bin/bash\nset -e\n\n# Approve private endpoint connection\npecname=$(az network private-endpoint-connection list \\\n  --name $PRIVATE_LINK_SERVICE_NAME \\\n  --resource-group $PRIVATE_LINK_SERVICE_RG \\\n  --type  $PRIVATE_LINK_SERVICE_TYPE \\\n  --query \"[0].name\" --output tsv)\n\naz network private-endpoint-connection approve \\\n  --name $pecname \\\n  --resource-name $PRIVATE_LINK_SERVICE_NAME \\\n  --resource-group $PRIVATE_LINK_SERVICE_RG \\\n  --description \"Please approve $PLS_RESOURSEID\" \\\n  --type  $PRIVATE_LINK_SERVICE_TYPE",
+                    "$fxv#0": "#!/bin/bash\nset -e\n\n# Approve private endpoint connection\npecname=$(az network private-endpoint-connection list \\\n  --name $PRIVATE_LINK_SERVICE_NAME \\\n  --resource-group $PRIVATE_LINK_SERVICE_RG \\\n  --type  $PRIVATE_LINK_SERVICE_TYPE \\\n  --query \"[0].name\" --output tsv)\n\naz network private-endpoint-connection approve \\\n  --name $pecname \\\n  --resource-name $PRIVATE_LINK_SERVICE_NAME \\\n  --resource-group $PRIVATE_LINK_SERVICE_RG \\\n  --description \"Please approve $PLS_RESOURSENAME\" \\\n  --type  $PRIVATE_LINK_SERVICE_TYPE",
                     "identityName": "[format('scratch{0}', uniqueString(resourceGroup().id))]",
                     "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
                     "roleAssignmentName": "[guid(variables('roleDefinitionId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')), resourceGroup().id)]"
@@ -986,7 +1007,7 @@
                             "secureValue": "[parameters('privateLinkServicenType')]"
                           },
                           {
-                            "name": "PLS_RESOURSEID",
+                            "name": "PLS_RESOURSENAME",
                             "secureValue": "[parameters('helmOutput')]"
                           }
                         ],

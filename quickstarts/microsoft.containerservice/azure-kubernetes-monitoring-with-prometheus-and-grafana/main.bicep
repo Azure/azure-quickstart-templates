@@ -1,6 +1,4 @@
-targetScope = 'subscription'
-
-param location string = 'westus'
+param location string = resourceGroup().location
 param prefix string
 
 @description('Virtual network resource name.')
@@ -36,13 +34,7 @@ param helmAppName string
 
 param grafanaObject object
 
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-07-01' = {
-  location: location
-  name: 'azdo-${guid(subscription().subscriptionId)}'
-}
-
 module aksManagedIdentity 'modules/identity/aksidentity.bicep' = {
-  scope: resourceGroup
   name: '${prefix}-aks'
   params: {
     location: location
@@ -51,7 +43,6 @@ module aksManagedIdentity 'modules/identity/aksidentity.bicep' = {
 }
 
 module network 'modules/network/network.bicep' = {
-  scope: resourceGroup
   name: 'Network'
   params: {
     location: location
@@ -66,7 +57,6 @@ module network 'modules/network/network.bicep' = {
 }
 
 module kubernetes 'modules/kubernetes/kubernetes.bicep' = {
-  scope: resourceGroup
   name: 'Kubernetes'
   params: {
     location: location
@@ -81,7 +71,6 @@ module kubernetes 'modules/kubernetes/kubernetes.bicep' = {
 }
 
 module grafana 'modules/grafana/grafana.bicep' = {
-  scope: resourceGroup
   name: 'Grafana'
   params: {
     location: location
@@ -100,7 +89,6 @@ module grafana 'modules/grafana/grafana.bicep' = {
     virtualNetworkName: network.outputs.virtualNetworkName
     virtualNetworkId: network.outputs.virtualNetworkId
     subnetId: network.outputs.subnet1Id
-    aksNodeResourceGroup: kubernetes.outputs.nodeResourceGroup
     helmOutput: kubernetes.outputs.helmOutput
   }
 }

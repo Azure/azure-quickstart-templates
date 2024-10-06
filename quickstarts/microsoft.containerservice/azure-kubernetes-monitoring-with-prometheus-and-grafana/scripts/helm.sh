@@ -24,6 +24,31 @@ helm install $HELM_APP_NAME \
     --namespace monitoring \
     --create-namespace
 
-echo "$KUBECTL_CONTENT" | kubectl --namespace monitoring apply -f -
+RESOURCEGROUP='AKSDemo'
+kubectlcontent='apiVersion: v1
+kind: Service
+metadata:
+  name: prom-pls-svc
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true" # Use an internal LB with PLS
+    service.beta.kubernetes.io/azure-pls-create: "true"
+    service.beta.kubernetes.io/azure-pls-name: prometheusManagedPls
+    service.beta.kubernetes.io/azure-pls-resource-group: '"$RESOURCEGROUP"'
+    service.beta.kubernetes.io/azure-pls-proxy-protocol: "false"
+    service.beta.kubernetes.io/azure-pls-visibility: "*"
+spec:
+  type: LoadBalancer
+  selector:
+    # app: myApp
+    app.kubernetes.io/name: prometheus
+    prometheus: prometheus-kube-prometheus-prometheus # note that this is related to the release name
+  ports:
+    - name: http-web
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+'
 
-echo \{\"plsName\":\"promManagedPls\"\} > $AZ_SCRIPTS_OUTPUT_PATH
+echo "$kubectlcontent" | kubectl --namespace monitoring apply -f -
+
+echo \{\"plsName\":\"prometheusManagedPls\"\} > $AZ_SCRIPTS_OUTPUT_PATH

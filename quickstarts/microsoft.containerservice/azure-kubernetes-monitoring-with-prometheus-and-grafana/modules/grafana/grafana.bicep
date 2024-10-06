@@ -12,13 +12,13 @@ param grafanaIntegrations object
 param zoneRedundancy string
 param privateDnsZoneName string
 param privateLinkServiceUrl string
-param aksNodeResourceGroup string
 param virtualNetworkId string
 param virtualNetworkName string
 param subnetId string
 param helmOutput string
 
-param  privateLinkResourceId string = '/subscriptions/${subscription().subscriptionId}/resourceGroups/${aksNodeResourceGroup}/providers/Microsoft.Network/privateLinkServices/promManagedPls'
+param  privateLinkResourceId string = resourceId('Microsoft.Network/privateLinkServices', 'prometheusManagedPls')
+//'/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Network/privateLinkServices/prometheusManagedPls'
 
 
 
@@ -140,11 +140,10 @@ resource grafanaManagedEndpoint 'Microsoft.Dashboard/grafana/managedPrivateEndpo
 }
 
 module privateLinkApproval 'privatelinkapproval.bicep' = {
-  scope: az.resourceGroup(aksNodeResourceGroup)
   name: 'PrivateLinkApprovalScripts'
   params: {
     location: location
-    privateLinkServicenName: 'promManagedPls'
+    privateLinkServicenName: 'prometheusManagedPls'
     helmOutput: helmOutput
   }
 

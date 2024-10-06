@@ -23,8 +23,6 @@ param helmApp string = 'prometheus-community/kube-prometheus-stack'
 @description('Public Helm App Name')
 param helmAppName string = 'prometheus'
 
-param kubectlcontent string = loadTextContent('../../scripts/pls-prometheus-svc.yaml')
-
 var helmRoleDefinitionId   = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var helmRoleAssignmentName = guid(helmRoleDefinitionId, helmManagedIdentity.id, resourceGroup().id)
 
@@ -84,10 +82,6 @@ resource helmCustomScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'HELM_APP_NAME'
         secureValue: helmAppName
-      }
-      {
-        name: 'KUBECTL_CONTENT'
-        secureValue: kubectlcontent
       }
     ]
     scriptContent: loadTextContent('../../scripts/helm.sh')
