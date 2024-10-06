@@ -24,7 +24,6 @@ helm install $HELM_APP_NAME \
     --namespace monitoring \
     --create-namespace
 
-RESOURCEGROUP='AKSDemo'
 kubectlcontent='apiVersion: v1
 kind: Service
 metadata:
