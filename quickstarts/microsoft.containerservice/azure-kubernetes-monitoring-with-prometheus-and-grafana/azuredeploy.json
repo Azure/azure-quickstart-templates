@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "2922179886593684259"
+      "templateHash": "17028454864025197288"
     }
   },
   "parameters": {
@@ -331,7 +331,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "9463116910001405163"
+              "templateHash": "11918826499664156329"
             }
           },
           "parameters": {
@@ -350,30 +350,43 @@
             "vmSize": {
               "type": "string"
             },
+            "utcValue": {
+              "type": "string",
+              "defaultValue": "[utcNow()]"
+            },
             "helmRepo": {
               "type": "string",
+              "defaultValue": "prometheus-community",
               "metadata": {
                 "description": "Public Helm Repo Name"
               }
             },
             "helmRepoURL": {
               "type": "string",
+              "defaultValue": "https://prometheus-community.github.io/helm-charts",
               "metadata": {
                 "description": "Public Helm Repo URL"
               }
             },
             "helmApp": {
               "type": "string",
+              "defaultValue": "prometheus-community/kube-prometheus-stack",
               "metadata": {
                 "description": "Public Helm App"
               }
             },
             "helmAppName": {
               "type": "string",
+              "defaultValue": "prometheus",
               "metadata": {
                 "description": "Public Helm App Name"
               }
             }
+          },
+          "variables": {
+            "$fxv#0": "#!/bin/bash\nset -e\n\n# Download and install Helm\nwget -O helm.tgz https://get.helm.sh/helm-v3.15.4-linux-amd64.tar.gz\ntar -zxvf helm.tgz\nmv linux-amd64/helm /usr/local/bin/helm\n# Install kubectl\naz aks install-cli\n\n# Get cluster credentials\naz aks get-credentials -g $RESOURCEGROUP -n $CLUSTER_NAME\n\n# Install Simple Helm Chart https://github.com/bitnami/azure-marketplace-charts\n\nhelm repo add \\\n    $HELM_REPO \\\n    $HELM_REPO_URL\n\nhelm repo update\n\nhelm install $HELM_APP_NAME \\\n    $HELM_APP \\\n    --namespace monitoring \\\n    --create-namespace\n\nkubectlcontent='apiVersion: v1\nkind: Service\nmetadata:\n  name: prom-pls-svc\n  annotations:\n    service.beta.kubernetes.io/azure-load-balancer-internal: \"true\" # Use an internal LB with PLS\n    service.beta.kubernetes.io/azure-pls-create: \"true\"\n    service.beta.kubernetes.io/azure-pls-name: prometheusManagedPls\n    service.beta.kubernetes.io/azure-pls-resource-group: '\"$RESOURCEGROUP\"'\n    service.beta.kubernetes.io/azure-pls-proxy-protocol: \"false\"\n    service.beta.kubernetes.io/azure-pls-visibility: \"*\"\nspec:\n  type: LoadBalancer\n  selector:\n    # app: myApp\n    app.kubernetes.io/name: prometheus\n    prometheus: prometheus-kube-prometheus-prometheus # note that this is related to the release name\n  ports:\n    - name: http-web\n      protocol: TCP\n      port: 9090\n      targetPort: 9090\n'\n\necho \"$kubectlcontent\" | kubectl --namespace monitoring apply -f -\n\necho \\{\\\"plsName\\\":\\\"prometheusManagedPls\\\"\\} > $AZ_SCRIPTS_OUTPUT_PATH",
+            "helmRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+            "helmRoleAssignmentName": "[guid(variables('helmRoleDefinitionId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'), resourceGroup().id)]"
           },
           "resources": [
             {
@@ -432,175 +445,74 @@
               }
             },
             {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
-              "name": "HelmScripts",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-07-31-preview",
+              "name": "helmIdentityName",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[variables('helmRoleAssignmentName')]",
               "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "location": {
-                    "value": "[parameters('location')]"
-                  },
-                  "clusterName": {
-                    "value": "[format('{0}-aks', parameters('prefix'))]"
-                  },
-                  "helmRepo": {
-                    "value": "[parameters('helmRepo')]"
-                  },
-                  "helmRepoURL": {
-                    "value": "[parameters('helmRepoURL')]"
-                  },
-                  "helmApp": {
-                    "value": "[parameters('helmApp')]"
-                  },
-                  "helmAppName": {
-                    "value": "[parameters('helmAppName')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.29.47.4906",
-                      "templateHash": "4005738993700674240"
-                    }
-                  },
-                  "parameters": {
-                    "location": {
-                      "type": "string",
-                      "defaultValue": "[resourceGroup().location]",
-                      "metadata": {
-                        "description": "Location of all resources to be deployed"
-                      }
-                    },
-                    "clusterName": {
-                      "type": "string"
-                    },
-                    "utcValue": {
-                      "type": "string",
-                      "defaultValue": "[utcNow()]"
-                    },
-                    "helmRepo": {
-                      "type": "string",
-                      "defaultValue": "prometheus-community",
-                      "metadata": {
-                        "description": "Public Helm Repo Name"
-                      }
-                    },
-                    "helmRepoURL": {
-                      "type": "string",
-                      "defaultValue": "https://prometheus-community.github.io/helm-charts",
-                      "metadata": {
-                        "description": "Public Helm Repo URL"
-                      }
-                    },
-                    "helmApp": {
-                      "type": "string",
-                      "defaultValue": "prometheus-community/kube-prometheus-stack",
-                      "metadata": {
-                        "description": "Public Helm App"
-                      }
-                    },
-                    "helmAppName": {
-                      "type": "string",
-                      "defaultValue": "prometheus",
-                      "metadata": {
-                        "description": "Public Helm App Name"
-                      }
-                    }
-                  },
-                  "variables": {
-                    "$fxv#0": "#!/bin/bash\nset -e\n\n# Download and install Helm\nwget -O helm.tgz https://get.helm.sh/helm-v3.15.4-linux-amd64.tar.gz\ntar -zxvf helm.tgz\nmv linux-amd64/helm /usr/local/bin/helm\n# Install kubectl\naz aks install-cli\n\n# Get cluster credentials\naz aks get-credentials -g $RESOURCEGROUP -n $CLUSTER_NAME\n\n# Install Simple Helm Chart https://github.com/bitnami/azure-marketplace-charts\n\nhelm repo add \\\n    $HELM_REPO \\\n    $HELM_REPO_URL\n\nhelm repo update\n\nhelm install $HELM_APP_NAME \\\n    $HELM_APP \\\n    --namespace monitoring \\\n    --create-namespace\n\nkubectlcontent='apiVersion: v1\nkind: Service\nmetadata:\n  name: prom-pls-svc\n  annotations:\n    service.beta.kubernetes.io/azure-load-balancer-internal: \"true\" # Use an internal LB with PLS\n    service.beta.kubernetes.io/azure-pls-create: \"true\"\n    service.beta.kubernetes.io/azure-pls-name: prometheusManagedPls\n    service.beta.kubernetes.io/azure-pls-resource-group: '\"$RESOURCEGROUP\"'\n    service.beta.kubernetes.io/azure-pls-proxy-protocol: \"false\"\n    service.beta.kubernetes.io/azure-pls-visibility: \"*\"\nspec:\n  type: LoadBalancer\n  selector:\n    # app: myApp\n    app.kubernetes.io/name: prometheus\n    prometheus: prometheus-kube-prometheus-prometheus # note that this is related to the release name\n  ports:\n    - name: http-web\n      protocol: TCP\n      port: 9090\n      targetPort: 9090\n'\n\necho \"$kubectlcontent\" | kubectl --namespace monitoring apply -f -\n\necho \\{\\\"plsName\\\":\\\"prometheusManagedPls\\\"\\} > $AZ_SCRIPTS_OUTPUT_PATH",
-                    "helmRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                    "helmRoleAssignmentName": "[guid(variables('helmRoleDefinitionId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'), resourceGroup().id)]"
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-                      "apiVersion": "2023-07-31-preview",
-                      "name": "helmIdentityName",
-                      "location": "[parameters('location')]"
-                    },
-                    {
-                      "type": "Microsoft.Authorization/roleAssignments",
-                      "apiVersion": "2022-04-01",
-                      "name": "[variables('helmRoleAssignmentName')]",
-                      "properties": {
-                        "roleDefinitionId": "[variables('helmRoleDefinitionId')]",
-                        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'), '2023-07-31-preview').principalId]",
-                        "principalType": "ServicePrincipal"
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName')]"
-                      ]
-                    },
-                    {
-                      "type": "Microsoft.Resources/deploymentScripts",
-                      "apiVersion": "2023-08-01",
-                      "name": "helmCustomScript",
-                      "location": "[parameters('location')]",
-                      "kind": "AzureCLI",
-                      "identity": {
-                        "type": "UserAssigned",
-                        "userAssignedIdentities": {
-                          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'))]": {}
-                        }
-                      },
-                      "properties": {
-                        "forceUpdateTag": "[parameters('utcValue')]",
-                        "azCliVersion": "2.63.0",
-                        "timeout": "PT300M",
-                        "environmentVariables": [
-                          {
-                            "name": "RESOURCEGROUP",
-                            "secureValue": "[resourceGroup().name]"
-                          },
-                          {
-                            "name": "CLUSTER_NAME",
-                            "secureValue": "[parameters('clusterName')]"
-                          },
-                          {
-                            "name": "HELM_REPO",
-                            "secureValue": "[parameters('helmRepo')]"
-                          },
-                          {
-                            "name": "HELM_REPO_URL",
-                            "secureValue": "[parameters('helmRepoURL')]"
-                          },
-                          {
-                            "name": "HELM_APP",
-                            "secureValue": "[parameters('helmApp')]"
-                          },
-                          {
-                            "name": "HELM_APP_NAME",
-                            "secureValue": "[parameters('helmAppName')]"
-                          }
-                        ],
-                        "scriptContent": "[variables('$fxv#0')]",
-                        "cleanupPreference": "OnSuccess",
-                        "retentionInterval": "P1D"
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Authorization/roleAssignments', variables('helmRoleAssignmentName'))]",
-                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName')]"
-                      ]
-                    }
-                  ],
-                  "outputs": {
-                    "helmOutput": {
-                      "type": "string",
-                      "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'helmCustomScript'), '2023-08-01').outputs.plsName]"
-                    }
-                  }
-                }
+                "roleDefinitionId": "[variables('helmRoleDefinitionId')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'), '2023-07-31-preview').principalId]",
+                "principalType": "ServicePrincipal"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.ContainerService/managedClusters', format('{0}-aks', parameters('prefix')))]"
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2023-08-01",
+              "name": "helmCustomScript",
+              "location": "[parameters('location')]",
+              "kind": "AzureCLI",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName'))]": {}
+                }
+              },
+              "properties": {
+                "forceUpdateTag": "[parameters('utcValue')]",
+                "azCliVersion": "2.63.0",
+                "timeout": "PT300M",
+                "environmentVariables": [
+                  {
+                    "name": "RESOURCEGROUP",
+                    "secureValue": "[resourceGroup().name]"
+                  },
+                  {
+                    "name": "CLUSTER_NAME",
+                    "secureValue": "[format('{0}-aks', parameters('prefix'))]"
+                  },
+                  {
+                    "name": "HELM_REPO",
+                    "secureValue": "[parameters('helmRepo')]"
+                  },
+                  {
+                    "name": "HELM_REPO_URL",
+                    "secureValue": "[parameters('helmRepoURL')]"
+                  },
+                  {
+                    "name": "HELM_APP",
+                    "secureValue": "[parameters('helmApp')]"
+                  },
+                  {
+                    "name": "HELM_APP_NAME",
+                    "secureValue": "[parameters('helmAppName')]"
+                  }
+                ],
+                "scriptContent": "[variables('$fxv#0')]",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', format('{0}-aks', parameters('prefix')))]",
+                "[resourceId('Microsoft.Authorization/roleAssignments', variables('helmRoleAssignmentName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'helmIdentityName')]"
               ]
             }
           ],
@@ -619,7 +531,7 @@
             },
             "helmOutput": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'HelmScripts'), '2022-09-01').outputs.helmOutput.value]"
+              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'helmCustomScript'), '2023-08-01').outputs.plsName]"
             }
           }
         }
@@ -685,7 +597,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Network'), '2022-09-01').outputs.subnet1Id.value]"
           },
           "helmOutput": {
-            "value": "prometheusManagedPls"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'Kubernetes'), '2022-09-01').outputs.helmOutput.value]"
           }
         },
         "template": {
@@ -695,7 +607,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "17996680838553961486"
+              "templateHash": "14028479914750425407"
             }
           },
           "parameters": {
@@ -749,7 +661,7 @@
             },
             "privateLinkResourceId": {
               "type": "string",
-              "defaultValue": "[resourceId('Microsoft.Network/privateLinkServices', 'prometheusManagedPls')]"
+              "defaultValue": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateLinkServices/{2}', subscription().subscriptionId, resourceGroup().name, parameters('helmOutput'))]"
             }
           },
           "resources": [
@@ -864,7 +776,7 @@
             {
               "type": "Microsoft.Dashboard/grafana/managedPrivateEndpoints",
               "apiVersion": "2023-09-01",
-              "name": "[format('{0}/{1}', format('{0}-grafana', parameters('prefix')), parameters('helmOutput'))]",
+              "name": "[format('{0}/{1}', format('{0}-grafana', parameters('prefix')), 'prometheusManagedPls')]",
               "location": "[parameters('location')]",
               "properties": {
                 "privateLinkResourceId": "[parameters('privateLinkResourceId')]",
@@ -1008,7 +920,7 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Dashboard/grafana/managedPrivateEndpoints', format('{0}-grafana', parameters('prefix')), parameters('helmOutput'))]"
+                "[resourceId('Microsoft.Dashboard/grafana/managedPrivateEndpoints', format('{0}-grafana', parameters('prefix')), 'prometheusManagedPls')]"
               ]
             }
           ],
@@ -1019,12 +931,13 @@
             },
             "mpeplsEndpoint": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Dashboard/grafana/managedPrivateEndpoints', format('{0}-grafana', parameters('prefix')), parameters('helmOutput')), '2023-09-01').privateLinkServiceUrl]"
+              "value": "[reference(resourceId('Microsoft.Dashboard/grafana/managedPrivateEndpoints', format('{0}-grafana', parameters('prefix')), 'prometheusManagedPls'), '2023-09-01').privateLinkServiceUrl]"
             }
           }
         }
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Kubernetes')]",
         "[resourceId('Microsoft.Resources/deployments', 'Network')]"
       ]
     }

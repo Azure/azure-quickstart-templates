@@ -16,8 +16,7 @@ param virtualNetworkName string
 param subnetId string
 param helmOutput string
 
-param  privateLinkResourceId string = resourceId('Microsoft.Network/privateLinkServices', 'prometheusManagedPls')
-//'/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Network/privateLinkServices/prometheusManagedPls'
+param  privateLinkResourceId string = '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Network/privateLinkServices/${helmOutput}'
 
 
 
@@ -120,7 +119,7 @@ resource privateDnsZoneGroups 'Microsoft.Network/privateEndpoints/privateDnsZone
 resource grafanaManagedEndpoint 'Microsoft.Dashboard/grafana/managedPrivateEndpoints@2023-09-01' = {
   parent: grafana
   location: location
-  name: helmOutput
+  name: 'prometheusManagedPls'
   properties: {
     privateLinkResourceId: privateLinkResourceId
     privateLinkServiceUrl: privateLinkServiceUrl

@@ -1,6 +1,6 @@
 using 'main.bicep'
 
-param prefix = 'testazure'
+param prefix = 'testaz'
 param virtualNetworkName = 'GEN-VNET-NAME'
 param virtualNetworkAddressSpace = ['10.0.0.0/16', '10.100.0.0/16']
 param subnetName1 = 'GEN-VNET-SUBNET1-NAME'

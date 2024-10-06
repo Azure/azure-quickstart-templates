@@ -90,7 +90,7 @@ module grafana 'modules/grafana/grafana.bicep' = {
     virtualNetworkName: virtualNetworkName
     virtualNetworkId: network.outputs.virtualNetworkId
     subnetId: network.outputs.subnet1Id
-    helmOutput: 'prometheusManagedPls'
+    helmOutput: kubernetes.outputs.helmOutput
   }
 }
 
