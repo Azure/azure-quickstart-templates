@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "1.0.0.1",
   "parameters": {
     "adminUsername": {
       "type": "string",
@@ -150,7 +150,7 @@
     "wafEnabled": true,
     "wafMode": "[parameters('wafMode')]",
     "wafRuleSetType": "OWASP",
-    "wafRuleSetVersion": "3.0",
+    "wafRuleSetVersion": "3.2",
     "dscZipFullPath": "[uri(parameters('_artifactsLocation'), concat('DSC/iisInstall.ps1.zip', parameters('_artifactsLocationSasToken')))]",
     "webConfigFullPath": "[uri(parameters('_artifactsLocation'), concat('artifacts/web.config', parameters('_artifactsLocationSasToken')))]",
     "vm1DefaultHtmFullPath": "[uri(parameters('_artifactsLocation'), concat('artifacts/vm1.default.htm', parameters('_artifactsLocationSasToken')))]",
@@ -563,12 +563,12 @@
 },
     {
       "apiVersion": "2024-03-01",
-      "name": "[variables('applicationGatewayName')]",
-      "type": "Microsoft.Network/applicationGateways",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGwPublicIpName'))]"
+  "name": "[variables('applicationGatewayName')]",
+  "type": "Microsoft.Network/applicationGateways",
+  "location": "[parameters('location')]",
+  "dependsOn": [
+    "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+    "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGwPublicIpName'))]"
       ],
       "properties": {
         "sku": {
@@ -576,6 +576,24 @@
           "tier": "WAF_v2",
           "capacity": "[parameters('capacity')]"
         },
+	"sslPolicy": {
+      "policyType": "Custom",
+      "minProtocolVersion": "TLSv1_2",
+      "cipherSuites": [
+        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+      ]
+    },
+    "frontendPorts": [
+      {
+        "name": "https",
+        "properties": {
+          "Port": 443
+        }
+      }
+    ],
         "sslCertificates": [
           {
             "name": "appGatewayFrontEndSslCert",
@@ -736,6 +754,9 @@
           "enabled": "[variables('wafEnabled')]",
           "firewallMode": "[variables('wafMode')]",
           "ruleSetType": "[variables('wafRuleSetType')]",
+          "requestBodyCheck": true,
+          "maxRequestBodySizeInKb": 128,
+          "fileUploadLimitInMb": 100,
           "ruleSetVersion": "[variables('wafRuleSetVersion')]"
         }
       }
