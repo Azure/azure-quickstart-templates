@@ -13,6 +13,9 @@ param hubName string
 @description('Optional. Azure location where all resources should be created. See https://aka.ms/azureregions. Default: Same as deployment.')
 param location string = resourceGroup().location
 
+@description('Optional. Azure location to use for a temporary Event Grid namespace to register the Microsoft.EventGrid resource provider if the primary location is not supported. The namespace will be deleted and is not used for hub operation. Default: "" (same as location).')
+param eventGridLocation string = ''
+
 @allowed([
   'Premium_LRS'
   'Premium_ZRS'
@@ -26,8 +29,21 @@ param tags object = {}
 @description('Optional. Tags to apply to resources based on their resource type. Resource type specific tags will be merged with tags for all resources.')
 param tagsByResource object = {}
 
-@description('Optional. List of scope IDs to create exports for.')
-param exportScopes array = []
+@description('Optional. List of scope IDs to monitor and ingest cost for.')
+param scopesToMonitor array = []
+
+@description('Optional. Number of days of cost data to retain in the ms-cm-exports container. Default: 0.')
+param exportRetentionInDays int = 0
+
+@description('Optional. Number of months of cost data to retain in the ingestion container. Default: 13.')
+param ingestionRetentionInMonths int = 13
+
+@description('Optional. Storage account to push data to for ingestion into a remote hub.')
+param remoteHubStorageUri string = ''
+
+@description('Optional. Storage account key to use when pushing data to a remote hub.')
+@secure()
+param remoteHubStorageKey string = ''
 
 //==============================================================================
 // Resources
@@ -38,10 +54,15 @@ module hub 'modules/hub.bicep' = {
   params: {
     hubName: hubName
     location: location
+    eventGridLocation: eventGridLocation
     storageSku: storageSku
     tags: tags
     tagsByResource: tagsByResource
-    exportScopes: exportScopes
+    scopesToMonitor: scopesToMonitor
+    exportRetentionInDays: exportRetentionInDays
+    ingestionRetentionInMonths: ingestionRetentionInMonths
+    remoteHubStorageUri: remoteHubStorageUri
+    remoteHubStorageKey: remoteHubStorageKey
   }
 }
 
@@ -66,3 +87,9 @@ output storageAccountName string = hub.outputs.storageAccountName
 
 @description('URL to use when connecting custom Power BI reports to your data.')
 output storageUrlForPowerBI string = hub.outputs.storageUrlForPowerBI
+
+@description('Object ID of the Data Factory managed identity. This will be needed when configuring managed exports.')
+output managedIdentityId string = hub.outputs.managedIdentityId
+
+@description('Azure AD tenant ID. This will be needed when configuring managed exports.')
+output managedIdentityTenantId string = hub.outputs.managedIdentityTenantId

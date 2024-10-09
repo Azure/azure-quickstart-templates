@@ -10,7 +10,7 @@ $validateScopes = { $_.Length -gt 45 }
 # Initialize variables
 $fileName = 'settings.json'
 $filePath = Join-Path -Path . -ChildPath $fileName
-$newScopes = $env:exportScopes.Split('|') | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }
+$newScopes = $env:scopes.Split('|') | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }
 
 # Get storage context
 $storageContext = @{
@@ -20,21 +20,25 @@ $storageContext = @{
 
 # Download existing settings, if they exist
 $blob = Get-AzStorageBlobContent @storageContext -Blob $fileName -Destination $filePath -Force
-if ($blob) {
-    Write-Output "Existing settings.json file found. Updating..."
+if ($blob)
+{
+    
     $text = Get-Content $filePath -Raw
     Write-Output "---------"
     Write-Output $text
     Write-Output "---------"
     $json = $text | ConvertFrom-Json
-
+    Write-Output "Existing settings.json file found. Updating..."
     # Rename exportScopes to scopes + convert to object array
-    if ($json.exportScopes) {
+    if ($json.exportScopes)
+    {
         Write-Output "  Updating exportScopes..."
-        if ($json.exportScopes[0] -is [string]) {
+        if ($json.exportScopes[0] -is [string])
+        {
             Write-Output "    Converting string array to object array..."
             $json.exportScopes = $json.exportScopes | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }
-            if (-not ($json.exportScopes -is [array])) {
+            if (-not ($json.exportScopes -is [array]))
+            {
                 Write-Output "    Converting single object to object array..."
                 $json.exportScopes = @($json.exportScopes)
             }
@@ -47,7 +51,8 @@ if ($blob) {
 }
 
 # Set default if not found
-if (!$json) {
+if (!$json)
+{
     Write-Output "No existing settings.json file found. Creating new file..."
     $json = [ordered]@{
         '$schema' = 'https://aka.ms/finops/hubs/settings-schema'
@@ -55,20 +60,55 @@ if (!$json) {
         version   = ''
         learnMore = 'https://aka.ms/finops/hubs'
         scopes    = @()
+        retention = @{
+            'msexports' = @{
+                days = 0
+            }
+            'ingestion' = @{
+                months = 13
+            }
+        }
     }
+
+    $text = $json | ConvertTo-Json
+    Write-Output "---------"
+    Write-Output $text
+    Write-Output "---------"
 }
+
+# Set values from inputs
+$json.scopes = $env:scopes.Split('|') | ForEach-Object { @{ 'scope' = $_ } }
+if (!($json.retention))
+{
+    # In case the retention object is not present in the settings.json file (versions before 0.4), add it with default values
+    $retention = @"
+    {
+        "msexports": {
+            "days": 0
+        },
+        "ingestion": {
+            "months": 13
+        }
+    }
+"@
+    $json | Add-Member -Name retention -Value (ConvertFrom-Json $retention) -MemberType NoteProperty
+}
+$json.retention.msexports.days = [Int32]::Parse($env:msexportRetentionInDays)
+$json.retention.ingestion.months = [Int32]::Parse($env:ingestionRetentionInMonths)
 
 # Updating settings
 Write-Output "Updating version to $env:ftkVersion..."
 $json.version = $env:ftkVersion
-if ($newScopes) {
+if ($newScopes)
+{
     Write-Output "Merging $($newScopes.Count) scopes..."
     $json.scopes = Compare-Object -ReferenceObject $json.scopes -DifferenceObject $newScopes -Property scope -PassThru -IncludeEqual
 
     # Remove the SideIndicator property from the Compare-Object output
     $json.scopes | ForEach-Object { $_.PSObject.Properties.Remove('SideIndicator') } | ConvertTo-Json
 
-    if (-not ($json.scopes -is [array])) {
+    if (-not ($json.scopes -is [array]))
+    {
         $json.scopes = @($json.scopes)
     }
     Write-Output "$($json.scopes.Count) scopes found."
@@ -81,4 +121,15 @@ $text | Out-File $filePath
 
 # Upload new/updated settings
 Write-Output "Uploading settings.json file..."
-Set-AzStorageBlobContent @storageContext -File $filePath -Force
+Set-AzStorageBlobContent @storageContext -File $filePath -Force | Out-Null
+
+# Save focusSchemaFile file to storage
+$schemaFiles = $env:schemaFiles | ConvertFrom-Json -Depth 10
+Write-Output "Uploading ${$schemaFiles.PSObject.Properties.Count} schema files..."
+$schemaFiles.PSObject.Properties | ForEach-Object {
+    $fileName = "$($_.Name).json"
+    $tempPath = "./$fileName"
+    Write-Output "  Uploading $($_.Name).json..."
+    $_.Value | Out-File $tempPath
+    Set-AzStorageBlobContent @storageContext -File $tempPath -Blob "schemas/$fileName" -Force | Out-Null
+}
