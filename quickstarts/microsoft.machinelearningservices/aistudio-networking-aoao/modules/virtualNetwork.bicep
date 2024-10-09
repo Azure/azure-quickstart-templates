@@ -129,7 +129,7 @@ var bastionMetrics = [for category in bastionMetricCategories: {
 var bastionSubnetName = 'AzureBastionSubnet'
 
 // Virtual Network
-resource vnet 'Microsoft.Network/virtualNetworks@2024-03-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: virtualNetworkName
   location: location
   tags: tags
@@ -369,7 +369,7 @@ resource natGatewayPublicIp 'Microsoft.Network/publicIPAddresses@2023-04-01' =  
   }
 }]
 
-resource natGateway 'Microsoft.Network/natGateways@2024-03-01' = {
+resource natGateway 'Microsoft.Network/natGateways@2023-11-01' = {
   name: natGatewayName
   location: location
   sku: {
