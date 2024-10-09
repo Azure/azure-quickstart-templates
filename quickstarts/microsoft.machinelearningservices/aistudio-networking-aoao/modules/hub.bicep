@@ -156,6 +156,7 @@ resource hub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' =
     properties: {
       category: 'AIServices'
       target: aiServices.properties.endpoint
+#disable-next-line BCP225
       authType: connectionAuthType
       isSharedToAll: true
       metadata: {
