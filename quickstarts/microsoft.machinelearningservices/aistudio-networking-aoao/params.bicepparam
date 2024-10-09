@@ -1,7 +1,7 @@
 using './main.bicep'
 
-param prefix = 'GEN-UNIQUE[4]'
-param suffix = 'GEN-UNIQUE[4]'
+param prefix = 'GEN-UNIQUE-4'
+param suffix = 'GEN-UNIQUE-4'
 param userObjectId = ''
 param vmAdminUsername = 'azadmin'
 param vmAdminPasswordOrKey = 'GEN-PASSWORD'
