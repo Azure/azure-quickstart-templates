@@ -213,7 +213,6 @@ Specify a value for the required parameters in the [main.bicepparam](./main.bice
 | keyVaultEnablePurgeProtection             | bool   | Specifies whether purge protection is enabled for this Azure Key Vault resource.                                            |
 | keyVaultEnableRbacAuthorization           | bool   | Specifies whether to enable the RBAC authorization for the Azure Key Vault resource.                                        |
 | keyVaultSoftDeleteRetentionInDays         | int    | Specifies the soft delete retention in days.                                                                                |
-| acrEnabled                                | bool   | Specifies whether to create the Azure Container Registry.                                                                   |
 | acrName                                   | string | Specifies the name of the Azure Container Registry resource.                                                                |
 | acrAdminUserEnabled                       | bool   | Enable admin user that have push/pull permission to the registry.                                                           |
 | acrPublicNetworkAccess                    | string | Specifies whether to allow public network access. Defaults to Enabled.                                                      |

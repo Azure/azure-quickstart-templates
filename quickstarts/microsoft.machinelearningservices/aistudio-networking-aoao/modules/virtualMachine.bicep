@@ -93,7 +93,7 @@ var linuxConfiguration = {
 }
 
 // Resources
-resource virtualMachineNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
+resource virtualMachineNic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
   name: vmNicName
   location: location
   tags: tags
@@ -113,11 +113,11 @@ resource virtualMachineNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   }
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' existing = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   name: vmName
   location: location
   tags: tags
@@ -221,7 +221,7 @@ resource entraExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01
   ]
 }
 
-resource dcrEventLogs 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
+resource dcrEventLogs 'Microsoft.Insights/dataCollectionRules@2023-03-11' = {
   name: 'DCR-Win-Event-Logs-to-LAW'
   location: location
   kind: 'Windows'
@@ -266,7 +266,7 @@ resource dcrEventLogs 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
   ]
 }
 
-resource dcrPerfLaw 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
+resource dcrPerfLaw 'Microsoft.Insights/dataCollectionRules@2023-03-11' = {
   name: 'DCR-Win-Perf-to-LAW'
   location: location
   kind: 'Windows'
@@ -355,7 +355,7 @@ resource dcrPerfLaw 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
   ]
 }
 
-resource dcrEventLogsAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2022-06-01' = {
+resource dcrEventLogsAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2023-03-11' = {
   name: 'DCRA-VMSS-WEL-LAW'
   scope: virtualMachine
   properties: {
@@ -364,7 +364,7 @@ resource dcrEventLogsAssociation 'Microsoft.Insights/dataCollectionRuleAssociati
   }
 }
 
-resource dcrPerfLawAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2022-06-01' = {
+resource dcrPerfLawAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2023-03-11' = {
   name: 'DCRA-VM-PC-LAW'
   scope: virtualMachine
   properties: {
