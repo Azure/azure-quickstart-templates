@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: storage-sftp
 languages:
-- json
 - bicep
+- json
 ---
 # Create Storage Account with SFTP enabled
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-sftp/PublicLastTestDate.svg)
@@ -25,26 +25,6 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.storage%2Fstorage-sftp%2Fazuredeploy.json)
 
 This template creates an Azure Storage account and a blob container that can be accessed using SFTP protocol. Access can be password or public-key based.
-
-This feature is currently in Public Preview. To enable the feature on your subscription, you will need execute either of the following commands:
-
-- Azure CLI
-```azurecli
-# Check if the SFTP feature is registered first
-az feature show --namespace Microsoft.Storage --name AllowSFTP
-
-# Register the SFTP feature on your subscription
-az feature register --namespace Microsoft.Storage --name AllowSFTP
-```
-
-- PowerShell
-```powershell
-# Check if the SFTP feature is registered first
-Get-AzProviderFeature -FeatureName "AllowSFTP" -ProviderNamespace "Microsoft.Storage"
-
-# Register the SFTP feature on your subscription
-Register-AzProviderFeature -FeatureName "AllowSFTP" -ProviderNamespace "Microsoft.Storage"
-```
 
 If using password authentication, you will need to access to the storage account in Azure Portal to securely generate a password for the user.
 
