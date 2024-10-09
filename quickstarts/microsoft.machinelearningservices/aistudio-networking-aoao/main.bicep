@@ -171,9 +171,6 @@ param keyVaultEnableRbacAuthorization bool = true
 @description('Specifies the soft delete retention in days.')
 param keyVaultSoftDeleteRetentionInDays int = 7
 
-@description('Specifies whether creating the Azure Container Registry.')
-param acrEnabled bool = true
-
 @description('Specifies the name of the Azure Container Registry resource.')
 param acrName string = ''
 
@@ -447,7 +444,7 @@ module keyVault 'modules/keyVault.bicep' = {
   }
 }
 
-module containerRegistry 'modules/containerRegistry.bicep' = if (acrEnabled) {
+module containerRegistry 'modules/containerRegistry.bicep' = {
   name: 'containerRegistry'
   params: {
     // properties
@@ -607,7 +604,7 @@ module hub 'modules/hub.bicep' = {
     // dependent resources
     aiServicesName: aiServices.outputs.name
     applicationInsightsId: applicationInsights.outputs.id
-    containerRegistryId: acrEnabled ? containerRegistry.outputs.id : ''
+    containerRegistryId: containerRegistry.outputs.id
     keyVaultId: keyVault.outputs.id
     storageAccountId: storageAccount.outputs.id
     connectionAuthType: connectionAuthType
