@@ -27,8 +27,14 @@ param tags object = {}
 @description('Optional. Tags to apply to resources based on their resource type. Resource type specific tags will be merged with tags for all resources.')
 param tagsByResource object = {}
 
-@description('Optional. List of scope IDs to create exports for.')
-param exportScopes array
+@description('Optional. List of scope IDs to monitor and ingest cost for.')
+param scopesToMonitor array
+
+@description('Optional. Number of days of cost data to retain in the ms-cm-exports container. Default: 0.')
+param msexportRetentionInDays int = 0
+
+@description('Optional. Number of months of cost data to retain in the ingestion container. Default: 13.')
+param ingestionRetentionInMonths int = 13
 
 //------------------------------------------------------------------------------
 // Variables
@@ -38,18 +44,29 @@ param exportScopes array
 var safeHubName = replace(replace(toLower(hubName), '-', ''), '_', '')
 var storageAccountSuffix = uniqueSuffix
 var storageAccountName = '${take(safeHubName, 24 - length(storageAccountSuffix))}${storageAccountSuffix}'
+var schemaFiles = {
+  'focuscost_1.0': loadTextContent('../schemas/focuscost_1.0.json')
+  'focuscost_1.0-preview(v1)': loadTextContent('../schemas/focuscost_1.0-preview(v1).json')
+  'pricesheet_2023-05-01_ea': loadTextContent('../schemas/pricesheet_2023-05-01_ea.json')
+  'pricesheet_2023-05-01_mca': loadTextContent('../schemas/pricesheet_2023-05-01_mca.json')
+  'reservationdetails_2023-05-01': loadTextContent('../schemas/reservationdetails_2023-05-01.json')
+  'reservationrecommendations_2023-05-01_ea': loadTextContent('../schemas/reservationrecommendations_2023-05-01_ea.json')
+  'reservationrecommendations_2023-05-01_mca': loadTextContent('../schemas/reservationrecommendations_2023-05-01_mca.json')
+  'reservationtransactions_2023-05-01_ea': loadTextContent('../schemas/reservationtransactions_2023-05-01_ea.json')
+  'reservationtransactions_2023-05-01_mca': loadTextContent('../schemas/reservationtransactions_2023-05-01_mca.json')
+}
 
 // Roles needed to auto-start triggers
 var blobUploadRbacRoles = [
   'ba92f5b4-2d11-453d-a403-e96b0029c9fe' // Storage Blob Data Contributor - https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor
-  'e40ec5ca-96e0-45a2-b4ff-59039f2c2b59' // Managed Identity Contributor - https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#managed-identity-contributor
+  'e40ec5ca-96e0-45a2-b4ff-59039f2c2b59' // Managed Identity Contributor - https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#managed-identity-contributor
 ]
 
 //==============================================================================
 // Resources
 //==============================================================================
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -69,12 +86,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
 // Containers
 //------------------------------------------------------------------------------
 
-resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2021-06-01' = {
+resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01' = {
   parent: storageAccount
   name: 'default'
 }
 
-resource configContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-06-01' = {
+resource configContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
   parent: blobService
   name: 'config'
   properties: {
@@ -83,7 +100,7 @@ resource configContainer 'Microsoft.Storage/storageAccounts/blobServices/contain
   }
 }
 
-resource exportContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-06-01' = {
+resource exportContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
   parent: blobService
   name: 'msexports'
   properties: {
@@ -92,7 +109,7 @@ resource exportContainer 'Microsoft.Storage/storageAccounts/blobServices/contain
   }
 }
 
-resource ingestionContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-06-01' = {
+resource ingestionContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
   parent: blobService
   name: 'ingestion'
   properties: {
@@ -124,7 +141,7 @@ resource identityRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-0
 }]
 
 resource uploadSettings 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'uploadSettings'
+  name: '${storageAccountName}_uploadSettings'
   kind: 'AzurePowerShell'
   // chinaeast2 is the only region in China that supports deployment scripts
   location: startsWith(location, 'china') ? 'chinaeast2' : location
@@ -148,8 +165,16 @@ resource uploadSettings 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: loadTextContent('./ftkver.txt')
       }
       {
-        name: 'exportScopes'
-        value: join(exportScopes, '|')
+        name: 'scopes'
+        value: join(scopesToMonitor, '|')
+      }
+      {
+        name: 'msexportRetentionInDays'
+        value: string(msexportRetentionInDays)
+      }
+      {
+        name: 'ingestionRetentionInMonths'
+        value: string(ingestionRetentionInMonths)
       }
       {
         name: 'storageAccountName'
@@ -158,6 +183,10 @@ resource uploadSettings 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'containerName'
         value: 'config'
+      }
+      {
+        name: 'schemaFiles'
+        value: string(schemaFiles)
       }
     ]
     scriptContent: loadTextContent('./scripts/Copy-FileToAzureBlob.ps1')
