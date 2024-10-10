@@ -126,13 +126,13 @@ resource virtualMachine 'Microsoft.AzureStackHCI/virtualMachineInstances@2024-01
 
     // // Use this optional block to configure a proxy server for your VM
     // httpProxyConfig: {
-    //   httpProxy: 'http://proxy.example.com:3128' // HTTP URLs for proxy server
-    //   httpsProxy: 'https://proxy.example.com:3128' // HTTPS URLs for proxy server
+    //   httpProxy: 'http://proxy.example.com:3128' // HTTP URL for proxy server.
+    //   httpsProxy: 'https://proxy.example.com:3128' // HTTPS URL for proxy server.
     //   noProxy: [  // URLs, which can bypass proxy.
     //     'localhost'
     //     '127.0.0.1'
     //   ]
-    //   trustedCa: 'C:\\Users\\Palomino\\proxycert.crt' // Name of the certificate file path for your proxy server.
+    //   trustedCa: '-----BEGIN CERTIFICATE-----....-----END CERTIFICATE-----' // Alternative CA cert to use for connecting to proxy servers.
     // }
 
     networkProfile: {
