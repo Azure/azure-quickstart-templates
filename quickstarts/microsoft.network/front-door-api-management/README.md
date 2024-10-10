@@ -116,9 +116,14 @@ You can use the Azure Portal to test the methods exposed by both APIs. As shown 
 
 ![Test Method](images/TestMethod.png)
 
-If you want to call the API using a command-line tool like [curl](https://curl.haxx.se/) or using a tool like [Postman](https://www.postman.com/) you need to retrieve the subscription key of the Custom product used by both APIs. As shown in the following figure, you can select the Custom product, Select Subscriptions in the left panel, right click the subscription key, click the show/hide key context menu item and copy the primary key.
+If you want to call the API using a command-line tool like [curl](https://curl.haxx.se/) or another REST API client, you need to retrieve the subscription key of the Custom product used by both APIs. 
 
-![Get Subscription Key](images/GetSubscriptionKey.png)
+> **Note:**
+> For scenarios where you have sensitive data, such as credentials, secrets, access tokens, API keys, and other similar information, make sure to use a tool that protects your data with the necessary security features, works offline or locally, doesn't sync your data to the cloud, and doesn't require that you sign in to an online account. This way, you reduce the risk around exposing sensitive data to the public.
+
+As shown in the following figure, you can select the Custom product, Select Subscriptions in the left panel, right click the subscription key, click the show/hide key context menu item and copy the primary key.
+
+![Get Subscription Key](images/getsubscriptionkey.png)
 
 If you want to invoke the GET method exposed by the Postman Echo API via Azure Front Door, make sure to use the following URL.
 

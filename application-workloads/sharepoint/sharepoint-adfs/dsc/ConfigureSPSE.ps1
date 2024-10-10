@@ -23,12 +23,12 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.0.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.1.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.3.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.4.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.5.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.5.0
@@ -201,7 +201,13 @@ configuration ConfigureSPVM
         Script EnableFileSharing {
             GetScript  = { }
             TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
-            SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain }
+        }
+
+        Script EnableRemoteEventViewerConnection {
+            GetScript  = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -Profile Domain }
         }
 
         # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
@@ -220,18 +226,19 @@ configuration ConfigureSPVM
                 }
             }
             SetScript  = {
-                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
-                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
-                if ($null -eq $icmpFirewallRule) {
-                    New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
-                        -Description "Allow ICMPv4 ping" `
-                        -Protocol ICMPv4 `
-                        -IcmpType 8 `
-                        -Enabled True `
-                        -Profile Any `
-                        -Action Allow
-                }
-                Enable-NetFirewallRule -DisplayName $icmpRuleName
+                # $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                # $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                # if ($null -eq $icmpFirewallRule) {
+                #     New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
+                #         -Description "Allow ICMPv4 ping" `
+                #         -Protocol ICMPv4 `
+                #         -IcmpType 8 `
+                #         -Enabled True `
+                #         -Profile Any `
+                #         -Action Allow
+                # }
+                # Enable-NetFirewallRule -DisplayName $icmpRuleName
+                Enable-NetFirewallRule -displayName "File and Printer Sharing (Echo Request - ICMPv4-In)"
 
                 $spRuleName = "SharePoint Distributed Cache"
                 $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue

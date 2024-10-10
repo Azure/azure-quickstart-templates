@@ -1,42 +1,46 @@
-// Creates an Azure AI resource with proxied endpoints for the Azure AI services provider
+// Creates an Azure AI Hub resource with proxied endpoints for the Azure AI services provider
 
-@description('Azure region of the deployment')
+@description('Azure region used for the deployment of the Azure AI Hub.')
 param location string
 
-@description('Tags to add to the resources')
+@description('Set of tags to apply to the Azure AI Hub.')
 param tags object
 
-@description('AI hub name')
+@description('Name for the Azure AI Hub resource.')
 param aiHubName string
 
-@description('AI hub display name')
+@description('Friendly name for your Azure AI Hub resource, displayed in the Studio UI.')
 param aiHubFriendlyName string = aiHubName
 
-@description('AI hub description')
+@description('Description of your Azure AI Hub resource, displayed in the Studio UI.')
 param aiHubDescription string
 
-@description('Resource ID of the application insights resource for storing diagnostics logs')
+@description('Resource ID of the Azure Application Insights resource for storing diagnostics logs.')
 param applicationInsightsId string
 
-@description('Resource ID of the container registry resource for storing docker images')
+@description('Resource ID of the Azure Container Registry resource for storing Docker images for models.')
 param containerRegistryId string
 
-@description('Resource ID of the key vault resource for storing connection strings')
+@description('Resource ID of the Azure Key Vault resource for storing connection strings.')
 param keyVaultId string
 
-@description('Resource ID of the storage account resource for storing experimentation outputs')
+@description('Resource ID of the Azure Storage Account resource for storing workspace data.')
 param storageAccountId string
 
-@description('Resource ID of the AI Services resource')
+@description('Resource ID of the Azure AI Services resource for connecting AI capabilities.')
 param aiServicesId string
 
-@description('Resource ID of the AI Services endpoint')
+@description('Target endpoint for the Azure AI Services resource to link to the Azure AI Hub.')
 param aiServicesTarget string
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+@description('The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub.')
+param userObjectId string = ''
+
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
+  kind: 'Hub'
   identity: {
     type: 'SystemAssigned'
   }
@@ -50,13 +54,13 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
     storageAccount: storageAccountId
     applicationInsights: applicationInsightsId
     containerRegistry: containerRegistryId
+    systemDatastoresAuthMode: 'identity'
   }
-  kind: 'hub'
 
-  resource aiServicesConnection 'connections@2024-01-01-preview' = {
-    name: '${aiHubName}-connection-AzureOpenAI'
+  resource aiServicesConnection 'connections@2024-04-01-preview' = {
+    name: '${aiHubName}-connection'
     properties: {
-      category: 'AzureOpenAI'
+      category: 'AIServices'
       target: aiServicesTarget
       authType: 'AAD'
       isSharedToAll: true
@@ -68,4 +72,19 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
   }
 }
 
-output aiHubID string = aiHub.id
+resource azureMLDataScientistRole 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = if (userObjectId != '') {
+  name: 'f6c7c914-8db3-469d-8ca1-694a8f32e121'
+  scope: resourceGroup()
+}
+
+resource azureMLDataScientistRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (userObjectId != '') {
+  name: guid(aiHub.id, userObjectId, azureMLDataScientistRole.id)
+  scope: aiHub
+  properties: {
+    principalId: userObjectId
+    roleDefinitionId: azureMLDataScientistRole.id
+    principalType: 'User'
+  }
+}
+
+output aiHubId string = aiHub.id

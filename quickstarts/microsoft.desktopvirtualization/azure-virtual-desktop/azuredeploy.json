@@ -1,0 +1,329 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.23.60470",
+      "templateHash": "11703503506037051562"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "newVirtualNetwork": {
+      "type": "bool",
+      "metadata": {
+        "description": "Set this to true if creating a new network"
+      }
+    },
+    "virtualNetworkRG": {
+      "type": "string",
+      "metadata": {
+        "description": "Exisiting Virtual network resource group."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network resource name."
+      }
+    },
+    "virtualNetworkAddressSpace": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network resource Address Space."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network resource Subnet name."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network resource Subnet Address Prefix."
+      }
+    },
+    "hostPoolName": {
+      "type": "string",
+      "metadata": {
+        "description": "Host pool resource name"
+      }
+    },
+    "applicationGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Application groups resource name"
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Workspace resource name"
+      }
+    },
+    "virtualMachine": {
+      "type": "object",
+      "metadata": {
+        "description": "Virtual machine resource name"
+      }
+    },
+    "adminUsername": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Virtual machine resource admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Virtual machine resource admin password"
+      }
+    },
+    "artifactsLocation": {
+      "type": "string"
+    },
+    "hostPoolProperties": {
+      "type": "object",
+      "defaultValue": {
+        "friendlyName": "[parameters('hostPoolName')]",
+        "description": "Azure Virtual Desktop host pool",
+        "hostPoolType": "Personal",
+        "personalDesktopAssignmentType": "Direct",
+        "maxSessionLimit": 999999,
+        "loadBalancerType": "Persistent",
+        "validationEnvironment": true,
+        "preferredAppGroupType": "Desktop",
+        "publicNetworkAccess": "Enabled",
+        "customRdpProperty": "targetisaadjoined:i:1;drivestoredirect:s:*;audiomode:i:0;videoplaybackmode:i:1;redirectclipboard:i:1;redirectprinters:i:1;devicestoredirect:s:*;redirectcomports:i:1;redirectsmartcards:i:1;usbdevicestoredirect:s:*;enablecredsspsupport:i:1;redirectwebauthn:i:1;use multimon:i:1;",
+        "directUDP": "Default",
+        "managedPrivateUDP": "Default",
+        "managementType": "Standard",
+        "publicUDP": "Default",
+        "relayUDP": "Default",
+        "startVMOnConnect": false,
+        "registrationInfo": {
+          "expirationTime": "[dateTimeAdd('2024-09-20 00:00:00Z', 'P2D')]",
+          "registrationTokenOperation": "Update"
+        }
+      },
+      "metadata": {
+        "description": "Host pool resource property configuration"
+      }
+    },
+    "applicationGroupProperties": {
+      "type": "object",
+      "defaultValue": {
+        "applicationGroupType": "Desktop",
+        "friendlyName": "[parameters('applicationGroupName')]",
+        "description": "Azure Virtual Desktop application group"
+      },
+      "metadata": {
+        "description": "Application group resource property configuration"
+      }
+    },
+    "workspaceProperties": {
+      "type": "object",
+      "defaultValue": {
+        "description": "Azure Virtual Desktop workspace",
+        "friendlyName": "[parameters('workspaceName')]",
+        "publicNetworkAccess": "Enabled"
+      },
+      "metadata": {
+        "description": "Workspace resource property configuration"
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[parameters('newVirtualNetwork')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressSpace')]"
+          ]
+        }
+      }
+    },
+    {
+      "condition": "[parameters('newVirtualNetwork')]",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetAddressPrefix')]",
+        "privateEndpointNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DesktopVirtualization/hostPools",
+      "apiVersion": "2024-04-08-preview",
+      "name": "[parameters('hostPoolName')]",
+      "location": "[parameters('location')]",
+      "properties": "[parameters('hostPoolProperties')]"
+    },
+    {
+      "type": "Microsoft.DesktopVirtualization/applicationGroups",
+      "apiVersion": "2024-04-08-preview",
+      "name": "[parameters('applicationGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": "[union(parameters('applicationGroupProperties'), createObject('hostPoolArmPath', resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DesktopVirtualization/workspaces",
+      "apiVersion": "2024-04-08-preview",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "properties": "[union(parameters('workspaceProperties'), createObject('applicationGroupReferences', createArray(resourceId('Microsoft.DesktopVirtualization/applicationGroups', parameters('applicationGroupName')))))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DesktopVirtualization/applicationGroups', parameters('applicationGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}-nic', parameters('virtualMachine').name)]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enableAcceleratedNetworking": true,
+        "ipConfigurations": [
+          {
+            "name": "ipConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[if(parameters('newVirtualNetwork'), resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('virtualNetworkRG')), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('virtualMachine').name]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "licenseType": "[parameters('virtualMachine').licenseType]",
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachine').vmSize]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "createOption": "[parameters('virtualMachine').osDisk.createOption]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('virtualMachine').osDisk.storageAccountType]"
+            },
+            "deleteOption": "[parameters('virtualMachine').osDisk.deleteOption]"
+          },
+          "imageReference": {
+            "publisher": "[parameters('virtualMachine').imageReference.publisher]",
+            "offer": "[parameters('virtualMachine').imageReference.offer]",
+            "sku": "[parameters('virtualMachine').imageReference.sku]",
+            "version": "[parameters('virtualMachine').imageReference.version]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('virtualMachine').name))]",
+              "properties": {
+                "deleteOption": "Delete"
+              }
+            }
+          ]
+        },
+        "securityProfile": {
+          "securityType": "TrustedLaunch",
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          }
+        },
+        "additionalCapabilities": {
+          "hibernationEnabled": false
+        },
+        "osProfile": {
+          "computerName": "[parameters('virtualMachine').name]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('virtualMachine').name))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2024-03-01",
+      "name": "[format('{0}/{1}', parameters('virtualMachine').name, 'AADLoginForWindows')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.ActiveDirectory",
+        "type": "AADLoginForWindows",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachine').name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2024-03-01",
+      "name": "[format('{0}/{1}', parameters('virtualMachine').name, 'MicrosoftPowershellDSC')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.73",
+        "settings": {
+          "modulesUrl": "[parameters('artifactsLocation')]",
+          "configurationFunction": "Configuration.ps1\\AddSessionHost",
+          "properties": {
+            "hostPoolName": "[parameters('hostPoolName')]",
+            "aadJoin": true
+          }
+        },
+        "protectedSettings": {
+          "properties": {
+            "registrationInfoToken": "[reference(resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))).registrationInfo.token]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachine').name, 'AADLoginForWindows')]",
+        "[resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachine').name)]"
+      ]
+    }
+  ]
+}
