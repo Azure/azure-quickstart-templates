@@ -3,12 +3,19 @@ description: This template creates a new FinOps hub instance, including Data Lak
 page_type: sample
 products:
 - azure
+- azure-blob-storage
+- azure-cost-management
+- azure-data-factory
+- azure-data-lake
+- azure-key-vault
 - azure-resource-manager
+- azure-storage-accounts
 urlFragment: finops-hub
 languages:
 - bicep
 - json
 ---
+
 # FinOps hub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/finops-hub/PublicLastTestDate.svg)
@@ -81,7 +88,7 @@ _<sup>1) A "scope" is an Azure construct that contains resources or enables purc
 
 ## 🧰 About the FinOps toolkit
 
-FinOps hubs are part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open-source collection of FinOps solutions that help you manage and optimize your cloud costs.
+FinOps hubs are part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open-source collection of FinOps solutions that help you manage and optimize your cost, usage, and carbon.
 
 To contribute to the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
 

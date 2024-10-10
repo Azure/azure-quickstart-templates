@@ -11,11 +11,8 @@ param hubName string
 @description('Optional. Azure location where all resources should be created. See https://aka.ms/azureregions. Default: (resource group location).')
 param location string = resourceGroup().location
 
-@description('Optional. Indicates whether the Event Grid resource provider has already been registered (e.g., in a previous hub deployment). Event Grid RP registration is required. If not set, a temporary Event Grid namespace will be created to auto-register the resource provider. Default: false (register RP).')
-param skipEventGridRegistration bool = false
-
-@description('Optional. Azure location to use for a temporary Event Grid namespace to register the Microsoft.EventGrid resource provider if the primary location is not supported. The namespace will be deleted and is not used for hub operation. Default: "" (same as location).')
-param eventGridLocation string = ''
+// @description('Optional. Azure location to use for a temporary Event Grid namespace to register the Microsoft.EventGrid resource provider if the primary location is not supported. The namespace will be deleted and is not used for hub operation. Default: "" (same as location).')
+// param eventGridLocation string = ''
 
 @allowed([
   'Premium_LRS'
@@ -70,27 +67,27 @@ var dataFactoryName = replace(
   '--',
   '-'
 )
-var eventGridPrefix = '${replace(hubName, '_', '-')}-ns'
-var eventGridSuffix = '-${uniqueSuffix}'
-var eventGridName = replace(
-  '${take(eventGridPrefix, 50 - length(eventGridSuffix))}${eventGridSuffix}',
-  '--',
-  '-'
-)
+// var eventGridPrefix = '${replace(hubName, '_', '-')}-ns'
+// var eventGridSuffix = '-${uniqueSuffix}'
+// var eventGridName = replace(
+//   '${take(eventGridPrefix, 50 - length(eventGridSuffix))}${eventGridSuffix}',
+//   '--',
+//   '-'
+// )
 
 // EventGrid Contributor role
-var eventGridContributorRoleId = '1e241071-0855-49ea-94dc-649edcd759de'
+// var eventGridContributorRoleId = '1e241071-0855-49ea-94dc-649edcd759de'
 
 // Find a fallback region for EventGrid
-var eventGridLocationFallback = {
-  israelcentral: 'uaenorth'
-  italynorth: 'switzerlandnorth'
-  mexicocentral: 'southcentralus'
-  polandcentral: 'swedencentral'
-  spaincentral: 'francecentral'
-  usdodeast: 'usdodcentral'
-}
-var finalEventGridLocation = eventGridLocation != null && !empty(eventGridLocation) ? eventGridLocation : (eventGridLocationFallback[?location] ?? location)
+// var eventGridLocationFallback = {
+//   israelcentral: 'uaenorth'
+//   italynorth: 'switzerlandnorth'
+//   mexicocentral: 'southcentralus'
+//   polandcentral: 'swedencentral'
+//   spaincentral: 'francecentral'
+//   usdodeast: 'usdodcentral'
+// }
+// var finalEventGridLocation = eventGridLocation != null && !empty(eventGridLocation) ? eventGridLocation : (eventGridLocationFallback[?location] ?? location)
 
 // The last segment of the telemetryId is used to identify this module
 var telemetryId = '00f120b5-2007-6120-0000-40b000000000'
@@ -125,73 +122,6 @@ resource defaultTelemetry 'Microsoft.Resources/deployments@2022-09-01' = if (ena
 }
 
 //------------------------------------------------------------------------------
-// RP registration
-// Create and delete a temporary EventGrid namespace so ARM will auto-register 
-// the Microsoft.EventGrid RP. This is needed because we cannot register RPs in 
-// a resource group template.
-//------------------------------------------------------------------------------
-
-// Temporary resource
-resource tempEventGridNamespace 'Microsoft.EventGrid/namespaces@2023-12-15-preview' = if (!skipEventGridRegistration) {
-  name: eventGridName
-  location: finalEventGridLocation
-  sku: {
-    capacity: 1
-    name: 'Standard'
-  }
-  properties: {
-    publicNetworkAccess: 'Disabled'
-  }
-}
-
-// Managed identity to run script
-resource cleanupIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = if (!skipEventGridRegistration) {
-  name: '${uniqueSuffix}_cleanup'
-  location: finalEventGridLocation
-}
-
-// Assign access to the identity
-resource cleanupIdentityRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!skipEventGridRegistration) {
-  name: guid(eventGridContributorRoleId, cleanupIdentity.id)
-  scope: tempEventGridNamespace
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', eventGridContributorRoleId)
-    principalId: cleanupIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Cleanup script
-resource cleanupTempEventGridNamespace 'Microsoft.Resources/deploymentScripts@2020-10-01' = if (!skipEventGridRegistration) {
-  name: '${uniqueSuffix}_deleteEventGrid'
-  dependsOn: [
-    cleanupIdentityRole
-  ]
-  // chinaeast2 is the only region in China that supports deployment scripts
-  location: startsWith(location, 'china') ? 'chinaeast2' : location
-  kind: 'AzurePowerShell'
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${cleanupIdentity.id}': {}
-    }
-  }
-  properties: {
-    azPowerShellVersion: '8.0'
-    scriptContent: 'Remove-AzResource -Id $env:resourceId -Force'
-    timeout: 'PT30M'
-    cleanupPreference: 'OnSuccess'
-    retentionInterval: 'PT1H'
-    environmentVariables: [
-      {
-        name: 'resourceId'
-        value: tempEventGridNamespace.id
-      }
-    ]
-  }
-}
-
-//------------------------------------------------------------------------------
 // ADLSv2 storage account for staging and archive
 //------------------------------------------------------------------------------
 
@@ -216,9 +146,7 @@ module storage 'storage.bicep' = {
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
   name: dataFactoryName
-  dependsOn: [
-    tempEventGridNamespace
-  ]
+  dependsOn: []
   location: location
   tags: union(
     resourceTags,
