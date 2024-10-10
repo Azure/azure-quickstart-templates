@@ -105,8 +105,16 @@ var nsgApiManagementName = 'nsg-${baseName}-apim'
 
 var apimSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetApiManagementName)
 var appGatewaySubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetAppGatewayName)
-var appServiceIntegrationSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetAppServiceIntName)
-var privateEndpointSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetPrivateEndpointName)
+var appServiceIntegrationSubnetId = resourceId(
+  'Microsoft.Network/virtualNetworks/subnets',
+  vnetName,
+  subnetAppServiceIntName
+)
+var privateEndpointSubnetId = resourceId(
+  'Microsoft.Network/virtualNetworks/subnets',
+  vnetName,
+  subnetPrivateEndpointName
+)
 
 var webAppName = 'web-${baseName}'
 
@@ -121,12 +129,16 @@ var applicationGatewayTrustedRootCertificates = [
 
 var applicationGatewayTrustedRootCertificateReferences = [
   {
-    id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', applicationGatewayName, 'trustedrootcert')
+    id: resourceId(
+      'Microsoft.Network/applicationGateways/trustedRootCertificates',
+      applicationGatewayName,
+      'trustedrootcert'
+    )
   }
 ]
 
 // ---- Create Virtual Network with subnets ----
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-03-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: vnetName
   location: location
   properties: {
@@ -180,7 +192,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-03-01' = {
 }
 
 // ---- Create Network Security Groups (NSGs) ----
-resource nsgAppGateway 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
+resource nsgAppGateway 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
   name: nsgAppGatewayName
   location: location
   properties: {
@@ -217,7 +229,7 @@ resource nsgAppGateway 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   }
 }
 
-resource nsgApiManagemnt 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
+resource nsgApiManagemnt 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
   name: nsgApiManagementName
   location: location
   properties: {
@@ -241,7 +253,7 @@ resource nsgApiManagemnt 'Microsoft.Network/networkSecurityGroups@2021-02-01' = 
 }
 
 // ---- Public IP Address ----
-resource applicationGatewayPublicIpAddress 'Microsoft.Network/publicIPAddresses@2021-03-01' = {
+resource applicationGatewayPublicIpAddress 'Microsoft.Network/publicIPAddresses@2024-01-01' = {
   name: appGatewayPublicIpAddressName
   location: location
   sku: {
@@ -324,7 +336,7 @@ resource webAppPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 }
 
 // ---- Private Endpoint ----
-resource webAppPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+resource webAppPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: 'pe-${baseName}-sites'
   location: location
   properties: {
@@ -359,7 +371,7 @@ resource webAppPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' =
   }
 }
 
-resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   name: 'pe-${baseName}-kv'
   location: location
   properties: {
@@ -423,7 +435,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'log-${baseName}'
   location: location
   properties: {
@@ -434,7 +446,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06
 }
 
 // ---- Azure Web App ----
-resource webAppPlan 'Microsoft.Web/serverfarms@2021-01-01' = {
+resource webAppPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: 'plan-${baseName}'
   location: location
   kind: 'app'
@@ -445,7 +457,7 @@ resource webAppPlan 'Microsoft.Web/serverfarms@2021-01-01' = {
   properties: {}
 }
 
-resource webApp 'Microsoft.Web/sites@2020-12-01' = {
+resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   name: webAppName
   location: location
   kind: 'app'
@@ -479,7 +491,7 @@ resource webApp 'Microsoft.Web/sites@2020-12-01' = {
   }
 }
 
-resource webAppSettings 'Microsoft.Web/sites/config@2021-01-15' = {
+resource webAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
   name: '${webAppName}/appsettings'
   dependsOn: [
     webApp
@@ -490,7 +502,7 @@ resource webAppSettings 'Microsoft.Web/sites/config@2021-01-15' = {
 }
 
 // ---- Azure API Management and related API operations ----
-resource apiManagementInstance 'Microsoft.ApiManagement/service@2020-12-01' = {
+resource apiManagementInstance 'Microsoft.ApiManagement/service@2023-09-01-preview' = {
   name: apiManagementServiceName
   dependsOn: [
     virtualNetwork
@@ -579,7 +591,7 @@ resource apiManagementDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@
 }
 
 // ---- Azure Application Gateway ----
-resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' = {
+resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' = {
   name: applicationGatewayName
   location: location
   dependsOn: [
@@ -690,7 +702,9 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', applicationGatewayName, 'apimgatewayprobe')
           }
-          trustedRootCertificates: useWellKnownCertificateAuthority ? null : applicationGatewayTrustedRootCertificateReferences
+          trustedRootCertificates: useWellKnownCertificateAuthority
+            ? null
+            : applicationGatewayTrustedRootCertificateReferences
         }
       }
       {
@@ -704,7 +718,9 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', applicationGatewayName, 'apimportalprobe')
           }
-          trustedRootCertificates: useWellKnownCertificateAuthority ? null : applicationGatewayTrustedRootCertificateReferences
+          trustedRootCertificates: useWellKnownCertificateAuthority
+            ? null
+            : applicationGatewayTrustedRootCertificateReferences
         }
       }
       {
@@ -716,9 +732,15 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           pickHostNameFromBackendAddress: true
           requestTimeout: 180
           probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', applicationGatewayName, 'apimmanagementprobe')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/probes',
+              applicationGatewayName,
+              'apimmanagementprobe'
+            )
           }
-          trustedRootCertificates: useWellKnownCertificateAuthority ? null : applicationGatewayTrustedRootCertificateReferences
+          trustedRootCertificates: useWellKnownCertificateAuthority
+            ? null
+            : applicationGatewayTrustedRootCertificateReferences
         }
       }
     ]
@@ -727,14 +749,22 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         name: 'gatewaylistener'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', applicationGatewayName, 'frontend1')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/frontendIPConfigurations',
+              applicationGatewayName,
+              'frontend1'
+            )
           }
           frontendPort: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', applicationGatewayName, 'port01')
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', applicationGatewayName, 'gatewaycert')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/sslCertificates',
+              applicationGatewayName,
+              'gatewaycert'
+            )
           }
           hostName: apiManagementProxyCustomHostname
           requireServerNameIndication: true
@@ -744,14 +774,22 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         name: 'portallistener'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', applicationGatewayName, 'frontend1')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/frontendIPConfigurations',
+              applicationGatewayName,
+              'frontend1'
+            )
           }
           frontendPort: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', applicationGatewayName, 'port01')
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', applicationGatewayName, 'portalcert')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/sslCertificates',
+              applicationGatewayName,
+              'portalcert'
+            )
           }
           hostName: apiManagementPortalCustomHostname
           requireServerNameIndication: true
@@ -761,14 +799,22 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         name: 'managementlistener'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', applicationGatewayName, 'frontend1')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/frontendIPConfigurations',
+              applicationGatewayName,
+              'frontend1'
+            )
           }
           frontendPort: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', applicationGatewayName, 'port01')
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', applicationGatewayName, 'managementcert')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/sslCertificates',
+              applicationGatewayName,
+              'managementcert'
+            )
           }
           hostName: apiManagementManagementCustomHostname
           requireServerNameIndication: true
@@ -780,14 +826,27 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         name: 'gatewayrule'
         properties: {
           ruleType: 'Basic'
+          priority: 1
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGatewayName, 'gatewaylistener')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/httpListeners',
+              applicationGatewayName,
+              'gatewaylistener'
+            )
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'gatewaybackend')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/backendAddressPools',
+              applicationGatewayName,
+              'gatewaybackend'
+            )
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', applicationGatewayName, 'apimPoolGatewaySetting')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
+              applicationGatewayName,
+              'apimPoolGatewaySetting'
+            )
           }
         }
       }
@@ -795,14 +854,27 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         name: 'portalrule'
         properties: {
           ruleType: 'Basic'
+          priority: 2
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGatewayName, 'portallistener')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/httpListeners',
+              applicationGatewayName,
+              'portallistener'
+            )
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'portalbackend')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/backendAddressPools',
+              applicationGatewayName,
+              'portalbackend'
+            )
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', applicationGatewayName, 'apimPoolPortalSetting')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
+              applicationGatewayName,
+              'apimPoolPortalSetting'
+            )
           }
         }
       }
@@ -810,14 +882,27 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         name: 'managementrule'
         properties: {
           ruleType: 'Basic'
+          priority: 3
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGatewayName, 'managementlistener')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/httpListeners',
+              applicationGatewayName,
+              'managementlistener'
+            )
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'managementbackend')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/backendAddressPools',
+              applicationGatewayName,
+              'managementbackend'
+            )
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', applicationGatewayName, 'apimPoolManagementSetting')
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
+              applicationGatewayName,
+              'apimPoolManagementSetting'
+            )
           }
         }
       }
@@ -908,7 +993,7 @@ resource applicationGatewayDiagnosticSettings 'Microsoft.Insights/diagnosticSett
 }
 
 // ---- Azure Key Vault ----
-resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
   location: location
   properties: {
