@@ -1,5 +1,5 @@
 ---
-description: This collection of Bicep templates demonstrates how to set up an Azure AI Studio environment with managed identity and Azure RBAC to connected Azure AI Services and dependent resources and with the managed virtual network isolation mode set to Allow Internet Outbound. For more information, see How to configure a managed network for Azure AI Studio hubs.
+description: This template creates a secure Azure AI Studio environment with robust network and identity security restrictions.
 page_type: sample
 products:
 - azure
@@ -280,4 +280,4 @@ We suggest reading sensitive configuration data such as passwords or SSH keys fr
 
 For more information, see:
 
-- [Azure AI Studio Documentation](https://aka.ms/aistudio/docs)
+- [Azure AI Studio Documentation](https://aka.ms/aistudio/docs)`Tags: `
