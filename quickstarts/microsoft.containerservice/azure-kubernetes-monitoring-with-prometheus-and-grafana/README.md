@@ -1,5 +1,5 @@
 ---
-description: This will create an Azure grafana, AKS and install Prometheus, an open-source monitoring and alerting toolkit, on an Azure Kubernetes Service (AKS) cluster. Then you use Azure Managed Grafana's managed private endpoint to connect to this Prometheus server and display the Prometheus data in a Grafana dashboard.
+description: This will create an Azure grafana, AKS and install Prometheus, an open-source monitoring and alerting toolkit, on an Azure Kubernetes Service (AKS) cluster. Then you use Azure Managed Grafana's managed private endpoint to connect to this Prometheus server and display the Prometheus data in a Grafana dashboard
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure Kubernetes Monitoring with Prometheus and Grafana
+# Create AKS with Prometheus and Grafana with privae link
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerservice/azure-kubernetes-monitoring-with-prometheus-and-grafana/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerservice/azure-kubernetes-monitoring-with-prometheus-and-grafana/PublicDeployment.svg)
