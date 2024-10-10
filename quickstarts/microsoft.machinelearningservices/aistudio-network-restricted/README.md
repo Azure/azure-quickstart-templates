@@ -39,7 +39,6 @@ To facilitate proper roles and permissions, please be sure to review the followi
 
 Limitations are maintained and kept up-to-date [here](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-private-link?source=recommendations&tabs=azure-portal#limitations):
 
-* The "Add your data" feature in the Azure AI Studio playground doesn't support private storage account.
 * You might encounter problems trying to access the private endpoint for your hub if you're using Mozilla Firefox. This problem might be related to DNS over HTTPS in Mozilla Firefox. We recommend using Microsoft Edge or Google Chrome.
 * Users can select either "Allow Internet Outbound" or "Allow Only Approved Outbound" as the two modes for managed vnet.
 
