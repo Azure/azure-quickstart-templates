@@ -522,7 +522,7 @@ module identity 'modules/identity/identity.bicep' = {
 }
 
 module network 'modules/networks/main.bicep' = {
-  name: 'networkComponent'
+  name: 'network'
   params: {
     location: location
     virtualNetworkName: virtualNetworkName
@@ -540,7 +540,7 @@ module network 'modules/networks/main.bicep' = {
 }
 
 module keyvault 'modules/security/keyvault.bicep' = {
-  name: 'keyvault'
+  name: 'keyVault'
   params: {
     location: location
     keyVaultName: keyVaultName
