@@ -47,7 +47,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-09-01-preview' = {
   }
 }
 
-resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2023-01-01-preview' = {
+resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {
   name: 'AllAzureAdvisorAlert'
   location: 'Global'
   properties: {
