@@ -411,10 +411,10 @@ param wafPolicyRuleSetVersion string = '3.1'
 
 
 @description('Unique name (within the Resource Group) for the Action group.')
-param actionGroupName string = 'demoActionGroup'
+param actionGroupName string = 'actiongroup${uniqueString(resourceGroup().id)}'
 
 @description('Short name (maximum 12 characters) for the Action group.')
-param actionGroupShortName string = 'agShortName'
+param actionGroupShortName string = 'actiongroup'
 
 @description('The list of email receivers that are part of this action group.')
 param emailReceivers array = [
@@ -496,7 +496,7 @@ var keyVaultPrivateEndpointGroupName = 'vault'
 var keyVaultPrivateDnsZoneGroupName = '${keyVaultPrivateEndpointGroupName}PrivateDnsZoneGroup'
 
 module monitoring 'modules/monitoring/monitoring.bicep' = {
-  name: 'monitoring'
+  name: 'monitoringComponent'
   params: {
     location: location
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
