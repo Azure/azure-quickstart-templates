@@ -39,12 +39,12 @@ resource blobStorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   kind: 'StorageV2'
 }
 
-resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
   name: blobPrivateDnsZoneName
   location: 'global'
 }
 
-resource blobPrivateDnsZoneName_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource blobPrivateDnsZoneName_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
   parent: blobPrivateDnsZone
   name: 'link_to_${toLower(split(virtualNetworkId, '/')[8])}'
   location: 'global'
@@ -56,7 +56,7 @@ resource blobPrivateDnsZoneName_link_to_virtualNetwork 'Microsoft.Network/privat
   }
 }
 
-resource blobStorageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-07-01' = {
+resource blobStorageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   name: blobStorageAccountPrivateEndpointName
   location: location
   properties: {
@@ -77,7 +77,7 @@ resource blobStorageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2
   }
 }
 
-resource blobStorageAccountPrivateEndpointName_blobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-07-01' = {
+resource blobStorageAccountPrivateEndpointName_blobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
   parent: blobStorageAccountPrivateEndpoint
   name: blobPrivateDnsZoneGroupName
   properties: {
@@ -182,12 +182,7 @@ resource vmName_GuestAttestation 'Microsoft.Compute/virtualMachines/extensions@2
     settings: {
       AttestationConfig: {
         MaaSettings: {
-          maaEndpoint: ''
           maaTenantName: maaTenantName
-        }
-        AscSettings: {
-          ascReportingEndpoint: ''
-          ascReportingFrequency: ''
         }
         useCustomToken: 'false'
         disableAlerts: 'false'

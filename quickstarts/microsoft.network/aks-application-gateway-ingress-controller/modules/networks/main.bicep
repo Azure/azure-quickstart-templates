@@ -297,7 +297,7 @@ resource bastionHost 'Microsoft.Network/bastionHosts@2024-01-01' = {
 
 resource bastionSubnetNsgDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: bastionSubnetNsg
-  name: 'default'
+  name: '${bastionHostName}Nsg-Diag'
   properties: {
     workspaceId: workspaceId
     logs: [
@@ -323,7 +323,7 @@ resource bastionSubnetNsgDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-
 
 resource vmSubnetNsgDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: vmSubnetNsg
-  name: 'default'
+  name: '${vmSubnetName}Nsg-Diag'
   properties: {
     workspaceId: workspaceId
     logs: [
@@ -349,7 +349,7 @@ resource vmSubnetNsgDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-previ
 
 resource bastionHostDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: bastionHost
-  name: 'default'
+  name: '${bastionHostName}-Diag'
   properties: {
     workspaceId: workspaceId
     logs: [

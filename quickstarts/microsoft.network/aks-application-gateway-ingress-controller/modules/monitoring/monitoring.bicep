@@ -11,7 +11,7 @@ param emailReceivers array
 param smsReceivers array
 param voiceReceivers array
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsWorkspaceName
   location: location
   properties: {
@@ -27,7 +27,6 @@ resource containerInsightsSolution 'Microsoft.OperationsManagement/solutions@201
   location: location
   plan: {
     name: containerInsightsSolutionName
-    promotionCode: ''
     product: 'OMSGallery/ContainerInsights'
     publisher: 'Microsoft'
   }
@@ -36,7 +35,7 @@ resource containerInsightsSolution 'Microsoft.OperationsManagement/solutions@201
   }
 }
 
-resource actionGroup 'Microsoft.Insights/actionGroups@2019-06-01' = {
+resource actionGroup 'Microsoft.Insights/actionGroups@2023-09-01-preview' = {
   name: actionGroupName
   location: 'Global'
   properties: {
@@ -48,7 +47,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2019-06-01' = {
   }
 }
 
-resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {
+resource AllAzureAdvisorAlert 'Microsoft.Insights/activityLogAlerts@2023-01-01-preview' = {
   name: 'AllAzureAdvisorAlert'
   location: 'Global'
   properties: {
