@@ -272,6 +272,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
       {
         name: applicationGatewayRequestRoutingRuleName
         properties: {
+          priority: 1
           ruleType: 'Basic'
           httpListener: {
             id: applicationGatewayHttpListenerId
