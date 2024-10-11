@@ -512,7 +512,7 @@ module monitoring 'modules/monitoring/monitoring.bicep' = {
 }
 
 module identity 'modules/identity/identity.bicep' = {
-  name: 'identity'
+  name: 'identityComponent'
   params: {
     location: location
     applicationGatewayName: applicationGatewayName
@@ -522,7 +522,7 @@ module identity 'modules/identity/identity.bicep' = {
 }
 
 module network 'modules/networks/main.bicep' = {
-  name: 'network'
+  name: 'networkComponent'
   params: {
     location: location
     virtualNetworkName: virtualNetworkName
@@ -540,7 +540,7 @@ module network 'modules/networks/main.bicep' = {
 }
 
 module keyvault 'modules/security/keyvault.bicep' = {
-  name: 'keyVault'
+  name: 'keyVaultComponent'
   params: {
     location: location
     keyVaultName: keyVaultName
@@ -562,7 +562,7 @@ module keyvault 'modules/security/keyvault.bicep' = {
 }
 
 module compute 'modules/computes/virtualmachine.bicep' = {
-  name: 'virtualMachine'
+  name: 'virtualMachineComponent'
   params: {
     location: location
     virtualNetworkId: network.outputs.virtualNetworkId
@@ -597,7 +597,7 @@ module compute 'modules/computes/virtualmachine.bicep' = {
 }
 
 module applicateGateway 'modules/networks/applicationgateway.bicep' = {
-  name: 'applicationGateway'
+  name: 'applicationGatewayComponent'
   params: {
     location: location
     workspaceId: workspaceId
@@ -616,7 +616,7 @@ module applicateGateway 'modules/networks/applicationgateway.bicep' = {
 }
 
 module kubernetes 'modules/containerservices/kubernetes.bicep' = {
-  name: 'kubernetes'
+  name: 'kubernetesComponent'
   params: {
     location: location
     aksClusterUserDefinedManagedIdentityPrincipalId: identity.outputs.aksClusterUserDefinedManagedIdentityPrincipalId
@@ -681,7 +681,7 @@ module kubernetes 'modules/containerservices/kubernetes.bicep' = {
 }
 
 module containerRegistry 'modules/containerservices/containerregistry.bicep' = {
-  name: 'containerRegistry'
+  name: 'containerRegistryComponent'
   params: {
     location: location
     acrName: acrName
@@ -702,7 +702,7 @@ module containerRegistry 'modules/containerservices/containerregistry.bicep' = {
 }
 
 module roleAssignment 'modules/roleassignment/roleassignment.bicep' = {
-  name: 'roleAssignment'
+  name: 'roleAssignmentComponent'
   params: {
     applicationGatewayUserDefinedManagedIdentityId: identity.outputs.applicationGatewayUserDefinedManagedIdentityId
     applicationGatewayId: applicateGateway.outputs.applicationGatewayId
