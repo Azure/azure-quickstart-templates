@@ -2,9 +2,7 @@ param location string
 param logAnalyticsWorkspaceName string
 param logAnalyticsSku string
 param logAnalyticsRetentionInDays int
-
 param containerInsightsSolutionName string
-
 param actionGroupName string
 param actionGroupShortName string
 param emailReceivers array
