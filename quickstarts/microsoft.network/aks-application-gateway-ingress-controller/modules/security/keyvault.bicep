@@ -65,7 +65,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
 
 resource keyVaultNameDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: keyVault
-  name: 'default'
+  name: 'default-Diag'
   properties: {
     workspaceId: workspaceId
     logs: [
@@ -131,7 +131,7 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01'
   }
 }
 
-resource keyVaultPrivateEndpointName_keyVaultPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-07-01' = {
+resource keyVaultPrivateEndpointName_keyVaultPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
   parent: keyVaultPrivateEndpoint
   name: keyVaultPrivateDnsZoneGroupName
   properties: {

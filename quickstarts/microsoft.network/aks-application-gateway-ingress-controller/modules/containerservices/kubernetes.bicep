@@ -170,7 +170,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-07-01' = {
       dnsServiceIP: aksClusterDnsServiceIP
       outboundType: aksClusterOutboundType
       loadBalancerSku: aksClusterLoadBalancerSku
-      loadBalancerProfile: {}
     }
     autoScalerProfile: {
       'scan-interval': autoScalerProfileScanInterval
@@ -190,7 +189,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-07-01' = {
 
 resource aksClusterDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: aksCluster
-  name: 'default'
+  name: '${aksClusterName}-Diag'
   properties: {
     workspaceId: workspaceId
     logs: [

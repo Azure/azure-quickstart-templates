@@ -95,7 +95,7 @@ resource applicationGatewayUserDefinedManagedIdentity 'Microsoft.ManagedIdentity
   location: location
 }
 
-resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2021-02-01' = {
+resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2024-01-01' = {
   name: wafPolicyName
   location: location
   properties: {
@@ -163,7 +163,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
   }
 }
 
-resource applicationGateway 'Microsoft.Network/applicationGateways@2020-05-01' = {
+resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' = {
   name: applicationGatewayName
   location: location
   identity: {
@@ -302,7 +302,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-05-01' =
 
 resource applicationGatewayDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: applicationGateway
-  name: 'default'
+  name: '${applicationGatewayName}-Diag'
   properties: {
     workspaceId: workspaceId
     logs: [

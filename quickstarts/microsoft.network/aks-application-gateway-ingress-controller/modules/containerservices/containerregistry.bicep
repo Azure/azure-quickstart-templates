@@ -62,7 +62,7 @@ resource acrName_acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@
 
 resource acrDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: acr
-  name: 'default'
+  name: '${acrName}-Diag'
   properties: {
     workspaceId: workspaceId
     metrics: [
