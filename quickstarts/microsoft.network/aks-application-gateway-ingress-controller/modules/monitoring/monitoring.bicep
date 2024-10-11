@@ -9,6 +9,7 @@ param emailReceivers array
 param smsReceivers array
 param voiceReceivers array
 
+
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsWorkspaceName
   location: location
