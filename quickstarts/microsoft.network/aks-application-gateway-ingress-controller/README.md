@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: aks-application-gateway-ingress-controller
 languages:
+- bicep
 - json
 ---
 # AKS cluster with the Application Gateway Ingress Controller
