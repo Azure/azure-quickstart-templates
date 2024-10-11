@@ -286,15 +286,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
         }
       }
     ]
-    webApplicationFirewallConfiguration: {
-      enabled: true
-      firewallMode: wafPolicyMode
-      ruleSetType: wafPolicyRuleSetType
-      ruleSetVersion: wafPolicyRuleSetVersion
-      requestBodyCheck: wafPolicyRequestBodyCheck
-      maxRequestBodySizeInKb: wafPolicyMaxRequestBodySizeInKb
-      fileUploadLimitInMb: wafPolicyFileUploadLimitInMb
-    }
     firewallPolicy: {
       id: wafPolicy.id
     }
