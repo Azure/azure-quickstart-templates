@@ -29,6 +29,7 @@ resource containerInsightsSolution 'Microsoft.OperationsManagement/solutions@201
     name: containerInsightsSolutionName
     product: 'OMSGallery/ContainerInsights'
     publisher: 'Microsoft'
+    promotionCode: ''
   }
   properties: {
     workspaceResourceId: logAnalyticsWorkspace.id
