@@ -19,6 +19,7 @@ param arbDeploymentAppId string
 param arbDeploymentSPObjectId string
 @secure()
 param arbDeploymentServicePrincipalSecret string
+param diagnosticStorageAccountName string
 
 // secret names for the Azure Key Vault - these cannot be changed
 var localAdminSecretName = 'LocalAdminCredential'
@@ -32,8 +33,6 @@ var localAdminSecretValue = base64('${localAdminUsername}:${localAdminPassword}'
 var arbDeploymentServicePrincipalValue = base64('${arbDeploymentAppId}:${arbDeploymentServicePrincipalSecret}')
 
 var storageAccountType = 'Standard_LRS'
-
-var diagnosticStorageAccountName = '${deploymentPrefix}diag'
 
 var azureConnectedMachineResourceManagerRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','f5819b54-e033-4d82-ac66-4fec3cbf3f4c')
 var readerRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')
@@ -115,7 +114,7 @@ resource keyVaultName_Microsoft_Insights_service 'microsoft.insights/diagnosticS
 }
 
 resource SPConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid('ConnectedMachineResourceManagerRolePermissions',resourceGroup().id)
+  name: guid(azureConnectedMachineResourceManagerRoleID,resourceGroup().id,hciResourceProviderObjectId)
   scope: resourceGroup()
   properties:  {
     roleDefinitionId: azureConnectedMachineResourceManagerRoleID
@@ -126,7 +125,7 @@ resource SPConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorizati
 }
 
 resource NodeAzureConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, azureConnectedMachineResourceManagerRoleID)
+  name: guid(resourceGroup().id,hciNode, azureConnectedMachineResourceManagerRoleID)
   properties:  {
     roleDefinitionId: azureConnectedMachineResourceManagerRoleID
     principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
@@ -136,7 +135,7 @@ resource NodeAzureConnectedMachineResourceManagerRolePermissions 'Microsoft.Auth
 }
 ]
 resource NodeazureStackHCIDeviceManagementRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, azureStackHCIDeviceManagementRole)
+  name: guid(resourceGroup().id,hciNode, azureStackHCIDeviceManagementRole)
   properties:  {
     roleDefinitionId: azureStackHCIDeviceManagementRole
     principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
@@ -147,7 +146,7 @@ resource NodeazureStackHCIDeviceManagementRole 'Microsoft.Authorization/roleAssi
 ]
 
 resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, readerRoleID)
+  name: guid(resourceGroup().id,hciNode, readerRoleID)
   properties:  {
     roleDefinitionId: readerRoleID
     principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
@@ -158,7 +157,7 @@ resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@20
 ]
 
 resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, keyVaultSecretUserRoleID)
+  name: guid(resourceGroup().id,hciNode, keyVaultSecretUserRoleID)
   scope: keyVault
   properties:  {
     roleDefinitionId: keyVaultSecretUserRoleID

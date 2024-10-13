@@ -153,18 +153,23 @@ type storageNetworksArrayType = storageNetworksType[]
 @description('An array of JSON objects that define the storage network configuration for the cluster. Each object should contain the adapterName and vlan properties.')
 param storageNetworks storageNetworksArrayType
 
-@description('An array of Network Adapter names present on every cluster node intended for compute traffic')
-param computeIntentAdapterNames array
+@description('An array of Network Adapter names present on every cluster node intended for the converged intent (compute, storage, and management traffic)')
+param convergedIntentAdapterNames array
 
-@description('An array of Network Adapter names present on every cluster node intended for management traffic')
-param managementIntentAdapterNames array
+@description('Required. The name of the Key Vault used for the deployment')
+param keyVaultName string
 
-var clusterWitnessStorageAccountName = '${deploymentPrefix}witness'
+@description('The name of the custom location for the deployment')
+param customLocationName string
 
-var keyVaultName = '${deploymentPrefix}-hcikv'
-var customLocationName = '${deploymentPrefix}_cl'
+@description('The witness storage account name for the deployment')
+param clusterWitnessStorageAccountName string
 
-var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
+@description('Required. The name of the storage account used for Key Vault diagnostics')
+param keyVaultDiagnosticStorageAccountName string
+
+var storageNetworkList = [
+  for (storageAdapter, index) in storageNetworks: {
     name: 'StorageNetwork${index + 1}'
     networkAdapterName: storageAdapter.adapterName
     vlanId: storageAdapter.vlan
@@ -172,31 +177,34 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
   }
 ]
 
-var arcNodeResourceIds = [for (nodeName, index) in clusterNodeNames: resourceId('Microsoft.HybridCompute/machines', nodeName)]
+var arcNodeResourceIds = [
+  for (nodeName, index) in clusterNodeNames: resourceId('Microsoft.HybridCompute/machines', nodeName)
+]
 
 module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode == 'Validate') {
   name: 'ashciPreReqResources'
   params: {
-    location: location
-    tenantId: tenantId
+    arbDeploymentAppId: arbDeploymentAppId
+    arbDeploymentServicePrincipalSecret: arbDeploymentServicePrincipalSecret
+    arbDeploymentSPObjectId: arbDeploymentSPObjectId
+    arcNodeResourceIds: arcNodeResourceIds
+    clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
     deploymentPrefix: deploymentPrefix
     deploymentUsername: deploymentUsername
     deploymentUserPassword: deploymentUserPassword
-    localAdminUsername: localAdminUsername
-    localAdminPassword: localAdminPassword
-    arbDeploymentAppId: arbDeploymentAppId
-    arbDeploymentServicePrincipalSecret: arbDeploymentServicePrincipalSecret
+    diagnosticStorageAccountName: keyVaultDiagnosticStorageAccountName
     hciResourceProviderObjectId: hciResourceProviderObjectId
-    softDeleteRetentionDays: softDeleteRetentionDays
-    logsRetentionInDays: logsRetentionInDays
-    arcNodeResourceIds: arcNodeResourceIds
     keyVaultName: keyVaultName
-    clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
-    arbDeploymentSPObjectId: arbDeploymentSPObjectId
+    localAdminPassword: localAdminPassword
+    localAdminUsername: localAdminUsername
+    location: location
+    logsRetentionInDays: logsRetentionInDays
+    softDeleteRetentionDays: softDeleteRetentionDays
+    tenantId: tenantId
   }
 }
 
-resource cluster 'Microsoft.AzureStackHCI/clusters@2024-02-15-preview' = if (deploymentMode == 'Validate') {
+resource cluster 'Microsoft.AzureStackHCI/clusters@2024-04-01' = if (deploymentMode == 'Validate') {
   name: clusterName
   identity: {
     type: 'SystemAssigned'
@@ -208,7 +216,7 @@ resource cluster 'Microsoft.AzureStackHCI/clusters@2024-02-15-preview' = if (dep
   ]
 }
 
-resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-02-15-preview' = if (deploymentMode != 'LocksOnly') {
+resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-04-01' = if (deploymentMode != 'LocksOnly') {
   name: 'default'
   parent: cluster
   properties: {
@@ -261,21 +269,20 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
                 dnsServers: dnsServers
               }
             ]
-            physicalNodes: [for hciNode in arcNodeResourceIds: {
-              name: reference(hciNode,'2022-12-27','Full').properties.displayName
-              // Getting the IP from the first management NIC of the node based on the first NIC name in the managementIntentAdapterNames array parameter
-              //
-              // During deployment, a management vNIC will be created with the name 'vManagement(managment)' and the IP config will be moved to the new vNIC--
-              // this causes a null-index error when re-running the template mid-deployment, after net intents have applied. To workaround, change the name of
-              // the management NIC in parameter file to 'vManagement(managment)' 
-              ipv4Address: (filter(reference('${hciNode}/providers/microsoft.azurestackhci/edgeDevices/default','2024-01-01','Full').properties.deviceConfiguration.nicDetails, nic => nic.adapterName == managementIntentAdapterNames[0]))[0].ip4Address
-            }
+            physicalNodes: [
+              for hciNode in arcNodeResourceIds: {
+                name: reference(hciNode, '2022-12-27', 'Full').properties.displayName
+                ipv4Address: (filter(
+                  reference('${hciNode}/providers/microsoft.azurestackhci/edgeDevices/default', '2024-01-01', 'Full').properties.deviceConfiguration.nicDetails,
+                  nic => nic.?defaultGateway != null
+                ))[0].ip4Address
+              }
             ]
             hostNetwork: {
               intents: [
                 {
-                  adapter: managementIntentAdapterNames
-                  name: 'managment'
+                  adapter: convergedIntentAdapterNames
+                  name: 'converged'
                   overrideAdapterProperty: false
                   adapterPropertyOverrides: {
                     jumboPacket: '9014'
@@ -287,7 +294,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
                     bandwidthPercentage_SMB: '50'
                     priorityValue8021Action_Cluster: '7'
                     priorityValue8021Action_SMB: '3'
-                    }
+                  }
                   overrideVirtualSwitchConfiguration: false
                   virtualSwitchConfigurationOverrides: {
                     enableIov: ''
@@ -295,54 +302,8 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
                   }
                   trafficType: [
                     'Management'
-                  ]
-                }
-                {
-                  adapter: computeIntentAdapterNames
-                  name: 'compute'
-                  overrideAdapterProperty: false
-                  adapterPropertyOverrides: {
-                    jumboPacket: '9014'
-                    networkDirect: 'Enabled'
-                    networkDirectTechnology: 'RoCEv2'
-                  }
-                  overrideQosPolicy: false
-                  qosPolicyOverrides: {
-                    bandwidthPercentage_SMB: '50'
-                    priorityValue8021Action_Cluster: '7'
-                    priorityValue8021Action_SMB: '3'
-                    }
-                  overrideVirtualSwitchConfiguration: false
-                  virtualSwitchConfigurationOverrides: {
-                    enableIov: ''
-                    loadBalancingAlgorithm: 'Dynamic'
-                  }
-                  trafficType: [
-                    'Compute'
-                  ]
-                }
-                {
-                  adapter: [for storageNetwork in storageNetworks: storageNetwork.adapterName]
-                  name: 'storage'
-                  overrideAdapterProperty: false
-                  adapterPropertyOverrides: {
-                    jumboPacket: '9014'
-                    networkDirect: 'Enabled'
-                    networkDirectTechnology: 'RoCEv2'
-                  }
-                  overrideQosPolicy: false
-                  qosPolicyOverrides: {
-                    bandwidthPercentage_SMB: '50'
-                    priorityValue8021Action_Cluster: '7'
-                    priorityValue8021Action_SMB: '3'
-                    }
-                  overrideVirtualSwitchConfiguration: false
-                  virtualSwitchConfigurationOverrides: {
-                    enableIov: ''
-                    loadBalancingAlgorithm: ''
-                  }
-                  trafficType: [
                     'Storage'
+                    'Compute'
                   ]
                 }
               ]
