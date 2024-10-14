@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: front-door-standard-premium-application-gateway-public
 languages:
-- json
 - bicep
+- json
 ---
 # Front Door Standard/Premium with Application Gateway origin
 

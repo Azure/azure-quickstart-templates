@@ -41,8 +41,8 @@ In addition to processing and transmitting network traffic, vSensors can ingest 
 In brief, the template will perform the following:
 * Create a Subnet for the vSensors in the existing VNet.
 * Create a subnet and deploy Azure Bastion to allow access to manage the vSensors (optional).
-* Create an Azure Storage Account and Blob Container to hold PCAP data for a configurable retention period.
-* Spin up the requested number of compatible base OS VMs in the existing vNet as part of a Virtual Machine Scale Set.
+* Create an Azure Storage Account and Blob Container to hold PCAP data for a configurable retention period (optional).
+* Spin up the requested number of compatible base OS VMs in the existing VNet as part of a Virtual Machine Scale Set.
 * Automatically download and install the Darktrace vSensor.  
 **Note**: a valid Darktrace Update Key is required for this. Please contact your Darktrace representative if you do not possess this.
 * The vSensors will self-configure. As part of the configuration the vSensor will automatically:
@@ -56,7 +56,7 @@ In brief, the template will perform the following:
 
 ### osSensors
 
-In Microsoft Azure, the configuration and maintenance of the virtual switches is automated and removed from the user’s control.  As a result of this lack of access, a direct SPAN cannot be setup from the virtual switch to the vSensor. 
+In Microsoft Azure, the configuration and maintenance of the virtual switches is automated and removed from the user’s control. As a result of this lack of access, a direct SPAN cannot be setup from the virtual switch to the vSensor. 
 
 In this environment, the Darktrace osSensor - a lightweight host-based server agent - is used to send a feed from all monitored VMs directly to the vSensor.
 
@@ -81,7 +81,7 @@ The template should be used to deploy vSensor(s) in an existing Virtual Network 
 The Resource Group (RG) is where the new resources’ metadata will be stored. The resources will be placed in the new/existing RG of the deployment, which may be separate from the VNet for easier management. The subnets created will still be created within the existing VNet's RG.
 
 #### Network Security Group
-The template will create a new Network Security Group (NSG) that permits outbound access to the Darktrace Update Packages CDN and the configured master appliance on HTTP/HTTPS. It also allows osSensor inbound connectivity on HTTP/HTTPS.
+The template will create a new Network Security Group (NSG) that permits outbound access to the Darktrace Update Packages CDN and the configured master instance on HTTP/HTTPS. It also allows osSensor inbound connectivity on HTTP/HTTPS.
 
 Lastly, it will enable access for SSH management from (private) IP addresses and/or IP Ranges specified in 'MgmtSourceAddressOrRange'.
 
@@ -164,8 +164,8 @@ The template should appear as a form that expects values for input parameters (w
 | existingRouteTable | If not deploying a NAT Gateway, you may need to provide an existing route table to attach to the new deployed vSensor subnet to allow internet routing. |
 | existingRouteTableResourceGroup | The Resource Group the existing Route Table (if provided) is deployed in. Default is same RG. |
 | bastionEnable | Whether to deploy a Azure Bastion and associated Subnet in. See above. |
-| bastionSubnetCIDR | CIDR IP range of the private subnet the Azure Bastion will be deployed in (if deployed). This must be an unused range within the supplied vNet. E.g. 10.0.1.0/24. If Bastion Enable is false, this value will be ignored. |
-| VMSSSubnetCIDR | CIDR IP range of the private subnet the vSensors will be deployed in. This must be an unused range within the supplied vNet. E.g. 10.0.2.0/24. |
+| bastionSubnetCIDR | CIDR IP range of the private subnet the Azure Bastion will be deployed in (if deployed). This must be an unused range within the supplied VNet. E.g. 10.0.1.0/24. If Bastion Enable is false, this value will be ignored. |
+| VMSSSubnetCIDR | CIDR IP range of the private subnet the vSensors will be deployed in. This must be an unused range within the supplied VNet. E.g. 10.0.2.0/24. |
 | MgmtSourceAddressOrRange | Provide a private address range using CIDR notation (e.g. 10.1.0.0/24), or an IP address (e.g. 192.168.99.21) for Management access via ssh (port 22/TCP). Set to 'VMSS Subnet CIDR' to not use this access. You can also provide a comma-separated list of IP addresses and/or address ranges (a valid comma-separated list is 10.1.0.4,10.2.1.0/24). |
 | VMSSInstanceSize | vSensor VM Size. For more information regarding the Virtual Hardware Requirements please visit https://customerportal.darktrace.com/product-guides/main/vsensor-requirements <br><br> _Default value_: **Standard_D2s_v3** |
 | VMSSMinSize | The minimum number of vSensors to auto-scale down to. |

@@ -34,7 +34,7 @@ param homeDirectory string
 @description('SSH Public Key for primary user. If not specified, Azure will generate a password which can be accessed securely')
 param publicKey string = ''
 
-resource sa 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource sa 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -48,7 +48,7 @@ resource sa 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
-resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-04-01' = {
+resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
   name: '${sa.name}/default/${homeDirectory}'
   properties: {
     publicAccess: 'None'
@@ -56,7 +56,7 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
 
 }
 
-resource user 'Microsoft.Storage/storageAccounts/localUsers@2021-04-01' = {
+resource user 'Microsoft.Storage/storageAccounts/localUsers@2023-05-01' = {
   parent: sa
   name: userName
   properties: {

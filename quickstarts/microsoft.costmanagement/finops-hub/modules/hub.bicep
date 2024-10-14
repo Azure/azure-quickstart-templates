@@ -11,6 +11,9 @@ param hubName string
 @description('Optional. Azure location where all resources should be created. See https://aka.ms/azureregions. Default: (resource group location).')
 param location string = resourceGroup().location
 
+// @description('Optional. Azure location to use for a temporary Event Grid namespace to register the Microsoft.EventGrid resource provider if the primary location is not supported. The namespace will be deleted and is not used for hub operation. Default: "" (same as location).')
+// param eventGridLocation string = ''
+
 @allowed([
   'Premium_LRS'
   'Premium_ZRS'
@@ -24,11 +27,21 @@ param tags object = {}
 @description('Optional. Tags to apply to resources based on their resource type. Resource type specific tags will be merged with tags for all resources.')
 param tagsByResource object = {}
 
-@description('Optional. List of scope IDs to create exports for.')
-param exportScopes array
+@description('Optional. List of scope IDs to monitor and ingest cost for.')
+param scopesToMonitor array
 
-@description('Optional. Indicates whether ingested data should be converted to Parquet. Default: true.')
-param convertToParquet bool = true
+@description('Optional. Number of days of cost data to retain in the ms-cm-exports container. Default: 0.')
+param exportRetentionInDays int = 0
+
+@description('Optional. Number of months of cost data to retain in the ingestion container. Default: 13.')
+param ingestionRetentionInMonths int = 13
+
+@description('Optional. Remote storage account for ingestion dataset.')
+param remoteHubStorageUri string = ''
+
+@description('Optional. Storage account key for remote storage account.')
+@secure()
+param remoteHubStorageKey string = ''
 
 @description('Optional. Enable telemetry to track anonymous module usage trends, monitor for bugs, and improve future releases.')
 param enableDefaultTelemetry bool = true
@@ -40,16 +53,41 @@ param enableDefaultTelemetry bool = true
 // Add cm-resource-parent to group resources in Cost Management
 var finOpsToolkitVersion = loadTextContent('ftkver.txt')
 var resourceTags = union(tags, {
-    'cm-resource-parent': '${resourceGroup().id}/providers/Microsoft.Cloud/hubs/${hubName}'
-    'ftk-version': finOpsToolkitVersion
-    'ftk-tool': 'FinOps hubs'
-  })
+  'cm-resource-parent': '${resourceGroup().id}/providers/Microsoft.Cloud/hubs/${hubName}'
+  'ftk-version': finOpsToolkitVersion
+  'ftk-tool': 'FinOps hubs'
+})
 
 // Generate globally unique Data Factory name: 3-63 chars; letters, numbers, non-repeating dashes
 var uniqueSuffix = uniqueString(hubName, resourceGroup().id)
 var dataFactoryPrefix = '${replace(hubName, '_', '-')}-engine'
 var dataFactorySuffix = '-${uniqueSuffix}'
-var dataFactoryName = replace('${take(dataFactoryPrefix, 63 - length(dataFactorySuffix))}${dataFactorySuffix}', '--', '-')
+var dataFactoryName = replace(
+  '${take(dataFactoryPrefix, 63 - length(dataFactorySuffix))}${dataFactorySuffix}',
+  '--',
+  '-'
+)
+// var eventGridPrefix = '${replace(hubName, '_', '-')}-ns'
+// var eventGridSuffix = '-${uniqueSuffix}'
+// var eventGridName = replace(
+//   '${take(eventGridPrefix, 50 - length(eventGridSuffix))}${eventGridSuffix}',
+//   '--',
+//   '-'
+// )
+
+// EventGrid Contributor role
+// var eventGridContributorRoleId = '1e241071-0855-49ea-94dc-649edcd759de'
+
+// Find a fallback region for EventGrid
+// var eventGridLocationFallback = {
+//   israelcentral: 'uaenorth'
+//   italynorth: 'switzerlandnorth'
+//   mexicocentral: 'southcentralus'
+//   polandcentral: 'swedencentral'
+//   spaincentral: 'francecentral'
+//   usdodeast: 'usdodcentral'
+// }
+// var finalEventGridLocation = eventGridLocation != null && !empty(eventGridLocation) ? eventGridLocation : (eventGridLocationFallback[?location] ?? location)
 
 // The last segment of the telemetryId is used to identify this module
 var telemetryId = '00f120b5-2007-6120-0000-40b000000000'
@@ -96,7 +134,9 @@ module storage 'storage.bicep' = {
     location: location
     tags: resourceTags
     tagsByResource: tagsByResource
-    exportScopes: exportScopes
+    scopesToMonitor: scopesToMonitor
+    msexportRetentionInDays: exportRetentionInDays
+    ingestionRetentionInMonths: ingestionRetentionInMonths
   }
 }
 
@@ -106,29 +146,32 @@ module storage 'storage.bicep' = {
 
 resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
   name: dataFactoryName
+  dependsOn: []
   location: location
-  tags: union(resourceTags, contains(tagsByResource, 'Microsoft.DataFactory/factories') ? tagsByResource['Microsoft.DataFactory/factories'] : {})
+  tags: union(
+    resourceTags,
+    contains(tagsByResource, 'Microsoft.DataFactory/factories') ? tagsByResource['Microsoft.DataFactory/factories'] : {}
+  )
   identity: { type: 'SystemAssigned' }
-  properties: union(
-    // Using union() to hide the error that gets surfaced because globalConfigurations is not in the ADF schema yet.
-    {},
-    {
-      globalConfigurations: {
-        PipelineBillingEnabled: 'true'
-      }
-    })
+  properties: any({ // Using any() to hide the error that gets surfaced because globalConfigurations is not in the ADF schema yet
+    globalConfigurations: {
+      PipelineBillingEnabled: 'true'
+    }
+  })
 }
 
 module dataFactoryResources 'dataFactory.bicep' = {
   name: 'dataFactoryResources'
   params: {
-    dataFactoryName: dataFactoryName
-    convertToParquet: convertToParquet
-    keyVaultName: keyVault.outputs.name
+    dataFactoryName: dataFactory.name
     storageAccountName: storage.outputs.name
     exportContainerName: storage.outputs.exportContainer
+    configContainerName: storage.outputs.configContainer
     ingestionContainerName: storage.outputs.ingestionContainer
+    keyVaultName: keyVault.outputs.name
     location: location
+    hubName: hubName
+    remoteHubStorageUri: remoteHubStorageUri
     tags: resourceTags
     tagsByResource: tagsByResource
   }
@@ -146,7 +189,7 @@ module keyVault 'keyVault.bicep' = {
     location: location
     tags: resourceTags
     tagsByResource: tagsByResource
-    storageAccountName: storage.outputs.name
+    storageAccountKey: remoteHubStorageKey
     accessPolicies: [
       {
         objectId: dataFactory.identity.principalId
@@ -182,3 +225,9 @@ output storageAccountName string = storage.outputs.name
 
 @description('URL to use when connecting custom Power BI reports to your data.')
 output storageUrlForPowerBI string = 'https://${storage.outputs.name}.dfs.${environment().suffixes.storage}/${storage.outputs.ingestionContainer}'
+
+@description('Object ID of the Data Factory managed identity. This will be needed when configuring managed exports.')
+output managedIdentityId string = dataFactory.identity.principalId
+
+@description('Azure AD tenant ID. This will be needed when configuring managed exports.')
+output managedIdentityTenantId string = tenant().tenantId
