@@ -17,8 +17,9 @@ param location string = resourceGroup().location
 @description('Optional. Array of access policies object.')
 param accessPolicies array = []
 
-@description('Required. Name of the storage account to store access keys for.')
-param storageAccountName string
+@description('Optional. Create and store a key for a remote storage account.')
+@secure()
+param storageAccountKey string
 
 @description('Optional. Specifies the SKU for the vault.')
 @allowed([
@@ -41,6 +42,7 @@ param tagsByResource object = {}
 var keyVaultPrefix = '${replace(hubName, '_', '-')}-vault'
 var keyVaultSuffix = '-${uniqueSuffix}'
 var keyVaultName = replace('${take(keyVaultPrefix, 24 - length(keyVaultSuffix))}${keyVaultSuffix}', '--', '-')
+var keyVaultSecretName = '${toLower(hubName)}-storage-key'
 
 var formattedAccessPolicies = [for accessPolicy in accessPolicies: {
   applicationId: contains(accessPolicy, 'applicationId') ? accessPolicy.applicationId : ''
@@ -53,7 +55,7 @@ var formattedAccessPolicies = [for accessPolicy in accessPolicies: {
 // Resources
 //==============================================================================
 
-resource keyVault 'Microsoft.KeyVault/vaults@2022-11-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   name: keyVaultName
   location: location
   tags: union(tags, contains(tagsByResource, 'Microsoft.KeyVault/vaults') ? tagsByResource['Microsoft.KeyVault/vaults'] : {})
@@ -75,7 +77,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-11-01' = {
   }
 }
 
-resource keyVault_accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2022-11-01' = if (!empty(accessPolicies)) {
+resource keyVault_accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2023-02-01' = if (!empty(accessPolicies)) {
   name: 'add'
   parent: keyVault
   properties: {
@@ -83,12 +85,8 @@ resource keyVault_accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2022-
   }
 }
 
-resource storageRef 'Microsoft.Storage/storageAccounts@2022-09-01' existing = {
-  name: storageAccountName
-}
-
-resource keyVault_secrets 'Microsoft.KeyVault/vaults/secrets@2022-11-01' = {
-  name: storageRef.name
+resource keyVault_secret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (!empty(storageAccountKey)) {
+  name: keyVaultSecretName
   parent: keyVault
   properties: {
     attributes: {
@@ -96,7 +94,7 @@ resource keyVault_secrets 'Microsoft.KeyVault/vaults/secrets@2022-11-01' = {
       exp: 1702648632
       nbf: 10000
     }
-    value: storageRef.listKeys().keys[0].value
+    value: storageAccountKey
   }
 }
 
