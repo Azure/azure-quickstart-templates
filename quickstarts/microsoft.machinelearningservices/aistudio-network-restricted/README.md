@@ -57,6 +57,7 @@ This template expects that you have private VNet setup for your organization, an
 | `Microsoft.ContainerRegistry/registries` | An Azure Container Registry instance associated with the Azure Machine Learning workspace |
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI hub (Azure Machine Learning RP workspace of kind 'hub') |
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
+| `Microsoft.Search/searchServices` | AI Search instance |
 
 ## Deployment
 
