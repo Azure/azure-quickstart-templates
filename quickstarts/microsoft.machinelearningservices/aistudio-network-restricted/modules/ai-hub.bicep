@@ -42,12 +42,19 @@ param subnetResourceId string
 @description('Unique Suffix used for name generation')
 param uniqueSuffix string
 
+@description('Determines whether or not to use credentials for the system datastores of the workspace workspaceblobstore and workspacefilestore. The default value is accessKey, in which case, the workspace will create the system datastores with credentials. If set to identity, the workspace will create the system datastores with no credentials.')
+@allowed([
+  'identity'
+  'accessKey'
+])
+param systemDatastoresAuthMode string = 'identity'
+
 var privateEndpointName = '${aiHubName}-AIHub-PE'
 var targetSubResource = [
     'amlworkspace'
 ]
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-10-01' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
@@ -70,6 +77,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-10-01' = {
     managedNetwork: {
       isolationMode: 'AllowInternetOutBound'
     }
+    systemDatastoresAuthMode: systemDatastoresAuthMode
 
     // private link settings
     sharedPrivateLinkResources: []
