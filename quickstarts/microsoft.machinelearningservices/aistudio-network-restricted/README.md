@@ -1,5 +1,5 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Studio with public internet access disabled and egress disabled, using Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
+description: This set of templates demonstrates how to set up Azure AI Studio with private link and egress disabled, using Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure AI Studio network-restricted setup 
+# Azure AI Studio Network Restricted
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-network-restricted/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-network-restricted/PublicDeployment.svg)
@@ -76,4 +76,4 @@ az deployment group create --resource-group privateAiHub --template-file main.bi
 
 If you are new to Azure AI Studio, see:
 
-- [Azure AI Studio](https://aka.ms/aistudio/docs)
+- [Azure AI Studio](https://aka.ms/aistudio/docs)`Tags: ``Tags: `
