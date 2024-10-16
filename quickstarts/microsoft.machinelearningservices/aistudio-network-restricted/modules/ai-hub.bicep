@@ -98,7 +98,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   kind: 'hub'
 
   // AI Services connection
-  resource aiServicesConnectionAPIKey 'connections@2024-07-01-preview' = if (connectionAuthMode == 'ApiKey') {
+  resource aiServicesConnectionAPIKey 'connections@2024-04-01' = if (connectionAuthMode == 'ApiKey') {
     name: '${aiHubName}-connection-AIServices'
     properties: {
       category: 'AIServices'
@@ -119,7 +119,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   }
 
   // AI Services connection
-  resource aiServicesConnectionAAD 'connections@2024-07-01-preview' = if (connectionAuthMode == 'AAD') {
+  resource aiServicesConnectionAAD 'connections@2024-04-01' = if (connectionAuthMode == 'AAD') {
     name: '${aiHubName}-connection-AIServices'
     properties: {
       category: 'AIServices'
@@ -135,7 +135,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   }
 
   // Azure Search connection
-  resource searchServiceConnectionAAD 'connections@2024-07-01-preview' = if (connectionAuthMode == 'AAD') {
+  resource searchServiceConnectionAAD 'connections@2024-04-01' = if (connectionAuthMode == 'AAD') {
     name: '${aiHubName}-connection-SearchAad'
     properties: {
       category: 'CognitiveSearch'
@@ -150,7 +150,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
     }
   }
     // Azure Search connection
-  resource searchServiceConnectionApiKey 'connections@2024-07-01-preview' = if (connectionAuthMode == 'ApiKey')  {
+  resource searchServiceConnectionApiKey 'connections@2024-04-01' = if (connectionAuthMode == 'ApiKey')  {
     name: '${aiHubName}-connection-SearchApi'
     properties: {
       category: 'CognitiveSearch'
