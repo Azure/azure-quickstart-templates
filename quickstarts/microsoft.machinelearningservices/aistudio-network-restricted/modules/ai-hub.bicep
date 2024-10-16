@@ -132,6 +132,12 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       useWorkspaceManagedIdentity: false
       sharedUserList: []
 
+      credentials: connectionAuthMode == 'ApiKey'
+      ? {
+          key: listAdminKeys(searchId, '2023-11-01')
+        }
+      : null
+
       metadata: {
         ApiType: 'Azure'
         ResourceId: searchId
