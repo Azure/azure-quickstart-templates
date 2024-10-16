@@ -117,3 +117,4 @@ resource searchPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtual
 output searchServiceId string = searchService.id
 output searchServicePrincipalId string = searchService.identity.principalId
 output searchServiceName string = searchService.name
+output searchServiceEndpoint string = 'https://${searchServiceName}.search.windows.net'

@@ -33,6 +33,12 @@ param aiServicesId string
 @description('Resource ID of the AI Services endpoint')
 param aiServicesTarget string
 
+@description('Resource ID of the AI Search resource')
+param searchId string
+
+@description('Resource ID of the AI Search endpoint')
+param searchTarget string
+
 @description('Resource Id of the virtual network to deploy the resource into.')
 param vnetResourceId string
 
@@ -42,19 +48,22 @@ param subnetResourceId string
 @description('Unique Suffix used for name generation')
 param uniqueSuffix string
 
-@description('Determines whether or not to use credentials for the system datastores of the workspace workspaceblobstore and workspacefilestore. The default value is accessKey, in which case, the workspace will create the system datastores with credentials. If set to identity, the workspace will create the system datastores with no credentials.')
+@description('SystemDatastoresAuthMode')
+param systemDatastoresAuthMode string
+
+@description('AI Service Connection Auth Mode')
 @allowed([
-  'identity'
-  'accessKey'
+  'ApiKey'
+  'AAD'
 ])
-param systemDatastoresAuthMode string = 'identity'
+param connectionAuthMode string
 
 var privateEndpointName = '${aiHubName}-AIHub-PE'
 var targetSubResource = [
     'amlworkspace'
 ]
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
@@ -84,22 +93,48 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview'
   }
   kind: 'hub'
 
-  resource aiServicesConnection 'connections@2024-01-01-preview' = {
+  // AI Services connection
+  resource aiServicesConnection 'connections@2024-07-01-preview' = {
     name: '${aiHubName}-connection-AIServices'
     properties: {
       category: 'AIServices'
       target: aiServicesTarget
-      authType: 'ApiKey'
+      authType: connectionAuthMode   
       isSharedToAll: true
-      credentials: {
+      
+      // Conditionally include the credentials section if authType is apiKey
+      credentials: connectionAuthMode == 'ApiKey' ? {
         key: '${listKeys(aiServicesId, '2021-10-01').key1}'
-      }
+      } : null
+
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
       }
     }
   }
+
+  // Azure Search connection
+  resource searchServiceConnection 'connections@2024-07-01-preview' = {
+    name: '${aiHubName}-connection-Search'
+    properties: {
+      category: 'CognitiveSearch'
+      target: searchTarget
+      authType: connectionAuthMode
+      isSharedToAll: true
+
+      // Conditionally include the credentials section if authType is apiKey
+      credentials: connectionAuthMode == 'ApiKey' ? {
+        key: '${listAdminKeys(searchId, '2015-08-19').PrimaryKey}'
+      } : null
+
+      metadata: {
+        ApiType: 'Azure'
+        ResourceId: searchId
+      }
+    }
+  }
+
 }
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
