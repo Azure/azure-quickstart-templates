@@ -109,7 +109,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       
       credentials: connectionAuthMode == 'ApiKey'
         ? {
-            key: listKeys(aiServicesId, '2021-10-01')
+            key: '${listKeys(aiServicesId, '2021-10-01')}'
           }
         : null
 
@@ -134,7 +134,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
 
       credentials: connectionAuthMode == 'ApiKey'
       ? {
-          key: listAdminKeys(searchId, '2023-11-01')
+          key: '${listAdminKeys(searchId, '2023-11-01')}'
         }
       : null
 
