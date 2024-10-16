@@ -1,14 +1,14 @@
 ---
-description: This template Upgrades an Azure Stack HCI 23H2 cluster using an ARM template.
+description: This template upgrades an Azure Stack HCI 22H2 cluster to 23H2 cluster using an ARM template.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: create-cluster
+urlFragment: upgrade-cluster
 languages:
 - json
 ---
-# creates an Azure Stack HCI 23H2 cluster
+# upgrades an Azure Stack HCI 22H2 cluster to 23H2 cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/upgrade-cluster/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/upgrade-cluster/PublicDeployment.svg)
