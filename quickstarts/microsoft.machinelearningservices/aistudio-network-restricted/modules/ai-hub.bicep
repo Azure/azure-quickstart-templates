@@ -49,6 +49,10 @@ param subnetResourceId string
 param uniqueSuffix string
 
 @description('SystemDatastoresAuthMode')
+@allowed([
+  'identity'
+  'accessKey'
+])
 param systemDatastoresAuthMode string
 
 @description('AI Service Connection Auth Mode')
@@ -125,7 +129,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
 
       // Conditionally include the credentials section if authType is apiKey
       credentials: connectionAuthMode == 'ApiKey' ? {
-        key: 'sanitytest'
+        key: '${listAdminKeys(searchId, '2023-11-01').primaryKey}'
       } : null
 
       metadata: {
