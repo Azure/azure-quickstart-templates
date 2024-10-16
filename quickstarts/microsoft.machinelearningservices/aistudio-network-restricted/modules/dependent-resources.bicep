@@ -102,6 +102,7 @@ output keyvaultId string = keyvault.outputs.keyvaultId
 output containerRegistryId string = containerRegistry.outputs.containerRegistryId
 output applicationInsightsId string = applicationInsights.outputs.applicationInsightsId
 output searchServiceId string = searchService.outputs.searchServiceId
+output searchServiceTarget string = searchService.outputs.searchServiceEndpoint
 
 output aiServicesPrincipalId string = aiServices.outputs.aiServicesPrincipalId
 output searchServicePrincipalId string = searchService.outputs.searchServicePrincipalId

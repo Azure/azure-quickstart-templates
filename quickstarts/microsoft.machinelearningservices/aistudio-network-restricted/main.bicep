@@ -37,7 +37,14 @@ param prefix string
   'identity'
   'accessKey'
 ])
-param systemDatastoresAuthMode string = 'identity'
+param systemDatastoresAuthMode string = 'accessKey'
+
+@description('Determines whether to use an API key or Azure Active Directory (AAD) for the AI service connection authentication. The default value is apiKey.')
+@allowed([
+  'ApiKey'
+  'AAD'
+])
+param connectionAuthMode string = 'ApiKey'
 
 // Variables
 var name = toLower('${aiHubName}')
@@ -96,7 +103,12 @@ module aiHub 'modules/ai-hub.bicep' = {
     containerRegistryId: aiDependencies.outputs.containerRegistryId
     keyVaultId: aiDependencies.outputs.keyvaultId
     storageAccountId: aiDependencies.outputs.storageId
+    searchId: aiDependencies.outputs.searchServiceId
+    searchTarget: aiDependencies.outputs.searchServiceTarget
+
+    //configuration settings
     systemDatastoresAuthMode: systemDatastoresAuthMode
+    connectionAuthMode: connectionAuthMode
 
   }
 }
