@@ -123,9 +123,9 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       authType: connectionAuthMode
       isSharedToAll: true
 
-      // Conditionally include the credentials section if authType is ApiKey
+      // Conditionally include the credentials section if authType is apiKey
       credentials: connectionAuthMode == 'ApiKey' ? {
-        key: '${listAdminKeys(searchId, '2023-11-01').primaryKey}'
+        key: 'sanitytest'
       } : null
 
       metadata: {
