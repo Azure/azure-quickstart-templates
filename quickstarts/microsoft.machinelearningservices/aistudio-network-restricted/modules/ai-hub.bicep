@@ -98,18 +98,34 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   kind: 'hub'
 
   // AI Services connection
-  resource aiServicesConnection 'connections@2024-07-01-preview' = {
+  resource aiServicesConnectionAPIKey 'connections@2024-07-01-preview' = if (connectionAuthMode == 'ApiKey') {
     name: '${aiHubName}-connection-AIServices'
     properties: {
       category: 'AIServices'
       target: aiServicesTarget
-      authType: connectionAuthMode   
+      authType: 'ApiKey'   
       isSharedToAll: true
       
       // Conditionally include the credentials section if authType is apiKey
-      credentials: connectionAuthMode == 'ApiKey' ? {
+      credentials: {
         key: '${listKeys(aiServicesId, '2021-10-01').key1}'
-      } : null
+      }
+
+      metadata: {
+        ApiType: 'Azure'
+        ResourceId: aiServicesId
+      }
+    }
+  }
+
+  // AI Services connection
+  resource aiServicesConnectionAAD 'connections@2024-07-01-preview' = if (connectionAuthMode == 'AAD') {
+    name: '${aiHubName}-connection-AIServices'
+    properties: {
+      category: 'AIServices'
+      target: aiServicesTarget
+      authType: 'AAD'   
+      isSharedToAll: true
 
       metadata: {
         ApiType: 'Azure'
@@ -119,18 +135,33 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   }
 
   // Azure Search connection
-  resource searchServiceConnection 'connections@2024-07-01-preview' = {
-    name: '${aiHubName}-connection-Search'
+  resource searchServiceConnectionAAD 'connections@2024-07-01-preview' = if (connectionAuthMode == 'AAD') {
+    name: '${aiHubName}-connection-SearchAad'
     properties: {
       category: 'CognitiveSearch'
       target: searchTarget
-      authType: connectionAuthMode
+      authType: 'AAD'
+      isSharedToAll: true
+
+      metadata: {
+        ApiType: 'Azure'
+        ResourceId: searchId
+      }
+    }
+  }
+    // Azure Search connection
+  resource searchServiceConnectionApiKey 'connections@2024-07-01-preview' = if (connectionAuthMode == 'ApiKey')  {
+    name: '${aiHubName}-connection-SearchApi'
+    properties: {
+      category: 'CognitiveSearch'
+      target: searchTarget
+      authType: 'ApiKey'
       isSharedToAll: true
 
       // Conditionally include the credentials section if authType is apiKey
-      credentials: connectionAuthMode == 'ApiKey' ? {
+      credentials: {
         key: '${listAdminKeys(searchId, '2023-11-01').primaryKey}'
-      } : null
+      }
 
       metadata: {
         ApiType: 'Azure'
