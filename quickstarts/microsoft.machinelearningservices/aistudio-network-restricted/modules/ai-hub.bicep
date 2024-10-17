@@ -51,7 +51,7 @@ param uniqueSuffix string
 @description('SystemDatastoresAuthMode')
 @allowed([
   'identity'
-  'accessKey'
+  'accesskey'
 ])
 param systemDatastoresAuthMode string
 
@@ -122,7 +122,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       }
     }
   }
-  
+
   // AI Services connection
   resource aiServicesConnection 'connections@2024-01-01-preview' = {
     name: '${aiHubName}-connection-AIServices'
