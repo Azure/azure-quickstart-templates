@@ -146,8 +146,8 @@ module network 'modules/virtualnetwork/main.bicep' = {
     virtualNetworkName: virtualNetworkName
     virtualNetworkAddressSpace: virtualNetworkAddressSpace
     virtualNetworkPeeringToHub: virtualNetworkPeeringToHub
-    hubVirtualNetworkRG: hubVirtualNetwork.virtualNetworkRG == '' ? null : hubVirtualNetwork.virtualNetworkRG
-    hubVirtualNetworkName: hubVirtualNetwork.virtualNetworkName == '' ? null : hubVirtualNetwork.virtualNetworkName
+    hubVirtualNetworkRG: hubVirtualNetwork.virtualNetworkRG == '' ? 'nothing' : hubVirtualNetwork.virtualNetworkRG
+    hubVirtualNetworkName: hubVirtualNetwork.virtualNetworkName == '' ? 'nothing' : hubVirtualNetwork.virtualNetworkName
     subnetName1: subnetName1
     subnetAddressPrefix1: subnetAddressPrefix1
     subnetName2: subnetName2
