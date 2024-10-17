@@ -37,8 +37,11 @@ param hubVirtualNetwork object = virtualNetworkPeeringToHub ? {
 } : {}
 @description('Number of session host to create')
 param numberOfSessionHost int = 2
+@secure()
 @description('Virtual machine resource admin username')
-param adminUsername string = 'azureuser'
+param vmAdminUsername string
+@description('Virtual machine size')
+param vmSize string = 'Standard_D2s_v3'
 @description('Domain name to join')
 param DomainName string = activeDirectoryAuthenticationEnabled ? 'contoso.com' : ''
 @description('OUPath for the domain join')
@@ -79,7 +82,7 @@ param adminRoleDefinitionId string = fslogixEnabled ? resourceId('Microsoft.Auth
 @description('Storage account role definition for Storage File Data SMB Share Contributor file share user access')
 param userRoleDefinitionId string = fslogixEnabled ? resourceId('Microsoft.Authorization/roleDefinitions', '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb') : ''
 @description('Application group Entra ID Group object ids for Desktop Virtualization User role assignment')
-param GroupObjectIds array = [adminGroupObjectId, userGroupObjectId]
+param GroupObjectIds array = adminGroupObjectId != '' && userGroupObjectId != '' ? [adminGroupObjectId, userGroupObjectId] : []
 
 
 // Required variables
@@ -87,7 +90,7 @@ param GroupObjectIds array = [adminGroupObjectId, userGroupObjectId]
 var virtualMachine = {
   name: 'azurevm'
   licenseType: 'Windows_Client'
-  vmSize: 'Standard_D2s_v3'
+  vmSize: vmSize
   osDisk: {
     createOption: 'FromImage'
     storageAccountType: 'Premium_LRS'
@@ -193,7 +196,7 @@ module sessionHost 'modules/sessionhost/main.bicep' = {
     subnetId: network.outputs.subnetId1
     numberOfSessionHost: numberOfSessionHost
     virtualMachine: virtualMachine
-    adminUsername: adminUsername
+    adminUsername: vmAdminUsername
     adminPassword: vmAdminPassword
     hostPoolName: hostPoolName
     activeDirectoryAuthenticationEnabled: activeDirectoryAuthenticationEnabled
