@@ -31,10 +31,10 @@ param subnetAddressPrefix1 string = '10.100.0.0/24'
 @description('Virtual network resource Subnet 2 Address Prefix.')
 param subnetAddressPrefix2 string = '10.100.1.0/24'
 @description('Hub Virtual network object')
-param hubVirtualNetwork object = virtualNetworkPeeringToHub ? {
-  virtualNetworkRG: ''
-  virtualNetworkName: ''
-} : {}
+param hubVirtualNetwork object = {
+  virtualNetworkRG: 'nothing'
+  virtualNetworkName: 'nothing'
+}
 @description('Number of session host to create')
 param numberOfSessionHost int = 2
 @secure()
@@ -146,8 +146,8 @@ module network 'modules/virtualnetwork/main.bicep' = {
     virtualNetworkName: virtualNetworkName
     virtualNetworkAddressSpace: virtualNetworkAddressSpace
     virtualNetworkPeeringToHub: virtualNetworkPeeringToHub
-    hubVirtualNetworkRG: hubVirtualNetwork.virtualNetworkRG == '' ? 'nothing' : hubVirtualNetwork.virtualNetworkRG
-    hubVirtualNetworkName: hubVirtualNetwork.virtualNetworkName == '' ? 'nothing' : hubVirtualNetwork.virtualNetworkName
+    hubVirtualNetworkRG: hubVirtualNetwork.virtualNetworkRG
+    hubVirtualNetworkName: hubVirtualNetwork.virtualNetworkName
     subnetName1: subnetName1
     subnetAddressPrefix1: subnetAddressPrefix1
     subnetName2: subnetName2

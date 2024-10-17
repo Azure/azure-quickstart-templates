@@ -21,7 +21,7 @@ param subnetAddressPrefix1 string
 param subnetAddressPrefix2 string
 
 resource hubVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = if(virtualNetworkPeeringToHub) {
-  scope: az.resourceGroup(hubVirtualNetworkRG)
+  //Set above scope to scope: az.resourceGroup(hubVirtualNetworkRG) if the hub network is in another resource group
   name: hubVirtualNetworkName
 }
 
@@ -53,7 +53,7 @@ resource virtualNetworkToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPe
 }
 
 module virtualNetworkHub 'hubnetwork.bicep' = if(virtualNetworkPeeringToHub) {
-  scope: az.resourceGroup(hubVirtualNetworkRG)
+  //Set above scope to scope: az.resourceGroup(hubVirtualNetworkRG) if the hub network is in another resource group
   name: 'hubVirtualNetworkPeering'
   params: {
     remoteVirtualNetworkId: virtualNetwork.id
