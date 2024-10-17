@@ -35,9 +35,9 @@ param prefix string
 @description('Determines whether or not to use credentials for the system datastores of the workspace workspaceblobstore and workspacefilestore. The default value is accessKey, in which case, the workspace will create the system datastores with credentials. If set to identity, the workspace will create the system datastores with no credentials.')
 @allowed([
   'identity'
-  'accessKey'
+  'accesskey'
 ])
-param systemDatastoresAuthMode string = 'accessKey'
+param systemDatastoresAuthMode string = 'identity'
 
 @description('Determines whether to use an API key or Azure Active Directory (AAD) for the AI service connection authentication. The default value is apiKey.')
 @allowed([
