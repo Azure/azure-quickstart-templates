@@ -54,7 +54,7 @@ resource virtualNetworkToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPe
 
 module virtualNetworkHub 'hubnetwork.bicep' = if(virtualNetworkPeeringToHub) {
   scope: az.resourceGroup(hubVirtualNetworkRG)
-  name: 'virtualNetworkPeeringToHub'
+  name: 'hubVirtualNetworkPeering'
   params: {
     remoteVirtualNetworkId: virtualNetwork.id
     hubVirtualNetworkName: hubVirtualNetworkName
