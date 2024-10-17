@@ -97,29 +97,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   }
   kind: 'hub'
 
-  // AI Services connection
-  resource aiServicesConnection 'connections@2024-01-01-preview' = {
-    name: '${aiHubName}-connection-AIServices'
-    properties: {
-      category: 'AIServices'
-      target: aiServicesTarget
-      #disable-next-line BCP225
-      authType: connectionAuthMode 
-      isSharedToAll: true
-      
-      credentials: connectionAuthMode == 'ApiKey'
-        ? {
-            key: '${listKeys(aiServicesId, '2021-10-01')}'
-          }
-        : null
-
-      metadata: {
-        ApiType: 'Azure'
-        ResourceId: aiServicesId
-      }
-    }
-  }
-
+  
   // Azure Search connection
   resource searchServiceConnection 'connections@2024-01-01-preview' = {
     name: '${aiHubName}-connection-Search'
@@ -141,6 +119,29 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       metadata: {
         ApiType: 'Azure'
         ResourceId: searchId
+      }
+    }
+  }
+  
+  // AI Services connection
+  resource aiServicesConnection 'connections@2024-01-01-preview' = {
+    name: '${aiHubName}-connection-AIServices'
+    properties: {
+      category: 'AIServices'
+      target: aiServicesTarget
+      #disable-next-line BCP225
+      authType: connectionAuthMode 
+      isSharedToAll: true
+      
+      credentials: connectionAuthMode == 'ApiKey'
+        ? {
+            key: '${listKeys(aiServicesId, '2021-10-01')}'
+          }
+        : null
+
+      metadata: {
+        ApiType: 'Azure'
+        ResourceId: aiServicesId
       }
     }
   }
