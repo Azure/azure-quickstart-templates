@@ -160,14 +160,11 @@ param computeIntentAdapterNames array
 param managementIntentAdapterNames array
 
 @description('Optional. The name of the storage account used for the Windows Failover Cluster Witness. If not provided, a new storage account will be created.')
-param existingClusterWitnessStorageAccountName string?
-
-param existingKeyVaultName string?
+param clusterWitnessStorageAccountName string = '${deploymentPrefix}${uniqueString(resourceGroup().id)}wit'
 
 param customLocationName string = '${deploymentPrefix}_cl'
 
-var newKeyVaultName = empty(existingKeyVaultName) ? '${deploymentPrefix}kv' : null
-var newClusterWitnessStorageAccountName = empty(existingClusterWitnessStorageAccountName) ? '${deploymentPrefix}witness' : null
+param keyVaultName string = '${deploymentPrefix}${uniqueString(resourceGroup().id)}kv'
 
 var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     name: 'StorageNetwork${index + 1}'
@@ -202,10 +199,8 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
     softDeleteRetentionDays: softDeleteRetentionDays
     logsRetentionInDays: logsRetentionInDays
     arcNodePrincipalIds: [for arcNodeResourceId in arcNodeResourceIds: reference(arcNodeResourceId, '2022-12-27', 'Full').identity.principalId]
-    newKeyVaultName: newKeyVaultName
-    existingKeyVaultName: existingKeyVaultName
-    newClusterWitnessStorageAccountName: newClusterWitnessStorageAccountName
-    existingClusterWitnessStorageAccountName: existingClusterWitnessStorageAccountName
+    keyVaultName: keyVaultName
+    clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
     arbDeploymentSPObjectId: arbDeploymentSPObjectId
     cloudId: cluster.properties.cloudId
     clusterName: clusterName
@@ -224,6 +219,9 @@ resource cluster 'Microsoft.AzureStackHCI/clusters@2024-04-01' = {
 resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-04-01' = if (deploymentMode != 'LocksOnly') {
   name: 'default'
   parent: cluster
+  dependsOn: [
+    ashciPreReqResources
+  ]
   properties: {
     arcNodeResourceIds: arcNodeResourceIds
     deploymentMode: deploymentMode
@@ -253,7 +251,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               name: clusterName
               witnessType: 'Cloud'
               witnessPath: ''
-              cloudAccountName: newClusterWitnessStorageAccountName ?? existingClusterWitnessStorageAccountName
+              cloudAccountName: clusterWitnessStorageAccountName
               azureServiceEndpoint: environment().suffixes.storage
             }
             storage: {
@@ -364,7 +362,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               enableStorageAutoIp: enableStorageAutoIp
             }
             adouPath: domainOUPath
-            secretsLocation: 'https://${newKeyVaultName ?? existingKeyVaultName}${environment().suffixes.keyvaultDns}'
+            secretsLocation: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}'
             optionalServices: {
               customLocation: customLocationName
             }
@@ -372,7 +370,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               for secretName in deploymentSecretEceNames: {
                 secretName: '${clusterName}-${secretName}-${cluster.properties.cloudId}'
                 eceSecretName: secretName
-                secretLocation: 'https://${newKeyVaultName ?? existingKeyVaultName}${environment().suffixes.keyvaultDns}/secrets/${clusterName}-${secretName}-${cluster.properties.cloudId}'
+                secretLocation: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/${clusterName}-${secretName}-${cluster.properties.cloudId}'
               }
             ]
           }
@@ -388,8 +386,8 @@ module lockResources 'modules/ashciLocks.bicep' = if (deploymentMode != 'Validat
   params: {
     clusterName: clusterName
     clusterNodeNames: clusterNodeNames
-    keyVaultName: newKeyVaultName ?? existingKeyVaultName
-    clusterWitnessStorageAccountName: newClusterWitnessStorageAccountName ?? existingClusterWitnessStorageAccountName
+    keyVaultName: keyVaultName
+    clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
     customLocationName: customLocationName
   }
   dependsOn: [
