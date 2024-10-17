@@ -121,10 +121,6 @@ Three node switchless deployments must disable storage auto IP assignment and sp
 | `subnetMask`                   |The subnet mask for deploying a HCI cluster||`255.255.252.0`|
 | `storageConfigurationMode`     | The storage volume configuration mode | Express| `InfraOnly`|
 |`enableStorageAutoIp`           | The enable storage auto IP value for deploying an HCI cluster - this should be true for most deployments except when deploying a three-node switchless cluster, in which case storage IPs should be configured in the `storageNetworks` parameter and this value set to false| true| `false`|
-|`existingClusterWitnessStorageAccountName`| Optional. The name of an existing storage account to use for a cluster witness| false| `myexistingwfcwit01`|
-|`newClusterWitnessStorageAccountName`| Optional. The name of a new storage account to be created for the cluster witness| false |`mynewwfcwit01`|
-|`existingKeyVaultName`| Optional. The name of an existing Key Vault to be used for the cluster. This may already be used by another cluster.| false| `myexistingkv01`|
-|`newKeyVaultName`| Optional. The name of an new Key Vault to be used for the cluster. | false| `mynewkv01`|
 
 ## Deploy using Bicep template
 
