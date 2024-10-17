@@ -1,10 +1,8 @@
 
 param location string
 
-param existingClusterWitnessStorageAccountName string?
-param newClusterWitnessStorageAccountName string?
-param newKeyVaultName string?
-param existingKeyVaultName string?
+param clusterWitnessStorageAccountName string
+param keyVaultName string
 param softDeleteRetentionDays int
 param logsRetentionInDays int
 param tenantId string
@@ -69,25 +67,11 @@ resource diagnosticStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01'
   kind: 'StorageV2'
   properties: {
     supportsHttpsTrafficOnly: true
-    allowBlobPublicAccess: false
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Deny'
-    }
-    publicNetworkAccess: 'Disabled'
-    encryption: {
-      services: {
-        blob: {
-          enabled: true
-        }
-      }
-      keySource: 'Microsoft.Storage'
-    }
   }
 }
 
-resource witnessStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if (newClusterWitnessStorageAccountName != null) {
-  name: newClusterWitnessStorageAccountName
+resource witnessStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: clusterWitnessStorageAccountName
   location: location
   sku: {
     name: storageAccountType
@@ -98,12 +82,8 @@ resource witnessStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = 
   }
 }
 
-resource existingWitnessStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if (existingClusterWitnessStorageAccountName != null) {
-  name: existingClusterWitnessStorageAccountName
-}
-
-resource newKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' = if (newKeyVaultName != null) {
-  name: newKeyVaultName
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: keyVaultName
   location: location
   properties: {
     enabledForDeployment: true
@@ -125,14 +105,10 @@ resource newKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' = if (newKeyVaultNam
   ]
 }
 
-resource existingKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' = if (existingKeyVaultName != null) {
-  name: existingKeyVaultName
-}
-
 resource keyVaultName_Microsoft_Insights_service 'microsoft.insights/diagnosticSettings@2016-09-01' = {
   name: 'service'
   location: location
-  scope: newKeyVault ?? existingKeyVault
+  scope: keyVault
   properties: {
     storageAccountId: diagnosticStorageAccount.id
     logs: [
@@ -181,7 +157,7 @@ resource NodeazureStackHCIDeviceManagementRole 'Microsoft.Authorization/roleAssi
 ]
 
 resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNodePrincipal in arcNodePrincipalIds:{
-  name: guid(hciNodePrincipal, readerRoleID, newKeyVault.id ?? existingKeyVault.id)
+  name: guid(hciNodePrincipal, readerRoleID, keyVault.id)
   properties:  {
     roleDefinitionId: readerRoleID
     principalId: hciNodePrincipal
@@ -192,8 +168,8 @@ resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@20
 ]
 
 resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNodePrincipal in arcNodePrincipalIds:{
-  name: guid(hciNodePrincipal, keyVaultSecretUserRoleID, newKeyVault.id ?? existingKeyVault.id)
-  scope: newKeyVault ?? existingKeyVault
+  name: guid(hciNodePrincipal, keyVaultSecretUserRoleID, keyVault.id)
+  scope: keyVault
   properties:  {
     roleDefinitionId: keyVaultSecretUserRoleID
     principalId: hciNodePrincipal
@@ -203,8 +179,8 @@ resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments
 }
 ]
 
-resource keyVaultName_domainAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(newKeyVaultName)) {
-  parent: existingKeyVault
+resource keyVaultName_domainAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
   name: domainAdminSecretName
   properties: {
     contentType: 'Secret'
@@ -215,8 +191,8 @@ resource keyVaultName_domainAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-
   }
 }
 
-resource keyVaultName_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(newKeyVaultName)) {
-  parent: existingKeyVault
+resource keyVaultName_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
   name: localAdminSecretName
   properties: {
     contentType: 'Secret'
@@ -227,8 +203,8 @@ resource keyVaultName_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
   }
 }
 
-resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(newKeyVaultName)) {
-  parent: existingKeyVault
+resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
   name: arbDeploymentServicePrincipalName
   properties: {
     contentType: 'Secret'
@@ -239,56 +215,8 @@ resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/s
   }
 }
 
-resource keyVaultName_storageWitness 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(newKeyVaultName)) {
-  parent: existingKeyVault
-  name: witnessStorageKeySecret
-  properties: {
-    contentType: 'Secret'
-    value: base64(witnessStorageAccount.listKeys().keys[0].value)
-    attributes: {
-      enabled: true
-    }
-  }
-}
-
-resource keyVaultNew_domainAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(existingKeyVaultName)) {
-  parent: newKeyVault
-  name: domainAdminSecretName
-  properties: {
-    contentType: 'Secret'
-    value: deploymentUserSecretValue
-    attributes: {
-      enabled: true
-    }
-  }
-}
-
-resource keyVaultNew_localAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(existingKeyVaultName)) {
-  parent: newKeyVault
-  name: localAdminSecretName
-  properties: {
-    contentType: 'Secret'
-    value: localAdminSecretValue
-    attributes: {
-      enabled: true
-    }
-  }
-}
-
-resource keyVaultNew_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(existingKeyVaultName)) {
-  parent: newKeyVault
-  name: arbDeploymentServicePrincipalName
-  properties: {
-    contentType: 'Secret'
-    value: arbDeploymentServicePrincipalValue
-    attributes: {
-      enabled: true
-    }
-  }
-}
-
-resource keyVaultNew_storageWitness 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (empty(existingKeyVaultName)) {
-  parent: newKeyVault
+resource keyVaultName_storageWitness 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
   name: witnessStorageKeySecret
   properties: {
     contentType: 'Secret'
