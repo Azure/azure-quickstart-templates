@@ -122,7 +122,7 @@ var hostPoolProperties = {
   relayUDP: 'Default'
   startVMOnConnect: false
   registrationInfo: {
-    expirationTime: dateTimeAdd('2024-10-15 00:00:00Z', 'P2D')
+    expirationTime: dateTimeAdd('2024-10-19 00:00:00Z', 'P2D')
     registrationTokenOperation: 'Update'
   }
 }
