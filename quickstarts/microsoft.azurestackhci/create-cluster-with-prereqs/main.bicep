@@ -159,10 +159,15 @@ param computeIntentAdapterNames array
 @description('An array of Network Adapter names present on every cluster node intended for management traffic')
 param managementIntentAdapterNames array
 
-var clusterWitnessStorageAccountName = '${deploymentPrefix}witness'
+@description('Optional. The name of the storage account used for the Windows Failover Cluster Witness. If not provided, a new storage account will be created.')
+param existingClusterWitnessStorageAccountName string?
 
-var keyVaultName = '${deploymentPrefix}-hcikv'
-var customLocationName = '${deploymentPrefix}_cl'
+param existingKeyVaultName string?
+
+param customLocationName string = '${deploymentPrefix}_cl'
+
+var newKeyVaultName = empty(existingKeyVaultName) ? '${deploymentPrefix}kv' : null
+var newClusterWitnessStorageAccountName = empty(existingClusterWitnessStorageAccountName) ? '${deploymentPrefix}witness' : null
 
 var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     name: 'StorageNetwork${index + 1}'
@@ -170,6 +175,13 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     vlanId: storageAdapter.vlan
     storageAdapterIPInfo: storageAdapter.?storageAdapterIPInfo
   }
+]
+
+var deploymentSecretEceNames = [
+  'LocalAdminCredential'
+  'AzureStackLCMUserCredential'
+  'DefaultARBApplication'
+  'WitnessStorageKey'
 ]
 
 var arcNodeResourceIds = [for (nodeName, index) in clusterNodeNames: resourceId('Microsoft.HybridCompute/machines', nodeName)]
@@ -189,26 +201,27 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
     hciResourceProviderObjectId: hciResourceProviderObjectId
     softDeleteRetentionDays: softDeleteRetentionDays
     logsRetentionInDays: logsRetentionInDays
-    arcNodeResourceIds: arcNodeResourceIds
-    keyVaultName: keyVaultName
-    clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
+    arcNodePrincipalIds: [for arcNodeResourceId in arcNodeResourceIds: reference(arcNodeResourceId, '2022-12-27', 'Full').identity.principalId]
+    newKeyVaultName: newKeyVaultName
+    existingKeyVaultName: existingKeyVaultName
+    newClusterWitnessStorageAccountName: newClusterWitnessStorageAccountName
+    existingClusterWitnessStorageAccountName: existingClusterWitnessStorageAccountName
     arbDeploymentSPObjectId: arbDeploymentSPObjectId
+    cloudId: cluster.properties.cloudId
+    clusterName: clusterName
   }
 }
 
-resource cluster 'Microsoft.AzureStackHCI/clusters@2024-02-15-preview' = if (deploymentMode == 'Validate') {
+resource cluster 'Microsoft.AzureStackHCI/clusters@2024-04-01' = {
   name: clusterName
   identity: {
     type: 'SystemAssigned'
   }
   location: location
   properties: {}
-  dependsOn: [
-    ashciPreReqResources
-  ]
 }
 
-resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-02-15-preview' = if (deploymentMode != 'LocksOnly') {
+resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-04-01' = if (deploymentMode != 'LocksOnly') {
   name: 'default'
   parent: cluster
   properties: {
@@ -240,7 +253,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               name: clusterName
               witnessType: 'Cloud'
               witnessPath: ''
-              cloudAccountName: clusterWitnessStorageAccountName
+              cloudAccountName: newClusterWitnessStorageAccountName ?? existingClusterWitnessStorageAccountName
               azureServiceEndpoint: environment().suffixes.storage
             }
             storage: {
@@ -351,10 +364,17 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               enableStorageAutoIp: enableStorageAutoIp
             }
             adouPath: domainOUPath
-            secretsLocation: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}'
+            secretsLocation: 'https://${newKeyVaultName ?? existingKeyVaultName}${environment().suffixes.keyvaultDns}'
             optionalServices: {
               customLocation: customLocationName
             }
+            secrets: [
+              for secretName in deploymentSecretEceNames: {
+                secretName: '${clusterName}-${secretName}-${cluster.properties.cloudId}'
+                eceSecretName: secretName
+                secretLocation: 'https://${newKeyVaultName ?? existingKeyVaultName}${environment().suffixes.keyvaultDns}/secrets/${clusterName}-${secretName}-${cluster.properties.cloudId}'
+              }
+            ]
           }
         }
       ]
@@ -368,8 +388,8 @@ module lockResources 'modules/ashciLocks.bicep' = if (deploymentMode != 'Validat
   params: {
     clusterName: clusterName
     clusterNodeNames: clusterNodeNames
-    keyVaultName: keyVaultName
-    clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
+    keyVaultName: newKeyVaultName ?? existingKeyVaultName
+    clusterWitnessStorageAccountName: newClusterWitnessStorageAccountName ?? existingClusterWitnessStorageAccountName
     customLocationName: customLocationName
   }
   dependsOn: [
