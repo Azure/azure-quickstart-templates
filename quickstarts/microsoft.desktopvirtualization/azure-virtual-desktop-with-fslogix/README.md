@@ -31,7 +31,7 @@ languages:
 
 This template allows you to create Azure Virtual Desktop resources such as host pool, application group, workspace, FSLogix storage account, file share, recovery service vault for file share backup a test session host, its extensions with Microsoft Entra ID join pr Active directory domain join. This is tested with a new azure azure Vnet/subnet.
 
-[Azure Virtual Desktop](https://learn.microsoft.com/en-us/azure/virtual-desktop/overview)
+[**Azure Virtual Desktop**](https://learn.microsoft.com/en-us/azure/virtual-desktop/overview)
 
 ## Description
 
@@ -43,17 +43,17 @@ Inside your Active directory domain controller server, run the powershell script
 
 > [!NOTE] Ignore this step if you will be leveraging on the existing OUs in your AD DS.
 
-### Deployment steps
-# Steps
-1. Run az cli command from the root of the microsoft.desktopvirtualization\azure-virtual-desktop-with-fslogix directory.
+## Deployment steps
+### Steps
+1. Run az cli command from the root of the **microsoft.desktopvirtualization\azure-virtual-desktop-with-fslogix directory**.
 2. Modify the '**azuredeploy.parameters.json**' as needed and then modify '**// Required parameters**' inside the '**main.bicep**' file
-3. Run az command to test deployment of the required resources (az deployment group create --resource-group '<deployment resource group name>' --template-file .\main.bicep --parameters .\azuredeploy.parameters.json --what-if)
-4. If comfortable with the outcome of step 2, run az command to deploy the required resources (az deployment group create --resource-group '<deployment resource group name>' --template-file .\main.bicep --parameters .\azuredeploy.parameters.json)
+3. Run az command to test deployment of the required resources (**az deployment group create --resource-group 'deployment resource group name' --template-file .\main.bicep --parameters .\azuredeploy.parameters.json --what-if**)
+4. If comfortable with the outcome of step 2, run az command to deploy the required resources (**az deployment group create --resource-group 'deployment resource group name' --template-file .\main.bicep --parameters .\azuredeploy.parameters.json**)
 
-### Post deployment configuration
+## Post deployment configuration
 
-# Steps
-1. Install AZ PowerShell module inside your domain controller server. Click the link for the installation steps. [Install Azure PowerShell on Windows](https://learn.microsoft.com/en-us/powershell/azure/install-azps-windows?view=azps-12.4.0&tabs=windowspowershell&pivots=windows-psgallery)
+### Steps
+1. Install AZ PowerShell module inside your domain controller server. Click the link for the installation steps. [**Install Azure PowerShell on Windows**](https://learn.microsoft.com/en-us/powershell/azure/install-azps-windows?view=azps-12.4.0&tabs=windowspowershell&pivots=windows-psgallery)
 2. Once deployment is completed, run the '**postconfiguration.ps1**' inside your domain controller server. Please follow the instruction in the file and provide the appropriate paramters before the script is executed.
 3. Please restart all the virtual machine session hosts for FSLogix to take effect with profile container.
 
