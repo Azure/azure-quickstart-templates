@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "12778535361576102747"
+      "templateHash": "6658381916954826830"
     }
   },
   "parameters": {
@@ -26,12 +26,6 @@
       "type": "string",
       "metadata": {
         "description": "Virtual network resource name."
-      }
-    },
-    "virtualNetworkPeeringToHub": {
-      "type": "bool",
-      "metadata": {
-        "description": "Peer Virtual network with Hub network"
       }
     },
     "subnetName1": {
@@ -83,13 +77,6 @@
       "defaultValue": "10.100.1.0/24",
       "metadata": {
         "description": "Virtual network resource Subnet 2 Address Prefix."
-      }
-    },
-    "hubVirtualNetwork": {
-      "type": "object",
-      "defaultValue": "[if(parameters('virtualNetworkPeeringToHub'), createObject('virtualNetworkRG', null(), 'virtualNetworkName', ''), createObject())]",
-      "metadata": {
-        "description": "Hub Virtual network object"
       }
     },
     "numberOfSessionHost": {
@@ -281,7 +268,7 @@
       "relayUDP": "Default",
       "startVMOnConnect": false,
       "registrationInfo": {
-        "expirationTime": "[dateTimeAdd('2024-10-15 00:00:00Z', 'P2D')]",
+        "expirationTime": "[dateTimeAdd('2024-10-19 00:00:00Z', 'P2D')]",
         "registrationTokenOperation": "Update"
       }
     },
@@ -316,11 +303,6 @@
           "virtualNetworkAddressSpace": {
             "value": "[parameters('virtualNetworkAddressSpace')]"
           },
-          "virtualNetworkPeeringToHub": {
-            "value": "[parameters('virtualNetworkPeeringToHub')]"
-          },
-          "hubVirtualNetworkRG": "[if(equals(parameters('hubVirtualNetwork').virtualNetworkRG, ''), createObject('value', null()), createObject('value', parameters('hubVirtualNetwork').virtualNetworkRG))]",
-          "hubVirtualNetworkName": "[if(equals(parameters('hubVirtualNetwork').virtualNetworkName, ''), createObject('value', null()), createObject('value', parameters('hubVirtualNetwork').virtualNetworkName))]",
           "subnetName1": {
             "value": "[parameters('subnetName1')]"
           },
@@ -341,69 +323,30 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "18423309091215069086"
+              "templateHash": "14165614464263531954"
             }
           },
           "parameters": {
             "location": {
-              "type": "string",
-              "metadata": {
-                "description": "Location for all resources."
-              }
+              "type": "string"
             },
             "virtualNetworkName": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network resource name."
-              }
+              "type": "string"
             },
             "virtualNetworkAddressSpace": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network resource Address Space."
-              }
-            },
-            "virtualNetworkPeeringToHub": {
-              "type": "bool",
-              "metadata": {
-                "description": "Peer Virtual network with Hub network"
-              }
-            },
-            "hubVirtualNetworkRG": {
-              "type": "string",
-              "metadata": {
-                "description": "Hub Virtual network RG"
-              }
-            },
-            "hubVirtualNetworkName": {
-              "type": "string",
-              "metadata": {
-                "description": "Hub Virtual network name"
-              }
+              "type": "string"
             },
             "subnetName1": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network resource Subnet 1 name."
-              }
+              "type": "string"
             },
             "subnetName2": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network resource Subnet 2 name."
-              }
+              "type": "string"
             },
             "subnetAddressPrefix1": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network resource Subnet 1 Address Prefix."
-              }
+              "type": "string"
             },
             "subnetAddressPrefix2": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network resource Subnet 2 Address Prefix."
-              }
+              "type": "string"
             }
           },
           "resources": [
@@ -418,26 +361,8 @@
                     "[parameters('virtualNetworkAddressSpace')]"
                   ]
                 },
-                "dhcpOptions": "[if(parameters('virtualNetworkPeeringToHub'), createObject('dnsServers', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('hubVirtualNetworkRG')), 'Microsoft.Network/virtualNetworks', parameters('hubVirtualNetworkName')), '2024-01-01').dhcpOptions.dnsServers), createObject())]"
+                "dhcpOptions": {}
               }
-            },
-            {
-              "condition": "[parameters('virtualNetworkPeeringToHub')]",
-              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-              "apiVersion": "2023-11-01",
-              "name": "[format('{0}/{1}', parameters('virtualNetworkName'), format('{0}-To-{1}', parameters('virtualNetworkName'), parameters('hubVirtualNetworkName')))]",
-              "properties": {
-                "allowForwardedTraffic": true,
-                "allowGatewayTransit": false,
-                "allowVirtualNetworkAccess": true,
-                "useRemoteGateways": false,
-                "remoteVirtualNetwork": {
-                  "id": "[resourceId(parameters('hubVirtualNetworkRG'), 'Microsoft.Network/virtualNetworks', parameters('hubVirtualNetworkName'))]"
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-              ]
             },
             {
               "type": "Microsoft.Network/virtualNetworks/subnets",
@@ -448,8 +373,7 @@
                 "privateEndpointNetworkPolicies": "Enabled"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-                "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('hubVirtualNetworkRG')), 'Microsoft.Resources/deployments', 'hubVirtualNetworkPeering')]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
               ]
             },
             {
@@ -459,72 +383,6 @@
               "properties": {
                 "addressPrefix": "[parameters('subnetAddressPrefix2')]",
                 "privateEndpointNetworkPolicies": "Enabled"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-                "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('hubVirtualNetworkRG')), 'Microsoft.Resources/deployments', 'hubVirtualNetworkPeering')]"
-              ]
-            },
-            {
-              "condition": "[parameters('virtualNetworkPeeringToHub')]",
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
-              "name": "hubVirtualNetworkPeering",
-              "resourceGroup": "[parameters('hubVirtualNetworkRG')]",
-              "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "remoteVirtualNetworkId": {
-                    "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-                  },
-                  "hubVirtualNetworkName": {
-                    "value": "[parameters('hubVirtualNetworkName')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.29.47.4906",
-                      "templateHash": "16406440668479612109"
-                    }
-                  },
-                  "parameters": {
-                    "remoteVirtualNetworkId": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Remote Virtual network resource Id."
-                      }
-                    },
-                    "hubVirtualNetworkName": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Hub Virtual network name"
-                      }
-                    }
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-                      "apiVersion": "2023-11-01",
-                      "name": "[format('{0}/{1}', parameters('hubVirtualNetworkName'), format('{0}-To-{1}', parameters('hubVirtualNetworkName'), split(parameters('remoteVirtualNetworkId'), '/')[8]))]",
-                      "properties": {
-                        "allowForwardedTraffic": true,
-                        "allowGatewayTransit": false,
-                        "allowVirtualNetworkAccess": true,
-                        "useRemoteGateways": false,
-                        "remoteVirtualNetwork": {
-                          "id": "[parameters('remoteVirtualNetworkId')]"
-                        }
-                      }
-                    }
-                  ]
-                }
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
@@ -606,88 +464,48 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "2800455163204163103"
+              "templateHash": "14621697707468401079"
             }
           },
           "parameters": {
             "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Location for all resources."
-              }
+              "type": "string"
             },
             "storageAccountName": {
-              "type": "string",
-              "metadata": {
-                "description": "Storage account name"
-              }
+              "type": "string"
             },
             "adminRoleDefinitionId": {
-              "type": "string",
-              "metadata": {
-                "description": "Storage account role assignment for file share admin access"
-              }
+              "type": "string"
             },
             "userRoleDefinitionId": {
-              "type": "string",
-              "metadata": {
-                "description": "Storage account role assignment for file share user access"
-              }
+              "type": "string"
             },
             "adminGroupObjectId": {
-              "type": "string",
-              "metadata": {
-                "description": "File share admin group object id"
-              }
+              "type": "string"
             },
             "userGroupObjectId": {
-              "type": "string",
-              "metadata": {
-                "description": "File share user group object id"
-              }
+              "type": "string"
             },
             "fileShareName": {
-              "type": "string",
-              "metadata": {
-                "description": "Azure storage account share name"
-              }
+              "type": "string"
             },
             "fileShareQuota": {
-              "type": "int",
-              "metadata": {
-                "description": "Azure storage account share quota"
-              }
+              "type": "int"
             },
             "filePrivateDnsZoneName": {
-              "type": "string",
-              "metadata": {
-                "description": "Storage account private dns zone"
-              }
+              "type": "string"
             },
             "virtualNetworkId": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network Id for private dns zone vnet link"
-              }
+              "type": "string"
             },
             "subnetId": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network subnet Id for private endpoint"
-              }
+              "type": "string"
             },
             "filePrivateEndpointGroupName": {
-              "type": "string",
-              "metadata": {
-                "description": "Azure storage file private endpoint groupId"
-              }
+              "type": "string"
             },
             "recoveryServiceVaultName": {
-              "type": "string",
-              "metadata": {
-                "description": "Azure recovery service vault name"
-              }
+              "type": "string"
             }
           },
           "resources": [
@@ -870,29 +688,19 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.29.47.4906",
-                      "templateHash": "17567831619494479315"
+                      "templateHash": "9872392196151631802"
                     }
                   },
                   "parameters": {
                     "location": {
-                      "type": "string",
-                      "defaultValue": "[resourceGroup().location]",
-                      "metadata": {
-                        "description": "Location for all resources."
-                      }
+                      "type": "string"
                     },
                     "recoveryServiceVaultName": {
-                      "type": "string",
-                      "metadata": {
-                        "description": "Recovery service vault name"
-                      }
+                      "type": "string"
                     },
                     "backupPolicyName": {
                       "type": "string",
-                      "defaultValue": "[format('DailyPolicy-{0}', uniqueString(resourceGroup().id))]",
-                      "metadata": {
-                        "description": "Recovery service vault backup policy name"
-                      }
+                      "defaultValue": "[format('DailyPolicy-{0}', uniqueString(resourceGroup().id))]"
                     },
                     "storageAccountId": {
                       "type": "string"
@@ -902,10 +710,7 @@
                     },
                     "timeZone": {
                       "type": "string",
-                      "defaultValue": "Central Standard Time",
-                      "metadata": {
-                        "description": "Backup policy time zone"
-                      }
+                      "defaultValue": "Central Standard Time"
                     }
                   },
                   "resources": [
@@ -1064,64 +869,36 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "17560319205698069198"
+              "templateHash": "16917999286300865132"
             }
           },
           "parameters": {
             "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Location for all resources."
-              }
+              "type": "string"
             },
             "hostPoolName": {
-              "type": "string",
-              "metadata": {
-                "description": "Host pool resource name"
-              }
+              "type": "string"
             },
             "applicationGroupName": {
-              "type": "string",
-              "metadata": {
-                "description": "Application groups resource name"
-              }
+              "type": "string"
             },
             "workspaceName": {
-              "type": "string",
-              "metadata": {
-                "description": "Workspace resource name"
-              }
+              "type": "string"
             },
             "hostPoolProperties": {
-              "type": "object",
-              "metadata": {
-                "description": "Host pool resource property configuration"
-              }
+              "type": "object"
             },
             "applicationGroupProperties": {
-              "type": "object",
-              "metadata": {
-                "description": "Application group resource property configuration"
-              }
+              "type": "object"
             },
             "workspaceProperties": {
-              "type": "object",
-              "metadata": {
-                "description": "Workspace resource property configuration"
-              }
+              "type": "object"
             },
             "avdRoleDefinitionId": {
-              "type": "string",
-              "metadata": {
-                "description": "Azure AVD Application group role assignment"
-              }
+              "type": "string"
             },
             "GroupObjectIds": {
-              "type": "array",
-              "metadata": {
-                "description": "Group object ids"
-              }
+              "type": "array"
             }
           },
           "resources": [
@@ -1199,7 +976,7 @@
             },
             "token": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))).registrationInfo.token]"
+              "value": "[listRegistrationTokens(resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName')), '2024-04-08-preview').value[0].token]"
             }
           }
         }
@@ -1269,102 +1046,59 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "14219378597871442669"
+              "templateHash": "13900215645124092148"
             }
           },
           "parameters": {
             "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Location for all resources."
-              }
+              "type": "string"
             },
             "fslogixEnabled": {
-              "type": "bool",
-              "metadata": {
-                "description": "Is the AVD FSLogix enabled or not"
-              }
+              "type": "bool"
             },
             "subnetId": {
-              "type": "string",
-              "metadata": {
-                "description": "Virtual network resource Subnet Id."
-              }
+              "type": "string"
             },
             "numberOfSessionHost": {
               "type": "int",
-              "defaultValue": 2,
-              "metadata": {
-                "description": "Number of session host to create"
-              }
+              "defaultValue": 2
             },
             "virtualMachine": {
-              "type": "object",
-              "metadata": {
-                "description": "Virtual machine resource name"
-              }
+              "type": "object"
             },
             "adminUsername": {
-              "type": "securestring",
-              "metadata": {
-                "description": "Virtual machine resource admin username"
-              }
+              "type": "securestring"
             },
             "adminPassword": {
-              "type": "securestring",
-              "metadata": {
-                "description": "Virtual machine resource admin password"
-              }
+              "type": "securestring"
             },
             "hostPoolName": {
-              "type": "string",
-              "metadata": {
-                "description": "Host pool resource name"
-              }
+              "type": "string"
             },
             "activeDirectoryAuthenticationEnabled": {
-              "type": "bool",
-              "metadata": {
-                "description": "Enable Active directory authentication"
-              }
+              "type": "bool"
             },
             "DomainName": {
               "type": "string",
-              "nullable": true,
-              "metadata": {
-                "description": "Domain name to join"
-              }
+              "nullable": true
             },
             "DomainJoinOUPath": {
               "type": "string",
-              "nullable": true,
-              "metadata": {
-                "description": "OUPath for the domain join"
-              }
+              "nullable": true
             },
             "ADAdministratorAccountUsername": {
               "type": "string",
-              "nullable": true,
-              "metadata": {
-                "description": "The username for the domain admin."
-              }
+              "nullable": true
             },
             "ADAdministratorAccountPassword": {
               "type": "securestring",
-              "nullable": true,
-              "metadata": {
-                "description": "The password that corresponds to the existing domain username."
-              }
+              "nullable": true
             },
             "artifactsLocation": {
               "type": "string"
             },
             "hostPoolRegistrationInfoToken": {
-              "type": "string",
-              "metadata": {
-                "description": "Host pool registration token"
-              }
+              "type": "string"
             }
           },
           "resources": {

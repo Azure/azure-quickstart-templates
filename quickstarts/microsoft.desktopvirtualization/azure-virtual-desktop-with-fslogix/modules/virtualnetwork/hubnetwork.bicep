@@ -1,6 +1,4 @@
-@description('Remote Virtual network resource Id.')
 param remoteVirtualNetworkId string
-@description('Hub Virtual network name')
 param hubVirtualNetworkName string
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = {

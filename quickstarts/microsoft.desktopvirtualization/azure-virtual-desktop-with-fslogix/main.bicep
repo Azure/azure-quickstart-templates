@@ -7,8 +7,8 @@ param location string = resourceGroup().location
 param fslogixEnabled bool
 @description('Virtual network resource name.')
 param virtualNetworkName string
-@description('Peer Virtual network with Hub network')
-param virtualNetworkPeeringToHub bool
+//@description('Peer Virtual network with Hub network')
+//param virtualNetworkPeeringToHub bool
 @description('Virtual network resource Subnet 1 name.')
 param subnetName1 string
 @description('Virtual network resource Subnet 2 name.')
@@ -30,11 +30,11 @@ param virtualNetworkAddressSpace string = '10.100.0.0/16'
 param subnetAddressPrefix1 string = '10.100.0.0/24'
 @description('Virtual network resource Subnet 2 Address Prefix.')
 param subnetAddressPrefix2 string = '10.100.1.0/24'
-@description('Hub Virtual network object')
-param hubVirtualNetwork object = {
-  virtualNetworkRG: 'nothing'
-  virtualNetworkName: 'nothing'
-}
+//@description('Hub Virtual network object')
+//param hubVirtualNetwork object = {
+//  virtualNetworkRG: 'nothing'
+//  virtualNetworkName: 'nothing'
+//}
 @description('Number of session host to create')
 param numberOfSessionHost int = 2
 @secure()
@@ -145,9 +145,9 @@ module network 'modules/virtualnetwork/main.bicep' = {
     location: location
     virtualNetworkName: virtualNetworkName
     virtualNetworkAddressSpace: virtualNetworkAddressSpace
-    virtualNetworkPeeringToHub: virtualNetworkPeeringToHub
-    hubVirtualNetworkRG: hubVirtualNetwork.virtualNetworkRG
-    hubVirtualNetworkName: hubVirtualNetwork.virtualNetworkName
+    //virtualNetworkPeeringToHub: virtualNetworkPeeringToHub
+    //hubVirtualNetworkRG: hubVirtualNetwork.virtualNetworkRG
+    //hubVirtualNetworkName: hubVirtualNetwork.virtualNetworkName
     subnetName1: subnetName1
     subnetAddressPrefix1: subnetAddressPrefix1
     subnetName2: subnetName2

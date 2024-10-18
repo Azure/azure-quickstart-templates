@@ -1,29 +1,19 @@
-@description('Location for all resources.')
 param location string
 
-@description('Virtual network resource name.')
 param virtualNetworkName string
-@description('Virtual network resource Address Space.')
 param virtualNetworkAddressSpace string
-@description('Peer Virtual network with Hub network')
-param virtualNetworkPeeringToHub bool
-@description('Hub Virtual network RG')
-param hubVirtualNetworkRG string
-@description('Hub Virtual network name')
-param hubVirtualNetworkName string
-@description('Virtual network resource Subnet 1 name.')
+//param virtualNetworkPeeringToHub bool
+//param hubVirtualNetworkRG string
+//param hubVirtualNetworkName string
 param subnetName1 string
-@description('Virtual network resource Subnet 2 name.')
 param subnetName2 string
-@description('Virtual network resource Subnet 1 Address Prefix.')
 param subnetAddressPrefix1 string
-@description('Virtual network resource Subnet 2 Address Prefix.')
 param subnetAddressPrefix2 string
 
-resource hubVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = if(virtualNetworkPeeringToHub) {
+/*resource hubVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = if(virtualNetworkPeeringToHub) {
   //Set above scope to scope: az.resourceGroup(hubVirtualNetworkRG) if the hub network is in another resource group
   name: hubVirtualNetworkName
-}
+}*/
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: virtualNetworkName
@@ -32,13 +22,14 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = {
     addressSpace: {
       addressPrefixes: [virtualNetworkAddressSpace]
     }
-    dhcpOptions: virtualNetworkPeeringToHub ? {
-      dnsServers: hubVirtualNetwork.properties.dhcpOptions.dnsServers
-    } : {}
+    dhcpOptions: {}
+    //virtualNetworkPeeringToHub ? {
+    //  dnsServers: hubVirtualNetwork.properties.dhcpOptions.dnsServers
+    //} : {}
   }
 }
 
-resource virtualNetworkToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-11-01' = if(virtualNetworkPeeringToHub) {
+/*resource virtualNetworkToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-11-01' = if(virtualNetworkPeeringToHub) {
   parent: virtualNetwork
   name: '${virtualNetwork.name}-To-${hubVirtualNetworkName}'
   properties: {
@@ -59,7 +50,7 @@ module virtualNetworkHub 'hubnetwork.bicep' = if(virtualNetworkPeeringToHub) {
     remoteVirtualNetworkId: virtualNetwork.id
     hubVirtualNetworkName: hubVirtualNetworkName
   }
-}
+}*/
 
 resource subnet1 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
   parent: virtualNetwork
@@ -69,7 +60,7 @@ resource subnet1 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
     privateEndpointNetworkPolicies: 'Enabled'
   }
   dependsOn: [
-    virtualNetworkHub
+    //virtualNetworkHub
   ]
 }
 
@@ -81,7 +72,7 @@ resource subnet2 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
     privateEndpointNetworkPolicies: 'Enabled'
   }
   dependsOn: [
-    virtualNetworkHub
+    //virtualNetworkHub
   ]
 }
 
