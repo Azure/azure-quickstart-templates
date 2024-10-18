@@ -1,28 +1,18 @@
-@description('Location for all resources.')
-param location string = resourceGroup().location
+param location string
 
-@description('Host pool resource name')
 param hostPoolName string
-@description('Application groups resource name')
 param applicationGroupName string
-@description('Workspace resource name')
 param workspaceName string
-@description('Host pool resource property configuration')
 param hostPoolProperties object
-@description('Application group resource property configuration')
 param applicationGroupProperties object
-@description('Workspace resource property configuration')
 param workspaceProperties object
-@description('Azure AVD Application group role assignment')
 param avdRoleDefinitionId string
-@description('Group object ids')
 param GroupObjectIds array
 
 resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2024-04-08-preview' = {
   location: location
   name: hostPoolName
   properties: {
-    
     friendlyName: hostPoolProperties.friendlyName
     description: hostPoolProperties.description
     hostPoolType: hostPoolProperties.hostPoolType
@@ -69,5 +59,6 @@ resource roleAssignmentAVDUser 'Microsoft.Authorization/roleAssignments@2022-04-
 }]
 
 
+var registrationToken = hostPool.listRegistrationTokens().value[0].token
 output hostPoolId string = hostPool.id
-output token string = reference(hostPool.id).registrationInfo.token 
+output token string = registrationToken

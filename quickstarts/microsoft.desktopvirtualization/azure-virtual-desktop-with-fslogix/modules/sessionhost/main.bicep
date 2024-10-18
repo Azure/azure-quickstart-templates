@@ -1,37 +1,21 @@
-@description('Location for all resources.')
-param location string = resourceGroup().location
-
-@description('Is the AVD FSLogix enabled or not')
+param location string
 param fslogixEnabled bool
 
-@description('Virtual network resource Subnet Id.')
 param subnetId string
-@description('Number of session host to create')
 param numberOfSessionHost int = 2
-@description('Virtual machine resource name')
 param virtualMachine object
 @secure()
-@description('Virtual machine resource admin username')
 param adminUsername string
 @secure()
-@description('Virtual machine resource admin password')
 param adminPassword string
-@description('Host pool resource name')
 param hostPoolName string
-@description('Enable Active directory authentication')
 param activeDirectoryAuthenticationEnabled bool
-@description('Domain name to join')
 param DomainName string?
-@description('OUPath for the domain join')
 param DomainJoinOUPath string?
-@description('The username for the domain admin.')
 param ADAdministratorAccountUsername string?
-@description('The password that corresponds to the existing domain username.')
 @secure()
 param ADAdministratorAccountPassword string?
-
 param artifactsLocation string
-@description('Host pool registration token')
 param hostPoolRegistrationInfoToken string
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2024-01-01' = [for i in range(0, numberOfSessionHost) : {

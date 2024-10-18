@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Creates AVD with Microsoft Entra ID Join
+# Create AVD with FSLogix and AD DS Join
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.desktopvirtualization/azure-virtual-desktop-with-fslogix/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.desktopvirtualization/azure-virtual-desktop-with-fslogix/PublicDeployment.svg)

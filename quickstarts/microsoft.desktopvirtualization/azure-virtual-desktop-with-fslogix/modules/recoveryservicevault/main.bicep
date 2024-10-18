@@ -1,15 +1,9 @@
-@description('Location for all resources.')
-param location string = resourceGroup().location
+param location string
 
-@description('Recovery service vault name')
 param recoveryServiceVaultName string
-@description('Recovery service vault backup policy name')
 param backupPolicyName string = 'DailyPolicy-${uniqueString(resourceGroup().id)}'
-
 param storageAccountId string
 param fileShareName string
-
-@description('Backup policy time zone')
 param timeZone string = 'Central Standard Time'
 
 

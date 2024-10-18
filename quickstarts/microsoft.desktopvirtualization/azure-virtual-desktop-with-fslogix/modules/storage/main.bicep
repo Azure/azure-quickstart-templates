@@ -1,29 +1,16 @@
-@description('Location for all resources.')
-param location string = resourceGroup().location
+param location string
 
-@description('Storage account name')
 param storageAccountName string
-@description('Storage account role assignment for file share admin access')
 param adminRoleDefinitionId string
-@description('Storage account role assignment for file share user access')
 param userRoleDefinitionId string
-@description('File share admin group object id')
 param adminGroupObjectId string
-@description('File share user group object id')
 param userGroupObjectId string
-@description('Azure storage account share name')
 param fileShareName string
-@description('Azure storage account share quota')
 param fileShareQuota int
-@description('Storage account private dns zone')
 param filePrivateDnsZoneName string
-@description('Virtual network Id for private dns zone vnet link')
 param virtualNetworkId string
-@description('Virtual network subnet Id for private endpoint')
 param subnetId string
-@description('Azure storage file private endpoint groupId')
 param filePrivateEndpointGroupName string
-@description('Azure recovery service vault name')
 param recoveryServiceVaultName string
 
 
