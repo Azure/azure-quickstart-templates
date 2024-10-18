@@ -1,5 +1,5 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Studio with with public internet access enabled, Microsoft-managed keys for encryption, service-side encryption, and Microsoft-managed identity configuration for the AI resource.
+description: This set of templates demonstrates how to set up Azure AI Studio with the basic setup, meaning with public internet access enabled, Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure AI Studio customer-managed keys encryption with service-side data storage (preview)
+# Azure AI Studio basic setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk-service-side-encryption/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk-service-side-encryption/PublicDeployment.svg)
