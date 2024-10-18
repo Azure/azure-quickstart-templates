@@ -22,7 +22,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = {
     addressSpace: {
       addressPrefixes: [virtualNetworkAddressSpace]
     }
-    dhcpOptions: {}
+    //dhcpOptions: {}
     //virtualNetworkPeeringToHub ? {
     //  dnsServers: hubVirtualNetwork.properties.dhcpOptions.dnsServers
     //} : {}

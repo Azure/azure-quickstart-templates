@@ -9,6 +9,23 @@ param workspaceProperties object
 param avdRoleDefinitionId string
 param GroupObjectIds array
 
+param fslogixEnabled bool
+
+param subnetId string
+param numberOfSessionHost int = 2
+param virtualMachine object
+@secure()
+param adminUsername string
+@secure()
+param adminPassword string
+param activeDirectoryAuthenticationEnabled bool
+param DomainName string?
+param DomainJoinOUPath string?
+param ADAdministratorAccountUsername string?
+@secure()
+param ADAdministratorAccountPassword string?
+param artifactsLocation string
+
 resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2024-04-08-preview' = {
   location: location
   name: hostPoolName
@@ -58,7 +75,25 @@ resource roleAssignmentAVDUser 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }]
 
+module sessionHost '../sessionhost/main.bicep' = {
+  name: 'sessionHostComponent'
+  params: {
+    location: location
+    subnetId: subnetId
+    numberOfSessionHost: numberOfSessionHost
+    virtualMachine: virtualMachine
+    adminUsername: adminUsername
+    adminPassword: adminPassword
+    hostPoolName: hostPoolName
+    activeDirectoryAuthenticationEnabled: activeDirectoryAuthenticationEnabled
+    fslogixEnabled: fslogixEnabled
+    DomainName: DomainName
+    DomainJoinOUPath: DomainJoinOUPath
+    ADAdministratorAccountUsername: ADAdministratorAccountUsername
+    ADAdministratorAccountPassword: ADAdministratorAccountPassword
+    artifactsLocation: artifactsLocation
+    hostPoolRegistrationInfoToken: hostPool.listRegistrationTokens().value[0].token
+  }
+}
 
-var registrationToken = hostPool.listRegistrationTokens().value[0].token
 output hostPoolId string = hostPool.id
-output token string = registrationToken
