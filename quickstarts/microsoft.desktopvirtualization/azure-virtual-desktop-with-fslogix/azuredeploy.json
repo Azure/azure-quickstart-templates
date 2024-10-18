@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "6658381916954826830"
+      "templateHash": "4995301365325655707"
     }
   },
   "parameters": {
@@ -234,22 +234,6 @@
     }
   },
   "variables": {
-    "virtualMachine": {
-      "name": "azurevm",
-      "licenseType": "Windows_Client",
-      "vmSize": "[parameters('vmSize')]",
-      "osDisk": {
-        "createOption": "FromImage",
-        "storageAccountType": "Premium_LRS",
-        "deleteOption": "Delete"
-      },
-      "imageReference": {
-        "publisher": "microsoftwindowsdesktop",
-        "offer": "office-365",
-        "sku": "win11-23h2-avd-m365",
-        "version": "latest"
-      }
-    },
     "hostPoolProperties": {
       "friendlyName": "[parameters('hostPoolName')]",
       "description": "Azure Virtual Desktop host pool",
@@ -281,6 +265,22 @@
       "description": "Azure Virtual Desktop workspace",
       "friendlyName": "[parameters('workspaceName')]",
       "publicNetworkAccess": "Enabled"
+    },
+    "virtualMachine": {
+      "name": "azurevm",
+      "licenseType": "Windows_Client",
+      "vmSize": "[parameters('vmSize')]",
+      "osDisk": {
+        "createOption": "FromImage",
+        "storageAccountType": "Premium_LRS",
+        "deleteOption": "Delete"
+      },
+      "imageReference": {
+        "publisher": "microsoftwindowsdesktop",
+        "offer": "office-365",
+        "sku": "win11-23h2-avd-m365",
+        "version": "latest"
+      }
     }
   },
   "resources": [
@@ -323,7 +323,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "14165614464263531954"
+              "templateHash": "108222585434514614"
             }
           },
           "parameters": {
@@ -360,8 +360,7 @@
                   "addressPrefixes": [
                     "[parameters('virtualNetworkAddressSpace')]"
                   ]
-                },
-                "dhcpOptions": {}
+                }
               }
             },
             {
@@ -860,16 +859,53 @@
           },
           "GroupObjectIds": {
             "value": "[parameters('GroupObjectIds')]"
+          },
+          "fslogixEnabled": {
+            "value": "[parameters('fslogixEnabled')]"
+          },
+          "subnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'networkComponent'), '2022-09-01').outputs.subnetId1.value]"
+          },
+          "numberOfSessionHost": {
+            "value": "[parameters('numberOfSessionHost')]"
+          },
+          "virtualMachine": {
+            "value": "[variables('virtualMachine')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('vmAdminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('vmAdminPassword')]"
+          },
+          "activeDirectoryAuthenticationEnabled": {
+            "value": "[parameters('activeDirectoryAuthenticationEnabled')]"
+          },
+          "DomainName": {
+            "value": "[parameters('DomainName')]"
+          },
+          "DomainJoinOUPath": {
+            "value": "[parameters('DomainJoinOUPath')]"
+          },
+          "ADAdministratorAccountUsername": {
+            "value": "[parameters('ADAdministratorAccountUsername')]"
+          },
+          "ADAdministratorAccountPassword": {
+            "value": "[parameters('ADAdministratorAccountPassword')]"
+          },
+          "artifactsLocation": {
+            "value": "[parameters('artifactsLocation')]"
           }
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
               "version": "0.29.47.4906",
-              "templateHash": "16917999286300865132"
+              "templateHash": "13021342744229043454"
             }
           },
           "parameters": {
@@ -899,10 +935,51 @@
             },
             "GroupObjectIds": {
               "type": "array"
+            },
+            "fslogixEnabled": {
+              "type": "bool"
+            },
+            "subnetId": {
+              "type": "string"
+            },
+            "numberOfSessionHost": {
+              "type": "int",
+              "defaultValue": 2
+            },
+            "virtualMachine": {
+              "type": "object"
+            },
+            "adminUsername": {
+              "type": "securestring"
+            },
+            "adminPassword": {
+              "type": "securestring"
+            },
+            "activeDirectoryAuthenticationEnabled": {
+              "type": "bool"
+            },
+            "DomainName": {
+              "type": "string",
+              "nullable": true
+            },
+            "DomainJoinOUPath": {
+              "type": "string",
+              "nullable": true
+            },
+            "ADAdministratorAccountUsername": {
+              "type": "string",
+              "nullable": true
+            },
+            "ADAdministratorAccountPassword": {
+              "type": "securestring",
+              "nullable": true
+            },
+            "artifactsLocation": {
+              "type": "string"
             }
           },
-          "resources": [
-            {
+          "resources": {
+            "hostPool": {
               "type": "Microsoft.DesktopVirtualization/hostPools",
               "apiVersion": "2024-04-08-preview",
               "name": "[parameters('hostPoolName')]",
@@ -930,27 +1007,27 @@
                 }
               }
             },
-            {
+            "applicationGroups": {
               "type": "Microsoft.DesktopVirtualization/applicationGroups",
               "apiVersion": "2024-04-08-preview",
               "name": "[parameters('applicationGroupName')]",
               "location": "[parameters('location')]",
               "properties": "[union(parameters('applicationGroupProperties'), createObject('hostPoolArmPath', resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))))]",
               "dependsOn": [
-                "[resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))]"
+                "hostPool"
               ]
             },
-            {
+            "workspace": {
               "type": "Microsoft.DesktopVirtualization/workspaces",
               "apiVersion": "2024-04-08-preview",
               "name": "[parameters('workspaceName')]",
               "location": "[parameters('location')]",
               "properties": "[union(parameters('workspaceProperties'), createObject('applicationGroupReferences', createArray(resourceId('Microsoft.DesktopVirtualization/applicationGroups', parameters('applicationGroupName')))))]",
               "dependsOn": [
-                "[resourceId('Microsoft.DesktopVirtualization/applicationGroups', parameters('applicationGroupName'))]"
+                "applicationGroups"
               ]
             },
-            {
+            "roleAssignmentAVDUser": {
               "copy": {
                 "name": "roleAssignmentAVDUser",
                 "count": "[length(parameters('GroupObjectIds'))]"
@@ -965,322 +1042,320 @@
                 "principalId": "[parameters('GroupObjectIds')[copyIndex()]]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DesktopVirtualization/applicationGroups', parameters('applicationGroupName'))]"
+                "applicationGroups"
+              ]
+            },
+            "sessionHost": {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "sessionHostComponent",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "subnetId": {
+                    "value": "[parameters('subnetId')]"
+                  },
+                  "numberOfSessionHost": {
+                    "value": "[parameters('numberOfSessionHost')]"
+                  },
+                  "virtualMachine": {
+                    "value": "[parameters('virtualMachine')]"
+                  },
+                  "adminUsername": {
+                    "value": "[parameters('adminUsername')]"
+                  },
+                  "adminPassword": {
+                    "value": "[parameters('adminPassword')]"
+                  },
+                  "hostPoolName": {
+                    "value": "[parameters('hostPoolName')]"
+                  },
+                  "activeDirectoryAuthenticationEnabled": {
+                    "value": "[parameters('activeDirectoryAuthenticationEnabled')]"
+                  },
+                  "fslogixEnabled": {
+                    "value": "[parameters('fslogixEnabled')]"
+                  },
+                  "DomainName": {
+                    "value": "[parameters('DomainName')]"
+                  },
+                  "DomainJoinOUPath": {
+                    "value": "[parameters('DomainJoinOUPath')]"
+                  },
+                  "ADAdministratorAccountUsername": {
+                    "value": "[parameters('ADAdministratorAccountUsername')]"
+                  },
+                  "ADAdministratorAccountPassword": {
+                    "value": "[parameters('ADAdministratorAccountPassword')]"
+                  },
+                  "artifactsLocation": {
+                    "value": "[parameters('artifactsLocation')]"
+                  },
+                  "hostPoolRegistrationInfoToken": {
+                    "value": "[listRegistrationTokens(resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName')), '2024-04-08-preview').value[0].token]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "languageVersion": "2.0",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.29.47.4906",
+                      "templateHash": "13900215645124092148"
+                    }
+                  },
+                  "parameters": {
+                    "location": {
+                      "type": "string"
+                    },
+                    "fslogixEnabled": {
+                      "type": "bool"
+                    },
+                    "subnetId": {
+                      "type": "string"
+                    },
+                    "numberOfSessionHost": {
+                      "type": "int",
+                      "defaultValue": 2
+                    },
+                    "virtualMachine": {
+                      "type": "object"
+                    },
+                    "adminUsername": {
+                      "type": "securestring"
+                    },
+                    "adminPassword": {
+                      "type": "securestring"
+                    },
+                    "hostPoolName": {
+                      "type": "string"
+                    },
+                    "activeDirectoryAuthenticationEnabled": {
+                      "type": "bool"
+                    },
+                    "DomainName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "DomainJoinOUPath": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "ADAdministratorAccountUsername": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "ADAdministratorAccountPassword": {
+                      "type": "securestring",
+                      "nullable": true
+                    },
+                    "artifactsLocation": {
+                      "type": "string"
+                    },
+                    "hostPoolRegistrationInfoToken": {
+                      "type": "string"
+                    }
+                  },
+                  "resources": {
+                    "networkInterface": {
+                      "copy": {
+                        "name": "networkInterface",
+                        "count": "[length(range(0, parameters('numberOfSessionHost')))]"
+                      },
+                      "type": "Microsoft.Network/networkInterfaces",
+                      "apiVersion": "2024-01-01",
+                      "name": "[format('{0}-nic{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[copyIndex()], 1))]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "enableAcceleratedNetworking": true,
+                        "ipConfigurations": [
+                          {
+                            "name": "ipConfig",
+                            "properties": {
+                              "privateIPAllocationMethod": "Dynamic",
+                              "subnet": {
+                                "id": "[parameters('subnetId')]"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "vms": {
+                      "copy": {
+                        "name": "vms",
+                        "count": "[length(range(0, parameters('numberOfSessionHost')))]"
+                      },
+                      "type": "Microsoft.Compute/virtualMachines",
+                      "apiVersion": "2024-03-01",
+                      "name": "[format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[copyIndex()], 1))]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "licenseType": "[parameters('virtualMachine').licenseType]",
+                        "hardwareProfile": {
+                          "vmSize": "[parameters('virtualMachine').vmSize]"
+                        },
+                        "storageProfile": {
+                          "osDisk": {
+                            "createOption": "[parameters('virtualMachine').osDisk.createOption]",
+                            "managedDisk": {
+                              "storageAccountType": "[parameters('virtualMachine').osDisk.storageAccountType]"
+                            },
+                            "deleteOption": "[parameters('virtualMachine').osDisk.deleteOption]"
+                          },
+                          "imageReference": {
+                            "publisher": "[parameters('virtualMachine').imageReference.publisher]",
+                            "offer": "[parameters('virtualMachine').imageReference.offer]",
+                            "sku": "[parameters('virtualMachine').imageReference.sku]",
+                            "version": "[parameters('virtualMachine').imageReference.version]"
+                          }
+                        },
+                        "networkProfile": {
+                          "networkInterfaces": [
+                            {
+                              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)))]",
+                              "properties": {
+                                "deleteOption": "Delete"
+                              }
+                            }
+                          ]
+                        },
+                        "securityProfile": {
+                          "securityType": "TrustedLaunch",
+                          "uefiSettings": {
+                            "secureBootEnabled": true,
+                            "vTpmEnabled": true
+                          }
+                        },
+                        "additionalCapabilities": {
+                          "hibernationEnabled": false
+                        },
+                        "osProfile": {
+                          "computerName": "[format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[copyIndex()], 1))]",
+                          "adminUsername": "[parameters('adminUsername')]",
+                          "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "diagnosticsProfile": {
+                          "bootDiagnostics": {
+                            "enabled": true
+                          }
+                        }
+                      },
+                      "dependsOn": [
+                        "[format('networkInterface[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
+                      ]
+                    },
+                    "entraIdJoin": {
+                      "copy": {
+                        "name": "entraIdJoin",
+                        "count": "[length(range(0, parameters('numberOfSessionHost')))]"
+                      },
+                      "condition": "[or(not(parameters('activeDirectoryAuthenticationEnabled')), not(parameters('fslogixEnabled')))]",
+                      "type": "Microsoft.Compute/virtualMachines/extensions",
+                      "apiVersion": "2024-03-01",
+                      "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)), 'AADLoginForWindows')]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "publisher": "Microsoft.Azure.ActiveDirectory",
+                        "type": "AADLoginForWindows",
+                        "typeHandlerVersion": "1.0",
+                        "autoUpgradeMinorVersion": true,
+                        "enableAutomaticUpgrade": false
+                      },
+                      "dependsOn": [
+                        "[format('vms[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
+                      ]
+                    },
+                    "dcs": {
+                      "copy": {
+                        "name": "dcs",
+                        "count": "[length(range(0, parameters('numberOfSessionHost')))]"
+                      },
+                      "type": "Microsoft.Compute/virtualMachines/extensions",
+                      "apiVersion": "2024-03-01",
+                      "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)), 'MicrosoftPowershellDSC')]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.83",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                          "modulesUrl": "[parameters('artifactsLocation')]",
+                          "configurationFunction": "Configuration.ps1\\AddSessionHost",
+                          "properties": {
+                            "hostPoolName": "[parameters('hostPoolName')]",
+                            "aadJoin": true
+                          }
+                        },
+                        "protectedSettings": {
+                          "properties": {
+                            "registrationInfoToken": "[parameters('hostPoolRegistrationInfoToken')]"
+                          }
+                        }
+                      },
+                      "dependsOn": [
+                        "entraIdJoin",
+                        "[format('vms[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
+                      ]
+                    },
+                    "adomainJoin": {
+                      "copy": {
+                        "name": "adomainJoin",
+                        "count": "[length(range(0, parameters('numberOfSessionHost')))]"
+                      },
+                      "condition": "[or(parameters('activeDirectoryAuthenticationEnabled'), parameters('fslogixEnabled'))]",
+                      "type": "Microsoft.Compute/virtualMachines/extensions",
+                      "apiVersion": "2024-03-01",
+                      "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)), 'ActiveDirectoryDomainJoin')]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "JsonADDomainExtension",
+                        "typeHandlerVersion": "1.3",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                          "name": "[parameters('DomainName')]",
+                          "ouPath": "[parameters('DomainJoinOUPath')]",
+                          "user": "[parameters('ADAdministratorAccountUsername')]",
+                          "restart": true,
+                          "options": 3
+                        },
+                        "protectedSettings": {
+                          "password": "[parameters('ADAdministratorAccountPassword')]"
+                        }
+                      },
+                      "dependsOn": [
+                        "dcs",
+                        "[format('vms[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
+                      ]
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "hostPool"
               ]
             }
-          ],
+          },
           "outputs": {
             "hostPoolId": {
               "type": "string",
               "value": "[resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))]"
-            },
-            "token": {
-              "type": "string",
-              "value": "[listRegistrationTokens(resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName')), '2024-04-08-preview').value[0].token]"
-            }
-          }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
-      "name": "sessionHostComponent",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "subnetId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'networkComponent'), '2022-09-01').outputs.subnetId1.value]"
-          },
-          "numberOfSessionHost": {
-            "value": "[parameters('numberOfSessionHost')]"
-          },
-          "virtualMachine": {
-            "value": "[variables('virtualMachine')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('vmAdminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('vmAdminPassword')]"
-          },
-          "hostPoolName": {
-            "value": "[parameters('hostPoolName')]"
-          },
-          "activeDirectoryAuthenticationEnabled": {
-            "value": "[parameters('activeDirectoryAuthenticationEnabled')]"
-          },
-          "fslogixEnabled": {
-            "value": "[parameters('fslogixEnabled')]"
-          },
-          "DomainName": {
-            "value": "[parameters('DomainName')]"
-          },
-          "DomainJoinOUPath": {
-            "value": "[parameters('DomainJoinOUPath')]"
-          },
-          "ADAdministratorAccountUsername": {
-            "value": "[parameters('ADAdministratorAccountUsername')]"
-          },
-          "ADAdministratorAccountPassword": {
-            "value": "[parameters('ADAdministratorAccountPassword')]"
-          },
-          "artifactsLocation": {
-            "value": "[parameters('artifactsLocation')]"
-          },
-          "hostPoolRegistrationInfoToken": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'virtualDesktopComponent'), '2022-09-01').outputs.token.value]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "languageVersion": "2.0",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.29.47.4906",
-              "templateHash": "13900215645124092148"
-            }
-          },
-          "parameters": {
-            "location": {
-              "type": "string"
-            },
-            "fslogixEnabled": {
-              "type": "bool"
-            },
-            "subnetId": {
-              "type": "string"
-            },
-            "numberOfSessionHost": {
-              "type": "int",
-              "defaultValue": 2
-            },
-            "virtualMachine": {
-              "type": "object"
-            },
-            "adminUsername": {
-              "type": "securestring"
-            },
-            "adminPassword": {
-              "type": "securestring"
-            },
-            "hostPoolName": {
-              "type": "string"
-            },
-            "activeDirectoryAuthenticationEnabled": {
-              "type": "bool"
-            },
-            "DomainName": {
-              "type": "string",
-              "nullable": true
-            },
-            "DomainJoinOUPath": {
-              "type": "string",
-              "nullable": true
-            },
-            "ADAdministratorAccountUsername": {
-              "type": "string",
-              "nullable": true
-            },
-            "ADAdministratorAccountPassword": {
-              "type": "securestring",
-              "nullable": true
-            },
-            "artifactsLocation": {
-              "type": "string"
-            },
-            "hostPoolRegistrationInfoToken": {
-              "type": "string"
-            }
-          },
-          "resources": {
-            "networkInterface": {
-              "copy": {
-                "name": "networkInterface",
-                "count": "[length(range(0, parameters('numberOfSessionHost')))]"
-              },
-              "type": "Microsoft.Network/networkInterfaces",
-              "apiVersion": "2024-01-01",
-              "name": "[format('{0}-nic{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[copyIndex()], 1))]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "enableAcceleratedNetworking": true,
-                "ipConfigurations": [
-                  {
-                    "name": "ipConfig",
-                    "properties": {
-                      "privateIPAllocationMethod": "Dynamic",
-                      "subnet": {
-                        "id": "[parameters('subnetId')]"
-                      }
-                    }
-                  }
-                ]
-              }
-            },
-            "vms": {
-              "copy": {
-                "name": "vms",
-                "count": "[length(range(0, parameters('numberOfSessionHost')))]"
-              },
-              "type": "Microsoft.Compute/virtualMachines",
-              "apiVersion": "2024-03-01",
-              "name": "[format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[copyIndex()], 1))]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "licenseType": "[parameters('virtualMachine').licenseType]",
-                "hardwareProfile": {
-                  "vmSize": "[parameters('virtualMachine').vmSize]"
-                },
-                "storageProfile": {
-                  "osDisk": {
-                    "createOption": "[parameters('virtualMachine').osDisk.createOption]",
-                    "managedDisk": {
-                      "storageAccountType": "[parameters('virtualMachine').osDisk.storageAccountType]"
-                    },
-                    "deleteOption": "[parameters('virtualMachine').osDisk.deleteOption]"
-                  },
-                  "imageReference": {
-                    "publisher": "[parameters('virtualMachine').imageReference.publisher]",
-                    "offer": "[parameters('virtualMachine').imageReference.offer]",
-                    "sku": "[parameters('virtualMachine').imageReference.sku]",
-                    "version": "[parameters('virtualMachine').imageReference.version]"
-                  }
-                },
-                "networkProfile": {
-                  "networkInterfaces": [
-                    {
-                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)))]",
-                      "properties": {
-                        "deleteOption": "Delete"
-                      }
-                    }
-                  ]
-                },
-                "securityProfile": {
-                  "securityType": "TrustedLaunch",
-                  "uefiSettings": {
-                    "secureBootEnabled": true,
-                    "vTpmEnabled": true
-                  }
-                },
-                "additionalCapabilities": {
-                  "hibernationEnabled": false
-                },
-                "osProfile": {
-                  "computerName": "[format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[copyIndex()], 1))]",
-                  "adminUsername": "[parameters('adminUsername')]",
-                  "adminPassword": "[parameters('adminPassword')]"
-                },
-                "diagnosticsProfile": {
-                  "bootDiagnostics": {
-                    "enabled": true
-                  }
-                }
-              },
-              "dependsOn": [
-                "[format('networkInterface[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
-              ]
-            },
-            "entraIdJoin": {
-              "copy": {
-                "name": "entraIdJoin",
-                "count": "[length(range(0, parameters('numberOfSessionHost')))]"
-              },
-              "condition": "[or(not(parameters('activeDirectoryAuthenticationEnabled')), not(parameters('fslogixEnabled')))]",
-              "type": "Microsoft.Compute/virtualMachines/extensions",
-              "apiVersion": "2024-03-01",
-              "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)), 'AADLoginForWindows')]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "publisher": "Microsoft.Azure.ActiveDirectory",
-                "type": "AADLoginForWindows",
-                "typeHandlerVersion": "1.0",
-                "autoUpgradeMinorVersion": true,
-                "enableAutomaticUpgrade": false
-              },
-              "dependsOn": [
-                "[format('vms[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
-              ]
-            },
-            "dcs": {
-              "copy": {
-                "name": "dcs",
-                "count": "[length(range(0, parameters('numberOfSessionHost')))]"
-              },
-              "type": "Microsoft.Compute/virtualMachines/extensions",
-              "apiVersion": "2024-03-01",
-              "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)), 'MicrosoftPowershellDSC')]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "2.83",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                  "modulesUrl": "[parameters('artifactsLocation')]",
-                  "configurationFunction": "Configuration.ps1\\AddSessionHost",
-                  "properties": {
-                    "hostPoolName": "[parameters('hostPoolName')]",
-                    "aadJoin": true
-                  }
-                },
-                "protectedSettings": {
-                  "properties": {
-                    "registrationInfoToken": "[parameters('hostPoolRegistrationInfoToken')]"
-                  }
-                }
-              },
-              "dependsOn": [
-                "entraIdJoin",
-                "[format('vms[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
-              ]
-            },
-            "adomainJoin": {
-              "copy": {
-                "name": "adomainJoin",
-                "count": "[length(range(0, parameters('numberOfSessionHost')))]"
-              },
-              "condition": "[or(parameters('activeDirectoryAuthenticationEnabled'), parameters('fslogixEnabled'))]",
-              "type": "Microsoft.Compute/virtualMachines/extensions",
-              "apiVersion": "2024-03-01",
-              "name": "[format('{0}/{1}', format('{0}{1}', parameters('virtualMachine').name, add(range(0, parameters('numberOfSessionHost'))[range(0, parameters('numberOfSessionHost'))[copyIndex()]], 1)), 'ActiveDirectoryDomainJoin')]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "publisher": "Microsoft.Compute",
-                "type": "JsonADDomainExtension",
-                "typeHandlerVersion": "1.3",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                  "name": "[parameters('DomainName')]",
-                  "ouPath": "[parameters('DomainJoinOUPath')]",
-                  "user": "[parameters('ADAdministratorAccountUsername')]",
-                  "restart": true,
-                  "options": 3
-                },
-                "protectedSettings": {
-                  "password": "[parameters('ADAdministratorAccountPassword')]"
-                }
-              },
-              "dependsOn": [
-                "dcs",
-                "[format('vms[{0}]', range(0, parameters('numberOfSessionHost'))[copyIndex()])]"
-              ]
             }
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'networkComponent')]",
-        "[resourceId('Microsoft.Resources/deployments', 'virtualDesktopComponent')]"
+        "[resourceId('Microsoft.Resources/deployments', 'networkComponent')]"
       ]
     }
   ]

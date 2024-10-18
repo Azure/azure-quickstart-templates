@@ -86,23 +86,6 @@ param GroupObjectIds array = adminGroupObjectId != '' && userGroupObjectId != ''
 
 
 // Required variables
-@description('Virtual machine resource object')
-var virtualMachine = {
-  name: 'azurevm'
-  licenseType: 'Windows_Client'
-  vmSize: vmSize
-  osDisk: {
-    createOption: 'FromImage'
-    storageAccountType: 'Premium_LRS'
-    deleteOption: 'Delete'
-  }
-  imageReference: {
-    publisher: 'microsoftwindowsdesktop'
-    offer: 'office-365'
-    sku: 'win11-23h2-avd-m365'
-    version: 'latest'
-  }
-}
 @description('Host pool resource property configuration')
 var hostPoolProperties = {
   friendlyName: hostPoolName
@@ -137,6 +120,23 @@ var workspaceProperties = {
   description: 'Azure Virtual Desktop workspace'
   friendlyName: workspaceName
   publicNetworkAccess: 'Enabled'
+}
+@description('Virtual machine resource object')
+var virtualMachine = {
+  name: 'azurevm'
+  licenseType: 'Windows_Client'
+  vmSize: vmSize
+  osDisk: {
+    createOption: 'FromImage'
+    storageAccountType: 'Premium_LRS'
+    deleteOption: 'Delete'
+  }
+  imageReference: {
+    publisher: 'microsoftwindowsdesktop'
+    offer: 'office-365'
+    sku: 'win11-23h2-avd-m365'
+    version: 'latest'
+  }
 }
 
 module network 'modules/virtualnetwork/main.bicep' = {
@@ -186,26 +186,18 @@ module virtualDesktop 'modules/virtualdesktop/main.bicep' = {
     workspaceProperties: workspaceProperties
     avdRoleDefinitionId: avdRoleDefinitionId
     GroupObjectIds: GroupObjectIds
-  }
-}
 
-module sessionHost 'modules/sessionhost/main.bicep' = {
-  name: 'sessionHostComponent'
-  params: {
-    location: location
+    fslogixEnabled: fslogixEnabled
     subnetId: network.outputs.subnetId1
     numberOfSessionHost: numberOfSessionHost
     virtualMachine: virtualMachine
     adminUsername: vmAdminUsername
     adminPassword: vmAdminPassword
-    hostPoolName: hostPoolName
     activeDirectoryAuthenticationEnabled: activeDirectoryAuthenticationEnabled
-    fslogixEnabled: fslogixEnabled
     DomainName: DomainName
     DomainJoinOUPath: DomainJoinOUPath
     ADAdministratorAccountUsername: ADAdministratorAccountUsername
     ADAdministratorAccountPassword: ADAdministratorAccountPassword
     artifactsLocation: artifactsLocation
-    hostPoolRegistrationInfoToken: virtualDesktop.outputs.token
   }
 }
