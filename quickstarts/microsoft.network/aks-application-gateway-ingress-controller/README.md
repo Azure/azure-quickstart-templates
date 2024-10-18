@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: aks-application-gateway-ingress-controller
 languages:
+- bicep
 - json
 ---
 # AKS cluster with the Application Gateway Ingress Controller
@@ -19,10 +20,12 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/BicepVersion.svg)
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Faks-application-gateway-ingress-controller%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Faks-application-gateway-ingress-controller%2Fazuredeploy.json)
 
-This ARM template can be used to deploy a public or private [Azure Kubernetes Cluster (AKS) cluster](https://docs.microsoft.com/azure/aks/intro-kubernetes) with an [Azure Application Gateway](https://docs.microsoft.com/azure/application-gateway/overview) and  [Application Gateway Ingress Controller](https://docs.microsoft.com/azure/application-gateway/ingress-controller-overview) add-on. The template allows to deploy a rich set of AKS features such as:
+This Bicep or Bicep can be used to deploy a public or private [Azure Kubernetes Cluster (AKS) cluster](https://docs.microsoft.com/azure/aks/intro-kubernetes) with an [Azure Application Gateway](https://docs.microsoft.com/azure/application-gateway/overview) and  [Application Gateway Ingress Controller](https://docs.microsoft.com/azure/application-gateway/ingress-controller-overview) add-on. The template allows to deploy a rich set of AKS features such as:
 
 - [AKS-managed AAD integration](https://docs.microsoft.com/azure/aks/managed-aad)
 - [Azure RBAC for Kubernetes Authorization](https://docs.microsoft.com/azure/aks/manage-azure-rbac)
@@ -40,7 +43,7 @@ This diagram shows the overall architecture:
 
 ![Architecture](images/architecture.png)
 
-The ARM template deploys the following resources:
+The Bicep deploys the following resources:
 
 - A new virtual network with 4 subnets:
   - **AksSubnet**: hosts the AKS cluster
@@ -128,11 +131,11 @@ is 100, and in case of WAF-enabled SKUs, this limit is 40. This implies that the
 
 ## Deployment ##
 
-The following picture shows the resources deployed by the ARM template in the target resource group.
+The following picture shows the resources deployed by the Bicep in the target resource group.
 
 ![Resource Group](images/resourcegroup.png)
 
-The following picture shows the resources deployed by the ARM template in the MC resource group associated to the AKS cluster:
+The following picture shows the resources deployed by the Bicep in the MC resource group associated to the AKS cluster:
 
 ![MC Resource Group](images/mc_resourcegroup.png)
 
@@ -174,7 +177,7 @@ The Application Gateway WAF can be configured to run in the following two modes:
 - **Detection mode**: Monitors and logs all threat alerts. You turn on logging diagnostics for Application Gateway in the Diagnostics section. You must also make sure that the WAF log is selected and turned on. Web application firewall doesn't block incoming requests when it's operating in Detection mode.
 - **Prevention mode**: Blocks intrusions and attacks that the rules detect. The attacker receives a "403 unauthorized access" exception, and the connection is closed. Prevention mode records such attacks in the WAF logs.
 
-You can configure Application Gateway to store diagnostic logs and metrics to Log Analytics. In this case, also WAF logs will be stored in Log Analytics and they can be queries using Kusto Query Language. In the ARM template the WAF policy is configured in Prevention mode and contains a couple of sample custom rules that block incoming request, when the query string contains the word blockme or when the User-Agent header contain the string evilbot:
+You can configure Application Gateway to store diagnostic logs and metrics to Log Analytics. In this case, also WAF logs will be stored in Log Analytics and they can be queries using Kusto Query Language. In the Bicep the WAF policy is configured in Prevention mode and contains a couple of sample custom rules that block incoming request, when the query string contains the word blockme or when the User-Agent header contain the string evilbot:
 
 ```json
 {
@@ -261,7 +264,7 @@ Azure Application Gateway WAF
 - [What is Azure Web Application Firewall on Azure Application Gateway?](https://docs.microsoft.com/azure/web-application-firewall/ag/ag-overview)
 - [Web Application Firewall CRS rule groups and rules](https://docs.microsoft.com/azure/web-application-firewall/ag/application-gateway-crs-rulegroups-rules?tabs=owasp31)
 - [Custom rules for Web Application Firewall v2 on Azure Application Gateway](https://docs.microsoft.com/azure/web-application-firewall/ag/custom-waf-rules-overview)
-- [Quickstart: Create an Azure WAF v2 on Application Gateway using an ARM template](https://docs.microsoft.com/azure/web-application-firewall/ag/quick-create-template)
+- [Quickstart: Create an Azure WAF v2 on Application Gateway using an Bicep](https://learn.microsoft.com/en-us/azure/web-application-firewall/ag/quick-create-bicep?tabs=CLI)
 - [Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies Resource Type](https://docs.microsoft.com/azure/templates/microsoft.network/applicationgatewaywebapplicationfirewallpolicies)
 - [Create and use Web Application Firewall v2 custom rules on Application Gateway](https://docs.microsoft.com/azure/web-application-firewall/ag/create-custom-waf-rules)
 - [az network application-gateway waf-policy Azure CLI commands](https://docs.microsoft.com/cli/azure/network/application-gateway/waf-policy?view=azure-cli-latest)
