@@ -37,12 +37,15 @@ param virtualMachineId string = 'none'
 
 @description('Resource group ID of where the virtual machine will be replicated to')
 param recoveryResourceGroupId string = 'none'
+@description('Deployment Script Resource Name. Defaults to `ds-az-resource-state-check`')
+param parDeploymentScriptName string = 'ds-az-resource-state-check'
 
 var blobPrivateDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
 var filePrivateDnsZoneName = 'privatelink.file.${environment().suffixes.storage}'
 var queuePrivateDnsZoneName = 'privatelink.queue.${environment().suffixes.storage}'
 var roleDefinitionContributorId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var roleDefinitionStorageBlobDataContributorId = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+var parDeploymentScriptUamiRbacRoleDefinitionIdToAssign = resourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')
 var rsvPrivateDnsZoneName = 'privatelink.siterecovery.windowsazure.com'
 var instanceType = 'A2A'
 
@@ -421,6 +424,43 @@ resource primaryProtectionContainerMappings 'Microsoft.RecoveryServices/vaults/r
   }
 }
 
+resource resDeploymentScriptUami 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+  location: location
+  name: 'uami-${parDeploymentScriptName}'
+}
+
+resource resDeploymentScriptUamiRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, resDeploymentScriptUami.id, parDeploymentScriptUamiRbacRoleDefinitionIdToAssign)
+  properties: {
+    principalId: resDeploymentScriptUami.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: parDeploymentScriptUamiRbacRoleDefinitionIdToAssign
+  }
+}
+
+resource resDeploymentScriptAzResourceStateCheck 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  location: location
+  name: parDeploymentScriptName
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${resDeploymentScriptUami.id}': {}
+    }
+  }
+  kind: 'AzurePowerShell'
+  properties: {
+    azPowerShellVersion: '8.3.0'
+    retentionInterval: 'PT2H'
+    scriptContent: loadTextContent('scripts/Invoke-AzResourceStateCheck.ps1')
+    arguments: '-azDnsResourceResourceId \'${rsvPrivateDnsZone.id}\' -azRsvResourceResourceId \'${recoveryServiceVault.id}\''
+    cleanupPreference: 'OnSuccess'
+    timeout: 'PT1H'
+  }
+  dependsOn: [
+    primaryProtectionContainerMappings
+  ]
+}
+
 resource secondaryProtectionContainerMappings 'Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings@2024-04-01' = {
   parent: secondaryRSVFabricProtectionContainers
   name: 'Secondary-Container-Mapping'
@@ -432,7 +472,7 @@ resource secondaryProtectionContainerMappings 'Microsoft.RecoveryServices/vaults
     targetProtectionContainerId: primaryRSVFabricProtectionContainers.id
   }
   dependsOn: [
-    primaryProtectionContainerMappings
+    resDeploymentScriptAzResourceStateCheck
   ]
 }
 
