@@ -1,8 +1,7 @@
 [CmdletBinding()]
 param (
-  [string]
-  $azDnsResourceResourceId,
-  $azRsvResourceResourceId
+  [string] [Parameter(Mandatory=$true)] $azDnsResourceResourceId,
+  [string] [Parameter(Mandatory=$true)] $azRsvResourceResourceId
 )
 
 $startTime = Get-Date
@@ -15,12 +14,12 @@ do {
   $GetDnsRecordSet = Get-AzPrivateDnsRecordSet -ParentResourceId $azDnsResourceResourceId | Where-Object {$_.Name -match $vaultPERecordCheck}
   foreach($name in $GetDnsRecordSet.Name){
     if($rcm1Check -notcontains $name){
-      $rcm1Check += $GetDnsRecordSet.Name
+      $rcm1Check += $name
     }
   }
 
   $ElapsedTime = New-TimeSpan -Start $StartTime -End (Get-Date)
-  if ($ElapsedTime.TotalSeconds -ge (1800)) {
+  if ($ElapsedTime.TotalSeconds -ge (1800)) { # Break after 30 minutes
     break
   }
 
