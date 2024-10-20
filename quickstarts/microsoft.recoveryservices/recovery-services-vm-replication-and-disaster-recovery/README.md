@@ -24,7 +24,7 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-replication-and-disaster-recovery%2Fazuredeploy.json)
 
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Fazure-virtual-desktop%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-replication-and-disaster-recovery%2Fazuredeploy.json)
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-replication-and-disaster-recovery%2Fazuredeploy.json)
 
@@ -51,13 +51,7 @@ This template allows you to create Azure Virtual machine replication disaster re
 
 ## Post deployment configuration
 
-### Steps
-1. Install AZ PowerShell module inside your domain controller server. Click the link for the installation steps. [**Install Azure PowerShell on Windows**](https://learn.microsoft.com/en-us/powershell/azure/install-azps-windows?view=azps-12.4.0&tabs=windowspowershell&pivots=windows-psgallery)
-2. Once deployment is completed, run the '***postconfiguration.ps1***' inside your domain controller server. Please follow the instruction in the file and provide the appropriate paramters before the script is executed.
-3. Please restart all the virtual machine session hosts for FSLogix to take effect with profile container.
-
 ## Architecture
-
 
 For more information on [**Azure Disaster Recovery**](https://learn.microsoft.com/en-us/azure/site-recovery/azure-to-azure-how-to-enable-replication)
 
@@ -68,12 +62,6 @@ The following resource types will be created as part of this template deployment
 - [**Microsoft.Network/virtualNetworks**](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview)
 - [**Microsoft.Network/virtualNetworks/subnets**](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview)
 - [**Microsoft.Authorization/roleAssignments**](https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments)
-- [**Microsoft.DesktopVirtualization/hostPools**](https://learn.microsoft.com/en-us/azure/virtual-desktop/deploy-azure-virtual-desktop?tabs=portal)
-- [**Microsoft.DesktopVirtualization/applicationGroups**](https://learn.microsoft.com/en-us/azure/virtual-desktop/deploy-azure-virtual-desktop?tabs=portal)
-- [**Microsoft.DesktopVirtualization/workspaces**](https://learn.microsoft.com/en-us/azure/virtual-desktop/deploy-azure-virtual-desktop?tabs=portal)
-- [**Microsoft.Network/networkInterfaces**](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-network-interface?tabs=azure-portal)
-- [**Microsoft.Compute/virtualMachines**](https://learn.microsoft.com/en-us/azure/virtual-machines/overview)
-- [**Microsoft.Compute/virtualMachines/extensions**](https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/overview)
 - [**Microsoft.Storage/storageAccounts**](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview)
 - [**Microsoft.RecoveryServices/vaults**](https://learn.microsoft.com/en-us/azure/site-recovery/site-recovery-overview)
 - [**Microsoft.RecoveryServices/vaults/replicationPolicies**](https://learn.microsoft.com/en-us/azure/site-recovery/azure-to-azure-tutorial-enable-replication)
@@ -88,4 +76,4 @@ The following resource types will be created as part of this template deployment
 - [**Microsoft.Network/privateEndpoints/privateDnsZoneGroups**](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview)
 
 
-`Tags: network, virtual network, subnet, virtual machine network interface, virtual machine, recovery service vault Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Authorization/roleAssignments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, Microsoft.Storage/storageAccounts, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/replicationPolicies, Microsoft.RecoveryServices/vaults/replicationFabrics, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectedItems, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`
+`Tags: network, virtual network, subnet, recovery service vault Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Authorization/roleAssignments, Microsoft.Storage/storageAccounts, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/replicationPolicies, Microsoft.RecoveryServices/vaults/replicationFabrics, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings, Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectedItems, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`
