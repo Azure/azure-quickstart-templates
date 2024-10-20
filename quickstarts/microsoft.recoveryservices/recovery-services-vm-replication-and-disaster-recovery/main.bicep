@@ -431,6 +431,9 @@ resource secondaryProtectionContainerMappings 'Microsoft.RecoveryServices/vaults
     }
     targetProtectionContainerId: primaryRSVFabricProtectionContainers.id
   }
+  dependsOn: [
+    primaryProtectionContainerMappings
+  ]
 }
 
 resource primaryReplicationNetworkMappings 'Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings@2024-04-01' = if(disasterRecoveryEnabled) {
