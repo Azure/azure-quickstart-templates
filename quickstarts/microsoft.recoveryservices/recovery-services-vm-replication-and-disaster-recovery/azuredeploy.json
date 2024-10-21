@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.29.47.4906",
-      "templateHash": "8261190815090294442"
+      "templateHash": "14583116116719728820"
     }
   },
   "parameters": {
@@ -107,23 +107,14 @@
       "metadata": {
         "description": "Resource group ID of where the virtual machine will be replicated to"
       }
-    },
-    "parDeploymentScriptName": {
-      "type": "string",
-      "defaultValue": "ds-az-resource-state-check",
-      "metadata": {
-        "description": "Deployment Script Resource Name. Defaults to `ds-az-resource-state-check`"
-      }
     }
   },
   "variables": {
-    "$fxv#0": "[CmdletBinding()]\r\nparam (\r\n  [string]\r\n  $azDnsResourceResourceId,\r\n  $azRsvResourceResourceId\r\n)\r\n\r\n$startTime = Get-Date\r\n$azRsvResourcePropertyStateGet = Get-AzRecoveryServicesVault -ResourceGroupName \"$($azRsvResourceResourceId.Split(\"/\")[4])\" -Name \"$($azRsvResourceResourceId.Split(\"/\")[8])\"\r\n$vaultPELinkId = ($azRsvResourcePropertyStateGet.Properties.PrivateEndpointConnections.Name).Split(\".\")[1]\r\n$vaultPERecordCheck = \"$($vaultPELinkId)-asr-pod01-rcm1\"\r\n\r\n$rcm1Check = @()\r\n\r\ndo {\r\n  $GetDnsRecordSet = Get-AzPrivateDnsRecordSet -ParentResourceId $azDnsResourceResourceId | Where-Object {$_.Name -match $vaultPERecordCheck}\r\n  foreach($name in $GetDnsRecordSet.Name){\r\n    if($rcm1Check -notcontains $name){\r\n      $rcm1Check += $GetDnsRecordSet.Name\r\n    }\r\n  }\r\n\r\n  $ElapsedTime = New-TimeSpan -Start $StartTime -End (Get-Date)\r\n  if ($ElapsedTime.TotalSeconds -ge (1800)) {\r\n    break\r\n  }\r\n\r\n  Start-Sleep -Seconds 60 # Wait for 1 minute\r\n} \r\nwhile (\r\n  $rcm1Check.Length -le 2\r\n)",
     "blobPrivateDnsZoneName": "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
     "filePrivateDnsZoneName": "[format('privatelink.file.{0}', environment().suffixes.storage)]",
     "queuePrivateDnsZoneName": "[format('privatelink.queue.{0}', environment().suffixes.storage)]",
     "roleDefinitionContributorId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
     "roleDefinitionStorageBlobDataContributorId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-    "parDeploymentScriptUamiRbacRoleDefinitionIdToAssign": "[resourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
     "rsvPrivateDnsZoneName": "privatelink.siterecovery.windowsazure.com",
     "instanceType": "A2A"
   },
@@ -597,70 +588,6 @@
       ]
     },
     {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2022-01-31-preview",
-      "name": "[format('uami-{0}', parameters('parDeploymentScriptName'))]",
-      "location": "[parameters('location')]"
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2022-04-01",
-      "name": "[guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('uami-{0}', parameters('parDeploymentScriptName'))), variables('parDeploymentScriptUamiRbacRoleDefinitionIdToAssign'))]",
-      "properties": {
-        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('uami-{0}', parameters('parDeploymentScriptName'))), '2022-01-31-preview').principalId]",
-        "principalType": "ServicePrincipal",
-        "roleDefinitionId": "[variables('parDeploymentScriptUamiRbacRoleDefinitionIdToAssign')]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('uami-{0}', parameters('parDeploymentScriptName')))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Resources/deploymentScripts",
-      "apiVersion": "2020-10-01",
-      "name": "[parameters('parDeploymentScriptName')]",
-      "location": "[parameters('location')]",
-      "identity": {
-        "type": "UserAssigned",
-        "userAssignedIdentities": {
-          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('uami-{0}', parameters('parDeploymentScriptName'))))]": {}
-        }
-      },
-      "kind": "AzurePowerShell",
-      "properties": {
-        "azPowerShellVersion": "8.3.0",
-        "retentionInterval": "PT2H",
-        "scriptContent": "[variables('$fxv#0')]",
-        "arguments": "[format('-azDnsResourceResourceId ''{0}'' -azRsvResourceResourceId ''{1}''', resourceId('Microsoft.Network/privateDnsZones', variables('rsvPrivateDnsZoneName')), resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName')))]",
-        "cleanupPreference": "OnSuccess",
-        "timeout": "PT1H"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container', 'Primary-Container-Mapping')]",
-        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('uami-{0}', parameters('parDeploymentScriptName')))]",
-        "[resourceId('Microsoft.Network/privateDnsZones', variables('rsvPrivateDnsZoneName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
-      "apiVersion": "2024-04-01",
-      "name": "[format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container', 'Secondary-Container-Mapping')]",
-      "properties": {
-        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
-        "providerSpecificInput": {
-          "instanceType": "[variables('instanceType')]"
-        },
-        "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container')]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container')]",
-        "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
-        "[resourceId('Microsoft.Resources/deploymentScripts', parameters('parDeploymentScriptName'))]",
-        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container')]"
-      ]
-    },
-    {
       "condition": "[parameters('disasterRecoveryEnabled')]",
       "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings",
       "apiVersion": "2024-04-01",
@@ -728,11 +655,10 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName1'))]",
-        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container', 'Primary-Container-Mapping')]",
         "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings', split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[0], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[1], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[2], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[3])]",
         "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container')]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container', 'Primary-Container-Mapping')]",
         "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
-        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container', 'Secondary-Container-Mapping')]",
         "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings', split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[0], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[1], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[2], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[3])]",
         "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container')]",
         "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]"
