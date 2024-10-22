@@ -95,8 +95,12 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
 resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2024-01-01' = {
   name: publicIPAddressName
   location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
   properties: {
-    publicIPAllocationMethod: 'Dynamic'
+    publicIPAllocationMethod: 'Static'
   }
 }
 
