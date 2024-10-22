@@ -354,7 +354,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
       {
         name: 'rule1'
         properties: {
-          priority: 100
+          priority: skuTier == 'Standard_v2' || skuTier == 'WAF_v2' ? 100 : null
           ruleType: 'PathBasedRouting'
           httpListener: {
             id: resourceId(
