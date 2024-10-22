@@ -182,7 +182,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
   properties: {
     firewallPolicy: enableWaf ? {
       id: wafPolicy.id
-    } : {}
+    } : null
     sku: {
       name: skuName
       tier: skuTier
@@ -264,7 +264,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
         properties: {
           firewallPolicy: enableWaf ? {
             id: wafPolicy.id
-          } : {}
+          } : null
           frontendIPConfiguration: {
             id: resourceId(
               'Microsoft.Network/applicationGateways/frontendIPConfigurations',
