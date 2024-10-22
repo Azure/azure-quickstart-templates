@@ -39,4 +39,4 @@ If you are new to template deployment, see:
 - [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 - [Azure AI services quickstart article](https://learn.microsoft.com/azure/cognitive-services/resource-manager-template)
 
-`Tags: Azure4Student, appServices, coginitiveServices, beginner, Microsoft.CognitiveServices/accounts`
+`Tags: Azure4Student, appServices, cognitiveServices, beginner, Microsoft.CognitiveServices/accounts`
