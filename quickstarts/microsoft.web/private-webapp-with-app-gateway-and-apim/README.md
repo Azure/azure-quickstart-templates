@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: private-webapp-with-app-gateway-and-apim
 languages:
-- json
 - bicep
+- json
 ---
 # Application Gateway with internal API Management and Web App
 
@@ -25,6 +25,12 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fprivate-webapp-with-app-gateway-and-apim%2Fazuredeploy.json)
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fprivate-webapp-with-app-gateway-and-apim%2Fazuredeploy.json)
+
+
+------
+:stop_sign: **This template is no longer maintained and will be removed by the end of 2024. Please consult [Integrate API Management in an internal virtual network with Application Gateway](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway) for additional information.** :stop_sign:
+
+------
 
 This template deploys an **Application Gateway with an internal (virtual network) API Management instance and Azure Web App**.
 

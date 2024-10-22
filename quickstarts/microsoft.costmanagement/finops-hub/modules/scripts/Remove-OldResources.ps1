@@ -18,5 +18,5 @@ $DeploymentScriptOutputs["deleteTriggers"] = $triggers | Remove-AzDataFactoryV2T
 
 # Delete old pipelines
 $DeploymentScriptOutputs["pipelines"] = Get-AzDataFactoryV2Pipeline @adfParams -ErrorAction SilentlyContinue `
-| Where-Object { $_.Name -match '^msexports_(backfill|extract|fill|get|run|setup|transform)$' } `
+| Where-Object { $_.Name -match '^(msexports_(backfill|extract|fill|get|run|setup|transform)|config_(BackfillData|ExportData|RunBackfill|RunExports))$' } `
 | Remove-AzDataFactoryV2Pipeline -Force -ErrorAction SilentlyContinue
