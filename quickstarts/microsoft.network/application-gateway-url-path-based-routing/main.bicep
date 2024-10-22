@@ -15,29 +15,21 @@ param applicationGatewayName string = 'apgw-${uniqueString(resourceGroup().id)}'
 param publicIPAddressName string = 'pip-${uniqueString(resourceGroup().id)}'
 @description('Sku Name')
 @allowed([
-  'Standard_Small'
-  'Standard_Medium'
-  'Standard_Large'
   'Standard_v2'
-  'WAF_Large'
-  'WAF_Medium'
   'WAF_v2'
 ])
-param skuName string = 'Standard_Medium'
+param skuName string = 'Standard_v2'
 @description('Sku tier')
 @allowed([
-  'Standard'
   'Standard_v2'
-  'WAF'
   'WAF_v2'
 ])
-param skuTier string = 'Standard'
+param skuTier string = 'Standard_v2'
 @description('Number of instances')
 @minValue(1)
 @maxValue(10)
 param capacity int = 2
 
-param enableWaf bool = false
 @description('Specifies the name of the WAF policy')
 param wafPolicyName string = '${applicationGatewayName}-WafPolicy'
 @description('Specifies the mode of the WAF policy.')
@@ -108,7 +100,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2024-01-01' = {
   }
 }
 
-resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2024-01-01' = if(enableWaf) {
+resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2024-01-01' = if(skuName == 'WAF_v2') {
   name: wafPolicyName
   location: location
   properties: {
@@ -180,7 +172,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
   name: applicationGatewayName
   location: location
   properties: {
-    firewallPolicy: enableWaf ? {
+    firewallPolicy: skuName == 'WAF_v2' ? {
       id: wafPolicy.id
     } : null
     sku: {
@@ -262,7 +254,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
       {
         name: 'appGatewayHttpListener'
         properties: {
-          firewallPolicy: enableWaf ? {
+          firewallPolicy: skuName == 'WAF_v2' ? {
             id: wafPolicy.id
           } : null
           frontendIPConfiguration: {
@@ -354,7 +346,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
       {
         name: 'rule1'
         properties: {
-          priority: skuTier == 'Standard_v2' || skuTier == 'WAF_v2' ? 100 : null
+          priority: 100
           ruleType: 'PathBasedRouting'
           httpListener: {
             id: resourceId(
