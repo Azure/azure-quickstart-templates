@@ -18,13 +18,13 @@ param publicIPAddressName string = 'pip-${uniqueString(resourceGroup().id)}'
   'Standard_v2'
   'WAF_v2'
 ])
-param skuName string = 'Standard_v2'
+param skuName string = 'WAF_v2'
 @description('Sku tier')
 @allowed([
   'Standard_v2'
   'WAF_v2'
 ])
-param skuTier string = 'Standard_v2'
+param skuTier string = 'WAF_v2'
 @description('Number of instances')
 @minValue(1)
 @maxValue(10)
@@ -59,7 +59,7 @@ param wafPolicyRequestBodyCheck bool = true
 param wafPolicyRuleSetType string = 'OWASP'
 
 @description('Specifies the rule set version.')
-param wafPolicyRuleSetVersion string = '3.1'
+param wafPolicyRuleSetVersion string = '3.2'
 @description('IP Address of Default Backend Server')
 param backendIpAddressDefault string
 @description('IP Address of Backend Server for Path Rule 1 match')
@@ -209,6 +209,12 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
         name: 'appGatewayFrontendPort80'
         properties: {
           port: 80
+        }
+      }
+      {
+        name: 'appGatewayFrontendPort443'
+        properties: {
+          port: 443
         }
       }
     ]
@@ -365,5 +371,15 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2024-01-01' =
         }
       }
     ]
+    sslPolicy: {
+      policyType: 'Custom'
+      minProtocolVersion: 'TLSv1_2'
+      cipherSuites: [
+        'TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384'
+        'TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256'
+        'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'
+        'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
+      ]
+    }
   }
 }
