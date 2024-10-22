@@ -81,7 +81,7 @@ _<sup>1) A "scope" is an Azure construct that contains resources or enables purc
 
 ## 🧰 About the FinOps toolkit
 
-FinOps hubs are part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open-source collection of FinOps solutions that help you manage and optimize your cloud costs.
+FinOps hubs are part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open-source collection of FinOps solutions that help you manage and optimize your cost, usage, and carbon.
 
 To contribute to the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
 

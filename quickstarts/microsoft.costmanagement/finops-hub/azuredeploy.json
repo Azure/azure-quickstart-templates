@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "14110423542018876455"
+      "templateHash": "5391928913029500628"
     }
   },
   "parameters": {
@@ -20,13 +20,6 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Optional. Azure location where all resources should be created. See https://aka.ms/azureregions. Default: Same as deployment."
-      }
-    },
-    "eventGridLocation": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Optional. Azure location to use for a temporary Event Grid namespace to register the Microsoft.EventGrid resource provider if the primary location is not supported. The namespace will be deleted and is not used for hub operation. Default: \"\" (same as location)."
       }
     },
     "storageSku": {
@@ -107,9 +100,6 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "eventGridLocation": {
-            "value": "[parameters('eventGridLocation')]"
-          },
           "storageSku": {
             "value": "[parameters('storageSku')]"
           },
@@ -142,7 +132,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "9856188681208866489"
+              "templateHash": "8393847679918058442"
             }
           },
           "parameters": {
@@ -157,20 +147,6 @@
               "defaultValue": "[resourceGroup().location]",
               "metadata": {
                 "description": "Optional. Azure location where all resources should be created. See https://aka.ms/azureregions. Default: (resource group location)."
-              }
-            },
-            "skipEventGridRegistration": {
-              "type": "bool",
-              "defaultValue": false,
-              "metadata": {
-                "description": "Optional. Indicates whether the Event Grid resource provider has already been registered (e.g., in a previous hub deployment). Event Grid RP registration is required. If not set, a temporary Event Grid namespace will be created to auto-register the resource provider. Default: false (register RP)."
-              }
-            },
-            "eventGridLocation": {
-              "type": "string",
-              "defaultValue": "",
-              "metadata": {
-                "description": "Optional. Azure location to use for a temporary Event Grid namespace to register the Microsoft.EventGrid resource provider if the primary location is not supported. The namespace will be deleted and is not used for hub operation. Default: \"\" (same as location)."
               }
             },
             "storageSku": {
@@ -241,25 +217,12 @@
             }
           },
           "variables": {
-            "finOpsToolkitVersion": "0.5",
+            "finOpsToolkitVersion": "0.6",
             "resourceTags": "[union(parameters('tags'), createObject('cm-resource-parent', format('{0}/providers/Microsoft.Cloud/hubs/{1}', resourceGroup().id, parameters('hubName')), 'ftk-version', variables('finOpsToolkitVersion'), 'ftk-tool', 'FinOps hubs'))]",
             "uniqueSuffix": "[uniqueString(parameters('hubName'), resourceGroup().id)]",
             "dataFactoryPrefix": "[format('{0}-engine', replace(parameters('hubName'), '_', '-'))]",
             "dataFactorySuffix": "[format('-{0}', variables('uniqueSuffix'))]",
             "dataFactoryName": "[replace(format('{0}{1}', take(variables('dataFactoryPrefix'), sub(63, length(variables('dataFactorySuffix')))), variables('dataFactorySuffix')), '--', '-')]",
-            "eventGridPrefix": "[format('{0}-ns', replace(parameters('hubName'), '_', '-'))]",
-            "eventGridSuffix": "[format('-{0}', variables('uniqueSuffix'))]",
-            "eventGridName": "[replace(format('{0}{1}', take(variables('eventGridPrefix'), sub(50, length(variables('eventGridSuffix')))), variables('eventGridSuffix')), '--', '-')]",
-            "eventGridContributorRoleId": "1e241071-0855-49ea-94dc-649edcd759de",
-            "eventGridLocationFallback": {
-              "israelcentral": "uaenorth",
-              "italynorth": "switzerlandnorth",
-              "mexicocentral": "southcentralus",
-              "polandcentral": "swedencentral",
-              "spaincentral": "francecentral",
-              "usdodeast": "usdodcentral"
-            },
-            "finalEventGridLocation": "[if(and(not(equals(parameters('eventGridLocation'), null())), not(empty(parameters('eventGridLocation')))), parameters('eventGridLocation'), coalesce(tryGet(variables('eventGridLocationFallback'), parameters('location')), parameters('location')))]",
             "telemetryId": "00f120b5-2007-6120-0000-40b000000000"
           },
           "resources": [
@@ -284,75 +247,6 @@
               }
             },
             {
-              "condition": "[not(parameters('skipEventGridRegistration'))]",
-              "type": "Microsoft.EventGrid/namespaces",
-              "apiVersion": "2023-12-15-preview",
-              "name": "[variables('eventGridName')]",
-              "location": "[variables('finalEventGridLocation')]",
-              "sku": {
-                "capacity": 1,
-                "name": "Standard"
-              },
-              "properties": {
-                "publicNetworkAccess": "Disabled"
-              }
-            },
-            {
-              "condition": "[not(parameters('skipEventGridRegistration'))]",
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "[format('{0}_cleanup', variables('uniqueSuffix'))]",
-              "location": "[variables('finalEventGridLocation')]"
-            },
-            {
-              "condition": "[not(parameters('skipEventGridRegistration'))]",
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.EventGrid/namespaces/{0}', variables('eventGridName'))]",
-              "name": "[guid(variables('eventGridContributorRoleId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_cleanup', variables('uniqueSuffix'))))]",
-              "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('eventGridContributorRoleId'))]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_cleanup', variables('uniqueSuffix'))), '2023-01-31').principalId]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_cleanup', variables('uniqueSuffix')))]",
-                "[resourceId('Microsoft.EventGrid/namespaces', variables('eventGridName'))]"
-              ]
-            },
-            {
-              "condition": "[not(parameters('skipEventGridRegistration'))]",
-              "type": "Microsoft.Resources/deploymentScripts",
-              "apiVersion": "2020-10-01",
-              "name": "[format('{0}_deleteEventGrid', variables('uniqueSuffix'))]",
-              "location": "[if(startsWith(parameters('location'), 'china'), 'chinaeast2', parameters('location'))]",
-              "kind": "AzurePowerShell",
-              "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_cleanup', variables('uniqueSuffix'))))]": {}
-                }
-              },
-              "properties": {
-                "azPowerShellVersion": "8.0",
-                "scriptContent": "Remove-AzResource -Id $env:resourceId -Force",
-                "timeout": "PT30M",
-                "cleanupPreference": "OnSuccess",
-                "retentionInterval": "PT1H",
-                "environmentVariables": [
-                  {
-                    "name": "resourceId",
-                    "value": "[resourceId('Microsoft.EventGrid/namespaces', variables('eventGridName'))]"
-                  }
-                ]
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_cleanup', variables('uniqueSuffix')))]",
-                "[extensionResourceId(resourceId('Microsoft.EventGrid/namespaces', variables('eventGridName')), 'Microsoft.Authorization/roleAssignments', guid(variables('eventGridContributorRoleId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_cleanup', variables('uniqueSuffix')))))]",
-                "[resourceId('Microsoft.EventGrid/namespaces', variables('eventGridName'))]"
-              ]
-            },
-            {
               "type": "Microsoft.DataFactory/factories",
               "apiVersion": "2018-06-01",
               "name": "[variables('dataFactoryName')]",
@@ -365,10 +259,7 @@
                 "globalConfigurations": {
                   "PipelineBillingEnabled": "true"
                 }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.EventGrid/namespaces', variables('eventGridName'))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Resources/deployments",
@@ -415,7 +306,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "10230817772499331645"
+                      "templateHash": "13154546136857545907"
                     }
                   },
                   "parameters": {
@@ -490,12 +381,12 @@
                     "$fxv#10": "# Copyright (c) Microsoft Corporation.\r\n# Licensed under the MIT License.\r\n\r\nWrite-Output \"Updating settings.json file...\"\r\nWrite-Output \"  Storage account: $env:storageAccountName\"\r\nWrite-Output \"  Container: $env:containerName\"\r\n\r\n$validateScopes = { $_.Length -gt 45 }\r\n\r\n# Initialize variables\r\n$fileName = 'settings.json'\r\n$filePath = Join-Path -Path . -ChildPath $fileName\r\n$newScopes = $env:scopes.Split('|') | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }\r\n\r\n# Get storage context\r\n$storageContext = @{\r\n    Context   = New-AzStorageContext -StorageAccountName $env:storageAccountName -UseConnectedAccount\r\n    Container = $env:containerName\r\n}\r\n\r\n# Download existing settings, if they exist\r\n$blob = Get-AzStorageBlobContent @storageContext -Blob $fileName -Destination $filePath -Force\r\nif ($blob)\r\n{\r\n    \r\n    $text = Get-Content $filePath -Raw\r\n    Write-Output \"---------\"\r\n    Write-Output $text\r\n    Write-Output \"---------\"\r\n    $json = $text | ConvertFrom-Json\r\n    Write-Output \"Existing settings.json file found. Updating...\"\r\n    # Rename exportScopes to scopes + convert to object array\r\n    if ($json.exportScopes)\r\n    {\r\n        Write-Output \"  Updating exportScopes...\"\r\n        if ($json.exportScopes[0] -is [string])\r\n        {\r\n            Write-Output \"    Converting string array to object array...\"\r\n            $json.exportScopes = $json.exportScopes | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }\r\n            if (-not ($json.exportScopes -is [array]))\r\n            {\r\n                Write-Output \"    Converting single object to object array...\"\r\n                $json.exportScopes = @($json.exportScopes)\r\n            }\r\n        }\r\n\r\n        Write-Output \"    Renaming to 'scopes'...\"\r\n        $json | Add-Member -MemberType NoteProperty -Name scopes -Value $json.exportScopes\r\n        $json.PSObject.Properties.Remove('exportScopes')\r\n    }\r\n}\r\n\r\n# Set default if not found\r\nif (!$json)\r\n{\r\n    Write-Output \"No existing settings.json file found. Creating new file...\"\r\n    $json = [ordered]@{\r\n        '$schema' = 'https://aka.ms/finops/hubs/settings-schema'\r\n        type      = 'HubInstance'\r\n        version   = ''\r\n        learnMore = 'https://aka.ms/finops/hubs'\r\n        scopes    = @()\r\n        retention = @{\r\n            'msexports' = @{\r\n                days = 0\r\n            }\r\n            'ingestion' = @{\r\n                months = 13\r\n            }\r\n        }\r\n    }\r\n\r\n    $text = $json | ConvertTo-Json\r\n    Write-Output \"---------\"\r\n    Write-Output $text\r\n    Write-Output \"---------\"\r\n}\r\n\r\n# Set values from inputs\r\n$json.scopes = $env:scopes.Split('|') | ForEach-Object { @{ 'scope' = $_ } }\r\nif (!($json.retention))\r\n{\r\n    # In case the retention object is not present in the settings.json file (versions before 0.4), add it with default values\r\n    $retention = @\"\r\n    {\r\n        \"msexports\": {\r\n            \"days\": 0\r\n        },\r\n        \"ingestion\": {\r\n            \"months\": 13\r\n        }\r\n    }\r\n\"@\r\n    $json | Add-Member -Name retention -Value (ConvertFrom-Json $retention) -MemberType NoteProperty\r\n}\r\n$json.retention.msexports.days = [Int32]::Parse($env:msexportRetentionInDays)\r\n$json.retention.ingestion.months = [Int32]::Parse($env:ingestionRetentionInMonths)\r\n\r\n# Updating settings\r\nWrite-Output \"Updating version to $env:ftkVersion...\"\r\n$json.version = $env:ftkVersion\r\nif ($newScopes)\r\n{\r\n    Write-Output \"Merging $($newScopes.Count) scopes...\"\r\n    $json.scopes = Compare-Object -ReferenceObject $json.scopes -DifferenceObject $newScopes -Property scope -PassThru -IncludeEqual\r\n\r\n    # Remove the SideIndicator property from the Compare-Object output\r\n    $json.scopes | ForEach-Object { $_.PSObject.Properties.Remove('SideIndicator') } | ConvertTo-Json\r\n\r\n    if (-not ($json.scopes -is [array]))\r\n    {\r\n        $json.scopes = @($json.scopes)\r\n    }\r\n    Write-Output \"$($json.scopes.Count) scopes found.\"\r\n}\r\n$text = $json | ConvertTo-Json\r\nWrite-Output \"---------\"\r\nWrite-Output $text\r\nWrite-Output \"---------\"\r\n$text | Out-File $filePath\r\n\r\n# Upload new/updated settings\r\nWrite-Output \"Uploading settings.json file...\"\r\nSet-AzStorageBlobContent @storageContext -File $filePath -Force | Out-Null\r\n\r\n# Save focusSchemaFile file to storage\r\n$schemaFiles = $env:schemaFiles | ConvertFrom-Json -Depth 10\r\nWrite-Output \"Uploading ${$schemaFiles.PSObject.Properties.Count} schema files...\"\r\n$schemaFiles.PSObject.Properties | ForEach-Object {\r\n    $fileName = \"$($_.Name).json\"\r\n    $tempPath = \"./$fileName\"\r\n    Write-Output \"  Uploading $($_.Name).json...\"\r\n    $_.Value | Out-File $tempPath\r\n    Set-AzStorageBlobContent @storageContext -File $tempPath -Blob \"schemas/$fileName\" -Force | Out-Null\r\n}\r\n",
                     "$fxv#2": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"EnrollmentNumber\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"EnrollmentNumber\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterID\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterID\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterType\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterCategory\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterCategory\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterSubCategory\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterSubCategory\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ServiceFamily\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ServiceFamily\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Product\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Product\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"SkuID\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"SkuID\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ProductID\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ProductID\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterRegion\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterRegion\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UnitOfMeasure\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"UnitOfMeasure\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PartNumber\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PartNumber\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EffectiveStartDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"EffectiveStartDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EffectiveEndDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"EffectiveEndDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UnitPrice\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"UnitPrice\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BasePrice\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"BasePrice\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MarketPrice\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"MarketPrice\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"CurrencyCode\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"CurrencyCode\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"IncludedQuantity\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"IncludedQuantity\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"OfferID\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"OfferID\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Term\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Term\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PriceType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PriceType\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
                     "$fxv#3": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"BillingAccountId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingAccountId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingAccountName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingAccountName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingProfileId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingProfileId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingProfileName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingProfileName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ServiceFamily\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ServiceFamily\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Product\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Product\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ProductId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ProductId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"SkuId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"SkuId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UnitOfMeasure\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"UnitOfMeasure\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterType\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterCategory\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterCategory\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterSubCategory\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterSubCategory\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterRegion\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterRegion\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"TierMinimumUnits\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"TierMinimumUnits\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EffectiveStartDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"EffectiveStartDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EffectiveEndDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"EffectiveEndDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UnitPrice\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"UnitPrice\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BasePrice\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"BasePrice\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MarketPrice\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"MarketPrice\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Currency\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Currency\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingCurrency\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingCurrency\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Term\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Term\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PriceType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PriceType\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
-                    "$fxv#4": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"InstanceFlexibilityGroup\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InstanceFlexibilityGroup\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InstanceFlexibilityRatio\", \"type\": \"Ratio\" },\r\n        \"sink\": { \"name\": \"InstanceFlexibilityRatio\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InstanceId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InstanceId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Kind\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Kind\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationOrderId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationOrderId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservedHours\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"ReservedHours\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"SkuName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"SkuName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"TotalReservedQuantity\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"TotalReservedQuantity\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UsageDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"UsageDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UsedHours\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"UsedHours\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
+                    "$fxv#4": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"InstanceFlexibilityGroup\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InstanceFlexibilityGroup\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InstanceFlexibilityRatio\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"InstanceFlexibilityRatio\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InstanceId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InstanceId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Kind\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Kind\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationOrderId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationOrderId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservedHours\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"ReservedHours\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"SkuName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"SkuName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"TotalReservedQuantity\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"TotalReservedQuantity\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UsageDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"UsageDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"UsedHours\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"UsedHours\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
                     "$fxv#5": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"SKU\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"SKU\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Location\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Location\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"CostWithNoReservedInstances\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"CostWithNoReservedInstances\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"FirstUsageDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"FirstUsageDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InstanceFlexibilityRatio\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"InstanceFlexibilityRatio\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InstanceFlexibilityGroup\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InstanceFlexibilityGroup\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"LookBackPeriod\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"LookBackPeriod\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"NetSavings\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"NetSavings\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"NormalizedSize\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"NormalizedSize\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"RecommendedQuantity\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"RecommendedQuantity\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"RecommendedQuantityNormalized\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"RecommendedQuantityNormalized\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ResourceType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ResourceType\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Scope\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Scope\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"SkuProperties\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"SkuProperties\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Term\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Term\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"TotalCostWithReservedInstances\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"TotalCostWithReservedInstances\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
                     "$fxv#6": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"Cost With No ReservedInstances\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Cost With No ReservedInstances\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"First UsageDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"First UsageDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Instance Flexibility Ratio\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Instance Flexibility Ratio\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Instance Flexibility Group\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Instance Flexibility Group\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Location\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Location\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"LookBackPeriod\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"LookBackPeriod\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MeterID\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"MeterID\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Net Savings\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Net Savings\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Normalized Size\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Normalized Size\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Recommended Quantity\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Recommended Quantity\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Recommended Quantity Normalized\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Recommended Quantity Normalized\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ResourceType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ResourceType\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"scope\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"scope\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"SkuName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"SkuName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Sku Properties\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Sku Properties\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Term\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Term\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Total Cost With ReservedInstances\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Total Cost With ReservedInstances\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
                     "$fxv#7": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"AccountName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"AccountName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"AccountOwnerEmail\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"AccountOwnerEmail\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Amount\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Amount\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ArmSkuName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ArmSkuName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingFrequency\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingFrequency\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingMonth\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingMonth\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"CostCenter\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"CostCenter\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Currency\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Currency\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"CurrentEnrollmentId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"CurrentEnrollmentId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"DepartmentName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"DepartmentName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Description\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Description\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EventDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"EventDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EventType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"EventType\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"MonetaryCommitment\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"MonetaryCommitment\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Overage\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Overage\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PurchasingSubscriptionGuid\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PurchasingSubscriptionGuid\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PurchasingSubscriptionName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PurchasingSubscriptionName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PurchasingEnrollment\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PurchasingEnrollment\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Quantity\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Quantity\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Region\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Region\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationOrderId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationOrderId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationOrderName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationOrderName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Term\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Term\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
                     "$fxv#8": "{\r\n  \"additionalColumns\": [],\r\n  \"translator\": {\r\n    \"type\": \"TabularTranslator\",\r\n    \"mappings\": [\r\n      {\r\n        \"source\": { \"name\": \"Amount\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Amount\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ArmSkuName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ArmSkuName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingFrequency\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingFrequency\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingProfileId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingProfileId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"BillingProfileName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"BillingProfileName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Currency\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Currency\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Description\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Description\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EventDate\", \"type\": \"DateTimeOffset\" },\r\n        \"sink\": { \"name\": \"EventDate\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"EventType\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"EventType\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Invoice\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Invoice\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InvoiceId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InvoiceId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InvoiceSectionId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InvoiceSectionId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"InvoiceSectionName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"InvoiceSectionName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PurchasingSubscriptionGuid\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PurchasingSubscriptionGuid\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"PurchasingSubscriptionName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"PurchasingSubscriptionName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Quantity\", \"type\": \"Decimal\" },\r\n        \"sink\": { \"name\": \"Quantity\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Region\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Region\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationOrderId\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationOrderId\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"ReservationOrderName\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"ReservationOrderName\" }\r\n      },\r\n      {\r\n        \"source\": { \"name\": \"Term\", \"type\": \"String\" },\r\n        \"sink\": { \"name\": \"Term\" }\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
-                    "$fxv#9": "0.5",
+                    "$fxv#9": "0.6",
                     "safeHubName": "[replace(replace(toLower(parameters('hubName')), '-', ''), '_', '')]",
                     "storageAccountSuffix": "[parameters('uniqueSuffix')]",
                     "storageAccountName": "[format('{0}{1}', take(variables('safeHubName'), sub(24, length(variables('storageAccountSuffix')))), variables('storageAccountSuffix'))]",
@@ -504,7 +395,7 @@
                       "focuscost_1.0-preview(v1)": "[variables('$fxv#1')]",
                       "pricesheet_2023-05-01_ea": "[variables('$fxv#2')]",
                       "pricesheet_2023-05-01_mca": "[variables('$fxv#3')]",
-                      "reservationdetails_2023-05-01": "[variables('$fxv#4')]",
+                      "reservationdetails_2023-03-01": "[variables('$fxv#4')]",
                       "reservationrecommendations_2023-05-01_ea": "[variables('$fxv#5')]",
                       "reservationrecommendations_2023-05-01_mca": "[variables('$fxv#6')]",
                       "reservationtransactions_2023-05-01_ea": "[variables('$fxv#7')]",
@@ -749,7 +640,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "11039657704195935121"
+                      "templateHash": "11358703735693729031"
                     }
                   },
                   "functions": [
@@ -859,7 +750,7 @@
                       "type": "object",
                       "defaultValue": {},
                       "metadata": {
-                        "description": "Optional. Tags to apply to all resources. We will also add the cm-resource-parent tag for improved cost roll-ups in Cost Management."
+                        "description": "Optional. Tags to apply to all resources."
                       }
                     },
                     "tagsByResource": {
@@ -871,11 +762,11 @@
                     }
                   },
                   "variables": {
-                    "$fxv#0": "# Copyright (c) Microsoft Corporation.\r\n# Licensed under the MIT License.\r\n\r\n# Init outputs\r\n$DeploymentScriptOutputs = @{}\r\n\r\n# \r\n$adfParams = @{\r\n    ResourceGroupName = $env:DataFactoryResourceGroup\r\n    DataFactoryName   = $env:DataFactoryName\r\n}\r\n\r\n# Delete old triggers\r\n$triggers = Get-AzDataFactoryV2Trigger @adfParams -ErrorAction SilentlyContinue `\r\n| Where-Object { $_.Name -match '^msexports(_(setup|daily|monthly|extract))?$' }\r\n$DeploymentScriptOutputs[\"stopTriggers\"] = $triggers | Stop-AzDataFactoryV2Trigger -Force -ErrorAction SilentlyContinue\r\n$DeploymentScriptOutputs[\"deleteTriggers\"] = $triggers | Remove-AzDataFactoryV2Trigger -Force -ErrorAction SilentlyContinue\r\n\r\n# Delete old pipelines\r\n$DeploymentScriptOutputs[\"pipelines\"] = Get-AzDataFactoryV2Pipeline @adfParams -ErrorAction SilentlyContinue `\r\n| Where-Object { $_.Name -match '^msexports_(backfill|extract|fill|get|run|setup|transform)$' } `\r\n| Remove-AzDataFactoryV2Pipeline -Force -ErrorAction SilentlyContinue\r\n",
+                    "$fxv#0": "# Copyright (c) Microsoft Corporation.\r\n# Licensed under the MIT License.\r\n\r\n# Init outputs\r\n$DeploymentScriptOutputs = @{}\r\n\r\n# \r\n$adfParams = @{\r\n    ResourceGroupName = $env:DataFactoryResourceGroup\r\n    DataFactoryName   = $env:DataFactoryName\r\n}\r\n\r\n# Delete old triggers\r\n$triggers = Get-AzDataFactoryV2Trigger @adfParams -ErrorAction SilentlyContinue `\r\n| Where-Object { $_.Name -match '^msexports(_(setup|daily|monthly|extract))?$' }\r\n$DeploymentScriptOutputs[\"stopTriggers\"] = $triggers | Stop-AzDataFactoryV2Trigger -Force -ErrorAction SilentlyContinue\r\n$DeploymentScriptOutputs[\"deleteTriggers\"] = $triggers | Remove-AzDataFactoryV2Trigger -Force -ErrorAction SilentlyContinue\r\n\r\n# Delete old pipelines\r\n$DeploymentScriptOutputs[\"pipelines\"] = Get-AzDataFactoryV2Pipeline @adfParams -ErrorAction SilentlyContinue `\r\n| Where-Object { $_.Name -match '^(msexports_(backfill|extract|fill|get|run|setup|transform)|config_(BackfillData|ExportData|RunBackfill|RunExports))$' } `\r\n| Remove-AzDataFactoryV2Pipeline -Force -ErrorAction SilentlyContinue\r\n",
                     "$fxv#1": "# Copyright (c) Microsoft Corporation.\r\n# Licensed under the MIT License.\r\n\r\nParam(\r\n    [switch] $Stop\r\n)\r\n\r\n# Init outputs\r\n$DeploymentScriptOutputs = @{}\r\n\r\nif (-not $Stop) {\r\n    Start-Sleep -Seconds 10\r\n}\r\n\r\n# Loop thru triggers\r\n$env:Triggers.Split('|') `\r\n| ForEach-Object {\r\n    $trigger = $_\r\n    if ($Stop) {\r\n        Write-Output \"Stopping trigger $trigger...\"\r\n        $triggerOutput = Stop-AzDataFactoryV2Trigger `\r\n            -ResourceGroupName $env:DataFactoryResourceGroup `\r\n            -DataFactoryName $env:DataFactoryName `\r\n            -Name $trigger `\r\n            -Force `\r\n            -ErrorAction SilentlyContinue # Ignore errors, since the trigger may not exist\r\n    } else {\r\n        Write-Output \"Starting trigger $trigger...\"\r\n        $triggerOutput = Start-AzDataFactoryV2Trigger `\r\n            -ResourceGroupName $env:DataFactoryResourceGroup `\r\n            -DataFactoryName $env:DataFactoryName `\r\n            -Name $trigger `\r\n            -Force\r\n    }\r\n    if ($triggerOutput) {\r\n        Write-Output \"done...\"\r\n    } else {\r\n        Write-Output \"failed...\"\r\n    }\r\n    $DeploymentScriptOutputs[$trigger] = $triggerOutput\r\n}\r\n\r\nif ($Stop) {\r\n    Start-Sleep -Seconds 10\r\n}\r\n",
                     "$fxv#2": "# Copyright (c) Microsoft Corporation.\r\n# Licensed under the MIT License.\r\n\r\nParam(\r\n    [switch] $Stop\r\n)\r\n\r\n# Init outputs\r\n$DeploymentScriptOutputs = @{}\r\n\r\nif (-not $Stop) {\r\n    Start-Sleep -Seconds 10\r\n}\r\n\r\n# Loop thru triggers\r\n$env:Triggers.Split('|') `\r\n| ForEach-Object {\r\n    $trigger = $_\r\n    if ($Stop) {\r\n        Write-Output \"Stopping trigger $trigger...\"\r\n        $triggerOutput = Stop-AzDataFactoryV2Trigger `\r\n            -ResourceGroupName $env:DataFactoryResourceGroup `\r\n            -DataFactoryName $env:DataFactoryName `\r\n            -Name $trigger `\r\n            -Force `\r\n            -ErrorAction SilentlyContinue # Ignore errors, since the trigger may not exist\r\n    } else {\r\n        Write-Output \"Starting trigger $trigger...\"\r\n        $triggerOutput = Start-AzDataFactoryV2Trigger `\r\n            -ResourceGroupName $env:DataFactoryResourceGroup `\r\n            -DataFactoryName $env:DataFactoryName `\r\n            -Name $trigger `\r\n            -Force\r\n    }\r\n    if ($triggerOutput) {\r\n        Write-Output \"done...\"\r\n    } else {\r\n        Write-Output \"failed...\"\r\n    }\r\n    $DeploymentScriptOutputs[$trigger] = $triggerOutput\r\n}\r\n\r\nif ($Stop) {\r\n    Start-Sleep -Seconds 10\r\n}\r\n",
                     "focusSchemaVersion": "1.0",
-                    "ftkVersion": "0.5",
+                    "ftkVersion": "0.6",
                     "exportApiVersion": "2023-07-01-preview",
                     "datasetPropsDefault": {
                       "location": {
@@ -1219,6 +1110,44 @@
                         "linkedService_storageAccount"
                       ]
                     },
+                    "dataset_msexports_gzip": {
+                      "type": "Microsoft.DataFactory/factories/datasets",
+                      "apiVersion": "2018-06-01",
+                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_gzip', variables('safeExportContainerName')))]",
+                      "properties": {
+                        "annotations": [],
+                        "parameters": {
+                          "blobPath": {
+                            "type": "String"
+                          }
+                        },
+                        "type": "DelimitedText",
+                        "typeProperties": {
+                          "location": {
+                            "type": "AzureBlobFSLocation",
+                            "fileName": {
+                              "value": "@{dataset().blobPath}",
+                              "type": "Expression"
+                            },
+                            "fileSystem": "[variables('safeExportContainerName')]"
+                          },
+                          "columnDelimiter": ",",
+                          "escapeChar": "\"",
+                          "quoteChar": "\"",
+                          "firstRowAsHeader": true,
+                          "compressionCodec": "Gzip"
+                        },
+                        "linkedServiceName": {
+                          "parameters": {},
+                          "referenceName": "[parameters('storageAccountName')]",
+                          "type": "LinkedServiceReference"
+                        }
+                      },
+                      "dependsOn": [
+                        "dataFactory",
+                        "linkedService_storageAccount"
+                      ]
+                    },
                     "dataset_msexports_parquet": {
                       "type": "Microsoft.DataFactory/factories/datasets",
                       "apiVersion": "2018-06-01",
@@ -1272,6 +1201,40 @@
                               "type": "Expression"
                             },
                             "fileSystem": "[variables('safeIngestionContainerName')]"
+                          }
+                        },
+                        "linkedServiceName": {
+                          "parameters": {},
+                          "referenceName": "[if(empty(parameters('remoteHubStorageUri')), parameters('storageAccountName'), 'remoteHubStorage')]",
+                          "type": "LinkedServiceReference"
+                        }
+                      },
+                      "dependsOn": [
+                        "dataFactory",
+                        "linkedService_remoteHubStorage",
+                        "linkedService_storageAccount"
+                      ]
+                    },
+                    "dataset_ingestion_files": {
+                      "type": "Microsoft.DataFactory/factories/datasets",
+                      "apiVersion": "2018-06-01",
+                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_files', variables('safeIngestionContainerName')))]",
+                      "properties": {
+                        "annotations": [],
+                        "parameters": {
+                          "folderPath": {
+                            "type": "String"
+                          }
+                        },
+                        "type": "Parquet",
+                        "typeProperties": {
+                          "location": {
+                            "type": "AzureBlobFSLocation",
+                            "fileSystem": "[variables('safeIngestionContainerName')]",
+                            "folderPath": {
+                              "value": "@dataset().folderPath",
+                              "type": "Expression"
+                            }
                           }
                         },
                         "linkedServiceName": {
@@ -1362,7 +1325,7 @@
                         "pipelines": [
                           {
                             "pipelineReference": {
-                              "referenceName": "[format('{0}_ExportData', variables('safeConfigContainerName'))]",
+                              "referenceName": "[format('{0}_StartExportProcess', variables('safeConfigContainerName'))]",
                               "type": "PipelineReference"
                             },
                             "parameters": {
@@ -1383,7 +1346,7 @@
                       "dependsOn": [
                         "azuretimezones",
                         "dataFactory",
-                        "pipeline_ExportData",
+                        "pipeline_StartExportProcess",
                         "stopTriggers"
                       ]
                     },
@@ -1395,7 +1358,7 @@
                         "pipelines": [
                           {
                             "pipelineReference": {
-                              "referenceName": "[format('{0}_ExportData', variables('safeConfigContainerName'))]",
+                              "referenceName": "[format('{0}_StartExportProcess', variables('safeConfigContainerName'))]",
                               "type": "PipelineReference"
                             },
                             "parameters": {
@@ -1422,14 +1385,14 @@
                       "dependsOn": [
                         "azuretimezones",
                         "dataFactory",
-                        "pipeline_ExportData",
+                        "pipeline_StartExportProcess",
                         "stopTriggers"
                       ]
                     },
-                    "pipeline_BackfillData": {
+                    "pipeline_StartBackfillProcess": {
                       "type": "Microsoft.DataFactory/factories/pipelines",
                       "apiVersion": "2018-06-01",
-                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_BackfillData', variables('safeConfigContainerName')))]",
+                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_StartBackfillProcess', variables('safeConfigContainerName')))]",
                       "properties": {
                         "activities": [
                           {
@@ -1623,7 +1586,7 @@
                                   "userProperties": [],
                                   "typeProperties": {
                                     "pipeline": {
-                                      "referenceName": "[format('{0}_RunBackfill', variables('safeConfigContainerName'))]",
+                                      "referenceName": "[format('{0}_RunBackfillJob', variables('safeConfigContainerName'))]",
                                       "type": "PipelineReference"
                                     },
                                     "waitOnCompletion": true,
@@ -1686,17 +1649,17 @@
                       "dependsOn": [
                         "dataFactory",
                         "dataset_config",
-                        "pipeline_RunBackfill",
+                        "pipeline_RunBackfillJob",
                         "storageAccount"
                       ],
                       "metadata": {
                         "description": "Runs the backfill job for each month based on retention settings."
                       }
                     },
-                    "pipeline_RunBackfill": {
+                    "pipeline_RunBackfillJob": {
                       "type": "Microsoft.DataFactory/factories/pipelines",
                       "apiVersion": "2018-06-01",
-                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_RunBackfill', variables('safeConfigContainerName')))]",
+                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_RunBackfillJob', variables('safeConfigContainerName')))]",
                       "properties": {
                         "activities": [
                           {
@@ -1740,8 +1703,9 @@
                             }
                           },
                           {
-                            "name": "ForEach Export Scope",
-                            "type": "ForEach",
+                            "name": "Set Scopes",
+                            "description": "Save scopes to test if it is an array",
+                            "type": "SetVariable",
                             "dependsOn": [
                               {
                                 "activity": "Get Config",
@@ -1750,10 +1714,90 @@
                                 ]
                               }
                             ],
+                            "policy": {
+                              "secureOutput": false,
+                              "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                              "variableName": "scopesArray",
+                              "value": {
+                                "value": "@activity('Get Config').output.firstRow.scopes",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "Set Scopes as Array",
+                            "description": "Wraps a single scope object into an array to work around the PowerShell bug where single-item arrays are sometimes written as a single object instead of an array.",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                              {
+                                "activity": "Set Scopes",
+                                "dependencyConditions": [
+                                  "Failed"
+                                ]
+                              }
+                            ],
+                            "policy": {
+                              "secureOutput": false,
+                              "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                              "variableName": "scopesArray",
+                              "value": {
+                                "value": "@createArray(activity('Get Config').output.firstRow.scopes)",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "Filter Invalid Scopes",
+                            "description": "Remove any invalid scopes to avoid errors.",
+                            "type": "Filter",
+                            "dependsOn": [
+                              {
+                                "activity": "Set Scopes",
+                                "dependencyConditions": [
+                                  "Succeeded"
+                                ]
+                              },
+                              {
+                                "activity": "Set Scopes as Array",
+                                "dependencyConditions": [
+                                  "Skipped",
+                                  "Succeeded"
+                                ]
+                              }
+                            ],
                             "userProperties": [],
                             "typeProperties": {
                               "items": {
-                                "value": "@activity('Get Config').output.firstRow.scopes",
+                                "value": "@variables('scopesArray')",
+                                "type": "Expression"
+                              },
+                              "condition": {
+                                "value": "@and(not(empty(item().scope)), not(equals(item().scope, '/')))",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "ForEach Export Scope",
+                            "type": "ForEach",
+                            "dependsOn": [
+                              {
+                                "activity": "Filter Invalid Scopes",
+                                "dependencyConditions": [
+                                  "Succeeded"
+                                ]
+                              }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                              "items": {
+                                "value": "@activity('Filter Invalid Scopes').output.Value",
                                 "type": "Expression"
                               },
                               "isSequential": true,
@@ -1847,6 +1891,9 @@
                           "folderPath": {
                             "type": "String",
                             "defaultValue": "[parameters('configContainerName')]"
+                          },
+                          "scopesArray": {
+                            "type": "Array"
                           }
                         }
                       },
@@ -1859,10 +1906,10 @@
                         "description": "Creates and triggers exports for all defined scopes for the specified date range."
                       }
                     },
-                    "pipeline_ExportData": {
+                    "pipeline_StartExportProcess": {
                       "type": "Microsoft.DataFactory/factories/pipelines",
                       "apiVersion": "2018-06-01",
-                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_ExportData', variables('safeConfigContainerName')))]",
+                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_StartExportProcess', variables('safeConfigContainerName')))]",
                       "properties": {
                         "activities": [
                           {
@@ -1906,8 +1953,9 @@
                             }
                           },
                           {
-                            "name": "ForEach Export Scope",
-                            "type": "ForEach",
+                            "name": "Set Scopes",
+                            "description": "Save scopes to test if it is an array",
+                            "type": "SetVariable",
                             "dependsOn": [
                               {
                                 "activity": "Get Config",
@@ -1916,10 +1964,90 @@
                                 ]
                               }
                             ],
+                            "policy": {
+                              "secureOutput": false,
+                              "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                              "variableName": "scopesArray",
+                              "value": {
+                                "value": "@activity('Get Config').output.firstRow.scopes",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "Set Scopes as Array",
+                            "description": "Wraps a single scope object into an array to work around the PowerShell bug where single-item arrays are sometimes written as a single object instead of an array.",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                              {
+                                "activity": "Set Scopes",
+                                "dependencyConditions": [
+                                  "Failed"
+                                ]
+                              }
+                            ],
+                            "policy": {
+                              "secureOutput": false,
+                              "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                              "variableName": "scopesArray",
+                              "value": {
+                                "value": "@createArray(activity('Get Config').output.firstRow.scopes)",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "Filter Invalid Scopes",
+                            "description": "Remove any invalid scopes to avoid errors.",
+                            "type": "Filter",
+                            "dependsOn": [
+                              {
+                                "activity": "Set Scopes",
+                                "dependencyConditions": [
+                                  "Succeeded"
+                                ]
+                              },
+                              {
+                                "activity": "Set Scopes as Array",
+                                "dependencyConditions": [
+                                  "Succeeded",
+                                  "Skipped"
+                                ]
+                              }
+                            ],
                             "userProperties": [],
                             "typeProperties": {
                               "items": {
-                                "value": "@activity('Get Config').output.firstRow.scopes",
+                                "value": "@variables('scopesArray')",
+                                "type": "Expression"
+                              },
+                              "condition": {
+                                "value": "@and(not(empty(item().scope)), not(equals(item().scope, '/')))",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "ForEach Export Scope",
+                            "type": "ForEach",
+                            "dependsOn": [
+                              {
+                                "activity": "Filter Invalid Scopes",
+                                "dependencyConditions": [
+                                  "Succeeded"
+                                ]
+                              }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                              "items": {
+                                "value": "@activity('Filter Invalid Scopes').output.Value",
                                 "type": "Expression"
                               },
                               "isSequential": true,
@@ -1965,7 +2093,7 @@
                                   "userProperties": [],
                                   "typeProperties": {
                                     "pipeline": {
-                                      "referenceName": "[format('{0}_RunExports', variables('safeConfigContainerName'))]",
+                                      "referenceName": "[format('{0}_RunExportJobs', variables('safeConfigContainerName'))]",
                                       "type": "PipelineReference"
                                     },
                                     "waitOnCompletion": true,
@@ -2008,22 +2136,25 @@
                           "resourceManagementUri": {
                             "type": "String",
                             "defaultValue": "[environment().resourceManager]"
+                          },
+                          "scopesArray": {
+                            "type": "Array"
                           }
                         }
                       },
                       "dependsOn": [
                         "dataFactory",
                         "dataset_config",
-                        "pipeline_RunExports"
+                        "pipeline_RunExportJobs"
                       ],
                       "metadata": {
-                        "description": "Gets a list of all Cost Management exports configured for this hub based on the scopes defined in settings.json, then runs each export using the config_RunExports pipeline."
+                        "description": "Gets a list of all Cost Management exports configured for this hub based on the scopes defined in settings.json, then runs each export using the config_RunExportJobs pipeline."
                       }
                     },
-                    "pipeline_RunExports": {
+                    "pipeline_RunExportJobs": {
                       "type": "Microsoft.DataFactory/factories/pipelines",
                       "apiVersion": "2018-06-01",
-                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_RunExports', variables('safeConfigContainerName')))]",
+                      "name": "[format('{0}/{1}', parameters('dataFactoryName'), format('{0}_RunExportJobs', variables('safeConfigContainerName')))]",
                       "properties": {
                         "activities": [
                           {
@@ -2068,7 +2199,7 @@
                                           },
                                           "method": "POST",
                                           "headers": {
-                                            "x-ms-command-name": "[format('FinOpsToolkit.Hubs.config_RunExports@{0}', variables('ftkVersion'))]",
+                                            "x-ms-command-name": "[format('FinOpsToolkit.Hubs.config_RunExportJobs@{0}', variables('ftkVersion'))]",
                                             "ClientType": "[format('FinOpsToolkit.Hubs@{0}', variables('ftkVersion'))]"
                                           },
                                           "authentication": {
@@ -2163,11 +2294,89 @@
                             }
                           },
                           {
+                            "name": "Save Scopes",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                              {
+                                "activity": "Get Config",
+                                "dependencyConditions": [
+                                  "Succeeded"
+                                ]
+                              }
+                            ],
+                            "policy": {
+                              "secureOutput": false,
+                              "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                              "variableName": "scopesArray",
+                              "value": {
+                                "value": "@activity('Get Config').output.firstRow.scopes",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "Save Scopes as Array",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                              {
+                                "activity": "Save Scopes",
+                                "dependencyConditions": [
+                                  "Failed"
+                                ]
+                              }
+                            ],
+                            "policy": {
+                              "secureOutput": false,
+                              "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                              "variableName": "scopesArray",
+                              "value": {
+                                "value": "@array(activity('Get Config').output.firstRow.scopes)",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "Filter Invalid Scopes",
+                            "type": "Filter",
+                            "dependsOn": [
+                              {
+                                "activity": "Save Scopes",
+                                "dependencyConditions": [
+                                  "Succeeded"
+                                ]
+                              },
+                              {
+                                "activity": "Save Scopes as Array",
+                                "dependencyConditions": [
+                                  "Skipped",
+                                  "Succeeded"
+                                ]
+                              }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                              "items": {
+                                "value": "@variables('scopesArray')",
+                                "type": "Expression"
+                              },
+                              "condition": {
+                                "value": "@and(not(empty(item().scope)), not(equals(item().scope, '/')))",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
                             "name": "ForEach Export Scope",
                             "type": "ForEach",
                             "dependsOn": [
                               {
-                                "activity": "Remove empty scopes",
+                                "activity": "Filter Invalid Scopes",
                                 "dependencyConditions": [
                                   "Succeeded"
                                 ]
@@ -2176,7 +2385,7 @@
                             "userProperties": [],
                             "typeProperties": {
                               "items": {
-                                "value": "@activity('Remove empty scopes').output.value",
+                                "value": "@activity('Filter Invalid Scopes').output.value",
                                 "type": "Expression"
                               },
                               "isSequential": true,
@@ -2300,89 +2509,11 @@
                                 }
                               ]
                             }
-                          },
-                          {
-                            "name": "Save scopes as array",
-                            "type": "SetVariable",
-                            "dependsOn": [
-                              {
-                                "activity": "Save scopes",
-                                "dependencyConditions": [
-                                  "Failed"
-                                ]
-                              }
-                            ],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "variableName": "scopes",
-                              "value": {
-                                "value": "@array(activity('Get Config').output.firstRow.scopes)",
-                                "type": "Expression"
-                              }
-                            }
-                          },
-                          {
-                            "name": "Save scopes",
-                            "type": "SetVariable",
-                            "dependsOn": [
-                              {
-                                "activity": "Get Config",
-                                "dependencyConditions": [
-                                  "Succeeded"
-                                ]
-                              }
-                            ],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "variableName": "scopes",
-                              "value": {
-                                "value": "@activity('Get Config').output.firstRow.scopes",
-                                "type": "Expression"
-                              }
-                            }
-                          },
-                          {
-                            "name": "Remove empty scopes",
-                            "type": "Filter",
-                            "dependsOn": [
-                              {
-                                "activity": "Save scopes as array",
-                                "dependencyConditions": [
-                                  "Succeeded",
-                                  "Skipped"
-                                ]
-                              },
-                              {
-                                "activity": "Save scopes",
-                                "dependencyConditions": [
-                                  "Completed"
-                                ]
-                              }
-                            ],
-                            "userProperties": [],
-                            "typeProperties": {
-                              "items": {
-                                "value": "@variables('scopes')",
-                                "type": "Expression"
-                              },
-                              "condition": {
-                                "value": "@greater(length(item().scope), 0)",
-                                "type": "Expression"
-                              }
-                            }
                           }
                         ],
                         "concurrency": 1,
                         "variables": {
-                          "scopes": {
+                          "scopesArray": {
                             "type": "Array"
                           },
                           "exportName": {
@@ -2439,6 +2570,7 @@
                           },
                           {
                             "name": "Read Manifest",
+                            "description": "Load the export manifest to determine the scope, dataset, and date range.",
                             "type": "Lookup",
                             "dependsOn": [
                               {
@@ -2486,6 +2618,7 @@
                           },
                           {
                             "name": "Set Dataset Type",
+                            "description": "Save the dataset type from the export manifest.",
                             "type": "SetVariable",
                             "dependsOn": [
                               {
@@ -2503,13 +2636,39 @@
                             "typeProperties": {
                               "variableName": "datasetType",
                               "value": {
-                                "value": "@activity('Read Manifest').output.firstRow.exportConfig.type",
+                                "value": "@toLower(activity('Read Manifest').output.firstRow.exportConfig.type)",
+                                "type": "Expression"
+                              }
+                            }
+                          },
+                          {
+                            "name": "Set MCA Column",
+                            "description": "Determines if the dataset schema has channel-specific columns and saves the column name that only exists in MCA to determine if it is an MCA dataset.",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                              {
+                                "activity": "Set Dataset Type",
+                                "dependencyConditions": [
+                                  "Succeeded"
+                                ]
+                              }
+                            ],
+                            "policy": {
+                              "secureOutput": false,
+                              "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                              "variableName": "mcaColumnToCheck",
+                              "value": {
+                                "value": "@if(contains(createArray('pricesheet', 'reservationtransactions'), variables('datasetType')), 'BillingProfileId', if(equals(variables('datasetType'), 'reservationrecommendations'), 'Net Savings', null))",
                                 "type": "Expression"
                               }
                             }
                           },
                           {
                             "name": "Set Dataset Version",
+                            "description": "Save the dataset version from the export manifest.",
                             "type": "SetVariable",
                             "dependsOn": [
                               {
@@ -2533,11 +2692,12 @@
                             }
                           },
                           {
-                            "name": "Set Schema File",
-                            "type": "SetVariable",
+                            "name": "Detect Channel",
+                            "description": "Determines what channel this dataset is from. Switch statement handles the different file types if the mcaColumnToCheck variable is set.",
+                            "type": "Switch",
                             "dependsOn": [
                               {
-                                "activity": "Set Dataset Type",
+                                "activity": "Set MCA Column",
                                 "dependencyConditions": [
                                   "Succeeded"
                                 ]
@@ -2549,21 +2709,236 @@
                                 ]
                               }
                             ],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
                             "userProperties": [],
                             "typeProperties": {
-                              "variableName": "schemaFile",
-                              "value": {
-                                "value": "@toLower(concat(variables('datasetType'), '_', variables('datasetVersion'), '.json'))",
+                              "on": {
+                                "value": "@if(empty(variables('mcaColumnToCheck')), 'ignore', last(array(split(activity('Read Manifest').output.firstRow.blobs[0].blobName, '.'))))",
                                 "type": "Expression"
-                              }
+                              },
+                              "cases": [
+                                {
+                                  "value": "csv",
+                                  "activities": [
+                                    {
+                                      "name": "Check for MCA Column in CSV",
+                                      "description": "Checks the dataset to determine if the applicable MCA-specific column exists.",
+                                      "type": "Lookup",
+                                      "dependsOn": [],
+                                      "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "source": {
+                                          "type": "DelimitedTextSource",
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSReadSettings",
+                                            "recursive": false,
+                                            "enablePartitionDiscovery": false
+                                          },
+                                          "formatSettings": {
+                                            "type": "DelimitedTextReadSettings"
+                                          }
+                                        },
+                                        "dataset": {
+                                          "referenceName": "[variables('safeExportContainerName')]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@activity('Read Manifest').output.firstRow.blobs[0].blobName",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "Set Schema File with Channel in CSV",
+                                      "type": "SetVariable",
+                                      "dependsOn": [
+                                        {
+                                          "activity": "Check for MCA Column in CSV",
+                                          "dependencyConditions": [
+                                            "Succeeded"
+                                          ]
+                                        }
+                                      ],
+                                      "policy": {
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "variableName": "schemaFile",
+                                        "value": {
+                                          "value": "@toLower(concat(variables('datasetType'), '_', variables('datasetVersion'), if(contains(activity('Check for MCA Column in CSV').output.firstRow, variables('mcaColumnToCheck')), '_mca', '_ea'), '.json'))",
+                                          "type": "Expression"
+                                        }
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "value": "gz",
+                                  "activities": [
+                                    {
+                                      "name": "Check for MCA Column in Gzip CSV",
+                                      "description": "Checks the dataset to determine if the applicable MCA-specific column exists.",
+                                      "type": "Lookup",
+                                      "dependsOn": [],
+                                      "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "source": {
+                                          "type": "DelimitedTextSource",
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSReadSettings",
+                                            "recursive": false,
+                                            "enablePartitionDiscovery": false
+                                          },
+                                          "formatSettings": {
+                                            "type": "DelimitedTextReadSettings"
+                                          }
+                                        },
+                                        "dataset": {
+                                          "referenceName": "[format('{0}_gzip', variables('safeExportContainerName'))]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@activity('Read Manifest').output.firstRow.blobs[0].blobName",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "Set Schema File with Channel in Gzip CSV",
+                                      "type": "SetVariable",
+                                      "dependsOn": [
+                                        {
+                                          "activity": "Check for MCA Column in Gzip CSV",
+                                          "dependencyConditions": [
+                                            "Succeeded"
+                                          ]
+                                        }
+                                      ],
+                                      "policy": {
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "variableName": "schemaFile",
+                                        "value": {
+                                          "value": "@toLower(concat(variables('datasetType'), '_', variables('datasetVersion'), if(contains(activity('Check for MCA Column in Gzip CSV').output.firstRow, variables('mcaColumnToCheck')), '_mca', '_ea'), '.json'))",
+                                          "type": "Expression"
+                                        }
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "value": "parquet",
+                                  "activities": [
+                                    {
+                                      "name": "Check for MCA Column in Parquet",
+                                      "description": "Checks the dataset to determine if the applicable MCA-specific column exists.",
+                                      "type": "Lookup",
+                                      "dependsOn": [],
+                                      "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "source": {
+                                          "type": "ParquetSource",
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSReadSettings",
+                                            "recursive": false,
+                                            "enablePartitionDiscovery": false
+                                          },
+                                          "formatSettings": {
+                                            "type": "ParquetReadSettings"
+                                          }
+                                        },
+                                        "dataset": {
+                                          "referenceName": "[format('{0}_parquet', variables('safeExportContainerName'))]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@activity('Read Manifest').output.firstRow.blobs[0].blobName",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "Set Schema File with Channel for Parquet",
+                                      "type": "SetVariable",
+                                      "dependsOn": [
+                                        {
+                                          "activity": "Check for MCA Column in Parquet",
+                                          "dependencyConditions": [
+                                            "Succeeded"
+                                          ]
+                                        }
+                                      ],
+                                      "policy": {
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "variableName": "schemaFile",
+                                        "value": {
+                                          "value": "@toLower(concat(variables('datasetType'), '_', variables('datasetVersion'), if(contains(activity('Check for MCA Column in Parquet').output.firstRow, variables('mcaColumnToCheck')), '_mca', '_ea'), '.json'))",
+                                          "type": "Expression"
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              ],
+                              "defaultActivities": [
+                                {
+                                  "name": "Set Schema File",
+                                  "type": "SetVariable",
+                                  "dependsOn": [],
+                                  "policy": {
+                                    "secureOutput": false,
+                                    "secureInput": false
+                                  },
+                                  "userProperties": [],
+                                  "typeProperties": {
+                                    "variableName": "schemaFile",
+                                    "value": {
+                                      "value": "@toLower(concat(variables('datasetType'), '_', variables('datasetVersion'), '.json'))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                }
+                              ]
                             }
                           },
                           {
                             "name": "Set Scope",
+                            "description": "Save the scope from the export manifest.",
                             "type": "SetVariable",
                             "dependsOn": [
                               {
@@ -2588,6 +2963,7 @@
                           },
                           {
                             "name": "Set Date",
+                            "description": "Save the exported month from the export manifest.",
                             "type": "SetVariable",
                             "dependsOn": [
                               {
@@ -2645,7 +3021,7 @@
                                 ]
                               },
                               {
-                                "activity": "Set Schema File",
+                                "activity": "Detect Channel",
                                 "dependencyConditions": [
                                   "Failed"
                                 ]
@@ -2662,6 +3038,7 @@
                           },
                           {
                             "name": "Check Schema",
+                            "description": "Verify that the schema file exists in storage.",
                             "type": "GetMetadata",
                             "dependsOn": [
                               {
@@ -2677,7 +3054,7 @@
                                 ]
                               },
                               {
-                                "activity": "Set Schema File",
+                                "activity": "Detect Channel",
                                 "dependencyConditions": [
                                   "Succeeded"
                                 ]
@@ -2738,12 +3115,13 @@
                           },
                           {
                             "name": "For Each Blob",
+                            "description": "Loop thru each exported file listed in the manifest.",
                             "type": "ForEach",
                             "dependsOn": [
                               {
                                 "activity": "Check Schema",
                                 "dependencyConditions": [
-                                  "Completed"
+                                  "Succeeded"
                                 ]
                               }
                             ],
@@ -2757,6 +3135,7 @@
                               "activities": [
                                 {
                                   "name": "Execute",
+                                  "description": "Run the ETL pipeline.",
                                   "type": "ExecutePipeline",
                                   "dependsOn": [],
                                   "policy": {
@@ -2775,7 +3154,15 @@
                                         "type": "Expression"
                                       },
                                       "destinationFolder": {
-                                        "value": "@toLower(replace(concat(variables('scope'),'/',variables('date'),'/',variables('datasetType')),'//','/'))",
+                                        "value": "@toLower(replace(concat(variables('datasetType'),'/',substring(variables('date'), 0, 4),'/',substring(variables('date'), 4, 2),'/',variables('scope')),'//','/'))",
+                                        "type": "Expression"
+                                      },
+                                      "destinationFile": {
+                                        "value": "@concat(activity('Read Manifest').output.firstRow.runInfo.runId, '__', last(array(split(replace(replace(item().blobName, '.gz', ''), '.csv', '.parquet'), '/'))))",
+                                        "type": "Expression"
+                                      },
+                                      "keepFilePrefix": {
+                                        "value": "@concat(activity('Read Manifest').output.firstRow.runInfo.runId, '__')",
                                         "type": "Expression"
                                       },
                                       "schemaFile": {
@@ -2798,19 +3185,22 @@
                           }
                         },
                         "variables": {
-                          "scope": {
-                            "type": "String"
-                          },
-                          "date": {
-                            "type": "String"
-                          },
                           "datasetType": {
                             "type": "String"
                           },
                           "datasetVersion": {
                             "type": "String"
                           },
+                          "date": {
+                            "type": "String"
+                          },
+                          "mcaColumnToCheck": {
+                            "type": "String"
+                          },
                           "schemaFile": {
+                            "type": "String"
+                          },
+                          "scope": {
                             "type": "String"
                           }
                         },
@@ -2820,6 +3210,9 @@
                         "dataFactory",
                         "dataset_config",
                         "dataset_manifest",
+                        "dataset_msexports",
+                        "dataset_msexports_gzip",
+                        "dataset_msexports_parquet",
                         "pipeline_ToIngestion"
                       ],
                       "metadata": {
@@ -2833,59 +3226,8 @@
                       "properties": {
                         "activities": [
                           {
-                            "name": "Set Destination File Name",
-                            "description": "",
-                            "type": "SetVariable",
-                            "dependsOn": [],
-                            "policy": {
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "variableName": "destinationFile",
-                              "value": {
-                                "value": "@replace(last(array(split(pipeline().parameters.blobPath, '/'))), '.csv', '.parquet')\n\n\n\n",
-                                "type": "Expression"
-                              }
-                            }
-                          },
-                          {
-                            "name": "Read Hub Config",
-                            "type": "Lookup",
-                            "dependsOn": [],
-                            "policy": {
-                              "timeout": "0.12:00:00",
-                              "retry": 0,
-                              "retryIntervalInSeconds": 30,
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                              "source": {
-                                "type": "JsonSource",
-                                "storeSettings": {
-                                  "type": "AzureBlobFSReadSettings",
-                                  "recursive": false,
-                                  "enablePartitionDiscovery": false
-                                },
-                                "formatSettings": {
-                                  "type": "JsonReadSettings"
-                                }
-                              },
-                              "dataset": {
-                                "referenceName": "[variables('safeConfigContainerName')]",
-                                "type": "DatasetReference",
-                                "parameters": {
-                                  "fileName": "settings.json",
-                                  "folderPath": "[parameters('configContainerName')]"
-                                }
-                              }
-                            }
-                          },
-                          {
                             "name": "Load Schema Mappings",
+                            "description": "Get schema mapping file to use for the CSV to parquet conversion.",
                             "type": "Lookup",
                             "dependsOn": [],
                             "policy": {
@@ -2942,21 +3284,10 @@
                             }
                           },
                           {
-                            "name": "Delete Target",
-                            "type": "Delete",
+                            "name": "Convert to Parquet",
+                            "description": "[format('Convert CSV to parquet and move the file to the {0} container.', parameters('ingestionContainerName'))]",
+                            "type": "Switch",
                             "dependsOn": [
-                              {
-                                "activity": "Set Destination File Name",
-                                "dependencyConditions": [
-                                  "Completed"
-                                ]
-                              },
-                              {
-                                "activity": "Read Hub Config",
-                                "dependencyConditions": [
-                                  "Completed"
-                                ]
-                              },
                               {
                                 "activity": "Load Schema Mappings",
                                 "dependencyConditions": [
@@ -2964,6 +3295,256 @@
                                 ]
                               }
                             ],
+                            "userProperties": [],
+                            "typeProperties": {
+                              "on": {
+                                "value": "@last(array(split(pipeline().parameters.blobPath, '.')))",
+                                "type": "Expression"
+                              },
+                              "cases": [
+                                {
+                                  "value": "csv",
+                                  "activities": [
+                                    {
+                                      "name": "Convert CSV File",
+                                      "type": "Copy",
+                                      "dependsOn": [],
+                                      "policy": {
+                                        "timeout": "0.00:10:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "source": {
+                                          "type": "DelimitedTextSource",
+                                          "additionalColumns": {
+                                            "type": "Expression",
+                                            "value": "@activity('Load Schema Mappings').output.firstRow.additionalColumns"
+                                          },
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSReadSettings",
+                                            "recursive": true,
+                                            "enablePartitionDiscovery": false
+                                          },
+                                          "formatSettings": {
+                                            "type": "DelimitedTextReadSettings"
+                                          }
+                                        },
+                                        "sink": {
+                                          "type": "ParquetSink",
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSWriteSettings"
+                                          },
+                                          "formatSettings": {
+                                            "type": "ParquetWriteSettings",
+                                            "fileExtension": ".parquet"
+                                          }
+                                        },
+                                        "enableStaging": false,
+                                        "parallelCopies": 1,
+                                        "validateDataConsistency": false,
+                                        "translator": {
+                                          "value": "@activity('Load Schema Mappings').output.firstRow.translator",
+                                          "type": "Expression"
+                                        }
+                                      },
+                                      "inputs": [
+                                        {
+                                          "referenceName": "[variables('safeExportContainerName')]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@pipeline().parameters.blobPath",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "outputs": [
+                                        {
+                                          "referenceName": "[variables('safeIngestionContainerName')]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@concat(pipeline().parameters.destinationFolder, '/', pipeline().parameters.destinationFile)",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "value": "gz",
+                                  "activities": [
+                                    {
+                                      "name": "Convert GZip CSV File",
+                                      "type": "Copy",
+                                      "dependsOn": [],
+                                      "policy": {
+                                        "timeout": "0.00:10:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "source": {
+                                          "type": "DelimitedTextSource",
+                                          "additionalColumns": {
+                                            "type": "Expression",
+                                            "value": "@activity('Load Schema Mappings').output.firstRow.additionalColumns"
+                                          },
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSReadSettings",
+                                            "recursive": true,
+                                            "enablePartitionDiscovery": false
+                                          },
+                                          "formatSettings": {
+                                            "type": "DelimitedTextReadSettings"
+                                          }
+                                        },
+                                        "sink": {
+                                          "type": "ParquetSink",
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSWriteSettings"
+                                          },
+                                          "formatSettings": {
+                                            "type": "ParquetWriteSettings",
+                                            "fileExtension": ".parquet"
+                                          }
+                                        },
+                                        "enableStaging": false,
+                                        "parallelCopies": 1,
+                                        "validateDataConsistency": false,
+                                        "translator": {
+                                          "value": "@activity('Load Schema Mappings').output.firstRow.translator",
+                                          "type": "Expression"
+                                        }
+                                      },
+                                      "inputs": [
+                                        {
+                                          "referenceName": "[format('{0}_gzip', variables('safeExportContainerName'))]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@pipeline().parameters.blobPath",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "outputs": [
+                                        {
+                                          "referenceName": "[variables('safeIngestionContainerName')]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@concat(pipeline().parameters.destinationFolder, '/', pipeline().parameters.destinationFile)",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "value": "parquet",
+                                  "activities": [
+                                    {
+                                      "name": "Move Parquet File",
+                                      "type": "Copy",
+                                      "dependsOn": [],
+                                      "policy": {
+                                        "timeout": "0.00:05:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                      },
+                                      "userProperties": [],
+                                      "typeProperties": {
+                                        "source": {
+                                          "type": "ParquetSource",
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSReadSettings",
+                                            "recursive": true,
+                                            "enablePartitionDiscovery": false
+                                          },
+                                          "formatSettings": {
+                                            "type": "ParquetReadSettings"
+                                          }
+                                        },
+                                        "sink": {
+                                          "type": "ParquetSink",
+                                          "storeSettings": {
+                                            "type": "AzureBlobFSWriteSettings"
+                                          },
+                                          "formatSettings": {
+                                            "type": "ParquetWriteSettings",
+                                            "fileExtension": ".parquet"
+                                          }
+                                        },
+                                        "enableStaging": false,
+                                        "parallelCopies": 1,
+                                        "validateDataConsistency": false
+                                      },
+                                      "inputs": [
+                                        {
+                                          "referenceName": "[format('{0}_parquet', variables('safeExportContainerName'))]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@pipeline().parameters.blobPath",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "outputs": [
+                                        {
+                                          "referenceName": "[variables('safeIngestionContainerName')]",
+                                          "type": "DatasetReference",
+                                          "parameters": {
+                                            "blobPath": {
+                                              "value": "@concat(pipeline().parameters.destinationFolder, '/', pipeline().parameters.destinationFile)",
+                                              "type": "Expression"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ],
+                              "defaultActivities": [
+                                {
+                                  "name": "Unsupported File Type",
+                                  "type": "Fail",
+                                  "dependsOn": [],
+                                  "userProperties": [],
+                                  "typeProperties": {
+                                    "message": {
+                                      "value": "@concat('Unable to ingest the specified export file because the file type is not supported. File: ', pipeline().parameters.blobPath)",
+                                      "type": "Expression"
+                                    },
+                                    "errorCode": "UnsupportedExportFileType"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "Get Existing Parquet Files",
+                            "description": "Get the previously ingested files so we can remove any older data. This is necessary to avoid data duplication in reports.",
+                            "type": "GetMetadata",
+                            "dependsOn": [],
                             "policy": {
                               "timeout": "0.12:00:00",
                               "retry": 0,
@@ -2974,114 +3555,115 @@
                             "userProperties": [],
                             "typeProperties": {
                               "dataset": {
-                                "referenceName": "[variables('safeIngestionContainerName')]",
+                                "referenceName": "[format('{0}_files', variables('safeIngestionContainerName'))]",
                                 "type": "DatasetReference",
                                 "parameters": {
-                                  "blobPath": {
-                                    "value": "@concat(pipeline().parameters.destinationFolder, '/', variables('destinationFile'))",
-                                    "type": "Expression"
-                                  }
+                                  "folderPath": "@pipeline().parameters.destinationFolder"
                                 }
                               },
-                              "enableLogging": false,
+                              "fieldList": [
+                                "childItems"
+                              ],
                               "storeSettings": {
                                 "type": "AzureBlobFSReadSettings",
-                                "recursive": true,
                                 "enablePartitionDiscovery": false
+                              },
+                              "formatSettings": {
+                                "type": "ParquetReadSettings"
                               }
                             }
                           },
                           {
-                            "name": "Convert CSV File",
-                            "type": "Copy",
+                            "name": "Filter Out Current Exports",
+                            "description": "Remove existing files from the current export so those files do not get deleted.",
+                            "type": "Filter",
                             "dependsOn": [
                               {
-                                "activity": "Delete Target",
+                                "activity": "Get Existing Parquet Files",
                                 "dependencyConditions": [
                                   "Completed"
                                 ]
                               }
                             ],
-                            "policy": {
-                              "timeout": "0.00:05:00",
-                              "retry": 0,
-                              "retryIntervalInSeconds": 30,
-                              "secureOutput": false,
-                              "secureInput": false
-                            },
                             "userProperties": [],
                             "typeProperties": {
-                              "source": {
-                                "type": "DelimitedTextSource",
-                                "additionalColumns": {
-                                  "type": "Expression",
-                                  "value": "@activity('Load Schema Mappings').output.firstRow.additionalColumns"
-                                },
-                                "storeSettings": {
-                                  "type": "AzureBlobFSReadSettings",
-                                  "recursive": true,
-                                  "enablePartitionDiscovery": false
-                                },
-                                "formatSettings": {
-                                  "type": "DelimitedTextReadSettings"
-                                }
+                              "items": {
+                                "value": "@if(contains(activity('Get Existing Parquet Files').output, 'childItems'), activity('Get Existing Parquet Files').output.childItems, json('[]'))",
+                                "type": "Expression"
                               },
-                              "sink": {
-                                "type": "ParquetSink",
-                                "storeSettings": {
-                                  "type": "AzureBlobFSWriteSettings"
-                                },
-                                "formatSettings": {
-                                  "type": "ParquetWriteSettings",
-                                  "fileExtension": ".parquet"
-                                }
-                              },
-                              "enableStaging": false,
-                              "parallelCopies": 1,
-                              "validateDataConsistency": false,
-                              "translator": {
-                                "value": "@activity('Load Schema Mappings').output.firstRow.translator",
+                              "condition": {
+                                "value": "@and(endswith(item().name, '.parquet'), not(startswith(item().name, pipeline().parameters.keepFilePrefix)))",
                                 "type": "Expression"
                               }
-                            },
-                            "inputs": [
-                              {
-                                "referenceName": "[variables('safeExportContainerName')]",
-                                "type": "DatasetReference",
-                                "parameters": {
-                                  "blobPath": {
-                                    "value": "@pipeline().parameters.blobPath",
-                                    "type": "Expression"
-                                  }
-                                }
-                              }
-                            ],
-                            "outputs": [
-                              {
-                                "referenceName": "[variables('safeIngestionContainerName')]",
-                                "type": "DatasetReference",
-                                "parameters": {
-                                  "blobPath": {
-                                    "value": "@concat(pipeline().parameters.destinationFolder, '/', variables('destinationFile'))",
-                                    "type": "Expression"
-                                  }
-                                }
-                              }
-                            ]
+                            }
                           },
                           {
-                            "name": "Convert Parquet File",
-                            "type": "Copy",
+                            "name": "For Each Old File",
+                            "description": "Loop thru each of the existing files from previous exports.",
+                            "type": "ForEach",
                             "dependsOn": [
                               {
-                                "activity": "Delete Target",
+                                "activity": "Convert to Parquet",
                                 "dependencyConditions": [
-                                  "Completed"
+                                  "Succeeded"
+                                ]
+                              },
+                              {
+                                "activity": "Filter Out Current Exports",
+                                "dependencyConditions": [
+                                  "Succeeded"
                                 ]
                               }
                             ],
+                            "userProperties": [],
+                            "typeProperties": {
+                              "items": {
+                                "value": "@activity('Filter Out Current Exports').output.Value",
+                                "type": "Expression"
+                              },
+                              "activities": [
+                                {
+                                  "name": "Delete Old Ingested File",
+                                  "description": "Delete the previously ingested files from older exports.",
+                                  "type": "Delete",
+                                  "dependsOn": [],
+                                  "policy": {
+                                    "timeout": "0.12:00:00",
+                                    "retry": 0,
+                                    "retryIntervalInSeconds": 30,
+                                    "secureOutput": false,
+                                    "secureInput": false
+                                  },
+                                  "userProperties": [],
+                                  "typeProperties": {
+                                    "dataset": {
+                                      "referenceName": "[variables('safeIngestionContainerName')]",
+                                      "type": "DatasetReference",
+                                      "parameters": {
+                                        "blobPath": {
+                                          "value": "@concat(pipeline().parameters.destinationFolder, '/', item().name)",
+                                          "type": "Expression"
+                                        }
+                                      }
+                                    },
+                                    "enableLogging": false,
+                                    "storeSettings": {
+                                      "type": "AzureBlobFSReadSettings",
+                                      "recursive": false,
+                                      "enablePartitionDiscovery": false
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "Read Hub Config",
+                            "description": "Read the hub config to determine if the export should be retained.",
+                            "type": "Lookup",
+                            "dependsOn": [],
                             "policy": {
-                              "timeout": "0.00:05:00",
+                              "timeout": "0.12:00:00",
                               "retry": 0,
                               "retryIntervalInSeconds": 30,
                               "secureOutput": false,
@@ -3090,67 +3672,39 @@
                             "userProperties": [],
                             "typeProperties": {
                               "source": {
-                                "type": "ParquetSource",
+                                "type": "JsonSource",
                                 "storeSettings": {
                                   "type": "AzureBlobFSReadSettings",
-                                  "recursive": true,
+                                  "recursive": false,
                                   "enablePartitionDiscovery": false
                                 },
                                 "formatSettings": {
-                                  "type": "ParquetReadSettings"
+                                  "type": "JsonReadSettings"
                                 }
                               },
-                              "sink": {
-                                "type": "ParquetSink",
-                                "storeSettings": {
-                                  "type": "AzureBlobFSWriteSettings"
-                                },
-                                "formatSettings": {
-                                  "type": "ParquetWriteSettings",
-                                  "fileExtension": ".parquet"
-                                }
-                              },
-                              "enableStaging": false,
-                              "parallelCopies": 1,
-                              "validateDataConsistency": false
-                            },
-                            "inputs": [
-                              {
-                                "referenceName": "[format('{0}_parquet', variables('safeExportContainerName'))]",
+                              "dataset": {
+                                "referenceName": "[variables('safeConfigContainerName')]",
                                 "type": "DatasetReference",
                                 "parameters": {
-                                  "blobPath": {
-                                    "value": "@pipeline().parameters.blobPath",
-                                    "type": "Expression"
-                                  }
+                                  "fileName": "settings.json",
+                                  "folderPath": "[parameters('configContainerName')]"
                                 }
                               }
-                            ],
-                            "outputs": [
-                              {
-                                "referenceName": "[variables('safeIngestionContainerName')]",
-                                "type": "DatasetReference",
-                                "parameters": {
-                                  "blobPath": {
-                                    "value": "@concat(pipeline().parameters.destinationFolder, '/', variables('destinationFile'))",
-                                    "type": "Expression"
-                                  }
-                                }
-                              }
-                            ]
+                            }
                           },
                           {
-                            "name": "If Retaining Exports",
+                            "name": "If Not Retaining Exports",
+                            "description": "If the msexports retention period <= 0, delete the source file. The main reason to keep the source file is to allow for troubleshooting and reprocessing in the future.",
                             "type": "IfCondition",
                             "dependsOn": [
                               {
-                                "activity": "Convert Parquet File",
+                                "activity": "Convert to Parquet",
                                 "dependencyConditions": [
-                                  "Completed"
+                                  "Succeeded"
                                 ]
                               },
                               {
-                                "activity": "Convert CSV File",
+                                "activity": "Read Hub Config",
                                 "dependencyConditions": [
                                   "Completed"
                                 ]
@@ -3159,12 +3713,13 @@
                             "userProperties": [],
                             "typeProperties": {
                               "expression": {
-                                "value": "@and(greater(coalesce(activity('Read Hub Config').output.firstRow.retention.msexports.days, 0), 0), or(equals(activity('Convert CSV File').Status, 'Succeeded'), equals(activity('Convert Parquet File').Status, 'Succeeded')))",
+                                "value": "@lessOrEquals(coalesce(activity('Read Hub Config').output.firstRow.retention.msexports.days, 0), 0)",
                                 "type": "Expression"
                               },
-                              "ifFalseActivities": [
+                              "ifTrueActivities": [
                                 {
                                   "name": "Delete Source File",
+                                  "description": "Delete the exported data file to keep storage costs down. This file is not referenced by any reporting systems.",
                                   "type": "Delete",
                                   "dependsOn": [],
                                   "policy": {
@@ -3202,7 +3757,13 @@
                           "blobPath": {
                             "type": "String"
                           },
+                          "destinationFile": {
+                            "type": "string"
+                          },
                           "destinationFolder": {
+                            "type": "string"
+                          },
+                          "keepFilePrefix": {
                             "type": "string"
                           },
                           "schemaFile": {
@@ -3220,7 +3781,9 @@
                         "dataFactory",
                         "dataset_config",
                         "dataset_ingestion",
+                        "dataset_ingestion_files",
                         "dataset_msexports",
+                        "dataset_msexports_gzip",
                         "dataset_msexports_parquet"
                       ],
                       "metadata": {

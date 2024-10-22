@@ -32,6 +32,20 @@ param location string = resourceGroup().location
 @description('Prefix for all resource names.')
 param prefix string
 
+@description('Determines whether or not to use credentials for the system datastores of the workspace workspaceblobstore and workspacefilestore. The default value is accessKey, in which case, the workspace will create the system datastores with credentials. If set to identity, the workspace will create the system datastores with no credentials.')
+@allowed([
+  'identity'
+  'accesskey'
+])
+param systemDatastoresAuthMode string = 'identity'
+
+@description('Determines whether to use an API key or Azure Active Directory (AAD) for the AI service connection authentication. The default value is apiKey.')
+@allowed([
+  'ApiKey'
+  'AAD'
+])
+param connectionAuthMode string = 'ApiKey'
+
 // Variables
 var name = toLower('${aiHubName}')
 
@@ -89,6 +103,12 @@ module aiHub 'modules/ai-hub.bicep' = {
     containerRegistryId: aiDependencies.outputs.containerRegistryId
     keyVaultId: aiDependencies.outputs.keyvaultId
     storageAccountId: aiDependencies.outputs.storageId
+    searchId: aiDependencies.outputs.searchServiceId
+    searchTarget: aiDependencies.outputs.searchServiceTarget
+
+    //configuration settings
+    systemDatastoresAuthMode: systemDatastoresAuthMode
+    connectionAuthMode: connectionAuthMode
 
   }
 }

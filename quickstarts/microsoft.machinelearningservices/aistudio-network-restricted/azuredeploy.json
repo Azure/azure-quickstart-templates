@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "8979709280275502576"
+      "templateHash": "13574054202006073581"
     }
   },
   "parameters": {
@@ -71,6 +71,28 @@
       "metadata": {
         "description": "Prefix for all resource names."
       }
+    },
+    "systemDatastoresAuthMode": {
+      "type": "string",
+      "defaultValue": "identity",
+      "allowedValues": [
+        "identity",
+        "accesskey"
+      ],
+      "metadata": {
+        "description": "Determines whether or not to use credentials for the system datastores of the workspace workspaceblobstore and workspacefilestore. The default value is accessKey, in which case, the workspace will create the system datastores with credentials. If set to identity, the workspace will create the system datastores with no credentials."
+      }
+    },
+    "connectionAuthMode": {
+      "type": "string",
+      "defaultValue": "ApiKey",
+      "allowedValues": [
+        "ApiKey",
+        "AAD"
+      ],
+      "metadata": {
+        "description": "Determines whether to use an API key or Azure Active Directory (AAD) for the AI service connection authentication. The default value is apiKey."
+      }
     }
   },
   "variables": {
@@ -113,7 +135,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "14455547317313707917"
+              "templateHash": "3302622018044117886"
             }
           },
           "parameters": {
@@ -673,7 +695,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "2427571107152102688"
+                      "templateHash": "12081248216228818396"
                     }
                   },
                   "parameters": {
@@ -741,7 +763,7 @@
                       "kind": "AIServices",
                       "properties": {
                         "publicNetworkAccess": "Disabled",
-                        "disableLocalAuth": true,
+                        "disableLocalAuth": false,
                         "apiProperties": {
                           "statisticsEnabled": false
                         },
@@ -1238,7 +1260,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "4495457709407411895"
+                      "templateHash": "15380434404905617810"
                     }
                   },
                   "parameters": {
@@ -1410,6 +1432,10 @@
                     "searchServiceName": {
                       "type": "string",
                       "value": "[parameters('searchServiceName')]"
+                    },
+                    "searchServiceEndpoint": {
+                      "type": "string",
+                      "value": "[format('https://{0}.search.windows.net', parameters('searchServiceName'))]"
                     }
                   }
                 }
@@ -1444,6 +1470,10 @@
             "searchServiceId": {
               "type": "string",
               "value": "[reference(resourceId('Microsoft.Resources/deployments', format('search{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.searchServiceId.value]"
+            },
+            "searchServiceTarget": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', format('search{0}{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.searchServiceEndpoint.value]"
             },
             "aiServicesPrincipalId": {
               "type": "string",
@@ -1659,6 +1689,18 @@
           },
           "storageAccountId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.storageId.value]"
+          },
+          "searchId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.searchServiceId.value]"
+          },
+          "searchTarget": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.searchServiceTarget.value]"
+          },
+          "systemDatastoresAuthMode": {
+            "value": "[parameters('systemDatastoresAuthMode')]"
+          },
+          "connectionAuthMode": {
+            "value": "[parameters('connectionAuthMode')]"
           }
         },
         "template": {
@@ -1668,7 +1710,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "15307308301331140426"
+              "templateHash": "5276321305169867687"
             }
           },
           "parameters": {
@@ -1739,6 +1781,18 @@
                 "description": "Resource ID of the AI Services endpoint"
               }
             },
+            "searchId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the AI Search resource"
+              }
+            },
+            "searchTarget": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the AI Search endpoint"
+              }
+            },
             "vnetResourceId": {
               "type": "string",
               "metadata": {
@@ -1756,6 +1810,26 @@
               "metadata": {
                 "description": "Unique Suffix used for name generation"
               }
+            },
+            "systemDatastoresAuthMode": {
+              "type": "string",
+              "allowedValues": [
+                "identity",
+                "accesskey"
+              ],
+              "metadata": {
+                "description": "SystemDatastoresAuthMode"
+              }
+            },
+            "connectionAuthMode": {
+              "type": "string",
+              "allowedValues": [
+                "ApiKey",
+                "AAD"
+              ],
+              "metadata": {
+                "description": "AI Service Connection Auth Mode"
+              }
             }
           },
           "variables": {
@@ -1768,15 +1842,34 @@
             {
               "type": "Microsoft.MachineLearningServices/workspaces/connections",
               "apiVersion": "2024-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('aiHubName'), format('{0}-connection-Search', parameters('aiHubName')))]",
+              "properties": {
+                "category": "CognitiveSearch",
+                "target": "[parameters('searchTarget')]",
+                "authType": "[parameters('connectionAuthMode')]",
+                "isSharedToAll": true,
+                "useWorkspaceManagedIdentity": false,
+                "sharedUserList": [],
+                "credentials": "[if(equals(parameters('connectionAuthMode'), 'ApiKey'), createObject('key', format('{0}', listAdminKeys(parameters('searchId'), '2023-11-01'))), null())]",
+                "metadata": {
+                  "ApiType": "Azure",
+                  "ResourceId": "[parameters('searchId')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.MachineLearningServices/workspaces/connections",
+              "apiVersion": "2024-01-01-preview",
               "name": "[format('{0}/{1}', parameters('aiHubName'), format('{0}-connection-AIServices', parameters('aiHubName')))]",
               "properties": {
                 "category": "AIServices",
                 "target": "[parameters('aiServicesTarget')]",
-                "authType": "ApiKey",
+                "authType": "[parameters('connectionAuthMode')]",
                 "isSharedToAll": true,
-                "credentials": {
-                  "key": "[format('{0}', listKeys(parameters('aiServicesId'), '2021-10-01').key1)]"
-                },
+                "credentials": "[if(equals(parameters('connectionAuthMode'), 'ApiKey'), createObject('key', format('{0}', listKeys(parameters('aiServicesId'), '2021-10-01'))), null())]",
                 "metadata": {
                   "ApiType": "Azure",
                   "ResourceId": "[parameters('aiServicesId')]"
@@ -1788,7 +1881,7 @@
             },
             {
               "type": "Microsoft.MachineLearningServices/workspaces",
-              "apiVersion": "2023-10-01",
+              "apiVersion": "2024-07-01-preview",
               "name": "[parameters('aiHubName')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
@@ -1806,6 +1899,7 @@
                 "managedNetwork": {
                   "isolationMode": "AllowInternetOutBound"
                 },
+                "systemDatastoresAuthMode": "[parameters('systemDatastoresAuthMode')]",
                 "sharedPrivateLinkResources": []
               },
               "kind": "hub"

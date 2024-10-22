@@ -19,7 +19,6 @@ param virtualNetworkId string
 @allowed([
   'S0'
 ])
-
 @description('AI service SKU')
 param aiServiceSkuName string = 'S0'
 
@@ -37,7 +36,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   kind: 'AIServices'
   properties: {
     publicNetworkAccess: 'Disabled'
-    disableLocalAuth: true
+    disableLocalAuth: false
     apiProperties: {
       statisticsEnabled: false
     }
