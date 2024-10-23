@@ -1,4 +1,3 @@
-// Creates AI services resources, private endpoints, and DNS zones
 @description('Azure region of the deployment')
 param location string
 
@@ -20,7 +19,6 @@ param virtualNetworkId string
 @allowed([
   'S0'
 ])
-
 @description('AI service SKU')
 param aiServiceSkuName string = 'S0'
 
@@ -37,8 +35,8 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
   kind: 'AIServices'
   properties: {
-    publicNetworkAccess: 'Enabled'
-    disableLocalAuth: true
+    publicNetworkAccess: 'Disabled'
+    disableLocalAuth: false
     apiProperties: {
       statisticsEnabled: false
     }
@@ -71,6 +69,11 @@ resource aiServicesPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-0
             'account'
           ]
           privateLinkServiceId: aiServices.id
+          privateLinkServiceConnectionState: {
+            status: 'Approved'
+            description: 'Auto-Approved'
+            actionsRequired: 'None'
+          }
         }
       }
     ]
@@ -137,3 +140,5 @@ resource aiServicesPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/priva
 
 output aiServicesId string = aiServices.id
 output aiServicesEndpoint string = aiServices.properties.endpoint
+output aiServicesName string = aiServices.name
+output aiServicesPrincipalId string = aiServices.identity.principalId

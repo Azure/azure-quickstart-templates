@@ -83,9 +83,30 @@ module storage 'dependent/storage.bicep' = {
   }
 }
 
+module searchService 'dependent/aisearch.bicep' = {
+  name: 'search${name}${uniqueSuffix}-deployment'
+  params: {
+    location: location
+    searchServiceName: 'search${name}${uniqueSuffix}'
+    searchPrivateLinkName: 'ple-${name}-${uniqueSuffix}-search'
+    subnetId: subnetResourceId
+    virtualNetworkId: vnetResourceId
+    tags: tags
+  }
+}
+
 output aiservicesID string = aiServices.outputs.aiServicesId
 output aiservicesTarget string = aiServices.outputs.aiServicesEndpoint
 output storageId string = storage.outputs.storageId
 output keyvaultId string = keyvault.outputs.keyvaultId
 output containerRegistryId string = containerRegistry.outputs.containerRegistryId
 output applicationInsightsId string = applicationInsights.outputs.applicationInsightsId
+output searchServiceId string = searchService.outputs.searchServiceId
+output searchServiceTarget string = searchService.outputs.searchServiceEndpoint
+
+output aiServicesPrincipalId string = aiServices.outputs.aiServicesPrincipalId
+output searchServicePrincipalId string = searchService.outputs.searchServicePrincipalId
+
+output aiservicesName string = aiServices.outputs.aiServicesName
+output searchServiceName string = searchService.outputs.searchServiceName
+output storageName string = storage.outputs.storageName
