@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create Azure Virtual machine replication disaster recovery.
+description: This template allows you to create Azure Virtual machine site replication disaster recovery.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Create Azure VM Site Replication and Disaster Recovery
+# Create Azure VM Replication and Disaster Recovery
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vm-replication-and-disaster-recovery/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-vm-replication-and-disaster-recovery/PublicDeployment.svg)
