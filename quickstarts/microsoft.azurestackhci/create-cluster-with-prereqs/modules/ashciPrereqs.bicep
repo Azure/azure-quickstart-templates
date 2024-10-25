@@ -7,7 +7,6 @@ param softDeleteRetentionDays int
 param logsRetentionInDays int
 param tenantId string
 param hciResourceProviderObjectId string
-param arcNodeResourceIds array
 param deploymentPrefix string
 param deploymentUsername string
 @secure()
@@ -19,12 +18,14 @@ param arbDeploymentAppId string
 param arbDeploymentSPObjectId string
 @secure()
 param arbDeploymentServicePrincipalSecret string
+param arcNodePrincipalIds array
+param cloudId string
+param clusterName string
 
-// secret names for the Azure Key Vault - these cannot be changed
-var localAdminSecretName = 'LocalAdminCredential'
-var domainAdminSecretName = 'AzureStackLCMUserCredential'
-var arbDeploymentServicePrincipalName = 'DefaultARBApplication'
-var storageWitnessName = 'WitnessStorageKey'
+var localAdminSecretName = '${clusterName}-LocalAdminCredential-${cloudId}'
+var domainAdminSecretName = '${clusterName}-AzureStackLCMUserCredential-${cloudId}'
+var arbDeploymentServicePrincipalName = '${clusterName}-DefaultARBApplication-${cloudId}'
+var witnessStorageKeySecret = '${clusterName}-WitnessStorageKey-${cloudId}'
 
 // create base64 encoded secret values to be stored in the Azure Key Vault
 var deploymentUserSecretValue = base64('${deploymentUsername}:${deploymentUserPassword}')
@@ -39,6 +40,15 @@ var azureConnectedMachineResourceManagerRoleID = subscriptionResourceId('Microso
 var readerRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')
 var azureStackHCIDeviceManagementRole = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','865ae368-6a45-4bd1-8fbf-0d5151f56fc1')
 var keyVaultSecretUserRoleID = subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')
+
+resource cluster 'Microsoft.AzureStackHCI/clusters@2024-02-15-preview' = {
+  name: clusterName
+  identity: {
+    type: 'SystemAssigned'
+  }
+  location: location
+  properties: {}
+}
 
 module ARBDeploymentSPNSubscriptionRoleAssignmnent 'ashciARBSPRoleAssignment.bicep' = {
   scope: subscription()
@@ -115,7 +125,7 @@ resource keyVaultName_Microsoft_Insights_service 'microsoft.insights/diagnosticS
 }
 
 resource SPConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid('ConnectedMachineResourceManagerRolePermissions',resourceGroup().id)
+  name: guid('ConnectedMachineResourceManagerRolePermissions',resourceGroup().id, hciResourceProviderObjectId)
   scope: resourceGroup()
   properties:  {
     roleDefinitionId: azureConnectedMachineResourceManagerRoleID
@@ -125,44 +135,44 @@ resource SPConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorizati
   }
 }
 
-resource NodeAzureConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, azureConnectedMachineResourceManagerRoleID)
+resource NodeAzureConnectedMachineResourceManagerRolePermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNodePrincipal in arcNodePrincipalIds:{
+  name: guid(hciNodePrincipal, azureConnectedMachineResourceManagerRoleID, resourceGroup().id)
   properties:  {
     roleDefinitionId: azureConnectedMachineResourceManagerRoleID
-    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
+    principalId: hciNodePrincipal
     principalType: 'ServicePrincipal'
     description: 'Created by Azure Stack HCI deployment template'
   }
 }
 ]
-resource NodeazureStackHCIDeviceManagementRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, azureStackHCIDeviceManagementRole)
+resource NodeazureStackHCIDeviceManagementRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNodePrincipal in arcNodePrincipalIds:{
+  name: guid(hciNodePrincipal, azureStackHCIDeviceManagementRole, resourceGroup().id)
   properties:  {
     roleDefinitionId: azureStackHCIDeviceManagementRole
-    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
+    principalId: hciNodePrincipal
     principalType: 'ServicePrincipal'
     description: 'Created by Azure Stack HCI deployment template'
   }
 }
 ]
 
-resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, readerRoleID)
+resource NodereaderRoleIDPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNodePrincipal in arcNodePrincipalIds:{
+  name: guid(hciNodePrincipal, readerRoleID, keyVault.id)
   properties:  {
     roleDefinitionId: readerRoleID
-    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
+    principalId: hciNodePrincipal
     principalType: 'ServicePrincipal'
     description: 'Created by Azure Stack HCI deployment template'
   }
 }
 ]
 
-resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNode in arcNodeResourceIds:{
-  name: guid(hciNode, keyVaultSecretUserRoleID)
+resource KeyVaultSecretsUserPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for hciNodePrincipal in arcNodePrincipalIds:{
+  name: guid(hciNodePrincipal, keyVaultSecretUserRoleID, keyVault.id)
   scope: keyVault
   properties:  {
     roleDefinitionId: keyVaultSecretUserRoleID
-    principalId: reference(hciNode,'2023-10-03-preview','Full').identity.principalId
+    principalId: hciNodePrincipal
     principalType: 'ServicePrincipal'
     description: 'Created by Azure Stack HCI deployment template'
   }
@@ -207,7 +217,7 @@ resource keyVaultName_arbDeploymentServicePrincipal 'Microsoft.KeyVault/vaults/s
 
 resource keyVaultName_storageWitness 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
-  name: storageWitnessName
+  name: witnessStorageKeySecret
   properties: {
     contentType: 'Secret'
     value: base64(witnessStorageAccount.listKeys().keys[0].value)
