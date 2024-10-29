@@ -29,7 +29,7 @@ param searchSkuName string = 'standard'
 
 var searchPrivateDnsZoneName = 'privatelink.search.windows.net'
 
-resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
+resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   name: searchServiceName
   location: location
   tags: tags
@@ -50,6 +50,7 @@ resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
     replicaCount: 1
     networkRuleSet: {
       ipRules: []
+      bypass: 'AzureServices'
     }
     publicNetworkAccess: 'disabled'
   }

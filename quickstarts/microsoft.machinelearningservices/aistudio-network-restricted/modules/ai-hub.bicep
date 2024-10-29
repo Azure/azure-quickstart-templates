@@ -67,7 +67,7 @@ var targetSubResource = [
     'amlworkspace'
 ]
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
@@ -86,6 +86,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
     containerRegistry: containerRegistryId
 
     // network settings
+    provisionNetworkNow: true
     publicNetworkAccess: 'Disabled'
     managedNetwork: {
       isolationMode: 'AllowInternetOutBound'
@@ -235,3 +236,5 @@ resource dnsZoneGroupAiHub 'Microsoft.Network/privateEndpoints/privateDnsZoneGro
 }
 
 output aiHubID string = aiHub.id
+output aiHubName string = aiHub.name
+output aiHubPrincipalId string = aiHub.identity.principalId
