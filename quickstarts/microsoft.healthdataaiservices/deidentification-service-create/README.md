@@ -23,6 +23,6 @@ languages:
 
 This template allows you to deploy a new Azure Health Data Services de-identification service. The [quickstart](/azure/healthcare-apis/deidentification/quickstart) article describes how to deploy the template.
 
-For more information about Azure Health Data Services de-identification service, see [What is the de-identification service (preview)?](/azure/healthcare-apis/deidentification/overview).
+For more information about Azure Health Data Services de-identification service, see [What is the de-identification service?](/azure/healthcare-apis/deidentification/overview).
 
 `Tags: Microsoft.HealthDataAIServices/deidServices`
