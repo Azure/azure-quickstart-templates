@@ -1,5 +1,5 @@
 ---
-description: This template creates a Azure Health Data Services de-identification service.
+description: This template creates an Azure Health Data Services de-identification service with optional system-assigned managed identity.
 page_type: sample
 products:
 - azure
@@ -7,8 +7,9 @@ products:
 urlFragment: deidentification-service-create
 languages:
 - bicep
+- json
 ---
-# Create an Azure Health Data Services de-identification service using a template
+# Create Azure Health Data Services de-identification service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthdataaiservices/deidentification-service-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.healthdataaiservices/deidentification-service-create/PublicDeployment.svg)
