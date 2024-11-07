@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: azure-dns-new-zone
 languages:
-- json
 - bicep
+- json
 ---
 # Azure DNS domain hosting example
 

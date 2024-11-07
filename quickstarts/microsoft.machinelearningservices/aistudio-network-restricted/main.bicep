@@ -67,18 +67,6 @@ module aiDependencies 'modules/dependent-resources.bicep' = {
   }
 }
 
-// Assignment of roles necessary for template usage
-module roleAssignments 'modules/role-assignments.bicep' = {
-  name: 'role-assignments-${name}-${uniqueSuffix}-deployment'
-  params: {
-    aiServicesPrincipalId: aiDependencies.outputs.aiServicesPrincipalId
-    aiServicesName: aiDependencies.outputs.aiservicesName
-    searchServicePrincipalId: aiDependencies.outputs.searchServicePrincipalId
-    searchServiceName: aiDependencies.outputs.searchServiceName
-    storageName: aiDependencies.outputs.storageName
-  }
-}
-
 module aiHub 'modules/ai-hub.bicep' = {
   name: 'ai-${name}-${uniqueSuffix}-deployment'
   params: {
@@ -111,4 +99,21 @@ module aiHub 'modules/ai-hub.bicep' = {
     connectionAuthMode: connectionAuthMode
 
   }
+}
+
+// Assignment of roles necessary for template usage
+module roleAssignments 'modules/role-assignments.bicep' = {
+  name: 'role-assignments-${name}-${uniqueSuffix}-deployment'
+  params: {
+    aiHubName: aiHub.outputs.aiHubName
+    aiHubPrincipalId: aiHub.outputs.aiHubPrincipalId
+    aiServicesPrincipalId: aiDependencies.outputs.aiServicesPrincipalId
+    aiServicesName: aiDependencies.outputs.aiservicesName
+    searchServicePrincipalId: aiDependencies.outputs.searchServicePrincipalId
+    searchServiceName: aiDependencies.outputs.searchServiceName
+    storageName: aiDependencies.outputs.storageName
+  }
+  dependsOn:[
+    aiHub
+  ]
 }
