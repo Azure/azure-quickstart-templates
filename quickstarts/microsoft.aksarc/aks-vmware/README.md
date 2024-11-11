@@ -11,7 +11,7 @@ languages:
 ---
 # Create an AKS ARC Provision cluster using a template
 
-![Azure Public Test Date]()
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.analysisservices/analysis-services-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.analysisservices/analysis-services-create/PublicDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.analysisservices/analysis-services-create/BestPracticeResult.svg)
