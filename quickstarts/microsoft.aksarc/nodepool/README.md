@@ -1,10 +1,10 @@
 ---
-description: This template creates an AKS ARC provision cluster.
+description: Deploys a provisioned cluster
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: AKS-VMWare
+urlFragment: nodepool
 languages:
 - json
 - bicep
