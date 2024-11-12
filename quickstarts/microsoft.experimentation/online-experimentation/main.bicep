@@ -1,7 +1,5 @@
-targetScope = 'subscription'
-
 @minLength(1)
-@maxLength(64)
+@maxLength(32)
 @description('Name which is used to generate a short unique hash for each resource')
 param name string
 
@@ -28,126 +26,151 @@ param principalType string = 'User'
 var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var prefix = '${name}-${resourceToken}'
 
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: '${name}-rg'
+// Create Log Analytics workspace, App Insights, Storage Account and Data Export Rule
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
+  name: '${prefix}-loganalytics'
   location: location
+  properties: any({
+    retentionInDays: 30
+    features: {
+      searchVersion: 1
+    }
+    sku: {
+      name: 'PerGB2018'
+    }
+  })
 }
 
-// Provision Log Analytics workspace, App Insights, with data export to storage account
-module logAnalyticsWorkspace 'modules/loganalytics.bicep' = {
-  name: 'loganalytics'
-  scope: resourceGroup
-  params: {
-    name: '${prefix}-loganalytics'
-    location: location
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
+  name: '${prefix}-appinsights'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalytics.id
   }
 }
 
-module appInsights 'modules/appinsights.bicep' = {
-  name: 'appinsights'
-  scope: resourceGroup
-  params: {
-    name: '${prefix}-appinsights'
-    logAnalyticsWorkspaceName: logAnalyticsWorkspace.outputs.name
-    location: location
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+  name: 'storage${resourceToken}'
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    allowSharedKeyAccess: false
   }
 }
 
-module storageAccount 'modules/storage.bicep' = {
-  name: 'storage'
-  scope: resourceGroup
-  params: {
-    location: location
-    storageAccountName: '${resourceToken}storage'
-    storageAccountType: 'Standard_LRS'
-  }
-}
-
-module dataExportRule 'modules/dataexport.bicep' = {
-  name: 'loganalytics-dataexportrule'
-  scope: resourceGroup
-  params: {
-    name: '${prefix}-dataexportrule'
-    logAnalyticsWorkspaceName: logAnalyticsWorkspace.outputs.name
-    storageAccountName: storageAccount.outputs.storageAccountName
-    tables: [
+resource dataExportRule 'Microsoft.OperationalInsights/workspaces/dataExports@2020-08-01' = {
+  name: '${prefix}-dataexportrule'
+  parent: logAnalytics
+  properties: {
+    destination: {
+      resourceId: storageAccount.id
+    }
+    enable: true
+    tableNames: [
       'AppEvents'
       'AppEvents_CL'
     ]
   }
 }
 
-// Provision App Configuration store linking to App Insights
-module appConfig 'modules/appconfig.bicep' = {
-  name: 'appconfig'
-  scope: resourceGroup
-  params: {
-    location: location
-    name: '${prefix}-appconfig'
-    appInsightsId: appInsights.outputs.appInsightsId
+// Create App Configuration Store
+resource appConfig 'Microsoft.AppConfiguration/configurationStores@2023-09-01-preview' = {
+  name: '${prefix}-appconfig'
+  location: location
+  sku: {
+    name: 'standard'
+  }
+  properties: {
+    encryption: {}
+    disableLocalAuth: true
+    enablePurgeProtection: false
+    experimentation:{}
+    dataPlaneProxy:{
+      authenticationMode: 'Pass-through'
+      privateLinkDelegation: 'Disabled'
+    }
+    telemetry: {
+      resourceId: applicationInsights.id
+    }
   }
 }
 
-// Provision Experiment Workspace linking to Log Analytics workspace and Storage Account
-module experimentWorkspace 'modules/experimentworkspace.bicep' = {
-  name: 'experimentworkspace'
-  scope: resourceGroup
-  params: {
-    name: 'exp${substring(resourceToken, 0, 10)}'
-    location: experimentWorkspaceLocation
-    logAnalyticsWorkspaceName: logAnalyticsWorkspace.outputs.name
-    storageAccountName: storageAccount.outputs.storageAccountName
-    identityName: '${prefix}-id-exp'
-  }
-}  
+// Create Experiment Workspace with managed identity
+resource expIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${prefix}-id-exp'
+  location: location
+}
 
-// Allow experiment workspace read access to storage
-module logAnalyticsExpAccess 'modules/role.bicep' = {
-  scope: resourceGroup
-  name: 'storage-account-exp-role'
-  params: {
-    principalId: experimentWorkspace.outputs.expWorkspaceIdentityPrincipalId
-    roleDefinitionId: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1' // Storage Blob Data Reader
+// Noite: no intellisense during private preview period
+#disable-next-line BCP081
+resource experimentWorkspace 'Microsoft.Experimentation/experimentWorkspaces@2024-11-30-preview' = {
+  name: 'exp${resourceToken}'
+  location: experimentWorkspaceLocation
+  kind: 'Regular'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: { '${expIdentity.id}': {} }
+  }
+  properties: {
+    logAnalyticsWorkspaceResourceId: logAnalytics.id
+    logsExporterStorageAccountResourceId: storageAccount.id
+  }
+}
+
+// Allow experiment workspace read access to logs storage account
+var storageDataReaderRoleId = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1' // Storage Blob Data Reader
+resource storageAccountExpAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(subscription().id, resourceGroup().id, principalId, storageDataReaderRoleId)
+  scope: storageAccount
+  properties: {
+    principalId: expIdentity.properties.principalId
     principalType: 'ServicePrincipal'
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', storageDataReaderRoleId)
   }
 }
 
 // Allow experiment workspace read access to log analytics workspace
-module storageAccountExpAccess 'modules/role.bicep' = {
-  scope: resourceGroup
-  name: 'loganalytics-exp-role'
-  params: {
-    principalId: experimentWorkspace.outputs.expWorkspaceIdentityPrincipalId
-    roleDefinitionId: '73c42c96-874c-492b-b04d-ab87d138a893' // Log Analytics Reader
+var logAnalyticsReaderRoleId = '73c42c96-874c-492b-b04d-ab87d138a893'  // Log Analytics Reader
+resource logAnalyticsExpAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(subscription().id, resourceGroup().id, principalId, logAnalyticsReaderRoleId)
+  scope: logAnalytics
+  properties: {
+    principalId: expIdentity.properties.principalId
     principalType: 'ServicePrincipal'
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', logAnalyticsReaderRoleId)
   }
 }
 
-// Allow input principal to read/write to app configuration
-module appConfigDataAccess 'modules/role.bicep'  = if (!empty(principalId) && !empty(principalType)) {
-  scope: resourceGroup
-  name: 'appconfig-dataowner-role'
-  params: {
+// Allow input principal read/write access to app configuration
+var appConfigDataOwnerRoleId = '5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b' // App Configuration Data Owner
+resource appConfigAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(principalId) && !empty(principalType)) {
+  name: guid(subscription().id, resourceGroup().id, principalId, appConfigDataOwnerRoleId)
+  scope: appConfig
+  properties: {
     principalId: principalId
-    roleDefinitionId: '6188b7c9-7d01-4f99-a59f-c88b630326c0' // App Configuration Data Owner
     principalType: principalType
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', appConfigDataOwnerRoleId)
   }
 }
   
-// Allow input principal to read/write to online experiment metrics
-module experimentWorkspaceMetricAccess 'modules/role.bicep'  = if (!empty(principalId) && !empty(principalType)) {
-  scope: resourceGroup
-  name: 'experimentworkspace-metrics-role'
-  params: {
+// Allow input principal read/write access to online experiment metrics
+var experimentMetricsRoleId = '6188b7c9-7d01-4f99-a59f-c88b630326c0' // Experimentation metrics contributor
+resource experimentWorkspaceAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(principalId) && !empty(principalType)) {
+  name: guid(subscription().id, resourceGroup().id, principalId, experimentMetricsRoleId)
+  scope: experimentWorkspace
+  properties: {
     principalId: principalId
-    roleDefinitionId: '6188b7c9-7d01-4f99-a59f-c88b630326c0' // Experimentation metric contributor
     principalType: principalType
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', experimentMetricsRoleId)
   }
 }
 
 output AZURE_LOCATION string = location
-output AZURE_TENANT_ID string = tenant().tenantId
-
-output APPLICATIONINSIGHTS_CONNECTION_STRING string = appInsights.outputs.appInsightsConnectionString
-output APP_CONFIGURATION_ENDPOINT string = appConfig.outputs.endpoint
-output EXPERIMENT_WORKSPACE_ID string = experimentWorkspace.outputs.expWorkspaceId
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = applicationInsights.properties.ConnectionString
+output APP_CONFIGURATION_ENDPOINT string = appConfig.properties.endpoint
+output EXPERIMENT_WORKSPACE_ID string = experimentWorkspace.id
