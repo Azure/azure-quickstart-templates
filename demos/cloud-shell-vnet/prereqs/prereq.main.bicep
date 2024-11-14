@@ -7,6 +7,9 @@ param vnetAddressPrefix string
 @description('Name of the default subnet.')
 param defaultSubnetName string = 'default'
 
+@description('Name of NSG for the default subnet.')
+param defaultNsgName string = 'defaultnsg'
+
 @description('Address space of the default subnet.')
 param defaultSubnetAddressPrefix string
 
@@ -30,9 +33,20 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         name: defaultSubnetName
         properties: {
           addressPrefix: defaultSubnetAddressPrefix
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
         }
       }
     ]
+  }
+}
+
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
+  name: defaultNsgName
+  location: location
+  properties: {
+    securityRules: []
   }
 }
 
