@@ -5,7 +5,7 @@
         "_generator": {
             "name": "bicep",
             "version": "0.31.34.60546",
-            "templateHash": "7193932620031991611"
+            "templateHash": "283929539160099551"
         }
     },
     "parameters": {
@@ -13,6 +13,13 @@
             "type": "string",
             "metadata": {
                 "description": "Name of the VNET to inject Cloud Shell into."
+            }
+        },
+        "nsgName": {
+            "type": "string",
+            "defaultValue": "cloudshellnsg",
+            "metadata": {
+                "description": "Name of Network Security Group."
             }
         },
         "vnetAddressPrefix": {
@@ -87,7 +94,10 @@
                     {
                         "name": "[parameters('defaultSubnetName')]",
                         "properties": {
-                            "addressPrefix": "[parameters('defaultSubnetAddressPrefix')]"
+                            "addressPrefix": "[parameters('defaultSubnetAddressPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+                            }
                         }
                     },
                     {
@@ -109,7 +119,10 @@
                                         "serviceName": "Microsoft.ContainerInstance/containerGroups"
                                     }
                                 }
-                            ]
+                            ],
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+                            }
                         }
                     },
                     {
@@ -123,7 +136,38 @@
                                         "[parameters('location')]"
                                     ]
                                 }
-                            ]
+                            ],
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('nsgName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+                        "name": "DenyIntraSubnetTraffic",
+                        "properties": {
+                            "description": "Deny traffic between container groups in cloudshellsubnet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
                         }
                     }
                 ]

@@ -1,6 +1,9 @@
 @description('Name of the VNET to inject Cloud Shell into.')
 param vnetName string
 
+@description('Name of Network Security Group.')
+param nsgName string = 'cloudshellnsg'
+
 @description('Address space of the subnet to add.')
 param vnetAddressPrefix string
 
@@ -42,6 +45,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
         name: defaultSubnetName
         properties: {
           addressPrefix: defaultSubnetAddressPrefix
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
         }
       }
       {
@@ -64,6 +70,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
               }
             }
           ]
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
         }
       }
       {
@@ -78,6 +87,33 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
               ]
             }
           ]
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
+        }
+      }
+    ]
+  }
+}
+
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
+  name: nsgName
+  location: location
+  properties: {
+    securityRules: [
+      {
+        id: resourceId('Microsoft.Network/networkSecurityGroups', nsgName)
+        name: 'DenyIntraSubnetTraffic'
+        properties: {
+          description: 'Deny traffic between container groups in cloudshellsubnet'
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: containerSubnetAddressPrefix
+          destinationAddressPrefix: containerSubnetAddressPrefix
+          access: 'Deny'
+          priority: 100
+          direction: 'Inbound'
         }
       }
     ]
