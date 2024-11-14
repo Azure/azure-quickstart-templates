@@ -38,7 +38,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   location: location
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -74,13 +73,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
 }
 
-resource storageAccountName_default 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
   parent: storageAccount
   name: 'default'
-  sku: {
-    name: 'Standard_LRS'
-    tier: 'Standard'
-  }
   properties: {
     deleteRetentionPolicy: {
       enabled: false
@@ -88,22 +83,15 @@ resource storageAccountName_default 'Microsoft.Storage/storageAccounts/blobServi
   }
 }
 
-resource Microsoft_Storage_storageAccounts_fileServices_storageAccountName_default 'Microsoft.Storage/storageAccounts/fileServices@2021-09-01' = {
+resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2021-09-01' = {
   parent: storageAccount
   name: 'default'
-  sku: {
-    name: 'Standard_LRS'
-    tier: 'Standard'
-  }
 }
 
-resource storageAccountName_default_fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-09-01' = {
-  parent: Microsoft_Storage_storageAccounts_fileServices_storageAccountName_default
+resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-09-01' = {
+  parent: fileServices
   name: fileShareName
   properties: {
     shareQuota: 6
   }
-  dependsOn: [
-    storageAccount
-  ]
 }
