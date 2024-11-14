@@ -173,6 +173,9 @@ resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
     addressPrefix: relaySubnetAddressPrefix
     privateEndpointNetworkPolicies: 'Disabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
   }
   dependsOn: [
     containerSubnet
@@ -214,6 +217,9 @@ resource storageSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = 
         ]
       }
     ]
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
   }
   dependsOn: [
     relaySubnet
