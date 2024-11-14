@@ -1,14 +1,16 @@
-@description('Name of the VNET to inject Cloud Shell into')
+@description('Name of the VNET to inject Cloud Shell into.')
 param vnetName string
 
-@description('Address space of the subnet to add')
+@description('Address space of the subnet to add.')
 param vnetAddressPrefix string
 
-@description('Name of the subnet to use for cloud shell containers')
+@description('Name of the default subnet.')
 param defaultSubnetName string = 'default'
 
-@description('Address space of the subnet to add')
+@description('Address space of the default subnet.')
 param defaultSubnetAddressPrefix string
+
+@description('Location for all resources.')
 param location string = resourceGroup().location
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
