@@ -7,7 +7,7 @@ param vnetAddressPrefix string
 @description('Name of the default subnet.')
 param defaultSubnetName string = 'default'
 
-@description('Name of NSG for the default subnet.')
+@description('Name of Network Security Group for the default subnet.')
 param defaultNsgName string = 'defaultnsg'
 
 @description('Address space of the default subnet.')
