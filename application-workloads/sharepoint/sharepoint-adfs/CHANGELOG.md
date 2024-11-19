@@ -1,6 +1,7 @@
 # Change log for Azure template SharePoint-ADFS
 
 ## Enhancements & bug-fixes - Published in November 19, 2024
+
 ### Changed
 
 - Template
