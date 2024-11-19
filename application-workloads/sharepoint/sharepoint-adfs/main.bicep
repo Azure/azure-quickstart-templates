@@ -282,7 +282,7 @@ var resourceGroupNameFormatted = replace(
 var sharePointSettings = {
   isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
   sharePointImagesList: {
-    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
+    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest'
     sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
     sp2016: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest'
   }
@@ -348,7 +348,7 @@ var sharePointSettings = {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/4/b/4/4b4d907f-2e25-4972-a7b1-dfe8d1c0fadb/uber-subscription-kb5002651-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -629,7 +629,7 @@ resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'proxyHttpsPort'
-        value: firewall_proxy_settings.https_port
+        value: string(firewall_proxy_settings.https_port)
       }
       {
         name: 'localDomainFqdn'
@@ -810,7 +810,7 @@ resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runComman
       }
       {
         name: 'proxyHttpsPort'
-        value: firewall_proxy_settings.https_port
+        value: string(firewall_proxy_settings.https_port)
       }
       {
         name: 'localDomainFqdn'
@@ -990,7 +990,7 @@ resource vm_sp_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'proxyHttpsPort'
-        value: firewall_proxy_settings.https_port
+        value: string(firewall_proxy_settings.https_port)
       }
       {
         name: 'localDomainFqdn'
@@ -1115,7 +1115,7 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
     name: 'vm-fe${i}-pip'
     location: location
     sku: {
-      name: 'Basic'
+      name: 'Standard'
       tier: 'Regional'
     }
     properties: {
@@ -1229,7 +1229,7 @@ resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
         }
         {
           name: 'proxyHttpsPort'
-          value: firewall_proxy_settings.https_port
+          value: string(firewall_proxy_settings.https_port)
         }
         {
           name: 'localDomainFqdn'
