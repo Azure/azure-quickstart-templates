@@ -1,6 +1,18 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Unreleased
+## Enhancements & bug-fixes - Published in November 19, 2024
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the November 2024 CU for SharePoint Subscription
+
+### Fixed
+
+- Template
+  - Stopped using the Windows Server's [small disk](https://azure.microsoft.com/en-us/blog/new-smaller-windows-server-iaas-image/) image for SharePoint Subscription VMs, as SharePoint updates no longer have enough free disk space to be installed.
+
+## Enhancements & bug-fixes - Published in September 17, 2024
 
 ### Added
 
