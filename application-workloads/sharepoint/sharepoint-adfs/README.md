@@ -1,14 +1,15 @@
 ---
-description: This template creates a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profiles service and a web application with 2 zones that contains multiple path based and host-named site collections. On the SharePoint virtual machines, Chocolatey is used to install the latest version of Notepad++, Visual Studio Code, Azure Data Studio, Fiddler, ULS Viewer and 7-Zip.
+description: Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: sharepoint-adfs
 languages:
+- bicep
 - json
 ---
-# SharePoint Subscription / 2019 / 2016 all configured
+# SharePoint Subscription / 2019 / 2016 fully configured
 
 ## Deploy the template
 
@@ -21,14 +22,18 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/BicepVersion.svg)
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 
 ## Features
 
-This templates creates a SharePoint Subscription / 2019 / 2016  farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profiles service and a web application with 2 zones and multiple path based and host-named site collections.  
-On the SharePoint virtual machines, [Chocolatey](https://chocolatey.org/) is used to install the latest version of Notepad++, Visual Studio Code, Azure Data Studio, Fiddler, ULS Viewer and 7-Zip.
+This template creates a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc...  
+The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed.  
+SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).
+
 There are some differences in the configuration, depending on the SharePoint version:
 
 ### Common to all SharePoint versions
@@ -54,44 +59,45 @@ There are some differences in the configuration, depending on the SharePoint ver
 - The HTTPS site certificate is positioned by the DSC script.
 - Federated authentication with ADFS is configured using SAML 1.1.
 
-## Key parameters
+## Outbound access to internet
+
+During the provisionning, virtual machines require an outbound access to internet to be able to download and apply their configuration.  
+The outbound access method depends on variable `outboundAccessMethod`:
+- `PublicIPAddress`: Virtual machines use a [Public IP](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/virtual-network-public-ip-address), associated to their network card.
+- `AzureFirewallProxy`: Virtual machines use [Azure Firewall](https://azure.microsoft.com/en-us/products/azure-firewall/) as an [HTTP proxy](https://learn.microsoft.com/en-us/azure/firewall/explicit-proxy).
+
+## Remote access
+
+The remote access to the virtual machines depends on the following parameters:
+
+- Parameter `rdpTrafficRule` specifies if a rule in the network security groups should allow the inbound RDP traffic:
+    - `No` (default): No rule is created, RDP traffic is blocked.
+    - `*` or `Internet`: RDP traffic is allowed from everywhere.
+    - CIDR notation (e.g. `192.168.99.0/24` or `2001:1234::/64`) or an IP address (e.g. `192.168.99.0` or `2001:1234::`): RDP traffic is allowed from the IP address / pattern specified.
+- parameter `enable_azure_bastion`:
+  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
+  - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
+
+IMPORTANT: If you set variable `outboundAccessMethod` to `AzureFirewallProxy`, you have to either enable Azure Bastion, or manually add a public IP address later, to be able to connect to a virtual machine.
 
 ### Input parameters
 
 - parameter `sharePointVersion` lets you choose which version of SharePoint to install:
-  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: February 2024 ([kb5002560](https://support.microsoft.com/help/5002560)).
+  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: November 2024 ([KB5002651](https://support.microsoft.com/help/5002651)).
+  - `Subscription-24H2`: Same as `Subscription-RTM`, then installs the [Feature Update 24H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h2-release) (September 2024 CU / [kb5002640](https://support.microsoft.com/help/5002640)).
+  - `Subscription-24H1`: Same as `Subscription-RTM`, then installs the [Feature Update 24H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h1-release) (March 2024 CU / [KB5002564](https://support.microsoft.com/help/5002564)).
   - `Subscription-23H2`: Same as `Subscription-RTM`, then installs the [Feature Update 23H2](https://learn.microsoft.com/en-us/SharePoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h2-release) (September 2023 CU / [KB5002474](https://support.microsoft.com/help/5002474)).
   - `Subscription-23H1`: Same as `Subscription-RTM`, then installs the [Feature Update 23H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h1-release) (March 2023 CU / [KB5002355](https://support.microsoft.com/help/5002355)).
   - `Subscription-22H2`: Same as `Subscription-RTM`, then installs the [Feature Update 22H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-22h2-release) (September 2022 CU / [KB5002270](https://support.microsoft.com/help/5002270) and [KB5002271](https://support.microsoft.com/help/5002271)).
   - `Subscription-RTM`: Uses a fresh Windows Server 2022 image, on which SharePoint Subscription RTM is downloaded and installed.
   - `2019`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2019 bits already installed.
   - `2016`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2016 bits already installed.
-- parameters `addPublicIPAddress` and `RDPTrafficAllowed`: See [this section](#remote-access-and-security) for detailed information.
-- parameter `numberOfAdditionalFrontEnd` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/en-us/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server).
-- parameter `enableHybridBenefitServerLicenses` allows you to enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, if you are eligible. See [this page](https://docs.microsoft.com/azure/virtual-machines/windows/hybrid-use-benefit-licensing) for more information..
+- Variable `frontEndServersCount` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/en-us/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server).
+- Variable `enableHybridBenefitServerLicenses` allows you to enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, if you are eligible. See [this page](https://docs.microsoft.com/azure/virtual-machines/windows/hybrid-use-benefit-licensing) for more information..
 
-### Output parameters
+## Outputs
 
-The template returns multiple variables to record the logins, passwords and the public IP address of virtual machines.
-
-## Remote access and security
-
-The template creates 1 virtual network with 3 subnets (+1 if [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is enabled), and each subnet is protected by a [Network Security Group](https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview) which denies all incoming traffic by default.  
-The following parameters configure how to connect to the virtual machines, and the level of network security:
-
-- parameters `adminPassword` and `serviceAccountsPassword` require a [strong password](https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-).
-- parameter `addPublicIPAddress`:
-  - if `"SharePointVMsOnly"` (default): Only SharePoint virtual machines get a public IP address with a DNS name and can be reached from Internet.
-  - If `"Yes"`: All virtual machines get a public IP address with a DNS name, and can be reached from Internet.
-  - if `"No"`: No public IP resource is created.
-  - The DNS name format of virtual machines is `"[resourceGroupName]-[vm_name].[region].cloudapp.azure.com"` and is recorded as output in the state file.
-- parameter `RDPTrafficAllowed` specifies if RDP traffic is allowed:
-  - If `"No"` (default): Firewall denies all incoming RDP traffic.
-  - If `"*"` or `"Internet"`: Firewall accepts all incoming RDP traffic from Internet (very, very much not recommended).
-  - If CIDR notation (e.g. `"192.168.99.0/24"` or `"2001:1234::/64"`) or IP address (e.g. `"192.168.99.0"` or `"2001:1234::"`): Firewall accepts incoming RDP traffic from the IP addresses specified.
-- parameter `addAzureBastion`:
-  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
-  - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
+The template returns multiple values to record the logins and the public IP address of virtual machines.
 
 ## Cost of the resources deployed
 
@@ -102,11 +108,14 @@ Here is the default size and storage type per virtual machine role:
 - SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
 - SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is either a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint Subscription and 2019), or a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint 2016).
 
-You can visit <https://azure.com/e/c494029b0b034b8ca356c926dfd2688a> to estimate the monthly cost of the template in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
+You can visit <https://azure.com/e/ec984bb923214cd1b8ee36d7ffc54e8e> to estimate the monthly cost of the template in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
 
 ## Known issues
 
-- The password of the directory synchronization connection (set in parameter `serviceAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise SharePoint is somehow unable to decrypt it and the import fails.
+- The password for the User Profile directory synchronization connection (value of parameter `otherAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise the import fails (password decryption error).
+- When parameter `outboundAccessMethod` is `AzureFirewallProxy`, most of the softwares installed through Chocolatey failed to download and are not installed.
+- When deploying SharePoint 2016 or 2019, the trial enterprise license has already expired, so you must enter your own in the central administration, then run iisreset and restart the SPTimerV4 service on all the servers.
+- When deploying SharePoint 2016 or 2019, the installation of softwares through Chocolatey fails for most of them.
 
 ## More information
 

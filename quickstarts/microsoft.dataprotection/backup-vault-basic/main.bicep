@@ -11,7 +11,7 @@ param vaultStorageRedundancy string = 'GeoRedundant'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource backupVault 'Microsoft.DataProtection/BackupVaults@2021-01-01' = {
+resource backupVault 'Microsoft.DataProtection/BackupVaults@2024-04-01' = {
   name: vaultName
   location: location
   identity: {

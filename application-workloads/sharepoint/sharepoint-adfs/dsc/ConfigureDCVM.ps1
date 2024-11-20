@@ -12,12 +12,12 @@
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.3.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.4.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.0.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.1.0 # Custom
     Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.4.0
 
     # Init
@@ -390,7 +390,7 @@
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "CN=$ComputerName.$DomainFQDN"
-            FriendlyName              = "LDAPS certificate for $ADFSSiteName.$DomainFQDN"
+            FriendlyName              = "LDAPS certificate for $ComputerName.$DomainFQDN"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -644,6 +644,18 @@
         WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
+
+        Script EnableFileSharing {
+            GetScript  = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain }
+        }
+
+        Script EnableRemoteEventViewerConnection {
+            GetScript  = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -Profile Any }
+        }
 
         #******************************************************************
         # Set insecure LDAP configurations from default 1 to 2 to avoid elevation of priviledge vulnerability on AD domain controller
