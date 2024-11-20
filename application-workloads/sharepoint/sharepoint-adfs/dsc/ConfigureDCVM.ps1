@@ -390,7 +390,7 @@
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "CN=$ComputerName.$DomainFQDN"
-            FriendlyName              = "LDAPS certificate for $ADFSSiteName.$DomainFQDN"
+            FriendlyName              = "LDAPS certificate for $ComputerName.$DomainFQDN"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
