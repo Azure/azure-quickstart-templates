@@ -23,5 +23,5 @@ Resources for the hub, project, storage account, key vault, AI Services, and Azu
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI hub (Azure Machine Learning RP workspace of kind 'hub') |
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI project (Azure Machine Learning RP workspace of kind 'project') |
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
-| `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |
+| `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model |
 | `Microsoft.Search/searchServices` | An Azure AI Search account  |
