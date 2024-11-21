@@ -3,7 +3,6 @@ description: This set of templates demonstrates how to set up Azure AI Agent Ser
 
 page_type: sample
 products:
-- azure
 - azure-resource-manager
 - azure-ai-agent-service
 - azure-ai-foundry
