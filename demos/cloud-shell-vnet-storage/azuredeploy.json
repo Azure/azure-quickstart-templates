@@ -1,143 +1,140 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "existingVNETName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the virtual network to use for cloud shell containers."
-            }
-        },
-        "existingStorageSubnetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the subnet to use for storage account."
-            }
-        },
-        "existingContainerSubnetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the subnet to use for cloud shell containers."
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the storage account in subnet."
-            }
-        },
-        "fileShareName": {
-            "type": "string",
-            "defaultValue": "acsshare",
-            "metadata": {
-                "description": "Name of the fileshare in storage account."
-            }
-        },
-        "resourceTags": {
-            "type": "object",
-            "defaultValue": {
-              "Environment": "cloudshell"
-            },
-            "metadata": {
-              "description": "Name of the resource tag"
-            }
-        },
-        "location": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().location]",
-            "metadata": {
-                "description": "Location for all resources."
-            }
-        }
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.31.34.60546",
+      "templateHash": "6679022393432852042"
+    }
+  },
+  "parameters": {
+    "existingVNETName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network to use for cloud shell containers."
+      }
     },
-    "variables": {
-        "containerSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('existingContainerSubnetName'))]",
-        "storageSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('existingStorageSubnetName'))]"
+    "existingStorageSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet to use for storage account."
+      }
     },
-    "resources": [
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2021-09-01",
-            "name": "[parameters('storageAccountName')]",
-            "tags": "[parameters('resourceTags')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
+    "existingContainerSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet to use for cloud shell containers."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account in subnet."
+      }
+    },
+    "fileShareName": {
+      "type": "string",
+      "defaultValue": "acsshare",
+      "metadata": {
+        "description": "Name of the fileshare in storage account."
+      }
+    },
+    "resourceTags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "cloudshell"
+      },
+      "metadata": {
+        "description": "Name of the resource tag"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "containerSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('existingContainerSubnetName'))]",
+    "storageSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('existingStorageSubnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-09-01",
+      "name": "[parameters('storageAccountName')]",
+      "tags": "[parameters('resourceTags')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "bypass": "None",
+          "virtualNetworkRules": [
+            {
+              "id": "[variables('containerSubnetRef')]",
+              "action": "Allow"
             },
-            "kind": "StorageV2",
-            "properties": {
-                "networkAcls": {
-                    "bypass": "None",
-                    "virtualNetworkRules": [
-                        {
-                            "id": "[variables('containerSubnetRef')]",
-                            "action": "Allow"
-                        },
-                        {
-                            "id": "[variables('storageSubnetRef')]",
-                            "action": "Allow"
-                        }
-                    ],
-                    "defaultAction": "Deny"
-                },
-                "supportsHttpsTrafficOnly": true,
-                "encryption": {
-                    "services": {
-                        "file": {
-                            "keyType": "Account",
-                            "enabled": true
-                        },
-                        "blob": {
-                            "keyType": "Account",
-                            "enabled": true
-                        }
-                    },
-                    "keySource": "Microsoft.Storage"
-                },
-                "accessTier": "Cool"
+            {
+              "id": "[variables('storageSubnetRef')]",
+              "action": "Allow"
             }
+          ],
+          "defaultAction": "Deny"
         },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices",
-            "apiVersion": "2021-09-01",
-            "name": "[concat(parameters('storageAccountName'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-            ],
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
             },
-            "properties": {
-                "deleteRetentionPolicy": {
-                    "enabled": false
-                }
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
             }
+          },
+          "keySource": "Microsoft.Storage"
         },
-        {
-            "type": "Microsoft.Storage/storageAccounts/fileServices",
-            "apiVersion": "2021-09-01",
-            "name": "[concat(parameters('storageAccountName'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-            ],
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
-            "apiVersion": "2021-09-01",
-            "name": "[concat(parameters('storageAccountName'), '/default/', parameters('fileShareName'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccountName'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-            ],
-            "properties": {
-                "shareQuota": 6
-            }
+        "accessTier": "Cool"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2021-09-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+      "properties": {
+        "deleteRetentionPolicy": {
+          "enabled": false
         }
-    ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices",
+      "apiVersion": "2021-09-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2021-09-01",
+      "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', parameters('fileShareName'))]",
+      "properties": {
+        "shareQuota": 6
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccountName'), 'default')]"
+      ]
+    }
+  ]
 }
