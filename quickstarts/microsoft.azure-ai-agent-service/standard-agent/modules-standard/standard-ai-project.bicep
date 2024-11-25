@@ -40,6 +40,12 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' exis
   name: aiSearchName
 }
 
+//for constructing endpoint
+var subscriptionId = subscription().subscriptionId
+var resourceGroupName = resourceGroup().name
+
+var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
+
 
 var storageConnections = ['${aiProjectName}/workspaceblobstore']
 var aiSearchConnection = ['${acsConnectionName}']
@@ -49,7 +55,9 @@ var aiServiceConnections = ['${aoaiConnectionName}']
 resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
   name: aiProjectName
   location: location
-  tags: tags
+  tags: union(tags, {
+    ProjectConnectionString: projectConnectionString
+  })
   identity: {
     type: 'SystemAssigned'
   }
@@ -155,4 +163,4 @@ resource searchServiceContributorRoleAssignment 'Microsoft.Authorization/roleAss
 output aiProjectName string = aiProject.name
 output aiProjectResourceId string = aiProject.id
 output aiProjectWorkspaceId string = aiProject.properties.workspaceId
-output enterpriseAgentsEndpoint string = aiProject.tags.AgentsEndpointUri
+output projectConnectionString string = aiProject.tags.ProjectConnectionString
