@@ -57,6 +57,7 @@ param modelCapacity int = 50
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
 param modelLocation string = 'eastus'
 
+
 // Variables
 var name = toLower('${aiHubName}')
 var projectName = toLower('${aiProjectName}')
@@ -89,15 +90,15 @@ module aiDependencies 'modules-standard/standard-dependent-resources.bicep' = {
 }
 
 module aiHub 'modules-standard/standard-ai-hub.bicep' = {
-  name: 'ai-${name}-${uniqueSuffix}-deployment'
+  name: '${name}-${uniqueSuffix}-deployment'
   params: {
     // workspace organization
-    aiHubName: 'ai-${name}-${uniqueSuffix}'
+    aiHubName: '${name}-${uniqueSuffix}'
     aiHubFriendlyName: aiHubFriendlyName
     aiHubDescription: aiHubDescription
     location: location
     tags: tags
-    capabilityHostName: capabilityHostName
+    capabilityHostName: '${name}-${uniqueSuffix}-${capabilityHostName}'
     modelLocation: modelLocation
 
 
@@ -112,16 +113,16 @@ module aiHub 'modules-standard/standard-ai-hub.bicep' = {
 
 
 module aiProject 'modules-standard/standard-ai-project.bicep' = {
-  name: 'ai-${projectName}-${uniqueSuffix}-deployment'
+  name: '${projectName}-${uniqueSuffix}-deployment'
   params: {
     // workspace organization
-    aiProjectName: 'ai-${projectName}-${uniqueSuffix}'
+    aiProjectName: '${projectName}-${uniqueSuffix}'
     aiProjectFriendlyName: aiProjectFriendlyName
     aiProjectDescription: aiProjectDescription
     location: location
     tags: tags
     
-    capabilityHostName: capabilityHostName
+    capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
     // dependent resources
     aiSearchName: '${aiSearchName}-${uniqueSuffix}'
     aiServicesName: '${aiServicesName}${uniqueSuffix}'
@@ -131,4 +132,4 @@ module aiProject 'modules-standard/standard-ai-project.bicep' = {
   }
 }
 
-output ENTERPRISE_AGENTS_ENDPOINT string = aiProject.outputs.enterpriseAgentsEndpoint
+output PROJECT_CONNECTION_STRING string = aiProject.outputs.projectConnectionString

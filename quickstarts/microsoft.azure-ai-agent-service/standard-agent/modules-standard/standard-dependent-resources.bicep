@@ -126,7 +126,7 @@ resource aiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' = {
 param noZRSRegions array = ['southindia', 'westus']
 param sku object = contains(noZRSRegions, location) ? { name: 'Standard_GRS' } : { name: 'Standard_ZRS' }
 
-resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageNameCleaned
   location: location
   kind: 'StorageV2'

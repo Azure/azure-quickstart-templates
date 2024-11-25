@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.92.45157",
-      "templateHash": "112381784411779503"
+      "templateHash": "1114174486229467923"
     }
   },
   "parameters": {
@@ -450,7 +450,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
+      "name": "[format('{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -458,7 +458,7 @@
         "mode": "Incremental",
         "parameters": {
           "aiHubName": {
-            "value": "[format('ai-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+            "value": "[format('{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
           },
           "aiHubFriendlyName": {
             "value": "[parameters('aiHubFriendlyName')]"
@@ -473,7 +473,7 @@
             "value": "[parameters('tags')]"
           },
           "capabilityHostName": {
-            "value": "[parameters('capabilityHostName')]"
+            "value": "[format('{0}-{1}-{2}', variables('name'), variables('uniqueSuffix'), parameters('capabilityHostName'))]"
           },
           "modelLocation": {
             "value": "[parameters('modelLocation')]"
@@ -684,7 +684,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[format('ai-{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix'))]",
+      "name": "[format('{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -692,7 +692,7 @@
         "mode": "Incremental",
         "parameters": {
           "aiProjectName": {
-            "value": "[format('ai-{0}-{1}', variables('projectName'), variables('uniqueSuffix'))]"
+            "value": "[format('{0}-{1}', variables('projectName'), variables('uniqueSuffix'))]"
           },
           "aiProjectFriendlyName": {
             "value": "[parameters('aiProjectFriendlyName')]"
@@ -707,7 +707,7 @@
             "value": "[parameters('tags')]"
           },
           "capabilityHostName": {
-            "value": "[parameters('capabilityHostName')]"
+            "value": "[format('{0}-{1}-{2}', variables('projectName'), variables('uniqueSuffix'), parameters('capabilityHostName'))]"
           },
           "aiSearchName": {
             "value": "[format('{0}-{1}', parameters('aiSearchName'), variables('uniqueSuffix'))]"
@@ -716,13 +716,13 @@
             "value": "[format('{0}{1}', parameters('aiServicesName'), variables('uniqueSuffix'))]"
           },
           "aiHubId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiHubID.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiHubID.value]"
           },
           "acsConnectionName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.acsConnectionName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.acsConnectionName.value]"
           },
           "aoaiConnectionName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aoaiConnectionName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aoaiConnectionName.value]"
           }
         },
         "template": {
@@ -732,7 +732,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.31.92.45157",
-              "templateHash": "13158181955687882338"
+              "templateHash": "5076019979158593319"
             }
           },
           "parameters": {
@@ -803,6 +803,9 @@
             }
           },
           "variables": {
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroupName": "[resourceGroup().name]",
+            "projectConnectionString": "[format('{0}.api.azureml.ms;{1};{2};{3}', parameters('location'), variables('subscriptionId'), variables('resourceGroupName'), parameters('aiProjectName'))]",
             "storageConnections": [
               "[format('{0}/workspaceblobstore', parameters('aiProjectName'))]"
             ],
@@ -833,7 +836,7 @@
               "apiVersion": "2023-08-01-preview",
               "name": "[parameters('aiProjectName')]",
               "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
+              "tags": "[union(parameters('tags'), createObject('ProjectConnectionString', variables('projectConnectionString')))]",
               "identity": {
                 "type": "SystemAssigned"
               },
@@ -928,22 +931,22 @@
               "type": "string",
               "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview').workspaceId]"
             },
-            "enterpriseAgentsEndpoint": {
+            "projectConnectionString": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview', 'full').tags.AgentsEndpointUri]"
+              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview', 'full').tags.ProjectConnectionString]"
             }
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
+        "[resourceId('Microsoft.Resources/deployments', format('{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
       ]
     }
   ],
   "outputs": {
-    "ENTERPRISE_AGENTS_ENDPOINT": {
+    "PROJECT_CONNECTION_STRING": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix'))), '2022-09-01').outputs.enterpriseAgentsEndpoint.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix'))), '2022-09-01').outputs.projectConnectionString.value]"
     }
   }
 }
