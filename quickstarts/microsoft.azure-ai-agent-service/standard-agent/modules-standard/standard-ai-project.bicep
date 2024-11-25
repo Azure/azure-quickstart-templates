@@ -43,14 +43,11 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' exis
 //for constructing endpoint
 var subscriptionId = subscription().subscriptionId
 var resourceGroupName = resourceGroup().name
-
 var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
-
 
 var storageConnections = ['${aiProjectName}/workspaceblobstore']
 var aiSearchConnection = ['${acsConnectionName}']
 var aiServiceConnections = ['${aoaiConnectionName}']
-
 
 resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
   name: aiProjectName
@@ -98,7 +95,6 @@ resource cognitiveServicesContributorAssignment 'Microsoft.Authorization/roleAss
     principalType: 'ServicePrincipal'
   }
   }
-
 
 resource cognitiveServicesOpenAIUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
   name: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
