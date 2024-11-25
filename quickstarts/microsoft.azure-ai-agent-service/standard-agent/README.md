@@ -10,7 +10,7 @@ languages:
 - bicep
 - json
 ---
-# Azure AI Agents Standard Setup
+# Standard Agent Setup
 
 Resources for the hub, project, storage account, key vault, AI Services, and Azure AI Search will be created for you. The AI Services, AI Search, and Azure Blob Storage account will be connected to your project/hub and a gpt-4o-mini model will be deployed in the eastus region.
 
