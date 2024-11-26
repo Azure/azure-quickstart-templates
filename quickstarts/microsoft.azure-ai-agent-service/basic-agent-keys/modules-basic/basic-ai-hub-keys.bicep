@@ -64,5 +64,4 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   }
 }
 
-
 output aiHubID string = aiHub.id
