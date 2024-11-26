@@ -111,3 +111,5 @@ module aiProject 'modules-basic/basic-ai-project-keys.bicep' = {
     aiHubId: aiHub.outputs.aiHubID
   }
 }
+
+output PROJECT_CONNECTION_STRING string = aiProject.outputs.projectConnectionString
