@@ -27,6 +27,9 @@ param aiServicesTarget string
 @description('Model/AI Resource deployment location')
 param modelLocation string 
 
+@description('The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub.')
+param userObjectId string = ''
+
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' = {
   name: aiHubName
   location: location
@@ -61,6 +64,21 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
         Location: modelLocation
       }
     }
+  }
+}
+
+resource azureAIDeveloperRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = if (userObjectId != '') {
+  name: '64702f94-c441-49e6-a78b-ef80e0188fee'
+  scope: resourceGroup()
+}
+
+resource azureAIDeveloperRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (userObjectId != '') {
+  scope: aiHub
+  name: guid(userObjectId, azureAIDeveloperRole.id, aiHub.id)
+  properties: {
+    principalId: userObjectId
+    roleDefinitionId: azureAIDeveloperRole.id
+    principalType: 'User'
   }
 }
 
