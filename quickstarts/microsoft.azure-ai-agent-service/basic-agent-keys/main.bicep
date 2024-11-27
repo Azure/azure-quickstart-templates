@@ -45,6 +45,9 @@ param modelCapacity int = 50
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
 param modelLocation string = 'eastus'
 
+@description('The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub.')
+param userObjectId string = ''
+
 // Variables
 var name = toLower('${aiHubName}')
 var projectName = toLower('${aiProjectName}')
@@ -86,6 +89,7 @@ module aiHub 'modules-basic/basic-ai-hub-keys.bicep' = {
     aiHubName: 'ai-${name}-${uniqueSuffix}'
     aiHubFriendlyName: aiHubFriendlyName
     aiHubDescription: aiHubDescription
+    userObjectId: userObjectId
     location: location
     tags: tags
 
