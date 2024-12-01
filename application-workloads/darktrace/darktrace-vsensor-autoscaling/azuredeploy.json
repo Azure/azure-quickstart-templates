@@ -206,22 +206,26 @@
         "bastionName": "[concat(variables('prefix'),'-bastion')]",
         "bastionPublicIPAddressName": "[concat(variables('prefix'),'-bastion-publicip')]",
         "bastionSubnetName": "AzureBastionSubnet",
-
         "VMSSName": "[concat(variables('prefix'), '-vmss')]",
-        "VMSSRef": "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', variables('VMSSName'))]",
+        "VMSSRef": "[resourceId(variables('resourceGroup'), 'Microsoft.Compute/virtualMachineScaleSets', variables('VMSSName'))]",
         "VMSSSubnetIPPrefix": "[string(first(split(parameters('VMSSSubnetCIDR'),'/')))]",
         "VMSSSubnetIPPrefixParts": "[split(variables('VMSSSubnetIPPrefix'),'.')]",
         "VMSSSubnetFirstIP": "[string(add(int(last(variables('VMSSSubnetIPPrefixParts'))),4))]",
         "VMSSSubnetProxyIP": "[string(add(int(last(variables('VMSSSubnetIPPrefixParts'))),5))]",
         "VMSSSubnetPrivateLinkIP": "[string(add(int(last(variables('VMSSSubnetIPPrefixParts'))),6))]",
         "VMSSIPPrefixParts": "[take(variables('VMSSSubnetIPPrefixParts'),3)]",
-        "fePoolIP": "[concat(join(variables('VMSSIPPrefixParts'),'.'), '.', variables('VMSSSubnetFirstIP'))]", 
+        "VMSSRoleName": "[guid(resourceGroup().id, deployment().name, 'vmss-vsensor-role')]",
+        "VMSSRoleAssignName": "[guid(resourceGroup().id, deployment().name, 'vmss-vsensor-assign')]",
+        "VMSSRoleAssignNameVNet": "[guid(resourceGroup().id, deployment().name, 'vmss-vsensor-assign-vnet')]",
+        "fePoolIP": "[concat(join(variables('VMSSIPPrefixParts'),'.'), '.', variables('VMSSSubnetFirstIP'))]",
         "fePoolProxyIP": "[concat(join(variables('VMSSIPPrefixParts'),'.'), '.', variables('VMSSSubnetProxyIP'))]",
         "privateLinkIp": "[concat(join(variables('VMSSIPPrefixParts'),'.'), '.', variables('VMSSSubnetPrivateLinkIP'))]",
         "privateLinkServiceName": "[concat(variables('prefix'), '-ossensor-privatelink')]",
         "subnetName": "[concat(variables('prefix'), '-subnet')]",
         "subnetTemplateName": "[concat(variables('prefix'), '-subnets-template')]",
-        "subnetResourceGroup": "[if(equals(parameters('existingVirtualNetworkResourceGroup'),'same_RG'), resourceGroup().name, parameters('existingVirtualNetworkResourceGroup'))]",
+        "vSensorRoleTemplateName": "[concat(variables('prefix'), '-role-template')]",
+        "vNetSameRG": "[equals(parameters('existingVirtualNetworkResourceGroup'),'same_RG')]",
+        "subnetResourceGroup": "[if(variables('vNetSameRG'), resourceGroup().name, parameters('existingVirtualNetworkResourceGroup'))]",
         "subnetsTemplateRef": "[resourceId(variables('subnetResourceGroup'), 'Microsoft.Resources/deployments', variables('subnetTemplateName'))]",
         "existingRouteTableResourceGroup": "[if(equals(parameters('existingRouteTableResourceGroup'),'same_RG'), resourceGroup().name, parameters('existingRouteTableResourceGroup'))]",
         "MgmtSourceAddressOrRange": "[replace(parameters('MgmtSourceAddressOrRange'), ' ', '')]",
@@ -855,7 +859,10 @@
             "dependsOn": [
                 "[variables('VMSSRef')]",
                 "[variables('blobStorageContribRoleName')]",
-                "[variables('blobStorageAccountContribRoleName')]"
+                "[variables('blobStorageAccountContribRoleName')]",
+                "[variables('VMSSRoleName')]",
+                "[variables('VMSSRoleAssignName')]",
+                "[variables('vSensorRoleTemplateName')]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -1203,7 +1210,8 @@
                                                 "blockBlob"
                                             ],
                                             "prefixMatch": [
-                                                "[concat(variables('blobStorageContainerName'), '/chronicle/data/')]"
+                                                "[concat(variables('blobStorageContainerName'), '/chronicle/data/')]",
+                                                "[concat(variables('blobStorageContainerName'), '/chronicle/index/bundle/')]"
                                             ]
                                         }
                                     },
@@ -1268,6 +1276,80 @@
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '17d1049b-9a84-46fb-8f53-869881c3d3ab')]",
                 "principalId": "[reference(variables('VMSSRef'), '2023-09-01', 'Full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleDefinitions",
+            "apiVersion": "2022-05-01-preview",
+            "name": "[variables('VMSSRoleName')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "assignableScopes": "[if(variables('vNetSameRG'), json(concat('[\"', subscription().id,'/resourceGroups/', variables('resourceGroup'), '\"]')), json(concat('[\"', subscription().id,'/resourceGroups/', variables('resourceGroup'), '\",\"', subscription().id,'/resourceGroups/', parameters('existingVirtualNetworkResourceGroup'), '\"]')))]",
+                "description": "Allows Darktrace vSensor to discover network properties for cloud tracking features.",
+                "permissions": [
+                    {
+                        "actions": [
+                            "Microsoft.Compute/virtualMachines/read",
+                            "Microsoft.Compute/virtualMachineScaleSets/read",
+                            "Microsoft.Network/virtualNetworks/read", 
+                            "Microsoft.Network/networkInterfaces/read"
+                        ]
+                    }
+                ],
+                "roleName": "[concat(variables('VMSSName'), ' vSensor Role')]",
+                "type": "customRole",
+                "isCustom": true
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('VMSSRoleAssignName')]",
+            "dependsOn": [
+                "[variables('VMSSRoleName')]",
+                "[variables('VMSSRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "roleDefinitionId": "[concat(subscription().Id, '/providers/Microsoft.Authorization/roleDefinitions/', variables('VMSSRoleName'))]",
+                "principalId": "[reference(variables('VMSSRef'), '2023-09-01', 'Full').identity.principalId]",
+                "description": "Allow vSensor to collect Darktrace / Cloud tracking metadata on the vSensor VNet."
+            }
+        },
+        {
+            "apiVersion": "2024-03-01",
+            "name": "[variables('vSensorRoleTemplateName')]",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('existingVirtualNetworkResourceGroup')]", // Force the role assignment to the other resource group.
+            "condition": "[not(variables('vNetSameRG'))]",
+            "dependsOn": [
+                "[variables('VMSSRoleName')]",
+                "[variables('VMSSRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {},
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[variables('VMSSRoleAssignNameVNet')]",
+                            "tags": "[parameters('resourceTags')]",
+                            "properties": {
+                                "roleDefinitionId": "[concat(subscription().Id, '/providers/Microsoft.Authorization/roleDefinitions/', variables('VMSSRoleName'))]",
+                                "principalId": "[reference(variables('VMSSRef'), '2023-09-01', 'Full').identity.principalId]",
+                                "description": "Allow vSensor to collect Darktrace / Cloud tracking metadata on an existing VNet in a different resource group."
+                            }
+                        }
+                    ],
+                    "outputs": {}
+                }
             }
         },
         {

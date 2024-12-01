@@ -17,7 +17,7 @@ if(!(Test-Path $cmpath))
     Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
     if(!(Test-Path $cmsourcepath))
     {
-        Start-Process -Filepath ($cmpath) -ArgumentList ('/x:"' + $cmsourceextractpath + '"','/q') -wait
+        Start-Process -FilePath $cmpath -ArgumentList('-y' + ' -o"' + $cmsourceextractpath+ '"') -Wait
     }
 }
 
