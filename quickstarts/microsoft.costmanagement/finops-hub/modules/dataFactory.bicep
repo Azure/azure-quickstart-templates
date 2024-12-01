@@ -4476,6 +4476,9 @@ resource pipeline_ToDataExplorer 'Microsoft.DataFactory/factories/pipelines@2018
         type: 'Integer'
         defaultValue: 999
       }
+      scope: {
+        type: 'String'
+      }
     }
     annotations: []
   }
@@ -4538,6 +4541,256 @@ resource pipeline_ExecuteIngestionETL 'Microsoft.DataFactory/factories/pipelines
             ]
           }
         ]
+        userProperties: []
+        typeProperties: {
+          on: {
+            value: '@last(array(split(pipeline().parameters.blobPath, \'.\')))'
+            type: 'Expression'
+          }
+          cases: [
+            {
+              value: 'csv'
+              activities: [
+                {
+                  name: 'Convert CSV File'
+                  type: 'Copy'
+                  dependsOn: []
+                  policy: {
+                    timeout: '0.00:10:00'
+                    retry: 0
+                    retryIntervalInSeconds: 30
+                    secureOutput: false
+                    secureInput: false
+                  }
+                  userProperties: []
+                  typeProperties: {
+                    source: {
+                      type: 'DelimitedTextSource'
+                      additionalColumns: {
+                        type: 'Expression'
+                        value: '@activity(\'Load Schema Mappings\').output.firstRow.additionalColumns'
+                      }
+                      storeSettings: {
+                        type: 'AzureBlobFSReadSettings'
+                        recursive: true
+                        enablePartitionDiscovery: false
+                      }
+                      formatSettings: {
+                        type: 'DelimitedTextReadSettings'
+                      }
+                    }
+                    sink: {
+                      type: 'ParquetSink'
+                      storeSettings: {
+                        type: 'AzureBlobFSWriteSettings'
+                      }
+                      formatSettings: {
+                        type: 'ParquetWriteSettings'
+                        fileExtension: '.parquet'
+                      }
+                    }
+                    enableStaging: false
+                    parallelCopies: 1
+                    validateDataConsistency: false
+                    translator: {
+                      value: '@activity(\'Load Schema Mappings\').output.firstRow.translator'
+                      type: 'Expression'
+                    }
+                  }
+                  inputs: [
+                    {
+                      referenceName: dataset_msexports.name
+                      type: 'DatasetReference'
+                      parameters: {
+                        blobPath: {
+                          value: '@pipeline().parameters.blobPath'
+                          type: 'Expression'
+                        }
+                      }
+                    }
+                  ]
+                  outputs: [
+                    {
+                      referenceName: dataset_ingestion.name
+                      type: 'DatasetReference'
+                      parameters: {
+                        blobPath: {
+                          value: '@concat(pipeline().parameters.destinationFolder, \'/\', pipeline().parameters.destinationFile)'
+                          type: 'Expression'
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+            {
+              value: 'gz'
+              activities: [
+                {
+                  name: 'Convert GZip CSV File'
+                  type: 'Copy'
+                  dependsOn: []
+                  policy: {
+                    timeout: '0.00:10:00'
+                    retry: 0
+                    retryIntervalInSeconds: 30
+                    secureOutput: false
+                    secureInput: false
+                  }
+                  userProperties: []
+                  typeProperties: {
+                    source: {
+                      type: 'DelimitedTextSource'
+                      additionalColumns: {
+                        type: 'Expression'
+                        value: '@activity(\'Load Schema Mappings\').output.firstRow.additionalColumns'
+                      }
+                      storeSettings: {
+                        type: 'AzureBlobFSReadSettings'
+                        recursive: true
+                        enablePartitionDiscovery: false
+                      }
+                      formatSettings: {
+                        type: 'DelimitedTextReadSettings'
+                      }
+                    }
+                    sink: {
+                      type: 'ParquetSink'
+                      storeSettings: {
+                        type: 'AzureBlobFSWriteSettings'
+                      }
+                      formatSettings: {
+                        type: 'ParquetWriteSettings'
+                        fileExtension: '.parquet'
+                      }
+                    }
+                    enableStaging: false
+                    parallelCopies: 1
+                    validateDataConsistency: false
+                    translator: {
+                      value: '@activity(\'Load Schema Mappings\').output.firstRow.translator'
+                      type: 'Expression'
+                    }
+                  }
+                  inputs: [
+                    {
+                      referenceName: dataset_msexports_gzip.name
+                      type: 'DatasetReference'
+                      parameters: {
+                        blobPath: {
+                          value: '@pipeline().parameters.blobPath'
+                          type: 'Expression'
+                        }
+                      }
+                    }
+                  ]
+                  outputs: [
+                    {
+                      referenceName: dataset_ingestion.name
+                      type: 'DatasetReference'
+                      parameters: {
+                        blobPath: {
+                          value: '@concat(pipeline().parameters.destinationFolder, \'/\', pipeline().parameters.destinationFile)'
+                          type: 'Expression'
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+            {
+              value: 'parquet'
+              activities: [
+                {
+                  name: 'Move Parquet File'
+                  type: 'Copy'
+                  dependsOn: []
+                  policy: {
+                    timeout: '0.00:05:00'
+                    retry: 0
+                    retryIntervalInSeconds: 30
+                    secureOutput: false
+                    secureInput: false
+                  }
+                  userProperties: []
+                  typeProperties: {
+                    source: {
+                      type: 'ParquetSource'
+                      storeSettings: {
+                        type: 'AzureBlobFSReadSettings'
+                        recursive: true
+                        enablePartitionDiscovery: false
+                      }
+                      formatSettings: {
+                        type: 'ParquetReadSettings'
+                      }
+                    }
+                    sink: {
+                      type: 'ParquetSink'
+                      storeSettings: {
+                        type: 'AzureBlobFSWriteSettings'
+                      }
+                      formatSettings: {
+                        type: 'ParquetWriteSettings'
+                        fileExtension: '.parquet'
+                      }
+                    }
+                    enableStaging: false
+                    parallelCopies: 1
+                    validateDataConsistency: false
+                  }
+                  inputs: [
+                    {
+                      referenceName: dataset_msexports_parquet.name
+                      type: 'DatasetReference'
+                      parameters: {
+                        blobPath: {
+                          value: '@pipeline().parameters.blobPath'
+                          type: 'Expression'
+                        }
+                      }
+                    }
+                  ]
+                  outputs: [
+                    {
+                      referenceName: dataset_ingestion.name
+                      type: 'DatasetReference'
+                      parameters: {
+                        blobPath: {
+                          value: '@concat(pipeline().parameters.destinationFolder, \'/\', pipeline().parameters.destinationFile)'
+                          type: 'Expression'
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+          defaultActivities: [
+            {
+              name: 'Unsupported File Type'
+              type: 'Fail'
+              dependsOn: []
+              userProperties: []
+              typeProperties: {
+                message: {
+                  value: '@concat(\'Unable to ingest the specified export file because the file type is not supported. File: \', pipeline().parameters.blobPath)'
+                  type: 'Expression'
+                }
+                errorCode: 'UnsupportedExportFileType'
+              }
+            }
+          ]
+        }
+      }
+      { // Get Existing Parquet Files
+        name: 'Get Existing Parquet Files'
+        description: 'Get the previously ingested files so we can remove any older data. This is necessary to avoid data duplication in reports.'
+        type: 'GetMetadata'
+        dependsOn: []
         policy: {
           timeout: '0.12:00:00'
           retry: 0

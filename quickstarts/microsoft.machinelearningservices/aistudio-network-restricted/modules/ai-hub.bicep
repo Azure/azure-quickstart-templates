@@ -33,6 +33,12 @@ param aiServicesId string
 @description('Resource ID of the AI Services endpoint')
 param aiServicesTarget string
 
+@description('Resource ID of the AI Search resource')
+param searchId string
+
+@description('Resource ID of the AI Search endpoint')
+param searchTarget string
+
 @description('Resource Id of the virtual network to deploy the resource into.')
 param vnetResourceId string
 
@@ -42,12 +48,26 @@ param subnetResourceId string
 @description('Unique Suffix used for name generation')
 param uniqueSuffix string
 
+@description('SystemDatastoresAuthMode')
+@allowed([
+  'identity'
+  'accesskey'
+])
+param systemDatastoresAuthMode string
+
+@description('AI Service Connection Auth Mode')
+@allowed([
+  'ApiKey'
+  'AAD'
+])
+param connectionAuthMode string
+
 var privateEndpointName = '${aiHubName}-AIHub-PE'
 var targetSubResource = [
     'amlworkspace'
 ]
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-10-01' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
@@ -66,32 +86,67 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-10-01' = {
     containerRegistry: containerRegistryId
 
     // network settings
+    provisionNetworkNow: true
     publicNetworkAccess: 'Disabled'
     managedNetwork: {
       isolationMode: 'AllowInternetOutBound'
     }
+    systemDatastoresAuthMode: systemDatastoresAuthMode
 
     // private link settings
     sharedPrivateLinkResources: []
   }
   kind: 'hub'
 
+  
+  // Azure Search connection
+  resource searchServiceConnection 'connections@2024-01-01-preview' = {
+    name: '${aiHubName}-connection-Search'
+    properties: {
+      category: 'CognitiveSearch'
+      target: searchTarget
+      #disable-next-line BCP225
+      authType: connectionAuthMode 
+      isSharedToAll: true
+      useWorkspaceManagedIdentity: false
+      sharedUserList: []
+
+      credentials: connectionAuthMode == 'ApiKey'
+      ? {
+          key: '${listAdminKeys(searchId, '2023-11-01')}'
+        }
+      : null
+
+      metadata: {
+        ApiType: 'Azure'
+        ResourceId: searchId
+      }
+    }
+  }
+
+  // AI Services connection
   resource aiServicesConnection 'connections@2024-01-01-preview' = {
     name: '${aiHubName}-connection-AIServices'
     properties: {
       category: 'AIServices'
       target: aiServicesTarget
-      authType: 'ApiKey'
+      #disable-next-line BCP225
+      authType: connectionAuthMode 
       isSharedToAll: true
-      credentials: {
-        key: '${listKeys(aiServicesId, '2021-10-01').key1}'
-      }
+      
+      credentials: connectionAuthMode == 'ApiKey'
+        ? {
+            key: '${listKeys(aiServicesId, '2021-10-01')}'
+          }
+        : null
+
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
       }
     }
   }
+
 }
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
@@ -181,3 +236,5 @@ resource dnsZoneGroupAiHub 'Microsoft.Network/privateEndpoints/privateDnsZoneGro
 }
 
 output aiHubID string = aiHub.id
+output aiHubName string = aiHub.name
+output aiHubPrincipalId string = aiHub.identity.principalId

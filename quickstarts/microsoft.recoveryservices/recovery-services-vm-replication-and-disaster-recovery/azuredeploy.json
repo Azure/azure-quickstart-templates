@@ -1,0 +1,668 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.23.60470",
+      "templateHash": "11206018683281531230"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "replicationLocation": {
+      "type": "string",
+      "defaultValue": "eastus",
+      "metadata": {
+        "description": "Location of the recovery service Vault for disaster recovery"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network resource name."
+      }
+    },
+    "virtualNetworkAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.100.0.0/16",
+      "metadata": {
+        "description": "Virtual network resource Address Space."
+      }
+    },
+    "subnetName1": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network resource Subnet 1 name."
+      }
+    },
+    "subnetName2": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network resource Subnet 2 name."
+      }
+    },
+    "subnetAddressPrefix1": {
+      "type": "string",
+      "defaultValue": "10.100.0.0/24",
+      "metadata": {
+        "description": "Virtual network resource Subnet 1 Address Prefix."
+      }
+    },
+    "subnetAddressPrefix2": {
+      "type": "string",
+      "defaultValue": "10.100.1.0/24",
+      "metadata": {
+        "description": "Virtual network resource Subnet 2 Address Prefix."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('storage{0}', uniqueString(subscription().id))]",
+      "metadata": {
+        "description": "Storage account name"
+      }
+    },
+    "recoveryServiceVaultName": {
+      "type": "string",
+      "defaultValue": "[format('rsv-{0}', uniqueString(subscription().id))]",
+      "metadata": {
+        "description": "Azure recovery service vault name"
+      }
+    },
+    "replicationPolicyName": {
+      "type": "string",
+      "defaultValue": "[format('DailyPolicy-{0}', uniqueString(resourceGroup().id))]"
+    },
+    "disasterRecoveryEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Set to true is disaster recovery vm replication should be enabled on the VM"
+      }
+    },
+    "recoveryNetworkId": {
+      "type": "string",
+      "defaultValue": "none",
+      "metadata": {
+        "description": "Provide the virtual network ID for replication secondary region"
+      }
+    },
+    "virtualMachineId": {
+      "type": "string",
+      "defaultValue": "none",
+      "metadata": {
+        "description": "Resource ID of the Virtual machine that needs replication"
+      }
+    },
+    "recoveryResourceGroupId": {
+      "type": "string",
+      "defaultValue": "none",
+      "metadata": {
+        "description": "Resource group ID of where the virtual machine will be replicated to"
+      }
+    }
+  },
+  "variables": {
+    "blobPrivateDnsZoneName": "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
+    "filePrivateDnsZoneName": "[format('privatelink.file.{0}', environment().suffixes.storage)]",
+    "queuePrivateDnsZoneName": "[format('privatelink.queue.{0}', environment().suffixes.storage)]",
+    "roleDefinitionContributorId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "roleDefinitionStorageBlobDataContributorId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+    "rsvPrivateDnsZoneName": "privatelink.siterecovery.windowsazure.com",
+    "instanceType": "A2A"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressSpace')]"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName1'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetAddressPrefix1')]",
+        "privateEndpointNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName2'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetAddressPrefix2')]",
+        "privateEndpointNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName1'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-05-01",
+      "name": "[toLower(parameters('storageAccountName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_GRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot",
+        "allowBlobPublicAccess": false,
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Deny"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2024-06-01",
+      "name": "[variables('blobPrivateDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2024-06-01",
+      "name": "[variables('filePrivateDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2024-06-01",
+      "name": "[variables('queuePrivateDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2024-06-01",
+      "name": "[format('{0}/{1}', variables('blobPrivateDnsZoneName'), format('link_to_{0}', toLower(split(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), '/')[8])))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2024-06-01",
+      "name": "[format('{0}/{1}', variables('filePrivateDnsZoneName'), format('link_to_{0}', toLower(split(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), '/')[8])))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('filePrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2024-06-01",
+      "name": "[format('{0}/{1}', variables('queuePrivateDnsZoneName'), format('link_to_{0}', toLower(split(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), '/')[8])))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('queuePrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}-blob-pe', toLower(parameters('storageAccountName')))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('{0}-blob-pe', toLower(parameters('storageAccountName')))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]",
+              "groupIds": [
+                "blob"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}-file-pe', toLower(parameters('storageAccountName')))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('{0}-file-pe', toLower(parameters('storageAccountName')))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]",
+              "groupIds": [
+                "file"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}-queue-pe', toLower(parameters('storageAccountName')))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('{0}-queue-pe', toLower(parameters('storageAccountName')))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]",
+              "groupIds": [
+                "queue"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', format('{0}-blob-pe', toLower(parameters('storageAccountName'))), 'blob')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-blob-pe', toLower(parameters('storageAccountName'))))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', format('{0}-file-pe', toLower(parameters('storageAccountName'))), 'file')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('filePrivateDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('filePrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-file-pe', toLower(parameters('storageAccountName'))))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', format('{0}-queue-pe', toLower(parameters('storageAccountName'))), 'queue')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('queuePrivateDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('queuePrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-queue-pe', toLower(parameters('storageAccountName'))))]"
+      ]
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2024-04-30-preview",
+      "name": "[parameters('recoveryServiceVaultName')]",
+      "location": "[parameters('replicationLocation')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": {
+        "redundancySettings": {
+          "crossRegionRestore": "Disabled",
+          "standardTierStorageRedundancy": "GeoRedundant"
+        },
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', toLower(parameters('storageAccountName')))]",
+      "name": "[guid(resourceGroup().id, resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName'))), 'Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[variables('roleDefinitionContributorId')]",
+        "principalType": "ServicePrincipal",
+        "principalId": "[reference(resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName')), '2024-04-30-preview', 'full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', toLower(parameters('storageAccountName')))]",
+      "name": "[guid(resourceGroup().id, resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName'))), 'Storage Blob Data Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[variables('roleDefinitionStorageBlobDataContributorId')]",
+        "principalType": "ServicePrincipal",
+        "principalId": "[reference(resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName')), '2024-04-30-preview', 'full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2024-06-01",
+      "name": "[variables('rsvPrivateDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2024-06-01",
+      "name": "[format('{0}/{1}', variables('rsvPrivateDnsZoneName'), format('link_to_{0}', toLower(split(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), '/')[8])))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('rsvPrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}-rsv-pe', parameters('recoveryServiceVaultName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('{0}-rsv-pe', parameters('recoveryServiceVaultName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]",
+              "groupIds": [
+                "AzureSiteRecovery"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName2'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', format('{0}-rsv-pe', parameters('recoveryServiceVaultName')), 'AzureSiteRecovery')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('rsvPrivateDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('rsvPrivateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-rsv-pe', parameters('recoveryServiceVaultName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/replicationPolicies",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
+      "properties": {
+        "providerSpecificInput": {
+          "instanceType": "[variables('instanceType')]",
+          "appConsistentFrequencyInMinutes": "[mul(4, 60)]",
+          "crashConsistentFrequencyInMinutes": 5,
+          "multiVmSyncStatus": "Enable",
+          "recoveryPointHistory": "[mul(24, 60)]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', parameters('recoveryServiceVaultName'), 'Primary-Fabric')]",
+      "properties": {
+        "customDetails": {
+          "instanceType": "Azure",
+          "location": "[parameters('location')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric')]",
+      "properties": {
+        "customDetails": {
+          "instanceType": "Azure",
+          "location": "[reference(resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName')), '2024-04-30-preview', 'full').location]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}/{2}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container')]",
+      "properties": {
+        "providerSpecificInput": [
+          {
+            "instanceType": "[variables('instanceType')]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('recoveryServiceVaultName'), 'Primary-Fabric')]"
+      ]
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}/{2}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container')]",
+      "properties": {
+        "providerSpecificInput": [
+          {
+            "instanceType": "[variables('instanceType')]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('recoveryServiceVaultName'), 'Secondary-Fabric')]"
+      ]
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container', 'Primary-Container-Mapping')]",
+      "properties": {
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
+        "providerSpecificInput": {
+          "instanceType": "[variables('instanceType')]"
+        },
+        "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container')]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container')]"
+      ]
+    },
+    {
+      "condition": "[parameters('disasterRecoveryEnabled')]",
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping')]",
+      "properties": {
+        "fabricSpecificDetails": {
+          "instanceType": "AzureToAzure",
+          "primaryNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+        },
+        "recoveryFabricName": "Secondary-Fabric",
+        "recoveryNetworkId": "[parameters('recoveryNetworkId')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('recoveryServiceVaultName'), 'Primary-Fabric')]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('recoveryServiceVaultName'), 'Secondary-Fabric')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disasterRecoveryEnabled')]",
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping')]",
+      "properties": {
+        "fabricSpecificDetails": {
+          "instanceType": "AzureToAzure",
+          "primaryNetworkId": "[parameters('recoveryNetworkId')]"
+        },
+        "recoveryFabricName": "Primary-Fabric",
+        "recoveryNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('recoveryServiceVaultName'), 'Primary-Fabric')]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('recoveryServiceVaultName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('recoveryServiceVaultName'), 'Secondary-Fabric')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disasterRecoveryEnabled')]",
+      "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectedItems",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container', split(parameters('virtualMachineId'), '/')[8])]",
+      "properties": {
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
+        "providerSpecificDetails": {
+          "instanceType": "[variables('instanceType')]",
+          "autoProtectionOfDataDisk": "Enabled",
+          "fabricObjectId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, split(parameters('virtualMachineId'), '/')[4]), 'Microsoft.Compute/virtualMachines', split(parameters('virtualMachineId'), '/')[8])]",
+          "recoveryResourceGroupId": "[parameters('recoveryResourceGroupId')]",
+          "recoveryContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container')]",
+          "recoveryAzureNetworkId": "[parameters('recoveryNetworkId')]",
+          "recoverySubnetName": "[parameters('subnetName1')]",
+          "vmManagedDisks": [
+            {
+              "diskId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, split(parameters('virtualMachineId'), '/')[4]), 'Microsoft.Compute/virtualMachines', split(parameters('virtualMachineId'), '/')[8])]",
+              "primaryStagingAzureStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]",
+              "recoveryReplicaDiskAccountType": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, split(parameters('virtualMachineId'), '/')[4]), 'Microsoft.Compute/virtualMachines', split(parameters('virtualMachineId'), '/')[8]), '2024-07-01').storageProfile.osDisk.managedDisk.storageAccountType]",
+              "recoveryTargetDiskAccountType": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, split(parameters('virtualMachineId'), '/')[4]), 'Microsoft.Compute/virtualMachines', split(parameters('virtualMachineId'), '/')[8]), '2024-07-01').storageProfile.osDisk.managedDisk.storageAccountType]",
+              "recoveryResourceGroupId": "[parameters('recoveryResourceGroupId')]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName1'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings', split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[0], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[1], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[2], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'azureNetwork', 'Source-Network-Mapping'), '/')[3])]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container')]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings', parameters('recoveryServiceVaultName'), 'Primary-Fabric', 'Primary-Protection-Container', 'Primary-Container-Mapping')]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('recoveryServiceVaultName'), parameters('replicationPolicyName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings', split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[0], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[1], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[2], split(format('{0}/{1}/{2}/{3}', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'azureNetwork', 'Target-Network-Mapping'), '/')[3])]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('recoveryServiceVaultName'), 'Secondary-Fabric', 'Secondary-Protection-Container')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storageAccountName')))]"
+      ]
+    }
+  ]
+}
