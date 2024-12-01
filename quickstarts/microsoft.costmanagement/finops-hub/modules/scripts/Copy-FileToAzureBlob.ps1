@@ -22,7 +22,6 @@ $storageContext = @{
 $blob = Get-AzStorageBlobContent @storageContext -Blob $fileName -Destination $filePath -Force
 if ($blob)
 {
-    
     $text = Get-Content $filePath -Raw
     Write-Output "---------"
     Write-Output $text
@@ -67,6 +66,12 @@ if (!$json)
             'ingestion' = @{
                 months = 13
             }
+            'raw'       = @{
+                days = 0
+            }
+            'final'     = @{
+                months = 13
+            }
         }
     }
 
@@ -88,13 +93,57 @@ if (!($json.retention))
         },
         "ingestion": {
             "months": 13
+        },
+        "raw": {
+            "days": 0
+        },
+        "final": {
+            "months": 13
         }
     }
 "@
     $json | Add-Member -Name retention -Value (ConvertFrom-Json $retention) -MemberType NoteProperty
 }
-$json.retention.msexports.days = [Int32]::Parse($env:msexportRetentionInDays)
-$json.retention.ingestion.months = [Int32]::Parse($env:ingestionRetentionInMonths)
+
+# Set or update msexports retention
+if (!($json.retention.msexports))
+{
+    $json.retention | Add-Member -Name msexports -Value (ConvertFrom-Json "{""days"":$($env:msexportRetentionInDays)}") -MemberType NoteProperty
+}
+else
+{
+    $json.retention.msexports.days = [Int32]::Parse($env:msexportRetentionInDays)
+}
+
+# Set or update ingestion retention
+if (!($json.retention.ingestion))
+{
+    $json.retention | Add-Member -Name ingestion -Value (ConvertFrom-Json "{""months"":$($env:ingestionRetentionInMonths)}") -MemberType NoteProperty
+}
+else
+{
+    $json.retention.ingestion.months = [Int32]::Parse($env:ingestionRetentionInMonths)
+}
+
+# Set or update raw retention
+if (!($json.retention.raw))
+{
+    $json.retention | Add-Member -Name raw -Value (ConvertFrom-Json "{""days"":$($env:rawRetentionInDays)}") -MemberType NoteProperty
+}
+else
+{
+    $json.retention.raw.days = [Int32]::Parse($env:rawRetentionInDays)
+}
+
+# Set or update final retention
+if (!($json.retention.final))
+{
+    $json.retention | Add-Member -Name final -Value (ConvertFrom-Json "{""months"":$($env:finalRetentionInMonths)}") -MemberType NoteProperty
+}
+else
+{
+    $json.retention.final.months = [Int32]::Parse($env:finalRetentionInMonths)
+}
 
 # Updating settings
 Write-Output "Updating version to $env:ftkVersion..."

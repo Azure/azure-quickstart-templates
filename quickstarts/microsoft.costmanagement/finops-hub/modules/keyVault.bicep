@@ -34,6 +34,12 @@ param tags object = {}
 @description('Optional. Tags to apply to resources based on their resource type. Resource type specific tags will be merged with tags for all resources.')
 param tagsByResource object = {}
 
+@description('Required. Resource ID of the virtual network for private endpoints.')
+param virtualNetworkId string
+
+@description('Required. Resource ID of the subnet for private endpoints.')
+param privateEndpointSubnetId string
+
 //------------------------------------------------------------------------------
 // Variables
 //------------------------------------------------------------------------------
@@ -43,6 +49,7 @@ var keyVaultPrefix = '${replace(hubName, '_', '-')}-vault'
 var keyVaultSuffix = '-${uniqueSuffix}'
 var keyVaultName = replace('${take(keyVaultPrefix, 24 - length(keyVaultSuffix))}${keyVaultSuffix}', '--', '-')
 var keyVaultSecretName = '${toLower(hubName)}-storage-key'
+var keyVaultPrivateDnsZoneName = 'privatelink${replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore')}'
 
 var formattedAccessPolicies = [for accessPolicy in accessPolicies: {
   applicationId: contains(accessPolicy, 'applicationId') ? accessPolicy.applicationId : ''
@@ -70,10 +77,14 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
     tenantId: subscription().tenantId
     accessPolicies: formattedAccessPolicies
     sku: {
-      // chinaeast2 is the only region in China that supports deployment scripts
+      // Azure China only supports standard
       name: startsWith(location, 'china') ? 'standard' : sku
       family: 'A'
     }
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Deny'
+  }
   }
 }
 
@@ -97,6 +108,62 @@ resource keyVault_secret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (!e
     value: storageAccountKey
   }
 }
+
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+  name: keyVaultPrivateDnsZoneName
+  location: 'global'
+  tags: union(tags, contains(tagsByResource, 'Microsoft.KeyVault/privateDnsZones') ? tagsByResource['Microsoft.KeyVault/privateDnsZones'] : {})
+  properties: {}
+}
+
+resource keyVaultPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+  name: '${replace(keyVaultPrivateDnsZone.name, '.', '-')}-link'
+  location: 'global'
+  parent: keyVaultPrivateDnsZone
+  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateDnsZones/virtualNetworkLinks') ? tagsByResource['Microsoft.Network/privateDnsZones/virtualNetworkLinks'] : {})
+  properties: {
+    virtualNetwork: {
+      id: virtualNetworkId
+    }
+    registrationEnabled: false
+  }
+}
+
+resource keyVaultEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+  name: '${keyVault.name}-ep'
+  location: location
+  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateEndpoints') ? tagsByResource['Microsoft.Network/privateEndpoints'] : {})
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'keyVaultLink'
+        properties: {
+          privateLinkServiceId: keyVault.id
+          groupIds: ['vault']
+        }
+      }
+    ]
+  }
+}
+
+resource keyVaultPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+  name: 'keyvault-endpoint-zone'
+  parent: keyVaultEndpoint
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: keyVaultPrivateDnsZone.name
+        properties: {
+          privateDnsZoneId: keyVaultPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 
 //==============================================================================
 // Outputs
