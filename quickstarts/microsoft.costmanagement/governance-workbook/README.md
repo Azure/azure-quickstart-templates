@@ -75,7 +75,7 @@ Once your workbook is deployed, you can use it by navigating to one of the follo
 
 ## 🧰 About the FinOps toolkit
 
-The governance workbook is part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open source collection of FinOps solutions that help you manage and optimize your cloud costs.
+The governance workbook is part of the [FinOps toolkit](https://aka.ms/finops/toolkit), an open source collection of FinOps solutions that help you manage and optimize your cost, usage, and carbon.
 
 To contribute to the FinOps toolkit, [join us on GitHub](https://aka.ms/ftk).
 
