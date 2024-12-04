@@ -1,4 +1,15 @@
-# Build Ready-To-Code Dev Box Images
+---
+description: This template build demonstrates how to build Ready-To-Code Dev Box images using Azure Image Builder.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: devbox-ready-to-code-image
+languages:
+- bicep
+- json
+---
+# Ready-To-Code Dev Box Images
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-ready-to-code-image/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-ready-to-code-image/PublicDeployment.svg)
