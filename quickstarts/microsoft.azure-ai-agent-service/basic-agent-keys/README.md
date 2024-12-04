@@ -1,5 +1,5 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Agent Service with the basic setup and uses API key authentication on the AI Services/AOAI connection. Agents use multi-tenant search and storage resources fully managed by Microsoft. You won’t have visibility or control over these underlying Azure resources.
+description: This set of templates demonstrates how to set up Azure AI Agent Service with the basic setup using API keys authetication for the AI Service/AOAI connection. Agents use multi-tenant search and storage resources fully managed by Microsoft. You won’t have visibility or control over these underlying Azure resources.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Basic Agent Setup using API Keys for AI Service/AOAI Connection 
+# Basic Agent Setup API Keys
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/basic-agent-keys/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/basic-agent-keys/PublicDeployment.svg)
@@ -36,4 +36,4 @@ Resources for the hub, project, storage account, and AI Services will be created
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI hub (Azure Machine Learning RP workspace of kind 'hub') |
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI project (Azure Machine Learning RP workspace of kind 'project') |
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
-| `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |
+| `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |`Tags: `
