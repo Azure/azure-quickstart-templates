@@ -15,9 +15,10 @@ if(!(Test-Path $cmpath))
     "[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
     $cmurl = "https://go.microsoft.com/fwlink/?linkid=2077212&clcid=0x409"
     Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
-    if(!(Test-Path $cmsourcepath))
+    if(!(Test-Path $cmsourceextractpath))
     {
-        Start-Process -FilePath $cmpath -ArgumentList('-y' + ' -o"' + $cmsourceextractpath+ '"') -Wait
+	    New-Item -ItemType Directory -Path $cmsourceextractpath
+        Start-Process -WorkingDirectory ($cmsourceextractpath) -Filepath ($cmpath) -ArgumentList ('/s') -wait
     }
 }
 
