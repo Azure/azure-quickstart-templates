@@ -7,12 +7,12 @@ $imageBuildTimeoutInMinutes = ([int]$Env:PIPELINE_TIMEOUT_IN_MINUTES) - 5
 
 $imageBicepPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'main.bicep'
 
-$imageBuildProfileParam = ''
+$imageBuildProfileParam = 'imageBuildProfile={}'
 if ($Env:VM_SKU) {
     $imageBuildProfileParam = "imageBuildProfile={""sku"": ""$Env:VM_SKU""}"
 }
 
-$artifactSourceParam = ''
+$artifactSourceParam = '{}'
 if ($Env:ARTIFACTS_SOURCE_OBJ) {
     $artifactSourceParam = "artifactSource=$Env:ARTIFACTS_SOURCE_OBJ"
 }
