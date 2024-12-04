@@ -1,22 +1,14 @@
 ---
-description: This template creates a new FinOps hub instance, including Data Lake storage and a Data Factory.
+description: This template creates a new FinOps hub instance, including Data Explorer, Data Lake storage, and Data Factory.
 page_type: sample
 products:
 - azure
-- azure-blob-storage
-- azure-cost-management
-- azure-data-explorer
-- azure-data-factory
-- azure-data-lake
-- azure-key-vault
 - azure-resource-manager
-- azure-storage-accounts
 urlFragment: finops-hub
 languages:
 - bicep
 - json
 ---
-
 # FinOps hub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.costmanagement/finops-hub/PublicLastTestDate.svg)
