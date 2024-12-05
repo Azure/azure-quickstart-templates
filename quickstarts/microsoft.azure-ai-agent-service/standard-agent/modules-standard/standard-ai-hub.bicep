@@ -21,27 +21,40 @@ param keyVaultId string
 @description('Resource ID of the storage account resource for storing experimentation outputs')
 param storageAccountId string
 
-@description('Model/AI Resource deployment location')
-param modelLocation string 
-
 @description('Resource ID of the AI Services resource')
 param aiServicesId string
-
 @description('Resource ID of the AI Services endpoint')
 param aiServicesTarget string
+@description('Name AI Services resource')
+param aiServicesName string
+@description('Resource Group name of the AI Services resource')
+param aiServiceAccountResourceGroupName string
+@description('Subscription ID of the AI Services resource')
+param aiServiceAccountSubscriptionId string
 
 @description('Name AI Search resource')
 param aiSearchName string
-
 @description('Resource ID of the AI Search resource')
 param aiSearchId string
-
+param aiSearchServiceResourceGroupName string
+param aiSearchServiceSubscriptionId string
 @description('Name for capabilityHost.')
 param capabilityHostName string = 'caphost1'
 
 var acsConnectionName = '${aiHubName}-connection-AISearch'
 
 var aoaiConnection  = '${aiHubName}-connection-AIServices_aoai'
+
+
+resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
+  name: aiServicesName
+  scope: resourceGroup(aiServiceAccountSubscriptionId, aiServiceAccountResourceGroupName)
+}
+
+resource searchService 'Microsoft.Search/searchServices@2023-11-01' existing = {
+  name: aiSearchName
+  scope: resourceGroup(aiSearchServiceSubscriptionId, aiSearchServiceResourceGroupName)
+}
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' = {
   name: aiHubName
@@ -71,7 +84,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
-        location: modelLocation
+        location: aiServices.location
       }
     }
   }
@@ -86,7 +99,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiSearchId
-        location: location
+        location: searchService.location
       }
     }
   }
@@ -98,6 +111,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
       capabilityHostKind: 'Agents'
     }
   }
+  
 }
 
 output aiHubID string = aiHub.id
