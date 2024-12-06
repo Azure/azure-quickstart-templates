@@ -60,6 +60,7 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
   kind: 'project'
 
   // Resource definition for the capability host
+  #disable-next-line BCP081
   resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
     name: '${aiProjectName}-${capabilityHostName}'
     properties: {
