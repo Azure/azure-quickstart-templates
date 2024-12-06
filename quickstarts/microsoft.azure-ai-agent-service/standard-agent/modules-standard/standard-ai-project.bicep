@@ -19,7 +19,7 @@ param aiProjectDescription string
 param aiHubId string
 
 @description('Name for capabilityHost.')
-param capabilityHostName string = 'caphost1'
+param capabilityHostName string 
 
 @description('Name for ACS connection.')
 param acsConnectionName string

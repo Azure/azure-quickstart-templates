@@ -1,5 +1,5 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Agent Service with the standard setup, meaning with managed identity authetication, public internet access enabled. Agents use customer-owned, single-tenant search and storage resources. With this setup, you have full control and visibility over these resources, but you will incur costs based on your usage.
+description: This set of templates demonstrates how to set up Azure AI Agent Service with the standard setup, meaning with managed identity authentication of each project connection and public internet access enabled. Agents use customer-owned, single-tenant search and storage resources. With this setup, you have full control and visibility over these resources, but you will incur costs based on your usage.
 page_type: sample
 products:
 - azure
@@ -26,7 +26,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azure-ai-agent-service%2Fstandard-agent%2Fazuredeploy.json)   
 
-Resources for the hub, project, storage account, key vault, AI Services, and Azure AI Search will be created for you. The AI Services, AI Search, and Azure Blob Storage account will be connected to your project/hub and a gpt-4o-mini model will be deployed in the eastus region.
+Resources for the hub, project, storage account, key vault, AI Services, and Azure AI Search will be created for you. The AI Services, AI Search, and Azure Blob Storage account will be connected to your project/hub using managed identity for authentication and a gpt-4o-mini model will be deployed in the eastus region.
 
 ## Resources
 
@@ -40,4 +40,3 @@ Resources for the hub, project, storage account, key vault, AI Services, and Azu
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
 | `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |
 | `Microsoft.Search/searchServices` | An Azure AI Search account  |
-`Tags: `
