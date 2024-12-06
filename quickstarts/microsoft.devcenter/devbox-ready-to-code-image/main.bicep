@@ -69,11 +69,9 @@ var imagesWithDefaults = union(defaultImages, images)
 
 var artifactSourceWithDefaults = union(
   {
-    // TODO: Switch to 'https://github.com/Azure/azure-quickstart-templates' after the changes are merged
-    Url: 'https://github.com/dmgonch/azure-quickstart-templates'
+    Url: 'https://github.com/Azure/azure-quickstart-templates'
     Path: 'quickstarts/microsoft.devcenter/devbox-ready-to-code-image/tools/artifacts'
-    // TODO: Switch to 'master' branch after the changes are merged
-    Branch: 'new-devbox-ready-to-code-image-sample'
+    Branch: 'master'
   },
   artifactSource ?? {}
 )
