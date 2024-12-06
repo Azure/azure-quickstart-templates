@@ -79,12 +79,12 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
 
 var aiServiceParts = split(aiServiceAccountResourceId, '/')
 
-resource existingAIServiceAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (aiServiceExists) {
+resource existingAIServiceAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = if (aiServiceExists) {
   name: aiServiceParts[8]
   scope: resourceGroup(aiServiceParts[2], aiServiceParts[4])
 }
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' = if(!aiServiceExists) {
+resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = if(!aiServiceExists) {
   name: aiServicesName
   location: modelLocation
   sku: {
@@ -102,7 +102,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' = 
     publicNetworkAccess: 'Enabled'
   }
 }
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-06-01-preview'= if(!aiServiceExists){
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01'= if(!aiServiceExists){
   parent: aiServices
   name: modelName
   sku : {
@@ -120,7 +120,7 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
 
 var acsParts = split(aiSearchServiceResourceId, '/')
 
-resource existingSearchService 'Microsoft.Search/searchServices@2023-11-01' existing = if (acsExists) {
+resource existingSearchService 'Microsoft.Search/searchServices@2024-06-01-preview' existing = if (acsExists) {
   name: acsParts[8]
   scope: resourceGroup(acsParts[2], acsParts[4])
 }
@@ -159,7 +159,7 @@ resource existingAIStorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01'
 param noZRSRegions array = ['southindia', 'westus']
 param sku object = contains(noZRSRegions, location) ? { name: 'Standard_GRS' } : { name: 'Standard_ZRS' }
 
-resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = if(!aiStorageExists) {
+resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = if(!aiStorageExists) {
   name: storageNameCleaned
   location: location
   kind: 'StorageV2'
