@@ -23,28 +23,37 @@ param storageAccountId string
 
 @description('Resource ID of the AI Services resource')
 param aiServicesId string
+
 @description('Resource ID of the AI Services endpoint')
 param aiServicesTarget string
+
 @description('Name AI Services resource')
 param aiServicesName string
+
 @description('Resource Group name of the AI Services resource')
 param aiServiceAccountResourceGroupName string
+
 @description('Subscription ID of the AI Services resource')
 param aiServiceAccountSubscriptionId string
 
 @description('Name AI Search resource')
 param aiSearchName string
+
 @description('Resource ID of the AI Search resource')
 param aiSearchId string
+
+@description('Resource Group name of the AI Search resource')
 param aiSearchServiceResourceGroupName string
+
+@description('Subscription ID of the AI Search resource')
 param aiSearchServiceSubscriptionId string
+
 @description('Name for capabilityHost.')
-param capabilityHostName string = 'caphost1'
+param capabilityHostName string 
 
 var acsConnectionName = '${aiHubName}-connection-AISearch'
 
 var aoaiConnection  = '${aiHubName}-connection-AIServices_aoai'
-
 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
   name: aiServicesName

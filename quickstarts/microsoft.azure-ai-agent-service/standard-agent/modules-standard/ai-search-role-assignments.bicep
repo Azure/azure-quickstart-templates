@@ -1,7 +1,12 @@
 // Assigns the necessary roles to the AI project
 
+@description('Name of the AI Search resource')
 param aiSearchName string
+
+@description('Principal ID of the AI project')
 param aiProjectPrincipalId string
+
+@description('Resource ID of the AI project')
 param aiProjectId string
 
 resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' existing = {
