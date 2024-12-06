@@ -102,7 +102,7 @@ var dataDisks = addDedicatedDataDiskForLXD ? [
   }
 ] : []
 
-var imagePlan = empty(ubuntuProToken) ? {
+var imagePlan = empty(ubuntuProToken) && startsWith(ubuntuImageOffer, '0001') ? {
   name: ubuntuImageSKU
   product: ubuntuImageOffer
   publisher: 'canonical'
