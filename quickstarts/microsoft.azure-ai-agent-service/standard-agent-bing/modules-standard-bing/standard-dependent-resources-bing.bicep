@@ -97,7 +97,7 @@ resource bingSearch 'Microsoft.Bing/accounts@2020-06-10' = if (!bingExists) {
   sku: {
     name: 'G1'
   }
-  kind: 'Bing.Grounding'
+  kind: 'Bing.Search.v7'
 }
 
 var aiServiceParts = split(aiServiceAccountResourceId, '/')
