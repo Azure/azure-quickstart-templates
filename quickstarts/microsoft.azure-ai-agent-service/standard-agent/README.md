@@ -1,10 +1,9 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Agent Service with the standard setup, meaning with managed identity authentication of each project connection and public internet access enabled. Agents use customer-owned, single-tenant search and storage resources. With this setup, you have full control and visibility over these resources, but you will incur costs based on your usage.
+description: This set of templates demonstrates how to set up Azure AI Agent Service with the standard setup, meaning with managed identity authentication for project/hub connections and public internet access enabled. Agents use customer-owned, single-tenant search and storage resources. With this setup, you have full control and visibility over these resources, but you will incur costs based on your usage.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-- azure-ai-agent-service
 urlFragment: standard-agent
 languages:
 - bicep
@@ -46,4 +45,4 @@ Optional use an existing AI Services, AI Search, Azure Blob Storage, and/or Bing
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI project (Azure Machine Learning RP workspace of kind 'project') |
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
 | `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |
-| `Microsoft.Search/searchServices` | An Azure AI Search account  |
+| `Microsoft.Search/searchServices` | An Azure AI Search account  |`Tags: `
