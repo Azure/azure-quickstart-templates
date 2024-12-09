@@ -1,177 +1,157 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "provisionedClusterName": {
-          "type": "string",
-          "metadata": {
-              "description": "The name of the AKS Arc Cluster resource."
-          }
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "aksClusterName": {
+      "type": "string"
+    },
+    "aksAdminGroupObjectId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "aksControlPlaneIP": {
+      "type": "string"
+    },
+    "aksControlPlaneNodeCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "maxValue": 5
+    },
+    "aksControlPlaneNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2"
+    },
+    "aksPodCidr": {
+      "type": "string",
+      "defaultValue": "10.244.0.0/16"
+    },
+    "aksKubernetesVersion": {
+      "type": "string",
+      "defaultValue": "v1.26.6"
+    },
+    "aksNodePoolName": {
+      "type": "string"
+    },
+    "aksNodePoolNodeCount": {
+      "type": "int",
+      "defaultValue": 1
+    },
+    "aksNodePoolNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2"
+    },
+    "aksNodePoolOSType": {
+      "type": "string",
+      "defaultValue": "Linux",
+      "allowedValues": ["Linux", "Windows"]
+    },
+    "sshPublicKey": {
+      "type": "string"
+    },
+    "hciLogicalNetworkName": {
+      "type": "string"
+    },
+    "hciCustomLocationName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "customLocationId": "[resourceId('Microsoft.ExtendedLocation/customLocations', parameters('hciCustomLocationName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "aksManagedIdentity",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+
+    {
+      "type": "Microsoft.Kubernetes/connectedClusters",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('aksClusterName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksManagedIdentity')]": {}
+        }
       },
-      "location": {
-          "type": "string",
-          "metadata": {
-              "description": "The location of the AKS Arc Cluster resource."
-          }
+      "kind": "ProvisionedCluster",
+      "properties": {
+        "agentPublicKeyCertificate": "",
+        "aadProfile": {
+          "enableAzureRBAC": false,
+          "adminGroupObjectIDs": ["[parameters('aksAdminGroupObjectId')]"]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials",
+      "apiVersion": "2021-09-30-preview",
+      "name": "aksManagedIdentity/aksFederatedCredential",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksManagedIdentity')]",
+        "[resourceId('Microsoft.Kubernetes/connectedClusters', parameters('aksClusterName'))]"
+      ],
+      "properties": {
+        "issuer": "https://issuer.example.com",
+        "subject": "subject-identifier",
+        "audiences": ["api://AzureADTokenExchange"]
+      }
+    },
+    {
+      "type": "Microsoft.HybridContainerService/provisionedClusterInstances",
+      "apiVersion": "2024-01-01",
+      "scope": "[format('Microsoft.Kubernetes/connectedClusters/{0}', parameters('aksClusterName'))]",
+      "name": "default",
+      "extendedLocation": {
+        "type": "CustomLocation",
+        "name": "[variables('customLocationId')]"
       },
-      "resourceTags": {
-            "type": "object"
+      "properties": {
+        "linuxProfile": {
+          "ssh": {
+            "publicKeys": [
+              {
+                "keyData": "[parameters('sshPublicKey')]"
+              }
+            ]
+          }
         },
-      "sshRSAPublicKey": {
-          "type": "string",
-          "metadata": {
-              "description": "Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH '"
-          }
-      },
-       "enableAHUB": {
-            "type": "string",
-            "metadata": {
-                "description": "Azure Hybrid Benefit for Windows Server licenses. NotApplicable, True, False."
-            }
+        "controlPlane": {
+          "count": "[parameters('aksControlPlaneNodeCount')]",
+          "controlPlaneEndpoint": {
+            "hostIP": "[parameters('aksControlPlaneIP')]"
+          },
+          "vmSize": "[parameters('aksControlPlaneNodeSize')]"
         },
-       "agentName": {
-              "type": "string",
-              "metadata": {
-                  "description": "The name of the node pool."
-              }
-          },
-        "agentVMSize": {
-            "type": "string",
-            "metadata": {
-                  "description": "The VM size for node pools."
-            }
-        },
-        "agentCount": {
-              "type": "int",
-              "minValue": 1,
-              "maxValue": 50,
-              "metadata": {
-                  "description": "The number of nodes for the cluster."
-              }
-          },
-          "agentOsType": {
-              "type": "string",
-              "metadata": {
-                  "description": "The OS Type for the agent pool. Values are Linux and Windows."
-              }
-          },
-         "loadBalancerCount": {
-            "type": "int",
-            "metadata": {
-                "description": "The number of load balancers."
-            }
-        },
-          "kubernetesVersion": {
-              "type": "string",
-              "metadata": {
-                  "description": "The version of Kubernetes."
-              }
-          },
-          "controlPlaneNodeCount": {
-              "type": "int",
-              "minValue": 1,
-              "maxValue": 5,
-              "metadata": {
-                  "description": "The number of control plane nodes for the cluster."
-              }
-          },
-          "controlPlaneIp": {
-            "type": "string",
-              "metadata": {
-                  "description": "Control plane IP address."
-              }
-         },
-          "controlPlaneVMSize": {
-              "type": "string",
-              "metadata": {
-                  "description": "The VM size for control plane."
-              }
-          },
-          "vnetSubnetIds": {
-              "type": "array",
-              "metadata": {
-                  "description": "List of subnet Ids for the AKS cluster."
-              }
-          },
-          "podCidr": {
-            "type": "string",
-            "metadata": {
-                  "description": "The VM size for control plane."
-              }
-          },
-          "networkPolicy": {
-            "type": "string",
-            "metadata": {
-                  "description": "Network policy to use for Kubernetes pods. Only options supported is calico."
-              }
-          },
-          "customLocation": {
-            "type": "string",
-            "metadata": {
-                  "description": "Fully qualified custom location ARM resource Id."
-              }
-          }
-      },
-      "resources": [
-      {
-          "apiVersion": "2024-01-01",
-          "type": "Microsoft.Kubernetes/ConnectedClusters",
-          "kind": "ProvisionedCluster",
-          "location": "[parameters('location')]",
-          "name": "[parameters('provisionedClusterName')]",
-          "tags": "[parameters('resourceTags')]",
-          "identity": {
-              "type": "SystemAssigned"
-          }
-      },
-      {
-          "apiVersion": "2024-01-01",
-          "type": "microsoft.hybridcontainerservice/provisionedclusterinstances",
-          "name": "default",
-          "scope": "[concat('Microsoft.Kubernetes/ConnectedClusters', '/', parameters('provisionedClusterName'))]",
-          "dependsOn": [
-              "[resourceId('Microsoft.Kubernetes/ConnectedClusters', parameters('provisionedClusterName'))]"
-          ],
-          "properties": {
-          "agentPoolProfiles": [
-            {
-              "count": "[parameters('agentCount')]",
-              "name":"[parameters('agentName')]",
-              "osType": "[parameters('agentOsType')]",
-              "vmSize": "[parameters('agentVMSize')]"
-            }
-          ],
-          "cloudProviderProfile": {
-            "infraNetworkProfile": {
-                  "vnetSubnetIds": "[parameters('vnetSubnetIds')]"
-            }
-          },
-          "controlPlane": {
-            "count": "[parameters('controlPlaneNodeCount')]",
-            "controlPlaneEndpoint": {
-                        "hostIP": "[parameters('controlPlaneIp')]"
-                    },
-            "vmSize": "[parameters('controlPlaneVMSize')]"
-          },
-         "licenseProfile": {
-            "azureHybridBenefit": "[parameters('enableAHUB')]"
-         },
-          "kubernetesVersion": "[parameters('kubernetesVersion')]",
-          "linuxProfile": {
-            "ssh": {
-              "publicKeys": [
-                {
-                  "keyData": "[parameters('sshRSAPublicKey')]"
-                }
-              ]
-            }
-          },
+        "kubernetesVersion": "[parameters('aksKubernetesVersion')]",
         "networkProfile": {
           "loadBalancerProfile": {
-            "count": "[parameters('loadBalancerCount')]"
+            "count": 0
           },
-          "networkPolicy": "[parameters('networkPolicy')]",
-          "podCidr": "[parameters('podCidr')]"
+          "networkPolicy": "calico",
+          "podCidr": "[parameters('aksPodCidr')]"
+        },
+        "agentPoolProfiles": [
+          {
+            "name": "[parameters('aksNodePoolName')]",
+            "count": "[parameters('aksNodePoolNodeCount')]",
+            "vmSize": "[parameters('aksNodePoolNodeSize')]",
+            "osType": "[parameters('aksNodePoolOSType')]"
+          }
+        ],
+        "cloudProviderProfile": {
+          "infraNetworkProfile": {
+            "vnetSubnetIds": [
+              "[resourceId('Microsoft.AzureStackHCI/logicalNetworks', parameters('hciLogicalNetworkName'))]"
+            ]
+          }
         },
         "storageProfile": {
           "nfsCsiDriver": {
@@ -180,12 +160,11 @@
           "smbCsiDriver": {
             "enabled": false
           }
-        },
-        "extendedLocation": {
-            "name": "[parameters('customLocation')]",
-            "type": "CustomLocation"
         }
-          }
-      }
-    ]
-  }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kubernetes/connectedClusters', parameters('aksClusterName'))]"
+      ]
+    }
+  ]
+}
