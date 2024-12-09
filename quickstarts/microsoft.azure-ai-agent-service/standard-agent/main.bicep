@@ -1,4 +1,4 @@
-// Execute this main file to depoy Azure AI studio resources in the basic security configuraiton
+// Execute this main file to deploy Standard Agent setup resources
 
 // Parameters
 @minLength(2)
@@ -9,7 +9,7 @@ param aiHubName string = 'hub-demo'
 @description('Friendly name for your Hub resource')
 param aiHubFriendlyName string = 'Agents Hub resource'
 
-@description('Description of your Azure AI resource dispayed in AI studio')
+@description('Description of your Azure AI resource displayed in AI studio')
 param aiHubDescription string = 'This is an example AI resource for use in Azure AI Studio.'
 
 @description('Name for the AI project resources.')
@@ -18,7 +18,7 @@ param aiProjectName string = 'project-demo'
 @description('Friendly name for your Azure AI resource')
 param aiProjectFriendlyName string = 'Agents Project resource'
 
-@description('Description of your Azure AI resource dispayed in AI studio')
+@description('Description of your Azure AI resource displayed in AI studio')
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 
 @description('Azure region used for the deployment of all resources.')
@@ -57,6 +57,14 @@ param modelCapacity int = 50
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
 param modelLocation string = 'eastus'
 
+@description('The AI Service Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created.')
+param aiServiceAccountResourceId string = ''
+
+@description('The Ai Search Service full ARM Resource ID. This is an optional field, and if not provided, the resource will be created.')
+param aiSearchServiceResourceId string = ''
+
+@description('The Ai Storage Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created.')
+param aiStorageAccountResourceId string = ''
 
 // Variables
 var name = toLower('${aiHubName}')
@@ -67,6 +75,16 @@ var projectName = toLower('${aiProjectName}')
 param deploymentTimestamp string = utcNow('yyyyMMddHHmmss')
 var uniqueSuffix = substring(uniqueString('${resourceGroup().id}-${deploymentTimestamp}'), 0, 4)
 
+var aiServiceExists = aiServiceAccountResourceId != ''
+var acsExists = aiSearchServiceResourceId != ''
+
+var aiServiceParts = split(aiServiceAccountResourceId, '/')
+var aiServiceAccountSubscriptionId = aiServiceExists ? aiServiceParts[2] : subscription().subscriptionId 
+var aiServiceAccountResourceGroupName = aiServiceExists ? aiServiceParts[4] : resourceGroup().name
+
+var acsParts = split(aiSearchServiceResourceId, '/')
+var aiSearchServiceSubscriptionId = acsExists ? acsParts[2] : subscription().subscriptionId
+var aiSearchServiceResourceGroupName = acsExists ? acsParts[4] : resourceGroup().name
 
 // Dependent resources for the Azure Machine Learning workspace
 module aiDependencies 'modules-standard/standard-dependent-resources.bicep' = {
@@ -86,6 +104,10 @@ module aiDependencies 'modules-standard/standard-dependent-resources.bicep' = {
      modelSkuName: modelSkuName
      modelCapacity: modelCapacity  
      modelLocation: modelLocation
+
+     aiServiceAccountResourceId: aiServiceAccountResourceId
+     aiSearchServiceResourceId: aiSearchServiceResourceId
+     aiStorageAccountResourceId: aiStorageAccountResourceId
     }
 }
 
@@ -99,13 +121,18 @@ module aiHub 'modules-standard/standard-ai-hub.bicep' = {
     location: location
     tags: tags
     capabilityHostName: '${name}-${uniqueSuffix}-${capabilityHostName}'
-    modelLocation: modelLocation
 
-
-    aiSearchName: '${aiSearchName}-${uniqueSuffix}'
+    aiSearchName: aiDependencies.outputs.aiSearchName
     aiSearchId: aiDependencies.outputs.aisearchID
+    aiSearchServiceResourceGroupName: aiDependencies.outputs.aiSearchServiceResourceGroupName
+    aiSearchServiceSubscriptionId: aiDependencies.outputs.aiSearchServiceSubscriptionId
+
+    aiServicesName: aiDependencies.outputs.aiServicesName
     aiServicesId: aiDependencies.outputs.aiservicesID
     aiServicesTarget: aiDependencies.outputs.aiservicesTarget
+    aiServiceAccountResourceGroupName:aiDependencies.outputs.aiServiceAccountResourceGroupName
+    aiServiceAccountSubscriptionId:aiDependencies.outputs.aiServiceAccountSubscriptionId
+    
     keyVaultId: aiDependencies.outputs.keyvaultId
     storageAccountId: aiDependencies.outputs.storageId
   }
@@ -122,13 +149,32 @@ module aiProject 'modules-standard/standard-ai-project.bicep' = {
     location: location
     tags: tags
     
-    capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
     // dependent resources
-    aiSearchName: '${aiSearchName}-${uniqueSuffix}'
-    aiServicesName: '${aiServicesName}${uniqueSuffix}'
+    capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
+
     aiHubId: aiHub.outputs.aiHubID
     acsConnectionName: aiHub.outputs.acsConnectionName
     aoaiConnectionName: aiHub.outputs.aoaiConnectionName
+  }
+}
+
+module aiServiceRoleAssignments 'modules-standard/ai-service-role-assignments.bicep' = {
+  name: 'ai-service-role-assignments-${projectName}-${uniqueSuffix}-deployment'
+  scope: resourceGroup(aiServiceAccountSubscriptionId, aiServiceAccountResourceGroupName)
+  params: {
+    aiServicesName: aiDependencies.outputs.aiServicesName
+    aiProjectPrincipalId: aiProject.outputs.aiProjectPrincipalId
+    aiProjectId: aiProject.outputs.aiProjectResourceId
+  }
+}
+
+module aiSearchRoleAssignments 'modules-standard/ai-search-role-assignments.bicep' = {
+  name: 'ai-search-role-assignments-${projectName}-${uniqueSuffix}-deployment'
+  scope: resourceGroup(aiSearchServiceSubscriptionId, aiSearchServiceResourceGroupName)
+  params: {
+    aiSearchName: aiDependencies.outputs.aiSearchName
+    aiProjectPrincipalId: aiProject.outputs.aiProjectPrincipalId
+    aiProjectId: aiProject.outputs.aiProjectResourceId
   }
 }
 
