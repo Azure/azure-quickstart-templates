@@ -151,7 +151,6 @@ module aiHub 'modules-standard-bing/standard-ai-hub-bing.bicep' = {
   }
 }
 
-
 module aiProject 'modules-standard-bing/standard-ai-project-bing.bicep' = {
   name: '${projectName}-${uniqueSuffix}-deployment'
   params: {
