@@ -18,6 +18,7 @@
     "aksControlPlaneNodeCount": {
       "type": "int",
       "defaultValue": 1,
+      "minValue": 1,
       "maxValue": 5
     },
     "aksControlPlaneNodeSize": {
@@ -62,20 +63,20 @@
     "customLocationId": "[resourceId('Microsoft.ExtendedLocation/customLocations', parameters('hciCustomLocationName'))]"
   },
   "resources": [
-    // {
-    //   "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-    //   "apiVersion": "2018-11-30",
-    //   "name": "aksManagedIdentity",
-    //   "location": "[parameters('location')]",
-    //   "properties": {}
-    // },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "aksManagedIdentity",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
     {
       "type": "Microsoft.Kubernetes/connectedClusters",
       "apiVersion": "2024-01-01",
       "name": "[parameters('aksClusterName')]",
       "location": "[parameters('location')]",
       "identity": {
-        "type": "systemAssigned"
+        "type": "SystemAssigned"
       },
       "kind": "ProvisionedCluster",
       "properties": {
@@ -83,20 +84,18 @@
         "aadProfile": {
           "enableAzureRBAC": false,
           "adminGroupObjectIDs": ["[parameters('aksAdminGroupObjectId')]"]
+        },
+        "addonProfiles": {
+          "azureKeyvaultSecretsProvider": {
+            "enabled": true,
+            "config": {
+              "usePodIdentity": "true",
+              "userAssignedIdentityID": [
+                "[parameters('aksAdminGroupObjectId')]"
+              ]
+            }
+          }
         }
-      }
-    },
-    {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials",
-      "apiVersion": "2021-09-30-preview",
-      "name": "aksFederatedCredential",
-      "dependsOn": [
-        "[resourceId('Microsoft.Kubernetes/connectedClusters', parameters('aksClusterName'))]"
-      ],
-      "properties": {
-        "issuer": "https://issuer.example.com",
-        "subject": "subject-identifier",
-        "audiences": ["api://AzureADTokenExchange"]
       }
     },
     {
