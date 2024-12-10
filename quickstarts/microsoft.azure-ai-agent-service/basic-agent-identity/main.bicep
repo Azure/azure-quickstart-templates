@@ -80,7 +80,6 @@ module aiDependencies 'modules-basic/basic-dependent-resources.bicep' = {
     aiServiceAccountResourceId: aiServiceAccountResourceId
     storageName: '${storageName}${uniqueSuffix}'
     location: location
-    tags: tags
 
      // Model deployment parameters
      modelName: modelName
