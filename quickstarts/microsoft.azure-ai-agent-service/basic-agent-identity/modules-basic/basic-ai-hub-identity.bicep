@@ -24,9 +24,22 @@ param aiServicesId string
 @description('Resource ID of the AI Services endpoint')
 param aiServicesTarget string
 
-@description('Model/AI Resource deployment location')
-param modelLocation string 
+@description('Name AI Services resource')
+param aiServicesName string
 
+@description('Resource Group name of the AI Services resource')
+param aiServiceAccountResourceGroupName string
+
+@description('Subscription ID of the AI Services resource')
+param aiServiceAccountSubscriptionId string
+
+@description('AI Service Account kind: either OpenAI or AIServices')
+param aiServiceKind string 
+
+resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
+  name: aiServicesName
+  scope: resourceGroup(aiServiceAccountSubscriptionId, aiServiceAccountResourceGroupName)
+}
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' = {
   name: aiHubName
@@ -48,19 +61,17 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
     resource aiServicesConnection 'connections@2024-07-01-preview' = {
     name: '${aiHubName}-connection-AIServices'
     properties: {
-      category: 'AIServices'
+      category: aiServiceKind
       target: aiServicesTarget
       authType: 'AAD'
       isSharedToAll: true
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
-        Location: modelLocation
+        Location: aiServices.location
       }
     }
   }
 
 }
-
-
 output aiHubID string = aiHub.id
