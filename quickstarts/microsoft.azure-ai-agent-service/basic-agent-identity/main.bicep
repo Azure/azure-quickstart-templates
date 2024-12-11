@@ -1,25 +1,25 @@
-// Execute this main file to depoy Azure AI studio resources in the standard agent configuraiton wit Managed Identity
+// Execute this main file to depoy Azure AI studio resources in the basic agent configuraiton wit Managed Identity
 
 // Parameters
 @minLength(2)
 @maxLength(12)
 @description('Name for the AI resource and used to derive name of dependent resources.')
-param aiHubName string = 'standard-hub'
+param aiHubName string = 'basic-hub'
 
 @description('Friendly name for your Azure AI resource')
-param aiHubFriendlyName string = 'Agents standard hub resource'
+param aiHubFriendlyName string = 'Agents basic hub resource'
 
 @description('Description of your Azure AI resource dispayed in AI studio')
-param aiHubDescription string = 'A standard hub resource required for the agent setup.'
+param aiHubDescription string = 'A basic hub resource required for the agent setup.'
 
 @description('Name for the project')
-param aiProjectName string = 'standard-project'
+param aiProjectName string = 'basic-project'
 
 @description('Friendly name for your Azure AI project resource')
-param aiProjectFriendlyName string = 'Agents standard project resource'
+param aiProjectFriendlyName string = 'Agents basic project resource'
 
 @description('Description of your Azure AI project resource dispayed in AI studio')
-param aiProjectDescription string = 'A standard project resource required for the agent setup.'
+param aiProjectDescription string = 'A basic project resource required for the agent setup.'
 
 @description('Azure region used for the deployment of all resources.')
 param location string = resourceGroup().location

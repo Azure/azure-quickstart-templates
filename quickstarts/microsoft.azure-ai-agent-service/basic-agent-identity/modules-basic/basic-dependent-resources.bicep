@@ -74,25 +74,65 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
   }
 }
 
-// Some regions doesn't support Standard Zone-Redundant storage, need to use Geo-redundant storage
-param noZRSRegions array = ['southindia', 'westus']
-param sku object = contains(noZRSRegions, location) ? { name: 'Standard_GRS' } : { name: 'Standard_ZRS' }
+@allowed([
+  'Standard_LRS'
+  'Standard_ZRS'
+  'Standard_GRS'
+  'Standard_GZRS'
+  'Standard_RAGRS'
+  'Standard_RAGZRS'
+  'Premium_LRS'
+  'Premium_ZRS'
+])
+@description('Storage SKU')
+param storageSkuName string = 'Standard_LRS'
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageNameCleaned
   location: location
+  sku: {
+    name: storageSkuName
+  }
   kind: 'StorageV2'
-  sku: sku
   properties: {
-    minimumTlsVersion: 'TLS1_2'
+    accessTier: 'Hot'
     allowBlobPublicAccess: false
-    publicNetworkAccess: 'Enabled'
+    allowCrossTenantReplication: false
+    allowSharedKeyAccess: true
+    encryption: {
+      keySource: 'Microsoft.Storage'
+      requireInfrastructureEncryption: false
+      services: {
+        blob: {
+          enabled: true
+          keyType: 'Account'
+        }
+        file: {
+          enabled: true
+          keyType: 'Account'
+        }
+        queue: {
+          enabled: true
+          keyType: 'Service'
+        }
+        table: {
+          enabled: true
+          keyType: 'Service'
+        }
+      }
+    }
+    isHnsEnabled: false
+    isNfsV3Enabled: false
+    keyPolicy: {
+      keyExpirationPeriodInDays: 7
+    }
+    largeFileSharesState: 'Disabled'
+    minimumTlsVersion: 'TLS1_2'
     networkAcls: {
       bypass: 'AzureServices'
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
+      defaultAction: 'Deny'
     }
-    allowSharedKeyAccess: false
+    supportsHttpsTrafficOnly: true
   }
 }
 
