@@ -28,6 +28,8 @@ languages:
 
 This sample demonstrates building `Ready-To-Code` images containing everything a developer needs (configuration, source, packages, binaries) to minimize the time used for setting up a new Dev Box. The sample relies on Dev Box Image Template to provide flexible approach for building images using Azure Image Builder.
 
+For more details see as well [Dev Box Ready-To-Code Dev Box images template](https://devblogs.microsoft.com/engineering-at-microsoft/dev-box-ready-to-code-dev-box-images-template/) blog post.
+
 ## Deployed Resources
 The sample builds 3 images to demonstrate various configuration options of the Dev Box Image Template. For each image the template creates the following Azure resources:
 - **Azure Image Builder Template**: the image factory used for building an image version.
