@@ -58,7 +58,6 @@ var vnetAddressPrefix = '10.0.0.0/16'
 var subnetName = '${webAppName}-sn'
 var subnetAddressPrefix = '10.0.0.0/24'
 var logAnalyticsName = 'logAnalytics-${webAppName}'
-var appInsightName = 'appInsights-${webAppName}'
 var diagnosticSettingName = 'diagnosticSetting-${webAppName}'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-03-01' = {
@@ -135,9 +134,6 @@ resource webApp 'Microsoft.Web/sites@2024-04-01' = {
       http20Enabled: true
       remoteDebuggingEnabled: false
       antivirusScanEnabled: true
-      detailedErrorLoggingEnabled: true
-      httpLoggingEnabled: true
-      requestTracingEnabled: true
       ipSecurityRestrictions: [
         {
           ipAddress: allowedIps
@@ -179,59 +175,6 @@ resource scmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-
   parent: webApp
   properties: {
     allow: true
-  }
-}
-
-resource appServiceLogging 'Microsoft.Web/sites/config@2024-04-01' = {
-  parent: webApp
-  name: 'appsettings'
-  properties: {
-    APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
-  }
-  dependsOn: [
-    appServiceSiteExtension
-  ]
-}
-
-resource appServiceSiteExtension 'Microsoft.Web/sites/siteextensions@2024-04-01' = {
-  parent: webApp
-  name: 'Microsoft.ApplicationInsights.AzureWebSites'
-  dependsOn: [
-    appInsights
-  ]
-}
-
-resource appServiceAppSettings 'Microsoft.Web/sites/config@2024-04-01' = {
-  parent: webApp
-  name: 'logs'
-  properties: {
-    applicationLogs: {
-      fileSystem: {
-        level: 'Warning'
-      }
-    }
-    httpLogs: {
-      fileSystem: {
-        retentionInMb: 40
-        enabled: true
-      }
-    }
-    failedRequestsTracing: {
-      enabled: true
-    }
-    detailedErrorMessages: {
-      enabled: true
-    }
-  }
-}
-
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: appInsightName
-  location: location
-  kind: 'string'
-  properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: logAnalyticsWorkspace.id
   }
 }
 
@@ -329,9 +272,6 @@ resource webAppSlot 'Microsoft.Web/sites/slots@2024-04-01' = {
       http20Enabled: true
       remoteDebuggingEnabled: false
       antivirusScanEnabled: true
-      detailedErrorLoggingEnabled: true
-      httpLoggingEnabled: true
-      requestTracingEnabled: true
       ipSecurityRestrictions: [
         {
           ipAddress: allowedIps
@@ -372,3 +312,57 @@ resource scmPolicySlot 'Microsoft.Web/sites/slots/basicPublishingCredentialsPoli
     allow: false
   }
 }
+
+// resource appServiceLogging 'Microsoft.Web/sites/config@2024-04-01' = {
+//   parent: webApp
+//   name: 'appsettings'
+//   properties: {
+//     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
+//     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+//   }
+//   dependsOn: [
+//     appServiceSiteExtension
+//   ]
+// }
+
+// resource appServiceSiteExtension 'Microsoft.Web/sites/siteextensions@2024-04-01' = {
+//   parent: webApp
+//   name: 'Microsoft.ApplicationInsights.AzureWebSites'
+//   dependsOn: [
+//     appInsights
+//   ]
+// }
+
+// resource appServiceAppSettings 'Microsoft.Web/sites/config@2024-04-01' = {
+//   parent: webApp
+//   name: 'logs'
+//   properties: {
+//     applicationLogs: {
+//       fileSystem: {
+//         level: 'Warning'
+//       }
+//     }
+//     httpLogs: {
+//       fileSystem: {
+//         retentionInMb: 40
+//         enabled: true
+//       }
+//     }
+//     failedRequestsTracing: {
+//       enabled: true
+//     }
+//     detailedErrorMessages: {
+//       enabled: true
+//     }
+//   }
+// }
+
+// resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+//   name: appInsightName
+//   location: location
+//   kind: 'string'
+//   properties: {
+//     Application_Type: 'web'
+//     WorkspaceResourceId: logAnalyticsWorkspace.id
+//   }
+// }
