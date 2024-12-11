@@ -46,3 +46,4 @@ Optional use an existing AI Services, AI Search, Azure Blob Storage, and/or Bing
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
 | `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |
 | `Microsoft.Search/searchServices` | An Azure AI Search account  |
+`Tags: `
