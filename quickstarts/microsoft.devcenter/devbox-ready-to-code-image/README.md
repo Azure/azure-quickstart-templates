@@ -110,3 +110,4 @@ The most powerful feature of the Dev Box Image Template is the ability to config
 - **EnableGitCommitGraph** (default: `true`): Generates a commit graph for faster git operations on large repos.
 
 `Tags: DevCenter, Dev Box, ARM Template, Microsoft.DevCenter/devcenters, Azure Image Builder, Ready-To-Code`
+
