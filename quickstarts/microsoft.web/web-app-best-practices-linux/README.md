@@ -1,5 +1,5 @@
 ---
-description: This template deploys an App Service plan and web app following best practices and security recommendations as defined by the App Service product group.e
+description: This template deploys an App Service plan and web app following best practices and security recommendations as defined by the App Service product group. 
 page_type: sample
 products:
 - azure
