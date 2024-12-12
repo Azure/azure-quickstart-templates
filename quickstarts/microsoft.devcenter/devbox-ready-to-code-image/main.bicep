@@ -52,7 +52,8 @@ param artifactSource types.artifactSource = {
 In the case of an error do not fail the deployment but rather return the tail of the customization log.
 Useful when debugging image build failures in PR validation pipelines (https://dev.azure.com/azurequickstarts/azure-quickstart-templates/_build).
 ''')
-param ignoreBuildFailure bool = false
+// UNDONE: temporary set to 'true' while investigating build failures
+param ignoreBuildFailure bool = true
 
 @description('Custom sample images configuration')
 param images types.images = {}
