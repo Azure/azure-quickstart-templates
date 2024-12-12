@@ -41,4 +41,4 @@ Optional use an existing AI Services resource by providing the full arm resource
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI hub (Azure Machine Learning RP workspace of kind 'hub') |
 | `Microsoft.MachineLearningServices/workspaces` | An Azure AI project (Azure Machine Learning RP workspace of kind 'project') |
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
-| `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |`Tags: ``Tags: ``Tags: `
+| `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |`Tags: ``Tags: ``Tags: ``Tags: `
