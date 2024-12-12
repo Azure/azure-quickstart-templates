@@ -74,11 +74,10 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
   }
 }
 
-// Some regions doesn't support Standard Zone-Redundant storage, need to use Geo-redundant storage
 param noZRSRegions array = ['southindia', 'westus']
 param sku object = contains(noZRSRegions, location) ? { name: 'Standard_GRS' } : { name: 'Standard_ZRS' }
 
-resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' =  {
   name: storageNameCleaned
   location: location
   kind: 'StorageV2'
