@@ -43,10 +43,10 @@ param modelSkuName string = 'GlobalStandard'
 param modelCapacity int = 50
 
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
-param modelLocation string = 'eastus'
+param modelLocation string = 'eastus2'
 
 @description('The AI Service Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created.')
-param aiServiceAccountResourceId string = ''
+param aiServiceAccountResourceId string = '/subscriptions/921496dc-987f-410f-bd57-426eb2611356/resourceGroups/rg-amanda-basic/providers/Microsoft.CognitiveServices/accounts/agent-ai-servicesctyh'
 
 @description('AI Service Account kind: either OpenAI or AIServices')
 param aiServiceKind string = 'AIServices'
