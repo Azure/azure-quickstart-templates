@@ -55,6 +55,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
 
     // dependent resources
     storageAccount: storageAccountId
+    systemDatastoresAuthMode: 'identity'
   }
   kind: 'hub'
 
