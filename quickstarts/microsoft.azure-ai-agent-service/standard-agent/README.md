@@ -34,7 +34,7 @@ Optional use an existing AI Services/AOAI, AI Search, and/or Azure Blob Storage 
 - aiSearchServiceResourceId
 - aiStorageAccountResourceId
 
-If you want to use an existing Azure OpenAI resource, you will need to update the `aiServiceAccountResourceId` and the `aiServiceKind` parameter in the parameters file. The `aiServiceKind` parameter should be set to `OpenAI`.
+If you want to use an existing Azure OpenAI resource, you will need to update the `aiServiceAccountResourceId` and the `aiServiceKind` parameter in the parameters file. The `aiServiceKind` parameter should be set to `AzureOpenAI`.
 
 ## Resources
 
