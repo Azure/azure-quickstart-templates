@@ -58,7 +58,7 @@ param modelCapacity int = 50
 param modelLocation string = 'eastus'
 
 @description('AI Service Account kind: either AzureOpenAI or AIServices')
-param aiServiceKind string = 'AzureOpenAI'
+param aiServiceKind string = 'AIServices'
 
 @description('The AI Service Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created.')
 param aiServiceAccountResourceId string = ''
