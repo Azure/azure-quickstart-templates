@@ -30,7 +30,9 @@ param createDevDrive bool = true
 param osDriveMinSizeGB int = 160
 
 @description('Custom VS SKU to use when allocating the VM for image creation')
-param imageBuildProfile object = {}
+param imageBuildProfile object = {
+  sku: 'Standard_D16_v4'
+}
 
 @description('Specifies whether the image is a base image, i.e. that is not meant to be used directly by users but as a base for other images. Base images cannot be used with Dev Box service at the moment.')
 param isBaseImage bool = false
