@@ -51,6 +51,9 @@ param aiSearchServiceSubscriptionId string
 @description('Name for capabilityHost.')
 param capabilityHostName string 
 
+@description('AI Service Account kind: either OpenAI or AIServices')
+param aiServiceKind string 
+
 var acsConnectionName = '${aiHubName}-connection-AISearch'
 
 var aoaiConnection  = '${aiHubName}-connection-AIServices_aoai'
@@ -87,7 +90,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   resource aiServicesConnection 'connections@2024-07-01-preview' = {
     name: '${aiHubName}-connection-AIServices'
     properties: {
-      category: 'AIServices'
+      category: aiServiceKind
       target: aiServicesTarget
       authType: 'AAD'
       isSharedToAll: true
