@@ -58,6 +58,10 @@ var acsConnectionName = '${aiHubName}-connection-AISearch'
 
 var aoaiConnection  = '${aiHubName}-connection-AIServices_aoai'
 
+var kindAIServicesExists = aiServiceKind == 'AIServices'
+
+var aiServiceConnectionName = kindAIServicesExists ? '${aiHubName}-connection-AIServices' : aoaiConnection
+
 resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: aiServicesName
   scope: resourceGroup(aiServiceAccountSubscriptionId, aiServiceAccountResourceGroupName)
@@ -88,9 +92,9 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   kind: 'hub'
 
   resource aiServicesConnection 'connections@2024-07-01-preview' = {
-    name: '${aiHubName}-connection-AIServices'
+    name: aiServiceConnectionName
     properties: {
-      category: aiServiceKind
+      category: aiServiceKind // either AIServices or AzureOpenAI
       target: aiServicesTarget
       authType: 'AAD'
       isSharedToAll: true
