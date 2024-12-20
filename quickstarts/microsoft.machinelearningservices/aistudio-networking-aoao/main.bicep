@@ -203,7 +203,7 @@ param acrNetworkRuleSet object = {
   defaultAction: 'Deny'
 }
 
-@description('Specifies ehether to allow trusted Azure services to access a network restricted registry.')
+@description('Specifies whether to allow trusted Azure services to access a network restricted registry.')
 @allowed([
   'AzureServices'
   'None'
