@@ -112,7 +112,7 @@ $Configuration.UpgradeSCCM.Status = 'Running'
 $Configuration.UpgradeSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
-Start-Sleep -econds 120
+Start-Sleep -Seconds 120
 $logpath = $ProvisionToolPath+"\UpgradeCMlog.txt"
 $SiteCode =  Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\SMS\Identification' -Name 'Site Code'
 
@@ -170,6 +170,33 @@ while($DMPState -ne "Running")
 }
 
 "Current SMS_DMP_DOWNLOADER state is : $DMPState " | Out-File -Append $logpath
+
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Trying to enable CAS EnableSCCMManagedCert." | Out-File -Append $logpath
+
+#Configure CAS EnableSCCMManagedCert
+$WmiObjectNameSpace = "root\SMS\site_$($SiteCode)"
+#Get component
+$wmiObject = Get-WmiObject -Namespace $WmiObjectNameSpace -class SMS_SCI_Component -Filter "ComponentName='SMS_SITE_COMPONENT_MANAGER'"| where-object {$_.SiteCode -eq $SiteCode}
+
+#Get embeded property
+$props = $wmiObject.Props
+$index = 0
+foreach($oProp in $props)
+{
+    if($oProp.PropertyName -eq 'IISSSLState')
+    {
+        $v = $oProp.Value
+        "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] IISSSLState previous value is $v." | Out-File -Append $logpath
+        $oProp.Value = '1216'
+        $props[$index] = $oProp
+    }
+    $index++
+}
+
+$WmiObject.Props = $props
+$wmiObject.Put()
+
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Set the IISSSLState 1216, you could check it manually" | Out-File -Append $logpath
 
 #get the available update
 function getupdate()
