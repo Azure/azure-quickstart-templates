@@ -30,6 +30,13 @@
       "type": "int",
       "defaultValue": 30
     },
+    "enableBackupSecretsToAzure": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Set this value as false, if you you do not want to backup secrets to cloud"
+      }
+    },
     "diagnosticStorageAccountName": {
       "type": "string",
       "metadata": {
@@ -495,7 +502,15 @@
     "arbDeploymentSpnSecretName": "[concat( parameters('clusterName'), '-', 'DefaultARBApplication')]",
     "storageWitnessNameVar": "WitnessStorageKey",
     "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
+	"backupsecretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
+    "secretsLocationPayload": [
+      {
+        "secretsType": "BackupSecrets",
+        "secretsLocation": "[variables('backupsecretsLocationVar')]"
+      }
+    ],
+	"BackupSecretsLocationList": "[if(parameters('enableBackupSecretsToAzure'), variables('secretsLocationPayload'), json('[]'))]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
     "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', 'core.windows.net')]",
     "localAdminSecretValue": "[base64(concat(parameters('localAdminUserName'),':',parameters('localAdminPassword')))]",
@@ -712,6 +727,23 @@
       }
     },
     {
+      "condition": "[parameters('enableBackupSecretsToAzure')]",
+      "copy": {
+        "name": "roleAssignmentCopy",
+        "count": "[length(parameters('arcNodeResourceIds'))]"
+      },
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(concat('AKV-', parameters('arcNodeResourceIds')[copyIndex()]))]",
+      "properties": {
+        "mode": "Incremental",
+        "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7')]",
+        "principalId": "[reference(parameters('arcNodeResourceIds')[copyIndex()], '2023-10-03-preview', 'full').identity.principalId]",
+        "scope": "[resourceGroup().id]",
+        "description": "[concat(substring(parameters('arcNodeResourceIds')[copyIndex()],lastIndexOf(parameters('arcNodeResourceIds')[copyIndex()],'/')),'- Key Vault Secrets Officer role')]"
+      }
+    },
+    {
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
       "apiVersion": "2024-09-01-preview",
@@ -723,7 +755,11 @@
         "type": "SystemAssigned"
       },
       "location": "[parameters('location')]",
-      "properties": {}
+	  "kind": "WindowsServer",
+      "properties": {
+        "secretsLocations": "[variables('BackupSecretsLocationList')]"
+		
+      }
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
@@ -821,6 +857,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.AzureStackHCI/clusters', parameters('clusterName'))]"
       ],
+      "kind": "WindowsServer",
       "properties": {
         "arcNodeResourceIds": "[parameters('arcNodeResourceIds')]",
         "deploymentMode": "[parameters('deploymentMode')]",
