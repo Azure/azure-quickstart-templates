@@ -65,7 +65,7 @@ The sample includes the following demo images (named after the key git repositor
 
 In addition, all demo images automatically inherit the default functionality like the following from the Dev Box Image Template:
 - Base image from [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/microsoftvisualstudio.visualstudioplustools) with the latest Visual Studio 2022, Microsoft 365 Apps and many other useful developer tools.
-- Chained (AKA based) images support is available.
+- Chained (AKA base) images support is available.
 - For better build performance [Dev Drive](https://devblogs.microsoft.com/engineering-at-microsoft/dev-drive-is-now-available/) is configured as drive Q: with all cloned repositories and their artifacts.
 - Dev Box Image Template makes sure that tools like Visual Studio 2022. Visual Studio Code, SysInternals Suite, Git, Azure Artifacts Credential Provider, WinGet are installed and configured regardless of the base image selected.
 - Smart defaults are applied for better developer scenarios performance.
