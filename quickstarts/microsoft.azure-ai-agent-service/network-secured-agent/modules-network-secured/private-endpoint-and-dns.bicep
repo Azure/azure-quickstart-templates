@@ -106,6 +106,21 @@ resource aiServicesLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2
   }
 }
 
+resource aiServicesDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01' = {
+  parent: aiServicesPrivateEndpoint
+  name: '${aiServicesName}-dns-group'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: '${aiServicesName}-dns-config'
+        properties: {
+          privateDnsZoneId: aiServicesPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 resource aiSearchPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.search.windows.net'
   location: 'global'
@@ -123,6 +138,21 @@ resource aiSearchLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@202
   }
 }
 
+resource aiSearchDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01' = {
+  parent: aiSearchPrivateEndpoint
+  name: '${aiSearchName}-dns-group'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: '${aiSearchName}-dns-config'
+        properties: {
+          privateDnsZoneId: aiSearchPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 resource storagePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.blob.core.windows.net'
   location: 'global'
@@ -137,5 +167,21 @@ resource storageLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024
       id: vnet.id
     }
     registrationEnabled: false
+  }
+}
+
+
+resource storageDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01' = {
+  parent: storagePrivateEndpoint
+  name: '${storageName}-dns-group'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: '${storageName}-dns-config'
+        properties: {
+          privateDnsZoneId: storagePrivateDnsZone.id
+        }
+      }
+    ]
   }
 }
