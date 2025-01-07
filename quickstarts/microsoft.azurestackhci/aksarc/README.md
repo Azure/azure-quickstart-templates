@@ -1,5 +1,5 @@
 ---
-description: This template creates a Kubernetes cluster on Azure Local version 23H2+
+description: This template creates a Kubernetes cluster on Azure Stack HCI version 23H2+
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Create a Kubernetes cluster on Azure Local
+# Create a Kubernetes cluster on Azure Stack HCI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/aksarc/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurestackhci/aksarc/PublicDeployment.svg)
