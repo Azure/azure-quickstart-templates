@@ -9,6 +9,7 @@ var userAssignedIdentityOverride = ''
 /* ---------------------------------- Deployment Identifiers ---------------------------------- */
 
 param deploymentName string = 'network-secured-agent'
+
 // Create a short, unique suffix, that will be unique to each resource group
 param deploymentTimestamp string = utcNow('yyyyMMddHHmmss')
 param uniqueSuffix string = substring(uniqueString('${resourceGroup().id}-${deploymentTimestamp}'), 0, 4)
@@ -67,14 +68,10 @@ param modelVersion string = '2024-07-18'
 param modelSkuName string = 'GlobalStandard'
 
 @description('Model deployment capacity')
-param modelCapacity int = 1
+param modelCapacity int = 50
 
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
 param modelLocation string = 'westus2'
-
-// Variables
-//var name = toLower('${aiHubName}')
-//var projectName = toLower('${aiProjectName}')
 
 
 /* ---------------------------------- Create User Assigned Identity ---------------------------------- */
@@ -95,29 +92,10 @@ module identity 'modules-network-secured/network-secured-identity.bicep' = {
 
 /* ---------------------------------- Create AI Assistant Dependent Resources ---------------------------------- */
 
-//var storageName = (storageOverride == '') ? '${defaultStorageName}${uniqueSuffix}' : storageOverride
-//var keyVaultName = (keyVaultOverride == '') ? 'kv-${defaultAiHubName}-${uniqueSuffix}' : keyVaultOverride
+var storageName = (storageOverride == '') ? '${defaultStorageName}${uniqueSuffix}' : storageOverride
+var keyVaultName = (keyVaultOverride == '') ? 'kv-${defaultAiHubName}-${uniqueSuffix}' : keyVaultOverride
 var aiServiceName = (aiServicesOverride == '') ? '${defaultAiServicesName}${uniqueSuffix}' : aiServicesOverride
 var aiSearchName = (aiSearchOverride == '') ? '${defaultAiSearchName}${uniqueSuffix}' : aiSearchOverride
-
-//resource existingStorage 'Microsoft.Storage/storageAccounts@2022-05-01' existing = if(storageOverride != '') {
-//  name: storageName
-//  scope: resourceGroup()
-//}
-//
-//resource existingKeyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = if(keyVaultOverride != '') {
-//  name: keyVaultName
-//  scope: resourceGroup()
-//}
-resource existingAiServices 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' existing = if(aiServicesOverride != '') {
-  name: aiServiceName
-  scope: resourceGroup()
-}
-
-resource existingAiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' existing = if(aiSearchOverride != '') {
-  name: aiSearchName
-  scope: resourceGroup()
-}
 
 var storageNameClean = '${defaultStorageName}${uniqueSuffix}'
 // Dependent resources for the Azure Machine Learning workspace
@@ -125,8 +103,8 @@ module aiDependencies 'modules-network-secured/network-secured-dependent-resourc
   name: '${deploymentName}-${uniqueSuffix}--dependencies'
   params: {
     suffix: uniqueSuffix
-    storageName: storageNameClean
-    keyvaultName: 'kv-${defaultAiHubName}-${uniqueSuffix}'
+    storageName: storageName
+    keyvaultName: keyVaultName
     aiServicesName: aiServiceName
     aiSearchName: aiSearchName
     tags: tags
