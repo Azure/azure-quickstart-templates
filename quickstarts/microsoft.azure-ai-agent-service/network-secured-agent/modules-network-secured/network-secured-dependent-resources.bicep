@@ -133,6 +133,7 @@ resource existingKeyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = if(k
   name: keyvaultName
   scope: resourceGroup()
 }
+
 resource existingAiServices 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' existing = if(aiServicesExists) {
   name: aiServicesName
   scope: resourceGroup()
@@ -354,4 +355,4 @@ output agentSubnetName string = agentsSubnetName
 output cxSubnetId string = cxSubnetRef
 output agentSubnetId string = agentSubnetRef
 
-output keyvaultId string = defaultKeyVault.id
+output keyvaultId string = keyvaultExists ? existingKeyVault.id : defaultKeyVault.id

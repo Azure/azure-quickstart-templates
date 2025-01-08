@@ -154,7 +154,7 @@ resource aiSearchDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGrou
 }
 
 resource storagePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'privatelink.blob.core.windows.net'
+  name: 'privatelink.blob.${environment().suffixes.storage}'
   location: 'global'
 }
 
