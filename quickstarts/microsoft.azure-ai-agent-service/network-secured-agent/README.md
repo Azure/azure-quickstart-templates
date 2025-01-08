@@ -1,15 +1,15 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Agent Service with virtual network isolation using User Managed Identity authetication for the AI Service/AOAI connection and private network links to connect the agent to your secure data. 
+description: This set of templates demonstrates how to set up Azure AI Agent Service with virtual network isolation using User Managed Identity authetication for the AI Service/AOAI connection and private network links to connect the agent to your secure data.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: network-secured-agents
+urlFragment: network-secured-agent
 languages:
 - bicep
 - json
 ---
-# Network Secured Agent Setup
+# Network Secured Agent with User Managed Identity
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/network-secured-agent/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/network-secured-agent/PublicDeployment.svg)
@@ -25,3 +25,4 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azure-ai-agent-service%2Fnetwork-secured-agent%2Fazuredeploy.json)
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azure-ai-agent-service%2Fnetwork-secured-agent%2Fazuredeploy.json)   
+`Tags: `
