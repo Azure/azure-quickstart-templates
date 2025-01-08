@@ -5,7 +5,6 @@ var aiServicesOverride = ''
 var aiSearchOverride = ''
 var userAssignedIdentityOverride = ''
 
-
 /* ---------------------------------- Deployment Identifiers ---------------------------------- */
 
 param name string = 'network-secured-agent'
