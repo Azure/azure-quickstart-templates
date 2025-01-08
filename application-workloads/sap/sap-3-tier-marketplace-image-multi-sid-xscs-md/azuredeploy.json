@@ -1,0 +1,508 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourcePrefix": {
+      "type": "string",
+      "defaultValue": "MULTI",
+      "maxLength": 6,
+      "minLength": 3,
+      "metadata": {
+        "description": "The prefix that should be used to create the resource names."
+      }
+    },
+    "stackType": {
+      "type": "string",
+      "allowedValues": [
+        "ABAP",
+        "JAVA",
+        "ABAP+JAVA"
+      ],
+      "defaultValue": "ABAP",
+      "metadata": {
+        "description": "The stack type of the SAP system."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [
+        "Windows Server 2012 Datacenter",
+        "Windows Server 2012 R2 Datacenter",
+        "Windows Server 2016 Datacenter",
+        "SLES 12",
+        "SLES 12 BYOS",
+        "RHEL 7",
+        "Oracle Linux 7"
+      ],
+      "defaultValue": "Windows Server 2016 Datacenter",
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "sapSystemCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 10,
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of SAP systems of this multi SID setup."
+      }
+    },
+    "systemAvailability": {
+      "type": "string",
+      "allowedValues": [
+        "HA",
+        "Not HA"
+      ],
+      "defaultValue": "Not HA",
+      "metadata": {
+        "description": "Determines whether this is a high available deployment or not. A HA deployment contains multiple instances of single point of failures."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password or ssh key for the Virtual Machine."
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The id of the subnet you want to use."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "images": {
+      "Windows Server 2012 Datacenter": {
+        "sku": "2012-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
+        "OSType": "Windows",
+        "UsePlan": false
+      },
+      "Windows Server 2012 R2 Datacenter": {
+        "sku": "2012-R2-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
+        "OSType": "Windows",
+        "UsePlan": false
+      },
+      "Windows Server 2016 Datacenter": {
+        "sku": "2016-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
+        "OSType": "Windows",
+        "UsePlan": false
+      },
+      "SLES 12": {
+        "sku": "12-SP3",
+        "offer": "SLES-SAP",
+        "publisher": "SUSE",
+        "version": "latest",
+        "OSType": "Linux",
+        "UsePlan": false
+      },
+      "SLES 12 BYOS": {
+        "sku": "12-SP3",
+        "offer": "SLES-SAP-BYOS",
+        "publisher": "SUSE",
+        "version": "latest",
+        "OSType": "Linux",
+        "UsePlan": false
+      },
+      "RHEL 7": {
+        "sku": "7.4",
+        "offer": "RHEL",
+        "publisher": "RedHat",
+        "version": "latest",
+        "OSType": "Linux",
+        "UsePlan": false
+      },
+      "Oracle Linux 7": {
+        "sku": "7.3",
+        "offer": "Oracle-Linux",
+        "publisher": "Oracle",
+        "version": "latest",
+        "OSType": "Linux",
+        "UsePlan": false
+      }
+    },
+    "internalOSType": "[variables('images')[parameters('osType')].OSType]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "systemCountSizes": {
+      "1": {
+        "Size": "Small"
+      },
+      "2": {
+        "Size": "Small"
+      },
+      "3": {
+        "Size": "Small"
+      },
+      "4": {
+        "Size": "Medium"
+      },
+      "5": {
+        "Size": "Medium"
+      },
+      "6": {
+        "Size": "Medium"
+      },
+      "7": {
+        "Size": "Medium"
+      },
+      "8": {
+        "Size": "Large"
+      },
+      "9": {
+        "Size": "Large"
+      },
+      "10": {
+        "Size": "Large"
+      }
+    },
+    "vmSizes": {
+      "Small": {
+        "Not HA": {
+          "xscsserversize": "Standard_D2s_v3",
+          "xscsservercount": 1
+        },
+        "HA": {
+          "xscsserversize": "Standard_D2s_v3",
+          "xscsservercount": 2
+        }
+      },
+      "Medium": {
+        "Not HA": {
+          "xscsserversize": "Standard_D4s_v3",
+          "xscsservercount": 1
+        },
+        "HA": {
+          "xscsserversize": "Standard_D4s_v3",
+          "xscsservercount": 2
+        }
+      },
+      "Large": {
+        "Not HA": {
+          "xscsserversize": "Standard_D8s_v3",
+          "xscsservercount": 1
+        },
+        "HA": {
+          "xscsserversize": "Standard_D8s_v3",
+          "xscsservercount": 2
+        }
+      }
+    },
+    "xscsvmSize": "[variables('vmSizes')[ variables('systemCountSizes')[string(parameters('sapSystemCount'))].Size ] [parameters('systemAvailability')].xscsserversize]",
+    "xscsvmCount": "[variables('vmSizes')[ variables('systemCountSizes')[string(parameters('sapSystemCount'))].Size ] [parameters('systemAvailability')].xscsservercount]",
+    "sidlower": "[toLower(parameters('resourcePrefix'))]",
+    "vmName": "[variables('sidlower')]",
+    "vnetName": "[concat(variables('sidlower'), '-vnet')]",
+    "subnetName": "Subnet",
+    "subnets": {
+      "true": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
+      "false": "[parameters('subnetId')]"
+    },
+    "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
+    "nestedDeploymentNameLBXSCS": "[concat(deployment().name, '-lbxscs')]",
+    "publicIpNameXSCS": "[concat(variables('sidlower'), '-pip-xscs')]",
+    "avSetNameXSCS": "[concat(variables('sidlower'), '-avset-xscs')]",
+    "nsgNameXSCS": "[concat(variables('sidlower'), '-nsg')]",
+    "osSecurityRules": {
+      "Windows": [
+        {
+          "name": "RDP",
+          "properties": {
+            "description": "Allow RDP Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "3389",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 100,
+            "direction": "Inbound"
+          }
+        }
+      ],
+      "Linux": [
+        {
+          "name": "SSH",
+          "properties": {
+            "description": "Allow SSH Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "22",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 100,
+            "direction": "Inbound"
+          }
+        }
+      ]
+    },
+    "selectedSecurityRules": "[variables('osSecurityRules')[variables('internalOSType')]]",
+    "loadBalancerNameXSCS": "[concat(variables('sidlower'), '-lb-xscs')]",
+    "vmNameXSCS": "[concat(variables('vmName'), '-xscs')]",
+    "nicNameXSCS": "[concat(variables('sidlower'), '-nic-xscs')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(variables('nsgNameXSCS'))]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "properties": {
+        "securityRules": "[variables('selectedSecurityRules')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2018-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgNameXSCS'))]"
+      ],
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgNameXSCS'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameXSCS')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 20
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIpNameXSCS'), '-', copyIndex())]",
+      "apiVersion": "2018-04-01",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "pipLoop",
+        "count": "[variables('xscsvmCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('nestedDeploymentNameLBXSCS')]",
+      "type": "Microsoft.Resources/deployments",
+      "condition": "[greater(variables('xscsvmCount'), 1)]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/loadbalancer.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerNameXSCS')]"
+          },
+          "sapSystemCount": {
+            "value": "[parameters('sapSystemCount')]"
+          },
+          "stackType": {
+            "value": "[parameters('stackType')]"
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          },
+          "subnetId": {
+            "value": "[variables('selectedSubnetId')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicNameXSCS'), '-', copyIndex())]",
+      "apiVersion": "2017-06-01",
+      "copy": {
+        "name": "nicXSCSLoop",
+        "count": "[variables('xscsvmCount')]"
+      },
+      "dependsOn": [
+        "pipLoop",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBXSCS'))]"
+      ],
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[if(equals(length(parameters('subnetId')), 0), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpNameXSCS'), '-', copyIndex())) ,'\"}')), json('null'))]",
+              "subnet": {
+                "id": "[variables('selectedSubnetId')]"
+              },
+              "loadBalancerBackendAddressPools": "[if(greater(variables('xscsvmCount'), 1), reference(variables('nestedDeploymentNameLBXSCS'), '2021-01-01').outputs.nicBackAddressPools.value, json('null'))]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmNameXSCS'), '-', copyIndex())]",
+      "copy": {
+        "name": "xscsVMLoop",
+        "count": "[variables('xscsvmCount')]"
+      },
+      "dependsOn": [
+        "nicXSCSLoop",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetNameXSCS'))]"
+      ],
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameXSCS'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('xscsvmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmNameXSCS'), '-', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('images')[parameters('osType')].publisher]",
+            "offer": "[variables('images')[parameters('osType')].offer]",
+            "sku": "[variables('images')[parameters('osType')].sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmNameXSCS'), '-', copyIndex(), '-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('sapSystemCount')]",
+              "input": {
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty",
+                "diskSizeGB": 128
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicNameXSCS'), '-', copyIndex()))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+

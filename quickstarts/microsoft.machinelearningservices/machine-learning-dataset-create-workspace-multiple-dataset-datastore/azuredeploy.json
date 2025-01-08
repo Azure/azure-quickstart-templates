@@ -1,0 +1,215 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": {
+				"description": "Specifies name of workspace to create in Azure Machine Learning workspace."
+			}
+		},
+		"location": {
+			"type": "string",
+			"allowedValues": [
+				"australiaeast",
+				"brazilsouth",
+				"canadacentral",
+				"centralus",
+				"eastasia",
+				"eastus",
+				"eastus2",
+				"francecentral",
+				"japaneast",
+				"koreacentral",
+				"northcentralus",
+				"northeurope",
+				"southeastasia",
+				"southcentralus",
+				"uksouth",
+				"westcentralus",
+				"westus",
+				"westus2",
+				"westeurope"
+			],
+			"metadata": {
+				"description": "Specifies the location for all resources."
+			}
+		},
+		"datastoreCount": {
+			"type": "int",
+			"defaultValue": 2,
+			"metadata": {
+				"description": "Specifies the number of datastores to be created."
+			}
+		},
+		"datasetCount": {
+			"type": "int",
+			"defaultValue": 2,
+			"metadata": {
+				"description": "Specifies the number of datasets to be created."
+			}
+		},
+		"storageAccountName": {
+			"type": "string",
+			"defaultValue": "[concat('sa',uniqueString(resourceGroup().id))]",
+			"metadata": {
+				"description": "The name for the storage account to created and associated with the workspace."
+			}
+		},
+		"containerName": {
+			"type": "string",
+			"defaultValue": "[concat('container',uniqueString(resourceGroup().id))]",
+			"metadata": {
+				"description": "The container name."
+			}
+		},
+		"keyVaultName": {
+			"type": "string",
+			"defaultValue": "[concat('kv',uniqueString(resourceGroup().id))]",
+			"metadata": {
+				"description": "The name for the key vault to created and associated with the workspace."
+			}
+		},
+		"tenantId": {
+			"type": "string",
+			"defaultValue": "[subscription().tenantId]",
+			"metadata": {
+				"description": "Specifies the tenant ID of the subscription. Get using Get-AzureRmSubscription cmdlet or Get Subscription API."
+			}
+		},
+		"applicationInsightsName": {
+			"type": "string",
+			"defaultValue": "[concat('ai',uniqueString(resourceGroup().id))]",
+			"metadata": {
+				"description": "The name for the application insights to created and associated with the workspace."
+			}
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Storage/storageAccounts",
+			"apiVersion": "2021-01-01",
+			"name": "[parameters('storageAccountName')]",
+			"location": "[parameters('location')]",
+			"sku": {
+				"name": "Standard_LRS"
+			},
+			"kind": "StorageV2",
+			"properties": {
+				"encryption": {
+					"services": {
+						"blob": {
+							"enabled": true
+						},
+						"file": {
+							"enabled": true
+						}
+					},
+					"keySource": "Microsoft.Storage"
+				},
+				"supportsHttpsTrafficOnly": true
+			},
+			"resources": [
+				{
+					"type": "blobServices/containers",
+					"apiVersion": "2019-06-01",
+					"name": "[concat('default/', parameters('containerName'))]",
+					"dependsOn": [
+						"[parameters('storageAccountName')]"
+					]
+				}
+			]
+		},
+		{
+			"type": "Microsoft.KeyVault/vaults",
+			"apiVersion": "2019-09-01",
+			"name": "[parameters('keyVaultName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"tenantId": "[parameters('tenantId')]",
+				"sku": {
+					"name": "standard",
+					"family": "A"
+				},
+				"accessPolicies": []
+			}
+		},
+		{
+			"type": "Microsoft.Insights/components",
+			"apiVersion": "2018-05-01-preview",
+			"name": "[parameters('applicationInsightsName')]",
+			"location": "[if(equals(parameters('location'),'westcentralus'),'southcentralus', parameters('location'))]",
+			"kind": "web",
+			"properties": {
+				"Application_Type": "web"
+			}
+		},
+		{
+			"type": "Microsoft.MachineLearningServices/workspaces",
+			"apiVersion": "2020-03-01",
+			"name": "[parameters('workspaceName')]",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+				"[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+			],
+			"identity": {
+				"type": "systemAssigned"
+			},
+			"properties": {
+				"friendlyName": "[parameters('workspaceName')]",
+				"storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+				"keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+				"applicationInsights": "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+			}
+		},
+		{
+			"type": "Microsoft.MachineLearningServices/workspaces/datastores",
+			"name": "[concat(parameters('workspaceName'), '/', 'datastore', copyIndex())]",
+			"apiVersion": "2020-05-01-preview",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+			],
+			"copy": {
+				"name": "datastoreCopy",
+				"count": "[int(parameters('datastoreCount'))]"
+			},
+			"properties": {
+				"DataStoreType": "blob",
+				"AccountName": "[parameters('storageAccountName')]",
+				"ContainerName": "[parameters('containerName')]",
+				"AccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value]"
+			}
+		},
+		{
+			"type": "Microsoft.MachineLearningServices/workspaces/datasets",
+			"name": "[concat(parameters('workspaceName'), '/', 'dataset', copyIndex())]",
+			"apiVersion": "2020-05-01-preview",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]"
+			],
+			"copy": {
+				"name": "datasetCopy",
+				"count": "[int(parameters('datasetCount'))]"
+			},
+			"properties": {
+				"DatasetType": "file",
+				"Parameters": {
+					"Path": {
+						"DataPath": {
+							"RelativePath": "/",
+							"DatastoreName": "workspaceblobstore"
+						}
+					}
+				},
+				"Registration": {
+					"Description": "Multiple datasets"
+				}
+			}
+		}
+	]
+}

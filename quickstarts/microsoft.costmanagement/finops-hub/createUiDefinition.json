@@ -1,0 +1,667 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "basics": {
+        "description": "FinOps hubs are a reliable, trustworthy platform for cost analytics, insights, and optimization. Connect your hub to one or more billing accounts and subscriptions and build custom reports in Power BI or other tools. [Learn more](https://aka.ms/finops/hubs)",
+        "location": {
+          "label": "Location",
+          "resourceTypes": [
+            "Microsoft.DataFactory/factories",
+            "Microsoft.KeyVault/vaults",
+            "Microsoft.Kusto/clusters",
+            "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "Microsoft.Network/privateDnsZones",
+            "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "Microsoft.Network/privateEndpoints",
+            "Microsoft.Resources/deploymentScripts",
+            "Microsoft.Storage/storageAccounts"
+          ]
+        }
+      }
+    },
+    "resourceTypes": [
+      "Microsoft.DataFactory/factories",
+      "Microsoft.KeyVault/vaults",
+      "Microsoft.Kusto/clusters",
+      "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "Microsoft.Network/privateDnsZones",
+      "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "Microsoft.Network/privateEndpoints",
+      "Microsoft.Resources/deploymentScripts",
+      "Microsoft.Storage/storageAccounts"
+    ],
+    "basics": [
+      {
+        "name": "hubName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Hub name",
+        "defaultValue": "finops-hub",
+        "toolTip": "Name of the FinOps hub instance. Used to ensure unique resource names.",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9]$",
+          "validationMessage": "Name must be between 3 and 63 characters long and can contain only lowercase letters, numbers, and hyphens. The first and last characters in the name must be alphanumeric."
+        },
+        "visible": true
+      },
+      {
+        "name": "dataExplorer",
+        "type": "Microsoft.Common.Section",
+        "label": "Azure Data Explorer (optional)",
+        "elements": [
+          {
+            "name": "dataExplorerIntro",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "Azure Data Explorer is a fast, scalable service for advanced, big data analytics. Data Explorer is optional but recommended when monitoring more than $1 million in spend. FinOps hubs with Data Explorer starts at $120 for a single node cluster plus $10 per million in monitored spend (<0.02% of annual spend)."
+            }
+          },
+          {
+            "name": "dataExplorerName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Cluster name",
+            "toolTip": "Name of the Azure Data Explorer cluster, if desired. If not specified, Data Explorer will not be deployed.",
+            "constraints": {
+              "required": false,
+              "regex": "^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,20}[a-z0-9]$",
+              "validationMessage": "Name must be between 4 and 22 characters long and can contain only lowercase letters, numbers, and hyphens. The first and last characters in the name must be alphanumeric."
+            },
+            "visible": true
+          }
+        ],
+        "visible": true
+      }
+    ],
+    "steps": [
+      {
+        "name": "pricing",
+        "label": "Pricing",
+        "elements": [
+          {
+            "name": "pricingIntro",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "Estimated costs below are based on list prices for the default settings. Refer to the Azure pricing calculator for the most accurate pricing based on your discounts. Learn more @ https://aka.ms/finops/hubs/calculator"
+            }
+          },
+          {
+            "name": "storage",
+            "type": "Microsoft.Common.Section",
+            "label": "Data Factory + storage",
+            "elements": [
+              {
+                "name": "storagePricingIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "FinOps hubs utilize Azure Data Factory for data processing and Azure Data Lake Storage Gen2 for staging during data ingestion."
+                }
+              },
+              {
+                "name": "storageEstimate",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Estimated cost: Starts at ~$5/mo per million in monitored spend*."
+                }
+              },
+              {
+                "name": "storageSku",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Storage redundancy",
+                "defaultValue": "Locally-redundant (LRS) - Lowest cost",
+                "toolTip": "The data in your storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your durability requirements. [Learn more](https://go.microsoft.com/fwlink/?linkid=2163103)",
+                "constraints": {
+                  "required": false,
+                  "allowedValues": [
+                    {
+                      "label": "Locally-redundant (LRS) - Lowest cost",
+                      "value": "Premium_LRS"
+                    },
+                    {
+                      "label": "Zone-redundant (ZRS) - High availability",
+                      "value": "Premium_ZRS"
+                    }
+                  ]
+                },
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "dataExplorer",
+            "type": "Microsoft.Common.Section",
+            "label": "Data Explorer (optional)",
+            "elements": [
+              {
+                "name": "dataExplorerPricingIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Azure Data Explorer is optional. If a cluster name is not specified on the Basics tab, this setting is ignored."
+                }
+              },
+              {
+                "name": "dataExplorerEstimate",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Added cost: Starts at $120/mo plus another ~$5/mo per million in monitored spend* (<0.02% of annual spend)."
+                }
+              },
+              {
+                "name": "dataExplorerSku",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Data Explorer SKU",
+                "defaultValue": "Dev/test: D11_v2 (no SLA) - Extra small, 78GB cache (~$121/mo)",
+                "toolTip": "Select an Azure Data Explorer SKU based on your needs. Consider how many accounts and datasets that are required for your needs. We recommend starting small and scaling up based on performance. [Learn more](https://learn.microsoft.com/azure/data-explorer/manage-cluster-choose-sku)",
+                "constraints": {
+                  "required": false,
+                  "allowedValues": [
+                    {
+                      "label": "Dev/test: E2a_v4 (no SLA) - Extra small, 24GB cache (~$110/mo)",
+                      "value": "Dev(No SLA)_Standard_E2a_v4"
+                    },
+                    {
+                      "label": "Dev/test: D11_v2 (no SLA) - Extra small, 78GB cache (~$121/mo)",
+                      "value": "Dev(No SLA)_Standard_D11_v2"
+                    },
+                    {
+                      "label": "D11_v2 - Extra small, 78GB cache (~$245/mo)",
+                      "value": "Standard_D11_v2"
+                    },
+                    {
+                      "label": "D12_v2 - Small, 162GB cache",
+                      "value": "Standard_D12_v2"
+                    },
+                    {
+                      "label": "D13_v2 - Medium, 335GB cache",
+                      "value": "Standard_D13_v2"
+                    },
+                    {
+                      "label": "D14_v2 - Large, 680GB cache",
+                      "value": "Standard_D14_v2"
+                    },
+                    {
+                      "label": "D16d_v5 - Large, 485GB cache",
+                      "value": "Standard_D16d_v5"
+                    },
+                    {
+                      "label": "D32d_v4 - Extra large, 976GB cache",
+                      "value": "Standard_D32d_v4"
+                    },
+                    {
+                      "label": "D32d_v5 - Extra large, 976GB cache",
+                      "value": "Standard_D32d_v5"
+                    },
+                    {
+                      "label": "DS13_v2+1TB_PS - Medium",
+                      "value": "Standard_DS13_v2+1TB_PS"
+                    },
+                    {
+                      "label": "DS13_v2+2TB_PS - Medium",
+                      "value": "Standard_DS13_v2+2TB_PS"
+                    },
+                    {
+                      "label": "DS14_v2+3TB_PS - Large",
+                      "value": "Standard_DS14_v2+3TB_PS"
+                    },
+                    {
+                      "label": "DS14_v2+4TB_PS - Large",
+                      "value": "Standard_DS14_v2+4TB_PS"
+                    },
+                    {
+                      "label": "E2a_v4 - Extra small, 30GB cache (~$220/mo)",
+                      "value": "Standard_E2a_v4"
+                    },
+                    {
+                      "label": "E2ads_v5 - Extra small",
+                      "value": "Standard_E2ads_v5"
+                    },
+                    {
+                      "label": "E2d_v4 - Extra small",
+                      "value": "Standard_E2d_v4"
+                    },
+                    {
+                      "label": "E2d_v5 - Extra small",
+                      "value": "Standard_E2d_v5"
+                    },
+                    {
+                      "label": "E4a_v4 - Small",
+                      "value": "Standard_E4a_v4"
+                    },
+                    {
+                      "label": "E4ads_v5 - Small",
+                      "value": "Standard_E4ads_v5"
+                    },
+                    {
+                      "label": "E4d_v4 - Small",
+                      "value": "Standard_E4d_v4"
+                    },
+                    {
+                      "label": "E4d_v5 - Small",
+                      "value": "Standard_E4d_v5"
+                    },
+                    {
+                      "label": "E8a_v4 - Medium",
+                      "value": "Standard_E8a_v4"
+                    },
+                    {
+                      "label": "E8ads_v5 - Medium",
+                      "value": "Standard_E8ads_v5"
+                    },
+                    {
+                      "label": "E8as_v4+1TB_PS - Medium",
+                      "value": "Standard_E8as_v4+1TB_PS"
+                    },
+                    {
+                      "label": "E8as_v4+2TB_PS - Medium",
+                      "value": "Standard_E8as_v4+2TB_PS"
+                    },
+                    {
+                      "label": "E8as_v5+1TB_PS - Medium",
+                      "value": "Standard_E8as_v5+1TB_PS"
+                    },
+                    {
+                      "label": "E8as_v5+2TB_PS - Medium",
+                      "value": "Standard_E8as_v5+2TB_PS"
+                    },
+                    {
+                      "label": "E8d_v4 - Medium",
+                      "value": "Standard_E8d_v4"
+                    },
+                    {
+                      "label": "E8d_v5 - Medium",
+                      "value": "Standard_E8d_v5"
+                    },
+                    {
+                      "label": "E8s_v4+1TB_PS - Medium",
+                      "value": "Standard_E8s_v4+1TB_PS"
+                    },
+                    {
+                      "label": "E8s_v4+2TB_PS - Medium",
+                      "value": "Standard_E8s_v4+2TB_PS"
+                    },
+                    {
+                      "label": "E8s_v5+1TB_PS - Medium",
+                      "value": "Standard_E8s_v5+1TB_PS"
+                    },
+                    {
+                      "label": "E8s_v5+2TB_PS - Medium",
+                      "value": "Standard_E8s_v5+2TB_PS"
+                    },
+                    {
+                      "label": "E16a_v4 - Large",
+                      "value": "Standard_E16a_v4"
+                    },
+                    {
+                      "label": "E16ads_v5 - Large",
+                      "value": "Standard_E16ads_v5"
+                    },
+                    {
+                      "label": "E16as_v4+3TB_PS - Large",
+                      "value": "Standard_E16as_v4+3TB_PS"
+                    },
+                    {
+                      "label": "E16as_v4+4TB_PS - Large",
+                      "value": "Standard_E16as_v4+4TB_PS"
+                    },
+                    {
+                      "label": "E16as_v5+3TB_PS - Large",
+                      "value": "Standard_E16as_v5+3TB_PS"
+                    },
+                    {
+                      "label": "E16as_v5+4TB_PS - Large",
+                      "value": "Standard_E16as_v5+4TB_PS"
+                    },
+                    {
+                      "label": "E16d_v4 - Large",
+                      "value": "Standard_E16d_v4"
+                    },
+                    {
+                      "label": "E16d_v5 - Large",
+                      "value": "Standard_E16d_v5"
+                    },
+                    {
+                      "label": "E16s_v4+3TB_PS - Large",
+                      "value": "Standard_E16s_v4+3TB_PS"
+                    },
+                    {
+                      "label": "E16s_v4+4TB_PS - Large",
+                      "value": "Standard_E16s_v4+4TB_PS"
+                    },
+                    {
+                      "label": "E16s_v5+3TB_PS - Large",
+                      "value": "Standard_E16s_v5+3TB_PS"
+                    },
+                    {
+                      "label": "E16s_v5+4TB_PS - Large",
+                      "value": "Standard_E16s_v5+4TB_PS"
+                    },
+                    {
+                      "label": "E64i_v3 - Extra large",
+                      "value": "Standard_E64i_v3"
+                    },
+                    {
+                      "label": "E80ids_v4 - Extra large",
+                      "value": "Standard_E80ids_v4"
+                    },
+                    {
+                      "label": "EC8ads_v5 - Medium",
+                      "value": "Standard_EC8ads_v5"
+                    },
+                    {
+                      "label": "EC8as_v5+1TB_PS - Medium",
+                      "value": "Standard_EC8as_v5+1TB_PS"
+                    },
+                    {
+                      "label": "EC8as_v5+2TB_PS - Medium",
+                      "value": "Standard_EC8as_v5+2TB_PS"
+                    },
+                    {
+                      "label": "EC16ads_v5 - Large",
+                      "value": "Standard_EC16ads_v5"
+                    },
+                    {
+                      "label": "EC16as_v5+3TB_PS - Large",
+                      "value": "Standard_EC16as_v5+3TB_PS"
+                    },
+                    {
+                      "label": "EC16as_v5+4TB_PS - Large",
+                      "value": "Standard_EC16as_v5+4TB_PS"
+                    },
+                    {
+                      "label": "L4s - Small",
+                      "value": "Standard_L4s"
+                    },
+                    {
+                      "label": "L8as_v3 - Medium",
+                      "value": "Standard_L8as_v3"
+                    },
+                    {
+                      "label": "L8s - Medium",
+                      "value": "Standard_L8s"
+                    },
+                    {
+                      "label": "L8s_v2 - Medium",
+                      "value": "Standard_L8s_v2"
+                    },
+                    {
+                      "label": "L8s_v3 - Medium",
+                      "value": "Standard_L8s_v3"
+                    },
+                    {
+                      "label": "L16as_v3 - Large",
+                      "value": "Standard_L16as_v3"
+                    },
+                    {
+                      "label": "L16s - Large",
+                      "value": "Standard_L16s"
+                    },
+                    {
+                      "label": "L16s_v2 - Large",
+                      "value": "Standard_L16s_v2"
+                    },
+                    {
+                      "label": "L16s_v3 - Large",
+                      "value": "Standard_L16s_v3"
+                    },
+                    {
+                      "label": "L32as_v3 - Extra large",
+                      "value": "Standard_L32as_v3"
+                    },
+                    {
+                      "label": "L32s_v3 - Extra large",
+                      "value": "Standard_L32s_v3"
+                    }
+                  ]
+                },
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "spacer",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": ""
+            }
+          },
+          {
+            "name": "monitoredSpendNote",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "* Monitored spend refers to how much cost data is stored based on desired retention. For instance, $1 million per month in spend for 13 months is $13 million in monitored spend. The basic deployment with Data Explorer would be $250/mo - $120/mo for a single node cluster plus $10 times 13 for Data Factory and storage costs."
+            }
+          }
+        ]
+      },
+      {
+        "name": "retention",
+        "label": "Data retention",
+        "elements": [
+          {
+            "name": "retentionIntro",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "Data retention settings indicate how long to keep data available for reporting or additional processing. Retained data contributes to monitored spend and the total storage costs for the hub instance."
+            }
+          },
+          {
+            "name": "storage",
+            "type": "Microsoft.Common.Section",
+            "label": "Storage",
+            "visible": false,
+            "elements": [
+              {
+                "name": "storageIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Storage retention is not implemented yet. You can set the retention period but files will not be automatically removed."
+                }
+              },
+              {
+                "name": "msexportsDays",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Export retention (days)",
+                "defaultValue": "0",
+                "toolTip": "Indicates how many days Cost Management exports are kept in the msexports container. If 0, exported data will be deleted after ingestion. Manifest files are always retained for troubleshooting. If set to any higher value, exported data will be retained indefinitely. This retention setting has not been implemented yet.",
+                "constraints": {
+                  "required": false,
+                  "regex": "^[0-9]{1,4}$",
+                  "validationMessage": "Number of days must be between 0 and 9999."
+                },
+                "visible": true
+              },
+              {
+                "name": "ingestionMonths",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Ingestion retention (months)",
+                "defaultValue": "13",
+                "toolTip": "Indicates how many months exported data is kept in the ingestion container. This retention setting has not been implemented yet.",
+                "constraints": {
+                  "required": false,
+                  "regex": "^[0-9]{1,2}$",
+                  "validationMessage": "Number of months must be between 0 and 99."
+                },
+                "visible": true
+              }
+            ]
+          },
+          {
+            "name": "dataExplorer",
+            "type": "Microsoft.Common.Section",
+            "label": "Data Explorer (optional)",
+            "visible": true,
+            "elements": [
+              {
+                "name": "dataExplorerIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Azure Data Explorer is optional. If a cluster name is not specified on the Basics tab, this setting is ignored."
+                }
+              },
+              {
+                "name": "rawDays",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Raw data retention (days)",
+                "defaultValue": "0",
+                "toolTip": "Indicates how many days ingested data should be retained in 'raw' tables. If 0, ingested data is deleted immediately after ingested into 'final' (normalized) tables.",
+                "constraints": {
+                  "required": false,
+                  "regex": "^[0-9]{1,4}$",
+                  "validationMessage": "Number of days must be between 0 and 9999."
+                },
+                "visible": true
+              },
+              {
+                "name": "finalMonths",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Normalized data retention (months)",
+                "defaultValue": "13",
+                "toolTip": "Indicates how many closed (complete) months data should be retained in 'final' (normalized) tables. If 0, ingested data is deleted on the first of the next month. This retention setting is only enforced when new data is ingested. If data ingestion stops, historical data will be retained indefinitely.",
+                "constraints": {
+                  "required": false,
+                  "regex": "^[0-9]{1,2}$",
+                  "validationMessage": "Number of months must be between 0 and 99."
+                },
+                "visible": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "advanced",
+        "label": "Advanced",
+        "elements": [
+          {
+            "name": "storage",
+            "type": "Microsoft.Common.Section",
+            "label": "Infrastructure encryption",
+            "elements": [
+              {
+                "name": "infraEncryptionIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Infrastructure encryption can be enabled for the entire storage account. To enable infrastructure encryption for this storage account, you must check this box at the time that you deploy this template. <a href='https://learn.microsoft.com/en-us/azure/storage/common/infrastructure-encryption-enable?tabs=portal'>Learn more</a>. To learn about pricing for encryption scopes, see <a href= 'https://azure.microsoft.com/en-us/pricing/details/storage/blobs/'>Blob Storage pricing</a>."
+                }
+              },
+              {
+                "name": "enableInfrastructureEncryption",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Enable Infrastructure Encryption",
+                "toolTip": "Infrastructure encryption is recommended for scenarios where doubly encrypting data is necessary for compliance requirements. For most other scenarios, Azure Storage encryption provides a sufficiently powerful encryption algorithm, and there is unlikely to be a benefit to using infrastructure encryption unless for compliance requirements."
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "networking",
+            "type": "Microsoft.Common.Section",
+            "label": "Networking",
+            "elements": [
+              {
+                "name": "infraEncryptionIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "For enhanced security, consider blocking external access to your FinOps hub instance to enable secure, private connectivity to your cloud resources by eliminating exposure to the public internet. Private endpoints can incur significant additional cost. Please understand the cost impact before selecting this option."
+                }
+              },
+              {
+                "name": "enablePublicAccess",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Access",
+                "toolTip": "Indicate whether FinOps hubs resources should be accessible by the internet or not. If set to private, all resources will be hidden behind a virtual network private endpoint. This will incur additional costs for data crossing virtual network boundaries and for virtual network peering, if configured.",
+                "defaultValue": "Public",
+                "multiLine": true,
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "Public",
+                      "description": "Allow external access to storage and Data Explorer.",
+                      "value": true
+                    },
+                    {
+                      "label": "Private",
+                      "description": "Block all external access. This will incur additional charges.",
+                      "value": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "virtualNetworkAddressPrefix",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Address prefix",
+                "toolTip": "Address space for the workload. A /26 is required for the workload.",
+                "defaultValue": "10.20.30.0/26",
+                "constraints": {
+                  "validations": [
+                    {
+                      "regex": "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/26$",
+                      "message": "Address prefix must be a valid IPv4 address in the format 'XXX.XXX.XXX.XXX/26'. The '/26' is required."
+                    }
+                  ]
+                }
+              }
+            ],
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "tags",
+        "label": "Tags",
+        "elements": [
+          {
+            "name": "tagsByResource",
+            "label": "Tags",
+            "toolTip": "Tags to apply to resources.",
+            "type": "Microsoft.Common.TagsByResource",
+            "resources": [
+              "Microsoft.DataFactory/factories",
+              "Microsoft.KeyVault/vaults",
+              "Microsoft.Kusto/clusters",
+              "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "Microsoft.Network/privateDnsZones",
+              "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "Microsoft.Network/privateEndpoints",
+              "Microsoft.Resources/deploymentScripts",
+              "Microsoft.Storage/storageAccounts"
+            ]
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "hubName": "[basics('hubName')]",
+      "location": "[location()]",
+      "storageSku": "[steps('pricing').storage.storageSku]",
+      "dataExplorerName": "[basics('dataExplorer').dataExplorerName]",
+      "enableInfrastructureEncryption": "[steps('advanced').storage.enableInfrastructureEncryption]",
+      "enablePublicAccess": "[steps('advanced').networking.enablePublicAccess]",
+      "virtualNetworkAddressPrefix": "[steps('advanced').networking.virtualNetworkAddressPrefix]",
+      "dataExplorerSku": "[steps('pricing').dataExplorer.dataExplorerSku]",
+      "exportRetentionInDays": "[steps('retention').storage.msexportsDays]",
+      "ingestionRetentionInMonths": "[steps('retention').storage.ingestionMonths]",
+      "dataExplorerRawRetentionInDays": "[steps('retention').dataExplorer.rawDays]",
+      "dataExplorerFinalRetentionInMonths": "[steps('retention').dataExplorer.finalMonths]",
+      "tagsByResource": "[steps('tags').tagsByResource]"
+    }
+  }
+}

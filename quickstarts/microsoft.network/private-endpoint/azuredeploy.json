@@ -1,0 +1,130 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.29.47.4906",
+      "templateHash": "3365105581093127240"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "privateLinkResourceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Link resource name from same tenant or cross-tenant."
+      }
+    },
+    "targetSubResource": {
+      "type": "array",
+      "metadata": {
+        "description": "Private Link sub resource name for Private Endpoint."
+      }
+    },
+    "requestMessage": {
+      "type": "string",
+      "metadata": {
+        "description": "Request message for the Private Link approval."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Endpoint VNet Name."
+      }
+    },
+    "virtualNetworkAddressSpace": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Endpoint VNet Address Space."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Endpoint Subnet Name."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Endpoint Subnet Address Prefix."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}-mifal', parameters('privateLinkResourceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "accessPolicies": [],
+        "tenantId": "[tenant().tenantId]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressSpace')]"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetAddressPrefix')]",
+        "privateEndpointNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}-pe', format('{0}-mifal', parameters('privateLinkResourceName')))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+        },
+        "customNetworkInterfaceName": "[format('{0}-nic', split(resourceId('Microsoft.KeyVault/vaults', format('{0}-mifal', parameters('privateLinkResourceName'))), '/')[8])]",
+        "manualPrivateLinkServiceConnections": [
+          {
+            "name": "[format('{0}-pe', format('{0}-mifal', parameters('privateLinkResourceName')))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', format('{0}-mifal', parameters('privateLinkResourceName')))]",
+              "groupIds": "[parameters('targetSubResource')]",
+              "requestMessage": "[parameters('requestMessage')]"
+            }
+          }
+        ]
+      },
+      "tags": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', format('{0}-mifal', parameters('privateLinkResourceName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+      ]
+    }
+  ]
+}

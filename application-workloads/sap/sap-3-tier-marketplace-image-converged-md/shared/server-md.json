@@ -1,0 +1,214 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageReference": {
+      "type": "object",
+      "metadata": {
+        "description": "imageReference object that should be used to create the virtual machine"
+      }
+    },
+    "osDisk": {
+      "type": "object",
+      "metadata": {
+        "description": "osDisk object that should be used to create the virtual machine"
+      }
+    },
+    "osDiskType": {
+      "type": "string",
+      "allowedValues": [
+        "image",
+        "userImage",
+        "osdisk"
+      ],
+      "metadata": {
+        "description": "The type of OS disk."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix of the virtual machine name."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "csExtensionScript": {
+      "type": "string",
+      "metadata": {
+        "description": "Script that should be passed to the CustomScriptExtension."
+      }
+    },
+    "csExtensionscriptCall": {
+      "type": "string",
+      "metadata": {
+        "description": "Script call that should be passed to the CustomScriptExtension."
+      }
+    },
+    "csExtensionscriptArgs": {
+      "type": "string",
+      "metadata": {
+        "description": "Script call that should be passed to the CustomScriptExtension."
+      }
+    },
+    "avSetObj": {
+      "type": "object",
+      "metadata": {
+        "description": "Availability set."
+      }
+    },
+    "useAVSet": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Availability set."
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the network interface."
+      }
+    },
+    "dataDisksObj": {
+      "type": "object",
+      "metadata": {
+        "description": "Information about the data disks that the VM should have."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "metadata": {
+        "description": "URL to github templates."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "availableAVSetObj": {
+      "true": "[parameters('avSetObj')]"
+    },
+    "internalAVSetObj": "[variables('availableAVSetObj')[toLower(string(parameters('useAVSet')))]]",
+    "csExtension": {
+      "Windows": {
+        "Publisher": "Microsoft.Compute",
+        "Name": "CustomScriptExtension",
+        "Version": "1.7"
+      },
+      "Linux": {
+        "Publisher": "Microsoft.Azure.Extensions",
+        "Name": "CustomScript",
+        "Version": "2.0"
+      }
+    },
+    "cseExtPublisher": "[variables('csExtension')[parameters('osType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[parameters('osType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[parameters('osType')].Version]",
+    "networkProfile": {
+      "networkInterfaces": [
+        {
+          "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+        }
+      ]
+    },
+    "availableProperties": {
+      "image": {
+        "availabilitySet": "[variables('internalAVSetObj')]",
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('imageReference')]",
+          "osDisk": "[parameters('osDisk')]",
+          "dataDisks": "[parameters('dataDisksObj').dataDisks]"
+        },
+        "networkProfile": "[variables('networkProfile')]"
+      },
+      "userImage": {
+        "availabilitySet": "[variables('internalAVSetObj')]",
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('imageReference')]",
+          "osDisk": "[parameters('osDisk')]",
+          "dataDisks": "[parameters('dataDisksObj').dataDisks]"
+        },
+        "networkProfile": "[variables('networkProfile')]"
+      },
+      "osdisk": {
+        "availabilitySet": "[variables('internalAVSetObj')]",
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "osDisk": "[parameters('osDisk')]",
+          "dataDisks": "[parameters('dataDisksObj').dataDisks]"
+        },
+        "networkProfile": "[variables('networkProfile')]"
+      }
+    },
+    "internalProperties": "[variables('availableProperties')[parameters('osDiskType')]]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "properties": "[variables('internalProperties')]"
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), '/', variables('cseExtName'))]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "[variables('cseExtPublisher')]",
+        "type": "[variables('cseExtName')]",
+        "typeHandlerVersion": "[variables('cseExtVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[parameters('csExtensionScript')]"
+          ],
+          "commandToExecute": "[concat(parameters('csExtensionscriptCall'), ' ', parameters('csExtensionscriptArgs'))]"
+        }
+      }
+    }
+  ]
+}

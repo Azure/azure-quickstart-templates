@@ -1,0 +1,177 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlServerName": {
+      "type": "string"
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "contosodb"
+    },
+    "location": {
+      "type": "string"
+    },
+    "edition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Web",
+        "Business",
+        "Basic",
+        "Standard",
+        "Premium",
+        "Free",
+        "Stretch",
+        "DataWarehouse",
+        "System",
+        "System2"
+      ]
+    },
+    "tags": {
+      "type": "object"
+    },
+    "omsWorkspaceResourceId": {
+      "type": "string"
+    },
+    "administratorLogin": {
+      "type": "string"
+    },
+    "administratorLoginPassword": {
+      "type": "securestring"
+    },
+    "bacpacuri": {
+      "type": "string"
+    },
+    "logsRetentionInDays": {
+      "type": "int",
+      "defaultValue": 0,
+      "minValue": 0,
+      "maxValue": 365,
+      "metadata": {
+        "description": "Specifies the number of days that logs are gonna be kept. If you do not want to apply any retention policy and retain data forever, set value to 0."
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('sqlServerName'),'/',parameters('databaseName'))]",
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2020-02-02-preview",
+      "tags": "[parameters('tags')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "createMode": "Default",
+        "edition": "[parameters('edition')]"
+      },
+      "resources": [
+        {
+          "name": "Import",
+          "type": "extensions",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/databases',parameters('sqlServerName'),parameters('databaseName'))]"
+          ],
+          "properties": {
+            "storageKey": "?",
+            "storageKeyType": "SharedAccessKey",
+            "storageUri": "[parameters('bacpacuri')]",
+            "administratorLogin": "[parameters('administratorLogin')]",
+            "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+            "operationMode": "Import"
+          }
+        },
+        {
+          "type": "providers/diagnosticSettings",
+          "name": "Microsoft.Insights/service",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/databases',parameters('sqlServerName'),parameters('databaseName'))]"
+          ],
+          "apiVersion": "2017-05-01-preview",
+          "properties": {
+            "workspaceId": "[parameters('omsWorkspaceResourceId')]",
+            "logs": [
+              {
+                "category": "QueryStoreRuntimeStatistics",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('logsRetentionInDays')]",
+                  "enabled": true
+                }
+              },
+              {
+                "category": "QueryStoreWaitStatistics",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('logsRetentionInDays')]",
+                  "enabled": true
+                }
+              },
+              {
+                "category": "Errors",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('logsRetentionInDays')]",
+                  "enabled": true
+                }
+              },
+              {
+                "category": "DatabaseWaitStatistics",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('logsRetentionInDays')]",
+                  "enabled": true
+                }
+              },
+              {
+                "category": "Timeouts",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('logsRetentionInDays')]",
+                  "enabled": true
+                }
+              },
+              {
+                "category": "Blocks",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('logsRetentionInDays')]",
+                  "enabled": true
+                }
+              },
+              {
+                "category": "SQLInsights",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('logsRetentionInDays')]",
+                  "enabled": true
+                }
+              }
+            ],
+            "metrics": [
+              {
+                "timeGrain": "AllMetrics",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": true,
+                  "days": "[parameters('logsRetentionInDays')]"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "databaseName": {
+      "type": "string",
+      "value": "[parameters('databaseName')]"
+    },
+    "dbConnetcionString":{
+      "type": "string",
+      "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlServerName')),'2020-02-02-preview').fullyQualifiedDomainName,',1433;Initial Catalog=', parameters('databaseName'))]"
+    }
+
+  }
+}

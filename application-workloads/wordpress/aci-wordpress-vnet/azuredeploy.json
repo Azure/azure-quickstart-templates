@@ -1,0 +1,480 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "aci-vnet",
+      "metadata": {
+        "description": "VNet name"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Address prefix"
+      }
+    },
+    "subnet1AddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix for ACI"
+      }
+    },
+    "subnet1Name": {
+      "type": "string",
+      "defaultValue": "aci-subnet",
+      "metadata": {
+        "description": "Subnet name for ACI"
+      }
+    },
+    "subnet2AddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "Subnet prefix for application gateway"
+      }
+    },
+    "subnet2Name": {
+      "type": "string",
+      "defaultValue": "ag-subnet",
+      "metadata": {
+        "description": "Subnet name for application gateway"
+      }
+    },
+    "mysqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "MySQL database password"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[uniquestring(resourceGroup().id)]",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "publicIp1",
+    "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+    "networkProfileName": "aci-networkProfile",
+    "interfaceConfigName": "eth0",
+    "interfaceIpConfig": "ipconfigprofile1",
+    "image": "mcr.microsoft.com/azure-cli",
+    "shareContainerGroupName": "createshare-containerinstance",
+    "wordpressContainerGroupName": "wordpress-containerinstance",
+    "mysqlContainerGroupName": "mysql-containerinstance",
+    "wordpressShareName": "wordpress-share",
+    "mysqlShareName": "mysql-share",
+    "cpuCores": "1.0",
+    "memoryInGb": "1.5",
+    "skuName": "Standard_Medium",
+    "capacity": "2",
+    "applicationGatewayName": "applicationGateway1",
+    "subnet2Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet2Name'))]",
+    "wordpressContainerGroupRef": "[resourceId('Microsoft.ContainerInstance/containerGroups/', variables('wordpresscontainerGroupName'))]",
+    "mysqlContainerGroupRef": "[resourceId('Microsoft.ContainerInstance/containerGroups/', variables('mysqlContainerGroupName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2021-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('acisite', uniqueString(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnet1AddressPrefix')]",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                }
+              ],
+              "delegations": [
+                {
+                  "name": "DelegationService",
+                  "properties": {
+                    "serviceName": "Microsoft.ContainerInstance/containerGroups"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "[parameters('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnet2AddressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('networkProfileName')]",
+      "type": "Microsoft.Network/networkProfiles",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ],
+      "properties": {
+        "containerNetworkInterfaceConfigurations": [
+          {
+            "name": "[variables('interfaceConfigName')]",
+            "properties": {
+              "ipConfigurations": [
+                {
+                  "name": "[variables('interfaceIpConfig')]",
+                  "properties": {
+                    "subnet": {
+                      "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet1Name'))]"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('shareContainerGroupName')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "containers": [
+          {
+            "name": "[variables('wordpressShareName')]",
+            "properties": {
+              "image": "[variables('image')]",
+              "command": [
+                "az",
+                "storage",
+                "share",
+                "create",
+                "--name",
+                "[variables('wordpressShareName')]"
+              ],
+              "environmentVariables": [
+                {
+                  "name": "AZURE_STORAGE_KEY",
+                  "value": "[listKeys(variables('storageAccountName'),'2021-06-01').keys[0].value]"
+                },
+                {
+                  "name": "AZURE_STORAGE_ACCOUNT",
+                  "value": "[variables('storageAccountName')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[variables('cpuCores')]",
+                  "memoryInGb": "[variables('memoryInGb')]"
+                }
+              }
+            }
+          },
+          {
+            "name": "[variables('mysqlShareName')]",
+            "properties": {
+              "image": "[variables('image')]",
+              "command": [
+                "az",
+                "storage",
+                "share",
+                "create",
+                "--name",
+                "[variables('mysqlShareName')]"
+              ],
+              "environmentVariables": [
+                {
+                  "name": "AZURE_STORAGE_KEY",
+                  "value": "[listKeys(variables('storageAccountName'),'2021-06-01').keys[0].value]"
+                },
+                {
+                  "name": "AZURE_STORAGE_ACCOUNT",
+                  "value": "[variables('storageAccountName')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[variables('cpuCores')]",
+                  "memoryInGb": "[variables('memoryInGb')]"
+                }
+              }
+            }
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "osType": "Linux"
+      }
+    },
+    {
+      "name": "[variables('mysqlContainerGroupName')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerInstance/containerGroups/', variables('shareContainerGroupName'))]",
+        "[resourceId('Microsoft.Network/networkProfiles/', variables('networkProfileName'))]"
+      ],
+      "properties": {
+        "containers": [
+          {
+            "name": "mysql",
+            "properties": {
+              "image": "mysql:5.6",
+              "ports": [
+                {
+                  "protocol": "Tcp",
+                  "port": 3306
+                }
+              ],
+              "environmentVariables": [
+                {
+                  "name": "MYSQL_ROOT_PASSWORD",
+                  "value": "[parameters('mysqlPassword')]"
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "mountPath": "/var/lib/mysql",
+                  "name": "mysqlfile"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[variables('cpuCores')]",
+                  "memoryInGb": "[variables('memoryInGb')]"
+                }
+              }
+            }
+          }
+        ],
+        "volumes": [
+          {
+            "azureFile": {
+              "shareName": "[variables('mysqlShareName')]",
+              "storageAccountKey": "[listKeys(variables('storageAccountName'),'2021-06-01').keys[0].value]",
+              "storageAccountName": "[variables('storageAccountName')]"
+            },
+            "name": "mysqlfile"
+          }
+        ],
+        "networkProfile": {
+          "Id": "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]"
+        },
+        "osType": "Linux"
+      }
+    },
+    {
+      "name": "[variables('wordpressContainerGroupName')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerInstance/containerGroups/', variables('shareContainerGroupName'))]",
+        "[resourceId('Microsoft.ContainerInstance/containerGroups/', variables('mysqlContainerGroupName'))]"
+      ],
+      "properties": {
+        "containers": [
+          {
+            "name": "wordpress",
+            "properties": {
+              "image": "wordpress:4.9-apache",
+              "ports": [
+                {
+                  "protocol": "Tcp",
+                  "port": 80
+                }
+              ],
+              "environmentVariables": [
+                {
+                  "name": "WORDPRESS_DB_HOST",
+                  "value": "[concat(reference(variables('mysqlContainerGroupRef')).ipAddress.ip, ':3306')]"
+                },
+                {
+                  "name": "WORDPRESS_DB_PASSWORD",
+                  "value": "[parameters('mysqlPassword')]"
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "mountPath": "/var/www/html",
+                  "name": "wordpressfile"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[variables('cpuCores')]",
+                  "memoryInGb": "[variables('memoryInGb')]"
+                }
+              }
+            }
+          }
+        ],
+        "volumes": [
+          {
+            "azureFile": {
+              "shareName": "[variables('wordpressShareName')]",
+              "storageAccountKey": "[listKeys(variables('storageAccountName'),'2021-06-01').keys[0].value]",
+              "storageAccountName": "[variables('storageAccountName')]"
+            },
+            "name": "wordpressfile"
+          }
+        ],
+        "networkProfile": {
+          "Id": "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]"
+        },
+        "osType": "Linux"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "name": "[variables('applicationGatewayName')]",
+      "type": "Microsoft.Network/applicationGateways",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.ContainerInstance/containerGroups/', variables('wordpressContainerGroupName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "[variables('skuName')]",
+          "tier": "Standard",
+          "capacity": "[variables('capacity')]"
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnet2Ref')]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "PublicIPAddress": {
+                "id": "[variables('publicIPRef')]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "properties": {
+              "Port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "IpAddress": "[reference(variables('wordpressContainerGroupRef')).ipAddress.ip]"
+                }
+              ]
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Disabled"
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('applicationGatewayName'), 'appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('applicationGatewayName'), 'appGatewayFrontendPort')]"
+              },
+              "Protocol": "Http"
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "Name": "rule1",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('applicationGatewayName'), 'appGatewayHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGatewayName'), 'appGatewayBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('applicationGatewayName'), 'appGatewayBackendHttpSettings')]"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "SiteFQDN": {
+      "type": "string",
+      "value": "[reference(variables('publicIPRef')).dnsSettings.fqdn]"
+    }
+  }
+}

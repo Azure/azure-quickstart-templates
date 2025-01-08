@@ -1,0 +1,318 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsId": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the OMS Workspace ID."
+      }
+    },
+    "omsKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the OMS Workspace KEY."
+      }
+    },
+    "automationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of an existing Automation Account with SPN."
+      }
+    },
+    "automationRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the existing Automation Account."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
+    },
+    "quickstartTags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "i-webrunbookDescription": "Authenticates to Azure and ingests all the WebApps metrics into an OMS wokrspace specified",
+    "i-sqlrunbookDescription": "Authenticates to Azure and ingests all the SQL Database metrics into an OMS wokrspace specified",
+    "s-runbookDescription": "Creates the schedules for the ingestion runbook to run every ten minutes on the hour",
+    "webIngestionRunbookName": "webAzureIngestion",
+    "sqlIngestionRunbookName": "sqlAzureIngestion",
+    "scheduleRunbookName": "scheduleIngestion",
+    "webIngestionScriptUri": "[uri(parameters('_artifactsLocation'), concat('nested/AutomationRunbooksOMSDashboard/scripts/webappazureIngestion.ps1', parameters('_artifactsLocationSasToken')))]",
+    "sqlIngestionScriptUri": "[uri(parameters('_artifactsLocation'), concat('nested/AutomationRunbooksOMSDashboard/scripts/sqlazureIngestion.ps1', parameters('_artifactsLocationSasToken')))]",
+    "scheduleScriptUri": "[uri(parameters('_artifactsLocation'), concat('nested/AutomationRunbooksOMSDashboard/scripts/scheduleIngestion.ps1', parameters('_artifactsLocationSasToken')))]",
+    "sku": "Basic",
+    "psModules": {
+      "AzureRmProfile": {
+        "Name": "AzureRm.Profile",
+        "URL": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.1.0.9.nupkg"
+      },
+      "AzureRmInsights": {
+        "Name": "AzureRm.Insights",
+        "URL": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.1.0.9.nupkg"
+      },
+      "AzureRmSql": {
+        "Name": "AzureRm.SQL",
+        "URL": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.sql.1.0.9.nupkg"
+      },
+      "AzureRmResources": {
+        "Name": "AzureRm.Resources",
+        "URL": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.2.0.0.nupkg"
+      },
+      "AzureRmAutomation": {
+        "Name": "AzureRm.Automation",
+        "URL": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.1.0.9.nupkg"
+      },
+      "OMSIngestionAPI": {
+        "Name": "OMSIngestionAPI",
+        "URL": "https://devopsgallerystorage.blob.core.windows.net/packages/omsingestionapi.1.3.0.nupkg"
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('automationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2021-04-01",
+      "location": "[parameters('automationRegion')]",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]"
+      },
+      "properties": {
+        "sku": {
+          "name": "[variables('sku')]"
+        }
+      },
+      "resources": [
+        {
+          "name": "[variables('webIngestionRunbookName')]",
+          "type": "runbooks",
+          "location": "[parameters('automationRegion')]",
+          "apiVersion": "2020-01-13-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "runbookType": "PowerShell",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": "[variables('i-webrunbookDescription')]",
+            "publishContentLink": {
+              "uri": "[variables('webIngestionScriptUri')]",
+              "version": "1.0.0.0"
+            }
+          }
+        },
+        {
+          "name": "[variables('sqlIngestionRunbookName')]",
+          "type": "runbooks",
+          "location": "[parameters('automationRegion')]",
+          "apiVersion": "2020-01-13-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "runbookType": "PowerShell",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": "[variables('i-sqlrunbookDescription')]",
+            "publishContentLink": {
+              "uri": "[variables('sqlIngestionScriptUri')]",
+              "version": "1.0.0.0"
+            }
+          }
+        },
+        {
+          "name": "OPSINSIGHTS_WS_ID",
+          "type": "variables",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "description": "Encrypted value of the users OMS Workspace ID",
+            "isEncrypted": true,
+            "type": "string",
+            "value": "[concat('\"', parameters('omsId'), '\"')]"
+          }
+        },
+        {
+          "name": "OPSINSIGHTS_WS_KEY",
+          "type": "variables",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "description": "Encrypted value of the users OMS Workspace KEY",
+            "isEncrypted": true,
+            "value": "[concat('\"', parameters('omsKey'), '\"')]"
+          }
+        },
+        {
+          "name": "SubscriptionID",
+          "type": "variables",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "description": "The subscription ID for the resource",
+            "isEncrypted": false,
+            "type": "string",
+            "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+          }
+        },
+        {
+          "name": "metricresourceGroupName",
+          "type": "variables",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "description": "The name of the resource group where your Azure Resource is hosted.",
+            "isEncrypted": false,
+            "type": "string",
+            "value": "[concat('\"',resourceGroup().name,'\"')]"
+          }
+        },
+        {
+          "name": "AzureAutomationAccount",
+          "type": "variables",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "description": "The name of the Automation Account",
+            "isEncrypted": false,
+            "type": "string",
+            "value": "[concat('\"', parameters('automationAccountName'), '\"')]"
+          }
+        },
+        {
+          "name": "AzureAutomationResourceGroup",
+          "type": "variables",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "description": "The name of the resource group",
+            "isEncrypted": false,
+            "type": "string",
+            "value": "[concat('\"',resourceGroup().name,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('psModules').AzureRmProfile.Name]",
+          "type": "modules",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').AzureRmProfile.URL]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').AzureRmResources.Name]",
+          "type": "modules",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules', parameters('automationAccountName'), variables('psModules').AzureRmProfile.Name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').AzureRMResources.URL]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').AzureRmInsights.Name]",
+          "type": "modules",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules', parameters('automationAccountName'), variables('psModules').AzureRmProfile.Name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').AzureRMInsights.URL]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').AzureRmSql.Name]",
+          "type": "modules",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules', parameters('automationAccountName'), variables('psModules').AzureRmProfile.Name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').AzureRmSql.URL]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').AzureRmAutomation.Name]",
+          "type": "modules",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules', parameters('automationAccountName'), variables('psModules').AzureRmProfile.Name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').AzureRMAutomation.URL]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').OMSIngestionAPI.Name]",
+          "type": "modules",
+          "apiVersion": "2021-04-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/modules', parameters('automationAccountName'), variables('psModules').AzureRmProfile.Name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').OMSIngestionAPI.URL]"
+            }
+          }
+        },
+        {
+          "name": "[variables('scheduleRunbookName')]",
+          "type": "runbooks",
+          "location": "[parameters('automationRegion')]",
+          "apiVersion": "2020-01-13-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+          ],
+          "properties": {
+            "runbookType": "PowerShell",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": "[variables('s-runbookDescription')]",
+            "publishContentLink": {
+              "uri": "[variables('scheduleScriptUri')]",
+              "version": "1.0.0.0"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

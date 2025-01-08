@@ -1,0 +1,96 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.27.1.19265",
+      "templateHash": "7026271350043138477"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Region where the SIM group will be deployed (must match the resource group region)."
+      }
+    },
+    "existingMobileNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the mobile network to which you are adding the SIM group."
+      }
+    },
+    "existingSimPolicyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SIM policy to be assigned to the SIM(s)."
+      }
+    },
+    "simGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the SIM group."
+      }
+    },
+    "existingEncryptionKeyUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "A unversioned key vault key to encrypt the SIM data that belongs to this SIM group. For example: https://contosovault.vault.azure.net/keys/azureKey."
+      }
+    },
+    "existingUserAssignedIdentityResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "User-assigned identity is an identity in Azure Active Directory that can be used to give access to other Azure resource such as Azure Key Vault. This identity should have Get, Wrap key, and Unwrap key permissions on the key vault."
+      }
+    },
+    "simResources": {
+      "type": "array",
+      "metadata": {
+        "description": "An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format."
+      }
+    }
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "exampleSimResources",
+        "count": "[length(parameters('simResources'))]"
+      },
+      "type": "Microsoft.MobileNetwork/simGroups/sims",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', parameters('simGroupName'), parameters('simResources')[copyIndex()].simName)]",
+      "properties": {
+        "integratedCircuitCardIdentifier": "[parameters('simResources')[copyIndex()].integratedCircuitCardIdentifier]",
+        "internationalMobileSubscriberIdentity": "[parameters('simResources')[copyIndex()].internationalMobileSubscriberIdentity]",
+        "authenticationKey": "[parameters('simResources')[copyIndex()].authenticationKey]",
+        "operatorKeyCode": "[parameters('simResources')[copyIndex()].operatorKeyCode]",
+        "deviceType": "[parameters('simResources')[copyIndex()].deviceType]",
+        "simPolicy": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks/simPolicies', parameters('existingMobileNetworkName'), parameters('existingSimPolicyName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MobileNetwork/simGroups', parameters('simGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.MobileNetwork/simGroups",
+      "apiVersion": "2024-04-01",
+      "name": "[parameters('simGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "mobileNetwork": {
+          "id": "[resourceId('Microsoft.MobileNetwork/mobileNetworks', parameters('existingMobileNetworkName'))]"
+        },
+        "encryptionKey": {
+          "keyUrl": "[parameters('existingEncryptionKeyUrl')]"
+        }
+      },
+      "identity": "[if(not(empty(parameters('existingUserAssignedIdentityResourceId'))), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', parameters('existingUserAssignedIdentityResourceId')), createObject())), createObject('type', 'None'))]"
+    }
+  ]
+}

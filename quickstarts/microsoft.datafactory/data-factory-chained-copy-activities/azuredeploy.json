@@ -1,0 +1,375 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dataLakeStoreUri": {
+      "type": "string",
+      "metadata": {
+        "description": "URI of Azure Data Lake store"
+      }
+    },
+    "dataLakeStoreServicePrincipalID": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of Azure Service Principal used for accessing Data Lake"
+      }
+    },
+    "dataLakeStoreServicePrincipalKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Key for Azure Service Principal used for accessing Data Lake"
+      }
+    },
+    "azureSQLConnectionString": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Connection string for Azure SQL Database"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "dataFactoryName": "[concat('CopyFromSQLToADFToAzureSQL', uniqueString(resourceGroup().id))]",
+    "gatewayName": "[concat('Gateway', uniqueString(resourceGroup().id))]",
+    "dataLakeLinkedServiceName": "DataFactoryLinkedService",
+    "sqlLinkedServiceName": "SqlLinkedService",
+    "azureSqlLinkedServiceName": "AzureSqlLinkedService",
+    "dataLakeDatasetName": "DataLakeDataset",
+    "sqlDatasetName": "SqlDataset",
+    "azureSqlDatasetName": "AzureSqlDataset",
+    "pipelineName": "CopyFromSQLToADFToAzureSQLPipeline"
+  },
+  "resources": [
+    {
+      "name": "[variables('dataFactoryName')]",
+      "apiVersion": "2015-10-01",
+      "type": "Microsoft.DataFactory/datafactories",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "dependsOn": [
+            "[resourceId('Microsoft.DataFactory/dataFactories/', variables('dataFactoryName'))]"
+          ],
+          "type": "gateways",
+          "apiVersion": "2015-10-01",
+          "name": "[variables('gatewayName')]",
+          "properties": {
+            "description": "ADF on-premises Data Management Gateway"
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('dataLakeLinkedServiceName')]",
+          "apiVersion": "2015-10-01",
+          "dependsOn": [
+            "[variables('dataFactoryName')]"
+          ],
+          "properties": {
+            "type": "AzureDataLakeStore",
+            "typeProperties": {
+              "dataLakeStoreUri": "[parameters('dataLakeStoreUri')]",
+              "servicePrincipalId": "[parameters('dataLakeStoreServicePrincipalID')]",
+              "servicePrincipalKey": "[parameters('dataLakeStoreServicePrincipalKey')]",
+              "tenant": "[subscription().tenantId]",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "resourceGroupName": "[resourceGroup().name]"
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('sqlLinkedServiceName')]",
+          "apiVersion": "2015-10-01",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('gatewayName')]"
+          ],
+          "properties": {
+            "type": "OnPremisesSqlServer",
+            "typeProperties": {
+              "connectionString": "Placeholder-COnnectionString-Replace-Post-Deployment",
+              "gatewayName": "[variables('gatewayName')]",
+              "password": "**********"
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureSqlLinkedServiceName')]",
+          "apiVersion": "2015-10-01",
+          "dependsOn": [
+            "[variables('dataFactoryName')]"
+          ],
+          "properties": {
+            "type": "AzureSqlDatabase",
+            "typeProperties": {
+              "connectionString": "[parameters('azureSQLConnectionString')]"
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('dataLakeDatasetName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('dataLakeLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "structure": [
+              {
+                "name": "CurrencyCode",
+                "type": "string"
+              },
+              {
+                "name": "Name",
+                "type": "string"
+              },
+              {
+                "name": "ModifiedDate",
+                "type": "Datetime"
+              }
+            ],
+            "published": false,
+            "type": "AzureDataLakeStore",
+            "linkedServiceName": "[variables('dataLakeLinkedServiceName')]",
+            "typeProperties": {
+              "fileName": "data.orc",
+              "folderPath": "[concat(variables('dataFactoryName'), '/{year}/{month}/{day}/{hour}/{minute}/')]",
+              "format": {
+                "type": "OrcFormat"
+              },
+              "partitionedBy": [
+                {
+                  "name": "year",
+                  "value": {
+                    "type": "DateTime",
+                    "date": "SliceStart",
+                    "format": "yy"
+                  }
+                },
+                {
+                  "name": "month",
+                  "value": {
+                    "type": "DateTime",
+                    "date": "SliceStart",
+                    "format": "MM"
+                  }
+                },
+                {
+                  "name": "day",
+                  "value": {
+                    "type": "DateTime",
+                    "date": "SliceStart",
+                    "format": "dd"
+                  }
+                },
+                {
+                  "name": "hour",
+                  "value": {
+                    "type": "DateTime",
+                    "date": "SliceStart",
+                    "format": "HH"
+                  }
+                },
+                {
+                  "name": "minute",
+                  "value": {
+                    "type": "DateTime",
+                    "date": "SliceStart",
+                    "format": "mm"
+                  }
+                }
+              ]
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            },
+            "external": false
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('sqlDatasetName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('sqlLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "structure": [
+              {
+                "name": "CurrencyCode",
+                "type": "string"
+              },
+              {
+                "name": "Name",
+                "type": "string"
+              },
+              {
+                "name": "ModifiedDate",
+                "type": "Datetime"
+              }
+            ],
+            "published": false,
+            "type": "SqlServerTable",
+            "linkedServiceName": "[variables('sqlLinkedServiceName')]",
+            "typeProperties": {
+              "tableName": "Sales.Currency"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            },
+            "external": true
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('azureSqlDatasetName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('azureSqlLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "structure": [
+              {
+                "name": "CurrencyCode",
+                "type": "string"
+              },
+              {
+                "name": "Name",
+                "type": "string"
+              },
+              {
+                "name": "ModifiedDate",
+                "type": "Datetime"
+              }
+            ],
+            "published": false,
+            "type": "AzureSqlTable",
+            "linkedServiceName": "[variables('azureSqlLinkedServiceName')]",
+            "typeProperties": {
+              "tableName": "Sales.Currency"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            },
+            "external": false
+          }
+        },
+        {
+          "type": "dataPipelines",
+          "name": "[variables('pipelineName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('dataLakeLinkedServiceName')]",
+            "[variables('sqlLinkedServiceName')]",
+            "[variables('azureSqlLinkedServiceName')]",
+            "[variables('dataLakeDatasetName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "activities": [
+              {
+                "type": "Copy",
+                "typeProperties": {
+                  "source": {
+                    "type": "SqlSource",
+                    "sqlReaderQuery": "$$Text.Format('select * from Sales.Currency where ModifiedDate >= \\'{0:yyyy-MM-dd HH:mm}\\' AND ModifiedDate < \\'{1:yyyy-MM-dd HH:mm}\\'', WindowStart, WindowEnd)"
+                  },
+                  "sink": {
+                    "type": "AzureDataLakeStoreSink",
+                    "writeBatchSize": 0,
+                    "writeBatchTimeout": "00:00:00"
+                  }
+                },
+                "inputs": [
+                  {
+                    "name": "[variables('sqlDatasetName')]"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "[variables('dataLakeDatasetName')]"
+                  }
+                ],
+                "policy": {
+                  "timeout": "1.00:00:00",
+                  "concurrency": 10,
+                  "executionPriorityOrder": "NewestFirst",
+                  "style": "StartOfInterval",
+                  "retry": 3,
+                  "longRetry": 0,
+                  "longRetryInterval": "00:00:00"
+                },
+                "scheduler": {
+                  "frequency": "Day",
+                  "interval": 1
+                },
+                "name": "Activity-OnPremSQL->ADL"
+              },
+              {
+                "type": "Copy",
+                "typeProperties": {
+                  "source": {
+                    "type": "AzureDataLakeStoreSource",
+                    "recursive": false
+                  },
+                  "sink": {
+                    "type": "SqlSink",
+                    "sqlWriterCleanupScript": "$$Text.Format('delete [Sales].[Currency] where [ModifiedDate] >= \\'{0:yyyy-MM-dd HH:mm}\\' AND [ModifiedDate] <\\'{1:yyyy-MM-dd HH:mm}\\'', WindowStart, WindowEnd)",
+                    "writeBatchSize": 0,
+                    "writeBatchTimeout": "00:00:00"
+                  },
+                  "translator": {
+                    "type": "TabularTranslator",
+                    "columnMappings": "CurrencyCode:CurrencyCode,ModifiedDate:ModifiedDate,Name:Name"
+                  }
+                },
+                "inputs": [
+                  {
+                    "name": "[variables('dataLakeDatasetName')]"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "[variables('azureSqlDatasetName')]"
+                  }
+                ],
+                "policy": {
+                  "timeout": "1.00:00:00",
+                  "concurrency": 10,
+                  "executionPriorityOrder": "NewestFirst",
+                  "style": "StartOfInterval",
+                  "retry": 3,
+                  "longRetry": 0,
+                  "longRetryInterval": "00:00:00"
+                },
+                "scheduler": {
+                  "frequency": "Day",
+                  "interval": 1
+                },
+                "name": "Activity-ADL->AzureSQL"
+              }
+            ],
+            "start": "2017-08-16T00:00:00Z",
+            "end": "2099-08-16T00:00:00Z",
+            "isPaused": true,
+            "pipelineMode": "Scheduled"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {}
+}

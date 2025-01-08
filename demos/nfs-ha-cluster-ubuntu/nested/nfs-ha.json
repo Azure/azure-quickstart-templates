@@ -1,0 +1,583 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure location where this template is to be deployed"
+            }
+        },
+        "subnetId": {
+            "metadata": {
+                "description": "Azure resource ID of the subnet where this NFS-HA cluster is to be deployed"
+            },
+            "type": "string"
+        },
+        "node0IPAddr": {
+            "metadata": {
+                "description": "IP address of node 0 (statically assigned). E.g., 10.0.0.11. Must belong to the IP range of the specified subnet"
+            },
+            "type": "string"
+        },
+        "node1IPAddr": {
+            "metadata": {
+                "description": "IP address of node 1 (statically assigned). E.g., 10.0.0.22. Must belong to the IP range of the specified subnet"
+            },
+            "type": "string"
+        },
+        "nfsClientsIPRange": {
+            "metadata": {
+                "description": "IP range of the allowed NFS clients. E.g., 10.0.0.0/24"
+            },
+            "type": "string"
+        },
+        "lbFrontEndIpAddr": {
+            "metadata": {
+                "description": "IP address of the load balancer front-end (statically assigned). E.g., 10.0.0.100. Must belong to the IP range of the specified subnet"
+            },
+            "type": "string"
+        },
+        "enableAccelNwSwitch": {
+            "metadata": {
+                "description": "Switch to enable Azure Accelerated Networking (Note: this feature is NOT available for D1-level VM SKU)"
+            },
+            "type": "bool",
+            "defaultValue": false
+        },
+        "vmSku": {
+            "metadata": {
+                "description": "Azure VM SKU for the NFS HA VMs"
+            },
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3"
+        },
+        "adminUserName": {
+            "metadata": {
+                "description": "VM admin user name"
+            },
+            "type": "string",
+            "defaultValue": "azureadmin"
+        },
+        "sshPublicKey": {
+            "metadata": {
+                "description": "SSH public key for the admin user"
+            },
+            "type": "string"
+        },
+        "osType": {
+            "metadata": {
+                "description": "OS type (offer/publisher/sku/version) info"
+            },
+            "type": "object",
+            "defaultValue": {
+                "offer": "UbuntuServer",
+                "publisher": "Canonical",
+                "sku": "18.04-LTS",
+                "version": "latest"
+            }
+        },
+        "osDiskStorageType": {
+            "defaultValue": "Premium_LRS",
+            "allowedValues": [
+                "Premium_LRS",
+                "Standard_LRS"
+            ],
+            "metadata": {
+                "description": "Azure storage type for all VMs' OS disks. With htmlLocalCopySwith true, Premium_LRS (SSD) is strongly recommended, as PHP files will be served from OS disks."
+            },
+            "type": "string"
+        },
+        "dataDiskCountPerVM": {
+            "metadata": {
+                "description": "Number of data disks per VM. 2 or more disks will be configured as RAID0"
+            },
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 8,
+            "type": "int"
+        },
+        "dataDiskSizeInGB": {
+            "defaultValue": 32,
+            "metadata": {
+                "description": "Size per disk in an NFS server"
+            },
+            "type": "int"
+        },
+        "resourcesUniqueString": {
+            "metadata": {
+                "description": "Unique string of fixed length (e.g., 6) identifying related resources"
+            },
+            "type": "string",
+            "defaultValue": "[substring(uniqueString(resourceGroup().id, deployment().name), 3, 6)]"
+        }
+    },
+    "variables": {
+        "availSetName": "[concat('nfs-ha-availset-', parameters('resourcesUniqueString'))]",
+        "vmDeploymentNameBase": "nfs-ha-vm-deployment",
+        "nodeIpAddrs": [
+            "[parameters('node0IPAddr')]",
+            "[parameters('node1IPAddr')]"
+        ],
+        "nfsHaLbName": "[concat('nfs-ha-lb-', parameters('resourcesUniqueString'))]",
+        "nfsHaLbFeName": "nfs-ha-lb-fe",
+        "nfsHaLbFeId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('nfsHaLbName'), variables('nfsHaLbFeName'))]",
+        "nfsHaLbBeName": "nfs-ha-lb-be",
+        "nfsHaLbBeId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('nfsHaLbName'), variables('nfsHaLbBeName'))]",
+        "nfsHaLbRuleName": "nfs-ha-lb-rule",
+        "nfsHaLbProbeName": "nfs-ha-lb-probe",
+        "nfsHaLbProbeId": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('nfsHaLbName'), variables('nfsHaLbProbeName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "name": "[variables('availSetName')]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 5
+            },
+            "sku": {
+                "name": "Aligned"
+            },
+            "tags": {
+                "displayName": "NFS-HA Availability Set"
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "sku": {
+                "name": "Basic"
+            },
+            "apiVersion": "2020-05-01",
+            "location": "[parameters('location')]",
+            "name": "[variables('nfsHaLbName')]",
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[variables('nfsHaLbFeName')]",
+                        "properties": {
+                            "privateIPAddress": "[parameters('lbFrontEndIpAddr')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('nfsHaLbBeName')]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-nfsd-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2049,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2049,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-nfsd-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2049,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2049,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-rpcbind-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 111,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 111,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-rpcbind-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 111,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 111,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-mountd-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2000,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2000,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-mountd-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2000,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2000,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-statd-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2001,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2001,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-statd-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2001,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2001,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-statd-outgoing-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2002,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2002,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-statd-outgoing-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2002,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2002,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-quotad-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2003,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2003,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-quotad-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2003,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2003,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-lockd-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2004,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2004,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-lockd-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2004,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2004,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-nfs-callback-tcp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2005,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2005,
+                            "protocol": "Tcp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "[concat(variables('nfsHaLbRuleName'), '-nfs-callback-udp')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('nfsHaLbFeId')]"
+                            },
+                            "frontendPort": 2005,
+                            "backendAddressPool": {
+                                "id": "[variables('nfsHaLbBeId')]"
+                            },
+                            "backendPort": 2005,
+                            "protocol": "Udp",
+                            "probe": {
+                                "id": "[variables('nfsHaLbProbeId')]"
+                            },
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[variables('nfsHaLbProbeName')]",
+                        "properties": {
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2,
+                            "port": 61000,
+                            "protocol": "Tcp"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "copy": {
+                "count": 2,
+                "name": "nfs-ha-vm-loop"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets/', variables('availSetName'))]",
+                "[resourceId('Microsoft.Network/loadBalancers/', variables('nfsHaLbName'))]"
+            ],
+            "name": "[concat(variables('vmDeploymentNameBase'), copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmIndex": {
+                        "value": "[copyindex()]"
+                    },
+                    "ipAddrs": {
+                        "value": "[variables('nodeIpAddrs')]"
+                    },
+                    "nfsClientsIPRange": {
+                        "value": "[parameters('nfsClientsIPRange')]"
+                    },
+                    "subnetId": {
+                        "value": "[parameters('subnetId')]"
+                    },
+                    "enableAccelNwSwitch": {
+                        "value": "[parameters('enableAccelNwSwitch')]"
+                    },
+                    "availSetId": {
+                        "value": "[resourceId('Microsoft.Compute/AvailabilitySets', variables('availSetName'))]"
+                    },
+                    "vmSku": {
+                        "value": "[parameters('vmSku')]"
+                    },
+                    "adminUserName": {
+                        "value": "[parameters('adminUserName')]"
+                    },
+                    "sshPublicKey": {
+                        "value": "[parameters('sshPublicKey')]"
+                    },
+                    "osType": {
+                        "value": "[parameters('osType')]"
+                    },
+                    "osDiskStorageType": {
+                        "value": "[parameters('osDiskStorageType')]"
+                    },
+                    "dataDiskCountPerVM": {
+                        "value": "[parameters('dataDiskCountPerVM')]"
+                    },
+                    "dataDiskSizeInGB": {
+                        "value": "[parameters('dataDiskSizeInGB')]"
+                    },
+                    "resourcesUniqueString": {
+                        "value": "[parameters('resourcesUniqueString')]"
+                    },
+                    "lbBeId": {
+                        "value": "[variables('nfsHaLbBeId')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nested/nfs-ha-vm.json', parameters('_artifactsLocationSasToken')))]"
+                }
+            }
+        }
+    ]
+}
+

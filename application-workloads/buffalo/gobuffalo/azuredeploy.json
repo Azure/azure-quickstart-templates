@@ -1,0 +1,249 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location" : {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "The Azure Region which should be targeted while provisioning the infrastructure described in this template."
+        }
+      },
+      "imageName" : {
+        "type": "string",
+        "defaultValue": "appsvc/sample-hello-world:latest",
+        "metadata": {
+          "description": "The image which defines the application to be hosted in Azure."
+        }
+      },
+      "name": {
+        "type": "string",
+        "defaultValue": "[concat('site', uniqueString(resourceGroup().id, deployment().name))]",
+        "metadata": {
+          "description": "A unique name to identify the site, and its relate assets once it is created."
+        }
+      },
+      "database": {
+        "type": "string",
+        "defaultValue": "postgresql",
+        "allowedValues": [
+            "none",
+            "postgresql",
+            "mysql"
+        ],
+        "metadata": {
+          "description": "The flavor of database that should be deployed alongside this application."
+        }
+      },
+      "databaseName": {
+        "type": "string",
+        "defaultValue": "buffalo_development",
+        "metadata": {
+          "description": "The name that will identify the database which is created, should one be created."
+        }
+      },
+      "databaseAdministratorLogin": {
+          "type": "string",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The user handle for the administrator of the database to be created."
+          }
+      },
+      "databaseAdministratorLoginPassword": {
+        "type": "SecureString",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The password for the administrator of the database to be created."
+        }
+      },
+      "dockerRegistryAccess": {
+        "type": "string",
+        "defaultValue": "public",
+        "allowedValues": [
+          "public",
+          "private"
+        ],
+        "metadata": {
+          "description": "Denotes whether the image selected lives in a public or private Docker registry."
+        }
+      },
+      "dockerRegistryServerURL": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The url of the Docker registry which hosts the repository being used to host the image for your site."
+        }
+      },
+      "dockerRegistryServerUsername": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The user handle used to authenticate against the private Docker registry, if applicable."
+        }
+      },
+      "dockerRegistryServerPassword": {
+        "type": "SecureString",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The password used to authenticate against the private Docker registry, if applicable."
+        }
+      }
+    },
+    "variables": {
+      "hostingPlanName": "[concat('hostingPlan-', parameters('name'))]",
+      "postgresqlName": "[concat(parameters('name'), '-postgresql')]",
+      "mysqlName": "[concat(parameters('name'), '-mysql')]",
+      "appSettingsPublicRegistry": [{
+        "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+        "value": "false"
+      }],
+      "appSettingsPrivateRegistry": [
+        {
+          "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+          "value": "false"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_URL",
+          "value": "[parameters('dockerRegistryServerURL')]"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+          "value": "[parameters('dockerRegistryServerUsername')]"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+          "value": "[parameters('dockerRegistryServerPassword')]"
+        }]
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Web/sites",
+        "name": "[parameters('name')]",
+        "apiVersion": "2018-02-01",
+        "location": "[parameters('location')]",
+        "tags": {
+          "[concat('hidden-related:', subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty",
+          "gobuffalo": "empty"
+        },
+        "properties": {
+          "name": "[parameters('name')]",
+          "siteConfig": {
+            "appSettings": "[if(equals(parameters('dockerRegistryAccess'), 'private'), variables('appSettingsPrivateRegistry'), variables('appSettingsPublicRegistry'))]",
+            "connectionStrings":[
+              {
+                "name":"DATABASE_URL",
+                "connectionString": "[if(equals(parameters('database'), 'postgresql'), concat('postgres://', parameters('databaseAdministratorLogin'), '@', variables('postgresqlName'),':', parameters('databaseAdministratorLoginPassword'), '@', reference(resourceId('Microsoft.DBforPostgreSQL/servers',variables('postgresqlName'))).fullyQualifiedDomainName, ':5432/', parameters('databaseName')), if(equals(parameters('database'), 'mysql'), concat('mysql://', parameters('databaseAdministratorLogin'), '@', variables('mysqlName'), ':', parameters('databaseAdministratorLoginPassword'), '@tcp(', reference(resourceId('Microsoft.DBforMySQL/servers',variables('mysqlName'))).fullyQualifiedDomainName , ':3306/', parameters('databaseName'), '?allowNativePasswords=true'),'not applicable'))]",
+                "type":"[if(equals(parameters('database'), 'mysql'), 'mysql', 'custom')]"
+              }
+            ],
+            "appCommandLine": "",
+            "linuxFxVersion": "[concat('DOCKER|', parameters('imageName'))]"
+          },
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+          "hostingEnvironment": ""
+        },
+        "dependsOn": [
+          "[variables('hostingPlanName')]",
+          "[variables('postgresqlName')]",
+          "[variables('mysqlName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Web/serverfarms",
+        "sku": {
+          "Tier": "Basic",
+          "Name": "B1"
+        },
+        "kind": "linux",
+        "name": "[variables('hostingPlanName')]",
+        "apiVersion": "2016-09-01",
+        "location": "[parameters('location')]",
+        "properties": {
+          "name": "[variables('hostingPlanName')]",
+          "workerSizeId": "0",
+          "reserved": true,
+          "numberOfWorkers": "1",
+          "hostingEnvironment": ""
+        }
+      },
+      {
+          "condition":"[equals(parameters('database'), 'postgresql')]",
+          "type": "Microsoft.DBforPostgreSQL/servers",
+          "sku": {
+              "name": "B_Gen5_1",
+              "family": "Gen5",
+              "capacity": "",
+              "size": "5120",
+              "tier":"Basic"
+          },
+          "kind":"",
+          "name":"[variables('postgresqlName')]",
+          "apiVersion": "2017-12-01-preview",
+          "location":"[parameters('location')]",
+          "properties": {
+              "version": "9.6",
+              "administratorLogin": "[parameters('databaseAdministratorLogin')]",
+              "administratorLoginPassword": "[parameters('databaseAdministratorLoginPassword')]",
+              "sslEnforcement": "Disabled"
+          },
+          "resources": [
+            {
+              "condition":"[equals(parameters('database'), 'postgresql')]",
+              "type":"firewallRules",
+              "apiVersion": "2017-12-01-preview",
+              "dependsOn": [
+                "[variables('postgresqlName')]"
+              ],
+              "location": "[parameters('location')]",
+              "name": "AllowAzureIPs",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+              }
+            }
+          ]
+      },
+      {
+        "condition":"[equals(parameters('database'), 'mysql')]",
+        "type": "Microsoft.DBforMySQL/servers",
+        "sku": {
+          "name":"B_Gen5_2",
+          "tier": "Basic",
+          "capacity": 2,
+          "size": 5120,
+          "family": "Gen5"
+        },
+        "kind": "",
+        "name": "[variables('mysqlName')]",
+        "apiVersion": "2017-12-01-preview",
+        "location": "[parameters('location')]",
+        "properties": {
+          "version": "5.7",
+          "administratorLogin": "[parameters('databaseAdministratorLogin')]",
+          "administratorLoginPassword": "[parameters('databaseAdministratorLoginPassword')]",
+          "storageProfile": {
+            "storageMB": 5120,
+            "backupRetentionDays": 7,
+            "geoRedundantBackup": "Disabled"
+          },
+          "sslEnforcement": "Disabled"
+        },
+        "resources": [
+          {
+            "condition":"[equals(parameters('database'), 'mysql')]",
+            "type":"firewallRules",
+            "apiVersion": "2017-12-01-preview",
+            "dependsOn": [
+              "[variables('mysqlName')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "AllowAzureIPs",
+            "properties": {
+              "startIpAddress": "0.0.0.0",
+              "endIpAddress": "0.0.0.0"
+            }
+          }
+        ]
+      }
+    ]
+  }

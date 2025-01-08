@@ -1,0 +1,315 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "probeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "Size of the VM that runs the test."
+      }
+    },
+    "probeVmLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the VM that runs the test."
+      }
+    },
+    "targetVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "Size of the target VM."
+      }
+    },
+    "VmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "Size of the VM."
+      }
+    },
+    "targetVmLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the target VM."
+      }
+    },
+    "testRequestSize": {
+      "type": "string",
+      "allowedValues": [
+        "8k",
+        "16k",
+        "32k",
+        "64k",
+        "128k",
+        "256k",
+        "512k",
+        "1m"
+      ],
+      "defaultValue": "64k",
+      "metadata": {
+        "description": "Size of the request to send to the target VM."
+      }
+    },
+    "testRequestCount": {
+      "type": "int",
+      "defaultValue": 1000,
+      "metadata": {
+        "description": "Number of the requests to send to the target VM."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the probe and target VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the probe and target VMs."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templatelink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "vmSettings": [
+      {
+        "name": "probeVM",
+        "location": "[parameters('probeVmLocation')]",
+        "size": "[parameters('probeVmSize')]",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2019-Datacenter",
+          "version": "latest"
+        },
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(variables('virtualNetworkName'), '1'), variables('subnetName'))]"
+      },
+      {
+        "name": "targetVM",
+        "location": "[parameters('targetVmLocation')]",
+        "size": "[parameters('targetVmSize')]",
+        "imageReference": {
+          "publisher": "Canonical",
+          "offer": "UbuntuServer",
+          "sku": "14.04.5-LTS",
+          "version": "latest"
+        },
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(variables('virtualNetworkName'), '2'), variables('subnetName'))]"
+      }
+    ],
+    "nicName": "myVMNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "publicIPAddressName": "publicIP",
+    "publicIPAddressType": "Static",
+    "virtualNetworkName": "testVNET",
+    "scriptFileName": "testBandwidth.ps1",
+    "frontEndNSGName": "[concat('webtestnsg-', uniqueString(resourceGroup().id))]",
+    "nsgId": {
+      "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex(1))]",
+      "location": "[variables('vmSettings')[copyIndex()].location]",
+      "copy": {
+        "name": "publicIPCopy",
+        "count": 2
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[concat(variables('virtualNetworkName'), copyIndex(1))]",
+      "location": "[variables('vmSettings')[copyIndex()].location]",
+      "copy": {
+        "name": "vNetCopy",
+        "count": 2
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('frontEndNSGName')]",
+      "location": "[variables('vmSettings')[1].location]",
+      "tags": {
+        "displayName": "NSG - test web server from probe"
+      },
+      "dependsOn": [
+        "publicIPCopy"
+      ],
+      "properties": {
+        "securityRules": [
+          {
+            "name": "web-rule",
+            "properties": {
+              "description": "Allow Web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '1'))).ipAddress]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyIndex(1))]",
+      "location": "[variables('vmSettings')[copyIndex()].location]",
+      "copy": {
+        "name": "nicCopy",
+        "count": 2
+      },
+      "dependsOn": [
+        "publicIPCopy",
+        "vNetCopy",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex(1)))]"
+              },
+              "subnet": {
+                "id": "[variables('vmSettings')[copyIndex()].subnetRef]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": "[if(equals(copyIndex(),1), variables('nsgId'), json('null'))]"
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmSettings')[copyIndex()].name]",
+      "location": "[variables('vmSettings')[copyIndex()].location]",
+      "copy": {
+        "name": "vmCopy",
+        "count": 2
+      },
+      "dependsOn": [
+        "nicCopy"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('VmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmSettings')[copyIndex()].name]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('vmSettings')[copyIndex()].imageReference]",
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex(1)))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-12-01",
+      "name": "[concat(variables('vmSettings')[0].name, '/CustomScriptExtension')]",
+      "location": "[variables('vmSettings')[0].location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmSettings')[0].name)]",
+        "publicIpCopy",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmSettings')[1].name, 'TargetVmCustomScriptExtension')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat(variables('ScriptFileName'), parameters('_artifactsLocationSasToken')))]"
+          ],
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('ScriptFileName'), ' -TestIPPort ', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '2'))).ipAddress, ':80 -TestNumber ', parameters('testRequestCount'), ' -PacketSize ', parameters('testRequestSize'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmSettings')[1].name, '/TargetVmCustomScriptExtension')]",
+      "apiVersion": "2019-12-01",
+      "location": "[variables('vmSettings')[1].location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmSettings')[1].name)]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "commandToExecute": "sudo bash -c 'apt-get -y update && apt-get -y install apache2'"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "bandwidthtestresult": {
+      "type": "string",
+      "value": "[trim(reference('CustomScriptExtension').instanceView.substatuses[0].message)]"
+    }
+  }
+}

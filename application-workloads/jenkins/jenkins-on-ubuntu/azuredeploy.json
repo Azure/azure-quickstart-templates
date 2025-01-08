@@ -1,0 +1,268 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "myVNET",
+      "metadata": {
+        "description": "Name of the virtual network provisioned for the cluster"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "dnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain name for the publicly accessible Jenkins master node"
+      }
+    },
+    "masterVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "allowedValues": [
+        "Standard_D4_v3",
+        "Standard_D8_v3"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning the Jenkins master node"
+      }
+    },
+    "slaveNodes": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of Jenkins slave node (1 is the default)"
+      }
+    },
+    "slaveVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "allowedValues": [
+        "Standard_D4_v3",
+        "Standard_D8_v3"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning Jenkins slave node(s)"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+     "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "[deployment().properties.templateLink.uri]"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jenkMasterTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('jenkmaster-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jenkSlaveTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('jenkslave-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "namespace": "jenk",
+    "networkSettings": {
+      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "jenkMaster": "10.0.0.240"
+      }
+    },
+    "masterOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('jenkMstrInstall.sh', parameters('_artifactsLocationSasToken')))]",
+        "[uri(parameters('_artifactsLocation'), concat('jenkAddNode.groovy', parameters('_artifactsLocationSasToken')))]"
+      ]
+    },
+    "slaveOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('jenkSlaveInstall.sh', parameters('_artifactsLocationSasToken')))]"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "location": {
+              "value": "[parameters('location')]" 
+          }
+        }
+      }
+    },
+    {
+      "name": "jenkMasterNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('jenkMasterTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "Master"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsName')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.jenkMaster]"
+          },
+          "vmSize": {
+            "value": "[parameters('masterVmSize')]"
+          },
+          "slaveNodes": {
+            "value": "[parameters('slaveNodes')]"
+          },
+          "osSettings": {
+            "value": "[variables('masterOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]" 
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('jenkSlaveNode', copyindex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'jenkMasterNode')]"
+      ],
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('slaveNodes')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('jenkSlaveTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('Slave', copyindex())]"
+          },
+          "masterNode": {
+            "value": "[variables('networkSettings').statics.jenkMaster]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('slaveVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('slaveOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]" 
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
+

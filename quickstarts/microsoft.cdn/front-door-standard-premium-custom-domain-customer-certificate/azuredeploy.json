@@ -1,0 +1,224 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "11356588940938298243"
+    }
+  },
+  "parameters": {
+    "endpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_AzureFrontDoor",
+      "allowedValues": [
+        "Standard_AzureFrontDoor",
+        "Premium_AzureFrontDoor"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Front Door profile."
+      }
+    },
+    "originHostName": {
+      "type": "string",
+      "metadata": {
+        "description": "The host name that should be used when connecting from Front Door to the origin."
+      }
+    },
+    "customDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The custom domain name to associate with your Front Door endpoint."
+      }
+    },
+    "certificateKeyVaultResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The name of the resource group that contains the key vault with custom domain's certificate."
+      }
+    },
+    "certificateKeyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Key Vault that contains the custom domain's certificate."
+      }
+    },
+    "certificateKeyVaultSecretName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Key Vault secret that contains the custom domain's certificate."
+      }
+    },
+    "certificateKeyVaultSecretVersion": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The version of the Key Vault secret that contains the custom domain's certificate. Set the value to an empty string to use the latest version."
+      }
+    }
+  },
+  "variables": {
+    "profileName": "MyFrontDoor",
+    "originGroupName": "MyOriginGroup",
+    "originName": "MyOrigin",
+    "routeName": "MyRoute",
+    "secretName": "MySecret",
+    "customDomainResourceName": "[replace(parameters('customDomainName'), '.', '-')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2020-09-01",
+      "name": "[variables('profileName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('skuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('profileName'), parameters('endpointName'))]",
+      "location": "global",
+      "properties": {
+        "originResponseTimeoutSeconds": 240,
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('profileName'), variables('originGroupName'))]",
+      "properties": {
+        "loadBalancingSettings": {
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "healthProbeSettings": {
+          "probePath": "/",
+          "probeRequestType": "HEAD",
+          "probeProtocol": "Http",
+          "probeIntervalInSeconds": 100
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/secrets",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('profileName'), variables('secretName'))]",
+      "properties": {
+        "parameters": {
+          "type": "CustomerCertificate",
+          "useLatestVersion": "[equals(parameters('certificateKeyVaultSecretVersion'), '')]",
+          "secretVersion": "[parameters('certificateKeyVaultSecretVersion')]",
+          "secretSource": {
+            "id": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('certificateKeyVaultResourceGroupName')), 'Microsoft.KeyVault/vaults/secrets', parameters('certificateKeyVaultName'), parameters('certificateKeyVaultSecretName'))]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/customDomains",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('profileName'), variables('customDomainResourceName'))]",
+      "properties": {
+        "hostName": "[parameters('customDomainName')]",
+        "tlsSettings": {
+          "certificateType": "CustomerCertificate",
+          "minimumTlsVersion": "TLS12",
+          "secret": {
+            "id": "[resourceId('Microsoft.Cdn/profiles/secrets', variables('profileName'), variables('secretName'))]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/secrets', variables('profileName'), variables('secretName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+      "properties": {
+        "hostName": "[parameters('originHostName')]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[parameters('originHostName')]",
+        "priority": 1,
+        "weight": 1000
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('endpointName'), variables('routeName'))]",
+      "properties": {
+        "customDomains": [
+          {
+            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]"
+          }
+        ],
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternsToMatch": [
+          "/*"
+        ],
+        "queryStringCachingBehavior": "IgnoreQueryString",
+        "forwardingProtocol": "HttpsOnly",
+        "linkToDefaultDomain": "Enabled",
+        "httpsRedirect": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "customDomainValidationDnsTxtRecordName": {
+      "type": "string",
+      "value": "[format('_dnsauth.{0}', reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).hostName)]"
+    },
+    "customDomainValidationDnsTxtRecordValue": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).validationProperties.validationToken]"
+    },
+    "customDomainValidationExpiry": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', variables('profileName'), variables('customDomainResourceName'))).validationProperties.expirationDate]"
+    },
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]"
+    }
+  }
+}

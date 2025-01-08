@@ -1,0 +1,181 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.61.36676",
+      "templateHash": "18244960644231163222"
+    }
+  },
+  "parameters": {
+    "existingVirtualMachinesResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group where the virtual machines are located. This can be different than resource group of the vault. "
+      }
+    },
+    "existingVirtualMachines": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of Azure virtual machines. e.g. [\"vm1\",\"vm2\",\"vm3\"]"
+      }
+    },
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "RecoveryServicesVault",
+      "metadata": {
+        "description": "Name of the Recovery Services Vault"
+      }
+    },
+    "isNewVault": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Conditional parameter for New or Existing Vault"
+      }
+    },
+    "policyName": {
+      "type": "string",
+      "defaultValue": "DefaultPolicy",
+      "metadata": {
+        "description": "Backup policy to be used to backup VMs. Backup POlicy defines the schedule of the backup and how long to retain backup copies. By default every vault comes with a 'DefaultPolicy' which canbe used here."
+      }
+    },
+    "isNewPolicy": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Conditional parameter for New or Existing Backup Policy"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "backupFabric": "Azure",
+    "scheduleRunTimes": [
+      "2017-01-26T05:30:00Z"
+    ],
+    "v2VmType": "Microsoft.Compute/virtualMachines",
+    "v2VmContainer": "iaasvmcontainer;iaasvmcontainerv2;",
+    "v2Vm": "vm;iaasvmcontainerv2;"
+  },
+  "resources": [
+    {
+      "condition": "[parameters('isNewVault')]",
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2021-03-01",
+      "name": "[parameters('vaultName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": {}
+    },
+    {
+      "condition": "[parameters('isNewPolicy')]",
+      "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+      "apiVersion": "2021-03-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('policyName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "backupManagementType": "AzureIaasVM",
+        "instantRpRetentionRangeInDays": 5,
+        "schedulePolicy": {
+          "scheduleRunFrequency": "Daily",
+          "scheduleRunTimes": "[variables('scheduleRunTimes')]",
+          "schedulePolicyType": "SimpleSchedulePolicy"
+        },
+        "retentionPolicy": {
+          "dailySchedule": {
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": 104,
+              "durationType": "Days"
+            }
+          },
+          "weeklySchedule": {
+            "daysOfTheWeek": [
+              "Sunday",
+              "Tuesday",
+              "Thursday"
+            ],
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": 104,
+              "durationType": "Weeks"
+            }
+          },
+          "monthlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": 60,
+              "durationType": "Months"
+            }
+          },
+          "yearlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "monthsOfYear": [
+              "January",
+              "March",
+              "August"
+            ],
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": 10,
+              "durationType": "Years"
+            }
+          },
+          "retentionPolicyType": "LongTermRetentionPolicy"
+        },
+        "timeZone": "UTC"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "protectedItems",
+        "count": "[length(parameters('existingVirtualMachines'))]"
+      },
+      "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+      "apiVersion": "2021-03-01",
+      "name": "[format('{0}/{1}/{2}{3};{4}/{5}{6};{7}', parameters('vaultName'), variables('backupFabric'), variables('v2VmContainer'), parameters('existingVirtualMachinesResourceGroup'), parameters('existingVirtualMachines')[copyIndex()], variables('v2Vm'), parameters('existingVirtualMachinesResourceGroup'), parameters('existingVirtualMachines')[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "protectedItemType": "[variables('v2VmType')]",
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]",
+        "sourceResourceId": "[resourceId(subscription().subscriptionId, parameters('existingVirtualMachinesResourceGroup'), 'Microsoft.Compute/virtualMachines', parameters('existingVirtualMachines')[copyIndex()])]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ]
+    }
+  ]
+}

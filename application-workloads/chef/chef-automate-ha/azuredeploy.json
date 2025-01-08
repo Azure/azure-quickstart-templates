@@ -1,0 +1,571 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "objectId": {
+      "type": "securestring",
+      "defaultValue": "44b29aa9-ccd0-4314-aaa0-fd4df282b906",
+      "metadata": {
+        "description": "Object Id of the AAD user or service principal that will have access to the vault. Available from the Get-AzureRMADUser or the Get-AzureRMADServicePrincipal cmdlets"
+      }
+    },
+    "vaultSku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "SKU for the vault"
+      }
+    },
+    "adminUsername": {
+      "defaultValue": "chefuser",
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "sshKeyData": {
+      "defaultValue": "",
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
+    "vmSize": {
+      "defaultValue": "Standard_D4s_v3",
+      "allowedValues": [
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_D4s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D4s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_F4s",
+        "Standard_F8s",
+        "Standard_F16s"
+      ],
+      "type": "string",
+      "metadata": {
+        "description": "size of the Virtual Machine."
+      }
+    },
+    "chefServerDnsPrefix": {
+      "type": "string",
+      "defaultValue": "chefserver",
+      "metadata": {
+        "description": "dens name for chef server"
+      }
+    },
+    "chefAutomateDnsPrefix": {
+      "type": "string",
+      "defaultValue": "chefautomate",
+      "metadata": {
+        "description": "chef automate dns name"
+      }
+    },
+    "firstName": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "administrator user for chef automate"
+      }
+    },
+    "lastName": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "administrator user for chef automate"
+      }
+    },
+    "emailId": {
+      "defaultValue": "user@password.com",
+      "type": "string",
+      "metadata": {
+        "description": "emaild for chef automate"
+      }
+    },
+    "organizationName": {
+      "defaultValue": "chef",
+      "type": "string",
+      "metadata": {
+        "description": "Organization name for chef automate"
+      }
+    },
+    "appID": {
+      "defaultValue": "",
+      "minLength": 1,
+      "type": "securestring",
+      "metadata": {
+        "description": "servicePrinciple"
+      }
+    },
+    "password": {
+      "defaultValue": "",
+      "minLength": 1,
+      "type": "securestring",
+      "metadata": {
+        "description": "password"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "keyvaultSettings": {
+      "keyVaultApiVersion": "2015-06-01",
+      "keyVaultName": "[concat('chef-key',substring(variables('prefix') ,0 ,5))]",
+      "tenantId": "[subscription().tenantId]",
+      "dbPasswordValue": "[concat('chv-',substring(variables('prefix'),0,10),'-dbp')]",
+      "replicationPasswordValue": "[concat('chv-',substring(variables('prefix'),0,11),'-rpp')]",
+      "clusterTokenValue": "[concat('chv-',substring(variables('prefix'),0,12),'-ctt')]",
+      "clusterNameValue": "[concat('chef-',substring(variables('prefix'),0,8))]",
+      "location": "[parameters('location')]",
+      "objectId": "[parameters('objectId')]",
+      "vaultSku": "[parameters('vaultSku')]",
+      "dbPassword": "dbPassword",
+      "replicationPassword": "replicationPassword",
+      "clusterToken": "clusterToken",
+      "clusterName": "clusterName",
+      "appID": "[parameters('appID')]",
+      "password": "[parameters('password')]"
+    },
+    "computeSettings": {
+      "count": 7,
+      "location": "[parameters('location')]",
+      "computeApiVersion": "2016-04-30-preview",
+      "adminUsername": "[parameters('adminUsername')]",
+      "sshKeyData": "[parameters('sshKeyData')]",
+      "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+      "chefServerUserName": "delivery",
+      "managedDiskName": "dataDisk",
+      "storageAccountType": "Premium_LRS",
+      "diagStorageAccountType": "Standard_LRS",
+      "diskCreateOption": "empty",
+      "diskSizeGB": 50,
+      "vmSize": "[parameters('vmSize')]",
+      "imagePublisher": "Canonical",
+      "imageOffer": "UbuntuServer",
+      "ubuntuOSVersion": "16.04-LTS",
+      "imageVersion": "latest",
+      "chefBEAvailName": "be-avail",
+      "leadercomputerName": "be0",
+      "followercomputerName1": "be1",
+      "followercomputerName2": "be2",
+      "leaderExtensionName": "be0-ex0",
+      "followerExtensionName1": "be-ex1",
+      "followerExtensionName2": "be-ex2",
+      "leadercustomData": "[variables('customData').leaderCustomData]",
+      "followercustomData": "[variables('customData').followerCustomData]",
+      "feComputerName0": "fe0",
+      "feComputerName1": "fe1",
+      "feComputerName2": "fe2",
+      "feVmExtensionName0": "fe0-ex0",
+      "feVmExtensionName1": "fe1-ex1",
+      "feVmExtensionName2": "fe1-ex2",
+      "fe0CustomData": "[variables('customData').fe0Customdata]",
+      "feCustomData": "[variables('customData').feCustomData]",
+      "chefFEAvailName": "fe-avail",
+      "autoComputerName": "chefautomate",
+      "chefAutoExtenName": "chef-auto-ex",
+      "automateCustomData": "[variables('customData').automateCustomData]",
+      "firstName": "[parameters('firstName')]",
+      "lastName": "[parameters('lastName')]",
+      "emailId": "[parameters('emailId')]",
+      "organizationName": "[parameters('organizationName')]",
+      "keyvaultId": "[concat(subscription().id,'/resourceGroups/',resourceGroup().name, '/providers/Microsoft.KeyVault/vaults/', variables('keyvaultSettings').keyVaultName)]"
+    },
+    "storageSettings": {
+      "location": "[parameters('location')]",
+      "diagStorageAccName": "[concat('diagstr',substring(variables('prefix') ,0 ,5))]",
+      "diagStorageAccountType": "Standard_LRS",
+      "storageApiVersion": "2015-06-15"
+    },
+    "networkSettings": {
+      "location": "[parameters('location')]",
+      "networkApiVersion": "2015-06-15",
+      "leaderNicName": "be-nic0",
+      "followerNicName1": "be-nic1",
+      "followerNicName2": "be-nic2",
+      "feNicName0": "fe-nic0",
+      "feNicName1": "fe-nic1",
+      "feNicName2": "fe-nic2",
+      "chefAutoNicName": "chefauto-nic",
+      "feNsg": "fe-nsg",
+      "beNsg": "be-nsg",
+      "bePoolName1": "chef-ha-pool-fe",
+      "bePoolName2": "chef-ha-pool-ssh-admin",
+      "felbPublicIPAddressName": "fe-pip",
+      "chefAutoPublicIPAddressName": "chefauto-pip",
+      "virtualNetworkName": "chef-vnet",
+      "addressPrefix": "10.0.0.0/16",
+      "feSubnetName": "fe-subnet",
+      "feSubnetPrefix": "10.0.0.0/24",
+      "feLoadBalancerName": "fe-lb",
+      "beSubnetName": "be-subnet",
+      "beSubnetPrefix": "10.0.1.0/24",
+      "publicIPAddressType": "Dynamic",
+      "dnsLabelPrefixFE": "[concat(parameters('chefServerDnsPrefix'),substring(variables('prefix') ,0 ,3))]",
+      "dnsLabelPrefixChefAuto": "[concat(parameters('chefAutomateDnsPrefix'),substring(variables('prefix') ,0 ,3))]",
+      "diagStorageAccName": "[concat('diagstr',substring(variables('prefix') ,0 ,5))]"
+    },
+    "chef_backend_install_script_base": "[concat('dbPassword=$1\n','replicationPassword=$2\n','clusterToken=$3\n','clusterName=$4\n','apt-get install -y apt-transport-https\n','wget -qO - https://downloads.chef.io/packages-chef-io-public.key | sudo apt-key add -\n','echo \"deb https://packages.chef.io/stable-apt trusty main\" > /etc/apt/sources.list.d/chef-stable.list\n','apt-get update\n','apt-get install -y chef-backend\n','apt-get install -y lvm2 xfsprogs sysstat atop\n','umount -f /mnt\n','pvcreate -f /dev/sdc\n','vgcreate chef-vg /dev/sdc\n','lvcreate -n chef-lv -l 80%VG chef-vg\n','mkfs.xfs /dev/chef-vg/chef-lv\n','mkdir -p /var/opt/chef-backend\n','mount /dev/chef-vg/chef-lv /var/opt/chef-backend\n','cat > /etc/chef-backend/chef-backend-secrets.json <<EOF\n','{\n','\"postgresql\": {\n','\"db_superuser_password\": \"######\",\n','\"replication_password\": \"#######\"\n','},\n','\"etcd\": {\n','\"initial_cluster_token\": \"########\"\n',' },\n','\"elasticsearch\": {\n','\"cluster_name\": \"#########\"\n','}\n','}\n','EOF\n','sed -i ''0,/######/s//''$dbPassword''/'' /etc/chef-backend/chef-backend-secrets.json\n','sed -i ''0,/#######/s//''$replicationPassword''/'' /etc/chef-backend/chef-backend-secrets.json\n','sed -i ''0,/########/s//''$clusterToken''/'' /etc/chef-backend/chef-backend-secrets.json\n','sed -i ''0,/#########/s//''$clusterName''/'' /etc/chef-backend/chef-backend-secrets.json\n','IP=`ifconfig eth0 | awk ''/inet addr/{print substr($2,6)}''`\n','cat > /etc/chef-backend/chef-backend.rb <<EOF\n','publish_address ''${IP}''\n','postgresql.log_min_duration_statement = 500\n','elasticsearch.heap_size = 3500\n','postgresql.md5_auth_cidr_addresses = [\"samehost\", \"samenet\", \"10.0.0.0/24\"]\n','EOF\n')]",
+    "chef_frontend_install_script_base": "[concat('dbPassword=$1\n','firstName=$2\n','lastName=$3\n','emailId=$4\n','organizationName=$5\n','appID=$6\n','tenantID=$7\n','password=$8\n','objectId=$9\n','keyVaultName=${10}\n','fqdn=`hostname -f`\n','apt-get install -y apt-transport-https\n','apt-get install -y sshpass\n','wget -qO - https://downloads.chef.io/packages-chef-io-public.key | sudo apt-key add -\n','echo \"deb https://packages.chef.io/stable-apt trusty main\" > /etc/apt/sources.list.d/chef-stable.list\n','apt-get update\n','apt-get install -y lvm2 xfsprogs sysstat atop\n','umount -f /mnt\n','pvcreate -f /dev/sdc\n','vgcreate chef-vg /dev/sdc\n','lvcreate -n chef-data -l 20%VG chef-vg\n','lvcreate -n chef-logs -l 80%VG chef-vg\n','mkfs.xfs /dev/chef-vg/chef-data\n','mkfs.xfs /dev/chef-vg/chef-logs\n','mkdir -p /var/opt/opscode\n','mkdir -p /var/log/opscode\n','mount /dev/chef-vg/chef-data /var/opt/opscode\n','mount /dev/chef-vg/chef-logs /var/log/opscode\n','apt-get install -y chef-server-core chef-manage\n','apt-get install -y libssl-dev libffi-dev python-dev build-essential\n','echo \"deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main\" > /etc/apt/sources.list.d/azure-cli.list\n','apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893\n','apt-get update\n','apt-get install azure-cli\n','cat > /etc/opscode/chef-server.rb <<EOF\n','\n','fqdn \"####\"\n','\n','use_chef_backend true\n','chef_backend_members [\"10.0.1.6\", \"10.0.1.5\", \"10.0.1.4\"]\n','\n','haproxy[''remote_postgresql_port''] = 5432\n','haproxy[''remote_elasticsearch_port''] = 9200\n','\n','postgresql[''external''] = true\n','postgresql[''vip''] = ''127.0.0.1''\n','postgresql[''db_superuser''] = ''chef_pgsql''\n','postgresql[''db_superuser_password''] = ''######''\n','\n','opscode_solr4[''external''] = true\n','opscode_solr4[''external_url''] = ''http://127.0.0.1:9200''\n','opscode_erchef[''search_provider''] = ''elasticsearch''\n','opscode_erchef[''search_queue_mode''] = ''batch''\n','\n','bookshelf[''storage_type''] = :sql\n','\n','rabbitmq[''enable''] = false\n','rabbitmq[''management_enabled''] = false\n','rabbitmq[''queue_length_monitor_enabled''] = false\n','\n','opscode_expander[''enable''] = false\n','\n','dark_launch[''actions''] = false\n','\n','opscode_erchef[''nginx_bookshelf_caching''] = :on\n','opscode_erchef[''s3_url_expiry_window_size''] = ''50%''\n','opscode_erchef[''s3_url_expiry_window_size''] = ''100%''\n','license[''nodes''] = 999999\n','oc_chef_authz[''http_init_count''] = 100\n','oc_chef_authz[''http_max_count''] = 100\n','oc_chef_authz[''http_queue_max''] = 200\n','oc_bifrost[''db_pool_size''] = 20\n','oc_bifrost[''db_pool_queue_max''] = 40\n','oc_bifrost[''db_pooler_timeout''] = 2000\n','opscode_erchef[''depsolver_worker_count''] = 4\n','opscode_erchef[''depsolver_timeout''] = 20000\n','opscode_erchef[''db_pool_size''] = 20\n','opscode_erchef[''db_pool_queue_max''] = 40\n','opscode_erchef[''db_pooler_timeout''] = 2000\n','opscode_erchef[''authz_pooler_timeout''] = 2000\n','EOF\n','sed -i ''0,/######/s//''$dbPassword''/'' /etc/opscode/chef-server.rb\n','sed -i ''0,/####/s//''$fqdn''/'' /etc/opscode/chef-server.rb\n')]",
+    "chef_automate_install_script_base": "[concat('appID=$1\n','tenantID=$2\n','password=$3\n','objectId=$4\n','keyVaultName=$5\n','apt-get install -y libssl-dev libffi-dev python-dev build-essential\n','echo \"deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main\" > /etc/apt/sources.list.d/azure-cli.list\n','apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893\n','apt-get update\n','apt-get install azure-cli\n','apt-get install -y apt-transport-https\n','apt-get update\n','apt-get install -y sshpass\n','apt-get install -y wget\n','apt-get install -y lvm2 xfsprogs sysstat atop\n','umount -f /mnt\n','pvcreate -f /dev/sdc\n','vgcreate delivery-vg /dev/sdc\n','lvcreate -n delivery-lv -l 80%VG delivery-vg\n','mkfs.xfs /dev/delivery-vg/delivery-lv\n','mkdir -p /var/opt/delivery\n','mount /dev/delivery-vg/delivery-lv /var/opt/delivery\n','wget  https://packages.chef.io/files/stable/automate/0.8.5/ubuntu/16.04/automate_0.8.5-1_amd64.deb\n','dpkg -i automate_0.8.5-1_amd64.deb\n','az login --service-principal -u $appID --password $password --tenant $tenantID\n','az keyvault secret download --file /etc/delivery/chefautomatedeliveryuser.pem --name chefdeliveryuserkey --vault-name $keyVaultName\n','cat > /etc/delivery/command_to_execute <<EOF\n','automate-ctl setup --license AUTOMATE_LICENSE --key < AUTOMATE_CHEF_USER_KEY > --server-url https:// < CHEF_SERVER_FQDN/organizations >/chef-automate-org --fqdn < AUTOMATE_SERVER_FQDN >  --enterprise < ENTERPRISE_NAME >\n','EOF\n')]",
+    "scripts": {
+      "chef_backend_install_script_leader": "[concat(variables('chef_backend_install_script_base'),'chef-backend-ctl create-cluster --accept-license --yes --quiet --verbose\n')]",
+      "chef_backend_install_script_follower": "[concat(variables('chef_backend_install_script_base'),'chef-backend-ctl join-cluster 10.0.1.4 -s /etc/chef-backend/chef-backend-secrets.json --accept-license --yes --quiet --verbose\n')]",
+      "chef_frontend_install_script_fe0": "[concat(variables('chef_frontend_install_script_base'),'chef-server-ctl reconfigure --accept-license\n','sudo chef-manage-ctl reconfigure --accept-license\n','echo ''ENABLED=\"true\"'' > /etc/default/sysstat\n','service sysstat start\n','sleep 5\n','chef-server-ctl user-create delivery $firstName $lastName $emailId $password --filename /etc/opscode/chefautomatedeliveryuser.pem\n','sleep 5\n','sudo chef-server-ctl org-create $organizationName ''Chef Automate Org'' --file /etc/opscode/chef_automate_org-validator.pem -a delivery\n','sleep 5\n','az login --service-principal -u $appID --password $password --tenant $tenantID\n','if [ `echo $?` -eq 0 ]\n','then\n','echo \"uploading the secret files to keyvault\"\n','az keyvault secret set --name chefsecrets --vault-name $keyVaultName --file /etc/opscode/private-chef-secrets.json\n','az keyvault secret set --name chefdeliveryuserkey --vault-name $keyVaultName --file /etc/opscode/chefautomatedeliveryuser.pem\n','az keyvault secret set --name chefdeliveryuserpassword --vault-name $keyVaultName --value $password\n','else\n','echo \"Authentication to Azure keyvault failed\"\n','fi\n')]",
+      "chef_frontend_install_script_fe": "[concat(variables('chef_frontend_install_script_base'),'az login --service-principal -u $appID --password $password --tenant $tenantID\n','az keyvault secret download --file /etc/opscode/private-chef-secrets.json --name chefsecrets --vault-name $keyVaultName\n','mkdir -p /var/opt/opscode/upgrades/\n','touch /var/opt/opscode/bootstrapped\n','chef-server-ctl reconfigure --accept-license\n','sudo chef-manage-ctl reconfigure --accept-license\n','echo ''ENABLED=\"true\"'' > /etc/default/sysstat\n','service sysstat start\n')]"
+    },
+    "customData": {
+      "fe0Customdata": "[base64(concat('#cloud-config\n', '\n', 'write_files:\n', '-   encoding: b64\n', '    content: ', base64(variables('scripts').chef_frontend_install_script_fe0) , '\n', '    path: /etc/opscode/chef-frontend-install.sh\n', '    permissions: 0700\n'))]",
+      "feCustomData": "[base64(concat('#cloud-config\n', '\n', 'write_files:\n', '-   encoding: b64\n', '    content: ', base64(variables('scripts').chef_frontend_install_script_fe) , '\n', '    path: /etc/opscode/chef-frontend-install.sh\n', '    permissions: 0700\n'))]",
+      "leaderCustomData": "[base64(concat('#cloud-config\n', '\n', 'write_files:\n', '-   encoding: b64\n', '    content: ', base64(variables('scripts').chef_backend_install_script_leader) , '\n', '    path: /etc/chef-backend/chef-backend-install.sh\n', '    permissions: 0700\n'))]",
+      "followerCustomData": "[base64(concat('#cloud-config\n', '\n', 'write_files:\n', '-   encoding: b64\n', '    content: ', base64(variables('scripts').chef_backend_install_script_follower) , '\n', '    path: /etc/chef-backend/chef-backend-install.sh\n', '    permissions: 0700\n'))]",
+      "automateCustomData": "[base64(concat('#cloud-config\n', '\n', 'write_files:\n', '-   encoding: b64\n', '    content: ', base64(variables('chef_automate_install_script_base')) , '\n', '    path: /etc/delivery/chef-automate-install.sh\n', '    permissions: 0700\n'))]"
+    },
+    "baseUrl": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/application-workloads/chef/chef-automate-ha/",
+    "keyvaultResourcesURL": "[concat(variables('baseUrl'),'nested/keyvaultResource.json')]",
+    "managedDisksResourcesURL": "[concat(variables('baseUrl'),'nested/managedDisksResource.json')]",
+    "diagnosticStorageAccountResourcesURL": "[concat(variables('baseUrl'),'nested/diagnosticStorageAccountResource.json')]",
+    "availabilitySetSResourcesURL": "[concat(variables('baseUrl'),'nested/availabilitySetsResource.json')]",
+    "publicIPAddressesResourcesURL": "[concat(variables('baseUrl'),'nested/publicIPAddressResource.json')]",
+    "networkSecurityGroupsResourcesURL": "[concat(variables('baseUrl'),'nested/networkSecurityGroupsResource.json')]",
+    "virtualNetworksResourcesURL": "[concat(variables('baseUrl'),'nested/virtualNetworksResource.json')]",
+    "fe-loadBalancersResourcesURL": "[concat(variables('baseUrl'),'nested/loadBalancersResource.json')]",
+    "fe-networkInterfacesResourcesURL": "[concat(variables('baseUrl'),'nested/fe-networkInterfacesResource.json')]",
+    "be-networkInterfacesResourcesURL": "[concat(variables('baseUrl'),'nested/be-networkInterfacesResource.json')]",
+    "chefAuto-networkInterfacesResourcesURL": "[concat(variables('baseUrl'),'nested/chefAuto-networkInterfacesResource.json')]",
+    "fe-be-VmsWithExtensionsURL": "[concat(variables('baseUrl'),'nested/fe-be-virtualmachines-with-extensions.json')]",
+    "beSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('networkSettings').virtualNetworkName, variables('networkSettings').beSubnetName)]",
+    "feSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('networkSettings').virtualNetworkName, variables('networkSettings').feSubnetName)]",
+    "felbPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('networkSettings').felbPublicIPAddressName)]",
+    "chefAutoPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('networkSettings').chefAutoPublicIPAddressName)]",
+    "prefix": "[uniqueString(resourceGroup().id)]",
+    "provider": "[toUpper('33194f91-eb5f-4110-827a-e95f640a9e46')]",
+    "tags": {
+      "provider": "18d63047-6cdf-4f34-beed-62f01fc73fc2"
+    }
+  },
+  "resources": [
+    {
+      "comments": "Resource to track Chef Automate installations using this template",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('pid-', variables('tags').provider)]",
+      "apiVersion": "2017-05-10",  
+      "properties": {
+          "mode": "Incremental",
+          "template": {
+              "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+              "contentVersion": "1.0.0.0",
+              "resources": []
+          }
+      }
+    },
+    {
+      "name": "keyvaultResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('keyvaultResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "keyvaultSettings": {
+            "value": "[variables('keyvaultSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "managedDisksResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('managedDisksResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "computeSettings": {
+            "value": "[variables('computeSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "diagnosticStorageAccountsResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('diagnosticStorageAccountResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageSettings": {
+            "value": "[variables('storageSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "availabilitySetsResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('availabilitySetSResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "computeSettings": {
+            "value": "[variables('computeSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "publicIPAddressesResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('publicIPAddressesResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "networkSecurityGroupsResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('networkSecurityGroupsResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "virtualNetworksResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "networkSecurityGroupsResource"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualNetworksResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "fe-loadBalancersResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "publicIPAddressesResource"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('fe-loadBalancersResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "felbPublicIPAddressID": {
+            "value": "[variables('felbPublicIPAddressID')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "fe-networkInterfacesResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "fe-loadBalancersResource",
+        "virtualNetworksResource",
+        "networkSecurityGroupsResource"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('fe-networkInterfacesResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "feSubnetRef": {
+            "value": "[variables('feSubnetRef')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "be-networkInterfacesResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "virtualNetworksResource",
+        "networkSecurityGroupsResource"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('be-networkInterfacesResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "beSubnetRef": {
+            "value": "[variables('beSubnetRef')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "chefAuto-networkInterfacesResource",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "publicIPAddressesResource",
+        "virtualNetworksResource",
+        "networkSecurityGroupsResource"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('chefAuto-networkInterfacesResourcesURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "feSubnetRef": {
+            "value": "[variables('feSubnetRef')]"
+          },
+          "chefAutoPublicIPAddressID": {
+            "value": "[variables('chefAutoPublicIPAddressID')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "fe-be-virtualMachinesWithExtensions",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('fe-be-VmsWithExtensionsURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "computeSettings": {
+            "value": "[variables('computeSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networksettings')]"
+          },
+          "keyvaultSettings": {
+            "value": "[variables('keyvaultSettings')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "managedDisksResource",
+        "diagnosticStorageAccountsResource",
+        "availabilitySetsResource",
+        "fe-networkInterfacesResource",
+        "be-networkInterfacesResource",
+        "chefAuto-networkInterfacesResource",
+        "keyvaultResource"
+      ]
+    }
+  ],
+  "outputs": {
+    "adminusername": {
+      "type": "string",
+      "value": "[variables('computeSettings').adminUsername]"
+    },
+    "chef-server-url": {
+      "type": "string",
+      "value": "[concat('https://',reference('publicIPAddressesResource').outputs.chefServerfqdn.value)]"
+    },
+    "chef-server-fqdn": {
+      "type": "string",
+      "value": "[reference('publicIPAddressesResource').outputs.chefServerfqdn.value]"
+    },
+    "keyvaultName": {
+      "type": "string",
+      "value": "[variables('keyvaultSettings').keyVaultName]"
+    },
+    "chef-server-webLogin-userName": {
+      "type": "string",
+      "value": "[variables('computeSettings').chefServerUserName]"
+    },
+    "chef-server-webLogin-password": {
+      "type": "string",
+      "value": "The chef-server-weblogin-password stored in the keyvault,you can retrieve it using azure CLI 2.0 [az keyvault secret show --name chefdeliveryuserpassword --vault-name < keyvaultname >]"
+    },
+    "chef-automate-url": {
+      "type": "string",
+      "value": "[concat('https://',reference('publicIPAddressesResource').outputs.chefAutomatefqdn.value)]"
+    },
+    "chef-automate-fqdn": {
+      "type": "string",
+      "value": "[reference('publicIPAddressesResource').outputs.chefAutomatefqdn.value]"
+    }
+  }
+}
+

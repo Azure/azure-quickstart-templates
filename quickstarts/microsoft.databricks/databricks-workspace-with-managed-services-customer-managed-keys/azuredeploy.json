@@ -1,0 +1,190 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.27.1.19265",
+      "templateHash": "12844862600618536139"
+    }
+  },
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "default",
+      "metadata": {
+        "description": "The name of the Azure Databricks workspace to create."
+      }
+    },
+    "pricingTier": {
+      "type": "string",
+      "defaultValue": "premium",
+      "allowedValues": [
+        "standard",
+        "premium"
+      ],
+      "metadata": {
+        "description": "The pricing tier of workspace."
+      }
+    },
+    "enableNoPublicIp": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether to deploy Azure Databricks workspace with secure cluster connectivity (SCC) enabled or not (No Public IP)"
+      }
+    },
+    "ObjectID": {
+      "type": "string",
+      "metadata": {
+        "description": "The object ID of the AzureDatabricks enterprise application."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The key vault name used for customer-managed key for managed services"
+      }
+    },
+    "keyvaultUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The key vault URI used for customer-managed key for managed services"
+      }
+    },
+    "keyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The key name used for customer-managed key for managed services"
+      }
+    },
+    "keyVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The key version used for customer-managed key for managed services"
+      }
+    },
+    "keyVaultResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group name of the key vault used for customer-managed key for managed services"
+      }
+    }
+  },
+  "variables": {
+    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+    "trimmedMRGName": "[substring(variables('managedResourceGroupName'), 0, min(length(variables('managedResourceGroupName')), 90))]",
+    "managedResourceGroupId": "[format('{0}/resourceGroups/{1}', subscription().id, variables('trimmedMRGName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('pricingTier')]"
+      },
+      "properties": {
+        "managedResourceGroupId": "[format('{0}/resourceGroups/{1}', subscription().id, variables('trimmedMRGName'))]",
+        "encryption": {
+          "entities": {
+            "managedServices": {
+              "keySource": "Microsoft.Keyvault",
+              "keyVaultProperties": {
+                "keyVaultUri": "[parameters('keyvaultUri')]",
+                "keyName": "[parameters('keyName')]",
+                "keyVersion": "[parameters('keyVersion')]"
+              }
+            }
+          }
+        },
+        "parameters": {
+          "enableNoPublicIp": {
+            "value": "[parameters('enableNoPublicIp')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "addAccessPolicy",
+      "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "ObjectID": {
+            "value": "[parameters('ObjectID')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.27.1.19265",
+              "templateHash": "3600769511872941018"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "The key vault name used for customer-managed key for managed services"
+              }
+            },
+            "ObjectID": {
+              "type": "string",
+              "metadata": {
+                "description": "The object ID of the AzureDatabricks enterprise application."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
+              "apiVersion": "2022-11-01",
+              "name": "[format('{0}/add', parameters('keyVaultName'))]",
+              "properties": {
+                "accessPolicies": [
+                  {
+                    "objectId": "[parameters('ObjectID')]",
+                    "tenantId": "[subscription().tenantId]",
+                    "permissions": {
+                      "keys": [
+                        "get",
+                        "wrapKey",
+                        "unwrapKey"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "workspace": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2024-05-01')]"
+    }
+  }
+}

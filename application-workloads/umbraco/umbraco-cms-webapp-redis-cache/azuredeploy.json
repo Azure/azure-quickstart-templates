@@ -1,0 +1,616 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+     "actionGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the action group."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "metadata": {
+        "description": "The short name of the action group."
+      }
+    },
+    "appInsightsResource": {
+      "type": "string",
+      "metadata": {
+        "description": "The id of the underlying Application Insights resource."
+      }
+    },
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of azure web app."
+      }
+    },
+    "appServiceTier": {
+      "type": "string",
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Choose either Standard or Premium Azure Web Apps pricing tiers. It defaults to Standard."
+      }
+    },
+    "appServiceWorkerSize": {
+      "type": "string",
+      "allowedValues": [
+        "0",
+        "1",
+        "2"
+      ],
+      "defaultValue": "0",
+      "metadata": {
+        "description": "Worker Size( 0=Small, 1=Medium, 2=Large )"
+      }
+    },
+    "dbServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Azure DB Server name"
+      }
+    },
+    "dbAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Azure DB administrator  user login"
+      }
+    },
+    "dbAdministratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Database admin user password"
+      }
+    },
+    "dbName": {
+      "type": "string",
+      "metadata": {
+        "description": "Database Name"
+      }
+    },
+    "dbEdition": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "SQL DB appServiceTier : Basic,Standard,Premium"
+      }
+    },
+    "nonAdminDatabaseUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Non-admin Database User. Must be Unique"
+      }
+    },
+    "nonAdminDatabasePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Non-admin Database User password"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS"
+      ],
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Storage Account Type : Standard-LRS, Standard-GRS,Standard-RAGRS,Standard-ZRS"
+      }
+    },
+    "redisCacheName": {
+      "type": "string",
+      "metadata": {
+        "description": "Redis Cache Name"
+      }
+    },
+    "redisCacheServiceTier": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Redis Cache appServiceTier - Basic , Standard"
+      }
+    },
+    "emails": {
+      "type": "array",
+      "metadata": {
+        "description": "A list of strings representing the email addresses to send alerts to."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "packageUri": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "appInsightsRegion": "[parameters('location')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+    "umbracoAdminWebAppName": "[concat(parameters('appName'), 'adminapp')]",
+    "appServicePlanName": "[concat(parameters('appName'), 'serviceplan')]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('actionGroupName')]",
+      "type": "microsoft.insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "global",
+      "properties": {
+        "groupShortName": "[parameters('actionGroupShortName')]",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "test",
+            "emailAddress": "[parameters('emails')[0]]",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2014-04-01-preview",
+      "name": "[parameters('redisCacheName')]",
+      "type": "Microsoft.Cache/Redis",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('redisCacheServiceTier')]",
+          "family": "C",
+          "capacity": 0
+        },
+        "redisVersion": "2.8",
+        "enableNonSslPort": true
+      }
+    },
+    {
+      "name": "[parameters('dbServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[parameters('location')]",
+      "apiVersion": "2014-04-01-preview",
+      "properties": {
+        "administratorLogin": "[parameters('dbAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "apiVersion": "2014-04-01-preview",
+          "name": "[parameters('dbName')]",
+          "type": "databases",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('dbServerName')]"
+          ],
+          "properties": {
+            "edition": "[parameters('dbEdition')]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "requestedServiceObjectiveId": "F1173C43-91BD-4AAA-973C-54E79E15235B"
+          }
+        },
+        {
+          "apiVersion": "2021-02-01-preview",
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', parameters('dbServerName'))]"
+          ],
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2014-06-01",
+      "name": "[variables('appServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('appServicePlanName')]",
+        "appServiceTier": "[parameters('appServiceTier')]",
+        "workerSize": "[parameters('appServiceWorkerSize')]",
+        "numberOfWorkers": 1
+      }
+    },
+    {
+      "apiVersion": "2015-02-01",
+      "name": "[parameters('appName')]",
+      "type": "Microsoft.Web/Sites",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "empty"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('appName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2014-06-01",
+          "name": "MSDeploy",
+          "type": "Extensions",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', parameters('appName'))]",
+            "[resourceId('Microsoft.Web/Sites/config', parameters('appName'), 'web')]",
+            "[resourceId('Microsoft.Sql/servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+          ],
+          "properties": {
+            "packageUri": "[parameters('packageUri')]",
+            "dbType": "SQL",
+            "connectionString": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+            "setParameters": {
+              "Application Path": "[parameters('appName')]",
+              "Database Server": "[reference(resourceId('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName]",
+              "Database Name": "[parameters('dbName')]",
+              "Database Username": "[parameters('nonAdminDatabaseUsername')]",
+              "Database Password": "[parameters('nonAdminDatabasePassword')]",
+              "Database Administrator": "[parameters('dbAdministratorLogin')]",
+              "Database Administrator Password": "[parameters('dbAdministratorLoginPassword')]",
+              "azurestoragerootUrl": "[format('https://{0}.blob.{1}',variables('storageAccountName'), environment().suffixes.storage)]",
+              "azurestoragecontainerName": "media",
+              "azurestorageconnectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(variables('storageAccountName'),'2021-04-01').keys[0].value))]",
+              "rediscachehost": "[concat(parameters('redisCacheName'), '.redis.cache.windows.net')]",
+              "rediscacheport": "6379",
+              "rediscacheaccessKey": "[listKeys(resourceId('Microsoft.Cache/Redis', parameters('redisCacheName')), '2020-06-01').primaryKey]",
+              "azurestoragecacheControl": "*|public, max-age=31536000;js|no-cache"
+            }
+          }
+        },
+        {
+          "apiVersion": "2020-12-01",
+          "name": "connectionstrings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+            "[resourceId('Microsoft.Sql/servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[resourceId('Microsoft.Web/Sites/Extensions', parameters('appName'), 'MSDeploy')]"
+          ],
+          "properties": {
+            "defaultConnection": {
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            }
+          }
+        },
+        {
+          "apiVersion": "2020-12-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', parameters('appName'))]"
+          ],
+          "properties": {
+            "phpVersion": "off",
+            "netFrameworkVersion": "v4.5",
+            "use32BitWorkerProcess": "true",
+            "webSocketsEnabled": true,
+            "alwaysOn": "true",
+            "httpLoggingEnabled": true,
+            "logsDirectorySizeLimit": 40
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2014-04-01",
+      "name": "[concat(variables('appServicePlanName'), '-scaleset')]",
+      "type": "microsoft.insights/autoscalesettings",
+      "location": "[variables('appInsightsRegion')]",
+      "tags": {
+        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": 1,
+              "maximum": 2,
+              "default": 1
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 80
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT1H",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT1H"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": false,
+        "name": "[concat(variables('appServicePlanName'), '-scaleset')]",
+        "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+      }
+    },
+    {
+      "name": "[concat('ServerErrors ', parameters('appName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/', parameters('appName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]": "Resource"
+      },
+      "properties": {
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/sites/', parameters('appName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/sites",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/sites', parameters('appName'), '-5XX-errors')]",
+              "metricName": "Http5xx",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            },
+            {
+              "name": "[concat('Microsoft.Web/sites', parameters('appName'), '-403-errors')]",
+              "metricName": "Http403",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[parameters('appInsightsResource')]",
+          "metricName": "[concat(parameters('appName'), 'server errors')]"
+          },
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
+      }
+    },
+    { 
+      "name": "[concat('The average CPU is high across all the instances of ', variables('appServicePlanName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "tags": {
+        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'), '-cpupercentage')]",
+              "metricName": "CpuPercentage",
+              "operator": "GreaterThan",
+              "threshold": 90,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[parameters('appInsightsResource')]",
+          "metricName": "[concat('The average CPU is high across all the instances of ', variables('appServicePlanName'))]"
+          },
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat('LongHttpQueue ', variables('appServicePlanName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "tags": {
+        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'), '-httpqueuelegth')]",
+              "metricName": "HttpQueueLength",
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[parameters('appInsightsResource')]",
+          "metricName": "[concat('The HTTP queue for the instances of ', variables('appServicePlanName'), ' has a large number of pending requests.')]"
+          },
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-02-01",
+      "name": "[variables('umbracoAdminWebAppName')]",
+      "type": "Microsoft.Web/Sites",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "empty"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "name": "[variables('umbracoAdminWebAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2014-06-01",
+          "name": "MSDeploy",
+          "type": "Extensions",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('umbracoAdminWebAppName'))]",
+            "[resourceId('Microsoft.Web/Sites/config',variables('umbracoAdminWebAppName'), 'web')]",
+            "[resourceId('Microsoft.Sql/servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+          ],
+          "properties": {
+            "packageUri": "[parameters('packageUri')]",
+            "dbType": "SQL",
+            "connectionString": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+            "setParameters": {
+              "Application Path": "[variables('umbracoAdminWebAppName')]",
+              "Database Server": "[reference(resourceId('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName]",
+              "Database Name": "[parameters('dbName')]",
+              "Database Username": "[concat(parameters('nonAdminDatabaseUsername'),'admin')]",
+              "Database Password": "[parameters('nonAdminDatabasePassword')]",
+              "Database Administrator": "[parameters('dbAdministratorLogin')]",
+              "Database Administrator Password": "[parameters('dbAdministratorLoginPassword')]",
+              "azurestoragerootUrl": "[format('https://{0}.blob.{1}',variables('storageAccountName'), environment().suffixes.storage)]",
+              "azurestoragecontainerName": "media",
+              "azurestorageconnectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(variables('storageAccountName'),'2021-04-01').keys[0].value))]",
+              "rediscachehost": "[concat(parameters('redisCacheName'), '.redis.cache.windows.net')]",
+              "rediscacheport": "6379",
+              "rediscacheaccessKey": "[listKeys(resourceId('Microsoft.Cache/Redis', parameters('redisCacheName')), '2020-06-01').primaryKey]",
+              "azurestoragecacheControl": "*|public, max-age=31536000;js|no-cache"
+            }
+          }
+        },
+        {
+          "apiVersion": "2020-12-01",
+          "name": "connectionstrings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', variables('umbracoAdminWebAppName'))]",
+            "[resourceId('Microsoft.Sql/servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[resourceId('Microsoft.Web/Sites/Extensions', variables('umbracoAdminWebAppName'), 'MSDeploy')]"
+          ],
+          "properties": {
+            "defaultConnection": {
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            }
+          }
+        },
+        {
+          "apiVersion": "2020-12-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('umbracoAdminWebAppName'))]"
+          ],
+          "properties": {
+            "phpVersion": "off",
+            "netFrameworkVersion": "v4.5",
+            "use32BitWorkerProcess": "true",
+            "webSocketsEnabled": true,
+            "alwaysOn": "true",
+            "httpLoggingEnabled": true,
+            "logsDirectorySizeLimit": 40
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,323 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Administrator user name used when provisioning virtual machines"
+            }
+        },
+        "mongoAdminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "MongoDB Administrator user name used when provisioning MongoDB replica set"
+            }
+        },
+        "mongoAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "MongoDB Administrator password used when provisioning MongoDB replica set"
+            }
+        },
+        "dnsNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS Name for the publicly accessible primary node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+            }
+        },
+        "sizeOfDataDiskInGB": {
+            "type": "int",
+            "minValue": 1,
+            "maxValue": 1023,
+            "defaultValue": 20,
+            "metadata": {
+                "description": "The size of each data disk, the value is between 1 and 1023. We use 4 data disks on each VM for raid0 to improve performance."
+            }
+        },
+        "centOsVersion": {
+            "type": "string",
+            "defaultValue": "7.7",
+            "allowedValues": [
+                "6.5",
+                "6.6",
+                "6.7",
+                "7.0",
+                "7.1",
+                "7.2",
+                "7.3",
+                "7.4",
+                "7.5",
+                "7.6",
+                "7.7"
+            ],
+            "metadata": {
+                "description": "The CentOS version for the VM. This will pick a fully patched image of this given CentOS version."
+            }
+        },
+        "secondaryNodeCount": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "Number of MongoDB secondary node (2 is the default), the value should be even numbers, like 2, 4, or 6. And 6 is the maximum number of secondary nodes."
+            }
+        },
+        "primaryNodeVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A4_v2",
+            "metadata": {
+                "description": "The size of the virtual machines used when provisioning the primary node"
+            }
+        },
+        "secondaryNodeVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A4_v2",
+            "metadata": {
+                "description": "The size of the virtual machines used when provisioning secondary node(s)"
+            }
+        },
+        "zabbixServerIPAddress": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The zabbix server IP which will monitor the mongodb nodes' mongodb status. Null means no zabbix server."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "authenticationType": {
+            "type": "string",
+            "defaultValue": "sshPublicKey",
+            "allowedValues": [
+                "sshPublicKey",
+                "password"
+            ],
+            "metadata": {
+                "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+            }
+        },
+        "adminPasswordOrKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "[deployment().properties.templateLink.uri]",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "primaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/primary.sh', parameters('_artifactsLocationSasToken')))]",
+        "secondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/secondary.sh', parameters('_artifactsLocationSasToken')))]",
+        "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+        "primaryTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/primary-resources.json', parameters('_artifactsLocationSasToken')))]",
+        "secondaryTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/secondary-resources.json', parameters('_artifactsLocationSasToken')))]",
+        "namespace": "mongodb-",
+        "virtualNetworkName": "myVNET1",
+        "networkSettings": {
+            "virtualNetworkName": "[variables('virtualNetworkName')]",
+            "addressPrefix": "10.0.0.0/16",
+            "subnet": {
+                "dse": {
+                    "name": "dse",
+                    "prefix": "10.0.1.0/24",
+                    "vnet": "[variables('virtualNetworkName')]"
+                }
+            },
+            "statics": {
+                "clusterRange": {
+                    "base": "10.0.1.",
+                    "start": 5
+                },
+                "primaryIp": "10.0.1.240"
+            }
+        },
+        "primaryOsSettings": {
+            "imageReference": {
+                "publisher": "OpenLogic",
+                "offer": "CentOS",
+                "sku": "[parameters('centOsVersion')]",
+                "version": "latest"
+            },
+            "scripts": [
+                "[variables('primaryNodeScript')]"
+            ]
+        },
+        "secondaryOsSettings": {
+            "imageReference": {
+                "publisher": "OpenLogic",
+                "offer": "CentOS",
+                "sku": "[parameters('centOsVersion')]",
+                "version": "latest"
+            },
+            "scripts": [
+                "[variables('secondaryNodeScript')]"
+            ]
+        }
+    },
+    "resources": [
+        {
+            "name": "shared",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('sharedTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "networkSettings": {
+                        "value": "[variables('networkSettings')]"
+                    },
+                    "namespace": {
+                        "value": "[variables('namespace')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat('secondaryNode', copyindex())]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+            ],
+            "copy": {
+                "name": "vmLoop",
+                "count": "[parameters('secondaryNodeCount')]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('secondaryTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "namespace": {
+                        "value": "[variables('namespace')]"
+                    },
+                    "vmbasename": {
+                        "value": "[concat('secondary', copyindex())]"
+                    },
+                    "subnet": {
+                        "value": "[variables('networkSettings').subnet.dse]"
+                    },
+                    "sizeOfDataDiskInGB": {
+                        "value": "[parameters('sizeOfDataDiskInGB')]"
+                    },
+                    "dnsname": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('secondaryNodeVmSize')]"
+                    },
+                    "zabbixServerIPAddress": {
+                        "value": "[parameters('zabbixServerIPAddress')]"
+                    },
+                    "osSettings": {
+                        "value": "[variables('secondaryOsSettings')]"
+                    },
+                    "authenticationType": {
+                        "value": "[parameters('authenticationType')]"
+                    },
+                    "adminPasswordOrKey": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "primaryNode",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+                "vmLoop"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('primaryTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "mongoAdminUsername": {
+                        "value": "[parameters('mongoAdminUsername')]"
+                    },
+                    "mongoAdminPassword": {
+                        "value": "[parameters('mongoAdminPassword')]"
+                    },
+                    "namespace": {
+                        "value": "[variables('namespace')]"
+                    },
+                    "vmbasename": {
+                        "value": "primary"
+                    },
+                    "subnet": {
+                        "value": "[variables('networkSettings').subnet.dse]"
+                    },
+                    "dnsname": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "staticIp": {
+                        "value": "[variables('networkSettings').statics.primaryIp]"
+                    },
+                    "secondaryNodeCount": {
+                        "value": "[parameters('secondaryNodeCount')]"
+                    },
+                    "sizeOfDataDiskInGB": {
+                        "value": "[parameters('sizeOfDataDiskInGB')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('primaryNodeVmSize')]"
+                    },
+                    "zabbixServerIPAddress": {
+                        "value": "[parameters('zabbixServerIPAddress')]"
+                    },
+                    "osSettings": {
+                        "value": "[variables('primaryOsSettings')]"
+                    },
+                    "authenticationType": {
+                        "value": "[parameters('authenticationType')]"
+                    },
+                    "adminPasswordOrKey": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

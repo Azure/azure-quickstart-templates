@@ -1,0 +1,247 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "workspaceName": {
+         "type": "string",
+         "metadata": {
+            "description": "Specify the workspace name"
+         }
+      }
+   },
+   "resources": [
+      {
+         "apiVersion": "2020-08-01",
+         "name": "[concat(parameters('workspaceName'), '/', 'cloud_storage')]",
+         "type": "Microsoft.OperationalInsights/workspaces/views",
+         "properties": {
+            "Name": "Cloud Storage",
+            "Author": "Microsoft",
+            "Source": "Local",
+            "Version": 2,
+            "Dashboard": [
+               {
+                  "Type": "Blade",
+                  "Version": 0,
+                  "Configuration": {
+                     "General": {
+                        "title": "Total Cloud Storage Consumed (GB)",
+                        "newGroup": false,
+                        "useIcon": false
+                     },
+                     "Trend1": {
+                        "Legend": "GRS (avg)",
+                        "LegendColor": "#00188f",
+                        "ChartQuery": "let VaultIdRepMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Vault\" | extend StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), VaultUniqueId_s=columnifexists(\"VaultUniqueId_s\",\"\") | summarize arg_max(TimeGenerated, *) by VaultUniqueId_s | where StorageReplicationType_s == \"GeoRedundant\" ; let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s=columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let Storages= AzureDiagnostics | where Category == \"AzureBackupReport\" |where OperationName == \"Storage\" |extend TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s=columnifexists(\"StorageType_s\", \"\") |summarize arg_max(TimeGenerated, *) by StorageUniqueId_s | project StorageUniqueId_s, StorageType_s | extend storage_type=StorageType_s; let StorageAssociations = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s=columnifexists(\"StorageConsumedInMBs_s\",\"\"), StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), VaultUniqueId_s=columnifexists(\"VaultUniqueId_s\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, VaultUniqueId_s, StorageUniqueId_s, TimeGenerated; StorageAssociations | join kind=inner ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | join kind=inner( VaultIdRepMap ) on VaultUniqueId_s | join kind=inner ( Storages ) on StorageUniqueId_s | where storage_type==\"Cloud\" | summarize arg_max(TimeGenerated,dayCharge=StorageInGB) by BackupItemUniqueId_s, bin(TimeGenerated, 1d) | summarize TotalCharge = sum(dayCharge) by TimeGenerated",
+                        "Calculation": {
+                           "Operation": "Average"
+                        }
+                     },
+                     "Trend2": {
+                        "Legend": "LRS (avg)",
+                        "LegendColor": "#0072c6",
+                        "ChartQuery": "let VaultIdRepMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Vault\" | extend StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), VaultUniqueId_s=columnifexists(\"VaultUniqueId_s\",\"\") |where StorageReplicationType_s != \"\" | summarize arg_max(TimeGenerated, *) by VaultUniqueId_s | where StorageReplicationType_s == \"LocallyRedundant\" ; let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s=columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let Storages= AzureDiagnostics | where Category == \"AzureBackupReport\" |where OperationName == \"Storage\" |extend TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s=columnifexists(\"StorageType_s\", \"\") |summarize arg_max(TimeGenerated, *) by StorageUniqueId_s | project StorageUniqueId_s, StorageType_s | extend storage_type=StorageType_s; let StorageAssociations = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s=columnifexists(\"StorageConsumedInMBs_s\",\"\"), StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), VaultUniqueId_s=columnifexists(\"VaultUniqueId_s\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, VaultUniqueId_s, StorageUniqueId_s, TimeGenerated; StorageAssociations | join kind=inner ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | join ( VaultIdRepMap ) on VaultUniqueId_s | join kind=inner ( Storages ) on StorageUniqueId_s | where storage_type==\"Cloud\" | summarize arg_max(TimeGenerated,dayCharge=StorageInGB) by BackupItemUniqueId_s, bin(TimeGenerated, 1d) | summarize TotalCharge = sum(dayCharge) by TimeGenerated",
+                        "Calculation": {
+                           "Operation": "Average"
+                        }
+                     },
+                     "List": {
+                        "Query": "let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s=columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), BackupItemFriendlyName_s=columnifexists(\"BackupItemFriendlyName_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s, item_name=BackupItemFriendlyName_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let StorageAssociations = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), StorageName_s=columnifexists(\"StorageName_s\",\"\") | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s, StorageUniqueId_s; let Storages=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Storage\" | extend StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s=columnifexists(\"StorageType_s\",\"\"), StorageName_s=columnifexists(\"StorageName_s\",\"\")| distinct StorageUniqueId_s, StorageType_s, StorageName_s; StorageAssociations | join kind=inner ( BackupIdTypeMap ) on BackupItemUniqueId_s | extend BackupItemType_s=columnifexists(\"BackupItemType_s1\", \"BackupItemType_s\") | extend StorageConsumedInMBs_s=columnifexists(\"StorageConsumedInMBs_s\",\"\") | where ${DatasourceType} | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, StorageName_s, item_name | join kind=inner ( Storages ) on StorageUniqueId_s | project StorageUniqueId_s, StorageName_s, StorageInGB, BackupItemUniqueId_s, StorageType_s, item_name | where StorageType_s==\"Cloud\" | project BackupItemUniqueId_s, BackupItemFriendlyName=item_name , StorageInGB| order by StorageInGB desc",
+                        "HideGraph": false,
+                        "enableSparklines": false,
+                        "ColumnsTitle": {
+                           "Name": "Backup Item ID",
+                           "Value": "Storage (GB)"
+                        },
+                        "Color": "#0072c6",
+                        "thresholds": {
+                           "isEnabled": false,
+                           "values": [
+                              {
+                                 "name": "Normal",
+                                 "threshold": "Default",
+                                 "color": "#009e49",
+                                 "isDefault": true
+                              },
+                              {
+                                 "name": "Warning",
+                                 "threshold": "60",
+                                 "color": "#fcd116",
+                                 "isDefault": false
+                              },
+                              {
+                                 "name": "Error",
+                                 "threshold": "90",
+                                 "color": "#ba141a",
+                                 "isDefault": false
+                              }
+                           ]
+                        },
+                        "NavigationQuery": " let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s=columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), BackupItemFriendlyName_s=columnifexists(\"BackupItemFriendlyName_s\",\"\")| where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s, item_name=BackupItemFriendlyName_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let StorageAssociations = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageConsumedInMBs_s = columnifexists (\"StorageConsumedInMBs_s\",\"\") |summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s, StorageUniqueId_s; let Storages=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Storage\" | extend StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s=columnifexists(\"StorageType_s\",\"\") |distinct StorageUniqueId_s, StorageType_s; StorageAssociations | join kind=inner ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, item_name | join kind= inner( Storages ) on StorageUniqueId_s | project StorageInGB, BackupItemUniqueId_s, StorageType_s, item_name, StorageUniqueId_s | where StorageType_s==\"Cloud\" | project StorageInGB, BackupItemFriendlyName=item_name, BackupItemUniqueId_s, StorageUniqueId_s | order by StorageInGB desc | search {selected item}",
+                        "NavigationSelect": {
+                           "NavigationQuery": " let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s=columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), BackupItemFriendlyName_s=columnifexists(\"BackupItemFriendlyName_s\",\"\")| where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s, item_name=BackupItemFriendlyName_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let StorageAssociations = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageConsumedInMBs_s = columnifexists (\"StorageConsumedInMBs_s\",\"\") |summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s, StorageUniqueId_s; let Storages=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Storage\" | extend StorageUniqueId_s=columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s=columnifexists(\"StorageType_s\",\"\") |distinct StorageUniqueId_s, StorageType_s; StorageAssociations | join kind=inner ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, item_name | join kind= inner( Storages ) on StorageUniqueId_s | project StorageInGB, BackupItemUniqueId_s, StorageType_s, item_name, StorageUniqueId_s | where StorageType_s==\"Cloud\" | project StorageInGB, BackupItemFriendlyName=item_name, BackupItemUniqueId_s, StorageUniqueId_s | order by StorageInGB desc | search {selected item}"
+                        }
+                     }
+                  }
+               },
+               {
+                  "Type": "Blade",
+                  "Version": 0,
+                  "Configuration": {
+                     "General": {
+                        "title": "Top 3 Vaults by Storage Consumed (GB)",
+                        "newGroup": false,
+                        "useIcon": false
+                     },
+                     "Header": {
+                        "Title": "Top 3 Vaults by Storage Consumed (GB)",
+                        "Subtitle": "Filter by Datasource Type by clicking the (+) above"
+                     },
+                     "Donut": {
+                        "Query": "let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"StorageAssociation\" |extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\") , BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, TimeGenerated | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s, BackupItemUniqueId_s | join kind=leftouter ( AzureDiagnostics | where Category == \"AzureBackupReport\" \t| where SchemaVersion_s==\"V2\" | where OperationName == \"Storage\" | extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageName_s=columnifexists(\"StorageName_s\",\"\") , StorageType_s = columnifexists(\"StorageType_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s | project StorageUniqueId_s, StorageName_s ,BackupItemUniqueId_s, StorageType_s ) on StorageUniqueId_s | where StorageType_s==\"Cloud\" | join kind=leftouter ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | summarize totalStorage=sum(StorageInGB) by StorageUniqueId_s, StorageName_s | project StorageName_s, totalStorage | sort by totalStorage desc",
+                        "CenterLegend": {
+                           "Text": "Total",
+                           "Operation": "Sum"
+                        },
+                        "Options": {
+                           "colors": [
+                              "#00188f",
+                              "#0072c6",
+                              "#00bcf2"
+                           ]
+                        }
+                     },
+                     "List": {
+                        "Query": "let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated=columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"StorageAssociation\" |extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\") , BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, TimeGenerated | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s, BackupItemUniqueId_s | join kind=leftouter ( AzureDiagnostics | where Category == \"AzureBackupReport\" \t| where SchemaVersion_s==\"V2\" | where OperationName == \"Storage\" | extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageName_s=columnifexists(\"StorageName_s\",\"\") , StorageType_s = columnifexists(\"StorageType_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s | project StorageUniqueId_s, StorageName_s ,BackupItemUniqueId_s, StorageType_s ) on StorageUniqueId_s | where StorageType_s==\"Cloud\" | join kind=leftouter ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | summarize totalStorage=sum(StorageInGB) by StorageUniqueId_s, StorageName_s | project StorageName_s, totalStorage | sort by totalStorage desc",
+                        "HideGraph": false,
+                        "enableSparklines": false,
+                        "operation": "Summary",
+                        "ColumnsTitle": {
+                           "Name": "Vault",
+                           "Value": "Storage In GB"
+                        },
+                        "Color": "#0072c6",
+                        "thresholds": {
+                           "isEnabled": false,
+                           "values": [
+                              {
+                                 "name": "Normal",
+                                 "threshold": "Default",
+                                 "color": "#009e49",
+                                 "isDefault": true
+                              },
+                              {
+                                 "name": "Warning",
+                                 "threshold": "60",
+                                 "color": "#fcd116",
+                                 "isDefault": false
+                              },
+                              {
+                                 "name": "Error",
+                                 "threshold": "90",
+                                 "color": "#ba141a",
+                                 "isDefault": false
+                              }
+                           ]
+                        },
+                        "NavigationQuery": "let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\")| where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, TimeGenerated | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s | join kind=leftouter ( AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"Storage\" | extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageName_s = columnifexists(\"StorageName_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageType_s = columnifexists(\"StorageType_s\",\"\") | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s | project StorageUniqueId_s, StorageName_s ,BackupItemUniqueId_s, StorageType_s ) on StorageUniqueId_s | where StorageType_s==\"Cloud\" | join kind=leftouter ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | search {selected item}",
+                        "NavigationSelect": {
+                           "NavigationQuery": "let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\")| where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, TimeGenerated | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s | join kind=leftouter ( AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"Storage\" | extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageName_s = columnifexists(\"StorageName_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageType_s = columnifexists(\"StorageType_s\",\"\") | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s | project StorageUniqueId_s, StorageName_s ,BackupItemUniqueId_s, StorageType_s ) on StorageUniqueId_s | where StorageType_s==\"Cloud\" | join kind=leftouter ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | search {selected item}"
+                        }
+                     }
+                  }
+               },
+               {
+                  "Type": "Blade",
+                  "Version": 0,
+                  "Configuration": {
+                     "General": {
+                        "title": "Storage by Storage Replication type (GB)",
+                        "newGroup": false,
+                        "useIcon": false
+                     },
+                     "Header": {
+                        "Title": "Storage by Storage Replication type (GB)"
+                     },
+                     "Donut": {
+                        "Query": "let VaultIdRepMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Vault\" |extend StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\") |where StorageReplicationType_s != \"\" | summarize arg_max(TimeGenerated, *) by VaultUniqueId_s; let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let StorageAssociations=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\")| extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, VaultUniqueId_s, StorageUniqueId_s, TimeGenerated | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s, BackupItemUniqueId_s ; let Storages=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Storage\" | extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s = columnifexists(\"StorageType_s\",\"\")| summarize arg_max(TimeGenerated, *) by StorageUniqueId_s | project StorageUniqueId_s, StorageType_s | extend storage_type=StorageType_s ; StorageAssociations | join kind=inner( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | join kind= inner ( VaultIdRepMap ) on VaultUniqueId_s | join kind=leftouter ( Storages ) on StorageUniqueId_s | where storage_type==\"Cloud\" | summarize TotalCharge = sum(StorageInGB) by StorageReplicationType_s",
+                        "CenterLegend": {
+                           "Text": "Total",
+                           "Operation": "Sum"
+                        },
+                        "Options": {
+                           "colors": [
+                              "#00188f",
+                              "#0072c6",
+                              "#00bcf2"
+                           ]
+                        }
+                     },
+                     "List": {
+                        "Query": "let VaultIdRepMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Vault\" |extend StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\") |where StorageReplicationType_s != \"\" | summarize arg_max(TimeGenerated, *) by VaultUniqueId_s; let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let StorageAssociations=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\")| extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, VaultUniqueId_s, StorageUniqueId_s, TimeGenerated | summarize arg_max(TimeGenerated,*) by StorageUniqueId_s, BackupItemUniqueId_s ; let Storages=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Storage\" | extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s = columnifexists(\"StorageType_s\",\"\")| summarize arg_max(TimeGenerated, *) by StorageUniqueId_s | project StorageUniqueId_s, StorageType_s | extend storage_type=StorageType_s ; StorageAssociations | join kind=inner( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | join kind= inner ( VaultIdRepMap ) on VaultUniqueId_s | join kind=leftouter ( Storages ) on StorageUniqueId_s | where storage_type==\"Cloud\" | summarize TotalCharge = sum(StorageInGB) by StorageReplicationType_s",
+                        "HideGraph": false,
+                        "enableSparklines": false,
+                        "operation": "Summary",
+                        "ColumnsTitle": {
+                           "Name": "Replication Type",
+                           "Value": "Storage (GB)"
+                        },
+                        "Color": "#0072c6",
+                        "thresholds": {
+                           "isEnabled": false,
+                           "values": [
+                              {
+                                 "name": "Normal",
+                                 "threshold": "Default",
+                                 "color": "#009e49",
+                                 "isDefault": true
+                              },
+                              {
+                                 "name": "Warning",
+                                 "threshold": "60",
+                                 "color": "#fcd116",
+                                 "isDefault": false
+                              },
+                              {
+                                 "name": "Error",
+                                 "threshold": "90",
+                                 "color": "#ba141a",
+                                 "isDefault": false
+                              }
+                           ]
+                        },
+                        "NavigationQuery": "let VaultIdRepMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Vault\" | extend StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\") | where StorageReplicationType_s != \"\" | summarize arg_max(TimeGenerated, *) by VaultUniqueId_s; let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let StorageAssociations=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, VaultUniqueId_s, StorageUniqueId_s, TimeGenerated ; let Storages=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Storage\" |extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s = columnifexists(\"StorageType_s\",\"\"), StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\") | summarize arg_max(TimeGenerated, *) by StorageUniqueId_s | project StorageUniqueId_s, StorageType_s, StorageReplicationType_s | extend storage_type=StorageType_s; let Table1 = StorageAssociations | join kind=leftouter ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | join kind=leftouter ( VaultIdRepMap ) on VaultUniqueId_s | join kind=leftouter ( Storages ) on StorageUniqueId_s | where storage_type==\"Cloud\" | summarize arg_max(TimeGenerated,*) by BackupItemUniqueId_s, StorageReplicationType_s, bin(TimeGenerated, 1d); let Selection = Table1 | summarize TotalCharge = sum(StorageInGB) by StorageReplicationType_s | search {selected item}; Selection | join(Table1) on StorageReplicationType_s | project StorageReplicationType_s, VaultUniqueId_s, StorageInGB, BackupItemUniqueId_s",
+                        "NavigationSelect": {
+                           "NavigationQuery": "let VaultIdRepMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Vault\" | extend StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\") | where StorageReplicationType_s != \"\" | summarize arg_max(TimeGenerated, *) by VaultUniqueId_s; let BackupIdTypeMap = AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"BackupItem\" | extend BackupItemType_s = columnifexists(\"BackupItemType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\") | where BackupItemType_s != \"\" | project TimeGenerated, BackupItemType_s , BackupItemUniqueId_s | summarize arg_max(TimeGenerated, *) by BackupItemUniqueId_s; let StorageAssociations=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\"), BackupItemUniqueId_s = columnifexists(\"BackupItemUniqueId_s\",\"\"), VaultUniqueId_s = columnifexists(\"VaultUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\") | extend StorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project StorageInGB, BackupItemUniqueId_s, VaultUniqueId_s, StorageUniqueId_s, TimeGenerated ; let Storages=AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Storage\" |extend TimeGenerated = columnifexists(\"TimeGenerated\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s = columnifexists(\"StorageType_s\",\"\"), StorageReplicationType_s = columnifexists(\"StorageReplicationType_s\",\"\") | summarize arg_max(TimeGenerated, *) by StorageUniqueId_s | project StorageUniqueId_s, StorageType_s, StorageReplicationType_s | extend storage_type=StorageType_s; let Table1 = StorageAssociations | join kind=leftouter ( BackupIdTypeMap ) on BackupItemUniqueId_s | where ${DatasourceType} | join kind=leftouter ( VaultIdRepMap ) on VaultUniqueId_s | join kind=leftouter ( Storages ) on StorageUniqueId_s | where storage_type==\"Cloud\" | summarize arg_max(TimeGenerated,*) by BackupItemUniqueId_s, StorageReplicationType_s, bin(TimeGenerated, 1d); let Selection = Table1 | summarize TotalCharge = sum(StorageInGB) by StorageReplicationType_s | search {selected item}; Selection | join(Table1) on StorageReplicationType_s | project StorageReplicationType_s, VaultUniqueId_s, StorageInGB, BackupItemUniqueId_s"
+                        }
+                     }
+                  }
+               }
+            ],
+            "Filters": [
+               {
+                  "FieldName": "BackupItemType_s",
+                  "QueryForValues": "AzureDiagnostics | where Category == \"AzureBackupReport\"|distinct BackupItemType_s",
+                  "Title": "DatasourceType"
+               }
+            ],
+            "OverviewTile": {
+               "Type": "OverviewTile",
+               "Version": 2,
+               "Configuration": {
+                  "Tile": {
+                     "Legend": "Total Cloud Storage Consumed (GB)",
+                     "Query": " AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"StorageAssociation\" | extend StorageConsumedInMBs_s = columnifexists(\"StorageConsumedInMBs_s\",\"\"), BackupItemUniqueId_s=columnifexists(\"BackupItemUniqueId_s\",\"\"), StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s=columnifexists(\"StorageType_s\",\"\"), TimeGenerated = columnifexists(\"TimeGenerated\",\"\")| extend CloudStorageInGB = todouble(StorageConsumedInMBs_s) / 1024 | project CloudStorageInGB, BackupItemUniqueId_s, StorageUniqueId_s, TimeGenerated | join kind=inner ( AzureDiagnostics | where Category == \"AzureBackupReport\" | where SchemaVersion_s==\"V2\" | where OperationName == \"Storage\" | extend StorageUniqueId_s = columnifexists(\"StorageUniqueId_s\",\"\"), StorageType_s=columnifexists(\"StorageType_s\",\"\")|distinct StorageUniqueId_s, StorageType_s | project StorageUniqueId_s, StorageType_s ) on StorageUniqueId_s | where StorageType_s == \"Cloud\" | summarize arg_max(TimeGenerated, *) by StorageUniqueId_s,BackupItemUniqueId_s | summarize sum(CloudStorageInGB)"
+                  },
+                  "Advanced": {
+                     "DataFlowVerification": {
+                        "Enabled": false,
+                        "Query": "search * | limit 1 | project TimeGenerated"
+                     }
+                  }
+               }
+            }
+         }
+      }
+   ]
+}

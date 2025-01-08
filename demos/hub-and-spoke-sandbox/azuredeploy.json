@@ -1,0 +1,727 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "windowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "metadata": {
+        "description": "The Windows version for Windows Jump-host VM."
+      }
+    },
+    "winVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "metadata": {
+        "description": "Size for Windows jump-host VM"
+      }
+    },
+    "winVmUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for Windows jump-host VM"
+      }
+    },
+    "winVmPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for Windows jump-host VM. The password must be between 6-72 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character 5) Control characters are not allowed"
+      }
+    },
+    "winVmDnsPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Label for Windows jump-host VM."
+      }
+    },
+    "deployVpnGateway": {
+      "type": "string",
+      "defaultValue": "No",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Whether or not to deploy a VPN Gateway in the Hub"
+      }
+    },
+    "gatewaySku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "VpnGw1",
+        "VpnGw2",
+        "VpnGw3"
+      ],
+      "metadata": {
+        "description": "The SKU of the Gateway, if deployed"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "hubVnetName": "hubVnet",
+    "hubVnetPrefix": "192.168.0.0/20",
+    "dmzSubnetName": "DMZSubnet",
+    "dmzSubnetPrefix": "192.168.0.0/25",
+    "mgmtSubnetName": "ManagementSubnet",
+    "mgmtSubnetPrefix": "192.168.1.0/24",
+    "sharedSubnetName": "SharedSubnet",
+    "sharedSubnetPrefix": "192.168.4.0/22",
+    "gatewaySubnetName": "GatewaySubnet",
+    "gatewaySubnetPrefix": "192.168.15.224/27",
+    "gatewayName": "hubVpnGateway",
+    "gatewayPIPName": "hubVpnGatewayPublicIp",
+    "subnetGatewayId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('gatewaySubnetName'))]",
+    "winJmphostName": "winJmphostVm",
+    "devSpokeVnetName": "spokeDevVnet",
+    "devSpokeVnetPrefix": "10.10.0.0/16",
+    "prodSpokeVnetName": "spokeProdVnet",
+    "prodSpokeVnetPrefix": "10.100.0.0/16",
+    "spokeWorkloadSubnetName": "WorkloadSubnet",
+    "devSpokeWorkloadSubnetPrefix": "10.10.0.0/16",
+    "prodSpokeWorkloadSubnetPrefix": "10.100.0.0/16",
+    "hubID": "[resourceId('Microsoft.Network/virtualNetworks/', variables('hubVnetName'))]",
+    "devSpokeID": "[resourceId('Microsoft.Network/virtualNetworks/', variables('devSpokeVnetName'))]",
+    "prodSpokeID": "[resourceId('Microsoft.Network/virtualNetworks/', variables('prodSpokeVnetName'))]",
+    "winVmNicName": "[concat(variables('winJmphostName'), 'NIC')]",
+    "winVmStorageName": "[concat('hubwinvm',uniquestring(resourceGroup().id))]",
+    "winNsgName": "winJmpHostNsg",
+    "winJmphostPublicIpName": "winJmphostVmPublicIp"
+  },
+  "resources": [
+    {
+      "comments": "HUB Virtual Network (VNet)",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('hubVnetName')]",
+      "apiVersion": "2019-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('hubVnetPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "comments": "Management Subnet",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('hubVnetName'), '/', variables('mgmtSubnetName'))]",
+      "apiVersion": "2019-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('mgmtSubnetPrefix')]"
+      }
+    },
+    {
+      "comments": "Shared Subnet",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('hubVnetName'), '/', variables('sharedSubnetName'))]",
+      "apiVersion": "2019-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('sharedSubnetPrefix')]"
+      }
+    },
+    {
+      "comments": "DMZ Subnet",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('hubVnetName'), '/', variables('dmzSubnetName'))]",
+      "apiVersion": "2019-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('dmzSubnetPrefix')]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'Yes')]",
+      "comments": "Gateway Subnet",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('hubVnetName'), '/', variables('gatewaySubnetName'))]",
+      "apiVersion": "2019-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('gatewaySubnetPrefix')]"
+      }
+    },
+    {
+      "comments": "Development Spoke Virtual Network (VNet)",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('devSpokeVnetName')]",
+      "apiVersion": "2019-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('devSpokeVnetPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "comments": "Development Workload Subnet",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('devSpokeVnetName'), '/', variables('spokeWorkloadSubnetName'))]",
+      "apiVersion": "2019-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('devSpokeVnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('devSpokeWorkloadSubnetPrefix')]"
+      }
+    },
+    {
+      "comments": "Production Spoke Virtual Network (VNet)",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('prodSpokeVnetName')]",
+      "apiVersion": "2019-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('prodSpokeVnetPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "comments": "Production Workload Subnet",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('prodSpokeVnetName'), '/', variables('spokeWorkloadSubnetName'))]",
+      "apiVersion": "2019-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('prodSpokeVnetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('prodSpokeWorkloadSubnetPrefix')]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'Yes')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('hubVnetName'), '/gwPeering_', variables('hubVnetName'), '_', variables('devSpokeVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('gatewaySubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('devSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('devSpokeVnetName'), variables('spokeWorkloadSubnetName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": true,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('devSpokeID')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'No')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('hubVnetName'), '/peering_', variables('hubVnetName'), '_', variables('devSpokeVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('devSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('devSpokeVnetName'), variables('spokeWorkloadSubnetName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('devSpokeID')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'Yes')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('hubVnetName'), '/gwPeering_', variables('hubVnetName'), '_', variables('prodSpokeVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('gatewaySubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('prodSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('prodSpokeVnetName'), variables('spokeWorkloadSubnetName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": true,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('prodSpokeID')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'No')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('hubVnetName'), '/peering_', variables('hubVnetName'), '_', variables('prodSpokeVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('prodSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('prodSpokeVnetName'), variables('spokeWorkloadSubnetName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('prodSpokeID')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'Yes')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('devSpokeVnetName'), '/gwPeering_', variables('devSpokeVnetName'), '_', variables('hubVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('gatewaySubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('devSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('devSpokeVnetName'), variables('spokeWorkloadSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('gatewayName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": true,
+        "remoteVirtualNetwork": {
+          "id": "[variables('hubID')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'No')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('devSpokeVnetName'), '/peering_', variables('devSpokeVnetName'), '_', variables('hubVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('devSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('devSpokeVnetName'), variables('spokeWorkloadSubnetName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('hubID')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'Yes')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('prodSpokeVnetName'), '/gwPeering_', variables('prodSpokeVnetName'), '_', variables('hubVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('gatewaySubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('prodSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('prodSpokeVnetName'), variables('spokeWorkloadSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('gatewayName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": true,
+        "remoteVirtualNetwork": {
+          "id": "[variables('hubID')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'No')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(variables('prodSpokeVnetName'), '/peering_', variables('prodSpokeVnetName'), '_', variables('hubVnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('sharedSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('dmzSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('prodSpokeVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('prodSpokeVnetName'), variables('spokeWorkloadSubnetName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('hubID')]"
+        }
+      }
+    },
+    {
+      "comments": "Windows Jump-Hosts",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('winJmphostName')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('winVmNicName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('winVmStorageName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('winVmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "diskSizeGB": 20,
+              "lun": 0,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[variables('winJmphostName')]",
+          "adminUsername": "[parameters('winVmUser')]",
+          "adminPassword": "[parameters('winVmPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('winVmNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(variables('winVmStorageName'), '2019-06-01').primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Network Interface Card (NIC) for Win Jump-Host",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('winVmNicName')]",
+      "apiVersion": "2019-11-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('winJmphostPublicIpName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('winNsgName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "winJmpHostIpConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('winJmphostPublicIpName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('mgmtSubnetName'))]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('winNsgName'))]"
+        },
+        "primary": true
+      }
+    },
+    {
+      "comments": "NSG For Windows Jump Host",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('winNsgName')]",
+      "apiVersion": "2019-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "NSG_RULE_INBOUND_RDP",
+            "properties": {
+              "description": "Allow inbound RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Public IP (PIP) for Windows JumpHost",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "name": "[variables('winJmphostPublicIpName')]",
+      "apiVersion": "2019-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(parameters('winVmDnsPrefix'))]"
+        }
+      }
+    },
+    {
+      "comments": "Storage account for WIN VM",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_GRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[variables('winVmStorageName')]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": false,
+        "encryption": {
+          "services": {
+            "file": {
+              "enabled": true
+            },
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('gatewayPIPName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployVpnGateway'), 'Yes')]",
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[variables('gatewayName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hubVnetName'), variables('gatewaySubnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetGatewayId')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPIPName'))]"
+              }
+            },
+            "name": "vnetGatewayConfig"
+          }
+        ],
+        "sku": {
+          "name": "[parameters('gatewaySku')]",
+          "tier": "[parameters('gatewaySku')]"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": false
+      }
+    }
+  ],
+  "outputs": {
+    "Jumphost VM IP address": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('winJmphostPublicIpName'))).IpAddress]"
+    }
+  }
+}
+

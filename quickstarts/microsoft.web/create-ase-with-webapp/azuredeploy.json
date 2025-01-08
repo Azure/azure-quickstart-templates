@@ -1,0 +1,249 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ASE-ipSslAddressCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of IP addresses for the IP-SSL address pool."
+      }
+    },
+    "ASE-frontEndSize": {
+      "type": "string",
+      "allowedValues": [
+        "Medium",
+        "Large",
+        "ExtraLarge"
+      ],
+      "defaultValue": "Medium",
+      "metadata": {
+        "description": "Instance size for the front-end pool.  Maps to P2,P3,P4."
+      }
+    },
+    "ASE-frontEndCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 100,
+      "metadata": {
+        "description": "Number of instances in the front-end pool.  Minimum of two."
+      }
+    },
+    "ASE-workerPoolOneInstanceSize": {
+      "type": "string",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large",
+        "ExtraLarge"
+      ],
+      "defaultValue": "Small",
+      "metadata": {
+        "description": "Instance size for worker pool one.  Maps to P1,P2,P3,P4."
+      }
+    },
+    "ASE-workerPoolOneInstanceCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 100,
+      "metadata": {
+        "description": "Number of instances in worker pool one.  Minimum of two."
+      }
+    },
+    "ASE-workerPoolTwoInstanceSize": {
+      "type": "string",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large",
+        "ExtraLarge"
+      ],
+      "defaultValue": "Small",
+      "metadata": {
+        "description": "Instance size for worker pool two.  Maps to P1,P2,P3,P4."
+      }
+    },
+    "ASE-workerPoolTwoInstanceCount": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "Number of instances in worker pool two.  Can be zero if not using worker pool two."
+      }
+    },
+    "ASE-workerPoolThreeInstanceSize": {
+      "type": "string",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large",
+        "ExtraLarge"
+      ],
+      "defaultValue": "Small",
+      "metadata": {
+        "description": "Instance size for worker pool three.  Maps to P1,P2,P3,P4."
+      }
+    },
+    "ASE-workerPoolThreeInstanceCount": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "Number of instances in worker pool three.  Can be zero if not using worker pool three."
+      }
+    },
+    "ASE-APP-SERVICE-workerPool": {
+      "type": "string",
+      "allowedValues": [
+        "1",
+        "2",
+        "3"
+      ],
+      "defaultValue": "1",
+      "metadata": {
+        "description": "Defines which worker pool's (WP1, WP2 or WP3) resources will be used for the app service plan."
+      }
+    },
+    "ASE-APP-SERVICE-numberOfWorkersFromWorkerPool": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Defines the number of workers from the worker pool that will be used by the app service plan."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "ASE-VNETPrefix": "10.0.0.0/16",
+    "ASE-VNETSubnet1Name": "Subnet-1",
+    "ASE-VNETSubnet1Prefix": "10.0.0.0/24",
+    "ASE-VNETSubnet2Name": "Subnet-2",
+    "ASE-VNETSubnet2Prefix": "10.0.1.0/24",
+    "ASE-WEB-APP-Name": "[concat('ASE-WEB-APP', uniqueString(resourceGroup().id))]",
+    "ASE-Name": "[concat('ASE', uniqueString(resourceGroup().id))]",
+    "ASE-VNET-Name": "[concat('ASE-VNET', uniqueString(resourceGroup().id))]",
+    "ASE-SERVICE-Name": "[concat('ASE-SERVICE', uniqueString(resourceGroup().id))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('ASE-VNET-Name')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
+      "tags": {
+        "displayName": "ASE-VNET"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('ASE-VNETPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('ASE-VNETSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('ASE-VNETSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('ASE-VNETSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('ASE-VNETSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/hostingEnvironments",
+      "name": "[variables('ASE-Name')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('ASE-VNET-Name'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('ASE-SERVICE-Name')))]": "Resource",
+        "[concat('hidden-related:', resourceId('Microsoft.Web/sites', variables('ASE-WEB-APP-Name')))]": "Resource",
+        "displayName": "ASE"
+      },
+      "properties": {
+        "name": "[variables('ASE-Name')]",
+        "location": "[parameters('location')]",
+        "ipSslAddressCount": "[parameters('ASE-ipSslAddressCount')]",
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('ASE-VNET-Name'), variables('ASE-VNETSubnet1Name'))]"
+        },
+        "multiSize": "[parameters('ASE-frontEndSize')]",
+        "multiRoleCount": "[parameters('ASE-frontEndCount')]",
+        "workerPools": [
+          {
+            "workerSizeId": 0,
+            "workerSize": "[parameters('ASE-workerPoolOneInstanceSize')]",
+            "workerCount": "[parameters('ASE-workerPoolOneInstanceCount')]"
+          },
+          {
+            "workerSizeId": 1,
+            "workerSize": "[parameters('ASE-workerPoolTwoInstanceSize')]",
+            "workerCount": "[parameters('ASE-workerPoolTwoInstanceCount')]"
+          },
+          {
+            "workerSizeId": 2,
+            "workerSize": "[parameters('ASE-workerPoolThreeInstanceSize')]",
+            "workerCount": "[parameters('ASE-workerPoolThreeInstanceCount')]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('ASE-SERVICE-Name')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/hostingEnvironments', variables('ASE-Name'))]"
+      ],
+      "tags": {
+        "displayName": "ASE-APP-SERVICE-APP"
+      },
+      "properties": {
+        "name": "[variables('ASE-SERVICE-Name')]",
+        "hostingEnvironment": "[variables('ASE-Name')]",
+        "hostingEnvironmentId": "[resourceId('Microsoft.Web/hostingEnvironments', variables('ASE-Name'))]"
+      },
+      "sku": {
+        "name": "[concat('P', parameters('ASE-APP-SERVICE-workerPool'))]",
+        "tier": "Premium",
+        "size": "[concat('P', parameters('ASE-APP-SERVICE-workerPool'))]",
+        "family": "P",
+        "capacity": "[parameters('ASE-APP-SERVICE-numberOfWorkersFromWorkerPool')]"
+      }
+    },
+    {
+      "name": "[variables('ASE-WEB-APP-Name')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('ASE-SERVICE-Name'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('ASE-SERVICE-Name')))]": "Resource",
+        "displayName": "ASE-WEB-APP"
+      },
+      "properties": {
+        "name": "[variables('ASE-WEB-APP-Name')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('ASE-SERVICE-Name'))]",
+        "hostingEnvironment": "[variables('ASE-Name')]",
+        "hostingEnvironmentId": "[resourceId('Microsoft.Web/hostingEnvironments', variables('ASE-Name'))]"
+      }
+    }
+  ]
+}

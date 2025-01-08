@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingVirtualMachineName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing SQL Server virtual machine name"
+      }
+    },
+    "sqlAutobackupRetentionPeriod": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Backup Retention Period"
+      },
+      "allowedValues": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30"
+      ],
+      "defaultValue": "2"
+    },
+    "sqlAutobackupStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Backup Storage Account Name"
+      }
+    },
+    "sqlAutobackupEncryptionPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SQL Server Auto Backup Encryption Password"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-07-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('existingVirtualMachineName'), '/SqlIaasExtension')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "type": "SqlIaaSAgent",
+        "publisher": "Microsoft.SqlServer.Management",
+        "typeHandlerVersion": "1.2",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AutoBackupSettings": {
+            "Enable": true,
+            "RetentionPeriod": "[parameters('sqlAutobackupRetentionPeriod')]",
+            "EnableEncryption": true
+          }
+        },
+        "protectedSettings": {
+          "StorageUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2021-04-01').primaryEndpoints['blob']]",
+          "StorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2021-04-01').keys[0].value]",
+          "Password": "[parameters('sqlAutobackupEncryptionPassword')]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

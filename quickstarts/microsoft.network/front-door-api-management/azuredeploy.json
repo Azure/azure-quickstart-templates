@@ -1,0 +1,985 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for the Azure resources."
+            }
+        },
+        "virtualNetwork": {
+            "type": "object",
+            "defaultValue": {
+                "name": "FrontDoorApimSampleVnet",
+                "addressPrefixes": [
+                    "10.0.0.0/16"
+                ],
+                "subnets": [
+                    {
+                        "name": "ApiManagementSubnet",
+                        "addressPrefix": "10.0.0.0/24",
+                        "nsg": "FrontDoorApimSampleNsg"
+                    }
+                ]
+            },
+            "metadata": {
+                "description": "Specifies the Virtual Network configuration."
+            }
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Log Analytics workspace."
+            }
+        },
+        "workspaceSku": {
+            "type": "string",
+            "allowedValues": [
+                "PerGB2018",
+                "Free",
+                "Standalone",
+                "PerNode",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "Standalone",
+            "metadata": {
+                "description": "Pricing tier: PerGB2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers."
+            }
+        },
+        "appInsightsName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of your Application Insights resource used by API Management."
+            }
+        },
+        "apimServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of your API Management service."
+            }
+        },
+        "apimPublisherEmail": {
+            "type": "string",
+            "defaultValue": "admin@contoso.com",
+            "metadata": {
+                "description": "The email address of the owner of the service"
+            }
+        },
+        "apimPublisherName": {
+            "type": "string",
+            "defaultValue": "Contoso",
+            "metadata": {
+                "description": "The name of the publisher."
+            }
+        },
+        "apimSku": {
+            "type": "string",
+            "allowedValues": [
+                "Developer",
+                "Premium"
+            ],
+            "defaultValue": "Developer",
+            "metadata": {
+                "description": "The pricing tier of this API Management service. Only Developer and Premium are supported when deploying into a shared VNET."
+            }
+        },
+        "apimCapacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Number of deployed units of the SKU."
+            }
+        },
+        "frontDoorName": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 64,
+            "metadata": {
+                "description": "Name of the Azure Front Door which is globally unique. Min length: 5. Max length: 64"
+            }
+        },
+        "frontDoorEnforceCertificateNameCheck": {
+            "type": "string",
+            "defaultValue": "Disabled",
+            "allowedValues": [
+                "Enabled",
+                "Disabled"
+            ],
+            "metadata": {
+                "description": "Whether to enforce certificate name check on HTTPS requests to all backend pools. No effect on non-HTTPS requests. - Enabled or Disabled"
+            }
+        },
+        "frontDoorFrontendEndpoint": {
+            "type": "object",
+            "defaultValue": {
+                "name": "MainFrontendEndpoint",
+                "sessionAffinityEnabledState": "Disabled",
+                "sessionAffinityTtlSeconds": 0
+            },
+            "metadata": {
+                "description": "This parameter contains the name and properties of the frontend endpoint."
+            }
+        },
+        "frontDoorBackendPool": {
+            "type": "object",
+            "defaultValue": {
+                "name": "ApimBackendPool",
+                "loadBalancerName": "ApimLoadBalancer"
+            },
+            "metadata": {
+                "description": "This parameter contains the name and properties of the Application Gateway Backend Pool"
+            }
+        },
+        "frontDoorRoutingRule": {
+            "type": "object",
+            "defaultValue": {
+                "name": "ApimRoutingRule",
+                "acceptedProtocols": [
+                    "Http",
+                    "Https"
+                ],
+                "patternsToMatch": [
+                    "/*"
+                ],
+                "customForwardingPath": "/",
+                "forwardingProtocol": "MatchRequest",
+                "cacheConfiguration": {
+                    "queryParameterStripDirective": "StripNone",
+                    "dynamicCompression": "Enabled"
+                }
+            },
+            "metadata": {
+                "description": "This parameter contains the name and properties of the routing rule."
+            }
+        },
+        "frontDoorHealthProbeSettings": {
+            "type": "object",
+            "defaultValue": {
+                "name": "ApimHealthProbeSettings",
+                "intervalInSeconds": 30,
+                "path": "/status-0123456789abcdef",
+                "protocol": "Https"
+            },
+            "metadata": {
+                "description": "This parameter contains the name and properties of the health probe settings."
+            }
+        },
+        "deployWaf": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Specifies whether to deploy a global WAF policy in Front Door."
+            }
+        },
+        "wafPolicyName": {
+            "type": "string",
+            "defaultValue": "FrontDoorApimSampleWaf",
+            "metadata": {
+                "description": "The name of the WAF policy"
+            }
+        },
+        "wafMode": {
+            "type": "string",
+            "allowedValues": [
+                "Detection",
+                "Prevention"
+            ],
+            "defaultValue": "Prevention",
+            "metadata": {
+                "description": "Describes if it is in detection mode or prevention mode at policy level."
+            }
+        },
+        "allowTrafficOnlyFromFrontDoor": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Specifies whether to allow traffic to API Management public endpoints only from Front Door."
+            }
+        }
+    },
+    "variables": {
+        "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('virtualNetwork').subnets[0].nsg)]",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork').name)]",
+        "apimId": "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]",
+        "appInsightsId": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+        "apimSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork').name, parameters('virtualNetwork').subnets[0].name)]",
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+        "loggerId": "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('apimServiceName'), parameters('appInsightsName'))]",
+        "frontDoorId": "[resourceId('Microsoft.Network/frontdoors', parameters('frontDoorName'))]",
+        "frontDoorBackendPoolId": "[resourceId('Microsoft.Network/frontdoors/backendPools', parameters('frontDoorName'), parameters('frontDoorBackendPool').name)]",
+        "frontDoorHealthProbeSettingsId": "[resourceId('Microsoft.Network/frontdoors/healthProbeSettings', parameters('frontDoorName'), parameters('frontDoorHealthProbeSettings').name)]",
+        "frontDoorLoadBalancerId": "[resourceId('Microsoft.Network/frontdoors/loadBalancingSettings', parameters('frontDoorName'), parameters('frontDoorBackendPool').loadBalancerName)]",
+        "frontDoorFrontedEndpointId": "[resourceId('Microsoft.Network/frontdoors/frontendEndpoints', parameters('frontDoorName'), parameters('frontDoorFrontendEndpoint').name)]",
+        "wafPolicyId": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', parameters('wafPolicyName'))]",
+        "mockApiId": "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'mockApi')]",
+        "postmanEchoApiId": "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'postmanEchoApi')]",
+        "customProductId": "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimServiceName'), 'custom')]",
+        "testMethodId": "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), 'mockApi', 'test')]",
+        "frontDoorSuffix": "[if(equals(toLower(environment().name), 'azureusgovernment'), 'azurefd.us', environment().suffixes.azureFrontDoorEndpointSuffix)]",
+        "frontDoorHostName": "[concat(toLower(parameters('frontDoorName')), '.', variables('frontDoorSuffix'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "name": "[parameters('workspaceName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('workspaceSku')]"
+                }
+            },
+            "resources": [
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('virtualNetwork').subnets[0].nsg]",
+            "apiVersion": "2019-09-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ClientCommunicationToAPIManagementInbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "[if(parameters('allowTrafficOnlyFromFrontDoor'), 'AzureFrontDoor.Backend', 'Internet')]",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SecureClientCommunicationToAPIManagementInbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "[if(parameters('allowTrafficOnlyFromFrontDoor'), 'AzureFrontDoor.Backend', 'Internet')]",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "ManagementEndpointForAzurePortalAndPowershellInbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3443",
+                            "sourceAddressPrefix": "ApiManagement",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DependencyOnRedisCacheInbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6381-6383",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 130,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AzureInfrastructureLoadBalancer",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 180,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DependencyOnAzureSQLOutbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Sql",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DependencyForLogToEventHubPolicyOutbound",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5671",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "EventHub",
+                            "access": "Allow",
+                            "priority": 150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DependencyOnRedisCacheOutbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6381-6383",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DependencyOnAzureFileShareForGitOutbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Storage",
+                            "access": "Allow",
+                            "priority": 170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "PublishDiagnosticLogsAndMetricsOutbound",
+                        "properties": {
+                            "description": "APIM Logs and Metrics for consumption by admins and your IT team are all part of the management plane",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "AzureMonitor",
+                            "access": "Allow",
+                            "priority": 185,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "443",
+                                "12000",
+                                "1886"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "ConnectToSmtpRelayForSendingEmailsOutbound",
+                        "properties": {
+                            "description": "APIM features the ability to generate email traffic as part of the data plane and the management plane",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 190,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "25",
+                                "587",
+                                "25028"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "AuthenticateToAzureActiveDirectoryOutbound",
+                        "properties": {
+                            "description": "Connect to Azure Active Directory for Developer Portal Authentication or for Oauth2 flow during any Proxy Authentication",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "AzureActiveDirectory",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "80",
+                                "443"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "DependencyOnAzureStorageOutbound",
+                        "properties": {
+                            "description": "APIM service dependency on Azure Blob and Azure Table Storage",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Storage",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "PublishMonitoringLogsOutbound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "AzureCloud",
+                            "access": "Allow",
+                            "priority": 300,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetwork').name]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgId')]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('virtualNetwork').addressPrefixes]"
+                },
+                "copy": [
+                    {
+                        "name": "subnets",
+                        "count": "[length(parameters('virtualNetwork').subnets)]",
+                        "input": {
+                            "name": "[parameters('virtualNetwork').subnets[copyIndex('subnets')].name]",
+                            "properties": {
+                                "addressPrefix": "[parameters('virtualNetwork').subnets[copyIndex('subnets')].addressPrefix]",
+                                "networkSecurityGroup": {
+                                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('virtualNetwork').subnets[copyIndex('subnets')].nsg)]"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('appInsightsName')]",
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2018-05-01-preview",
+            "location": "[parameters('location')]",
+            "kind": "web",
+            "tags": {
+                "name": "[parameters('appInsightsName')]",
+                "resource": "[parameters('apimServiceName')]",
+                "service": "Application Insights"
+            },
+            "properties": {
+                "Application_Type": "web",
+                "Request_Source": "rest"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/loggers",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('appInsightsName'))]",
+            "apiVersion": "2019-12-01",
+            "dependsOn": [
+                "[variables('apimId')]"
+            ],
+            "properties": {
+                "loggerType": "applicationInsights",
+                "description": "Logger resources to APIM",
+                "credentials": {
+                    "instrumentationKey": "[reference(variables('appInsightsId'), '2015-05-01').InstrumentationKey]"
+                }
+            }
+        },
+        {
+            "name": "[parameters('apimServiceName')]",
+            "type": "Microsoft.ApiManagement/service",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "tags": {
+                "name": "[parameters('apimServiceName')]",
+                "service": "APIM"
+            },
+            "sku": {
+                "name": "[parameters('apimSku')]",
+                "capacity": "[parameters('apimCapacity')]"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[variables('vnetId')]"
+            ],
+            "properties": {
+                "publisherEmail": "[parameters('apimPublisherEmail')]",
+                "publisherName": "[parameters('apimPublisherName')]",
+                "virtualNetworkType": "External",
+                "virtualNetworkConfiguration": {
+                    "subnetResourceId": "[variables('apimSubnetId')]"
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2019-12-01",
+                    "type": "products",
+                    "name": "custom",
+                    "dependsOn": [
+                        "[variables('apimId')]",
+                        "[variables('mockApiId')]",
+                        "[variables('postmanEchoApiId')]"
+                    ],
+                    "properties": {
+                        "displayName": "Custom",
+                        "description": "Subscribers have completely unlimited access to the API. Administrator approval is required.",
+                        "subscriptionRequired": true,
+                        "approvalRequired": false,
+                        "subscriptionsLimit": 1,
+                        "state": "published"
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "2019-12-01",
+                            "type": "apis",
+                            "name": "mockApi",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('mockApiId')]",
+                                "[variables('customProductId')]"
+                            ],
+                            "properties": {
+                                "displayName": "Mock API",
+                                "apiRevision": "1",
+                                "description": "This is a Mock API.",
+                                "subscriptionRequired": true,
+                                "path": "mock",
+                                "protocols": [
+                                    "https",
+                                    "http"
+                                ],
+                                "subscriptionKeyParameterNames": {
+                                    "header": "Ocp-Apim-Subscription-Key",
+                                    "query": "subscription-key"
+                                },
+                                "isCurrent": true
+                            }
+                        },
+                        {
+                            "apiVersion": "2019-12-01",
+                            "type": "apis",
+                            "name": "postmanEchoApi",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('postmanEchoApiId')]",
+                                "[variables('customProductId')]"
+                            ],
+                            "properties": {
+                                "displayName": "Postman Echo API",
+                                "apiRevision": "1",
+                                "description": "This is the Postman Echo API.",
+                                "subscriptionRequired": true,
+                                "serviceUrl": "https://postman-echo.com",
+                                "path": "postman-echo",
+                                "protocols": [
+                                    "https",
+                                    "http"
+                                ],
+                                "subscriptionKeyParameterNames": {
+                                    "header": "Ocp-Apim-Subscription-Key",
+                                    "query": "subscription-key"
+                                },
+                                "isCurrent": true
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "apis",
+                    "name": "mockApi",
+                    "apiVersion": "2019-12-01",
+                    "dependsOn": [
+                        "[variables('apimId')]"
+                    ],
+                    "properties": {
+                        "displayName": "Mock API",
+                        "apiRevision": "1",
+                        "description": "This is a Mock API.",
+                        "subscriptionRequired": true,
+                        "path": "mock",
+                        "protocols": [
+                            "https",
+                            "http"
+                        ],
+                        "subscriptionKeyParameterNames": {
+                            "header": "Ocp-Apim-Subscription-Key",
+                            "query": "subscription-key"
+                        },
+                        "isCurrent": true
+                    },
+                    "resources": [
+                        {
+                            "type": "operations",
+                            "name": "test",
+                            "apiVersion": "2019-12-01",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('mockApiId')]"
+                            ],
+                            "properties": {
+                                "displayName": "Test",
+                                "method": "GET",
+                                "urlTemplate": "/test",
+                                "description": "This method always return 200.",
+                                "responses": [
+                                    {
+                                        "statusCode": 200,
+                                        "description": "The GET mock methods always returns a given response",
+                                        "representations": [
+                                            {
+                                                "contentType": "application/json",
+                                                "sample": "[concat('{\"company\": \"Contoso\", \"api\": \"Mock API\", \"method\": \"GET\", \"operation\": \"test\"}')]"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "resources": [
+                                {
+                                    "name": "policy",
+                                    "type": "policies",
+                                    "apiVersion": "2019-12-01",
+                                    "dependsOn": [
+                                        "[variables('apimId')]",
+                                        "[variables('mockApiId')]",
+                                        "[variables('testMethodId')]"
+                                    ],
+                                    "properties": {
+                                        "value": "<policies>\r\n    <inbound>\r\n        <base />\r\n        <mock-response status-code=\"200\" content-type=\"application/json\" />\r\n    </inbound>\r\n    <backend>\r\n        <base />\r\n    </backend>\r\n    <outbound>\r\n        <base />\r\n    </outbound>\r\n    <on-error>\r\n        <base />\r\n    </on-error>\r\n</policies>",
+                                        "format": "xml"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "apiVersion": "2019-12-01",
+                            "type": "policies",
+                            "name": "policy",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('mockApiId')]"
+                            ],
+                            "properties": {
+                                "format": "xml",
+                                "value": "<policies>\r\n\t<inbound>\r\n\t\t<base />\r\n\t\t<cors>\r\n\t\t\t<allowed-origins>\r\n\t\t\t\t<origin>*</origin>\r\n\t\t\t</allowed-origins>\r\n\t\t\t<allowed-methods>\r\n\t\t\t\t<method>GET</method>\r\n\t\t\t\t<method>POST</method>\r\n\t\t\t\t<method>PUT</method>\r\n\t\t\t\t<method>DELETE</method>\r\n\t\t\t\t<method>HEAD</method>\r\n\t\t\t\t<method>OPTIONS</method>\r\n\t\t\t\t<method>PATCH</method>\r\n\t\t\t\t<method>TRACE</method>\r\n\t\t\t</allowed-methods>\r\n\t\t\t<allowed-headers>\r\n\t\t\t\t<header>*</header>\r\n\t\t\t</allowed-headers>\r\n\t\t\t<expose-headers>\r\n\t\t\t\t<header>*</header>\r\n\t\t\t</expose-headers>\r\n\t\t</cors>\r\n\t</inbound>\r\n\t<backend>\r\n\t\t<base />\r\n\t</backend>\r\n\t<outbound>\r\n\t\t<base />\r\n\t</outbound>\r\n\t<on-error>\r\n\t\t<base />\r\n\t</on-error>\r\n</policies>"
+                            }
+                        },
+                        {
+                            "type": "diagnostics",
+                            "name": "applicationinsights",
+                            "apiVersion": "2019-12-01",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('loggerId')]",
+                                "[variables('mockApiId')]"
+                            ],
+                            "properties": {
+                                "alwaysLog": "allErrors",
+                                "loggerId": "[variables('loggerId')]",
+                                "sampling": {
+                                    "samplingType": "fixed",
+                                    "percentage": 100
+                                },
+                                "enableHttpCorrelationHeaders": true
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "apis",
+                    "name": "postmanEchoApi",
+                    "apiVersion": "2019-12-01",
+                    "dependsOn": [
+                        "[variables('apimId')]"
+                    ],
+                    "properties": {
+                        "displayName": "Postman Echo API",
+                        "apiRevision": "1",
+                        "description": "This is the Postman Echo API.",
+                        "subscriptionRequired": true,
+                        "serviceUrl": "https://postman-echo.com",
+                        "path": "postman-echo",
+                        "protocols": [
+                            "https",
+                            "http"
+                        ],
+                        "subscriptionKeyParameterNames": {
+                            "header": "Ocp-Apim-Subscription-Key",
+                            "query": "subscription-key"
+                        },
+                        "isCurrent": true
+                    },
+                    "resources": [
+                        {
+                            "type": "operations",
+                            "name": "get",
+                            "apiVersion": "2019-12-01",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('postmanEchoApiId')]"
+                            ],
+                            "properties": {
+                                "displayName": "GET Request",
+                                "method": "GET",
+                                "urlTemplate": "/get",
+                                "description": "The HTTP GET request method is meant to retrieve data from a server. The data is identified by a unique URI (Uniform Resource Identifier). "
+                            }
+                        },
+                        {
+                            "apiVersion": "2019-12-01",
+                            "type": "policies",
+                            "name": "policy",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('postmanEchoApiId')]"
+                            ],
+                            "properties": {
+                                "format": "xml",
+                                "value": "<policies>\r\n\t<inbound>\r\n\t\t<base />\r\n\t\t<cors>\r\n\t\t\t<allowed-origins>\r\n\t\t\t\t<origin>*</origin>\r\n\t\t\t</allowed-origins>\r\n\t\t\t<allowed-methods>\r\n\t\t\t\t<method>GET</method>\r\n\t\t\t\t<method>POST</method>\r\n\t\t\t\t<method>PUT</method>\r\n\t\t\t\t<method>DELETE</method>\r\n\t\t\t\t<method>HEAD</method>\r\n\t\t\t\t<method>OPTIONS</method>\r\n\t\t\t\t<method>PATCH</method>\r\n\t\t\t\t<method>TRACE</method>\r\n\t\t\t</allowed-methods>\r\n\t\t\t<allowed-headers>\r\n\t\t\t\t<header>*</header>\r\n\t\t\t</allowed-headers>\r\n\t\t\t<expose-headers>\r\n\t\t\t\t<header>*</header>\r\n\t\t\t</expose-headers>\r\n\t\t</cors>\r\n\t</inbound>\r\n\t<backend>\r\n\t\t<base />\r\n\t</backend>\r\n\t<outbound>\r\n\t\t<base />\r\n\t</outbound>\r\n\t<on-error>\r\n\t\t<base />\r\n\t</on-error>\r\n</policies>"
+                            }
+                        },
+                        {
+                            "type": "diagnostics",
+                            "name": "applicationinsights",
+                            "apiVersion": "2019-12-01",
+                            "dependsOn": [
+                                "[variables('apimId')]",
+                                "[variables('loggerId')]",
+                                "[variables('postmanEchoApiId')]"
+                            ],
+                            "properties": {
+                                "alwaysLog": "allErrors",
+                                "loggerId": "[variables('loggerId')]",
+                                "sampling": {
+                                    "samplingType": "fixed",
+                                    "percentage": 100
+                                },
+                                "enableHttpCorrelationHeaders": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/providers/diagnosticsettings",
+            "name": "[concat(parameters('apimServiceName'), '/Microsoft.Insights/service')]",
+            "apiVersion": "2016-09-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('apimId')]",
+                "[variables('workspaceId')]"
+            ],
+            "properties": {
+                "workspaceId": "[variables('workspaceId')]",
+                "logs": [
+                    {
+                        "category": "GatewayLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": true,
+                            "days": 0
+                        }
+                    }
+                ],
+                "metrics": [
+                    {
+                        "category": "AllMetrics",
+                        "timeGrain": "PT1M",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[parameters('deployWaf')]",
+            "apiVersion": "2019-03-01",
+            "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+            "name": "[parameters('wafPolicyName')]",
+            "location": "global",
+            "properties": {
+                "policySettings": {
+                    "mode": "[parameters('wafMode')]",
+                    "enabledState": "Enabled"
+                },
+                "managedRules": {
+                    "managedRuleSets": [
+                        {
+                            "ruleSetType": "DefaultRuleSet",
+                            "ruleSetVersion": "1.0"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/frontdoors",
+            "apiVersion": "2019-05-01",
+            "name": "[parameters('frontDoorName')]",
+            "location": "Global",
+            "dependsOn": [
+                "[variables('wafPolicyId')]"
+            ],
+            "properties": {
+                "backendPoolsSettings": {
+                    "enforceCertificateNameCheck": "[parameters('frontDoorEnforceCertificateNameCheck')]",
+                    "sendRecvTimeoutSeconds": 120
+                },
+                "enabledState": "Enabled",
+                "resourceState": "Enabled",
+                "backendPools": [
+                    {
+                        "name": "[parameters('frontDoorBackendPool').name]",
+                        "properties": {
+                            "backends": [
+                                {
+                                    "address": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))).hostnameConfigurations[0].hostName]",
+                                    "httpPort": 80,
+                                    "httpsPort": 443,
+                                    "priority": 1,
+                                    "weight": 100,
+                                    "backendHostHeader": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))).hostnameConfigurations[0].hostName]"
+                                }
+                            ],
+                            "healthProbeSettings": {
+                                "id": "[variables('frontDoorHealthProbeSettingsId')]"
+                            },
+                            "loadBalancingSettings": {
+                                "id": "[variables('frontDoorLoadBalancerId')]"
+                            }
+                        }
+                    }
+                ],
+                "healthProbeSettings": [
+                    {
+                        "name": "[parameters('frontDoorHealthProbeSettings').name]",
+                        "properties": {
+                            "intervalInSeconds": "[parameters('frontDoorHealthProbeSettings').intervalInSeconds]",
+                            "path": "[parameters('frontDoorHealthProbeSettings').path]",
+                            "protocol": "[parameters('frontDoorHealthProbeSettings').protocol]"
+                        }
+                    }
+                ],
+                "frontendEndpoints": [
+                    {
+                        "name": "[parameters('frontDoorFrontendEndpoint').name]",
+                        "properties": {
+                            "hostName": "[variables('frontDoorHostName')]",
+                            "sessionAffinityEnabledState": "[parameters('frontDoorFrontendEndpoint').sessionAffinityEnabledState]",
+                            "sessionAffinityTtlSeconds": "[parameters('frontDoorFrontendEndpoint').sessionAffinityTtlSeconds]",
+                            "resourceState": "Enabled",
+                            "webApplicationFirewallPolicyLink": {
+                                "id": "[if(parameters('deployWaf'), variables('wafPolicyId'), json('null'))]"
+                            }
+                        }
+                    }
+                ],
+                "loadBalancingSettings": [
+                    {
+                        "name": "[parameters('frontDoorBackendPool').loadBalancerName]",
+                        "properties": {
+                            "additionalLatencyMilliseconds": 0,
+                            "sampleSize": 4,
+                            "successfulSamplesRequired": 2
+                        }
+                    }
+                ],
+                "routingRules": [
+                    {
+                        "name": "[parameters('frontDoorRoutingRule').name]",
+                        "properties": {
+                            "frontendEndpoints": [
+                                {
+                                    "id": "[variables('frontDoorFrontedEndpointId')]"
+                                }
+                            ],
+                            "acceptedProtocols": "[parameters('frontDoorRoutingRule').acceptedProtocols]",
+                            "patternsToMatch": "[parameters('frontDoorRoutingRule').patternsToMatch]",
+                            "routeConfiguration": {
+                                "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorForwardingConfiguration",
+                                "customForwardingPath": "/",
+                                "forwardingProtocol": "[parameters('frontDoorRoutingRule').forwardingProtocol]",
+                                "backendPool": {
+                                    "id": "[variables('frontDoorBackendPoolId')]"
+                                },
+                                "cacheConfiguration": "[parameters('frontDoorRoutingRule').cacheConfiguration]"
+                            }
+                        }
+                    }
+                ],
+                "friendlyName": "[parameters('frontDoorName')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/frontdoors/providers/diagnosticsettings",
+            "name": "[concat(parameters('frontDoorName'), '/Microsoft.Insights/service')]",
+            "apiVersion": "2016-09-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('frontDoorId')]",
+                "[variables('workspaceId')]"
+            ],
+            "properties": {
+                "workspaceId": "[variables('workspaceId')]",
+                "logs": [
+                    {
+                        "category": "FrontdoorAccessLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": true,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "FrontdoorWebApplicationFirewallLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": true,
+                            "days": 0
+                        }
+                    }
+                ],
+                "metrics": [
+                    {
+                        "category": "AllMetrics",
+                        "timeGrain": "PT1M",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "apiManagement": {
+            "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2019-12-01', 'Full')]",
+            "type": "object"
+        }
+    }
+}

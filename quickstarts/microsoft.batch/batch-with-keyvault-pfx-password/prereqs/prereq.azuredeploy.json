@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "certificatePrefixName": {
+      "type": "string"
+    },
+    "certificatePfxBase64": {
+      "type": "securestring"
+    },
+    "certificatePfxPassword": {
+      "type": "securestring"
+    },
+    "location":{
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "storagename":{
+      "type": "string"
+    },
+    "batchname":{
+      "type": "string"
+    }
+  },
+  "variables": {
+    "certificateName": "[concat(parameters('certificatePrefixName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/certificates",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('certificateName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "pfxBlob": "[parameters('certificatePfxBase64')]",
+        "password": "[parameters('certificatePfxPassword')]"
+      },
+      "tags": {
+        "displayName": "Certificate"
+      }
+    },
+    {
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storagename')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Batch/batchAccounts",
+      "apiVersion": "2019-04-01",
+      "name": "[parameters('batchname')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "autoStorage": {
+          "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storagename'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storagename'))]"
+      ]
+    }    
+  ],
+  "outputs": {
+    "batchservice": {
+      "type": "string",
+      "value": "[parameters('batchname')]"
+    },
+    "certthumbprint": {
+      "type": "string",
+      "value": "[reference(variables('certificateName')).thumbprint]"
+    }
+  }
+}

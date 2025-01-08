@@ -1,0 +1,164 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "counter": {
+            "metadata": {
+                "description": "from the copyindex function of calling template"
+            },
+            "type": "int"
+        },
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[variables('nicName')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipcfggfs",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetSanRef')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "Gluster VM NIC"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[variables('vmName')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[variables('asRef')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('maharaCommon').glusterVmSku]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('maharaCommon').sshUsername]",
+                    "computerName": "[variables('vmName')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('maharaCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('maharaCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('maharaCommon').osType]",
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "name": "[variables('vmName')]"
+                    },
+                    "copy": [
+                        {
+                            "name": "dataDisks",
+                            "count": "[parameters('maharaCommon').fileServerDiskCount]",
+                            "input": {
+                                "managedDisk": {
+                                    "storageAccountType": "Premium_LRS"
+                                },
+                                "diskSizeGB": "[parameters('maharaCommon').fileServerDiskSize]",
+                                "lun": "[copyIndex('dataDisks')]",
+                                "createOption": "Empty"
+                            }
+                        }
+                    ]
+                }
+            },
+            "tags": {
+                "displayName": "Gluster Virtual Machine"
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/',variables('vmName'))]"
+            ],
+            "name": "[concat(variables('vmName'),'-ScriptProcessor')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[ variables('vmName')]"
+                    },
+                    "vmNumber": {
+                        "value": "[parameters('counter')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'glustervmconfig.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/',variables('vmName'))]"
+            ],
+            "name": "[concat(variables('vmName'),'-Backup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('vmName')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        }
+    ],
+    "variables": {
+        "asRef": "[resourceId('Microsoft.Compute/availabilitySets', parameters('maharaCommon').gfxAvailabilitySetName)]",
+        "nicName": "[concat(variables('vmName'),'-nic')]",
+        "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+        "subnetSanRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('maharaCommon').vnetName, parameters('maharaCommon').subnetSan)]",
+        "vmName": "[concat(parameters('maharaCommon').gfsNameRoot,parameters('counter'))]"
+    }
+}

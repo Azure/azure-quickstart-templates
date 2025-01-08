@@ -1,0 +1,272 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "defaultValue": "ad-vm",
+      "metadata": {
+          "description": "Virtual machine name."
+      }
+     },
+    "dnsZoneName": {
+      "type": "string",
+      "defaultValue": "private.local",
+      "metadata": {
+        "description": "The private DNS suffix and zone name."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Administrator of the new VM and Domain"
+      },
+      "defaultValue": "adAdministrator"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the Administrator account of the new VM and Domain"
+      }
+    },
+
+    "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+            "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+        },
+        "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+            "description": "Auto-generated token to access _artifactsLocation"
+        },
+        "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "comments": "This uses one of the other templates to deploy a pair of AD controllers",
+      "name": "adDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/active-directory-new-domain/0.9/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "domainName": {
+            "value": "[parameters('dnsZoneName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "virtualMachineName": {
+            "value": "[parameters('virtualMachineName')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "This deployment modifies the DNS servers to allow dynamic and reverse DNS",
+      "name": "setupServer",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/adDeployment"
+      ],
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/server/setupserver.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmList": {
+            "value": "[parameters('virtualMachineName')]"
+          },
+          "dnsZone": {
+            "value": "[parameters('dnsZoneName')]"
+          },
+          "vnetName": {
+            "value": "[reference('adDeployment').outputs.virtualNetworkName.value]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Create an example Windows client VM",
+      "name": "setupWindowsClient",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/setupServer"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/genericvm.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "WindowsClient"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnetId": {
+            "value": "[resourceId(reference('adDeployment').outputs.virtualNetworkResourceGroupName.value, 'Microsoft.Network/virtualNetworks/subnets', reference('adDeployment').outputs.virtualNetworkName.value, reference('adDeployment').outputs.virtualNetworkSubnetName.value)]"
+          },
+          "imagePublisher": {
+            "value": "MicrosoftWindowsServer"
+          },
+          "imageOffer": {
+            "value": "WindowsServer"
+          },
+          "imageSKU": {
+            "value": "2012-R2-Datacenter"
+          },
+          "location": {
+            "value":"[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Install the extension on the Windows Client",
+      "name": "WindowsExtension",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/setupWindowsClient"
+      ],
+      "apiVersion":"2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/windows-client/setupwinclient.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmList": {
+            "value": "WindowsClient"
+          },
+          "dnsZone": {
+            "value": "[parameters('dnsZoneName')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Create an example Ubuntu client VM",
+      "name": "setupLinuxClient",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/setupServer"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/genericvm.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "LinuxClient"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnetId": {
+            "value": "[resourceId(reference('adDeployment').outputs.virtualNetworkResourceGroupName.value, 'Microsoft.Network/virtualNetworks/subnets', reference('adDeployment').outputs.virtualNetworkName.value, reference('adDeployment').outputs.virtualNetworkSubnetName.value)]"
+          },
+          "imagePublisher": {
+            "value": "Canonical"
+          },
+          "imageOffer": {
+            "value": "UbuntuServer"
+          },
+          "imageSKU": {
+            "value": "14.04.5-LTS"
+          },
+          "location": {
+            "value":"[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Install the extension on the Linux Client",
+      "name": "LinuxExtension",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/setupLinuxClient"
+      ],
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/linux-client/setuplinuxclient.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmList": {
+            "value": "LinuxClient"
+          },
+          "dnsZone": {
+            "value": "[parameters('dnsZoneName')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
+          }
+        }
+      }
+    }
+  ]
+}

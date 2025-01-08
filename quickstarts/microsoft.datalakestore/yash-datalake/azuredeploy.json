@@ -1,0 +1,581 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location in which the resources will be created.Check supported locations"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "eventHubNamespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the EventHub namespace"
+      },
+      "defaultValue": "[toLower(concat('yashEventHubns', uniqueString(resourceGroup().id)))]"
+    },
+    "captureTime": {
+      "type": "int",
+      "minValue": 60,
+      "maxValue": 900,
+      "metadata": {
+        "description": "the time window in seconds for the archival"
+      },
+      "defaultValue": 300
+    },
+    "captureSize": {
+      "type": "int",
+      "minValue": 10485760,
+      "maxValue": 524288000,
+      "metadata": {
+        "description": "the size window in bytes for event hub capture"
+      },
+      "defaultValue": 10485760
+    },
+    "eventhubSku": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      },
+      "defaultValue": "Standard"
+    },
+    "skuCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        4
+      ],
+      "metadata": {
+        "description": "MessagingUnits for premium namespace"
+      },
+      "defaultValue": 1
+    },
+    "isAutoInflateEnabled": {
+      "type": "string",
+      "allowedValues": [
+        "True",
+        "False"
+      ],
+      "metadata": {
+        "description": "Enable or disable AutoInflate"
+      },
+      "defaultValue": "True"
+    },
+    "messageRetentionInDays": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 7,
+      "metadata": {
+        "description": "How long to retain the data in Event Hub"
+      },
+      "defaultValue": 1
+    },
+    "partitionCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of partitions chosen"
+      },
+      "defaultValue": 2
+    },
+    "captureEncodingFormat": {
+      "type": "string",
+      "allowedValues": [
+        "Avro"
+      ],
+      "metadata": {
+        "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
+      },
+      "defaultValue": "Avro"
+    },
+    "adlAnalyticsName": {
+      "type": "string",
+      "defaultValue": "[toLower(concat('yashadlaa', uniqueString(resourceGroup().id)))]",
+      "metadata": {
+        "description": "The name of the Data Lake Analytics account to create."
+      }
+    },
+    "adlStoreName": {
+      "type": "string",
+      "defaultValue": "[toLower(concat('yashadls1a', uniqueString(resourceGroup().id)))]",
+      "metadata": {
+        "description": "The name of the Data Lake Store account to create."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of vm Eg. Standard_D1_v2"
+      },
+      "defaultValue": "Standard_D2_v3"
+    },
+    "vm_username": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "vm_password": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "OptionalWizardInstall": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "Yes",
+      "metadata": {
+        "description": "Select whether the VM should be in production or not."
+      }
+    },
+    "dataFactoryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the data factory. Must be globally unique."
+      },
+      "defaultValue": "[toLower(concat('yashdf', uniqueString(resourceGroup().id)))]"
+    },
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure datalake UI app registered. Must be globally unique."
+      },
+      "defaultValue": "[toLower(concat('azuredatalakeuiappa', uniqueString(resourceGroup().id)))]"
+    },
+    "servicePrincipalId": {
+      "type": "string",
+      "defaultValue": "null",
+      "metadata": {
+        "description": "The ID of the service principal that has permissions to create HDInsight clusters in your subscription."
+      }
+    },
+    "servicePrincipalKey": {
+      "type": "SecureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The access key of the service principal that has permissions to create HDInsight clusters in your subscription."
+      }
+    },
+    "dataLakeAnalyticsLocation": {
+      "type": "string",
+      "allowedValues": [
+        "East US 2",
+        "North Europe",
+        "Central US",
+        "West Europe",
+        "Australia East"
+      ],
+      "defaultValue": "East US 2",
+      "metadata": {
+        "description": "The location in which the resources will be created.Check supported locations"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located here"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[toLower(concat('storagea', uniqueString(resourceGroup().id)))]",
+    "blobContainer": "raw",
+    "storageAccountType": "Standard_LRS",
+    "maximumThroughputUnits": 8,
+    "DataCleaningInputStream": "datalakerawstreama",
+    "DataCleaningOutputStream": "datalakecleanstreama",
+    "captureNameFormat": "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}",
+    "DataCleaningStreamAnalyticsJob": "cleanOrdersStreamAnalyticsJoba",
+    "DataAggregatorStreamAnalyticsJob1": "sellingProductPerMinJoba",
+    "DataAggregatorStreamAnalyticsJob2": "geoLocationsJoba",
+    "DataAggregatorStreamAnalyticsJob3": "ageGroupWiseRevenueJoba",
+    "dnsLabelPrefix": "[concat('datalake',uniquestring(resourceGroup().id,deployment().name))]",
+    "ES_Function_name": "[toLower(concat('elkstackFn', uniqueString(resourceGroup().id)))]",
+    "serverfarms_name": "[toLower(concat('elkstackASP', uniqueString(resourceGroup().id)))]",
+    "config_web_name_4": "web",
+    "artloc": "[concat('https://azbotstorage.blob.',environment().suffixes.storage,'/sample-artifacts/yash-datalake-2/')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "storageAccount",
+      "apiVersion": "2021-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/storageAccount.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "dataFactory",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "KibanaESDeployedVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/dataFactory.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "KibanaESDeployedVMIP": {
+            "value": "[reference('KibanaESDeployedVM').outputs.publicIpAddress.value]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artloc')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "dataFactoryName": {
+            "value": "[parameters('dataFactoryName')]"
+          },
+          "dataFactoryLocation": {
+            "value": "[parameters('location')]"
+          },
+          "blobContainer": {
+            "value": "[variables('blobContainer')]"
+          },
+          "servicePrincipalId": {
+            "value": "[parameters('servicePrincipalId')]"
+          },
+          "servicePrincipalKey": {
+            "value": "[parameters('servicePrincipalKey')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "dataLakeAnalytics",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "storageAccount"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/datalakeAnalytics.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adlAnalyticsName": {
+            "value": "[parameters('adlAnalyticsName')]"
+          },
+          "adlStoreName": {
+            "value": "[parameters('adlStoreName')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "dataLakeAnalyticsLocation": {
+            "value": "[parameters('dataLakeAnalyticsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "EventHubTemplate",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "dataLakeAnalytics"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/eventHub.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "eventHubNamespaceName": {
+            "value": "[parameters('eventHubNamespaceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "eventhubSku": {
+            "value": "[parameters('eventhubSku')]"
+          },
+          "skuCapacity": {
+            "value": "[parameters('skuCapacity')]"
+          },
+          "isAutoInflateEnabled": {
+            "value": "[parameters('isAutoInflateEnabled')]"
+          },
+          "maximumThroughputUnits": {
+            "value": "[variables('maximumThroughputUnits')]"
+          },
+          "DataCleaningInputStream": {
+            "value": "[variables('DataCleaningInputStream')]"
+          },
+          "DataCleaningOutputStream": {
+            "value": "[variables('DataCleaningOutputStream')]"
+          },
+          "messageRetentionInDays": {
+            "value": "[parameters('messageRetentionInDays')]"
+          },
+          "partitionCount": {
+            "value": "[parameters('partitionCount')]"
+          },
+          "captureEncodingFormat": {
+            "value": "[parameters('captureEncodingFormat')]"
+          },
+          "captureTime": {
+            "value": "[parameters('captureTime')]"
+          },
+          "captureSize": {
+            "value": "[parameters('captureSize')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "captureNameFormat": {
+            "value": "[variables('captureNameFormat')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "streamAnalyticsJobsTemplate",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "EventHubTemplate"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/streamAnalytics.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "eventHubNamespaceName": {
+            "value": "[parameters('eventHubNamespaceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "DataCleaningInputStream": {
+            "value": "[variables('DataCleaningInputStream')]"
+          },
+          "DataCleaningOutputStream": {
+            "value": "[variables('DataCleaningOutputStream')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "DataCleaningStreamAnalyticsJob": {
+            "value": "[variables('DataCleaningStreamAnalyticsJob')]"
+          },
+          "DataAggregatorStreamAnalyticsJob1": {
+            "value": "[variables('DataAggregatorStreamAnalyticsJob1')]"
+          },
+          "DataAggregatorStreamAnalyticsJob2": {
+            "value": "[variables('DataAggregatorStreamAnalyticsJob2')]"
+          },
+          "DataAggregatorStreamAnalyticsJob3": {
+            "value": "[variables('DataAggregatorStreamAnalyticsJob3')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('OptionalWizardInstall'), 'Yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "azureFunction",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "KibanaESDeployedVM",
+        "EventHubTemplate"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/azureFunction.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "KibanaESDeployedVMIP": {
+            "value": "[reference('KibanaESDeployedVM').outputs.publicIpAddress.value]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "appName": {
+            "value": "[parameters('appName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "web_app_id": {
+            "value": "[parameters('servicePrincipalId')]"
+          },
+          "web_app_secret": {
+            "value": "[parameters('servicePrincipalKey')]"
+          },
+          "datafactory_name": {
+            "value": "[parameters('dataFactoryName')]"
+          },
+          "eventhub_name": {
+            "value": "[variables('DataCleaningInputStream')]"
+          },
+          "eventhub_namespace": {
+            "value": "[parameters('eventHubNamespaceName')]"
+          },
+          "adla_account_name": {
+            "value": "[parameters('adlAnalyticsName')]"
+          },
+          "DataCleaningStreamAnalyticsJob": {
+            "value": "[variables('DataCleaningStreamAnalyticsJob')]"
+          },
+          "DataAggregatorStreamAnalyticsJob1": {
+            "value": "[variables('DataAggregatorStreamAnalyticsJob1')]"
+          },
+          "DataAggregatorStreamAnalyticsJob2": {
+            "value": "[variables('DataAggregatorStreamAnalyticsJob2')]"
+          },
+          "DataAggregatorStreamAnalyticsJob3": {
+            "value": "[variables('DataAggregatorStreamAnalyticsJob3')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "KibanaESDeployedVM",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "storageAccount"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/elasticSearchKibana.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "username": {
+            "value": "[parameters('vm_username')]"
+          },
+          "password": {
+            "value": "[parameters('vm_password')]"
+          },
+          "dnsLabelPrefix": {
+            "value": "[variables('dnsLabelPrefix')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "KibanaFunctionApp",
+      "apiVersion": "2021-01-01",
+      "dependsOn": [
+        "KibanaESDeployedVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'),concat('nested/blobTriggerdFunction.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storage_name": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "kibanaFunctionHost": {
+            "value": "[variables('ES_Function_name')]"
+          },
+          "kibanaFunctionPath": {
+            "value": "/api/AddKibanaDashboard"
+          },
+          "EsIP": {
+            "value": "[reference('KibanaESDeployedVM').outputs.publicIpAddress.value]"
+          },
+          "serverfarms_name": {
+            "value": "[variables('serverfarms_name')]"
+          },
+          "sites_demotriggerapp1234_name": {
+            "value": "[variables('ES_Function_name')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "config_web_name_4": {
+            "value": "[variables('config_web_name_4')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "websiteUrl": {
+      "type": "string",
+      "value": "[Concat(reference('azureFunction').outputs.websiteUrl.value,'/api/quickstart_wizard')]"
+    }
+  }
+}
+

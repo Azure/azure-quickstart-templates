@@ -1,0 +1,244 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure region that supports Availability Zones"
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 8,
+      "metadata": {
+        "description": "Naming prefix for each new resource created. 3-char min, 8-char max, lowercase alphanumeric"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the SQL Server VMs to be created"
+      },
+      "defaultValue": "Standard_D4s_v3"
+    },
+    "sqlVMImage": {
+      "type": "string",
+      "allowedValues": [
+        "SQL2016SP1-WS2016",
+        "SQL2016SP1-WS2016-BYOL",
+        "SQL2017-WS2016",
+        "SQL2017-WS2016-BYOL"
+      ],
+      "metadata": {
+        "description": "VM Image Offer to use for provisioning SQL VMs"
+      },
+      "defaultValue": "SQL2016SP1-WS2016"
+    },
+    "sqlVMImageSku": {
+       "type": "string",
+       "metadata": {
+            "description": "SQL Image Sku"
+        },
+        "defaultValue": "SQLDEV"
+    },
+    "vmCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 9,
+      "metadata": {
+        "description": "Number of SQL Server VMs to be created in AlwaysOn Availability Group cluster (Min=2, Max=9)"
+      },
+      "defaultValue": 2
+    },
+    "vmDiskSize": {
+      "type": "int",
+      "minValue": 128,
+      "maxValue": 1023,
+      "metadata": {
+        "description": "Size of each data disk in GB on each SQL Server VM (Min=128, Max=1023)"
+      },
+      "defaultValue": 1023
+    },
+    "vmDiskCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of data disks on each SQL Server VM (Min=2, Max=32). Ensure that the VM size you've selected will support this number of data disks."
+      },
+      "defaultValue": 2
+    },
+    "existingDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS domain name for existing Active Directory domain"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Administrator of the existing Active Directory Domain"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "minLength": 12,
+      "metadata": {
+        "description": "Password for the Administrator account of the existing Active Directory Domain"
+      }
+    },
+    "sqlServiceAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the user account to be used for the SQL Server service account. Do not use the same account speficied in adminUsername parameter"
+      }
+    },
+    "sqlServicePassword": {
+      "type": "securestring",
+      "minLength": 12,
+      "metadata": {
+        "description": "Password to be used for the SQL Server service account"
+      }
+    },
+    "existingVirtualNetworkRGName": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group Name for the existing VNET."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "defaultValue": "sqlSubnet",
+      "metadata": {
+        "description": "Name of the existing subnet in the existing VNET to which the SQL Server VMs should be deployed"
+      }
+    },
+    "enableOutboundInternet": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "No",
+      "metadata": {
+        "description": "Enable outbound Internet access via source NAT to support ongoing VM Agent extension communication needs"
+      }
+    },
+    "workloadType": {
+      "type": "string",
+      "allowedValues": [
+        "GENERAL",
+        "OLTP",
+        "DW"
+      ],
+      "metadata": {
+        "description": "SQL DB workload type: GENERAL - General workload; DW - Data Warehouse workload; OLTP - Transactional Processing workload"
+      },
+      "defaultValue": "GENERAL"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/sql-alwayson-md-ilb-zones/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "subnetId": "[resourceId(parameters('existingVirtualNetworkRGName'),'Microsoft.Network/virtualNetworks/subnets',parameters('existingVirtualNetworkName'), parameters('existingSubnetName'))]",
+    "deploySqlClusterTemplateURL": "[uri(parameters('_artifactsLocation'),concat('nestedtemplates/deploy-sql-cluster.json', parameters('_artifactsLocationSasToken')))]",
+    "deploySqlCluster": "deploySqlCluster"
+  },
+  "resources": [
+    {
+      "name": "[variables('deploySqlCluster')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('deploySqlClusterTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "domainName": {
+            "value": "[parameters('existingDomainName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "sqlServiceAccount": {
+            "value": "[parameters('sqlServiceAccount')]"
+          },
+          "sqlServicePassword": {
+            "value": "[parameters('sqlServicePassword')]"
+          },
+          "subnetId": {
+            "value": "[variables('subnetId')]"
+          },
+          "enableOutboundInternet": {
+            "value": "[parameters('enableOutboundInternet')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "imageOffer": {
+            "value": "[parameters('sqlVMImage')]"
+          },
+          "imageSKU": {
+            "value": "[parameters('sqlVMImageSku')]"
+          }, 
+          "vmCount": {
+            "value": "[parameters('vmCount')]"
+          },
+          "vmDiskSize": {
+            "value": "[parameters('vmDiskSize')]"
+          },
+          "vmDiskCount": {
+            "value": "[parameters('vmDiskCount')]"
+          },
+          "workloadType": {
+            "value": "[parameters('workloadType')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "agListenerName": {
+      "type": "string",
+      "value": "[reference(variables('deploySqlCluster')).outputs.agListenerName.value]"
+    }
+  }
+}
+

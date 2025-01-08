@@ -1,0 +1,395 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": {
+				"description": "Specify the workspace name"
+			}
+		},
+		"location": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "Specify the workspace region"
+			}
+		},
+		"LineChartBuilderBladeId": {
+			"type": "string",
+			"defaultValue": "LineChartBuilderBlade",
+			"metadata": {
+				"description": "Line Chart Builder Blade Id"
+			}
+		},
+		"NotableQueriesBuilderBladeId": {
+			"type": "string",
+			"defaultValue": "NotableQueriesBuilderBlade",
+			"metadata": {
+				"description": "Notable Queries Builder Blade Id"
+			}
+		},
+		"LineChartBuilderTileId": {
+			"type": "string",
+			"defaultValue": "LineChartBuilderTile",
+			"metadata": {
+				"description": "Line Chart Builder Tile Id"
+			}
+		},
+		"LineChartBuilderBladetabGroupId1": {
+			"type": "int",
+			"defaultValue": 1528570627308
+		},
+		"LineChartBuilderBladetabGroupId2": {
+			"type": "int",
+			"defaultValue": 1528570627318
+		},
+		"NotableQueriesBuilderBladetabGroupId1": {
+			"type": "int",
+			"defaultValue": 1528570627315
+		},
+		"NotableQueriesBuilderBladetabGroupId2": {
+			"type": "int",
+			"defaultValue": 1528570627320
+		}
+	},
+	"variables": {
+		"omsSolutions": {
+			"customSolution": {
+				"name": "Azure Network Security Group Analytics",
+				"solutionName": "[concat('AzureNSGAnalytics', '[', parameters('workspaceName'), ']')]",
+				"publisher": "Microsoft",
+				"displayName": "Azure Network Security Group Analytics",
+				"description": "Gain insight into your Azure Network Security Group logs",
+				"author": "Microsoft"
+			}
+		}
+	},
+	"resources": [
+		{
+			"apiVersion": "2020-10-01",
+			"name": "[parameters('workspaceName')]",
+			"type": "Microsoft.OperationalInsights/workspaces",
+			"location": "[parameters('location')]",
+			"resources": [
+				{
+					"apiVersion": "2015-11-01-preview",
+					"name": "Azure Network Security Group Analytics",
+					"type": "views",
+					"location": "[parameters('location')]",
+					"dependsOn": [
+						"[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+					],
+					"properties": {
+						"Name": "[variables('omsSolutions').customSolution.name]",
+						"Author": "[variables('omsSolutions').customSolution.author]",
+						"Source": "Local",
+						"Version": 2,
+						"Dashboard": [
+							{
+								"Id": "[parameters('LineChartBuilderBladeId')]",
+								"Type": "Blade",
+								"Version": 0,
+								"Configuration": {
+									"General": {
+										"title": "Network Security Group Blocked Flows",
+										"newGroup": true,
+										"useIcon": false
+									},
+									"Header": {
+										"Title": "Rules with blocked flows"
+									},
+									"LineChart": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"block\" | summarize AggregatedValue = sum(matchedConnections_d) by ruleName_s , bin(TimeGenerated, 1h)| where AggregatedValue >0 |render timechart",
+										"yAxis": {
+											"isLogarithmic": false
+										}
+									},
+									"List": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"block\" | summarize AggregatedValue = sum(matchedConnections_d) by ruleName_s | where AggregatedValue > 0",
+										"HideGraph": false,
+										"enableSparklines": true,
+										"ColumnsTitle": {
+											"Name": "Rule",
+											"Value": "Blocked Flows Last Hour"
+										},
+										"Color": "#0072c6",
+										"operation": "Last Sample",
+										"thresholds": {
+											"isEnabled": false,
+											"values": [
+												{
+													"name": "Normal",
+													"threshold": "Default",
+													"color": "#009e49",
+													"isDefault": true
+												},
+												{
+													"name": "Warning",
+													"threshold": "60",
+													"color": "#fcd116",
+													"isDefault": false
+												},
+												{
+													"name": "Error",
+													"threshold": "90",
+													"color": "#ba141a",
+													"isDefault": false
+												}
+											]
+										},
+										"NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+										"NavigationSelect": {
+											"NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+										}
+									}
+								}
+							},
+							{
+								"Id": "[parameters('LineChartBuilderBladeId')]",
+								"Type": "Blade",
+								"Version": 0,
+								"Configuration": {
+									"General": {
+										"newGroup": false,
+										"useIcon": false,
+										"tabGroupId": "[parameters('LineChartBuilderBladetabGroupId1')]"
+									},
+									"Header": {
+										"Title": "MAC Addresses with Blocked Flows"
+									},
+									"LineChart": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"block\" | summarize AggregatedValue = sum(matchedConnections_d) by subnetPrefix_s, bin(TimeGenerated, 1h)| render timechart",
+										"yAxis": {
+											"isLogarithmic": false
+										}
+									},
+									"List": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"block\" | summarize AggregatedValue = sum(matchedConnections_d) by subnetPrefix_s",
+										"HideGraph": false,
+										"enableSparklines": true,
+										"operation": "Last Sample",
+										"ColumnsTitle": {
+											"Name": "MAC Address",
+											"Value": "Blocked Flows Last Hour"
+										},
+										"Color": "#0072c6",
+										"thresholds": {
+											"isEnabled": false,
+											"values": [
+												{
+													"name": "Normal",
+													"threshold": "Default",
+													"color": "#009e49",
+													"isDefault": true
+												},
+												{
+													"name": "Warning",
+													"threshold": "60",
+													"color": "#fcd116",
+													"isDefault": false
+												},
+												{
+													"name": "Error",
+													"threshold": "90",
+													"color": "#ba141a",
+													"isDefault": false
+												}
+											]
+										},
+										"NavigationQuery": "search in (AzureDiagnostics) ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and {selected item} | sort by TimeGenerated desc"
+									}
+								}
+							},
+							{
+								"Id": "[parameters('LineChartBuilderBladeId')]",
+								"Type": "Blade",
+								"Version": 0,
+								"Configuration": {
+									"General": {
+										"title": "Network Security Group Allowed Flows",
+										"newGroup": true,
+										"useIcon": false,
+										"tabGroupId": "[parameters('NotableQueriesBuilderBladetabGroupId1')]"
+									},
+									"Header": {
+										"Title": "Rules with Allowed Flows"
+									},
+									"LineChart": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"allow\" | summarize AggregatedValue = sum(matchedConnections_d) by ruleName_s, bin(TimeGenerated, 1h) | where AggregatedValue > 0| render timechart",
+										"yAxis": {
+											"isLogarithmic": false
+										}
+									},
+									"List": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"allow\" | summarize AggregatedValue = sum(matchedConnections_d) by ruleName_s| where AggregatedValue > 0",
+										"HideGraph": false,
+										"enableSparklines": true,
+										"operation": "Last Sample",
+										"ColumnsTitle": {
+											"Name": "Rule",
+											"Value": "Allowed Flows Last Hour"
+										},
+										"Color": "#0072c6",
+										"thresholds": {
+											"isEnabled": false,
+											"values": [
+												{
+													"name": "Normal",
+													"threshold": "Default",
+													"color": "#009e49",
+													"isDefault": true
+												},
+												{
+													"name": "Warning",
+													"threshold": "60",
+													"color": "#fcd116",
+													"isDefault": false
+												},
+												{
+													"name": "Error",
+													"threshold": "90",
+													"color": "#ba141a",
+													"isDefault": false
+												}
+											]
+										},
+										"NavigationQuery": "search in (AzureDiagnostics) ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and {selected item} | sort by TimeGenerated desc"									}
+								}
+							},
+							{
+								"Id": "[parameters('LineChartBuilderBladeId')]",
+								"Type": "Blade",
+								"Version": 0,
+								"Configuration": {
+									"General": {
+										"newGroup": false,
+										"useIcon": false,
+										"tabGroupId": "[parameters('LineChartBuilderBladetabGroupId2')]"
+									},
+									"Header": {
+										"Title": "MAC Addresses with Allowed Flows"
+									},
+									"LineChart": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"allow\" | summarize AggregatedValue = sum(matchedConnections_d) by subnetPrefix_s, bin(TimeGenerated, 1h) | render timechart",
+										"yAxis": {
+											"isLogarithmic": false
+										}
+									},
+									"List": {
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and type_s == \"block\" | summarize AggregatedValue = sum(matchedConnections_d) by subnetPrefix_s",
+										"HideGraph": false,
+										"enableSparklines": true,
+										"operation": "Last Sample",
+										"ColumnsTitle": {
+											"Name": "MAC Address",
+											"Value": "Allowed Flows Last Hour"
+										},
+										"Color": "#0072c6",
+										"thresholds": {
+											"isEnabled": false,
+											"values": [
+												{
+													"name": "Normal",
+													"threshold": "Default",
+													"color": "#009e49",
+													"isDefault": true
+												},
+												{
+													"name": "Warning",
+													"threshold": "60",
+													"color": "#fcd116",
+													"isDefault": false
+												},
+												{
+													"name": "Error",
+													"threshold": "90",
+													"color": "#ba141a",
+													"isDefault": false
+												}
+											]
+										},
+										"NavigationQuery": "search in (AzureDiagnostics) ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" and {selected item} | sort by TimeGenerated desc"									}
+								}
+							},
+							{
+								"Id": "[parameters('NotableQueriesBuilderBladeId')]",
+								"Type": "Blade",
+								"Version": 0,
+								"Configuration": {
+									"General": {
+										"title": "Recommended Searches",
+										"newGroup": true,
+										"preselectedFilters": "Type, Computer",
+										"renderMode": "grid",
+										"tabGroupId": "[parameters('NotableQueriesBuilderBladetabGroupId2')]"
+									},
+									"queries": [
+										{
+											"query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupEvent\" | sort by TimeGenerated desc",
+											"displayName": "Azure Network Security Group Events"
+										},
+										{
+											"query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" | sort by TimeGenerated desc",
+											"displayName": "Azure Network Security Group Counter Events"
+										},
+										{
+											"query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupEvent\" and ruleName_s !in ((union * | where Category == \"NetworkSecurityGroupRuleCounter\" and matchedConnections_d > 0 | distinct ruleName_s)) | summarize arg_max(TimeGenerated, *) by ruleName_s | sort by TimeGenerated desc | project TimeGenerated, ruleName_s, type_s, direction_s",
+											"displayName": "Azure Network Security Group Rules Not Matching Any Flows"
+										},
+										{
+											"query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupEvent\" and ruleName_s in ((union * | where Category == \"NetworkSecurityGroupRuleCounter\" and matchedConnections_d > 0 | distinct ruleName_s)) | summarize arg_max(TimeGenerated, *) by ruleName_s | sort by TimeGenerated desc | project TimeGenerated, ruleName_s, type_s, direction_s",
+											"displayName": "Azure Network Security Group Rules Matching Flows"
+										}
+									]
+								}
+							}
+						],
+						"OverviewTile": {
+							"Id": "[parameters('LineChartBuilderTileId')]",
+							"Type": "OverviewTile",
+							"Version": 2,
+							"Configuration": {
+								"LineChart": {
+									"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" and Category == \"NetworkSecurityGroupRuleCounter\" | summarize AggregatedValue = sum(matchedConnections_d) by type_s | where AggregatedValue > 0",
+									"yAxis": {
+										"isLogarithmic": false
+									}
+								},
+								"Advanced": {
+									"DataFlowVerification": {
+										"Enabled": true,
+										"Query": "AzureDiagnostics | where ResourceType == \"NETWORKSECURITYGROUPS\" | sort by TimeGenerated desc",
+										"Message": "Learn how to configure solution: http://go.microsoft.com/fwlink/?linkid=839623"
+									}
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "[variables('omsSolutions').customSolution.solutionName]",
+					"type": "Microsoft.OperationsManagement/solutions",
+					"apiVersion": "2015-11-01-preview",
+					"location": "[parameters('location')]",
+					"dependsOn": [
+						"[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+						"[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('workspaceName'), variables('omsSolutions').customSolution.Name)]"
+					],
+					"plan": {
+						"name": "[variables('omsSolutions').customSolution.solutionName]",
+						"product": "[variables('omsSolutions').customSolution.name]",
+						"publisher": "[variables('omsSolutions').customSolution.publisher]",
+						"promotionCode": ""
+					},
+					"properties": {
+						"workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+						"containedResources": [
+							"[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('workspaceName'), variables('omsSolutions').customSolution.name)]"
+						]
+					}
+				}
+			]
+		}
+	]
+}

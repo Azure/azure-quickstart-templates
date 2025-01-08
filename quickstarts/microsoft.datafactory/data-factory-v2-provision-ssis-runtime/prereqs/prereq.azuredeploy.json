@@ -1,0 +1,119 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "databaseAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user name for the Azure SQL server."
+      }
+    },
+    "databaseAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for the Azure SQL user."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "virtualNetworkName": "[concat('VNet', uniqueString(resourceGroup().id))]",
+    "subnetName": "default",
+    "serverName": "[concat('server', uniqueString(resourceGroup().id))]",
+    "databaseName": "DB",
+    "databaseCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "databaseEdition": "Basic",
+    "databaseRequestedServiceObjectiveName": "Basic"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }]
+      }
+    },
+    {
+      "name": "[variables('serverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-02-01-preview",
+      "tags": {
+        "displayName": "server"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('databaseAdminUsername')]",
+        "administratorLoginPassword": "[parameters('databaseAdminPassword')]"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[parameters('location')]",
+          "apiVersion": "2021-02-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[variables('databaseName')]",
+          "type": "databases",
+          "location": "[parameters('location')]",
+          "apiVersion": "2021-02-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
+          ],
+          "tags": {
+            "displayName": "database"
+          },
+          "properties": {
+            "collation": "[variables('databaseCollation')]",
+            "edition": "[variables('databaseEdition')]",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "[variables('databaseRequestedServiceObjectiveName')]"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "azure-sql-server-name": {
+      "type": "string",
+      "value": "[variables('serverName')]"
+    },
+    "sql-admin-user": {
+      "type": "string",
+      "value": "[parameters('databaseAdminUsername')]"
+    },
+    "virtual-network-name": {
+      "type": "string",
+      "value": "[variables('virtualNetworkName')]"
+    },
+    "virtual-network-subnet-name": {
+      "type": "string",
+      "value": "[variables('subnetName')]"
+    }
+  }
+}

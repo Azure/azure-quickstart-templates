@@ -1,0 +1,292 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.27.1.19265",
+      "templateHash": "9916649783587000712"
+    }
+  },
+  "parameters": {
+    "disablePublicIp": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not"
+      }
+    },
+    "loadBalancerBackendPoolName": {
+      "type": "string",
+      "defaultValue": "myLoadBalancerBackendPool",
+      "metadata": {
+        "description": "Name of the outbound Load Balancer's Backend Pool."
+      }
+    },
+    "loadBalancerFrontendConfigName": {
+      "type": "string",
+      "defaultValue": "myLoadBalancerFrontendConfig",
+      "metadata": {
+        "description": "Name of the outbound Load Balancer's Frontend Config."
+      }
+    },
+    "loadBalancerName": {
+      "type": "string",
+      "defaultValue": "myLoadBalancer",
+      "metadata": {
+        "description": "Name of the outbound Load Balancer."
+      }
+    },
+    "loadBalancerPublicIpName": {
+      "type": "string",
+      "defaultValue": "myLoadBalancerPublicIP",
+      "metadata": {
+        "description": "Name of the outbound Load Balancer public IP."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "nsgName": {
+      "type": "string",
+      "defaultValue": "databricks-nsg",
+      "metadata": {
+        "description": "The name of the network security group to create."
+      }
+    },
+    "pricingTier": {
+      "type": "string",
+      "defaultValue": "premium",
+      "allowedValues": [
+        "trial",
+        "standard",
+        "premium"
+      ],
+      "metadata": {
+        "description": "The pricing tier of workspace."
+      }
+    },
+    "privateSubnetCidr": {
+      "type": "string",
+      "defaultValue": "10.179.0.0/18",
+      "metadata": {
+        "description": "Cidr range for the private subnet."
+      }
+    },
+    "privateSubnetName": {
+      "type": "string",
+      "defaultValue": "private-subnet",
+      "metadata": {
+        "description": "The name of the private subnet to create."
+      }
+    },
+    "publicSubnetCidr": {
+      "type": "string",
+      "defaultValue": "10.179.64.0/18",
+      "metadata": {
+        "description": "Cidr range for the public subnet.."
+      }
+    },
+    "publicSubnetName": {
+      "type": "string",
+      "defaultValue": "public-subnet",
+      "metadata": {
+        "description": "The name of the public subnet to create."
+      }
+    },
+    "vnetCidr": {
+      "type": "string",
+      "defaultValue": "10.179.0.0/16",
+      "metadata": {
+        "description": "Cidr range for the vnet."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "databricks-vnet",
+      "metadata": {
+        "description": "The name of the virtual network to create."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Databricks workspace to create."
+      }
+    }
+  },
+  "variables": {
+    "loadBalancerId": "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName'))]",
+    "loadBalancerBackendPoolId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancerName'), parameters('loadBalancerBackendPoolName'))]",
+    "loadBalancerFrontendConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('loadBalancerName'), parameters('loadBalancerFrontendConfigName'))]",
+    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+    "trimmedMRGName": "[substring(variables('managedResourceGroupName'), 0, min(length(variables('managedResourceGroupName')), 90))]",
+    "managedResourceGroupId": "[format('{0}/resourceGroups/{1}', subscription().id, variables('trimmedMRGName'))]",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('nsgName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('loadBalancerPublicIpName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('loadBalancerName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[parameters('loadBalancerFrontendConfigName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('loadBalancerPublicIpName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[parameters('loadBalancerBackendPoolName')]"
+          }
+        ],
+        "outboundRules": [
+          {
+            "name": "databricks-outbound-rule",
+            "properties": {
+              "allocatedOutboundPorts": 0,
+              "protocol": "All",
+              "enableTcpReset": true,
+              "idleTimeoutInMinutes": 4,
+              "backendAddressPool": {
+                "id": "[variables('loadBalancerBackendPoolId')]"
+              },
+              "frontendIPConfigurations": [
+                {
+                  "id": "[variables('loadBalancerFrontendConfigId')]"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('loadBalancerPublicIpName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetCidr')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('publicSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('publicSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-public",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "[parameters('privateSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('privateSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-private",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('pricingTier')]"
+      },
+      "properties": {
+        "managedResourceGroupId": "[variables('managedResourceGroupId')]",
+        "parameters": {
+          "customVirtualNetworkId": {
+            "value": "[variables('vnetId')]"
+          },
+          "customPublicSubnetName": {
+            "value": "[parameters('publicSubnetName')]"
+          },
+          "customPrivateSubnetName": {
+            "value": "[parameters('privateSubnetName')]"
+          },
+          "enableNoPublicIp": {
+            "value": "[parameters('disablePublicIp')]"
+          },
+          "loadBalancerId": {
+            "value": "[variables('loadBalancerId')]"
+          },
+          "loadBalancerBackendPoolName": {
+            "value": "[parameters('loadBalancerBackendPoolName')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    }
+  ]
+}

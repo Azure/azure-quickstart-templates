@@ -1,0 +1,273 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Authentication type"
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "OS Admin password or SSH Key depending on value of authentication type"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The Location For the resources"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the VM to create"
+      },
+      "defaultValue": "Standard_D2s_v3"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation."
+      },
+      "defaultValue": ""
+    },
+    "operatingSystem": {
+      "type": "string",
+      "defaultValue": "UbuntuServer_18.04-LTS",
+      "metadata": {
+        "description": "Operating system to use for the virtual machine."
+      },
+      "allowedValues": [
+        "UbuntuServer_18.04-LTS",
+        "UbuntuServer_16.04-LTS",
+        "WindowsServer_2016-DataCenter"
+      ]
+    }
+  },
+  "variables": {
+    "isWindowsOs": "[contains(toLower(parameters('operatingSystem')), 'windows')]",
+    "script1Command": "[if(variables('isWindowsOs'), 'powershell -ExecutionPolicy Unrestricted -File  .\\script-1.ps1 ', './script-1.sh ')]",
+    "script2Command": "[if(variables('isWindowsOs'), 'powershell -ExecutionPolicy Unrestricted -File  .\\script-2.ps1 ', './script-2.sh ')]",
+    "script1File": "[if(variables('isWindowsOs'), 'script-1.ps1', 'script-1.sh')]",
+    "script2File": "[if(variables('isWindowsOs'), 'script-2.ps1', 'script-2.sh')]",
+    "vmName": "vm",
+    "storageAccountName": "[concat(variables('vmName'),uniquestring(resourceGroup().id))]",
+    "networkSecurityGroupName": "nsg",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "virtualNetworkName": "vnet",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "createVMUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vm.json', parameters('_artifactsLocationSasToken')))]",
+    "extensionUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/customScriptExtension.json', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2021-01-01",
+      "location": "[parameters('Location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2018-07-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('Location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('networkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2018-07-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-remote-access",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "[if(contains(toLower(parameters('operatingSystem')), 'windows'), 3389, 22)]",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "creatingVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[variables('virtualNetworkName')]",
+        "[variables('storageAccountName')]",
+        "[variables('networkSecurityGroupName')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('createVMUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "operatingSystem": {
+            "value": "[parameters('operatingSystem')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "nsgId": {
+            "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+          },
+          "storageAccountId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "vmName": {
+            "value": "[variables('vmName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "firstExtensionRun",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "creatingVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "extensionName": {
+            "value": "cse"
+          },
+          "vmName": {
+            "value": "[variables('vmName')]"
+          },
+          "fileUris": {
+            "value": [
+              "[uri(parameters('_artifactsLocation'), concat(variables('script1File'), parameters('_artifactsLocationSasToken')))]"
+            ]
+          },
+          "commandToExecute": {
+            "value": "[variables('script1Command')]"
+          },
+          "isWindowsOS": {
+            "value": "[variables('isWindowsOs')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "secondExtensionRun",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "firstExtensionRun"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "extensionName": {
+            "value": "cse"
+          },
+          "vmName": {
+            "value": "[variables('vmName')]"
+          },
+          "fileUris": {
+            "value": [
+              "[uri(parameters('_artifactsLocation'), concat(variables('script2File'), parameters('_artifactsLocationSasToken')))]"
+            ]
+          },
+          "commandToExecute": {
+            "value": "[concat(variables('script2Command'), '\"', split(string(if(variables('isWindowsOs'), reference('firstExtensionRun').outputs.instanceView.value.substatuses[0].message, reference('firstExtensionRun').outputs.instanceView.value.statuses[0].message)), '#DATA#')[1], '\"')]"
+          },
+          "isWindowsOS": {
+            "value": "[variables('isWindowsOs')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "sample": {
+      "type": "object",
+      "value": "[reference('firstExtensionRun').outputs.instanceView.value]"
+    }
+  }
+}
+

@@ -1,0 +1,1019 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+   "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location for all the resources."
+      }
+    },
+    "virtualNetworkName": {
+      "defaultValue": "UbuntuVnet",
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the virtual network hosting the virtual machine."
+      }
+    },
+    "virtualNetworkAddressPrefix": {
+      "defaultValue": "10.0.0.0/16",
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the address prefix of the virtual network hosting the virtual machine."
+      }
+    },
+    "subnetName": {
+      "defaultValue": "DefaultSubnet",
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the subnet hosting the virtual machine."
+      }
+    },
+    "subnetAddressPrefix": {
+      "defaultValue": "10.0.0.0/24",
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the address prefix of the subnet hosting the virtual machine."
+      }
+    },
+    "adlsStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('adls', uniquestring(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the globally unique DNS Name for the ADLS Gen 2 storage account."
+      }
+    },
+    "blobStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('boot', uniquestring(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the globally unique name for the storage account used to store the boot diagnostics logs of the virtual machine."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "TestVm",
+      "metadata": {
+        "description": "Specifies the name of the virtual machine."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "Specifies the size of the virtual machine."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "metadata": {
+        "description": "Specifies the image publisher of the disk image used to create the virtual machine."
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "metadata": {
+        "description": "Specifies the offer of the platform image or marketplace image used to create the virtual machine."
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "metadata": {
+        "description": "Specifies the Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Specifies the type of authentication when accessing the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azadmin",
+      "metadata": {
+        "description": "Specifies the name of the administrator account of the virtual machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Specifies the SSH Key or password for the virtual machine. SSH key is recommended."
+      }
+    },
+    "diskStorageAccounType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GZRS",
+        "Standard_RAGZRS"
+      ],
+      "metadata": {
+        "description": "Specifies the storage account type for OS and data disk."
+      }
+    },
+    "numDataDisks": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 0,
+      "maxValue": 64,
+      "metadata": {
+        "description": "Specifies the number of data disks of the virtual machine."
+      }
+    },
+    "osDiskSize": {
+      "type": "int",
+      "defaultValue": 50,
+      "metadata": {
+        "description": "Specifies the size in GB of the OS disk of the VM."
+      }
+    },
+    "dataDiskSize": {
+      "type": "int",
+      "defaultValue": 50,
+      "metadata": {
+        "description": "Specifies the size in GB of the OS disk of the virtual machine."
+      }
+    },
+    "dataDiskCaching": {
+      "type": "string",
+      "defaultValue": "ReadWrite",
+      "metadata": {
+        "description": "Specifies the caching requirements for the data disks."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "Specifies the base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies the sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
+    },
+    "scriptFileName": {
+      "type": "string",
+      "defaultValue": "nslookup.sh",
+      "metadata": {
+        "description": "The name of the script to download from the URI specified by the scriptFilePath parameter."
+      }
+    },
+    "deployLogAnalytics": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether to deploy a Log Analytics workspace to monitor the health and performance of the virtual machine."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the globally unique name of the Log Analytics workspace."
+      }
+    },
+    "workspaceSku": {
+      "type": "string",
+      "allowedValues": [
+        "PerGB2018",
+        "Free",
+        "Standalone",
+        "PerNode",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "PerGB2018",
+      "metadata": {
+        "description": "Specifies the SKU of the Log Analytics workspace."
+      }
+    },
+    "adlsStorageAccountPrivateEndpointName": {
+      "type": "string",
+      "defaultValue": "AdlsStorageAccountPrivateEndpoint",
+      "metadata": {
+        "description": "Specifies the name of the private link to the storage account."
+      }
+    },
+    "blobStorageAccountPrivateEndpointName": {
+      "type": "string",
+      "defaultValue": "BlobStorageAccountPrivateEndpoint",
+      "metadata": {
+        "description": "Specifies the name of the private link to the boot diagnostics storage account."
+      }
+    }
+  },
+  "variables": {
+    "nicName": "[concat(parameters('vmName'), 'Nic')]",
+    "nsgName": "[concat(parameters('subnetName'), 'Nsg')]",
+    "publicIPAddressName": "[concat(parameters('vmName'), 'PublicIp')]",
+    "publicIPAddressType": "Dynamic",
+    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "publicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+    "nicId": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "vmId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]",
+    "customScriptId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), 'CustomScript')]",
+    "omsAgentForLinuxId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), 'LogAnalytics')]",
+    "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', parameters('scriptFileName'), parameters('_artifactsLocationSasToken')))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      },
+      "provisionVMAgent": true
+    },
+    "adlsStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('adlsStorageAccountName'))]",
+    "blobStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('blobStorageAccountName'))]",
+    "adlsPublicDNSZoneForwarder": "[concat('.dfs.', environment().suffixes.storage)]",
+    "blobPublicDNSZoneForwarder": "[concat('.blob.', environment().suffixes.storage)]",
+    "adlsPrivateDnsZoneName": "[concat('privatelink', variables('adlsPublicDNSZoneForwarder'))]",
+    "blobPrivateDnsZoneName": "[concat('privatelink', variables('blobPublicDNSZoneForwarder'))]",
+    "adlsPrivateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('adlsPrivateDnsZoneName'))]",
+    "blobPrivateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]",
+    "adlsServicePrimaryEndpoint": "[concat(parameters('adlsStorageAccountName'), variables('adlsPublicDNSZoneForwarder'))]",
+    "blobServicePrimaryEndpoint": "[concat(parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]",
+    "adlsStorageAccountPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('adlsStorageAccountPrivateEndpointName'))]",
+    "blobStorageAccountPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('blobStorageAccountPrivateEndpointName'))]",
+    "adlsStorageAccountPrivateEndpointGroupName": "dfs",
+    "blobStorageAccountPrivateEndpointGroupName": "blob",
+    "adlsPrivateDnsZoneGroup": "[concat(parameters('adlsStorageAccountPrivateEndpointName'),'/', variables('adlsStorageAccountPrivateEndpointGroupName'), 'PrivateDnsZoneGroup')]",
+    "blobPrivateDnsZoneGroup": "[concat(parameters('blobStorageAccountPrivateEndpointName'),'/', variables('blobStorageAccountPrivateEndpointGroupName'), 'PrivateDnsZoneGroup')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('adlsStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('blobStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+           "domainNameLabel": "[concat(toLower(parameters('vmName')), uniquestring(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowSshInbound",
+            "properties": {
+              "priority": 100,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-11-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('nsgId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('publicIpId')]",
+        "[variables('vnetId')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('adlsStorageAccountPrivateEndpointId')]",
+        "[variables('blobStorageAccountPrivateEndpointId')]",
+        "[variables('nicId')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "diskSizeGB": "[parameters('osDiskSize')]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskStorageAccounType')]"
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "caching": "[parameters('dataDiskCaching')]",
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "name": "[concat(parameters('vmName'),'-DataDisk',copyIndex('dataDisks'))]",
+                "createOption": "Empty",
+                "managedDisk": {
+                  "storageAccountType": "[parameters('diskStorageAccounType')]"
+                }
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(variables('blobStorageAccountId')).primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), '/CustomScript')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('vmId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false,
+          "timestamp": 123456789,
+          "fileUris": [
+            "[variables('scriptFileUri')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash ',  parameters('scriptFileName'), ' ', variables('adlsServicePrimaryEndpoint'), ' ', variables('blobServicePrimaryEndpoint'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/LogAnalytics')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('vmId')]",
+        "[variables('workspaceId')]",
+        "[variables('customScriptId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "OmsAgentForLinux",
+        "typeHandlerVersion": "1.12",
+        "settings": {
+          "workspaceId": "[reference(variables('workspaceId'), '2020-03-01-preview').customerId]",
+          "stopOnMultipleConnections": false
+        },
+        "protectedSettings": {
+          "workspaceKey": "[listKeys(variables('workspaceId'),'2020-03-01-preview').primarySharedKey]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/DependencyAgent')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('vmId')]",
+        "[variables('workspaceId')]",
+        "[variables('customScriptId')]",
+        "[variables('omsAgentForLinuxId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+        "type": "DependencyAgentLinux",
+        "typeHandlerVersion": "9.10",
+        "autoUpgradeMinorVersion": true
+      }
+    },
+    {
+      "condition": "[parameters('deployLogAnalytics')]",
+      "apiVersion": "2020-03-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('workspaceSku')]"
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "Kern",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslog",
+          "properties": {
+            "syslogName": "kern",
+            "syslogSeverities": [
+              {
+                "severity": "emerg"
+              },
+              {
+                "severity": "alert"
+              },
+              {
+                "severity": "crit"
+              },
+              {
+                "severity": "err"
+              },
+              {
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "Syslog",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslog",
+          "properties": {
+            "syslogName": "syslog",
+            "syslogSeverities": [
+              {
+                "severity": "emerg"
+              },
+              {
+                "severity": "alert"
+              },
+              {
+                "severity": "crit"
+              },
+              {
+                "severity": "err"
+              },
+              {
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "User",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslog",
+          "properties": {
+            "syslogName": "user",
+            "syslogSeverities": [
+              {
+                "severity": "emerg"
+              },
+              {
+                "severity": "alert"
+              },
+              {
+                "severity": "crit"
+              },
+              {
+                "severity": "err"
+              },
+              {
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "SampleSyslogCollection1",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslogCollection",
+          "properties": {
+            "state": "Enabled"
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "DiskPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "% Used Inodes"
+              },
+              {
+                "counterName": "Free Megabytes"
+              },
+              {
+                "counterName": "% Used Space"
+              },
+              {
+                "counterName": "Disk Transfers/sec"
+              },
+              {
+                "counterName": "Disk Reads/sec"
+              },
+              {
+                "counterName": "Disk Writes/sec"
+              },
+              {
+                "counterName": "Disk Read Bytes/sec"
+              },
+              {
+                "counterName": "Disk Write Bytes/sec"
+              }
+            ],
+            "objectName": "Logical Disk",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "ProcessorPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "% Processor Time"
+              },
+              {
+                "counterName": "% User Time"
+              },
+              {
+                "counterName": "% Privileged Time"
+              },
+              {
+                "counterName": "% IO Wait Time"
+              },
+              {
+                "counterName": "% Idle Time"
+              },
+              {
+                "counterName": "% Interrupt Time"
+              }
+            ],
+            "objectName": "Processor",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "ProcessPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "% User Time"
+              },
+              {
+                "counterName": "% Privileged Time"
+              },
+              {
+                "counterName": "Used Memory"
+              },
+              {
+                "counterName": "Virtual Shared Memory"
+              }
+            ],
+            "objectName": "Process",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "SystemPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "Processes"
+              }
+            ],
+            "objectName": "System",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "NetworkPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "Total Bytes Transmitted"
+              },
+              {
+                "counterName": "Total Bytes Received"
+              },
+              {
+                "counterName": "Total Bytes"
+              },
+              {
+                "counterName": "Total Packets Transmitted"
+              },
+              {
+                "counterName": "Total Packets Received"
+              },
+              {
+                "counterName": "Total Rx Errors"
+              },
+              {
+                "counterName": "Total Tx Errors"
+              },
+              {
+                "counterName": "Total Collisions"
+              }
+            ],
+            "objectName": "Network",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "MemorydataSources",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "Available MBytes Memory"
+              },
+              {
+                "counterName": "% Available Memory"
+              },
+              {
+                "counterName": "Used Memory MBytes"
+              },
+              {
+                "counterName": "% Used Memory"
+              }
+            ],
+            "objectName": "Memory",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-03-01-preview",
+          "type": "dataSources",
+          "name": "SampleLinuxPerfCollection1",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceCollection",
+          "properties": {
+            "state": "Enabled"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2018-09-01",
+      "name": "[variables('adlsPrivateDnsZoneName')]",
+      "location": "global",
+      "properties": {
+        "maxNumberOfRecordSets": 25000,
+        "maxNumberOfVirtualNetworkLinks": 1000,
+        "maxNumberOfVirtualNetworkLinksWithRegistration": 100
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2018-09-01",
+      "name": "[variables('blobPrivateDnsZoneName')]",
+      "location": "global",
+      "properties": {
+        "maxNumberOfRecordSets": 25000,
+        "maxNumberOfVirtualNetworkLinks": 1000,
+        "maxNumberOfVirtualNetworkLinksWithRegistration": 100
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2018-09-01",
+      "name": "[concat(variables('adlsPrivateDnsZoneName'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
+      "location": "global",
+      "dependsOn": [
+        "[variables('adlsPrivateDnsZoneId')]",
+        "[variables('vnetId')]"
+      ],
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[variables('vnetId')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2018-09-01",
+      "name": "[concat(variables('blobPrivateDnsZoneName'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
+      "location": "global",
+      "dependsOn": [
+        "[variables('blobPrivateDnsZoneId')]",
+        "[variables('vnetId')]"
+      ],
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[variables('vnetId')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-04-01",
+      "name": "[parameters('adlsStorageAccountPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "[variables('adlsStorageAccountId')]"
+      ],
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[parameters('adlsStorageAccountPrivateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[variables('adlsStorageAccountId')]",
+              "groupIds": [
+                "[variables('adlsStorageAccountPrivateEndpointGroupName')]"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[variables('subnetId')]"
+        },
+        "customDnsConfigs": [
+          {
+            "fqdn": "[concat(parameters('adlsStorageAccountName'), variables('adlsPublicDNSZoneForwarder'))]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-04-01",
+      "name": "[parameters('blobStorageAccountPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "[variables('blobStorageAccountId')]"
+      ],
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[parameters('blobStorageAccountPrivateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[variables('blobStorageAccountId')]",
+              "groupIds": [
+                "[variables('blobStorageAccountPrivateEndpointGroupName')]"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[variables('subnetId')]"
+        },
+        "customDnsConfigs": [
+          {
+            "fqdn": "[concat(parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]"
+          }
+        ]
+      }
+    },
+        {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('adlsPrivateDnsZoneGroup')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('adlsPrivateDnsZoneId')]",
+        "[variables('adlsStorageAccountPrivateEndpointId')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[variables('adlsPrivateDnsZoneId')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('blobPrivateDnsZoneGroup')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('blobPrivateDnsZoneId')]",
+        "[variables('blobStorageAccountPrivateEndpointId')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[variables('blobPrivateDnsZoneId')]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "adlsStorageAccountPrivateEndpoint": {
+      "value": "[reference(resourceId('Microsoft.Network/privateEndpoints', parameters('adlsStorageAccountPrivateEndpointName')), '2020-04-01', 'Full')]",
+      "type": "object"
+    },
+    "blobStorageAccountPrivateEndpoint": {
+      "value": "[reference(resourceId('Microsoft.Network/privateEndpoints', parameters('blobStorageAccountPrivateEndpointName')), '2020-04-01', 'Full')]",
+      "type": "object"
+    },
+    "adlsStorageAccount": {
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('adlsStorageAccountName')), '2019-06-01', 'Full')]",
+      "type": "object"
+    },
+    "blobStorageAccount": {
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('blobStorageAccountName')), '2019-06-01', 'Full')]",
+      "type": "object"
+    },
+    "adminUsername": {
+      "value": "[parameters('adminUsername')]",
+      "type": "string"
+    },
+    "workspaceName": {
+      "value": "[parameters('workspaceName')]",
+      "type": "string"
+    },
+    "scriptFileUri": {
+      "value": "[variables('scriptFileUri')]",
+      "type": "string"
+    },
+    "environment": {
+      "value": "[environment()]",
+      "type": "object"
+    }
+  }
+}
+

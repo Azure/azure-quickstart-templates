@@ -1,0 +1,138 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual machine."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the KeyVault to place the volume encryption key"
+      }
+    },
+      "enabledForDeployment": {
+        "type": "bool",
+        "defaultValue": true,
+        "metadata": {
+          "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
+        }
+      },
+      "enabledForDiskEncryption": {
+        "type": "bool",
+        "defaultValue": true,
+        "metadata": {
+          "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
+        }
+      },
+      "enabledForTemplateDeployment": {
+        "type": "bool",
+        "defaultValue": true,
+        "metadata": {
+          "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
+        }
+      },
+      "keysPermissions": {
+        "type": "array",
+        "defaultValue": [
+          "list",
+          "get",
+          "decrypt",
+          "encrypt",
+          "unwrapkey",
+          "wrapkey"
+        ],
+        "metadata": {
+          "description": "Specifies the permissions to keys in the vault. Valid values are: all, encrypt, decrypt, wrapKey, unwrapKey, sign, verify, get, list, create, update, import, delete, backup, restore, recover, and purge."
+        }
+      },
+      "secretsPermissions": {
+        "type": "array",
+        "defaultValue": [
+          "list",
+          "get"
+        ],
+        "metadata": {
+          "description": "Specifies the permissions to secrets in the vault. Valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
+        }
+      },
+      "skuName": {
+        "type": "string",
+        "defaultValue": "Standard",
+        "allowedValues": [
+          "Standard",
+          "Premium"
+        ],
+        "metadata": {
+          "description": "Specifies whether the key vault is a standard vault or a premium vault."
+        }
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location of the resources."
+        }
+      }
+  },
+  "variables": {
+    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), environment().suffixes.keyVaultDns)]",
+    "encryptionOperation": "EnableEncryption"
+  },
+  "resources": [
+    {
+        "type": "Microsoft.KeyVault/vaults",
+        "apiVersion": "2021-04-01-preview",
+        "name": "[parameters('keyVaultName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "enabledForDeployment": "[parameters('enabledForDeployment')]",
+          "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
+          "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+          "tenantId": "[subscription().tenantId]",
+          "accessPolicies": [
+            {
+              "objectId": "[reference(resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName')), '2020-12-01', 'full').identity.principalId]",
+              "tenantId": "[subscription().tenantId]",
+              "permissions": {
+                "keys": "[parameters('keysPermissions')]",
+                "secrets": "[parameters('secretsPermissions')]"
+              }
+            }
+          ],
+          "sku": {
+            "name": "[parameters('skuName')]",
+            "family": "A"
+          },
+          "networkAcls": {
+            "defaultAction": "Allow",
+            "bypass": "AzureServices"
+          }
+        }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('vmName'),'/diskEncryption')]",
+        "apiVersion": "2020-12-01",
+        "dependsOn": [
+          "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+        ],
+        "location": "[parameters('location')]",
+        "properties": {
+            "publisher": "Microsoft.Azure.Security",
+            "type": "AzureDiskEncryption",
+            "typeHandlerVersion": "2.2",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+                "EncryptionOperation": "[variables('encryptionOperation')]",
+                "KeyVaultURL": "[variables('keyVaultURL')]",
+                "KeyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
+                "VolumeType": "All"
+            }
+          }
+        }
+      ]
+    }

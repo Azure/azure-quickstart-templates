@@ -1,0 +1,1026 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "VirtualNetworkName": {
+            "defaultValue": "examplevnet",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the VNET for all Resources."
+            }
+        },
+        "OperatingSystemImage": {
+            "type": "string",
+            "defaultValue": "Red Hat Enterprise Linux 7 (latest, LVM)",
+            "allowedValues": [
+                "Red Hat Enterprise Linux 7 (latest, LVM)",
+                "SUSE Enterprise Linux 12 SP5 +Patching"
+            ],
+            "metadata": {
+                "description": "OS Image to use for All VMs."
+            }
+        },
+        "ProximityPlacementGroupName": {
+            "defaultValue": "proxgroup",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Proximity Placement Group to use for All Resources."
+            }
+        },
+        "AdminUserForVMAccess": {
+            "type": "String",
+            "metadata": {
+                "description": "Admin User for all VMs."
+            }
+        },
+        "sshKeyForVMAccess": {
+            "type": "String",
+            "metadata": {
+                "description": "ssh Public Key used to access all VMs."
+            }
+        },
+        "MidtierNetworkSecurityGroupName": {
+            "defaultValue": "midtierNSG",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Network Security Group for the Midtier Resources."
+            }
+        },
+        "MidtierVMNameBase": {
+            "defaultValue": "midtier",
+            "type": "String",
+            "metadata": {
+                "description": "Prefix for naming Midtier VMs."
+            }
+        },
+        "MidtierVMCount": {
+            "defaultValue": 1,
+            "type": "Int",
+            "allowedValues": [
+                0,
+                1,
+                3
+            ],
+            "metadata": {
+                "description": "How many Midtier VMs to provision."
+            }
+        },
+        "MidtierVMSize": {
+            "defaultValue": "Standard_D2s_v3",
+            "type": "String",
+            "allowedValues": [
+                "Standard_D2s_v3",
+                "Standard_D4s_v3",
+                "Standard_D8s_v3",
+                "Standard_D16s_v3",
+                "Standard_D32s_v3"
+            ],
+            "metadata": {
+                "description": "VM Size for Midtier VMs."
+            }
+        },
+        "BackendNetworkSecurityGroupName": {
+            "defaultValue": "backendNSG",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Network Security Group for the Backend Resources."
+            }
+        },
+        "BackendVMNameBase": {
+            "defaultValue": "backend",
+            "type": "String",
+            "metadata": {
+                "description": "Prefix for naming Backend VMs."
+            }
+        },
+        "BackendVMCount": {
+            "defaultValue": 2,
+            "type": "Int",
+            "minValue": 0,
+            "maxValue": 100,
+            "metadata": {
+                "description": "How many Backend VMs to provision."
+            }
+        },
+        "BackendVMTemplate": {
+            "defaultValue": "Standard_D8s_v3 2xP10 (256MB/node)",
+            "type": "String",
+            "allowedValues": [
+                "Standard_D8s_v3 2xP10 (256MB/node)",
+                "Standard_D8s_v3 1xP30 (1024MB/node)",
+                "Standard_D16s_v3 4xP10 (512MB/node)",
+                "Standard_D16s_v3 2xP30 (2048MB/node)",
+                "Standard_D32s_v3 8xP10 (1024MB/node)",
+                "Standard_D32s_v3 4xP30 (4096MB/node)",
+                "Standard_D48s_v3 12xP10 (1536MB/node)",
+                "Standard_D48s_v3 6xP30 (6144MB/node)",
+                "Standard_D64s_v3 12xP10 (1536MB/node)",
+                "Standard_D64s_v3 6xP30 (6144MB/node)"
+            ],
+            "metadata": {
+                "description": "VM Size and Storage Profile for Backend VMs."
+            }
+        },
+        "FrontendNetworkSecurityGroupName": {
+            "defaultValue": "frontendNSG",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Network Security Group for the Frontend Resources."
+            }
+        },
+        "AllowFrontendConnectionFromIPOrCIDRBlock": {
+            "defaultValue": "0.0.0.0/0",
+            "type": "string",
+            "metadata": {
+                "description": "Default value of 0.0.0.0/0 allows management and connections from the entire Internet"
+            }
+        },
+        "DeployAzureBastionFrontend": {
+            "defaultValue": "Yes",
+            "type": "String",
+            "allowedValues": [
+                "No",
+                "Yes"
+            ],
+            "metadata": {
+                "description": "Selection to deploy Azure Bastion Frontend"
+            }
+        },
+        "DeployAppGatewayFrontend": {
+            "defaultValue": "Yes",
+            "type": "String",
+            "allowedValues": [
+                "No",
+                "Yes"
+            ],
+            "metadata": {
+                "description": "Selection to deploy Azure Application Gateway Frontend"
+            }
+        },
+        "DeployJumpBoxFrontend": {
+            "defaultValue": "Yes",
+            "type": "String",
+            "allowedValues": [
+                "No",
+                "Yes"
+            ],
+            "metadata": {
+                "description": "Selection to deploy Jump Box (VM) Frontend"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "AvailabilitySetFaultDomain": {
+            "eastus": 3,
+            "eastus2": 3,
+            "westus": 3,
+            "centralus": 3,
+            "northcentralus": 3,
+            "southcentralus": 3,
+            "northeurope": 3,
+            "westeurope": 3,
+            "brazilsouth": 3,
+            "CentralIndia": 3,
+            "CanadaCentral": 3,
+            "westus2": 3,
+            "FranceCentral": 3
+        },
+        "maxFaultDomainsforLocation": "[if(contains(variables('AvailabilitySetFaultDomain'),parameters('location')),variables('AvailabilitySetFaultDomain')[parameters('location')],2)]",
+        "storageProfileSimple": {
+            "Standard_D2s_v3": 1,
+            "Standard_D4s_v3": 1,
+            "Standard_D8s_v3": 2,
+            "Standard_D16s_v3": 4,
+            "Standard_D32s_v3": 8
+        },
+        "storageProfileAdvanced": {
+            "Standard_D8s_v3 2xP10 (256MB/node)": {
+                "disksize": 128,
+                "vmsize": "Standard_D8s_v3",
+                "diskcount": 2
+            },
+            "Standard_D8s_v3 1xP30 (1024MB/node)": {
+                "disksize": 1024,
+                "vmsize": "Standard_D8s_v3",
+                "diskcount": 1
+            },
+            "Standard_D16s_v3 4xP10 (512MB/node)": {
+                "disksize": 128,
+                "vmsize": "Standard_D16s_v3",
+                "diskcount": 4
+            },
+            "Standard_D16s_v3 2xP30 (2048MB/node)": {
+                "disksize": 1024,
+                "vmsize": "Standard_D16s_v3",
+                "diskcount": 2
+            },
+            "Standard_D32s_v3 8xP10 (1024MB/node)": {
+                "disksize": 128,
+                "vmsize": "Standard_D32s_v3",
+                "diskcount": 8
+            },
+            "Standard_D32s_v3 4xP30 (4096MB/node)": {
+                "disksize": 1024,
+                "vmsize": "Standard_D32s_v3",
+                "diskcount": 4
+            },
+            "Standard_D48s_v3 12xP10 (1536MB/node)": {
+                "disksize": 128,
+                "vmsize": "Standard_D48s_v3",
+                "diskcount": 12
+            },
+            "Standard_D48s_v3 6xP30 (6144MB/node)": {
+                "disksize": 1024,
+                "vmsize": "Standard_D48s_v3",
+                "diskcount": 6
+            },
+            "Standard_D64s_v3 12xP10 (1536MB/node)": {
+                "disksize": 128,
+                "vmsize": "Standard_D64s_v3",
+                "diskcount": 12
+            },
+            "Standard_D64s_v3 6xP30 (6144MB/node)": {
+                "disksize": 1024,
+                "vmsize": "Standard_D64s_v3",
+                "diskcount": 6
+            }
+        },
+        "ostag": "[if(equals(parameters('OperatingSystemImage'),'Red Hat Enterprise Linux 7 (latest, LVM)'),'RH7x','SL12')]",
+        "osProfile": {
+            "RH7x": {
+                "image": {
+                    "publisher": "RedHat",
+                    "offer": "RHEL",
+                    "sku": "7-LVM",
+                    "version": "latest"
+                },
+                "diskscript": "scripts/rhel_raid_azure_data.sh"
+            },
+            "SL12": {
+                "image": {
+                    "publisher": "suse",
+                    "offer": "sles-12-sp5-basic",
+                    "sku": "gen1",
+                    "version": "latest"
+                },
+                "diskscript": "scripts/sles_raid_azure_data.sh"
+            }
+        },
+        "postInstallActions": {
+            "backend": {
+                "commandToExecute": "[concat('sh ',variables('osProfile')[variables('ostag')]['diskscript'],'; sh examplepostinstall1.sh; sh examplepostinstall2.sh')]",
+                "fileUris": [
+                    "[uri(parameters('_artifactsLocation'), concat(variables('osProfile')[variables('ostag')]['diskscript'], parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall1.sh', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall2.sh', parameters('_artifactsLocationSasToken')))]"
+                ]
+            },
+            "midtier": {
+                "commandToExecute": "[concat('sh ',variables('osProfile')[variables('ostag')]['diskscript'],'; sh examplepostinstall1.sh')]",
+                "fileUris": [
+                    "[uri(parameters('_artifactsLocation'), concat(variables('osProfile')[variables('ostag')]['diskscript'], parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall1.sh', parameters('_artifactsLocationSasToken')))]"
+                ]
+            },
+            "jump": {
+                "commandToExecute": "[concat('sh ',variables('osProfile')[variables('ostag')]['diskscript'],'; sh examplepostinstall3.sh')]",
+                "fileUris": [
+                    "[uri(parameters('_artifactsLocation'), concat(variables('osProfile')[variables('ostag')]['diskscript'], parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall3.sh', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/rhel_raid_azure_data.sh', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/sles_raid_azure_data.sh', parameters('_artifactsLocationSasToken')))]"
+                    
+                ]
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-07-01",
+            "type": "Microsoft.Compute/proximityPlacementGroups",
+            "name": "[parameters('ProximityPlacementGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+            }
+        },
+        {
+            "condition": "[greater(parameters('BackendVMCount'),1)]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2019-07-01",
+            "name": "[concat(parameters('BackendVMNameBase'),'-AS')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Aligned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "platformFaultDomainCount": "[variables('maxFaultDomainsforLocation')]",
+                "platformUpdateDomainCount": 6,
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',parameters('ProximityPlacementGroupName'))]"
+                }
+            }
+        },
+        {
+            "condition": "[greater(parameters('MidtierVMCount'),1)]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2019-07-01",
+            "name": "[concat(parameters('MidtierVMNameBase'),'-AS')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Aligned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "platformFaultDomainCount": "[variables('maxFaultDomainsforLocation')]",
+                "platformUpdateDomainCount": 6,
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',parameters('ProximityPlacementGroupName'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-12-01",
+            "name": "[parameters('BackendNetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-12-01",
+            "name": "[parameters('MidtierNetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-12-01",
+            "name": "[parameters('FrontendNetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "allow_http_from_ip_or_range_forwebhttp",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "[parameters('AllowFrontendConnectionFromIPorCIDRBlock')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow_ssh_from_ip_or_range_for_jumpboxssh",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "[parameters('AllowFrontendConnectionFromIPorCIDRBlock')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 510,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow_https_from_ip_or_range_for_bastion",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "[parameters('AllowFrontendConnectionFromIPorCIDRBlock')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 520,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow_ssh_to_vnet_for_bastion",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 530,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "allow_rdp_to_vnet_for_bastion",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 540,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "allow_https_to_azurecloud_for_bastion",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "AzureCloud",
+                            "access": "Allow",
+                            "priority": 550,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "allow_management_from_gateway_manager_for_appgateway",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "65200-65535",
+                            "sourceAddressPrefix": "GatewayManager",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 560,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow_https_from_gateway_manager_for_appgateway",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "GatewayManager",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 570,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[equals(parameters('DeployAppGatewayFrontend'), 'Yes')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "ParameterizedAppGateway",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'frontend-appgateway-ip')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VirtualNetworkName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nested/paramappgateway.json', parameters('_artifactsLocationSasToken')))]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "appgateway_name": {
+                        "value": "frontend-appgateway"
+                    },
+                    "public_ip": {
+                        "value": "[resourceId('Microsoft.Network/publicIPAddresses', 'frontend-appgateway-ip')]"
+                    },
+                    "vnet_name": {
+                        "value": "[parameters('VirtualNetworkName')]"
+                    },
+                    "vnet_subnet_name": {
+                        "value": "AppGatewaySubnet"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "ParameterizedBackendVM-Loop",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VirtualNetworkName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "[resourceId('Microsoft.Resources/deployments', 'ParameterizedAppGateway')]",
+                "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('BackendVMNameBase'),'-AS'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "templateUri": {
+                        "value": "[uri(parameters('_artifactsLocation'), concat('nested/paramvm.json', parameters('_artifactsLocationSasToken')))]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "Backend VM Template": {
+                        "value": "[parameters('BackendVMTemplate')]"
+                    },
+                    "Backend VM Name Base": {
+                        "value": "[parameters('BackendVMNameBase')]"
+                    },
+                    "Backend VM Count": {
+                        "value": "[parameters('BackendVMCount')]"
+                    },
+                    "Proximity PlacementGroup Name": {
+                        "value": "[parameters('ProximityPlacementGroupName')]"
+                    },
+                    "Admin User for VM Access": {
+                        "value": "[parameters('AdminUserForVMAccess')]"
+                    },
+                    "ssh Key for VM Access": {
+                        "value": "[parameters('sshKeyForVMAccess')]"
+                    },
+                    "Virtual Network Name": {
+                        "value": "[parameters('VirtualNetworkName')]"
+                    },
+                    "storageProfileAdvanced": {
+                        "value": "[variables('storageProfileAdvanced')]"
+                    },
+                    "osProfile": {
+                        "value": "[variables('osProfile')]"
+                    },
+                    "ostag": {
+                        "value": "[variables('ostag')]"
+                    },
+                    "postInstallActions": {
+                        "value": "[variables('postInstallActions')]"
+                    },
+                    "availabilityset_id_or_empty": {
+                        "value": "[if(greater(parameters('BackendVMCount'),1),resourceId('Microsoft.Compute/availabilitySets',concat(parameters('BackendVMNameBase'),'-AS')),'')]"
+                    },
+                    "appgatewaybackend_id_or_empty": {
+                        "value": "[if(equals(parameters('DeployAppGatewayFrontend'),'Yes'),resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'frontend-appgateway', 'default-backend'),'')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "templateUri": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "Backend VM Template": {
+                            "type": "string"
+                        },
+                        "Backend VM Name Base": {
+                            "type": "string"
+                        },
+                        "Backend VM Count": {
+                            "type": "int"
+                        },
+                        "Proximity PlacementGroup Name": {
+                            "type": "string"
+                        },
+                        "Admin User for VM Access": {
+                            "type": "string"
+                        },
+                        "ssh Key for VM Access": {
+                            "type": "string"
+                        },
+                        "Virtual Network Name": {
+                            "type": "string"
+                        },
+                        "storageProfileAdvanced": {
+                            "type": "object"
+                        },
+                        "osProfile": {
+                            "type": "object"
+                        },
+                        "ostag": {
+                            "type": "string"
+                        },
+                        "postInstallActions": {
+                            "type": "object"
+                        },
+                        "availabilityset_id_or_empty": {
+                            "type": "string"
+                        },
+                        "appgatewaybackend_id_or_empty": {
+                            "type": "string"
+                        }
+
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2019-10-01",
+                            "name": "[concat('ParameterizedBackendVM-', copyIndex())]",
+                            "copy": {
+                                "name": "ParameterizedBackendVM-Copy",
+                                "count": "[parameters('Backend VM Count')]"
+                            },
+                            "properties": {
+                                "mode": "Incremental",
+                                "templateLink": {
+                                    "uri": "[parameters('templateUri')]"
+                                },
+                                "parameters": {
+                                    "location": {
+                                        "value": "[parameters('location')]"
+                                    },
+                                    "vm_name": {
+                                        "value": "[concat(parameters('Backend VM Name Base'),'-', copyIndex())]"
+                                    },
+                                    "vm_size": {
+                                        "value": "[parameters('storageProfileAdvanced')[parameters('Backend VM Template')]['vmsize']]"
+                                    },
+                                    "datadisk_size": {
+                                        "value": "[parameters('storageProfileAdvanced')[parameters('Backend VM Template')]['disksize']]"
+                                    },
+                                    "datadisk_count": {
+                                        "value": "[parameters('storageProfileAdvanced')[parameters('Backend VM Template')]['diskcount']]"
+                                    },
+                                    "proximity_group_name": {
+                                        "value": "[parameters('Proximity PlacementGroup Name')]"
+                                    },
+                                    "admin_user": {
+                                        "value": "[parameters('Admin User for VM Access')]"
+                                    },
+                                    "ssh_pub_key": {
+                                        "value": "[parameters('ssh Key for VM Access')]"
+                                    },
+                                    "vnet_name": {
+                                        "value": "[parameters('Virtual Network Name')]"
+                                    },
+                                    "vnet_subnet_name": {
+                                        "value": "backendSubnet"
+                                    },
+                                    "os_image": {
+                                        "value": "[parameters('osProfile')[parameters('ostag')]['image']]"
+                                    },
+                                    "post_install_actions": {
+                                        "value": "[parameters('postInstallActions')['backend']]"
+                                    },
+                                    "enable_enhanced_networking": {
+                                        "value": true
+                                    },
+                                    "publicip_id_or_empty": {
+                                        "value": ""
+                                    },
+                                    "appgatewaybackend_id_or_empty": {
+                                        "value": "[parameters('appgatewaybackend_id_or_empty')]"
+                                    },
+                                    "availabilityset_id_or_empty": {
+                                        "value": "[parameters('availabilityset_id_or_empty')]"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "backendIp": {
+                            "type": "array",
+                            "copy": {
+                                "count": "[parameters('Backend VM Count')]",
+                                "input": "[reference(resourceId('Microsoft.Resources/deployments',concat('ParameterizedBackendVM-', copyIndex()))).outputs.privateIp.value]"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat('ParameterizedMidtierVM-', copyIndex())]",
+            "copy": {
+                "name": "ParameterizedMidtierVM-Copy",
+                "count": "[parameters('MidtierVMCount')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VirtualNetworkName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('MidtierVMNameBase'),'-AS'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nested/paramvm.json', parameters('_artifactsLocationSasToken')))]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vm_name": {
+                        "value": "[concat(parameters('MidtierVMNameBase'),'-', copyIndex())]"
+                    },
+                    "vm_size": {
+                        "value": "[parameters('MidtierVMSize')]"
+                    },
+                    "datadisk_size": {
+                        "value": 128
+                    },
+                    "datadisk_count": {
+                        "value": "[variables('storageProfileSimple')[parameters('MidtierVMSize')]]"
+                    },
+                    "proximity_group_name": {
+                        "value": "[parameters('ProximityPlacementGroupName')]"
+                    },
+                    "admin_user": {
+                        "value": "[parameters('AdminUserForVMAccess')]"
+                    },
+                    "ssh_pub_key": {
+                        "value": "[parameters('sshKeyForVMAccess')]"
+                    },
+                    "vnet_name": {
+                        "value": "[parameters('VirtualNetworkName')]"
+                    },
+                    "vnet_subnet_name": {
+                        "value": "midtierSubnet"
+                    },
+                    "os_image": {
+                        "value": "[variables('osProfile')[variables('ostag')]['image']]"
+                    },
+                    "post_install_actions": {
+                        "value": "[variables('postInstallActions')['midtier']]"
+                    },
+                    "enable_enhanced_networking": {
+                        "value": "[not(equals(parameters('MidtierVMSize'),'Standard_D2s_v3'))]"
+                    },
+                    "publicip_id_or_empty": {
+                        "value": ""
+                    },
+                    "appgatewaybackend_id_or_empty": {
+                        "value": ""
+                    },
+                    "availabilityset_id_or_empty": {
+                        "value": "[if(greater(parameters('MidtierVMCount'),1),resourceId('Microsoft.Compute/availabilitySets',concat(parameters('MidtierVMNameBase'),'-AS')),'')]"
+
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('DeployJumpBoxFrontend'), 'Yes')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "ParameterizedJumpVM",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VirtualNetworkName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'frontend-jumpvm-ip')]",
+                "ParameterizedBackendVM-Loop"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nested/paramvm.json', parameters('_artifactsLocationSasToken')))]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vm_name": {
+                        "value": "frontend-jumpvm"
+                    },
+                    "vm_size": {
+                        "value": "Standard_B2ms"
+                    },
+                    "datadisk_size": {
+                        "value": 128
+                    },
+                    "datadisk_count": {
+                        "value": 1
+                    },
+                    "proximity_group_name": {
+                        "value": "[parameters('ProximityPlacementGroupName')]"
+                    },
+                    "admin_user": {
+                        "value": "[parameters('AdminUserForVMAccess')]"
+                    },
+                    "ssh_pub_key": {
+                        "value": "[parameters('sshKeyForVMAccess')]"
+                    },
+                    "vnet_name": {
+                        "value": "[parameters('VirtualNetworkName')]"
+                    },
+                    "vnet_subnet_name": {
+                        "value": "frontendSubnet"
+                    },
+                    "os_image": {
+                        "value": "[variables('osProfile')[variables('ostag')]['image']]"
+                    },
+                    "post_install_actions": {
+                        "value": {
+                            "commandToExecute": "[concat(variables('postInstallActions')['jump'].commandToExecute,' ', string(reference('ParameterizedBackendVM-Loop').outputs.backendIp.value))]",
+                            "fileUris": "[variables('postInstallActions')['jump'].fileUris]"
+                        }
+                    },
+                    "enable_enhanced_networking": {
+                        "value": false
+                    },
+                    "publicip_id_or_empty": {
+                        "value": "[resourceId('Microsoft.Network/publicIPAddresses', 'frontend-jumpvm-ip')]"
+                    },
+                    "appgatewaybackend_id_or_empty": {
+                        "value": ""
+                    },
+                    "availabilityset_id_or_empty": {
+                        "value": ""
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-12-01",
+            "name": "[parameters('VirtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('BackendNetworkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('MidtierNetworkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.2.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "10.2.0.224/27"
+                        }
+                    },
+                    {
+                        "name": "AzureBastionSubnet",
+                        "properties": {
+                            "addressPrefix": "10.2.0.192/27",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('FrontendNetworkSecurityGroupName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "frontendSubnet",
+                        "properties": {
+                            "addressPrefix": "10.2.0.160/27",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('FrontendNetworkSecurityGroupName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "AppGatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "10.2.0.128/27",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('FrontendNetworkSecurityGroupName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "backendSubnet",
+                        "properties": {
+                            "addressPrefix": "10.2.1.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('BackendNetworkSecurityGroupName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "midtierSubnet",
+                        "properties": {
+                            "addressPrefix": "10.2.0.0/28",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('MidtierNetworkSecurityGroupName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[equals(parameters('DeployAzureBastionFrontend'), 'Yes')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-12-01",
+            "name": "frontend-bastion-ip",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "condition": "[equals(parameters('DeployJumpBoxFrontend'), 'Yes')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-12-01",
+            "name": "frontend-jumpvm-ip",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "condition": "[equals(parameters('DeployAppGatewayFrontend'), 'Yes')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-12-01",
+            "name": "frontend-appgateway-ip",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "condition": "[equals(parameters('DeployAzureBastionFrontend'), 'Yes')]",
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2019-12-01",
+            "name": "bastion",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VirtualNetworkName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'frontend-bastion-ip')]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), 'AzureBastionSubnet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,146 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the Azure location where the key vault should be created."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "[deployment().properties.templateLink.uri]",
+            "metadata": {
+                "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Auto-generated token to access _artifactsLocation. Leave it blank unless you need to provide your own value."
+            }
+        },
+        "modelFilePath": {
+            "type": "string",
+            "defaultValue": "sklearn_regression_model.pkl",
+            "metadata": {
+                "description": "relative path to the model file in the staged/source location."
+            }
+        },
+        "driverFilePath": {
+            "type": "string",
+            "defaultValue": "Driver.py",
+            "metadata": {
+                "description": "relative path to the Driver file in the staged/source location."
+            }
+        }
+    },
+    "variables": {
+        "scriptName": "uploadModelAndAssets",
+        "identityName": "scratch",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "roleDefinitionName": "[guid(variables('identityName'), variables('roleDefinitionId'))]",
+        "modelFileUri": "[uri(parameters('_artifactsLocation'), concat(parameters('modelFilePath'), parameters('_artifactsLocationSasToken')))]",
+        "driverFileUri": "[uri(parameters('_artifactsLocation'), concat(parameters('driverFilePath'), parameters('_artifactsLocationSasToken')))]",
+        "storageAccountName": "[concat('sa', uniqueString(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('identityName')]",
+            "apiVersion": "2018-11-30",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[variables('roleDefinitionName')]",
+            "dependsOn": [
+                "[variables('identityName')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                "principalId": "[reference(variables('identityName')).principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "name": "ml",
+            "dependsOn": [
+                "[variables('roleDefinitionName')]" // doing this last gives the above roleAssignment time to replicate
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/machine-learning-workspace/0.9/azuredeploy.json",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "storageAccountName": {
+                        "value": "[variables('storageAccountName')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('scriptName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "ml"
+            ],
+            "kind": "AzurePowerShell",
+            "identity": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": { /*ttk bug*/
+                    }
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "0",
+                "azPowerShellVersion": "3.0",
+                "arguments": "[format(' -destStorageAccountName {0} -destContainer {1} -destStorageAccountResourceGroupName ''{2}'' -modelFileUri ''{3}'' -driverFileUri ''{4}''', 
+                                       variables('storageAccountName'),
+                                       'mlassets',
+                                       resourceGroup().name,
+                                       variables('modelFileUri'),
+                                       variables('driverFileUri'))]",
+                "scriptContent": "
+                    param(
+                      [string] $destStorageAccountName,
+                      [string] $destContainer,
+                      [string] $destStorageAccountResourceGroupName,
+                      [string] $modelFileUri,
+                      [string] $driverFileUri
+                    )
+                      $modelFilePath = [System.UriBuilder]::new($modelFileUri).Path
+                      $modelFileName = $modelFilePath.Substring($modelFilePath.LastIndexOf('/') + 1)
+                      $storageAccountKey = $(Get-AzStorageAccountKey -StorageAccountName $destStorageAccountName -ResourceGroupName $destStorageAccountResourceGroupName)[0].value
+                      $ctx = New-AzStorageContext -StorageAccountName $destStorageAccountName -StorageAccountKey \"$storageAccountKey\"
+                      New-AzStorageContainer -Context $ctx -Container $destContainer -ErrorAction SilentlyContinue # in case it exists
+                      Start-AzStorageBlobCopy -AbsoluteUri \"$modelFileUri\" -DestContext $ctx -DestContainer $destContainer -DestBlob \"$modelFileName\" -Force -Verbose
+                      $driverFilePath = [System.UriBuilder]::new($driverFileUri).Path
+                      $driverFileName = $driverFilePath.Substring($driverFilePath.LastIndexOf('/') + 1)
+                      Start-AzStorageBlobCopy -AbsoluteUri \"$driverFileUri\" -DestContext $ctx -DestContainer $destContainer -DestBlob \"$driverFileName\" -Force -Verbose
+                    ",
+                "timeout": "PT5M",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        }
+    ],
+    "outputs": {
+        "workspaceName": {
+            "type": "string",
+            "value": "[reference('ml').outputs.workspaceName.value]"
+        }
+    }
+}

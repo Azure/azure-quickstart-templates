@@ -1,0 +1,298 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "2740484521905225007"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the VM, only certain regions support zones."
+      }
+    },
+    "uniqueDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Relative DNS name for the traffic manager profile, must be globally unique"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user name for the Virtual Machines."
+      }
+    },
+    "uniqueDnsNameForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Relative DNS Name for the Public IPs used to access the Virtual Machines, must be globally unique. An index will be appended for each instance."
+      }
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "allowedValues": [
+        "18.04-LTS",
+        "16.04-LTS"
+      ],
+      "metadata": {
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 18.04-LTS, 16.04-LTS."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the virtual machine"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "secureString",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "numVMs": 3,
+    "imageReference": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "[parameters('ubuntuOSVersion')]",
+      "version": "latest"
+    },
+    "vmName": "UbuntuVM",
+    "virtualNetworkName": "[format('{0}-vnet', variables('vmName'))]",
+    "networkSecurityGroupName": "[format('{0}-nsg', variables('vmName'))]",
+    "traficManagerProfileName": "[format('{0}-tm', variables('vmName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "subnetName": "Subnet",
+    "publicIPAddressType": "Dynamic",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUserName'))]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "pip",
+        "count": "[length(range(0, variables('numVMs')))]"
+      },
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-03-01",
+      "name": "[format('{0}{1}-pip', variables('vmName'), range(0, variables('numVMs'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "publicIPAddressVersion": "IPv4",
+        "dnsSettings": {
+          "domainNameLabel": "[format('{0}{1}', parameters('uniqueDnsNameForPublicIP'), range(0, variables('numVMs'))[copyIndex()])]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "copy": {
+        "name": "nic",
+        "count": "[length(range(0, variables('numVMs')))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-03-01",
+      "name": "[format('{0}{1}-nic', variables('vmName'), range(0, variables('numVMs'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}-pip', variables('vmName'), range(0, variables('numVMs'))[range(0, variables('numVMs'))[copyIndex()]]))]"
+              },
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))).subnets[0].id]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}-pip', variables('vmName'), range(0, variables('numVMs'))[range(0, variables('numVMs'))[copyIndex()]]))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow-HTTP",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "copy": {
+        "name": "vm",
+        "count": "[length(range(0, variables('numVMs')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-07-01",
+      "name": "[format('{0}{1}', variables('vmName'), range(0, variables('numVMs'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[format('{0}{1}', variables('vmName'), range(0, variables('numVMs'))[copyIndex()])]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')]",
+          "osDisk": {
+            "name": "[format('{0}{1}-osdisk', variables('vmName'), range(0, variables('numVMs'))[copyIndex()])]",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}-nic', variables('vmName'), range(0, variables('numVMs'))[range(0, variables('numVMs'))[copyIndex()]]))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}-nic', variables('vmName'), range(0, variables('numVMs'))[range(0, variables('numVMs'))[copyIndex()]]))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "customScript",
+        "count": "[length(range(0, variables('numVMs')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-07-01",
+      "name": "[format('{0}/{1}', format('{0}{1}', variables('vmName'), range(0, variables('numVMs'))[range(0, variables('numVMs'))[copyIndex()]]), 'installcustomscript')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "commandToExecute": "sudo bash -c \"sudo apt-get install -f -y && sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get install -y apache2 && echo \\\"You're connected to $(hostname)\\\" | sudo tee /var/www/html/index.html\""
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}{1}', variables('vmName'), range(0, variables('numVMs'))[range(0, variables('numVMs'))[copyIndex()]]))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/trafficmanagerprofiles",
+      "apiVersion": "2018-08-01",
+      "name": "[variables('traficManagerProfileName')]",
+      "location": "global",
+      "properties": {
+        "copy": [
+          {
+            "name": "endpoints",
+            "count": "[length(range(0, variables('numVMs')))]",
+            "input": {
+              "name": "[format('endpoint{0}', range(0, variables('numVMs'))[copyIndex('endpoints')])]",
+              "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+              "properties": {
+                "targetResourceId": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}-pip', variables('vmName'), range(0, variables('numVMs'))[range(0, variables('numVMs'))[copyIndex('endpoints')]]))]",
+                "endpointStatus": "Enabled",
+                "weight": 1
+              }
+            }
+          }
+        ],
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "Weighted",
+        "dnsConfig": {
+          "relativeName": "[parameters('uniqueDnsName')]",
+          "ttl": 30
+        },
+        "monitorConfig": {
+          "protocol": "HTTP",
+          "port": 80,
+          "path": "/"
+        }
+      },
+      "dependsOn": [
+        "pip"
+      ]
+    }
+  ]
+}

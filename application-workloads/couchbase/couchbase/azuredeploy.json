@@ -1,0 +1,443 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/couchbase/couchbase/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "serverNodeCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Couchbase Servers"
+      }
+    },
+    "serverDiskSize": {
+      "type": "int",
+      "metadata": {
+        "description": "Size of Disk in GB for each Couchbase Server"
+      }
+    },
+    "syncGatewayNodeCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Couchbase Sync Gateways"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of VM for Coucbase Server and Sync Gateway"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin Username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin Password"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location"
+      }
+    },
+    "license": {
+      "type": "string",
+      "defaultValue": "hourly_pricing",
+      "metadata": {
+        "description": "License can be hourly_pricing or byol"
+      }
+    }
+  },
+  "variables": {
+    "uniqueString": "[uniquestring(resourceGroup().id, deployment().name)]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "networksecuritygroups",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "ErlangPortMapper",
+            "properties": {
+              "description": "Erlang Port Mapper ( epmd )",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4369",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "SyncGateway",
+            "properties": {
+              "description": "Sync Gateway",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4984-4985",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Server",
+            "properties": {
+              "description": "Server",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8091-8094",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Index",
+            "properties": {
+              "description": "Index",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9100-9105",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Internal",
+            "properties": {
+              "description": "Internal",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9998-9999",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 105,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "XDCR",
+            "properties": {
+              "description": "XDCR",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "11207-11215",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 106,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "SSL",
+            "properties": {
+              "description": "SSL",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "18091-18093",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 107,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "NodeDataExchange",
+            "properties": {
+              "description": "Node data exchange",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "21100-21299",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 108,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "vnet",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "Microsoft.Network/networkSecurityGroups/networksecuritygroups"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/8"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "subnet",
+            "properties": {
+              "addressPrefix": "10.0.0.0/16",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'networksecuritygroups')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "server",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "Microsoft.Network/virtualNetworks/vnet"
+      ],
+      "plan": {
+        "publisher": "couchbase",
+        "product": "couchbase-server-enterprise",
+        "name": "[parameters('license')]"
+      },
+      "sku": {
+        "name": "[parameters('vmSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('serverNodeCount')]"
+      },
+      "properties": {
+        "overprovision": false,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "couchbase",
+              "offer": "couchbase-server-enterprise",
+              "sku": "[parameters('license')]",
+              "version": "latest"
+            },
+            "dataDisks": [
+              {
+                "lun": 0,
+                "createOption": "Empty",
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                },
+                "caching": "None",
+                "diskSizeGB": "[parameters('serverDiskSize')]"
+              }
+            ]
+          },
+          "osProfile": {
+            "computerNamePrefix": "server",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', 'vnet'), '/subnets/subnet')]"
+                        },
+                        "publicipaddressconfiguration": {
+                          "name": "public",
+                          "properties": {
+                            "idleTimeoutInMinutes": 30,
+                            "dnsSettings": {
+                              "domainNameLabel": "[concat('server-', variables('uniqueString'))]"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "extension",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/server.sh', parameters('_artifactsLocationSasToken')))]",
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/util.sh', parameters('_artifactsLocationSasToken')))]"
+                    ],
+                    "commandToExecute": "[concat('bash server.sh ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' ', variables('uniqueString'), ' ', parameters('location'))]"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "syncgateway",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "Microsoft.Network/virtualNetworks/vnet"
+      ],
+      "plan": {
+        "publisher": "couchbase",
+        "product": "couchbase-sync-gateway-enterprise",
+        "name": "[parameters('license')]"
+      },
+      "sku": {
+        "name": "[parameters('vmSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('syncGatewayNodeCount')]"
+      },
+      "properties": {
+        "overprovision": false,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "couchbase",
+              "offer": "couchbase-sync-gateway-enterprise",
+              "sku": "[parameters('license')]",
+              "version": "latest"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "syncgateway",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', 'vnet'), '/subnets/subnet')]"
+                        },
+                        "publicipaddressconfiguration": {
+                          "name": "public",
+                          "properties": {
+                            "idleTimeoutInMinutes": 30,
+                            "dnsSettings": {
+                              "domainNameLabel": "[concat('syncgateway-', variables('uniqueString'))]"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "extension",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/syncGateway.sh', parameters('_artifactsLocationSasToken')))]",
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/util.sh', parameters('_artifactsLocationSasToken')))]"
+                    ],
+                    "commandToExecute": "[concat('bash syncGateway.sh ', variables('uniqueString'), ' ', parameters('location'))]"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "serverAdminURL": {
+      "type": "string",
+      "value": "[concat(reference(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/server/virtualMachines/0/networkInterfaces/nic/ipConfigurations/ipconfig/publicIPAddresses/public'), '2017-03-30').dnsSettings.fqdn, ':8091')]"
+    },
+    "syncGatewayAdminURL": {
+      "type": "string",
+      "value": "[concat(reference(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/syncgateway/virtualMachines/0/networkInterfaces/nic/ipConfigurations/ipconfig/publicIPAddresses/public'), '2017-03-30').dnsSettings.fqdn, ':4985/_admin/')]"
+    }
+  }
+}

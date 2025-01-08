@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.23.60470",
+      "templateHash": "9670550413759945184"
+    }
+  },
+  "parameters": {
+    "configStoreName": {
+      "type": "string",
+      "defaultValue": "[format('appconfig{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the App Configuration store."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the Azure location where the app configuration store should be created."
+      }
+    },
+    "keyValue": {
+      "type": "string",
+      "defaultValue": "key$label",
+      "metadata": {
+        "description": "Specifies the name of the key-value resource. The name is a combination of key and label with $ as delimiter."
+      }
+    },
+    "keyVaultSecretURL": {
+      "type": "string",
+      "metadata": {
+        "description": "Format should be https://{vault-name}.{vault-DNS-suffix}/secrets/{secret-name}/{secret-version}. Secret version is optional."
+      }
+    }
+  },
+  "variables": {
+    "keyVaultRef": {
+      "uri": "[parameters('keyVaultSecretURL')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('configStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "standard"
+      }
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('configStoreName'), parameters('keyValue'))]",
+      "properties": {
+        "value": "[string(variables('keyVaultRef'))]",
+        "contentType": "application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('configStoreName'))]"
+      ]
+    }
+  ]
+}

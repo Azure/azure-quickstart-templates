@@ -1,0 +1,148 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "5826154981175193904"
+    }
+  },
+  "parameters": {
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container group"
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "defaultValue": "container1",
+      "metadata": {
+        "description": "Name for the container"
+      }
+    },
+    "imageName": {
+      "type": "string",
+      "defaultValue": "containerinstance/helloworld:ssl",
+      "metadata": {
+        "description": "Name for the image"
+      }
+    },
+    "volumeName": {
+      "type": "string",
+      "defaultValue": "volume1",
+      "metadata": {
+        "description": "Name for the secret volume"
+      }
+    },
+    "dnsNameLabel": {
+      "type": "string",
+      "metadata": {
+        "description": "The DSN name label"
+      }
+    },
+    "sslCertificateData": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Base-64 encoded authentication PFX certificate."
+      }
+    },
+    "sslCertificatePwd": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Base-64 encoded password of authentication PFX certificate."
+      }
+    },
+    "port": {
+      "type": "int",
+      "defaultValue": 443,
+      "metadata": {
+        "description": "Port to open on the container and the public IP address."
+      }
+    },
+    "cpuCores": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of CPU cores to allocate to the container."
+      }
+    },
+    "memoryInGb": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The amount of memory to allocate to the container in gigabytes."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('containerName')]",
+            "properties": {
+              "image": "[parameters('imageName')]",
+              "ports": [
+                {
+                  "port": "[parameters('port')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGB": "[parameters('memoryInGb')]"
+                }
+              },
+              "volumeMounts": [
+                {
+                  "name": "[parameters('volumeName')]",
+                  "mountPath": "/mnt/secrets",
+                  "readOnly": false
+                }
+              ]
+            }
+          }
+        ],
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "dnsNameLabel": "[parameters('dnsNameLabel')]",
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": "[parameters('port')]"
+            }
+          ]
+        },
+        "volumes": [
+          {
+            "name": "[parameters('volumeName')]",
+            "secret": {
+              "sslCertificateData": "[parameters('sslCertificateData')]",
+              "sslCertificatePwd": "[base64(parameters('sslCertificatePwd'))]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "containerIPAddressFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('name'))).ipAddress.fqdn]"
+    }
+  }
+}

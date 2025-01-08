@@ -1,0 +1,445 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "php",
+      "metadata": {
+        "description": "Prefix Name for the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "Size for the reversed proxy nginx and PHP Virtual Machine."
+      }
+    },
+    "postgresqlvmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "Size for the postgresql Virtual Machine."
+      }
+    },
+    "freeBSDOSVersion": {
+      "type": "string",
+      "defaultValue": "11.0",
+      "allowedValues": [
+        "11.0",
+        "10.3"
+      ],
+      "metadata": {
+        "description": "The FreeBSD version for the VM. This will pick a fully patched image of this given FreeBSD version."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "numberOfDataDisks": {
+      "type": "int",
+      "defaultValue": 8,
+      "maxValue": 64,
+      "minValue": 8,
+      "metadata": {
+        "description": "Number of attached data disk"
+      }
+    },
+    "sizeOfDataDisksInGB": {
+      "type": "int",
+      "defaultValue": 30,
+      "maxValue": 1023,
+      "minValue": 30,
+      "metadata": {
+        "description": "Size of attached data disk"
+      }
+    },
+    "diskCaching": {
+      "type": "string",
+      "defaultValue": "ReadWrite",
+      "allowedValues": [
+        "None",
+        "ReadOnly",
+        "ReadWrite"
+      ],
+      "metadata": {
+        "description": "Caching type of data disk"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "vmNames": [
+      "[concat(parameters('vmNamePrefix'), '-frontend')]",
+      "[concat(parameters('vmNamePrefix'), '-php1')]",
+      "[concat(parameters('vmNamePrefix'), '-php2')]"
+    ],
+    "vmNameSql": "[concat(parameters('vmNamePrefix'), '-postgresql')]",
+    "imagePublisher": "MicrosoftOSTC",
+    "imageOffer": "FreeBSD",
+    "nicConfig": [
+      {
+        "name": "[concat(variables('vmNames')[0], 'nic1')]",
+        "subnetRef": "[variables('subnet1Ref')]"
+      },
+      {
+        "name": "[concat(variables('vmNames')[0], 'nic2')]",
+        "subnetRef": "[variables('subnet2Ref')]"
+      },
+      {
+        "name": "[concat(variables('vmNames')[1], 'nic1')]",
+        "subnetRef": "[variables('subnet2Ref')]"
+      },
+
+      {
+        "name": "[concat(variables('vmNames')[1], 'nic2')]",
+        "subnetRef": "[variables('subnet3Ref')]"
+      },
+
+      {
+        "name": "[concat(variables('vmNames')[2], 'nic1')]",
+        "subnetRef": "[variables('subnet2Ref')]"
+      },
+      {
+        "name": "[concat(variables('vmNames')[2], 'nic2')]",
+        "subnetRef": "[variables('subnet3Ref')]"
+      }
+    ],
+    "addressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet2Name": "Subnet-2",
+    "subnet2Prefix": "10.0.1.0/24",
+    "subnet3Name": "Subnet-3",
+    "subnet3Prefix": "10.0.2.0/24",
+    "publicIPAddressName": "[concat(uniquestring(parameters('vmNamePrefix')), 'publicip')]",
+    "publicIPAddressType": "Dynamic",
+    "virtualNetworkName": "[concat(parameters('vmNamePrefix'),'-vnet')]",
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
+    "subnet2Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet2Name'))]",
+    "subnet3Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet3Name'))]",
+    "publicIPAddressId": {
+      "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-01-01",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet2Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('subnet3Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet3Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('nicConfig')[copyIndex()].name]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": 6
+      },
+      "dependsOn": [
+        "[variables('publicIPAddressName')]",
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[if(equals(copyIndex(), 0), variables('publicIpAddressId'), json('null'))]",
+              "subnet": {
+                "id": "[variables('nicConfig')[copyIndex()].subnetRef]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('vmNameSql')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('publicIPAddressName')]",
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet":{
+                "id": "[variables('subnet3Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "name": "[variables('vmNames')[copyIndex()]]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "vmLoop",
+        "count": 3
+      },
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmNames')[copyIndex()]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('freeBSDOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicConfig')[mul(copyIndex(),2)].name)]",
+              "properties": {
+                "primary": true
+              }
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicConfig')[add(mul(copyIndex(),2),1)].name)]",
+              "properties": {
+                "primary": false
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "name": "[variables('vmNameSql')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('postgresqlvmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmNameSql')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('freeBSDOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numberOfDataDisks')]",
+              "input": {
+                "diskSizeGB": "[parameters('sizeOfDataDisksInGB')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "caching": "[parameters('diskCaching')]",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNameSql'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-07-01",
+      "name": "[concat(variables('vmNames')[copyIndex()], '/installnginx')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "vmLoop"
+      ],
+      "copy": {
+        "name": "extLoop",
+        "count": 3
+      },
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install_reverse_nginx.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install_nginx_php.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('conf/frontend_nginx.conf', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('conf/frontend_proxy.conf', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('conf/backend_nginx.conf', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": 
+          
+          "[if(equals(copyIndex(), 0), 
+              concat('sh install_reverse_nginx.sh ', 
+              reference(variables('nicConfig')[0].name).ipConfigurations[0].properties.privateIPAddress, ' ', 
+              reference(variables('nicConfig')[2].name).ipConfigurations[0].properties.privateIPAddress, ' ',
+              reference(variables('nicConfig')[4].name).ipConfigurations[0].properties.privateIPAddress),
+              'sh install_nginx_php.sh')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-07-01",
+      "name": "[concat(variables('vmNameSql'),'/installpostgresql')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('vmNameSql')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('conf/postgresql.conf', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install_postgresql.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('conf/pgbouncer.ini', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh install_postgresql.sh ', parameters('numberOfDataDisks'))]"
+        }
+      }
+    }
+  ]
+}

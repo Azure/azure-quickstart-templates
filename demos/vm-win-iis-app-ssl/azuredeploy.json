@@ -1,0 +1,376 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appVMName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Set this value for the VM name"
+      }
+    },
+    "appVMAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Set this value for the VM admin user name"
+      }
+    },
+    "appVMAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Set this value for the VM admin user password"
+      }
+    },
+    "appVMWindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ],
+      "metadata": {
+        "description": "Set this value for the VM Windows OS Version"
+      }
+    },
+    "appPublicIPDnsName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Set this value for the dns name of the public ip"
+      }
+    },
+    "appDSCUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "This value must be changed from a previous deployment to ensure the extension will run"
+      }
+    },
+    "appWebPackage": {
+      "type": "string",
+      "defaultValue": "https://computeteststore.blob.core.windows.net/deploypackage/deployPackage.zip?sv=2015-04-05&ss=bfqt&srt=sco&sp=r&se=2099-10-16T02:03:39Z&st=2016-10-15T18:03:39Z&spr=https&sig=aSH6yNPEGPWXk6PxTPzS6fyEXMD1ZYIkI0j5E9Hu5%2Fk%3D",
+      "metadata": {
+        "description": "Set this value for the signed uri to download the deployment package"
+      }
+    },
+    "appVMVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "allowedValues": [
+        "Standard_D2_v3",
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D5"
+      ],
+      "metadata": {
+        "description": "Set this value for the VM size"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "vaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Key vault where SSL certificates are stored"
+      }
+    },
+    "vaultResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group of the key vault"
+      }
+    },
+    "httpssecretUrlWithVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "full Key Vault Id to the secret that stores the SSL cert"
+      }
+    },
+    "httpssecretCaUrlWithVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "full Key Vault Id to the secret that stores the CA cert"
+      }
+    },
+    "certificateStore": {
+      "type": "string",
+      "metadata": {
+        "description": "name of the certificate key secret"
+      }
+    },
+    "certificateDomain": {
+      "type": "string",
+      "metadata": {
+        "description": "name of the domain the certificate is created for"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "appVnetPrefix": "10.0.0.0/16",
+    "appVnetSubnet1Name": "FrontEndSubNet",
+    "appVnetSubnet1Prefix": "10.0.0.0/24",
+    "appVnetSubnet2Name": "DatabaseSubNet",
+    "appVnetSubnet2Prefix": "10.0.1.0/24",
+    "appVMImagePublisher": "MicrosoftWindowsServer",
+    "appVMImageOffer": "WindowsServer",
+    "appVMVmSize": "[parameters('appVMVmSize')]",
+    "appVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'appVnet')]",
+    "appVMSubnetRef" : "appVMresourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('appVMVnetID'), '/subnets/', variables('appVnetSubnet1Name'))]",
+    "appVMNicName": "[concat(parameters('appVMName'), 'NetworkInterface')]",
+    "appPublicIPName": "appPublicIP",
+    "appDSCArchiveFolder": "dsc",
+    "appDSCArchiveFileName": "appDSC.zip",
+      "appDSCSqlArchiveFolder": "dsc",
+    "appDSCSqlArchiveFileName": "appDSCSql.zip"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "appNetworkSecurityGroup",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "webrule",
+            "properties": {
+              "description": "This rule allows traffic in on port 80",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "INTERNET",
+              "destinationAddressPrefix": "10.0.0.0/24",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "httpsrule",
+            "properties": {
+              "description": "This rule allows traffic in on port 443",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "INTERNET",
+              "destinationAddressPrefix": "10.0.0.0/24",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rdprule",
+            "properties": {
+              "description": "This rule allows traffic on port 3389 from the web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "INTERNET",
+              "destinationAddressPrefix": "10.0.0.0/24",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "appVnet",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'appNetworkSecurityGroup')]"
+      ],
+      "tags": {
+        "displayName": "appVnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('appVnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('appVnetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('appVnetSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'appNetworkSecurityGroup')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('appVnetSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('appVnetSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+   {
+      "name": "[variables('appVMNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'appVnet')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('appPublicIPName'))]"
+      ],
+      "tags": {
+        "displayName": "appVMNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('appVMSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appPublicIPName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('appVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('appVMNicName'))]"
+      ],
+      "tags": {
+        "displayName": "appVM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('appVMVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('appVMName')]",
+          "adminUsername": "[parameters('appVMAdminUsername')]",
+          "adminPassword": "[parameters('appVMAdminPassword')]",
+          "secrets": [
+            {
+              "sourceVault": {
+                "id": "[resourceId(parameters('vaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+              },
+              "vaultCertificates": [
+                {
+                  "certificateUrl": "[parameters('httpssecretUrlWithVersion')]",
+                  "certificateStore": "[parameters('certificateStore')]"
+                }
+              ]
+            }
+          ]
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('appVMImagePublisher')]",
+            "offer": "[variables('appVMImageOffer')]",
+            "sku": "[parameters('appVMWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('appVMName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('appVMNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "Microsoft.Powershell.DSC",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('appVMName'))]"
+          ],
+          "tags": {
+            "displayName": "appDSC"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[parameters('appDSCUpdateTagVersion')]",
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'), '/', variables('appDSCArchiveFolder'), '/', variables('appDSCArchiveFileName'))]",
+                "script": "appDSC.ps1",
+                "function": "Main"
+              },
+              "configurationArguments": {
+                "nodeName": "[parameters('appVMName')]",
+                "webDeployPackage": "[parameters('appWebPackage')]",
+                "certStoreName": "[parameters('certificateStore')]",
+                "certDomain": "[parameters('certificateDomain')]"
+              }
+            },
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('appPublicIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "appPublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('appPublicIPDnsName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
+

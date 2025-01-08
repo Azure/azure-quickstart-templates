@@ -1,0 +1,258 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "integrationServiceEnvironmentName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Integration Service Environment."
+      }
+    },
+    "location": {
+      "defaultValue": "[resourceGroup().location]",
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "integrationServiceEnvironmentSku": {
+      "type": "string",
+      "defaultValue": "Developer",
+      "allowedValues": [ "Developer", "Premium" ],
+      "metadata": {
+        "description": "The SKU for the Integration Service Environment, either Developer or Premium."
+      }
+    },
+    "skuCapacity": {
+      "defaultValue": 0,
+      "type": "int",
+      "metadata": {
+        "description": "The number of scale units for the Integration Service Environment. 0 is the base unit."
+      }
+    },
+    "accessEndpointType": {
+      "type": "string",
+      "defaultValue": "External",
+      "allowedValues": [ "Internal", "External" ],
+      "metadata": {
+        "description": "The type of access endpoint to use for the Integration Service Environment. The endpoint determine whether request or webhook triggers on logic apps in the Integration Service Environment can receive calls from outside the virtual network."
+      }
+    },
+    "managedConnectors": {
+      "type": "array",
+      "metadata": {
+        "description": "The list of managed connectors to deploy into the ISE in JSON array format (e.g. [\"sql\", \"ftp\" ...]). The values must be from this list: sql;ftp;azureblob;azurefile;azurequeues;azuretables;sftpwithssh;edifact;x12;servicebus;documentdb;eventhubs;mq;sqldw;db2;smtp;si3270"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the VNET for ISE to be deployed into."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/22",
+      "metadata": {
+        "description": "The VNET address prefix. For example, 10.0.0.0/22."
+      }
+    },
+    "subnet1Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/26",
+      "metadata": {
+        "description": "The prefix for the first ISE subnet. For example, 10.0.1.0/26."
+      }
+    },
+    "subnet1Name": {
+      "type": "string",
+      "defaultValue": "Subnet1",
+      "metadata": {
+        "description": "The name of the first ISE subnet."
+      }
+    },
+    "subnet2Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.64/26",
+      "metadata": {
+        "description": "The prefix for the second ISE subnet. For example, 10.0.1.64/26."
+      }
+    },
+    "subnet2Name": {
+      "type": "string",
+      "defaultValue": "Subnet2",
+      "metadata": {
+        "description": "The name of the second ISE subnet."
+      }
+    },
+    "subnet3Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.128/26",
+      "metadata": {
+        "description": "The prefix for the third ISE subnet. For example, 10.0.1.128/26."
+      }
+    },
+    "subnet3Name": {
+      "type": "string",
+      "defaultValue": "Subnet3",
+      "metadata": {
+        "description": "The name of the third ISE subnet."
+      }
+    },
+    "subnet4Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.192/26",
+      "metadata": {
+        "description": "The prefix for the fourth ISE subnet. For example, 10.0.1.192/26."
+      }
+    },
+    "subnet4Name": {
+      "type": "string",
+      "defaultValue": "Subnet4",
+      "metadata": {
+        "description": "The name of the fourth ISE subnet."
+      }
+    },
+    "rebuildVNET": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "After the first deployment, you don't need to recreate the VNET. When set to false this will skip the VNET and subnet deployment."
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[parameters('rebuildVNET')]",
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        }
+      },
+      "resources": [
+        {
+          "condition": "[parameters('rebuildVNET')]",
+          "apiVersion": "2020-05-01",
+          "type": "subnets",
+          "location": "[parameters('location')]",
+          "name": "[parameters('subnet1Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+          ],
+          "properties": {
+            "addressPrefix": "[parameters('subnet1Prefix')]",
+            "delegations": [
+              {
+                "name": "integrationServiceEnvironments",
+                "properties": {
+                  "serviceName": "Microsoft.Logic/integrationServiceEnvironments"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "condition": "[parameters('rebuildVNET')]",
+          "apiVersion": "2020-05-01",
+          "type": "subnets",
+          "location": "[parameters('location')]",
+          "name": "[parameters('subnet2Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+            "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet1Name'))]"
+          ],
+          "properties": {
+            "addressPrefix": "[parameters('subnet2Prefix')]"
+          }
+        },
+        {
+          "condition": "[parameters('rebuildVNET')]",
+          "apiVersion": "2020-05-01",
+          "type": "subnets",
+          "location": "[parameters('location')]",
+          "name": "[parameters('subnet3Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+            "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet2Name'))]"
+          ],
+          "properties": {
+            "addressPrefix": "[parameters('subnet3Prefix')]"
+          }
+        },
+        {
+          "condition": "[parameters('rebuildVNET')]",
+          "apiVersion": "2020-05-01",
+          "type": "subnets",
+          "location": "[parameters('location')]",
+          "name": "[parameters('subnet4Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+            "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet3Name'))]"
+          ],
+          "properties": {
+            "addressPrefix": "[parameters('subnet4Prefix')]"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Logic/integrationServiceEnvironments",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('integrationServiceEnvironmentName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet1Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet2Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet3Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet4Name'))]"
+      ],
+      "sku": {
+        "name": "[parameters('integrationServiceEnvironmentSku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "properties": {
+        "networkConfiguration": {
+          "accessEndpoint": {
+            "type": "[parameters('accessEndpointType')]"
+          },
+          "subnets": [
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet1Name'))]"
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet2Name'))]"
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet3Name'))]"
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet4Name'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-05-01",
+      "type": "Microsoft.Logic/integrationServiceEnvironments/ManagedApis",
+      "name": "[concat(parameters('integrationServiceEnvironmentName'), '/', parameters('managedConnectors')[copyindex()])]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/integrationServiceEnvironments/', parameters('integrationServiceEnvironmentName'))]"
+      ],
+      "copy": {
+        "name": "queueCopy",
+        "count": "[length(parameters('managedConnectors'))]"
+      },
+      "properties": {
+      }
+    }
+  ]
+}

@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.5.6.12127",
+      "templateHash": "16815708176905569328"
+    }
+  },
   "parameters": {
     "rgName": {
       "type": "string",
@@ -17,7 +24,7 @@
     "principalId": {
       "type": "string",
       "metadata": {
-        "description": "principalId if the user that will be given contributor access to the resourceGroup"
+        "description": "principalId of the user that will be given contributor access to the resourceGroup"
       }
     },
     "roleDefinitionId": {
@@ -29,13 +36,12 @@
     },
     "roleAssignmentName": {
       "type": "string",
-      "defaultValue": "[guid(deployment().name)]",
+      "defaultValue": "[guid(parameters('principalId'), parameters('roleDefinitionId'), parameters('rgName'))]",
       "metadata": {
         "description": "Unique name for the roleAssignment in the format of a guid"
       }
     }
   },
-  "variables": { },
   "resources": [
     {
       "type": "Microsoft.Resources/resourceGroups",
@@ -49,21 +55,59 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-10-01",
       "name": "applyLock",
       "resourceGroup": "[parameters('rgName')]",
-      "dependsOn": [
-        "[parameters('rgName')]"
-      ],
       "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
         "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[parameters('principalId')]"
+          },
+          "roleDefinitionId": {
+            "value": "[parameters('roleDefinitionId')]"
+          },
+          "roleAssignmentName": {
+            "value": "[parameters('roleAssignmentName')]"
+          }
+        },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.5.6.12127",
+              "templateHash": "6034226420560042393"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string",
+              "metadata": {
+                "description": "principalId of the user that will be given contributor access to the resourceGroup"
+              }
+            },
+            "roleDefinitionId": {
+              "type": "string",
+              "metadata": {
+                "description": "roleDefinition to apply to the resourceGroup - default is contributor"
+              }
+            },
+            "roleAssignmentName": {
+              "type": "string",
+              "metadata": {
+                "description": "Unique name for the roleAssignment in the format of a guid"
+              }
+            }
+          },
           "resources": [
             {
               "type": "Microsoft.Authorization/locks",
-              "apiVersion": "2017-04-01",
+              "apiVersion": "2016-09-01",
               "name": "DontDelete",
               "properties": {
                 "level": "CanNotDelete",
@@ -72,17 +116,19 @@
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2020-03-01-preview",
+              "apiVersion": "2020-04-01-preview",
               "name": "[guid(parameters('roleAssignmentName'))]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
-                "principalId": "[parameters('principalId')]",
-                "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('rgName'))]"
+                "principalId": "[parameters('principalId')]"
               }
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('rgName'))]"
+      ]
     }
   ]
 }

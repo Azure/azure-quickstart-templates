@@ -1,0 +1,467 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password used when provisioning virtual machines"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username used when provisioning virtual machines"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the VM."
+      }
+    }
+  },
+  "variables": {
+    "esClusterName": "elasticsearch",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/elastic/elasticsearch",
+    "nestedTemplatesFolderName": "nestedtemplates",
+    "scriptsLocation": "[concat(variables('_artifactsLocation'), '/scripts/')]",
+    "sharedScriptsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/",
+    "storageAccountPrefix": "[concat('st',uniqueString(resourceGroup().id))]",
+    "storageAccountNameAFS": "[concat(variables('storageAccountPrefix'), 'afs')]",
+    "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 'sh')]",
+    "networkSettings": {
+      "virtualNetworkName": "es-vnet",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "master": {
+          "name": "master",
+          "prefix": "10.0.0.0/24",
+          "vnet": "es-vnet"
+        },
+        "data": {
+          "name": "data",
+          "prefix": "10.0.1.0/24",
+          "vnet": "es-vnet"
+        },
+        "other": {
+          "name": "other",
+          "prefix": "10.0.2.0/24",
+          "vnet": "es-vnet"
+        }
+      }
+    },
+    "lbBackEndPoolsAdded": {
+      "backendPools": [
+        {
+          "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'es-load-balancer', 'LBBE')]"
+        }
+      ]
+    },
+    "lbBackendPoolsRemoved": {
+      "backendPools": []
+    },
+    "dataLBSettings": "[variables('lbBackendPoolsRemoved')]",
+    "ubuntuScripts": [
+      "[concat(variables('scriptsLocation'), 'elasticsearch-ubuntu-install.sh', '')]",
+      "[concat(variables('scriptsLocation'), 'kibana-install.sh', '')]",
+      "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]",
+      "[concat(variables('sharedScriptsLocation'), 'afs-utils-0.1.sh')]"
+    ],
+    "authSet": {
+      "password": "[parameters('adminPassword')]",
+      "type": "password"
+    },
+    "ubuntuSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "linuxConfiguration": {},
+      "managementPort": "22",
+      "extensionSettings": {
+        "marvel": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "autoUpgradeMinorVersion": true,
+          "typeHandlerVersion": "2.0",
+          "settings": {
+            "fileUris": "[variables('ubuntuScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -wn elasticsearch-marvel -v 2.3.1 -d 10.0.2.2-3 -k ')]"
+          }
+        },
+        "master": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "autoUpgradeMinorVersion": true,
+          "typeHandlerVersion": "2.0",
+          "settings": {
+            "fileUris": "[variables('ubuntuScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn elasticsearch -v 2.3.1 -d 10.0.0.1-3 -m -a ', variables('storageAccountNameAFS'), ' -k ')]"
+          }
+        },
+        "client": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": "[variables('ubuntuScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn elasticsearch -v 2.3.1 -d 10.0.0.1-3 -m -a ', variables('storageAccountNameAFS'), ' -k ')]"
+          }
+        },
+        "data": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "settings": {
+            "fileUris": "[variables('ubuntuScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn elasticsearch -v 2.3.1 -d 10.0.0.1-3 -m -a ', variables('storageAccountNameAFS'), ' -k ')]"
+          }
+        },
+        "kibana": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "autoUpgradeMinorVersion": true,
+          "typeHandlerVersion": "2.0",
+          "settings": {
+            "fileUris": "[variables('ubuntuScripts')]",
+            "commandToExecute": "[concat('bash kibana-install.sh -v 2.3.1 -m -s -t http://10.0.0.10:9200')]"
+          }
+        }
+      }
+    },
+    "osSettings": "[variables('ubuntuSettings')]",
+    "storageBinPackMap": [
+      "[div(sub(add(1, 4), 1), 4)]",
+      "[div(sub(add(2, 4), 1), 4)]",
+      "[div(sub(add(3, 4), 1), 4)]",
+      "[div(sub(add(4, 4), 1), 4)]",
+      "[div(sub(add(5, 4), 1), 4)]",
+      "[div(sub(add(6, 4), 1), 4)]",
+      "[div(sub(add(7, 4), 1), 4)]",
+      "[div(sub(add(8, 4), 1), 4)]",
+      "[div(sub(add(9, 4), 1), 4)]",
+      "[div(sub(add(10, 4), 1), 4)]",
+      "[div(sub(add(11, 4), 1), 4)]",
+      "[div(sub(add(12, 4), 1), 4)]",
+      "[div(sub(add(13, 4), 1), 4)]",
+      "[div(sub(add(14, 4), 1), 4)]",
+      "[div(sub(add(15, 4), 1), 4)]",
+      "[div(sub(add(16, 4), 1), 4)]",
+      "[div(sub(add(17, 4), 1), 4)]",
+      "[div(sub(add(18, 4), 1), 4)]",
+      "[div(sub(add(19, 4), 1), 4)]",
+      "[div(sub(add(20, 4), 1), 4)]",
+      "[div(sub(add(21, 4), 1), 4)]",
+      "[div(sub(add(22, 4), 1), 4)]",
+      "[div(sub(add(23, 4), 1), 4)]",
+      "[div(sub(add(24, 4), 1), 4)]",
+      "[div(sub(add(25, 4), 1), 4)]",
+      "[div(sub(add(26, 4), 1), 4)]",
+      "[div(sub(add(27, 4), 1), 4)]",
+      "[div(sub(add(28, 4), 1), 4)]",
+      "[div(sub(add(29, 4), 1), 4)]",
+      "[div(sub(add(30, 4), 1), 4)]",
+      "[div(sub(add(31, 4), 1), 4)]",
+      "[div(sub(add(32, 4), 1), 4)]",
+      "[div(sub(add(33, 4), 1), 4)]",
+      "[div(sub(add(34, 4), 1), 4)]",
+      "[div(sub(add(35, 4), 1), 4)]",
+      "[div(sub(add(36, 4), 1), 4)]",
+      "[div(sub(add(37, 4), 1), 4)]",
+      "[div(sub(add(38, 4), 1), 4)]",
+      "[div(sub(add(39, 4), 1), 4)]",
+      "[div(sub(add(40, 4), 1), 4)]",
+      "[div(sub(add(51, 4), 1), 4)]",
+      "[div(sub(add(52, 4), 1), 4)]",
+      "[div(sub(add(53, 4), 1), 4)]",
+      "[div(sub(add(54, 4), 1), 4)]",
+      "[div(sub(add(55, 4), 1), 4)]",
+      "[div(sub(add(56, 4), 1), 4)]",
+      "[div(sub(add(57, 4), 1), 4)]",
+      "[div(sub(add(58, 4), 1), 4)]",
+      "[div(sub(add(59, 4), 1), 4)]",
+      "[div(sub(add(60, 4), 1), 4)]"
+    ],
+    "dataNodeStorageSettings": {
+      "count": "[div(sub(add(3, 4), 1), 4)]",
+      "mapping": "[variables('storageBinPackMap')]",
+      "accountType": "Standard_LRS",
+      "afs": "[variables('storageAccountNameAFS')]",
+      "shared": "[variables('storageAccountNameShared')]",
+      "prefix": "[concat(variables('storageAccountPrefix'), 'da')]"
+    }
+  },
+  "resources": [
+    {
+      "name": "master-nodes",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'master-nodes-resources.json', '')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageSettings": {
+            "value": "[variables('dataNodeStorageSettings')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "authSet": {
+            "value": "[variables('authSet')]"
+          },
+          "masterNodesIpPrefix": {
+            "value": "10.0.0.1"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.master]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "namespace": {
+            "value": "[concat(variables('esClusterName'), '-master')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "marvel-nodes",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'empty-resources.json', '')]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'shared-resources.json', '')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "storageSettings": {
+            "value": "[variables('dataNodeStorageSettings')]"
+          },
+          "loadBalancerType": {
+            "value": "internal"
+          },
+          "ilbIpAddress": {
+            "value": "10.0.2.100"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "client-nodes",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'client-nodes-resources.json', '')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "authSet": {
+            "value": "[variables('authSet')]"
+          },
+          "storageSettings": {
+            "value": "[variables('dataNodeStorageSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.other]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "vmCount": {
+            "value": 1
+          },
+          "lbBackendPools": {
+            "value": "[variables('lbBackEndPoolsAdded')]"
+          },
+          "namespace": {
+            "value": "[concat(variables('esClusterName'), '-client')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "data-nodes",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'data-nodes-4disk-resources.json', '')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "authSet": {
+            "value": "[variables('authSet')]"
+          },
+          "storageSettings": {
+            "value": "[variables('dataNodeStorageSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.data]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "vmCount": {
+            "value": 3
+          },
+          "namespace": {
+            "value": "[concat(variables('esClusterName'), '-data')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "lbBackendPools": {
+            "value": "[variables('dataLBSettings')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "jumpbox",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'jumpbox-resources.json', '')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "authSet": {
+            "value": "[variables('authSet')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.other]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "namespace": {
+            "value": "[concat(variables('esClusterName'), '-jumpbox')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "kibana",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/kibana-resources.json', '')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "authSet": {
+            "value": "[variables('authSet')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.other]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "namespace": {
+            "value": "[concat(variables('esClusterName'), '-kibana')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "existingVnetName": {
+      "type": "string",
+      "value": "es-vnet"
+    }
+  }
+}
+

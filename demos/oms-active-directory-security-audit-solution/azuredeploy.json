@@ -1,0 +1,719 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the workspace name"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources"
+            },
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "pricingTier": {
+            "type": "string",
+            "defaultValue": "Standalone",
+            "allowedValues": [
+                "Free",
+                "Standalone",
+                "PerNode"
+            ],
+            "metadata": {
+                "description": "Service Tier: Free, Standalone, or PerNode"
+            }
+        }
+    },
+    "variables": {
+        "ViewDescription": "Active Directory Security Audit monitoring solution",
+        "ViewName": "Users And Groups Monitoring",
+        "ViewName2": "User Account Security Monitoring"
+    },
+    "resources": [
+        {
+            "name": "[parameters('workspaceName')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2020-08-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('pricingTier')]"
+                }
+            },
+            "resources": [
+                {
+                    "name": "AD Security Audit Solution",
+                    "location": "[parameters('location')]",
+                    "type": "Microsoft.OperationsManagement/solutions",
+                    "apiVersion": "2015-11-01-preview",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+                        "containedResources": [
+                            "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('workspaceName'), variables('ViewName'))]",
+                            "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('workspaceName'), variables('ViewName2'))]"
+                        ]
+                    },
+                    "plan": {
+                        "name": "AD Security Audit Solution",
+                        "Version": "1.1",
+                        "product": "MillenniumSolution",
+                        "publisher": "asithad",
+                        "promotionCode": ""
+                    }
+                },
+                {
+                    "apiVersion": "2017-03-03-preview",
+                    "name": "[concat(parameters('workspaceName'), '/', variables('ViewName'))]",
+                    "type": "Microsoft.OperationalInsights/workspaces/views",
+                    "location": "[parameters('location')]",
+                    "id": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('workspaceName'), variables('ViewName'))]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Id": "[variables('ViewName')]",
+                        "Name": "[variables('ViewName')]",
+                        "DisplayName": "[variables('ViewName')]",
+                        "Description": "[variables('ViewDescription')]",
+                        "Author": "asithad",
+                        "Source": "Local",
+                        "Dashboard": [
+                            {
+                                "Id": "NumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Created User Accounts",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "User Account Created",
+                                        "Query": "SecurityEvent | where (EventID == 624 or EventID == 4720) | summarize count() by TargetUserName | count"
+                                    },
+                                    "List": {
+                                        "Query": "SecurityEvent | where (EventID == 624 or EventID == 4720) | extend CreatedBy = SubjectUserName  | extend AccountName = SamAccountName | extend Time =TimeGenerated +330m  | project AccountName, CreatedBy,Time",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "ColumnsTitle": {
+                                            "Name": "Account Name",
+                                            "Value": "Date and Time"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "NumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Deleted User Accounts",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "SecurityEvent | where (EventID == 630 or EventID == 4726) | summarize count() by TargetUserName | count",
+                                        "Legend": "User Account Deleted  "
+                                    },
+                                    "List": {
+                                        "Query": "SecurityEvent | where (EventID == 630 or EventID == 4726) | extend DeletedBy = SubjectUserName  | extend AccountName = TargetUserName  | extend Time =TimeGenerated +330m  | project AccountName, DeletedBy,Time",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Account Name",
+                                            "Value": "Date and Time"
+                                        },
+                                        "Color": "#ba141a",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "TwoNumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Global Group Membership Changes ",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "Users Added - Domain/Enterprise Admin group",
+                                        "Query": "search in (SecurityEvent) EventID == 4728 or EventID == 4732 or EventID == 4756 or EventID == 632 or EventID == 636 or EventID == 660 | where TargetUserName == \"Domain Admins\" or TargetUserName ==\"Enterprise Admins\" | summarize AggregatedValue = count() by MemberName | count"
+                                    },
+                                    "SecondTile": {
+                                        "Legend": "Users Removed - Domain/Enterprise Admin group",
+                                        "Query": "search in (SecurityEvent) EventID == 4729 or EventID == 4733 or EventID == 4757 or EventID == 633 or EventID == 637 or EventID == 661 | where TargetUserName == \"Domain Admins\" or TargetUserName ==\"Enterprise Admins\" | summarize AggregatedValue = count() by MemberName | count"
+                                    },
+                                    "List": {
+                                        "Query": "search in (SecurityEvent) EventID == 4728 or EventID == 4732 or EventID == 4756 or EventID == 632 or EventID == 636 or EventID == 660 or EventID == 4729 or EventID == 4733 or EventID == 4757 or EventID == 633 or EventID == 637 or EventID == 661 | extend Action = iff(Activity ==\"4728 - A member was added to a security-enabled global group.\" ,\"Added\",\"Removed\" ) | extend GroupName = TargetUserName | extend Time =TimeGenerated +330m | project  Action , GroupName, Time",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "ColumnsTitle": {
+                                            "Name": "Action",
+                                            "Value": "Date and Time"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "NotableQueriesBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "List of queries",
+                                        "newGroup": false,
+                                        "preselectedFilters": "Type, Computer",
+                                        "renderMode": "grid"
+                                    },
+                                    "queries": [
+                                        {
+                                            "query": "Type=SecurityEvent (EventID=624 OR EventID=4720) | EXTEND SubjectAccount AS CreatedBy | Select TimeGenerated, TargetAccount, CreatedBy, Computer",
+                                            "displayName": "Accounts Created"
+                                        },
+                                        {
+                                            "query": "SecurityEvent | where (EventID == 630 or EventID == 4726) | extend DeletedBy = SubjectAccount | project TimeGenerated, TargetAccount, DeletedBy, Computer",
+                                            "displayName": "Accounts Deleted"
+                                        },
+                                        {
+                                            "query": "search in (SecurityEvent) EventID == 4728 or EventID == 4732 or EventID == 4756 or EventID == 632 or EventID == 636 or EventID == 660 or EventID == 4729 or EventID == 4733 or EventID == 4757 or EventID == 633 or EventID == 637 or EventID == 661 | extend Action = iff(Activity ==\"4728 - A member was added to a security-enabled global group.\" ,\"Added\",\"Removed\" ) | project  Action , MemberName, TargetUserName, TimeGenerated  | sort by TimeGenerated desc",
+                                            "displayName": "Group Membership Changes"
+                                        },
+                                        {
+                                            "query": "SecurityEvent | where (EventID == 631 or EventID == 4727) | extend CreatedBy = SubjectUserName | extend GroupName = TargetUserName | project CreatedBy, GroupName, Activity, TimeGenerated ",
+                                            "displayName": "Groups Created"
+                                        },
+                                        {
+                                            "query": "SecurityEvent | where (EventID == 634 or EventID == 4730) | extend DeletedBy = SubjectUserName | extend GroupName = TargetUserName | project DeletedBy, GroupName, Activity, TimeGenerated ",
+                                            "displayName": "Groups Deleted"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "Id": "InformationBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "Title": "",
+                                        "NewGroup": false,
+                                        "Color": "#0072c6"
+                                    },
+                                    "Header": {
+                                        "Image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/4RD6RXhpZgAATU0AKgAAAAgABAE7AAIAAAAQAAAISodpAAQAAAABAAAIWpydAAEAAAAgAAAQ0uocAAcAAAgMAAAAPgAAAAAc6gAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEFzaXRoYSBEZSBTaWx2YQAABZADAAIAAAAUAAAQqJAEAAIAAAAUAAAQvJKRAAIAAAADMjEAAJKSAAIAAAADMjEAAOocAAcAAAgMAAAInAAAAAAc6gAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIwMTg6MDg6MzEgMTU6MTc6MjcAMjAxODowODozMSAxNToxNzoyNwAAAEEAcwBpAHQAaABhACAARABlACAAUwBpAGwAdgBhAAAA/+ELImh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4NCjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iPjxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+PHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9InV1aWQ6ZmFmNWJkZDUtYmEzZC0xMWRhLWFkMzEtZDMzZDc1MTgyZjFiIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iLz48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyI+PHhtcDpDcmVhdGVEYXRlPjIwMTgtMDgtMzFUMTU6MTc6MjcuMjEzPC94bXA6Q3JlYXRlRGF0ZT48L3JkZjpEZXNjcmlwdGlvbj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyI+PGRjOmNyZWF0b3I+PHJkZjpTZXEgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOmxpPkFzaXRoYSBEZSBTaWx2YTwvcmRmOmxpPjwvcmRmOlNlcT4NCgkJCTwvZGM6Y3JlYXRvcj48L3JkZjpEZXNjcmlwdGlvbj48L3JkZjpSREY+PC94OnhtcG1ldGE+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAg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",
+                                        "Label": "Security Audit",
+                                        "Link": {
+                                            "Label": "More info",
+                                            "Url": "https://asitha.info/"
+                                        }
+                                    },
+                                    "List": [
+                                        {
+                                            "Title": "Active Directory Security Audit Solution",
+                                            "Content": "## Users and Groups Monitoring View\n1. Created user accounts\n2. Deleted user accounts\n3. Group membership changes - Domain Admin and Local Admin\n4. Related quries\n \n\nPost your feedback and Let us know how to improve this solution \n\n#### Solution by Asitha De Silva"
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "OverviewTile": {
+                            "Id": "DoubleNumberBuilderTile",
+                            "Type": "OverviewTile",
+                            "Version": 2,
+                            "Configuration": {
+                                "TileOne": {
+                                    "Legend": "Account Created",
+                                    "Query": "SecurityEvent | where (EventID == 624 or EventID == 4720) | summarize count() by SamAccountName | count"
+                                },
+                                "TileTwo": {
+                                    "Legend": "Account Deleted",
+                                    "Query": "SecurityEvent | where (EventID == 630 or EventID == 4726) | summarize count() by TargetUserName | count"
+                                },
+                                "Advanced": {
+                                    "DataFlowVerification": {
+                                        "Enabled": false,
+                                        "Query": "search * | limit 1 | project TimeGenerated",
+                                        "Message": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2017-03-03-preview",
+                    "name": "[concat(parameters('workspaceName'), '/', variables('ViewName2'))]",
+                    "type": "Microsoft.OperationalInsights/workspaces/views",
+                    "location": "[parameters('location')]",
+                    "id": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('workspaceName'), variables('ViewName2'))]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Id": "[variables('ViewName2')]",
+                        "Name": "[variables('ViewName2')]",
+                        "DisplayName": "[variables('ViewName2')]",
+                        "Description": "[variables('ViewDescription')]",
+                        "Author": "asithad",
+                        "Source": "Local",
+                        "Version": 2,
+                        "Dashboard": [
+                            {
+                                "Id": "NumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Logged on Users to Active Directory Domain",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "User Login - Last 24 Hours",
+                                        "Query": "SecurityEvent | where AccountType =~ \"user\" and EventID == 4624 and TimeGenerated > ago(1d) | summarize count() by Account | count"
+                                    },
+                                    "List": {
+                                        "Query": "SecurityEvent | where AccountType =~ \"user\" and EventID == 4624 | summarize LastLogin = max(TimeGenerated +330m)  by Account | sort by LastLogin ",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "ColumnsTitle": {
+                                            "Name": "User Name",
+                                            "Value": "Last login - Date and Time"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": true,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "3",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "5",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "SingleQueryDonutBuilderBladeV1",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Failed logon attampts by User",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Users failed most",
+                                        "Subtitle": ""
+                                    },
+                                    "Donut": {
+                                        "Query": "SecurityEvent | where EventID == 4771 | summarize AggregatedValue = count() by TargetUserName | sort by AggregatedValue desc// Oql: Type=SecurityEvent EventID=4771 |measure count() by TargetUserName",
+                                        "CenterLegend": {
+                                            "Text": "Total",
+                                            "Operation": "Sum"
+                                        },
+                                        "Options": {
+                                            "colors": [
+                                                "#00188f",
+                                                "#0072c6",
+                                                "#00bcf2"
+                                            ]
+                                        }
+                                    },
+                                    "List": {
+                                        "Query": "SecurityEvent | where EventID == 4771 | summarize AggregatedValue = count() by TargetUserName",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "User Name",
+                                            "Value": "No of Attempt "
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "SingleQueryDonutBuilderBladeV1",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Failed Logon attampt by Computer",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Computers that had most failed logon attampts",
+                                        "Subtitle": ""
+                                    },
+                                    "Donut": {
+                                        "Query": "SecurityEvent | where EventID == 4771 | summarize AggregatedValue = count() by IpAddress | sort by AggregatedValue desc",
+                                        "CenterLegend": {
+                                            "Text": "Total",
+                                            "Operation": "Sum"
+                                        },
+                                        "Options": {
+                                            "colors": [
+                                                "#00188f",
+                                                "#0072c6",
+                                                "#00bcf2"
+                                            ]
+                                        }
+                                    },
+                                    "List": {
+                                        "Query": "SecurityEvent | where EventID == 4771 | summarize AggregatedValue = count() by IpAddress// Oql: Type=SecurityEvent EventID=4771 |measure count() by IPAddress_CF",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Computer",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "NumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Locked User Accounts",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "SecurityEvent | where EventID == 4740 | summarize count() by TargetUserName | count",
+                                        "Legend": "Number of Locked Accounts"
+                                    },
+                                    "List": {
+                                        "Query": "SecurityEvent | where EventID == 4740 | extend Source= TargetDomainName | summarize count() by TargetUserName,Source",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "User Name",
+                                            "Value": "No of Locked"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "NumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Users Logon Device",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "SecurityEvent | where AccountType =~ \"user\" and EventID == 4624 and TimeGenerated > ago(1d) | summarize count() by Account ",
+                                        "Legend": "User Name with their logon Computer IP"
+                                    },
+                                    "List": {
+                                        "Query": "SecurityEvent | where EventID == 4624 | where TargetUserName != \"MSOL_d7b788949824\" | extend DeviceIP = IpAddress | extend AccountName = TargetUserName| extend IP=replace(@'::ffff:', @' \\1', DeviceIP) | extend Time =TimeGenerated +330m | summarize by AccountName, IP,Time",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Average",
+                                        "ColumnsTitle": {
+                                            "Name": "User Name",
+                                            "Value": "Updated On"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "InformationBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "Title": "",
+                                        "NewGroup": false,
+                                        "Color": "#0072c6"
+                                    },
+                                    "Header": {
+                                        "Image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/4RD6RXhpZgAATU0AKgAAAAgABAE7AAIAAAAQAAAISodpAAQAAAABAAAIWpydAAEAAAAgAAAQ0uocAAcAAAgMAAAAPgAAAAAc6gAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEFzaXRoYSBEZSBTaWx2YQAABZADAAIAAAAUAAAQqJAEAAIAAAAUAAAQvJKRAAIAAAADMjEAAJKSAAIAAAADMjEAAOocAAcAAAgMAAAInAAAAAAc6gAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIwMTg6MDg6MzEgMTU6MTc6MjcAMjAxODowODozMSAxNToxNzoyNwAAAEEAcwBpAHQAaABhACAARABlACAAUwBpAGwAdgBhAAAA/+ELImh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4NCjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iPjxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+PHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9InV1aWQ6ZmFmNWJkZDUtYmEzZC0xMWRhLWFkMzEtZDMzZDc1MTgyZjFiIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iLz48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyI+PHhtcDpDcmVhdGVEYXRlPjIwMTgtMDgtMzFUMTU6MTc6MjcuMjEzPC94bXA6Q3JlYXRlRGF0ZT48L3JkZjpEZXNjcmlwdGlvbj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyI+PGRjOmNyZWF0b3I+PHJkZjpTZXEgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOmxpPkFzaXRoYSBEZSBTaWx2YTwvcmRmOmxpPjwvcmRmOlNlcT4NCgkJCTwvZGM6Y3JlYXRvcj48L3JkZjpEZXNjcmlwdGlvbj48L3JkZjpSREY+PC94OnhtcG1ldGE+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAg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",
+                                        "Label": "Security Audit",
+                                        "Link": {
+                                            "Label": "More info",
+                                            "Url": "http://asitha.info/"
+                                        }
+                                    },
+                                    "List": [
+                                        {
+                                            "Title": "Active Directory Security Audit Solution",
+                                            "Content": "## User Account Security Monitoring View\n1. Domain logged on users last 24 hours\n2. User logging failures\n3. Computers where users failed to login\n4. All Locked accounts last 24 hours\n5. Finding users logged on computer (IP)\n\n\nPost your feedback and Let us know how to improve this solution \n\n#### Solution by Asitha De Silva"
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "OverviewTile": {
+                            "Id": "SingleNumberBuilderTile",
+                            "Type": "OverviewTile",
+                            "Version": 2,
+                            "Configuration": {
+                                "Tile": {
+                                    "Legend": "Faild Login Attampts",
+                                    "Query": "SecurityEvent | where AccountType =~ \"user\" and EventID == 4625 | summarize Failed = count() by Account| count // Oql: Type=SecurityEvent AccountType=user EventID=4625 | measure count() as Failed by Account"
+                                },
+                                "Advanced": {
+                                    "DataFlowVerification": {
+                                        "Enabled": false,
+                                        "Query": "search *// Oql: *",
+                                        "Message": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

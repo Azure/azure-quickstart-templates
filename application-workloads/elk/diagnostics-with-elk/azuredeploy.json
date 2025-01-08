@@ -1,0 +1,407 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "esClusterName": {
+      "type": "string",
+      "defaultValue": "elasticsearch",
+      "metadata": {
+        "description": "The name of the Elasticsearch cluster."
+      }
+    },
+    "esVersion": {
+      "type": "string",
+      "defaultValue": "2.3.1",
+      "allowedValues": [
+        "2.3.1",
+        "2.2.2",
+        "2.1.2",
+        "1.7.5"
+      ],
+      "metadata": {
+        "description": "Elasticsearch version to install."
+      }
+    },
+    "vmClientNodeCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "metadata": {
+        "description": "Number of Elasticsearch client nodes to provision (Setting this to zero puts the data nodes on the load balancer)"
+      }
+    },
+    "vmDataNodeCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of Elasticsearch data nodes"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "vmSizeMarvelNodes": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the Elasticsearch cluster marvel nodes"
+      }
+    },
+    "vmSizeMasterNodes": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the Elasticsearch cluster master nodes"
+      }
+    },
+    "vmSizeClientNodes": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the Elasticsearch cluster client nodes"
+      }
+    },
+    "vmSizeDataNodes": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the Elasticsearch cluster data nodes"
+      }
+    },
+    "encodedConfigString": {
+      "type": "string",
+      "defaultValue": "na",
+      "metadata": {
+        "description": "Base64 encoded string which is the Logstash configuration. If you don't want to enter a custom Logstash configuration and would like to use the logstash-input-azurewadtable plugin set this to 'na'."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "16.04-LTS",
+      "metadata": {
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+      }
+    },
+    "existingDiagnosticsStorageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Existing diagnostics storage account name."
+      }
+    },
+    "existingDiagnosticsStorageAccountKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Existing diagnostics storage account key."
+      }
+    },
+    "existingDiagnosticsStorageTableNames": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "List of existing tables containing diagnostics data separated by semicolon (;)."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountPrefix": "[concat(substring(uniqueString(resourceGroup().id, parameters('esClusterName')), 0, 6), substring(parameters('esClusterName'), 0, 3))]",
+    "storageAccountName": "[concat(variables('storageAccountPrefix'), 'log')]",
+    "extensionName": "ELKSimple",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "storageAccountType": "Standard_LRS",
+    "vmName": "logstashvm1",
+    "vmNicName": "[concat(variables('vmName'), '-nic')]",
+    "vmNsgName": "[concat(variables('vmName'), '-nsg')]",
+    "vmPipName": "[concat(variables('vmName'), '-pip')]",
+    "virtualNetworkName": "elkvnet2",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'other')]",
+    "esHost": "10.0.2.100",
+    "elkCommonArtifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/elastic/elasticsearch/",
+    "esDeploymentName": "esDeploymentForDiagnosticsWithELK"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-10-01",
+      "name": "[variables('esDeploymentName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('elkCommonArtifactsLocation'), 'azuredeploy.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "OS": {
+            "value": "ubuntu"
+          },
+          "authenticationType": {
+            "value": "password"
+          },
+          "sshPublicKey": {
+            "value": ""
+          },
+          "loadBalancerType": {
+            "value": "internal"
+          },
+          "jumpbox": {
+            "value": "Yes"
+          },
+          "vmClientNodeCount": {
+            "value": "[parameters('vmClientNodeCount')]"
+          },
+          "vmSizeClientNodes": {
+            "value": "[parameters('vmSizeClientNodes')]"
+          },
+          "vmSizeMasterNodes": {
+            "value": "[parameters('vmSizeMasterNodes')]"
+          },
+          "vmSizeDataNodes": {
+            "value": "[parameters('vmSizeDataNodes')]"
+          },
+          "vmDataNodeCount": {
+            "value": "[parameters('vmDataNodeCount')]"
+          },
+          "esClusterName": {
+            "value": "[parameters('esClusterName')]"
+          },
+          "esVersion": {
+            "value": "[parameters('esVersion')]"
+          },
+          "afs": {
+            "value": "no"
+          },
+          "marvel": {
+            "value": "no"
+          },
+          "marvelCluster": {
+            "value": "no"
+          },
+          "vmSizeMarvelNodes": {
+            "value": "[parameters('vmSizeMarvelNodes')]"
+          },
+          "kibana": {
+            "value": "yes"
+          },
+          "sense": {
+            "value": "no"
+          },
+          "jmeterAgent": {
+            "value": "no"
+          },
+          "cloudAzure": {
+            "value": "no"
+          },
+          "cloudAzureStorageAccount": {
+            "value": ""
+          },
+          "cloudAzureStorageKey": {
+            "value": ""
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('vmNsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "22",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('vmPipName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('vmNicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', variables('esDeploymentName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmNsgName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPipName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig2",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPipName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+          "networkSecurityGroup": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmNsgName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2021-02-01",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "StorageAccount"
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'_OSDisk')]",   
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/', variables('extensionName'))]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
+        "[resourceId('Microsoft.Resources/deployments', variables('esDeploymentName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('scripts/elk-simple-install-ubuntu.sh', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash ./elk-simple-install-ubuntu.sh -e ', parameters('encodedConfigString'), ' -a ', parameters('existingDiagnosticsStorageAccountName'), ' -k ', parameters('existingDiagnosticsStorageAccountKey'), ' -t ', parameters('existingDiagnosticsStorageTableNames'), ' -i ', variables('esHost'))]"
+        }
+      }
+    }
+  ]
+}
+

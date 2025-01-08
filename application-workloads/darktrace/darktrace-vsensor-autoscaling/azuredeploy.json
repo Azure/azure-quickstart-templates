@@ -1,0 +1,1427 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources. The default is the Resource Group location."
+            }
+        },
+        "shortID": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "A short (upto 20 character alphanumeric) string to prefix resource names by (where available). Leave blank to use resource group name."
+            },
+            "minLength": 0,
+            "maxLength": 20
+        },
+        "zones": {
+            "defaultValue": [],
+            "type": "array",
+            "metadata": {
+                "description": "List of availability zone numbers for vSensors to be deployed into. Leave default for all Zones."
+            }
+        },
+        "existingVirtualNetworkName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80,
+            "metadata": {
+                "description": "Name of the existing Virtual Network to be monitored, should be in the same location as this deployment/resource group."
+            }
+        },
+        "existingVirtualNetworkResourceGroup": {
+            "type": "string",
+            "defaultValue": "same_RG",
+            "minLength": 1,
+            "maxLength": 64,
+            "metadata": {
+                "description": "The Resource Group the existing Virtual Network is deployed in. Default is same RG."
+            }
+        },
+        "natGatewayEnable": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Deploy a NAT Gateway in the Virtual Network. If using an existing VNet and are using other firewall configurations, False may be required."
+            }
+        },
+        "existingRouteTable": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "If not deploying a NAT Gateway, you may need to provide an existing route table to attach to the new deployed vSensor subnet to allow internet routing."
+            }
+        },
+        "existingRouteTableResourceGroup": {
+            "type": "string",
+            "defaultValue": "same_RG",
+            "minLength": 1,
+            "maxLength": 64,
+            "metadata": {
+                "description": "The Resource Group the existing Route Table (if provided) is deployed in. Default is same RG."
+            }
+        },
+        "bastionEnable": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Deploy a Azure Bastion host to access your vSensor deployment. If 'False' is selected, configure your ssh access manually after deployment."
+            }
+        },
+        "bastionSubnetCIDR": {
+            "type": "string",
+            "defaultValue": "",
+            "minLength": 0,
+            "maxLength": 18,
+            "metadata": {
+                "description": "CIDR IP range of the private subnet the Azure Bastion will be deployed in (if deployed). This must be an unused range within the supplied VNet. E.g. 10.0.1.0/24. If Bastion Enable is false, this value will be ignored."
+            }
+        },
+        "MgmtSourceAddressOrRange": {
+            "type": "string",
+            "minLength": 7,
+            "metadata": {
+                "description": "Provide a private address range using CIDR notation (e.g. 10.1.0.0/24), or an IP address (e.g. 192.168.99.21) for Management access via ssh (port 22/TCP). Set to 'VMSS Subnet CIDR' to not use this access. You can also provide a comma-separated list of IP addresses and/or address ranges (a valid comma-separated list is 10.1.0.4,10.2.1.0/24)."
+            }
+        },
+        "VMSSSubnetCIDR": {
+            "type": "string",
+            "minLength": 9,
+            "maxLength": 18,
+            "metadata": {
+                "description": "CIDR IP range of the private subnet the vSensors will be deployed in. This must be an unused range within the supplied VNet. E.g. 10.0.2.0/24 "
+            }
+        },
+        "VMSSInstanceSize": {
+            "defaultValue": "Standard_D2_v3",
+            "metadata": {
+                "description": "The VM size. Check the Darktrace customer portal for more information about the vSensor Virtual Hardware requirements."
+            },
+            "type": "string"
+        },
+        "VMSSMinSize": {
+            "type": "int",
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 100,
+            "metadata": {
+                "description": "The minimum number of vSensors to auto-scale down to."
+            }
+        },
+        "VMSSMaxSize": {
+            "type": "int",
+            "defaultValue": 5,
+            "minValue": 1,
+            "maxValue": 100,
+            "metadata": {
+                "description": "The maximum number of vSensors to be deployed by auto-scaling during high traffic."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "metadata": {
+                "description": "Administrator username to be created when the vSensor is spun up."
+            }
+        },
+        "adminPublicKey": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Public key for the admin username to ssh to the vSensors. Note that password authentication over ssh for newly created VMs is disabled."
+            }
+        },
+        "VSensorUpdateKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Darktrace Update Key needed to install the vSensor package. Contact your Darktrace representative for more information."
+            }
+        },
+        "applianceHostName": {
+            "type": "string",
+            "metadata": {
+                "description": "The FQDN or the IP of the Darktrace master instance (virtual/physical)."
+            }
+        },
+        "appliancePort": {
+            "defaultValue": 443,
+            "type": "int",
+            "minValue": 1,
+            "maxValue": 65535,
+            "metadata": {
+                "description": "Connection port between vSensor and the Darktrace appliance."
+            }
+        },
+        "appliancePushToken": {
+            "type": "securestring",
+            "maxLength": 128,
+            "metadata": {
+                "description": "Push token to authenticate with the appliance. Should be generated on the Darktrace master instance."
+            }
+        },
+        "OSSensorHMACToken": {
+            "type": "securestring",
+            "minLength": 6,
+            "maxLength": 62,
+            "metadata": {
+                "description": "Hash-based message authentication code (HMAC) token to authenticate osSensors with vSensor."
+            }
+        },
+        "PCAPLifetimeDays": {
+            "type": "int",
+            "defaultValue": 7,
+            "minValue": 0,
+            "maxValue": 365,
+            "metadata": {
+                "description": "Captured packets storage retention (days), longer retention will increase storage costs. Set to 0 to disable PCAP storage and storage account."
+            }
+        },
+        "privateLinkEnable": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "If you wish to connect osSensors from outside the deployed Virtual Network via Azure Private endpoints, enable this option. This will deploy a PrivateLink service and direct all traffic via the load balancer instead of direct from osSensor to vSensor after registration. Note: this will incur extra Azure charges for the private link endpoint and associated bandwidth."
+            }
+        },
+        "resourceTags": {
+            "type": "object",
+            "defaultValue": {
+              "Deployed-By": "Darktrace vSensor Quickstart",
+              "Deployment-Name": "[deployment().name]" 
+            },
+            "metadata": {
+                "description": "Specify tags as JSON key-pairs to apply to all compatible resources deployed by this template."
+            }
+        }
+    },
+    "variables": {
+        "location": "[parameters('location')]",
+        "prefix": "[if(empty(parameters('shortID')), substring(resourceGroup().name,0, min(20, length(resourceGroup().name))), parameters('shortID'))]",
+        "resourceGroup": "[resourceGroup().name]",
+        "bastionName": "[concat(variables('prefix'),'-bastion')]",
+        "bastionPublicIPAddressName": "[concat(variables('prefix'),'-bastion-publicip')]",
+        "bastionSubnetName": "AzureBastionSubnet",
+        "VMSSName": "[concat(variables('prefix'), '-vmss')]",
+        "VMSSRef": "[resourceId(variables('resourceGroup'), 'Microsoft.Compute/virtualMachineScaleSets', variables('VMSSName'))]",
+        "VMSSSubnetIPPrefix": "[string(first(split(parameters('VMSSSubnetCIDR'),'/')))]",
+        "VMSSSubnetIPPrefixParts": "[split(variables('VMSSSubnetIPPrefix'),'.')]",
+        "VMSSSubnetFirstIP": "[string(add(int(last(variables('VMSSSubnetIPPrefixParts'))),4))]",
+        "VMSSSubnetProxyIP": "[string(add(int(last(variables('VMSSSubnetIPPrefixParts'))),5))]",
+        "VMSSSubnetPrivateLinkIP": "[string(add(int(last(variables('VMSSSubnetIPPrefixParts'))),6))]",
+        "VMSSIPPrefixParts": "[take(variables('VMSSSubnetIPPrefixParts'),3)]",
+        "VMSSRoleName": "[guid(resourceGroup().id, deployment().name, 'vmss-vsensor-role')]",
+        "VMSSRoleAssignName": "[guid(resourceGroup().id, deployment().name, 'vmss-vsensor-assign')]",
+        "VMSSRoleAssignNameVNet": "[guid(resourceGroup().id, deployment().name, 'vmss-vsensor-assign-vnet')]",
+        "fePoolIP": "[concat(join(variables('VMSSIPPrefixParts'),'.'), '.', variables('VMSSSubnetFirstIP'))]",
+        "fePoolProxyIP": "[concat(join(variables('VMSSIPPrefixParts'),'.'), '.', variables('VMSSSubnetProxyIP'))]",
+        "privateLinkIp": "[concat(join(variables('VMSSIPPrefixParts'),'.'), '.', variables('VMSSSubnetPrivateLinkIP'))]",
+        "privateLinkServiceName": "[concat(variables('prefix'), '-ossensor-privatelink')]",
+        "subnetName": "[concat(variables('prefix'), '-subnet')]",
+        "subnetTemplateName": "[concat(variables('prefix'), '-subnets-template')]",
+        "vSensorRoleTemplateName": "[concat(variables('prefix'), '-role-template')]",
+        "vNetSameRG": "[equals(parameters('existingVirtualNetworkResourceGroup'),'same_RG')]",
+        "subnetResourceGroup": "[if(variables('vNetSameRG'), resourceGroup().name, parameters('existingVirtualNetworkResourceGroup'))]",
+        "subnetsTemplateRef": "[resourceId(variables('subnetResourceGroup'), 'Microsoft.Resources/deployments', variables('subnetTemplateName'))]",
+        "existingRouteTableResourceGroup": "[if(equals(parameters('existingRouteTableResourceGroup'),'same_RG'), resourceGroup().name, parameters('existingRouteTableResourceGroup'))]",
+        "MgmtSourceAddressOrRange": "[replace(parameters('MgmtSourceAddressOrRange'), ' ', '')]",
+        "nsgSourceAddressPrefix": "[split(variables('MgmtSourceAddressOrRange'), ',')]",
+        "nicName": "[concat(variables('prefix'), '-nic')]",
+        "ipConfigName": "[concat(variables('prefix'), '-ipconfig')]",
+        "networkSecurityGroupName": "[concat(variables('prefix'), '-nsg')]",
+        "loadBalancerName": "[concat(variables('prefix'), '-loadbalancer')]",
+        "loadBalancerRef": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+        "bePoolName": "[concat(variables('prefix'), '-backendpool')]",
+        "bePoolRef": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]",
+        "fePoolName": "[concat(variables('prefix'), '-frontendpool')]",
+        "fePoolRef": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), variables('fePoolName'))]",
+        "fePoolProxyName": "[concat(variables('prefix'), '-frontendpool-proxy')]",
+        "fePoolProxyRef": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), variables('fePoolProxyName'))]",
+        "natGatewayName": "[concat(variables('prefix'),'-natgw')]",
+        "natGatewayIPName": "[concat(variables('prefix'),'-natgw-ip')]",
+        "imageReference": {
+            "publisher": "canonical",
+            "offer": "0001-com-ubuntu-server-focal",
+            "sku": "20_04-lts",
+            "version": "latest"
+        },
+        "resgpguid": "[toLower(replace(concat(substring(variables('prefix'),0, min(16, length(variables('prefix')))), substring(guid(resourceGroup().id), 0, 8)), '-', ''))]",
+        "blobStorageEnable": "[not(equals(parameters('PCAPLifetimeDays'),0))]",
+        "blobStorageAccountName": "[variables('resgpguid')]",
+        "blobStorageContainerName": "darktrace-vsensor-quickstart-pcaps",
+        "blobStorageAccountRef": "[resourceId('Microsoft.Storage/storageAccounts/', variables('blobStorageAccountName'))]",
+        "blobStorageLifecycleName": "[concat(variables('resgpguid'),'-lifecycle-policy')]",
+        "blobStorageContribRoleName": "[guid(resourceGroup().id, deployment().name, 'blobdatacontrib')]",
+        "blobStorageAccountContribRoleName": "[guid(resourceGroup().id, deployment().name, 'accountcontrib')]",
+        "serviceEndPointPolicyName": "[concat(variables('prefix'),'-pcaps')]",
+        "serviceEndPointPolicyDefinitionName": "Microsoft.Storage",
+        "asgName": "[concat(variables('prefix'),'-asg')]",
+        "logWorkspaceName": "[concat(variables('prefix'),'-workspace')]",
+        "dataCollectionName": "[concat('MSVMI-', split(resourceId('Microsoft.OperationalInsights/workspaces', variables('logWorkspaceName')),'/')[8])]",
+        "loadBalancerDirectEnable": "[if(parameters('privateLinkEnable'), '0', '1')]",
+        "loadBalancerDistributionMode": "[if(parameters('privateLinkEnable'), 'SourceIP', 'Default')]",
+        "loadBalancerRules": [
+            {
+                "name": "vSensorHTTPS",
+                "type": "Microsoft.Network/loadBalancers/loadBalancingRules",
+                "properties": {
+                    "frontendIPConfiguration": {
+                        "id": "[variables('fePoolRef')]"
+                    },
+                    "backendAddressPool": {
+                        "id": "[variables('bePoolRef')]"
+                    },
+                    "frontendPort": 443,
+                    "backendPort": 443,
+                    "enableFloatingIP": false,
+                    "idleTimeoutInMinutes": 4,
+                    "protocol": "Tcp",
+                    "loadDistribution": "[variables('loadBalancerDistributionMode')]",
+                    "probe": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'),'vmss-health-probe-443')]"
+                    }
+                }
+            },
+            {
+                "name": "vSensorHTTP",
+                "type": "Microsoft.Network/loadBalancers/loadBalancingRules",
+                "properties": {
+                    "frontendIPConfiguration": {
+                        "id": "[variables('fePoolRef')]"
+                    },
+                    "backendAddressPool": {
+                        "id": "[variables('bePoolRef')]"
+                    },
+                    "frontendPort": 80,
+                    "backendPort": 80,
+                    "enableFloatingIP": false,
+                    "idleTimeoutInMinutes": 4,
+                    "protocol": "Tcp",
+                    "loadDistribution": "[variables('loadBalancerDistributionMode')]",
+                    "probe": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'),'vmss-health-probe-80')]"
+                    }
+                }
+            }
+        ],
+        "loadBalancerRulesProxy": [
+            {
+                "name": "vSensorHTTPSPROXY",
+                "type": "Microsoft.Network/loadBalancers/loadBalancingRules",
+                "properties": {
+                    "frontendIPConfiguration": {
+                        "id": "[variables('fePoolProxyRef')]"
+                    },
+                    "backendAddressPool": {
+                        "id": "[variables('bePoolRef')]"
+                    },
+                    "frontendPort": 443,
+                    "backendPort": 444,
+                    "enableFloatingIP": false,
+                    "idleTimeoutInMinutes": 4,
+                    "protocol": "Tcp",
+                    "loadDistribution": "[variables('loadBalancerDistributionMode')]",
+                    "probe": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'),'vmss-health-probe-444')]"
+                    }
+                }
+            },
+            {
+                "name": "vSensorHTTPPROXY",
+                "type": "Microsoft.Network/loadBalancers/loadBalancingRules",
+                "properties": {
+                    "frontendIPConfiguration": {
+                        "id": "[variables('fePoolProxyRef')]"
+                    },
+                    "backendAddressPool": {
+                        "id": "[variables('bePoolRef')]"
+                    },
+                    "frontendPort": 80,
+                    "backendPort": 81,
+                    "enableFloatingIP": false,
+                    "idleTimeoutInMinutes": 4,
+                    "protocol": "Tcp",
+                    "loadDistribution": "[variables('loadBalancerDistributionMode')]",
+                    "probe": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'),'vmss-health-probe-81')]"
+                    }
+                }
+            }
+        ],
+        "healthProbes": [
+            {
+                "name": "vmss-health-probe-443",
+                "properties": {
+                    "protocol": "Https",
+                    "port": 443,
+                    "requestPath": "/healthcheck",
+                    "intervalInSeconds": 60,
+                    "numberOfProbes": 1,
+                    "probeThreshold": 1
+                }
+            },
+            {
+                "name": "vmss-health-probe-80",
+                "properties": {
+                    "protocol": "Http",
+                    "port": 80,
+                    "requestPath": "/healthcheck",
+                    "intervalInSeconds": 60,
+                    "numberOfProbes": 1,
+                    "probeThreshold": 1
+                }
+            }
+        ],
+        "healthProbesProxy": [
+            {
+                "name": "vmss-health-probe-444",
+                "properties": {
+                    "protocol": "Https",
+                    "port": 444,
+                    "requestPath": "/healthcheck",
+                    "intervalInSeconds": 60,
+                    "numberOfProbes": 1,
+                    "probeThreshold": 1
+                }
+            },
+            {
+                "name": "vmss-health-probe-81",
+                "properties": {
+                    "protocol": "Http",
+                    "port": 81,
+                    "requestPath": "/healthcheck",
+                    "intervalInSeconds": 60,
+                    "numberOfProbes": 1,
+                    "probeThreshold": 1
+                }
+            }
+        ]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2023-11-01",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[variables('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowMgmtInPorts22",
+                        "properties": {
+                            "description": "Allow Inbound traffic to TCP ports 22 from customer selected IPs/Ranges.",
+                            "direction": "Inbound",
+                            "priority": 1000,
+                            "access": "Allow",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": ["22"],
+                            "SourceAddressPrefixes": "[variables('nsgSourceAddressPrefix')]",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "AllowLoadBalancer",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1001,
+                            "direction": "Inbound",
+                            "destinationPortRanges": [
+                                "80-81",
+                                "443-444"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "AllowOSSensorHTTP",
+                        "properties": {
+                            "description": "Allow HTTP traffic from osSensors to vSensor for HTTP and TCP PROXYv2 Traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80-81",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1002,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowOSSensorHTTPS",
+                        "properties": {
+                            "description": "Allow HTTPS traffic from osSensors to vSensor for HTTPS and TCP PROXYv2 Traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443-444",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1003,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowOutboundHTTPS",
+                        "properties": {
+                            "description": "Allow HTTPS traffic from vSensor to packages{-cdn}.darktrace.com/*ubuntu.com / Master Appliance",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1003,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowOutboundHTTP",
+                        "properties": {
+                            "description": "Allow HTTP traffic from vSensor to packages{-cdn}.darktrace.com/*ubuntu.com",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1004,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyOutboundInternet",
+                        "properties": {
+                            "description": "Deny rest of internet outbound.",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Deny",
+                            "priority": 4096,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllIn",
+                        "properties": {
+                            "description": "Deny all Inbound traffic.",
+                            "direction": "Inbound",
+                            "priority": 4095,
+                            "access": "Deny",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2023-11-01",
+            "name": "[concat(variables('networkSecurityGroupName'),'/AllowOutboundMasterPort')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+            ],
+            "condition": "[not(equals(parameters('appliancePort'),443))]",
+            "properties": {
+                            "description": "Allow HTTPS traffic from vSensor to Master on custom port",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "[parameters('appliancePort')]",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1004,
+                            "direction": "Outbound"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2023-11-01",
+            "name": "[concat(variables('networkSecurityGroupName'),'/AllowAzureBastion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+            ],
+            "condition": "[parameters('bastionEnable')]",
+            "properties": {
+                            "description": "Allow Bastion traffic to vSensor",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "[parameters('bastionSubnetCIDR')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1005,
+                            "direction": "Inbound"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2023-11-01",
+            "name": "[variables('natGatewayIPName')]",
+            "location": "[variables('location')]",
+            "condition": "[parameters('natGatewayEnable')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "deleteOption": "Delete"
+            }
+        },
+        {
+            "type": "Microsoft.Network/natGateways",
+            "apiVersion": "2023-11-01",
+            "name": "[variables('natGatewayName')]",
+            "location": "[variables('location')]",
+            "condition": "[parameters('natGatewayEnable')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayIPName'))]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "idleTimeoutInMinutes": 4,
+                "publicIpAddresses": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayIPName'))]"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2024-03-01",
+            "name": "[variables('subnetTemplateName')]",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[variables('subnetResourceGroup')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]",
+                "[resourceId('Microsoft.Network/serviceEndpointPolicies', variables('serviceEndpointPolicyName'))]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "name": "[concat(parameters('existingVirtualNetworkName'), '/', variables('subnetName'))]",
+                            "location": "[variables('location')]",
+                            "apiVersion": "2023-11-01",
+                            "properties": {
+                                "addressPrefix": "[parameters('VMSSSubnetCIDR')]",
+                                "natGateway": "[if(parameters('natGatewayEnable'), json(concat('{\"id\": \"', resourceId(variables('resourceGroup'), 'Microsoft.Network/natGateways', variables('natGatewayName')),  '\"}')),  json('null') )]",
+                                "routeTable": "[if(not(empty(parameters('existingRouteTable'))), json(concat('{\"id\": \"', resourceId(variables('existingRouteTableResourceGroup'), 'Microsoft.Network/routeTables', parameters('existingRouteTable')),  '\"}')),  json('null') )]",
+                                "networkSecurityGroup": {
+                                    "id": "[resourceId(variables('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                                },
+                                "serviceEndpoints": "[if(variables('blobStorageEnable'), json(concat('[{\"service\": \"Microsoft.Storage\", \"locations\": \"', variables('location'),'\"}]')),  json('null') )]",
+                                "serviceEndpointPolicies": "[if(variables('blobStorageEnable'), json(concat('[{\"id\": \"', resourceId(variables('resourceGroup'), 'Microsoft.Network/serviceEndpointPolicies', variables('serviceEndpointPolicyName')),'\"}]')),  json('null') )]",
+                                "privateLinkServiceNetworkPolicies": "Disabled"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "dependsOn": [
+                                "[variables('subnetName')]"
+                            ],
+                            "apiVersion": "2023-11-01",
+                            "location": "[variables('location')]",
+                            "name": "[concat(parameters('existingVirtualNetworkName'), '/' ,variables('bastionSubnetName'))]",
+                            "condition": "[parameters('bastionEnable')]",
+                            "properties": {
+                                "addressPrefix": "[parameters('bastionSubnetCIDR')]"
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "VMSSSubnetRef": {
+                            "type": "string",
+                            "value": "[resourceId(variables('subnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), variables('subnetName'))]"
+                        },
+                        "bastionSubnetRef": {
+                            "condition": "[parameters('bastionEnable')]",
+                            "type": "string",
+                            "value": "[resourceId(variables('subnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), variables('bastionSubnetName'))]"
+                        }
+                    }
+                },
+                "parameters": {}
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2023-11-01",
+            "name": "[variables('bastionPublicIPAddressName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "condition": "[parameters('bastionEnable')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2023-11-01",
+            "name": "[variables('bastionName')]",
+            "location": "[variables('location')]",
+            "condition": "[parameters('bastionEnable')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]",
+                "[variables('subnetsTemplateRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "enableFileCopy": true,
+                "enableShareableLink": false,
+                "enableIpConnect": false,
+                "enableTunneling": true,
+                "enableKerberos": false,
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[reference(variables('subnetsTemplateRef')).outputs.bastionSubnetRef.value]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "name": "[variables('VMSSName')]",
+            "location": "[variables('location')]",
+            "apiVersion": "2023-09-01",
+            "dependsOn": [
+                "[variables('loadBalancerRef')]",
+                "[variables('subnetsTemplateRef')]",
+                "[variables('privateLinkServiceName')]",
+                "[variables('blobStorageAccountRef')]",
+                "[resourceId('Microsoft.Network/serviceEndpointPolicies/serviceEndpointPolicyDefinitions/', variables('serviceEndPointPolicyName'), variables('serviceEndPointPolicyDefinitionName'))]"
+            ],
+            "sku": {
+                "name": "[parameters('VMSSInstanceSize')]",
+                "tier": "Standard",
+                "capacity": "[parameters('VMSSMinSize')]"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "tags": "[parameters('resourceTags')]",
+            "zones": "[parameters('zones')]",
+            "properties": {
+                "additionalCapabilities": {
+                    "hibernationEnabled": false,
+                    "ultraSSDEnabled": false
+                },
+                "orchestrationMode": "Uniform",
+                "overprovision": "false",
+                "upgradePolicy": {
+                    "mode": "Automatic"
+                },
+                "automaticRepairsPolicy": {
+                    "enabled": true,
+                    "gracePeriod": "PT10M"
+                },
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "caching": "ReadOnly",
+                            "createOption": "FromImage",
+                            "diskSizeGB": 30,
+                            "managedDisk": {
+                                "storageAccountType": "StandardSSD_LRS"
+                            }
+                        },
+                        "imageReference": "[variables('imageReference')]"
+                    },
+                    "osProfile": {
+                        "computerNamePrefix": "[concat(variables('VMSSName'), '-')]",
+                        "adminUsername": "[parameters('adminUsername')]",
+                        "linuxConfiguration": {
+                            "disablePasswordAuthentication": true,
+                            "ssh": {
+                                "publicKeys": [
+                                    {
+                                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                                        "keyData": "[parameters('adminPublicKey')]"
+                                    }
+                                ]
+                            },
+                            "patchSettings": {
+                                "patchMode": "ImageDefault"
+                            }
+                        }
+                    },
+                    "networkProfile": {
+                        "networkInterfaceConfigurations": [
+                            {
+                                "name": "[variables('nicName')]",
+                                "properties": {
+                                    "primary": true,
+                                    "enableAcceleratedNetworking": true,
+                                    "enableIPForwarding": true,
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "[variables('ipConfigName')]",
+                                            "properties": {
+                                                "subnet": {
+                                                    "id": "[reference(variables('subnetsTemplateRef')).outputs.VMSSSubnetRef.value]"
+                                                },
+                                                "loadBalancerBackendAddressPools": [
+                                                    {
+                                                        "id": "[variables('bePoolRef')]"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "extensionProfile": {
+                        "extensions": [
+                            {
+                                "name": "AzureMonitorLinuxAgent",
+                                "properties": {
+                                    "publisher": "Microsoft.Azure.Monitor",
+                                    "type": "AzureMonitorLinuxAgent",
+                                    "typeHandlerVersion": "1.5",
+                                    "autoUpgradeMinorVersion": true,
+                                    "enableAutomaticUpgrade": true
+                                }
+                            },
+                            {
+                                "name": "healthRepairExtension",
+                                "properties": {
+                                    "autoUpgradeMinorVersion": true,
+                                    "publisher": "Microsoft.ManagedServices",
+                                    "type": "ApplicationHealthLinux",
+                                    "typeHandlerVersion": "1.0",
+                                    "settings": {
+                                        "protocol": "https",
+                                        "port": 443,
+                                        "requestPath": "/healthcheck"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "diagnosticsProfile": {
+                        "bootDiagnostics": {
+                            "enabled": false
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets/extensions",
+            "apiVersion": "2023-09-01",
+            "name": "[concat(variables('VMSSName'),'/', 'DarktraceVSensorInstaller')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('VMSSRef')]",
+                "[variables('blobStorageContribRoleName')]",
+                "[variables('blobStorageAccountContribRoleName')]",
+                "[variables('VMSSRoleName')]",
+                "[variables('VMSSRoleAssignName')]",
+                "[variables('vSensorRoleTemplateName')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "skipDos2Unix":false,
+                  "timestamp":123456789          
+                },
+                "protectedSettings": {
+                   "script": "[base64(concat('#! /bin/bash -xe\n\nwait_for_apt() {\n    echo \"Waiting for apt/dpkg lock.\"\n    tries=0\n    maxtries=10\n    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1 && [ $tries -le $maxtries ]; do\n       sleep 20\n       ((tries=tries+1))\n    done\n    if [ $tries -ge $maxtries ]; then\n        echo \"ERROR: Failed to get apt / dpkg lock before timeout. Please wait and try again, or fix dpkg lock manually.\"\n        exit 1\n    fi\n}\nif [ -f \"/etc/darktrace/.user-data-success\" ]; then\n    echo \"Not re-running user-data, already succeeded\"\n    exit 0\nfi\nexec > >(tee -a /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\nif [[ \"', parameters('VSensorUpdateKey'), '\" == \"updateKey-example\" ]]; then\n    echo \"Skipping install in azure CI due to dummy key.\"\n    exit 0\nfi\nwait_for_apt\nsleep 10\nwait_for_apt\nbash <(wget https://packages-cdn.darktrace.com/install -O -) --updateKey \"', parameters('VSensorUpdateKey'), '\"\n/usr/sbin/set_pushtoken.sh \"', parameters('appliancePushtoken'), '\" \"', parameters('applianceHostName'), ':', parameters('appliancePort'), '\"\nset_ossensor_hmac.sh \"', parameters('OSSensorHMACToken'), '\"\nif [[ \"', variables('blobStorageEnable'), '\" == \"True\" ]]; then\n    set_pcap_azure_container.sh \"', variables('blobStorageAccountName'), '\" \"', variables('blobStorageContainerName'), '\"\nelse\n    set_pcap_size.sh 0\nfi\nset_ossensor_loadbalancer_direct.sh \"', variables('loadBalancerDirectEnable'), '\"\nif [ \"', variables('loadBalancerDirectEnable'), '\" -eq \"0\" ]; then\n    set_tcp_proxy_access.sh \"', variables('privateLinkIP'), '/32\"\n    set_tcp_proxy_access.sh \"168.63.129.16/32\" # Allow Load Balancer Health Probes\nfi\nset_ephemeral.sh 1\necho \"Configuration complete, vSensor is ready for use.\"\ntouch /etc/darktrace/.user-data-success\n'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Insights/autoscaleSettings",
+            "apiVersion": "2022-10-01",
+            "name": "[variables('asgName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[variables('VMSSRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "name": "[variables('asgName')]",
+                "targetResourceUri": "[variables('VMSSRef')]",
+                "enabled": true,
+                "predictiveAutoscalePolicy": {
+                    "scaleLookAheadTime": "PT5M",
+                    "scaleMode": "Enabled"
+                },
+                "profiles": [
+                    {
+                        "name": "Autoscale by percentage based on CPU usage",
+                        "capacity": {
+                            "minimum": "[parameters('VMSSMinSize')]",
+                            "maximum": "[parameters('VMSSMaxSize')]",
+                            "default": "[parameters('VMSSMinSize')]"
+                        },
+                        "rules": [
+                            {
+                                "metricTrigger": {
+                                    "metricName": "Percentage CPU",
+                                    "metricResourceUri": "[variables('VMSSRef')]",
+                                    "timeGrain": "PT1M",
+                                    "statistic": "Average",
+                                    "timeWindow": "PT5M",
+                                    "timeAggregation": "Average",
+                                    "operator": "GreaterThan",
+                                    "threshold": 70
+                                },
+                                "scaleAction": {
+                                    "direction": "Increase",
+                                    "type": "ChangeCount",
+                                    "value": "1",
+                                    "cooldown": "PT5M"
+                                }
+                            },
+                            {
+                                "metricTrigger": {
+                                    "metricName": "Percentage CPU",
+                                    "metricResourceUri": "[variables('VMSSRef')]",
+                                    "timeGrain": "PT1M",
+                                    "statistic": "Average",
+                                    "timeWindow": "PT5M",
+                                    "timeAggregation": "Average",
+                                    "operator": "LessThan",
+                                    "threshold": 50
+                                },
+                                "scaleAction": {
+                                    "direction": "Decrease",
+                                    "type": "ChangeCount",
+                                    "value": "1",
+                                    "cooldown": "PT5M"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2023-11-01",
+            "name": "[variables('loadBalancerName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[variables('subnetsTemplateRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('bePoolName')]"
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[variables('fePoolName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[variables('fePoolIP')]",
+                            "privateIPAddressVersion": "IPv4",
+                            "subnet": {
+                                "id": "[reference(variables('subnetsTemplateRef')).outputs.VMSSSubnetRef.value]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('fePoolProxyName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[variables('fePoolProxyIP')]",
+                            "privateIPAddressVersion": "IPv4",
+                            "subnet": {
+                                "id": "[reference(variables('subnetsTemplateRef')).outputs.VMSSSubnetRef.value]"
+                            }
+                        }
+                    }
+                ],
+                "loadBalancingRules": "[if(parameters('privateLinkEnable'), union(variables('loadBalancerRules'),variables('loadBalancerRulesProxy')), variables('loadBalancerRules'))]",
+                "probes": "[if(parameters('privateLinkEnable'), union(variables('healthProbes'),variables('healthProbesProxy')), variables('healthProbes'))]"
+            }
+        },
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2022-10-01",
+            "name": "[variables('logWorkspaceName')]",
+            "location": "[variables('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "sku": {
+                    "name": "perGB2018"
+                },
+                "retentionInDays": 30,
+                "features": {
+                    "enableLogAccessUsingOnlyResourcePermissions": true,
+                    "disableLocalAuth": true
+                },
+                "workspaceCapping": {
+                    "dailyQuotaGb": -1
+                },
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "apiVersion": "2022-06-01",
+            "name": "[variables('dataCollectionName')]",
+            "location": "[variables('location')]",
+            "kind": "Linux",
+            "tags": "[parameters('resourceTags')]",
+            "dependsOn": [
+                "[variables('logWorkspaceName')]"
+            ],
+            "properties": {
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-InsightsMetrics"
+                        ],
+                        "destinations": [
+                            "VMInsightsPerf-Logs-Dest"
+                        ]
+                    },
+                    {
+                        "streams": [
+                            "Microsoft-Syslog"
+                        ],
+                        "destinations": [
+                            "VMInsightsPerf-Logs-Dest"
+                        ]
+                    }
+                ],
+                "dataSources": {
+                    "performanceCounters": [
+                        {
+                            "name": "VMInsightsPerfCounters",
+                            "streams": [
+                                "Microsoft-InsightsMetrics"
+                            ],
+                            "scheduledTransferPeriod": "PT1M",
+                            "samplingFrequencyInSeconds": 60,
+                            "counterSpecifiers": [
+                                "\\VmInsights\\DetailedMetrics"
+                            ]
+
+                        }
+                    ],
+                    "syslog": [
+                        {
+                            "streams": [
+                                "Microsoft-Syslog"
+                            ],
+                            "facilityNames": [
+                                "auth",
+                                "authpriv",
+                                "cron",
+                                "daemon",
+                                "mark",
+                                "kern",
+                                "local0",
+                                "local1",
+                                "local2",
+                                "local3",
+                                "local4",
+                                "local5",
+                                "local6",
+                                "local7",
+                                "lpr",
+                                "mail",
+                                "news",
+                                "syslog",
+                                "user",
+                                "uucp"
+                            ],
+                            "logLevels": [
+                                "Debug",
+                                "Info",
+                                "Notice",
+                                "Warning",
+                                "Error",
+                                "Critical",
+                                "Alert",
+                                "Emergency"
+                            ],
+                            "name": "Syslog"
+                        }
+                    ]
+                },
+                "description": "Collect metrics from vSensor Scale Set",
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logWorkspaceName'))]",
+                            "name": "VMInsightsPerf-Logs-Dest"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+            "apiVersion": "2022-06-01",
+            "scope": "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('VMSSName'))]",
+            "name": "[concat(variables('dataCollectionName'), '-assoc')]",
+            "dependsOn": [
+                "[variables('VMSSRef')]",
+                "[variables('dataCollectionName')]",
+                "[variables('logWorkspaceName')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "description": "Association of data collection rule. Deleting this association will break the data collection for this virtual machine.",
+                "dataCollectionRuleId": "[resourceId('Microsoft.Insights/dataCollectionRules', variables('dataCollectionName'))]"
+            }
+        },
+        {
+            "name": "[variables('blobStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "dependsOn": [
+                "[variables('subnetsTemplateRef')]"
+            ],
+            "condition": "[variables('blobStorageEnable')]",
+            "apiVersion": "2023-01-01",
+            "location": "[variables('location')]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": false,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "isNfsV3Enabled": false,
+                "isSftpEnabled": false,
+                "minimumTlsVersion": "TLS1_2",
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[resourceId(variables('subnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), variables('subnetName'))]",
+                            "action": "Allow"
+                        }
+                    ],
+                    "defaultAction": "Deny"
+                },
+                "supportsHttpsTrafficOnly": true
+            },
+            "resources": [
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2023-01-01",
+                    "name": "[concat('default/', variables('blobStorageContainerName'))]",
+                    "condition": "[variables('blobStorageEnable')]",
+                    "dependsOn": [
+                        "[variables('blobStorageAccountName')]"
+                    ],
+                    "tags": "[parameters('resourceTags')]",
+                    "properties": {
+                        "publicAccess": "None"
+                    }
+                },
+                {
+                    "type": "managementPolicies",
+                    "apiVersion": "2023-01-01",
+                    "name": "default",
+                    "condition": "[variables('blobStorageEnable')]",
+                    "dependsOn": [
+                        "[variables('blobStorageAccountName')]"
+                    ],
+                    "properties": {
+                        "policy": {
+                            "rules": [
+                                {
+                                    "definition": {
+                                        "actions": {
+                                            "baseBlob": {
+                                                "delete": {
+                                                    "daysAfterModificationGreaterThan": "[parameters('PCAPLifetimeDays')]"
+                                                },
+                                                "enableAutoTierToHotFromCool": false
+                                            }
+                                        },
+                                        "filters": {
+                                            "blobTypes": [
+                                                "blockBlob"
+                                            ],
+                                            "prefixMatch": [
+                                                "[concat(variables('blobStorageContainerName'), '/chronicle/data/')]",
+                                                "[concat(variables('blobStorageContainerName'), '/chronicle/index/bundle/')]"
+                                            ]
+                                        }
+                                    },
+                                    "enabled": true,
+                                    "name": "[concat(variables('blobStorageLifecycleName'), '-rule')]",
+                                    "type": "Lifecycle"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/serviceEndpointPolicies",
+            "apiVersion": "2023-11-01",
+            "condition": "[variables('blobStorageEnable')]",
+            "name": "[variables('serviceEndPointPolicyName')]",
+            "location": "[variables('location')]",
+            "tags": "[parameters('resourceTags')]"
+        },
+        {
+            "type": "Microsoft.Network/serviceEndpointPolicies/serviceEndpointPolicyDefinitions",
+            "apiVersion": "2023-11-01",
+            "name": "[concat(variables('serviceEndPointPolicyName'), '/', variables('serviceEndPointPolicyDefinitionName'))]",
+            "condition": "[variables('blobStorageEnable')]",
+            "dependsOn": [
+                "[variables('blobStorageAccountRef')]"
+            ],
+            "properties": {
+                "service": "Microsoft.Storage",
+                "serviceResources": [
+                    "[variables('blobStorageAccountRef')]"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "condition": "[variables('blobStorageEnable')]",
+            "name": "[variables('blobStorageContribRoleName')]",
+            "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('blobStorageAccountName'))]",
+            "dependsOn": [
+                "[variables('blobStorageAccountRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                "principalId": "[reference(variables('VMSSRef'), '2023-09-01', 'Full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "condition": "[variables('blobStorageEnable')]",
+            "name": "[variables('blobStorageAccountContribRoleName')]",
+            "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('blobStorageAccountName'))]",
+            "dependsOn": [
+                "[variables('blobStorageAccountRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '17d1049b-9a84-46fb-8f53-869881c3d3ab')]",
+                "principalId": "[reference(variables('VMSSRef'), '2023-09-01', 'Full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleDefinitions",
+            "apiVersion": "2022-05-01-preview",
+            "name": "[variables('VMSSRoleName')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "assignableScopes": "[if(variables('vNetSameRG'), json(concat('[\"', subscription().id,'/resourceGroups/', variables('resourceGroup'), '\"]')), json(concat('[\"', subscription().id,'/resourceGroups/', variables('resourceGroup'), '\",\"', subscription().id,'/resourceGroups/', parameters('existingVirtualNetworkResourceGroup'), '\"]')))]",
+                "description": "Allows Darktrace vSensor to discover network properties for cloud tracking features.",
+                "permissions": [
+                    {
+                        "actions": [
+                            "Microsoft.Compute/virtualMachines/read",
+                            "Microsoft.Compute/virtualMachineScaleSets/read",
+                            "Microsoft.Network/virtualNetworks/read", 
+                            "Microsoft.Network/networkInterfaces/read"
+                        ]
+                    }
+                ],
+                "roleName": "[concat(variables('VMSSName'), ' vSensor Role')]",
+                "type": "customRole",
+                "isCustom": true
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('VMSSRoleAssignName')]",
+            "dependsOn": [
+                "[variables('VMSSRoleName')]",
+                "[variables('VMSSRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "roleDefinitionId": "[concat(subscription().Id, '/providers/Microsoft.Authorization/roleDefinitions/', variables('VMSSRoleName'))]",
+                "principalId": "[reference(variables('VMSSRef'), '2023-09-01', 'Full').identity.principalId]",
+                "description": "Allow vSensor to collect Darktrace / Cloud tracking metadata on the vSensor VNet."
+            }
+        },
+        {
+            "apiVersion": "2024-03-01",
+            "name": "[variables('vSensorRoleTemplateName')]",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('existingVirtualNetworkResourceGroup')]", // Force the role assignment to the other resource group.
+            "condition": "[not(variables('vNetSameRG'))]",
+            "dependsOn": [
+                "[variables('VMSSRoleName')]",
+                "[variables('VMSSRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {},
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[variables('VMSSRoleAssignNameVNet')]",
+                            "tags": "[parameters('resourceTags')]",
+                            "properties": {
+                                "roleDefinitionId": "[concat(subscription().Id, '/providers/Microsoft.Authorization/roleDefinitions/', variables('VMSSRoleName'))]",
+                                "principalId": "[reference(variables('VMSSRef'), '2023-09-01', 'Full').identity.principalId]",
+                                "description": "Allow vSensor to collect Darktrace / Cloud tracking metadata on an existing VNet in a different resource group."
+                            }
+                        }
+                    ],
+                    "outputs": {}
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateLinkServices",
+            "apiVersion": "2023-11-01",
+            "name": "[variables('privateLinkServiceName')]",
+            "condition": "[parameters('privateLinkEnable')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('loadBalancerRef')]",
+                "[variables('subnetsTemplateRef')]"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+              "enableProxyProtocol": true,
+              "loadBalancerFrontendIpConfigurations": [
+                {
+                  "id": "[variables('fePoolProxyRef')]"
+                }
+              ],
+              "ipConfigurations": [
+                {
+                  "name": "vsensor-subnet",
+                  "properties": {
+                    "privateIPAllocationMethod": "Static",
+                    "privateIPAddress": "[variables('privateLinkIP')]",
+                    "privateIPAddressVersion": "IPv4",
+                    "subnet": {
+                        "id": "[reference(variables('subnetsTemplateRef')).outputs.VMSSSubnetRef.value]"
+                    },
+                    "primary": true
+                  }
+                }
+              ]
+            }
+        }
+    ],
+    "outputs": {
+        "vnetName": {
+            "type": "string",
+            "value": "[parameters('existingVirtualNetworkName')]"
+        },
+        "natExternalIP": {
+            "condition": "[parameters('natGatewayEnable')]",
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('natGatewayIPName'))).ipAddress]"
+        },
+        "pcapContainer": {
+            "type": "string",
+            "value": "[concat(variables('blobStorageAccountName'),'/',variables('blobStorageContainerName'))]"
+        },
+        "vSensorSubnetCIDR": {
+            "type": "string",
+            "value": "[parameters('VMSSSubnetCIDR')]"
+        },
+        "bastionSubnetCIDR": {
+            "condition": "[parameters('bastionEnable')]",
+            "type": "string",
+            "value": "[parameters('bastionSubnetCIDR')]"
+        },
+        "osSensorVsensorIP": {
+            "type": "string",
+            "value": "[variables('fePoolIP')]"
+        },
+        "osSensorPrivateLinkService": {
+            "type": "string",
+            "condition": "[parameters('privateLinkEnable')]",
+            "value": "[variables('privateLinkServiceName')]"
+        },
+        "osSensorVsensorCIDR": {
+            "type": "string",
+            "value": "[parameters('VMSSSubnetCIDR')]"
+        }
+    }
+}

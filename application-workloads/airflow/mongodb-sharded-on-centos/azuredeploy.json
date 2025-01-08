@@ -1,0 +1,627 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "mongoAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "MongoDB Administrator user name used when provisioning MongoDB sharding cluster"
+      }
+    },
+    "mongoAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "MongoDB Administrator password used when provisioning MongoDB sharding cluster"
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name for the publicly accessible router nodes. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "centOsVersion": {
+      "type": "string",
+      "defaultValue": "7.7",
+      "allowedValues": [
+        "6.5",
+        "6.6",
+        "6.7",
+        "7.0",
+        "7.1",
+        "7.2",
+        "7.3",
+        "7.4",
+        "7.5",
+        "7.6",
+        "7.7"
+      ],
+      "metadata": {
+        "description": "The CentOS version for the VM. This will pick a fully patched image of this given CentOS version."
+      }
+    },
+    "numDataDisks": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        32
+      ],
+      "metadata": {
+        "description": "The number of data disks on each shard node. We will use Raid0 for the data disks to improve performance. On each shard."
+      }
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 1023,
+      "defaultValue": 256,
+      "metadata": {
+        "description": "The size of each data disk, the value is between 1 and 1023."
+      }
+    },
+    "routerNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning the router nodes"
+      }
+    },
+    "configNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning config nodes"
+      }
+    },
+    "replicaNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning replica set nodes"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "mongoSSLCertPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password of the pem file that is used as ssl cert by the cluster"
+      }
+    }
+  },
+  "variables": {
+    "configPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_primary.sh', parameters('_artifactsLocationSasToken')))]",
+    "configSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsLocationSasToken')))]",
+    "routerNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router.sh', parameters('_artifactsLocationSasToken')))]",
+    "replicaPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsLocationSasToken')))]",
+    "replicaSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsLocationSasToken')))]",
+    "certificateLocation": "[uri(parameters('_artifactsLocation'), concat('scripts/MongoAuthCert.pem', parameters('_artifactsLocationSasToken')))]",
+    "templateBaseUrl": "[parameters('_artifactsLocation')]",
+    "sharedTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "configTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/config-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "routerTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/router-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "replicaTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/replica-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "namespace": "mongodb-",
+    "virtualNetworkName": "myVNET",
+    "networkSettings": {
+      "virtualNetworkName": "[variables('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[variables('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "configPrimaryIp": "10.0.0.240",
+        "configSecondaryIp1": "10.0.0.241",
+        "configSecondaryIp2": "10.0.0.242",
+        "routerIp": "10.0.0.230",
+        "replicaPrimaryIp": "10.0.0.100"
+      }
+    },
+    "configPrimaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('configPrimaryNodeScript')]"
+      ],
+      "certificates": "[variables('certificateLocation')]"
+    },
+    "configSecondaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('configSecondaryNodeScript')]"
+      ],
+      "certificates": "[variables('certificateLocation')]"
+    },
+    "routerOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('routerNodeScript')]"
+      ],
+      "certificates": "[variables('certificateLocation')]"
+    },
+    "replicaPrimaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('replicaPrimaryNodeScript')]"
+      ],
+      "certificates": "[variables('certificateLocation')]"
+    },
+    "replicaSecondaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('replicaSecondaryNodeScript')]"
+      ],
+      "certificates": "[variables('certificateLocation')]"
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-07-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('configSecondaryNode', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "copy": {
+        "name": "secondaryconfigcopy",
+        "count": 2,
+        "mode": "serial",
+        "batchSize": 1
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('configTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('configSecondary', copyIndex(1))]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('configNodeVmSize')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics[concat('configSecondaryIp', copyIndex(1))]]"
+          },
+          "osSettings": {
+            "value": "[variables('configSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "routerDnsNamePrefix": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Secondary"
+          },
+          "mongoSSLCertPassword": {
+            "value": "[parameters('mongoSSLCertPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "configPrimaryNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "secondaryconfigcopy"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('configTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "configPrimary"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.configPrimaryIp]"
+          },
+          "vmSize": {
+            "value": "[parameters('configNodeVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('configPrimaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "routerDnsNamePrefix": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Primary"
+          },
+          "mongoSSLCertPassword": {
+            "value": "[parameters('mongoSSLCertPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('ReplicaSecondaryNode', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "copy": {
+        "name": "secondaryreplicacopy",
+        "count": 3,
+        "mode": "serial",
+        "batchSize": 1
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "replSetName": {
+            "value": "repset1"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('ReplicaSecondary', copyIndex(1))]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.replicaPrimaryIp]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "routerDnsNamePrefix": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Secondary"
+          },
+          "mongoSSLCertPassword": {
+            "value": "[parameters('mongoSSLCertPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "ReplicaPrimaryNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "secondaryreplicacopy"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "replSetName": {
+            "value": "repset1"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "ReplicaPrimary"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.replicaPrimaryIp]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaPrimaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "routerDnsNamePrefix": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Primary"
+          },
+          "mongoSSLCertPassword": {
+            "value": "[parameters('mongoSSLCertPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "routerNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'configPrimaryNode')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'ReplicaPrimaryNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('routerTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "router"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('routerNodeVmSize')]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.routerIp]"
+          },
+          "osSettings": {
+            "value": "[variables('routerOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "mongoSSLCertPassword": {
+            "value": "[parameters('mongoSSLCertPassword')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
+

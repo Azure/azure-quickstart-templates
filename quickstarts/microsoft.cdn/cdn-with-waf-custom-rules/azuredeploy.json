@@ -1,0 +1,213 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "policyName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CDN WAF Policy"
+      }
+    },
+    "profileName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CDN Profile"
+      }
+    },
+    "endpointName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CDN Endpoint"
+      }
+    },
+    "originUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Url of the origin"
+      }
+    },
+    "policyMode": {
+      "type": "string",
+      "metadata": {
+        "description": "The enforcement mode of the CDN WAF Policy"
+      },
+      "defaultValue": "Detection",
+      "allowedValues": [
+        "Detection",
+        "Prevention"
+      ]
+    },
+    "enabledState": {
+      "type": "string",
+      "metadata": {
+        "description": "Whether the CDN WAF Policy is enabled"
+      },
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "redirectUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The redirect URL of the CDN WAF Policy"
+      },
+      "defaultValue": "https://contoso.com/login"
+    },
+    "CDNSku": {
+      "type": "string",
+      "metadata": {
+        "description": "CDN SKU names"
+      },
+      "defaultValue": "Standard_Microsoft",
+      "allowedValues": [
+        "Standard_Microsoft"
+      ]
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location the CDN profile and endpoint."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cdn/CdnWebApplicationFirewallPolicies",
+      "apiVersion": "2020-09-01",
+      "name": "[parameters('policyName')]",
+      "location": "Global",
+      "sku": {
+        "name": "[parameters('CDNSku')]"
+      },
+      "properties": {
+        "policySettings": {
+          "enabledState": "[parameters('enabledState')]",
+          "mode": "[parameters('policyMode')]",
+          "defaultRedirectUrl": "[parameters('redirectUrl')]"
+        },
+        "customRules": {
+          "rules": [
+            {
+              "name": "BlockOutsideNorthAmerica",
+              "priority": 10,
+              "enabledState": "Enabled",
+              "matchConditions": [
+                {
+                  "matchVariable": "RemoteAddr",
+                  "operator": "GeoMatch",
+                  "negateCondition": true,
+                  "matchValue": [
+                    "US",
+                    "MX",
+                    "CA"
+                  ]
+                }
+              ],
+              "action": "Block"
+            },
+            {
+              "name": "RedirectIPMatch",
+              "priority": 20,
+              "enabledState": "Enabled",
+              "matchConditions": [
+                {
+                  "matchVariable": "RemoteAddr",
+                  "operator": "IPMatch",
+                  "negateCondition": false,
+                  "matchValue": [
+                    "1.0.0.0/8",
+                    "2.1.1.1",
+                    "ffff::/16"
+                  ]
+                }
+              ],
+              "action": "Redirect"
+            },
+            {
+              "name": "AllowUnauthenticatedLogin",
+              "priority": 30,
+              "enabledState": "Enabled",
+              "matchConditions": [
+                {
+                  "matchVariable": "RequestUri",
+                  "operator": "Contains",
+                  "negateCondition": false,
+                  "matchValue": ["/login"]
+                }
+              ],
+              "action": "Allow"
+            },
+            {
+              "name": "RedirectUnauthenticated",
+              "priority": 40,
+              "enabledState": "Enabled",
+              "matchConditions": [
+                {
+                  "matchVariable": "Cookies",
+                  "selector": "SESSIONID",
+                  "transforms": [
+                    "Trim"
+                  ],
+                  "operator": "LessThanOrEqual",
+                  "negateCondition": false,
+                  "matchValue": ["0"]
+                }
+              ],
+              "action": "Redirect"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[parameters('profileName')]",
+      "type": "Microsoft.Cdn/profiles",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-06-15-preview",
+      "sku": {
+        "name": "[parameters('CDNSku')]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2019-06-15-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Cdn/profiles', parameters('profileName'))]",
+            "[resourceId('Microsoft.Cdn/CdnWebApplicationFirewallPolicies', parameters('policyName'))]"
+          ],
+          "location": "[parameters('location')]",
+          "name": "[parameters('endpointName')]",
+          "type": "endpoints",
+          "properties": {
+            "originHostHeader": "[parameters('originUrl')]",
+            "isHttpAllowed": true,
+            "isHttpsAllowed": true,
+            "queryStringCachingBehavior": "IgnoreQueryString",
+            "contentTypesToCompress": [
+              "text/plain",
+              "text/html",
+              "text/css",
+              "application/x-javascript",
+              "text/javascript"
+            ],
+            "isCompressionEnabled": true,
+            "origins": [
+              {
+                "name": "origin1",
+                "properties": {
+                  "hostName": "[parameters('originUrl')]"
+                }
+              }
+            ],
+            "webApplicationFirewallPolicyLink": {
+              "id": "[resourceId('Microsoft.Cdn/CdnWebApplicationFirewallPolicies', parameters('policyName'))]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+  

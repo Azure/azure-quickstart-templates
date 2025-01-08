@@ -1,0 +1,617 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "jumpboxVmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the jumpbox VM, will be used as DNS Name for the Public IP used to access the Virtual Machine"
+      }
+    },
+    "jumpboxUbuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "16.04-LTS",
+      "metadata": {
+        "description": "OS version of Ubuntu"
+      }
+    },
+    "jumpboxVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Please check if the region support this VM size https://azure.microsoft.com/en-us/regions/#services. For more information about virtual machine sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/"
+      }
+    },
+    "jumpboxUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine"
+      }
+    },
+    "jumpboxSshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
+      }
+    },
+    "concourseUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Login username for Concourse web portal or Fly CLI"
+      }
+    },
+    "concoursePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Login password for Concourse web portal or Fly CLI"
+      }
+    },
+    "concourseWorkerDiskSize": {
+      "type": "int",
+      "defaultValue": 30,
+      "minValue": 30,
+      "maxValue": 1023,
+      "metadata": {
+        "description": "Disk size of Concourse worker instance in GB, value must be between 30GB to 1023GB"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "AzureCloud",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Supported values: AzureCloud, AzureChinaCloud"
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of the tenant. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientID": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "secret of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "boshVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Please check if the region support this VM size https://azure.microsoft.com/en-us/regions/#services. For more information about virtual machine sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/"
+      }
+    },
+    "autoDeployBosh": {
+      "type": "string",
+      "defaultValue": "enabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to deploy Bosh automatically or not"
+      }
+    },
+    "autoDeployConcourse": {
+      "type": "string",
+      "defaultValue": "enabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to deploy Concourse automatically or not"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "For a standard deployment, leave empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. "
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "defaultStorageAccountName": "[concat('concourse', uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_RAGRS",
+    "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName'))]",
+    "virtualNetworkName": "vnet",
+    "virtualNetworkAddressSpace": "10.0.0.0/16",
+    "subnetNameForBosh": "Bosh",
+    "subnetAddressRangeForBosh": "10.0.0.0/24",
+    "subnetGatewayForBosh": "10.0.0.1",
+    "internalIPForBosh": "10.0.0.4",
+    "subnetNameForConcourse": "Concourse",
+    "subnetAddressRangeForConcourse": "10.0.16.0/20",
+    "subnetGatewayForConcourse": "10.0.16.1",
+    "devboxNetworkSecurityGroup": "nsg-devbox",
+    "boshNetworkSecurityGroup": "nsg-bosh",
+    "concourseNetworkSecurityGroup": "nsg-concourse",
+    "nicName": "[parameters('jumpboxVmName')]",
+    "devboxPrivateIPAddress": "10.0.0.100",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "sshKeyPath": "[concat('/home/', parameters('jumpboxUsername'), '/.ssh/authorized_keys')]",
+    "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
+    "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/",
+    "filesToDownload": [
+      "[uri(variables('baseUriAzureCloud'), concat('scripts/setup_env.sh', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/bosh.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/cpi.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/custom-cpi-release.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/custom-environment.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-managed-disks.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-azure-dns.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/jumpbox-user.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/keep-failed-or-unreachable-vms.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/cloud-config.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/concourse.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-mirror-releases-for-bosh.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-mirror-releases-for-concourse.yml', parameters('_artifactsLocationSasToken')))]"
+    ],
+    "environment": {
+      "AzureCloud": {
+        "serviceHostBase": "[environment().suffixes.storage]",
+        "boshCliUrl": "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-5.1.2-linux-amd64",
+        "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=35.4.0",
+        "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
+        "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=97.12",
+        "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
+      },
+      "azureChinaCloud": {
+        "serviceHostBase": "core.chinacloudapi.cn",
+        "boshCliUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-cli/bosh-cli-5.1.2-linux-amd64')]",
+        "boshAzureCPIReleaseUrl": "https://mirror.azure.cn/bosh/bosh-azure-cpi-release/bosh-azure-cpi-release-35.4.0.tgz",
+        "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
+        "stemcellUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-azure-stemcells/bosh-stemcell-97.12-azure-hyperv-ubuntu-xenial-go_agent.tgz')]",
+        "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
+      }
+    },
+    "environmentVariable": "[variables('environment')[parameters('environment')]]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('boshNetworkSecurityGroup')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-agent",
+            "properties": {
+              "description": "Allow bosh-agent",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6868",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-director",
+            "properties": {
+              "description": "Allow bosh-director",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "25555",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "dns",
+            "properties": {
+              "description": "Allow DNS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('devboxNetworkSecurityGroup')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('concourseNetworkSecurityGroup')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "concourse-https",
+            "properties": {
+              "description": "Allow HTTPS",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-http",
+            "properties": {
+              "description": "Allow HTTP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-atc",
+            "properties": {
+              "description": "Allow Concourse ATC",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-tsa",
+            "properties": {
+              "description": "Allow Concourse TSA",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2222",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 204,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-garden",
+            "properties": {
+              "description": "Allow Concourse Garden",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "7777",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 205,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-baggageclaim",
+            "properties": {
+              "description": "Allow Concourse Baggageclaim",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "7788",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 206,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('defaultStorageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('jumpboxVmName'),'-devbox')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(toLower(parameters('jumpboxVmName')), '-', uniqueString(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('jumpboxVmName'), '-concourse')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "static"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('virtualNetworkAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetNameForBosh')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressRangeForBosh')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForConcourse')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressRangeForConcourse')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('jumpboxVmName'), '-devbox'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
+      ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('devboxNetworkSecurityGroup'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('devboxPrivateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('jumpboxVmName'), '-devbox'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetNameForBosh'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "generate-customdata",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(variables('baseUriAzureCloud'), concat('generate-customdata.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "customData": {
+            "value": {
+              "VNET_NAME": "[variables('virtualNetworkName')]",
+              "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
+              "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
+              "BOSH_VM_SIZE": "[parameters('boshVmSize')]",
+              "SUBNET_GATEWAY_FOR_BOSH": "[variables('subnetGatewayForBosh')]",
+              "INTERNAL_IP_FOR_BOSH": "[variables('internalIPForBosh')]",
+              "SUBNET_NAME_FOR_CONCOURSE": "[variables('subnetNameForConcourse')]",
+              "SUBNET_ADDRESS_RANGE_FOR_CONCOURSE": "[variables('subnetAddressRangeForConcourse')]",
+              "SUBNET_GATEWAY_FOR_CONCOURSE": "[variables('subnetgatewayForConcourse')]",
+              "CONCOURSE_PUBLIC_IP": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('jumpboxVmName'),'-concourse'))).ipAddress]",
+              "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
+              "NSG_NAME_FOR_CONCOURSE": "[variables('concourseNetworkSecurityGroup')]",
+              "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
+              "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
+              "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
+              "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), '2015-06-15').key1]",
+              "ADMIN_USER_NAME": "[parameters('jumpboxUsername')]",
+              "ENVIRONMENT": "[parameters('environment')]",
+              "SERVICE_HOST_BASE": "[variables('environmentVariable').serviceHostBase]",
+              "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environmentVariable').boshAzureCPIReleaseUrl]",
+              "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environmentVariable').boshAzureCPIReleaseSha1]",
+              "STEMCELL_URL": "[variables('environmentVariable').stemcellUrl]",
+              "STEMCELL_SHA1": "[variables('environmentVariable').stemcellSha1]",
+              "BOSH_CLI_URL": "[variables('environmentVariable').boshCLIUrl]",
+              "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
+              "AUTO_DEPLOY_CONCOURSE": "[parameters('autoDeployConcourse')]",
+              "CONCOURSE_USERNAME": "[parameters('concourseUsername')]",
+              "CONCOURSE_PASSWORD": "[parameters('concoursePassword')]",
+              "CONCOURSE_WORKER_DISK_SIZE": "[parameters('concourseWorkerDiskSize')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('jumpboxVmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'generate-customdata')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('jumpboxVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('jumpboxVmName')]",
+          "adminUsername": "[parameters('jumpboxUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('jumpboxSshKeyData')]"
+                }
+              ]
+            }
+          },
+          "customData": "[reference('Microsoft.Resources/deployments/generate-customdata', '2015-01-01').outputs.customData.value]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('jumpboxUbuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('jumpboxVmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('jumpboxVmName'),'/initdevbox')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('jumpboxVmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[variables('filesToDownload')]"
+        },
+        "protectedSettings": {
+	          "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', parameters('clientSecret'), ' 2>&1 | tee /home/', parameters('jumpboxUsername'), '/install.log\"')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "sshDevBox": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('jumpboxUsername'), '@', reference(resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('jumpboxVmName'), '-devbox'))).dnsSettings.fqdn)]"
+    },
+    "concourseEndpoint": {
+      "type": "string",
+      "value": "[concat('http://', reference(resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('jumpboxVmName'), '-concourse'))).ipAddress, ':8080')]"
+    }
+  }
+}
+

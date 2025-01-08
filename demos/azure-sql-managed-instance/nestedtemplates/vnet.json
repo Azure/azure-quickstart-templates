@@ -1,0 +1,208 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources"
+            }
+        },
+        "vnetResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the vnet"
+            }
+        },
+        "vnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address range of the virtual network"
+            }
+        },
+        "managedInstanceSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Managed Instance Subnet name"
+            }
+        },
+        "managedInstanceSubnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Managed Instance Subnet range"
+            }
+        },
+        "managedInstanceNSGName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Managed Instance NSG"
+            }
+        },
+        "managedInstanceRouteTableName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Managed Instance Route Table"
+            }
+        },
+        "miManagementIps": {
+            "type": "array",
+            "metadata": {
+                "description": "List of MI management IP ranges"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-11-01",
+            "location": "[parameters('location')]",
+            "name": "[parameters('managedInstanceNsgName')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "allow-management-outbound",
+                        "properties": {
+                            "description": "Allow outbound management TCP traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "AzureCloud",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "443",
+                                "12000"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "inbound-management",
+                        "properties": {
+                            "description": "Management ports for the Managed Instance",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "SqlManagement",
+                            "destinationAddressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "destinationPortRanges": [
+                                "9000",
+                                "9003",
+                                "1438",
+                                "1440",
+                                "1452"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "outbound-mi-subnet",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "access": "Allow",
+                            "priority": 150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "inbound-mi-subnet",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "inbound-health-probe",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "apiVersion": "2019-11-01",
+            "name": "[parameters('managedInstanceRouteTableName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "Deploy Azure SQL Managed Instance UDR"
+            },
+            "properties": {
+                "copy": [
+                    {
+                        "name": "routes",
+                        "count": "[length(parameters('miManagementIps'))]",
+                        "input": {
+                            "name": "[if(equals(copyIndex('routes'),0),'subnet_to_vnetlocal',concat(replace(parameters('miManagementIps')[copyIndex('routes')],'/','-'),'-next-hop-internet-route'))]",
+                            "properties": {
+                                "addressPrefix": "[if(equals(copyIndex('routes'),0),parameters('managedInstanceSubnetAddressRange'),parameters('miManagementIps')[copyIndex('routes')])]",
+                                "nextHopType": "[if(equals(copyIndex('routes'),0),'VnetLocal','Internet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-11-01",
+            "name": "[parameters('vnetResourceName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "Deploy VNet"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('managedInstanceNSGName'))]",
+                "[resourceId('Microsoft.Network/routeTables',parameters('managedInstanceRouteTableName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressRange')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('managedInstanceSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables',parameters('managedInstanceRouteTableName'))]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('managedInstanceNSGName'))]"
+                            },
+                            "delegations": [
+                                {
+                                    "properties": {
+                                        "serviceName": "Microsoft.Sql/managedInstances"
+                                    },
+                                    "name": "[concat(parameters('managedInstanceSubnetName'),'-delegation')]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

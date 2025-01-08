@@ -1,0 +1,191 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.31.92.45157",
+      "templateHash": "3388183904886815391"
+    }
+  },
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VNET to inject Cloud Shell into."
+      }
+    },
+    "nsgName": {
+      "type": "string",
+      "defaultValue": "cloudshellnsg",
+      "metadata": {
+        "description": "Name of Network Security Group."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space of the subnet to add."
+      }
+    },
+    "defaultSubnetName": {
+      "type": "string",
+      "defaultValue": "default",
+      "metadata": {
+        "description": "Name of the default subnet."
+      }
+    },
+    "defaultSubnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space of the default subnet."
+      }
+    },
+    "containerSubnetName": {
+      "type": "string",
+      "defaultValue": "cloudshellsubnet",
+      "metadata": {
+        "description": "Name of the subnet to use for Cloud Shell containers."
+      }
+    },
+    "containerSubnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space of the subnet to add for Cloud Shell."
+      }
+    },
+    "storageSubnetName": {
+      "type": "string",
+      "defaultValue": "storagesubnet",
+      "metadata": {
+        "description": "Name of the subnet to use for storage account."
+      }
+    },
+    "storageSubnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space of the subnet to add for storage."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-08-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "The VNET"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('defaultSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('defaultSubnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('containerSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                }
+              ],
+              "delegations": [
+                {
+                  "name": "CloudShellDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.ContainerInstance/containerGroups"
+                  }
+                }
+              ],
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('storageSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('storageSubnetAddressPrefix')]",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                }
+              ],
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('nsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+            "name": "DenyIntraSubnetTraffic",
+            "properties": {
+              "description": "Deny traffic between container groups in cloudshellsubnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+              "destinationAddressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+              "access": "Deny",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "vnetName": {
+      "type": "string",
+      "value": "[parameters('vnetName')]"
+    },
+    "containerSubnetName": {
+      "type": "string",
+      "value": "[parameters('containerSubnetName')]"
+    },
+    "storageSubnetName": {
+      "type": "string",
+      "value": "[parameters('storageSubnetName')]"
+    }
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "loadBalancerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the the load balancer"
+      }
+    },
+    "dbInstanceNumber": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "The instance number of the database"
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The id of the subnet you want to use."
+      }
+    },
+    "nicBackAddressPoolsArray": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "The array that contains the backaddress pools for the Network Interface creation"
+      }
+    },
+    "frontendIPConfigurationsArray": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "The array that contains the frontend IP configurations for the Load Balancer creation"
+      }
+    },
+    "backendAddressPoolsArray": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "The array that contains the backend address pools for the Load Balancer creation"
+      }
+    },
+    "loadBalancingRulesArray": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "The array that contains the fload balancing rules for the Load Balancer creation"
+      }
+    },
+    "probesArray": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "The array that contains the probes for the Load Balancer creation"
+      }
+    }
+  },
+  "variables": {
+    "lbPrefix": "[concat('lb', padLeft(parameters('dbInstanceNumber'), 2, '0'))]",
+    "lbrulePrefix": "[concat(variables('lbPrefix'), 'Rule')]",
+    "backendPoolDB": "[concat(variables('lbPrefix'), 'BackendPoolDB')]",
+    "loadBalancerFrontendDB": "[concat(variables('lbPrefix'), 'FrontendDB')]",
+    "lbProbePortDB": "[concat(variables('lbPrefix'), 'ProbePortDB')]",
+    "lbProbePortInternalDB": "[add(62500, parameters('dbInstanceNumber'))]",
+    "idleTimeoutInMinutesDB": 30,
+    "nicBackAddressPoolsResult": [
+      {
+        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolDB'))]"
+      }
+    ],
+    "frontendIPConfigurationsResult": [
+      {
+        "properties": {
+          "subnet": {
+            "id": "[parameters('subnetId')]"
+          },
+          "privateIPAllocationMethod": "Dynamic"
+        },
+        "name": "[variables('loadBalancerFrontendDB')]"
+      }
+    ],
+    "backendAddressPoolsResult": [
+      {
+        "name": "[variables('backendPoolDB')]"
+      }
+    ],
+    "loadBalancingRulesResult": [
+      {
+        "properties": {
+          "frontendIPConfiguration": {
+            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/', variables('loadBalancerFrontendDB'))]"
+          },
+          "backendAddressPool": {
+            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolDB'))]"
+          },
+          "probe": {
+            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/', variables('lbProbePortDB'))]"
+          },
+          "protocol": "Tcp",
+          "frontendPort": "[add(30015, mul(parameters('dbInstanceNumber'), 100))]",
+          "backendPort": "[add(30015, mul(parameters('dbInstanceNumber'), 100))]",
+          "enableFloatingIP": true,
+          "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesDB')]"
+        },
+        "name": "[concat(variables('lbrulePrefix'), '3', padLeft(parameters('dbInstanceNumber'), 2, '0'), '15')]"
+      },
+      {
+        "properties": {
+          "frontendIPConfiguration": {
+            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/', variables('loadBalancerFrontendDB'))]"
+          },
+          "backendAddressPool": {
+            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolDB'))]"
+          },
+          "probe": {
+            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/', variables('lbProbePortDB'))]"
+          },
+          "protocol": "Tcp",
+          "frontendPort": "[add(30017, mul(parameters('dbInstanceNumber'), 100))]",
+          "backendPort": "[add(30017, mul(parameters('dbInstanceNumber'), 100))]",
+          "enableFloatingIP": true,
+          "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesDB')]"
+        },
+        "name": "[concat(variables('lbrulePrefix'), '3', padLeft(parameters('dbInstanceNumber'), 2, '0'), '17')]"
+      }
+    ],
+    "probesResult": [
+      {
+        "properties": {
+          "protocol": "Tcp",
+          "port": "[variables('lbProbePortInternalDB')]",
+          "intervalInSeconds": 5,
+          "numberOfProbes": 2
+        },
+        "name": "[variables('lbProbePortDB')]"
+      }
+    ]
+  },
+  "resources": [],
+  "outputs": {
+    "nicBackAddressPools": {
+      "value": "[concat(parameters('nicBackAddressPoolsArray'), variables('nicBackAddressPoolsResult'))]",
+      "type": "array"
+    },
+    "frontendIPConfigurations": {
+      "value": "[concat(parameters('frontendIPConfigurationsArray'), variables('frontendIPConfigurationsResult'))]",
+      "type": "array"
+    },
+    "backendAddressPools": {
+      "value": "[concat(parameters('backendAddressPoolsArray'), variables('backendAddressPoolsResult'))]",
+      "type": "array"
+    },
+    "loadBalancingRules": {
+      "value": "[concat(parameters('loadBalancingRulesArray'), variables('loadBalancingRulesResult'))]",
+      "type": "array"
+    },
+    "probes": {
+      "value": "[concat(parameters('probesArray'), variables('probesResult'))]",
+      "type": "array"
+    }
+  }
+}

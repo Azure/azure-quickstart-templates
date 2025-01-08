@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.1.0.0",
+  "parameters": {
+    "indx": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "Index to create multiple DCs. Index == 0 means it will be a new domain and a PDCE will be created"
+      }
+    },
+    "computerName": {
+      "type": "string",
+      "defaultValue": "mbmr",
+      "metadata": {
+        "description": "Computer Name, will be suffixed by the indx"
+      }
+    },
+    "domainJoinPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password to join the domain"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "fabrikam.com",
+      "metadata": {
+        "description": "The FQDN of the AD Domain created "
+      }
+    },
+    "OUPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Organizational unit for the domain"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "srv-",
+      "metadata": {
+        "description": "Name of the vm, will be suffixed by the indx"
+      }
+    },
+    "domainJoinUsername": {
+      "type": "string",
+      "defaultValue": "zeAdmin",
+      "metadata": {
+        "description": "The user to join the domain"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "vmName": "[concat(parameters('vmNamePrefix'), parameters('computerName'), parameters('indx'))]"
+  },
+  "resources": [
+    {
+      "name": "[concat(variables('vmName'),'/extensions')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "settings": {
+          "Name": "[parameters('domainName')]",
+          "OUPath": "[parameters('OUPath')]",
+          "User": "[concat(parameters('domainJoinUsername'), '@',parameters('domainName'))]",
+          "Restart": true,
+          "Options": 3
+        },
+        "protectedSettings": {
+          "Password": "[parameters('domainJoinPassword')]"
+        }
+      }
+    }
+  ]
+}

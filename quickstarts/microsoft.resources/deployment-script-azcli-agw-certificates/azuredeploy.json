@@ -1,0 +1,810 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "12940275780992224008"
+    }
+  },
+  "parameters": {
+    "AgwName": {
+      "type": "string",
+      "defaultValue": "[format('agw-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Application Gateway"
+      }
+    },
+    "AkvName": {
+      "type": "string",
+      "defaultValue": "[format('akv-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Key Vault"
+      }
+    },
+    "FrontendCertificateName": {
+      "type": "string",
+      "defaultValue": "frontend",
+      "metadata": {
+        "description": "The name of the certificate to generate for the frontend AGW. Name will be used as a ARecord in a Private DNS zone."
+      }
+    },
+    "Location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location to deploy the resources to"
+      }
+    },
+    "DnsPrivateZoneName": {
+      "type": "string",
+      "defaultValue": "Contoso.local",
+      "metadata": {
+        "description": "The name of the DNS Private Zone to create"
+      }
+    }
+  },
+  "variables": {
+    "FrontendCertificateFqdn": "[format('{0}.{1}', parameters('FrontendCertificateName'), parameters('DnsPrivateZoneName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/privateDnsZones/A",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('DnsPrivateZoneName'), parameters('FrontendCertificateName'))]",
+      "properties": {
+        "ttl": 60,
+        "aRecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.Resources/deployments', parameters('AgwName')), '2020-10-01').outputs.agwPip.value]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', parameters('AgwName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('DnsPrivateZoneName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/A",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('DnsPrivateZoneName'), 'appdirect')]",
+      "properties": {
+        "ttl": 60,
+        "aRecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.Resources/deployments', 'sampleWebApplication'), '2020-10-01').outputs.IpAddress.value]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'sampleWebApplication')]",
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('DnsPrivateZoneName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('DnsPrivateZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[parameters('AkvName')]",
+      "location": "[parameters('Location')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "enableSoftDelete": false,
+        "enableRbacAuthorization": true,
+        "accessPolicies": []
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "CreateFeKvCert",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "akvName": {
+            "value": "[parameters('AkvName')]"
+          },
+          "certificateName": {
+            "value": "[parameters('FrontendCertificateName')]"
+          },
+          "certificateCommonName": {
+            "value": "[variables('FrontendCertificateFqdn')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.5.6.12127",
+              "templateHash": "9962724588709099443"
+            }
+          },
+          "parameters": {
+            "akvName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Key Vault"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location to deploy the resources to"
+              }
+            },
+            "forceUpdateTag": {
+              "type": "string",
+              "defaultValue": "[utcNow()]",
+              "metadata": {
+                "description": "How the deployment script should be forced to execute"
+              }
+            },
+            "rbacRolesNeededOnKV": {
+              "type": "string",
+              "defaultValue": "a4417e6f-fecd-4de8-b567-7b0420556985",
+              "metadata": {
+                "description": "The RoleDefinitionId required for the DeploymentScript resource to interact with KeyVault"
+              }
+            },
+            "useExistingManagedIdentity": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Does the Managed Identity already exists, or should be created"
+              }
+            },
+            "managedIdentityName": {
+              "type": "string",
+              "defaultValue": "id-KeyVaultCertificateCreator",
+              "metadata": {
+                "description": "Name of the Managed Identity resource"
+              }
+            },
+            "existingManagedIdentitySubId": {
+              "type": "string",
+              "defaultValue": "[subscription().subscriptionId]",
+              "metadata": {
+                "description": "For an existing Managed Identity, the Subscription Id it is located in"
+              }
+            },
+            "existingManagedIdentityResourceGroupName": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().name]",
+              "metadata": {
+                "description": "For an existing Managed Identity, the Resource Group it is located in"
+              }
+            },
+            "certificateName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the certificate to create"
+              }
+            },
+            "certificateCommonName": {
+              "type": "string",
+              "defaultValue": "[parameters('certificateName')]",
+              "metadata": {
+                "description": "The common name of the certificate to create"
+              }
+            },
+            "initialScriptDelay": {
+              "type": "string",
+              "defaultValue": "0",
+              "metadata": {
+                "description": "A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate"
+              }
+            },
+            "cleanupPreference": {
+              "type": "string",
+              "defaultValue": "OnSuccess",
+              "metadata": {
+                "description": "When the script resource is cleaned up"
+              },
+              "allowedValues": [
+                "OnSuccess",
+                "OnExpiration",
+                "Always"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "condition": "[not(parameters('useExistingManagedIdentity'))]",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[parameters('managedIdentityName')]",
+              "location": "[parameters('location')]",
+              "metadata": {
+                "description": "A new managed identity that will be created in this Resource Group, this is the default option"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('rbacRolesNeededOnKV')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-08-01-preview",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('akvName'))]",
+              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), parameters('rbacRolesNeededOnKV'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('rbacRolesNeededOnKV'))]",
+                "principalId": "[if(parameters('useExistingManagedIdentity'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId, reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2018-11-30').principalId)]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2020-10-01",
+              "name": "[format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-'))]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))))]": {}
+                }
+              },
+              "kind": "AzureCLI",
+              "properties": {
+                "forceUpdateTag": "[parameters('forceUpdateTag')]",
+                "azCliVersion": "2.35.0",
+                "timeout": "PT10M",
+                "retentionInterval": "P1D",
+                "environmentVariables": [
+                  {
+                    "name": "akvName",
+                    "value": "[parameters('akvName')]"
+                  },
+                  {
+                    "name": "certName",
+                    "value": "[parameters('certificateName')]"
+                  },
+                  {
+                    "name": "certCommonName",
+                    "value": "[parameters('certificateCommonName')]"
+                  },
+                  {
+                    "name": "initialDelay",
+                    "value": "[parameters('initialScriptDelay')]"
+                  },
+                  {
+                    "name": "retryMax",
+                    "value": "10"
+                  },
+                  {
+                    "name": "retrySleep",
+                    "value": "5s"
+                  }
+                ],
+                "scriptContent": "      #!/bin/bash\n      set -e\n\n      echo \"Waiting on Identity RBAC replication ($initialDelay)\"\n      sleep $initialDelay\n\n      #Retry loop to catch errors (usually RBAC delays)\n      retryLoopCount=0\n      until [ $retryLoopCount -ge $retryMax ]\n      do\n        echo \"Creating AKV Cert $certName with CN $certCommonName (attempt $retryLoopCount)...\"\n        az keyvault certificate create --vault-name $akvName -n $certName -p \"$(az keyvault certificate get-default-policy | sed -e s/CN=CLIGetDefaultPolicy/CN=${certCommonName}/g )\" \\\n          && break\n\n        sleep $retrySleep\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      echo \"Getting Certificate $certName\";\n      retryLoopCount=0\n      createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n      while [ -z \"$(echo $createdCert | jq -r '.x509ThumbprintHex')\" ] && [ $retryLoopCount -lt $retryMax ]\n      do\n        echo \"Waiting for cert creation (attempt $retryLoopCount)...\"\n        sleep $retrySleep\n        createdCert=$(az keyvault certificate show -n $certName --vault-name $akvName -o json)\n        retryLoopCount=$((retryLoopCount+1))\n      done\n\n      unversionedSecretId=$(echo $createdCert | jq -r \".sid\" | cut -d'/' -f-5) # remove the version from the url;\n      jsonOutputString=$(echo $createdCert | jq --arg usid $unversionedSecretId '{name: .name ,certSecretId: {versioned: .sid, unversioned: $usid }, thumbprint: .x509Thumbprint, thumbprintHex: .x509ThumbprintHex}')\n      echo $jsonOutputString > $AZ_SCRIPTS_OUTPUT_PATH\n    ",
+                "cleanupPreference": "[parameters('cleanupPreference')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]",
+                "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), parameters('rbacRolesNeededOnKV'), if(parameters('useExistingManagedIdentity'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('existingManagedIdentitySubId'), parameters('existingManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')))))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "certificateName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.name]",
+              "metadata": {
+                "description": "Certificate name"
+              }
+            },
+            "certificateSecretId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.certSecretId.versioned]",
+              "metadata": {
+                "description": "KeyVault secret id to the created version"
+              }
+            },
+            "certificateSecretIdUnversioned": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.certSecretId.unversioned]",
+              "metadata": {
+                "description": "KeyVault secret id which uses the unversioned uri"
+              }
+            },
+            "certificateThumbprint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.thumbprint]",
+              "metadata": {
+                "description": "Certificate Thumbprint"
+              }
+            },
+            "certificateThumbprintHex": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', format('AKV-Cert-{0}-{1}', parameters('akvName'), replace(replace(parameters('certificateName'), ':', ''), '/', '-')))).outputs.thumbprintHex]",
+              "metadata": {
+                "description": "Certificate Thumbprint (in hex)"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('AkvName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[parameters('AgwName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('Location')]"
+          },
+          "akvName": {
+            "value": "[parameters('AkvName')]"
+          },
+          "frontEndCertificateSecretId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'CreateFeKvCert'), '2020-10-01').outputs.certificateSecretIdUnversioned.value]"
+          },
+          "backendIpAddress": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'sampleWebApplication'), '2020-10-01').outputs.IpAddress.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.13.1.58284",
+              "templateHash": "13485062416026037300"
+            }
+          },
+          "parameters": {
+            "agwName": {
+              "type": "string",
+              "defaultValue": "[format('agw-{0}', uniqueString(resourceGroup().id))]",
+              "metadata": {
+                "description": "The name of the Azure Application Gateway"
+              }
+            },
+            "agwIdName": {
+              "type": "string",
+              "defaultValue": "[format('id-{0}', parameters('agwName'))]",
+              "metadata": {
+                "description": "The name of the Azure Application Gateway Managed Identity"
+              }
+            },
+            "akvName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Key Vault"
+              }
+            },
+            "frontEndCertificateSecretId": {
+              "type": "secureString",
+              "metadata": {
+                "description": "The URI of the frontend KeyVault Certificate Secret Id"
+              }
+            },
+            "backendIpAddress": {
+              "type": "string",
+              "metadata": {
+                "description": "This is the IP address the web application is hosted on"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location to deploy the resources to"
+              }
+            }
+          },
+          "variables": {
+            "appgwSubnetAddress": "10.0.1.0/24",
+            "frontendAgwCertificateName": "frontend",
+            "appgwResourceId": "[resourceId('Microsoft.Network/applicationGateways', format('{0}', parameters('agwName')))]",
+            "frontendAgwCertificateId": "[format('{0}/sslCertificates/{1}', variables('appgwResourceId'), variables('frontendAgwCertificateName'))]",
+            "keyVaultSecretsUserRole": "[resourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2021-05-01",
+              "name": "[format('vnet-{0}', uniqueString(resourceGroup().id))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[variables('appgwSubnetAddress')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "agw",
+                    "properties": {
+                      "addressPrefix": "[variables('appgwSubnetAddress')]"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[parameters('agwIdName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Network/applicationGateways",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('agwName')]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('agwIdName')))]": {}
+                }
+              },
+              "properties": {
+                "sslCertificates": [
+                  {
+                    "name": "[variables('frontendAgwCertificateName')]",
+                    "properties": {
+                      "keyVaultSecretId": "[parameters('frontEndCertificateSecretId')]"
+                    }
+                  }
+                ],
+                "sku": {
+                  "capacity": 1,
+                  "tier": "Standard_v2",
+                  "name": "Standard_v2"
+                },
+                "gatewayIPConfigurations": [
+                  {
+                    "name": "besubnet",
+                    "properties": {
+                      "subnet": {
+                        "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', uniqueString(resourceGroup().id))), '2021-05-01').subnets[0].id]"
+                      }
+                    }
+                  }
+                ],
+                "frontendIPConfigurations": [
+                  {
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('agwName')))]"
+                      }
+                    },
+                    "name": "appGatewayFrontendIP"
+                  }
+                ],
+                "frontendPorts": [
+                  {
+                    "name": "appGatewayFrontendPort",
+                    "properties": {
+                      "port": 443
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "defaultaddresspool",
+                    "properties": {
+                      "backendAddresses": [
+                        {
+                          "ipAddress": "[parameters('backendIpAddress')]"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "backendHttpSettingsCollection": [
+                  {
+                    "name": "defaulthttpsetting",
+                    "properties": {
+                      "port": 80,
+                      "protocol": "Http",
+                      "cookieBasedAffinity": "Disabled",
+                      "requestTimeout": 30,
+                      "pickHostNameFromBackendAddress": true
+                    }
+                  }
+                ],
+                "httpListeners": [
+                  {
+                    "name": "hlisten",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[format('{0}/frontendIPConfigurations/appGatewayFrontendIP', variables('appgwResourceId'))]"
+                      },
+                      "frontendPort": {
+                        "id": "[format('{0}/frontendPorts/appGatewayFrontendPort', variables('appgwResourceId'))]"
+                      },
+                      "protocol": "Https",
+                      "sslCertificate": {
+                        "id": "[variables('frontendAgwCertificateId')]"
+                      }
+                    }
+                  }
+                ],
+                "requestRoutingRules": [
+                  {
+                    "name": "appGwRoutingRuleName",
+                    "properties": {
+                      "ruleType": "Basic",
+                      "priority": 100,
+                      "httpListener": {
+                        "id": "[format('{0}/httpListeners/hlisten', variables('appgwResourceId'))]"
+                      },
+                      "backendAddressPool": {
+                        "id": "[format('{0}/backendAddressPools/defaultaddresspool', variables('appgwResourceId'))]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[format('{0}/backendHttpSettingsCollection/defaulthttpsetting', variables('appgwResourceId'))]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('agwIdName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('agwName')))]",
+                "[resourceId('Microsoft.Resources/deployments', 'DeploymentDelay')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', uniqueString(resourceGroup().id)))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2020-07-01",
+              "name": "[format('pip-{0}', parameters('agwName'))]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-08-01-preview",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('akvName'))]",
+              "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('agwIdName')), resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), variables('keyVaultSecretsUserRole'))]",
+              "properties": {
+                "roleDefinitionId": "[variables('keyVaultSecretsUserRole')]",
+                "principalType": "ServicePrincipal",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('agwIdName')), '2018-11-30').principalId]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('agwIdName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "DeploymentDelay",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "waitSeconds": {
+                    "value": 60
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.8.9.13224",
+                      "templateHash": "2218759242619531802"
+                    }
+                  },
+                  "parameters": {
+                    "waitSeconds": {
+                      "type": "int",
+                      "metadata": {
+                        "description": "The number of seconds to wait for"
+                      },
+                      "maxValue": 180,
+                      "minValue": 1
+                    },
+                    "location": {
+                      "type": "string",
+                      "defaultValue": "[resourceGroup().location]",
+                      "metadata": {
+                        "description": "The location to deploy the resources to"
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Resources/deploymentScripts",
+                      "apiVersion": "2020-10-01",
+                      "name": "DeployDelay",
+                      "location": "[parameters('location')]",
+                      "kind": "AzurePowerShell",
+                      "properties": {
+                        "retentionInterval": "PT1H",
+                        "azPowerShellVersion": "6.4",
+                        "cleanupPreference": "OnSuccess",
+                        "environmentVariables": [
+                          {
+                            "name": "waitSeconds",
+                            "value": "[format('{0}', parameters('waitSeconds'))]"
+                          }
+                        ],
+                        "scriptContent": "write-output \"Sleeping for $Env:waitSeconds\"; start-sleep -Seconds $Env:waitSeconds"
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('agwIdName')), resourceId('Microsoft.KeyVault/vaults', parameters('akvName')), variables('keyVaultSecretsUserRole')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "agwPip": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('agwName'))), '2020-07-01').ipAddress]"
+            },
+            "agwId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/applicationGateways', parameters('agwName'))]"
+            },
+            "agwName": {
+              "type": "string",
+              "value": "[parameters('agwName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('AkvName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'CreateFeKvCert')]",
+        "[resourceId('Microsoft.Resources/deployments', 'sampleWebApplication')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "sampleWebApplication",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appName": {
+            "value": "SampleWebApp"
+          },
+          "location": {
+            "value": "[parameters('Location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.13.1.58284",
+              "templateHash": "14567789054878958025"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "appName": {
+              "type": "string"
+            },
+            "appImage": {
+              "type": "string",
+              "defaultValue": "mcr.microsoft.com/oss/nginx/nginx:1.9.15-alpine",
+              "allowedValues": [
+                "mcr.microsoft.com/oss/nginx/nginx:1.9.15-alpine",
+                "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerInstance/containerGroups",
+              "apiVersion": "2021-09-01",
+              "name": "[parameters('appName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "containers": [
+                  {
+                    "name": "t1",
+                    "properties": {
+                      "image": "[parameters('appImage')]",
+                      "resources": {
+                        "requests": {
+                          "cpu": 1,
+                          "memoryInGB": 2
+                        }
+                      },
+                      "ports": [
+                        {
+                          "port": 80,
+                          "protocol": "TCP"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "restartPolicy": "OnFailure",
+                "sku": "Standard",
+                "ipAddress": {
+                  "type": "Public",
+                  "ports": [
+                    {
+                      "port": 80,
+                      "protocol": "TCP"
+                    }
+                  ]
+                },
+                "osType": "Linux"
+              }
+            }
+          ],
+          "outputs": {
+            "IpAddress": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('appName')), '2021-09-01').ipAddress.ip]"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "description": "This is just a *random* sample app to sit behind the Application Gateway."
+      }
+    }
+  ],
+  "outputs": {
+    "FrontendPrivateDnsFqdn": {
+      "type": "string",
+      "value": "[variables('FrontendCertificateFqdn')]"
+    },
+    "ApplicationGatewayPublicIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', parameters('AgwName')), '2020-10-01').outputs.agwPip.value]"
+    },
+    "KeyVaultName": {
+      "type": "string",
+      "value": "[parameters('AkvName')]"
+    }
+  }
+}

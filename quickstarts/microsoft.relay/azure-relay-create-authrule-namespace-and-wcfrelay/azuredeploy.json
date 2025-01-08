@@ -1,0 +1,110 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure Relay namespace"
+      }
+    },
+    "namespaceAuthorizationRuleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Namespace AuthorizationRule"
+      }
+    },
+    "wcfrelayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the WcfRelay"
+      }
+    },
+    "wcfRelayType": {
+      "type": "string",
+      "allowedValues": [
+        "NetTcp",
+        "Http"
+      ],
+      "metadata": {
+        "description": "WCF Relay Type. It could be any of the types: NetTcp/Http"
+      }
+    },
+    "wcfrelayAuthorizationRuleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the WcfRelay AuthorizationRule"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "location": "[parameters('location')]",
+    "apiVersion": "2017-04-01",
+    "namespaceAuthRuleName": "[concat(parameters('namespaceName'), concat('/', parameters('namespaceAuthorizationRuleName')))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[parameters('namespaceName')]",
+      "type": "Microsoft.Relay/Namespaces",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "apiVersion": "[variables('apiVersion')]",
+          "name": "[parameters('wcfrelayName')]",
+          "type": "WcfRelays",
+          "dependsOn": [
+            "[resourceId('Microsoft.Relay/namespaces/', parameters('namespaceName'))]"
+          ],
+          "properties": {
+            "relayType": "[parameters('wcfRelayType')]",
+            "requiresClientAuthorization": "false",
+            "requiresTransportSecurity": "false",
+            "userMetadata": "Meta Data supplied by user for wcfRelays"
+          },
+          "resources": [
+            {
+              "apiVersion": "[variables('apiVersion')]",
+              "name": "[parameters('wcfrelayAuthorizationRuleName')]",
+              "type": "authorizationRules",
+              "dependsOn": [
+                "[parameters('wcfrelayName')]"
+              ],
+              "properties": {
+                "Rights": [
+                  "Listen"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "apiVersion": "[variables('apiVersion')]",
+          "name": "[variables('namespaceAuthRuleName')]",
+          "type": "Microsoft.Relay/namespaces/authorizationRules",
+          "dependsOn": [
+            "[resourceId('Microsoft.Relay/namespaces/', parameters('namespaceName'))]"
+          ],
+          "properties": {
+            "Rights": [
+              "Send"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}

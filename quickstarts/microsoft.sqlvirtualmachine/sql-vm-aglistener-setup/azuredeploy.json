@@ -1,0 +1,119 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "existingFailoverClusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of the failover cluster"
+            }
+        },
+        "existingSqlAvailabilityGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of SQL Availability Group for which listener is being created"
+            }
+        },
+        "existingVmList": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the Virtual machine list participating in SQL Availability Group e.g. VM1, VM2. Maximum number is 6."
+            }
+        },
+        "Listener": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify a name for the listener for SQL Availability Group"
+            },
+            "defaultValue": "aglistener"
+        },
+        "ListenerPort": {
+            "type": "Int",
+            "metadata": {
+                "description": "Specify the port for listener"
+            },
+            "defaultValue": 1433
+        },
+        "ListenerIp": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the available private IP address for the listener from the subnet the existing Vms are part of."
+            },
+            "defaultValue": "10.0.0.7"
+        },
+        "existingVnetResourcegroup": {
+            "defaultValue": "[resourcegroup().name]",
+            "type": "string",
+            "metadata": {
+                "description": "Specify the resourcegroup for virtual network"
+            }
+        },
+        "existingVnet": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the virtual network for Listener IP Address"
+            }
+        },
+        "existingSubnet": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the subnet under Vnet for Listener IP address"
+            }
+        },
+        "existingInternalLoadBalancer": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing internal load balancer for the AG listener. Choose Standard Sku if the VMs are not in an availability set."
+            }
+        },
+        "ProbePort": {
+            "type": "Int",
+            "metadata": {
+                "description": "Specify the load balancer port number (e.g. 59999)"
+            },
+            "defaultValue": 59999
+        },
+        "Location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            },
+            "defaultValue": "[resourceGroup().location]"
+        }
+    },
+    "variables": {
+        "LoadBalancerResourceId": "[resourceId('Microsoft.Network/loadBalancers', parameters('existingInternalLoadBalancer'))]",
+        "SubnetResourceId": "[concat(resourceid(parameters('existingVnetResourcegroup'),'Microsoft.Network/virtualNetworks', parameters('existingVnet')), '/subnets/', parameters('existingSubnet'))]",
+        "VmArray": "[split(parameters('existingVmList'),',')]",
+        "VM0": "[if(less(0, length(variables('VmArray'))), createArray(resourceId('Microsoft.SqlVirtualMachine/sqlVirtualMachines', trim(variables('VmArray')[0]))), json('[]'))]",
+        "VM1": "[if(less(1, length(variables('VmArray'))), createArray(resourceId('Microsoft.SqlVirtualMachine/sqlVirtualMachines', trim(variables('VmArray')[1]))), json('[]'))]",
+        "VM2": "[if(less(2, length(variables('VmArray'))), createArray(resourceId('Microsoft.SqlVirtualMachine/sqlVirtualMachines', trim(variables('VmArray')[2]))), json('[]'))]",
+        "VM3": "[if(less(3, length(variables('VmArray'))), createArray(resourceId('Microsoft.SqlVirtualMachine/sqlVirtualMachines', trim(variables('VmArray')[3]))), json('[]'))]",
+        "VM4": "[if(less(4, length(variables('VmArray'))), createArray(resourceId('Microsoft.SqlVirtualMachine/sqlVirtualMachines', trim(variables('VmArray')[4]))), json('[]'))]",
+        "VM5": "[if(less(5, length(variables('VmArray'))), createArray(resourceId('Microsoft.SqlVirtualMachine/sqlVirtualMachines', trim(variables('VmArray')[5]))), json('[]'))]",
+        "SqlVmResourceIdList": "[union(variables('VM0'), variables('VM1'), variables('VM2'), variables('VM3'), variables('VM4'), variables('VM5'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups/availabilityGroupListeners",
+            "name": "[concat(parameters('existingFailoverClusterName'), '/', parameters('Listener'))]",
+            "apiVersion": "2017-03-01-preview",
+            "location": "[parameters('Location')]",
+            "properties": {
+                "AvailabilityGroupName": "[parameters('existingSqlAvailabilityGroup')]",
+                "LoadBalancerConfigurations": [
+                    {
+                        "privateIPAddress": {
+                            "IpAddress": "[parameters('ListenerIp')]",
+                            "SubnetResourceId": "[variables('SubnetResourceId')]"
+                        },
+                        "LoadBalancerResourceId": "[variables('LoadBalancerResourceId')]",
+                        "ProbePort": "[parameters('ProbePort')]",
+                        "SqlVirtualMachineInstances": "[variables('SqlVmResourceIdList')]"
+                    }
+                ],
+                "Port": "[parameters('ListenerPort')]"
+            }
+        }
+    ]
+}

@@ -1,0 +1,432 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.17.1.54307",
+      "templateHash": "11664508253795316259"
+    }
+  },
+  "parameters": {
+    "existingDataFactoryName": {
+      "type": "string",
+      "metadata": {
+        "description": "your existing data factory name"
+      }
+    },
+    "existingDataFactoryResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "your existing data factory resource group"
+      }
+    },
+    "IntegrationRuntimeName": {
+      "type": "string",
+      "defaultValue": "[format('ir-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "IR name must be unique in subscription"
+      }
+    },
+    "NodeCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "maxValue": 4,
+      "minValue": 1,
+      "metadata": {
+        "description": "the node count is between 1 and 4."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "SKU Size for the VMs"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the virtual machine"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the virtual machine"
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "your existing vnet name"
+      }
+    },
+    "existingVnetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "your virtual machine will be create in the same datacenter with VNET"
+      }
+    },
+    "existingVnetResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET resource group"
+      }
+    },
+    "existingSubnetInYourVnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet in the virtual network you want to use"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    }
+  },
+  "variables": {
+    "delimiters": [
+      "-",
+      "_"
+    ],
+    "prefix": "[split(parameters('IntegrationRuntimeName'), variables('delimiters'))[0]]",
+    "networkSecurityGroupName": "[format('{0}nsg', parameters('IntegrationRuntimeName'))]",
+    "subnetId": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetInYourVnet'))]",
+    "scriptURL": "[uri(parameters('_artifactsLocation'), format('gatewayInstall.ps1{0}', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('existingVnetLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "nestedTemplate",
+      "resourceGroup": "[parameters('existingDataFactoryResourceGroup')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "existingDataFactoryName": {
+            "value": "[parameters('existingDataFactoryName')]"
+          },
+          "IntegrationRuntimeName": {
+            "value": "[parameters('IntegrationRuntimeName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.17.1.54307",
+              "templateHash": "12535090198905133255"
+            }
+          },
+          "parameters": {
+            "existingDataFactoryName": {
+              "type": "string"
+            },
+            "IntegrationRuntimeName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', parameters('existingDataFactoryName'), parameters('IntegrationRuntimeName'))]",
+              "properties": {
+                "type": "SelfHosted",
+                "description": "Self-hosted Integration runtime created using ARM template"
+              }
+            }
+          ],
+          "outputs": {
+            "irId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.DataFactory/factories/integrationRuntimes', split(format('{0}/{1}', parameters('existingDataFactoryName'), parameters('IntegrationRuntimeName')), '/')[0], split(format('{0}/{1}', parameters('existingDataFactoryName'), parameters('IntegrationRuntimeName')), '/')[1])]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "VMtemplate",
+        "count": "[length(range(0, parameters('NodeCount')))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('vmCopy-{0}', range(0, parameters('NodeCount'))[copyIndex()])]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualMachineName": {
+            "value": "[take(format('vm{0}-{1}', range(0, parameters('NodeCount'))[copyIndex()], variables('prefix')), 15)]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "existingVnetLocation": {
+            "value": "[parameters('existingVnetLocation')]"
+          },
+          "subnetId": {
+            "value": "[variables('subnetId')]"
+          },
+          "nsgId": {
+            "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.17.1.54307",
+              "templateHash": "9503221338010603266"
+            }
+          },
+          "parameters": {
+            "virtualMachineName": {
+              "type": "string"
+            },
+            "vmSize": {
+              "type": "string"
+            },
+            "adminUserName": {
+              "type": "string"
+            },
+            "adminPassword": {
+              "type": "securestring"
+            },
+            "existingVnetLocation": {
+              "type": "string"
+            },
+            "subnetId": {
+              "type": "string"
+            },
+            "nsgId": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "nicName": "[format('{0}Nic', parameters('virtualMachineName'))]",
+            "publicIPAddressName": "[format('{0}-ip', parameters('virtualMachineName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2022-05-01",
+              "name": "[variables('publicIPAddressName')]",
+              "location": "[parameters('existingVnetLocation')]",
+              "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2022-05-01",
+              "name": "[variables('nicName')]",
+              "location": "[parameters('existingVnetLocation')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                      },
+                      "subnet": {
+                        "id": "[parameters('subnetId')]"
+                      }
+                    }
+                  }
+                ],
+                "networkSecurityGroup": {
+                  "id": "[parameters('nsgId')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2022-08-01",
+              "name": "[parameters('virtualMachineName')]",
+              "location": "[parameters('existingVnetLocation')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[parameters('virtualMachineName')]",
+                  "adminUsername": "[parameters('adminUserName')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "2022-Datacenter",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "name": "[format('{0}_OSDisk', parameters('virtualMachineName'))]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('existingDataFactoryResourceGroup')), 'Microsoft.Resources/deployments', 'nestedTemplate')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "IRInstalltemplate",
+        "count": "[length(range(0, parameters('NodeCount')))]",
+        "mode": "serial",
+        "batchSize": 1
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('irInstallCopy-{0}', range(0, parameters('NodeCount'))[copyIndex()])]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "datafactoryId": {
+            "value": "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.DataFactory/factories/integrationruntimes', parameters('existingDataFactoryName'), parameters('IntegrationRuntimeName'))]"
+          },
+          "virtualMachineName": {
+            "value": "[take(format('vm{0}-{1}', range(0, parameters('NodeCount'))[copyIndex()], variables('prefix')), 15)]"
+          },
+          "existingVnetLocation": {
+            "value": "[parameters('existingVnetLocation')]"
+          },
+          "scriptUrl": {
+            "value": "[variables('scriptURL')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.17.1.54307",
+              "templateHash": "8662714689762209589"
+            }
+          },
+          "parameters": {
+            "datafactoryId": {
+              "type": "string"
+            },
+            "virtualMachineName": {
+              "type": "string"
+            },
+            "existingVnetLocation": {
+              "type": "string"
+            },
+            "scriptUrl": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}installGW', parameters('virtualMachineName'), parameters('virtualMachineName'))]",
+              "location": "[parameters('existingVnetLocation')]",
+              "tags": {
+                "vmname": "[parameters('virtualMachineName')]"
+              },
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.7",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "fileUris": [
+                    "[parameters('scriptUrl')]"
+                  ]
+                },
+                "protectedSettings": {
+                  "commandToExecute": "[format('powershell.exe -ExecutionPolicy Unrestricted -File gatewayInstall.ps1 {0}', listAuthKeys(parameters('datafactoryId'), '2018-06-01').authKey1)]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('existingDataFactoryResourceGroup')), 'Microsoft.Resources/deployments', 'nestedTemplate')]",
+        "VMtemplate"
+      ]
+    }
+  ]
+}

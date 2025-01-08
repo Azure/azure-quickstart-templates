@@ -46,17 +46,24 @@ if ($StorageAccount -eq $null) {
     New-AzureRmResourceGroup -Location "$Location" -Name $StorageResourceGroupName -Force
     $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
 }
-# Assign perms
-if ($ServicePrincipalObjectId) {
-    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
-    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
-}
 
 #create a userAssigned MSI that can have access to the vault where test keys/certs are stored
 $msi = (az identity create -g "$ResourceGroupName" -n "$msiName" --verbose) | ConvertFrom-Json
 
 $json.Add("USER-ASSIGNED-IDENTITY-NAME", $msiName)
 $json.Add("USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME", $ResourceGroupName)
+
+# Assign perms
+if ($ServicePrincipalObjectId) {
+    # to be able to write to the staging storage account (deployment script stages artifacts)
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
+    # to use the MSI on a resource (the msi should have very limited permissions)
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Managed Identity Operator'
+    $msiId = "/subscriptions/$((Get-AzureRMContext).Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/$msiName"
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $msiId -Verbose
+}
+
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'
@@ -169,6 +176,8 @@ if ($ServicePrincipalObjectId) {
                               -ObjectId $ServicePrincipalObjectId `
                               -Scope $(Get-AzureRmResourceGroup -Name 'NetworkWatcherRG').ResourceId `
                               -Verbose
+                              
+    # TODO - Add the "Cognitive Services Contributor" role 25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68 to be able to deploy CS
 
 }
 
@@ -187,6 +196,18 @@ $json.Add("COSMOS-DB-SP-OBJECTID", $cosmossp.id)
 
 $webapp = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" # Web App SP for certificate scenarios - not available in Fairfax?
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $webapp.id -PermissionsToSecrets get 
+
+# for the Microsoft.Azure.CDN service principal - it first must be registered in the sub
+$cdn = New-AzureRmADServicePrincipal -ApplicationId 205478c0-bd83-4e1b-a9d6-db63a3e1e1c8
+# if the RP autoregisters at some point in the future the above call will fail and will need to simply GET the SP
+# $cdn = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" 
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cdn.id -PermissionsToSecrets get 
+
+# Assign Front Door access to the vault to work with custom domain certificates.
+# See https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain-https#option-2-use-your-own-certificate
+$frontDoor = New-AzureRmADServicePrincipal -ApplicationId 'ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037'
+# $frontDoor = Get-AzureRmADServicePrincipal -ServicePrincipalName "ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037"
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $frontDoor.id -PermissionsToSecrets get -PermissionsToCertificates get
 
 # 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
@@ -306,6 +327,18 @@ $json.Add("SELFSIGNED-CERT-CERDATA", [System.Convert]::ToBase64String([System.IO
 $json.Add("SELFSIGNED-CERT-PASSWORD", $CertPass)
 $json.Add("SELFSIGNED-CERT-THUMBPRINT", $kvCert.Thumbprint)
 $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
+
+#6) Create 2 url signing keys for a specific quickstart
+$SecretValue = ConvertTo-SecureString -String $(new-guid) -AsPlainText -Force
+$s1 = Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name 'url-sign-secret-1' -SecretValue $SecretValue -Verbose
+$SecretValue = ConvertTo-SecureString -String $(new-guid) -AsPlainText -Force
+$s2 = Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name 'url-sign-secret-2' -SecretValue $SecretValue -Verbose
+ 
+$json.Add("KEYVAULT-URLSIGN-SECRET1-NAME", 'url-sign-secret-1')
+$json.Add("KEYVAULT-URLSIGN-SECRET2-NAME", 'url-sign-secret-2')
+
+$json.Add("KEYVAULT-URLSIGN-SECRET1-VERSION", $s1.Version)
+$json.Add("KEYVAULT-URLSIGN-SECRET2-VERSION", $s2.Version)
 
 # Create the Microsoft.appConfiguration/configurationStores
 # There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."

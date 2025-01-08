@@ -1,0 +1,196 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.27.1.19265",
+      "templateHash": "13618930684609763232"
+    }
+  },
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "[format('workspace{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Databricks workspace to create."
+      }
+    },
+    "enableNoPublicIp": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "pricingTier": {
+      "type": "string",
+      "defaultValue": "premium",
+      "allowedValues": [
+        "standard",
+        "premium"
+      ],
+      "metadata": {
+        "description": "The pricing tier of workspace."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The key vault name used for Customer managed keys for Managed disk."
+      }
+    },
+    "keyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The key name used for Customer managed keys for Managed disk."
+      }
+    },
+    "keyVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The key version used for Customer managed keys for Managed disk."
+      }
+    },
+    "keyVaultResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group name of the key vault used for Customer managed keys for Managed disk"
+      }
+    },
+    "enableAutoRotation": {
+      "type": "bool",
+      "defaultValue": false,
+      "allowedValues": [
+        true,
+        false
+      ],
+      "metadata": {
+        "description": "Whether managed disk will pick up new key version automatically."
+      }
+    }
+  },
+  "variables": {
+    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+    "trimmedMRGName": "[substring(variables('managedResourceGroupName'), 0, min(length(variables('managedResourceGroupName')), 90))]",
+    "managedResourceGroupId": "[format('{0}/resourceGroups/{1}', subscription().id, variables('trimmedMRGName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('pricingTier')]"
+      },
+      "properties": {
+        "managedResourceGroupId": "[variables('managedResourceGroupId')]",
+        "encryption": {
+          "entities": {
+            "managedDisk": {
+              "keySource": "Microsoft.Keyvault",
+              "keyVaultProperties": {
+                "keyVaultUri": "[uri(format('https://{0}{1}', parameters('keyVaultName'), environment().suffixes.keyvaultDns), '/')]",
+                "keyName": "[parameters('keyName')]",
+                "keyVersion": "[parameters('keyVersion')]"
+              },
+              "rotationToLatestKeyVersionEnabled": "[parameters('enableAutoRotation')]"
+            }
+          }
+        },
+        "parameters": {
+          "enableNoPublicIp": {
+            "value": "[parameters('enableNoPublicIp')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "addAccessPolicy",
+      "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview').managedDiskIdentity.principalId]"
+          },
+          "tenantId": {
+            "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview').managedDiskIdentity.tenantId]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.27.1.19265",
+              "templateHash": "2350601366002080039"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string"
+            },
+            "tenantId": {
+              "type": "string"
+            },
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "The key vault name used for Customer managed keys for Managed disk"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/add', parameters('keyVaultName'))]",
+              "properties": {
+                "accessPolicies": [
+                  {
+                    "objectId": "[parameters('principalId')]",
+                    "tenantId": "[parameters('tenantId')]",
+                    "permissions": {
+                      "keys": [
+                        "get",
+                        "wrapKey",
+                        "unwrapKey"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "workspace": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2022-04-01-preview')]"
+    }
+  }
+}

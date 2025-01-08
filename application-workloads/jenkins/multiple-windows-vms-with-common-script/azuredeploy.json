@@ -1,0 +1,286 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmCount": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of LAB-VM tobe deployed"
+            }
+        },
+        "dns-prefix": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS Prefix used by LabVM Public IP"
+            }
+        },
+        "adminUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin Username for Lab VM"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for admin user"
+            }
+        },
+        "vmsize": {
+            "type": "string",
+            "defaultValue": "Standard_D4s_v3",
+            "metadata": {
+                "description": "VM Size for all lab-vms. "
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location to deploy current resource"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "SAS Token for accessing script path"
+            }
+        },
+        "scriptFilename": {
+            "type": "string",
+            "defaultValue": "jenkins-java8.ps1",
+            "allowedValues": [
+                "jenkins-java8.ps1",
+                "az-500.ps1",
+                "container-lab.ps1",
+                "container-vs2019-lab.ps1"
+            ],
+            "metadata": {
+                "description": "Choose script to launch from list of available scripts"
+            }
+        }
+    },
+    "variables": {
+        "strname": "[toLower(concat('labvmstg',uniqueString(resourceGroup().id)))]",
+        "scriptUrl": "[uri(parameters('_artifactsLocation'),concat(parameters('scriptFilename'),parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('strname')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+             "tags": {
+                "displayName": "labvm Storage Account"
+            },
+            "properties": {
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-11-01",
+            "name": "[concat('labvm-pip-',copyIndex(1))]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "vmpipcopy",
+                "count": "[parameters('vmCount')]"
+            },
+            "tags": {
+                "displayName": "PublicIPAddress"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(concat(parameters('dns-prefix'),'-',copyIndex(1)))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-04-01",
+            "name": "labvm-nsg",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "nsgRule1",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-11-01",
+            "name": "labvm-vnet",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'labvm-nsg')]"
+            ],
+            "tags": {
+                "displayName": "labvm-vnet"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "30.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "labvm-Subnet",
+                        "properties": {
+                            "addressPrefix": "30.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'labvm-nsg')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-11-01",
+            "name": "[concat('labvm-nic-',copyIndex(1))]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "count": "[parameters('vmCount')]",
+                "name": "niccopy"
+            },
+            "dependsOn": [
+                "vmpipcopy",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'labvm-vnet')]"
+            ],
+    
+            "tags": {
+                "displayName": "labvm Network Interface"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('labvm-pip-',copyIndex(1)))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'labvm-vnet', 'labvm-Subnet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+            
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[concat('labvm-',copyIndex(1))]",
+            "location": "[parameters('location')]",
+            
+            "copy": {
+                "count": "[parameters('vmCount')]",
+                "name": "vmcopy"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('strname'))]",
+                "vmpipcopy",
+                "niccopy"
+            ],
+            "tags": {
+                "displayName": "labvm"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmsize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat('labvm-',copyIndex(1))]",
+                    "adminUsername": "[parameters('adminUser')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2019-Datacenter",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat('labvm',copyIndex(1),'OSDisk')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('labvm-nic-',copyIndex(1)))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('strname'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-07-01",
+            "name": "[concat('labvm-',copyIndex(1),'/installScript')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "customScript1 for Windows VM"
+            },
+            "copy": {
+                "name": "scriptCopy",
+                "count": "[parameters('vmCount')]"
+            },
+            "dependsOn": [
+                "vmcopy"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUrl')]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -file  ', parameters('scriptFilename'))]"
+                }
+            }
+        }
+    ]
+}

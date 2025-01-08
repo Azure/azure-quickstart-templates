@@ -1,0 +1,215 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.17.1.54307",
+      "templateHash": "13673649489438267206"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "defaultValue": "[format('kusto{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the cluster"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_D12_v2",
+      "metadata": {
+        "description": "Name of the sku"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "maxValue": 1000,
+      "minValue": 2,
+      "metadata": {
+        "description": "# of nodes"
+      }
+    },
+    "kustoDatabaseName": {
+      "type": "string",
+      "defaultValue": "kustodb",
+      "metadata": {
+        "description": "Name of the database"
+      }
+    },
+    "cosmosDbAccountName": {
+      "type": "string",
+      "defaultValue": "[format('cosmosdb{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of Cosmos DB account"
+      }
+    },
+    "cosmosDbDatabaseName": {
+      "type": "string",
+      "defaultValue": "mydb",
+      "metadata": {
+        "description": "Name of Cosmos DB database"
+      }
+    },
+    "cosmosDbContainerName": {
+      "type": "string",
+      "defaultValue": "mycontainer",
+      "metadata": {
+        "description": "Name of Cosmos DB container"
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": "//  Create a landing table for Cosmos DB's documents\r\n.create table TestTable(Id:string, Name:string, _ts:long, _timestamp:datetime)\r\n\r\n//  Create mapping from JSON ingestion to landing table\r\n.create table TestTable ingestion json mapping \"DocumentMapping\"\r\n```\r\n[\r\n    {\"column\":\"Id\",\"path\":\"$.id\"},\r\n    {\"column\":\"Name\",\"path\":\"$.name\"},\r\n    {\"column\":\"_ts\",\"path\":\"$._ts\"},\r\n    {\"column\":\"_timestamp\",\"path\":\"$._ts\", \"transform\":\"DateTimeFromUnixSeconds\"}\r\n]\r\n```\r\n\r\n//  We modify the ingestion batching policy to make it easy to see records coming ingestion\r\n//  THIS CONFIGURATION SHOULDN'T BE USED IN PRODUCTION:  MaximumBatchingTimeSpan SHOULD BE AT LEAST 1 MINUTE\r\n.alter table TestTable policy ingestionbatching \"{'MaximumBatchingTimeSpan': '0:0:10', 'MaximumNumberOfItems': 10000}\"",
+    "cosmosDataReader": "00000000-0000-0000-0000-000000000001"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2022-08-15",
+      "name": "[format('{0}/{1}/{2}', parameters('cosmosDbAccountName'), parameters('cosmosDbDatabaseName'), parameters('cosmosDbContainerName'))]",
+      "properties": {
+        "options": {
+          "throughput": 400
+        },
+        "resource": {
+          "id": "[parameters('cosmosDbContainerName')]",
+          "partitionKey": {
+            "kind": "Hash",
+            "paths": [
+              "/part"
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('cosmosDbAccountName'), parameters('cosmosDbDatabaseName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "apiVersion": "2022-08-15",
+      "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), parameters('cosmosDbDatabaseName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('cosmosDbDatabaseName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2022-08-15",
+      "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName'), 'data-plane'))]",
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2022-11-11', 'full').identity.principalId]",
+        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosDbAccountName'), variables('cosmosDataReader'))]",
+        "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases/scripts",
+      "apiVersion": "2022-11-11",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('kustoDatabaseName'), 'db-script')]",
+      "properties": {
+        "scriptContent": "[variables('$fxv#0')]",
+        "continueOnErrors": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('kustoDatabaseName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases/dataConnections",
+      "apiVersion": "2022-11-11",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('kustoDatabaseName'), 'cosmosDbConnection')]",
+      "location": "[parameters('location')]",
+      "kind": "CosmosDb",
+      "properties": {
+        "tableName": "TestTable",
+        "mappingRuleName": "DocumentMapping",
+        "managedIdentityResourceId": "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "cosmosDbAccountResourceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]",
+        "cosmosDbDatabase": "[parameters('cosmosDbDatabaseName')]",
+        "cosmosDbContainer": "[parameters('cosmosDbContainerName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName'), 'data-plane'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]",
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('kustoDatabaseName'))]",
+        "[resourceId('Microsoft.Kusto/clusters/databases/scripts', parameters('clusterName'), parameters('kustoDatabaseName'), 'db-script')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases",
+      "apiVersion": "2022-11-11",
+      "name": "[format('{0}/{1}', parameters('clusterName'), parameters('kustoDatabaseName'))]",
+      "location": "[parameters('location')]",
+      "kind": "ReadWrite",
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2022-08-15",
+      "name": "[parameters('cosmosDbAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0
+          }
+        ],
+        "databaseAccountOfferType": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.DocumentDB/databaseAccounts/{0}', parameters('cosmosDbAccountName'))]",
+      "name": "[guid(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), parameters('cosmosDbAccountName'), 'rbac')]",
+      "properties": {
+        "description": "Giving RBAC reader on Cosmos DB",
+        "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2022-11-11', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'fbdf93bf-df7d-467e-a4d2-9458aa1360c8')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters",
+      "apiVersion": "2022-11-11",
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "Standard",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      }
+    }
+  ]
+}

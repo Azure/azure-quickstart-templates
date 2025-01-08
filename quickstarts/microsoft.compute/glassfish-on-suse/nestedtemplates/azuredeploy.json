@@ -1,0 +1,113 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+
+    "vmPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Naming prefix applied to the deployed VM resources"
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Number of VMs"
+      }
+    },
+    "glassfishVersion": {
+      "type": "int",
+      "minValue": 3,
+      "maxValue": 4,
+      "allowedValues": [
+        3,
+        4
+      ],
+      "metadata": {
+        "description": "Release number for the GlassFish package to be deployed"
+      }
+    },
+    "glassfishRelease": {
+      "type": "string",
+      "allowedValues": [
+        "3.1.1",
+        "3.1.2",
+        "3.1.2.2",
+        "3.2",
+        "4.0",
+        "4.1"
+      ],
+      "metadata": {
+        "description": "Version of GlassFish to deploy"
+      }
+    },
+    "glassfishAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "GlassFish admin user password"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "location": "[parameters('location')]",
+    "deploymentScriptFolder": "scripts/",
+    "deploymentScriptFileName": "deployGlassFish.sh",
+    "deploymentScriptUrl": "[uri(parameters('_artifactsLocation'), concat(variables('deploymentScriptFolder'), variables('deploymentScriptFileName'), parameters('_artifactsLocationSasToken')))]"
+
+
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmPrefix'), copyIndex(), '/deployGlassFish')]",
+      "location": "[variables('location')]",
+      "apiVersion": "2020-12-01",
+      "tags": {
+        "displayName": "deployGlassFish"
+      },
+      "copy": {
+        "name": "vmDeploymentScriptLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('deploymentScriptUrl')]"
+          ]
+
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sudo bash ', variables('deploymentScriptFileName'), ' ', parameters('glassfishVersion'), ' ', parameters('glassfishRelease'), ' ', parameters('glassfishAdminPassword'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

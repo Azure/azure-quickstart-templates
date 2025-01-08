@@ -1,0 +1,127 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseResourceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resource"
+      },
+      "maxLength": 15
+    },
+    "appSettingName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the app setting"
+      },
+      "maxLength": 24
+    },
+    "environments": {
+      "defaultValue": [
+        "Dev",
+        "QA",
+        "UAT",
+        "Preview"
+      ],
+      "type": "array",
+      "metadata": {
+        "description": "Array with the names for the environment slots"
+      },
+      "maxLength": 19
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "standardPlanMaxAdditionalSlots": 4,
+    "webAppPortalName": "[concat(parameters('baseResourceName'), 'Portal')]",
+    "appServicePlanName": "[concat('AppServicePlan-', parameters('baseResourceName'))]",
+    "stickyAppSettingName": "[concat(parameters('appSettingName'), '-sticky')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Web/serverfarms",
+      "kind": "app",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "comments": "This app service plan is used for the web app and slots.",
+      "tags": {
+        "displayName": "AppServicePlan"
+      },
+      "properties": {},
+      "sku": {
+        "name": "[if(lessOrEquals(length(parameters('environments')), variables('standardPlanMaxAdditionalSlots')), 'S1', 'P1')]"
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[variables('webAppPortalName')]",
+      "location": "[parameters('location')]",
+      "comments": "This is the web app, also the default 'nameless' slot.",
+      "tags": {
+        "displayName": "WebApp"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "[parameters('appSettingName')]",
+              "value": "value"
+            },
+            {
+              "name": "[variables('stickyAppSettingName')]",
+              "value": "value"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Web/sites/slots",
+      "name": "[concat(variables('webAppPortalName'), '/', parameters('environments')[copyIndex()])]",
+      "kind": "app",
+      "location": "[parameters('location')]",
+      "comments": "This specifies the web app slots.",
+      "tags": {
+        "displayName": "WebAppSlots"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('webAppPortalName'))]"
+      ],
+      "copy": {
+        "name": "webPortalSlot",
+        "count": "[length(parameters('environments'))]"
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('webAppPortalName'), '/slotconfignames')]",
+      "type": "Microsoft.Web/sites/config",
+      "comments": "This specifies the sticky (slot setting) application settings.",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('webAppPortalName'))]"
+      ],
+      "properties": {
+        "appSettingNames": [
+          "[variables('stickyAppSettingName')]"
+        ]
+      }
+    }
+  ]
+}

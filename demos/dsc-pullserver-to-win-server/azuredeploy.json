@@ -1,0 +1,260 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The admin user name for the VM created."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The admin password for the VM created."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "The machine type for the server vm."
+      }
+    },
+    "dscPullSrvName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Windows vm."
+      }
+    },
+    "dscPullIPDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the public ip address"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "VirtualNetworkPrefix": "10.0.0.0/16",
+    "VirtualNetworkSubnet1Name": "Subnet-1",
+    "VirtualNetworkSubnet1Prefix": "10.0.0.0/24",
+    "VirtualNetworkSubnet2Name": "Subnet-2",
+    "VirtualNetworkSubnet2Prefix": "10.0.1.0/24",
+    "dscPullSrvSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'dscVirtualNetwork', variables('VirtualNetworkSubnet1Name'))]",
+    "dscPullSrvNicName": "dscNetworkInterface",
+    "dscPullIPName": "dscPublicIPAddress",
+    "deployDSCPullServerConfigurationFile": "[uri(parameters('_artifactsLocation'), concat('ConfigurePullServer.ps1.zip', parameters('_artifactsLocationSasToken')))]",
+    "deployDSCPullServerConfigurationFunction": "ConfigurePullServer.ps1\\ConfigurePullServer",
+    "windowsOSVersion": "2012-R2-Datacenter",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "networkSecurityGroupName": "default-NSG"
+  },
+  "resources": [
+    {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-80",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "80",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1001,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dscVirtualNetwork",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "tags": {
+        "displayName": "VirtualNetwork"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('VirtualNetworkPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('VirtualNetworkSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('VirtualNetworkSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('VirtualNetworkSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('VirtualNetworkSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('dscPullSrvNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', 'dscVirtualNetwork')]"
+      ],
+      "tags": {
+        "displayName": "dscPullSrvNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.0.0.5",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[variables('dscPullSrvSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dscPullIPName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('dscPullSrvName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('dscPullSrvNicName'))]"
+      ],
+      "tags": {
+        "displayName": "dscPullSrv"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('dscPullSrvName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('dscPullSrvName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('dscPullSrvNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "deployDSCPullServer",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-12-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('dscPullSrvName'))]"
+          ],
+          "tags": {
+            "displayName": "deployDSCPullServer"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.19",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "modulesUrl": "[variables('deployDSCPullServerConfigurationFile')]",
+              "configurationFunction": "[variables('deployDSCPullServerConfigurationFunction')]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('dscPullIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "tags": {
+        "displayName": "dscPullIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dscPullIPDnsName')]"
+        }
+      }
+    }
+  ]
+}
+
