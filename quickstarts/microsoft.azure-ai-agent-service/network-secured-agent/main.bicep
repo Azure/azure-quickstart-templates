@@ -8,7 +8,7 @@ var userAssignedIdentityOverride = ''
 
 /* ---------------------------------- Deployment Identifiers ---------------------------------- */
 
-param deploymentName string = 'network-secured-agent'
+param name string = 'network-secured-agent'
 
 // Create a short, unique suffix, that will be unique to each resource group
 param deploymentTimestamp string = utcNow('yyyyMMddHHmmss')
@@ -81,7 +81,7 @@ param userAssignedIdentityDefaultName string = 'secured-agents-identity-${unique
 var uaiName = (userAssignedIdentityOverride == '') ? userAssignedIdentityDefaultName : userAssignedIdentityOverride
 
 module identity 'modules-network-secured/network-secured-identity.bicep' = {
-  name: '${deploymentName}-${uniqueSuffix}--identity'
+  name: '${name}-${uniqueSuffix}--identity'
   params: {
     location: location
     userAssignedIdentityName: uaiName
@@ -100,7 +100,7 @@ var aiSearchName = (aiSearchOverride == '') ? '${defaultAiSearchName}${uniqueSuf
 var storageNameClean = '${defaultStorageName}${uniqueSuffix}'
 // Dependent resources for the Azure Machine Learning workspace
 module aiDependencies 'modules-network-secured/network-secured-dependent-resources.bicep' = {
-  name: '${deploymentName}-${uniqueSuffix}--dependencies'
+  name: '${name}-${uniqueSuffix}--dependencies'
   params: {
     suffix: uniqueSuffix
     storageName: storageName
@@ -128,7 +128,7 @@ module aiDependencies 'modules-network-secured/network-secured-dependent-resourc
 
 
 module aiHub 'modules-network-secured/network-secured-ai-hub.bicep' = {
-  name: '${deploymentName}-${uniqueSuffix}--hub'
+  name: '${name}-${uniqueSuffix}--hub'
   params: {
     // workspace organization
     aiHubName: '${defaultAiHubName}-${uniqueSuffix}'
@@ -173,7 +173,7 @@ resource aiSearch 'Microsoft.Search/searchServices@2023-11-01' existing = {
 }
 
 module privateEndpointAndDNS 'modules-network-secured/private-endpoint-and-dns.bicep' = {
-  name: '${deploymentName}-${uniqueSuffix}--private-endpoint'
+  name: '${name}-${uniqueSuffix}--private-endpoint'
   params: {
     aiServicesName: aiDependencies.outputs.aiServicesName
     aiSearchName: aiDependencies.outputs.aiSearchName
@@ -191,7 +191,7 @@ module privateEndpointAndDNS 'modules-network-secured/private-endpoint-and-dns.b
 }
 
 module aiProject 'modules-network-secured/network-secured-ai-project.bicep' = {
-  name: '${deploymentName}-${uniqueSuffix}--project'
+  name: '${name}-${uniqueSuffix}--project'
   params: {
     // workspace organization
     aiProjectName: '${defaultAiProjectName}-${uniqueSuffix}'
@@ -211,7 +211,7 @@ module aiProject 'modules-network-secured/network-secured-ai-project.bicep' = {
 }
 
 module aiServiceRoleAssignments 'modules-network-secured/ai-service-role-assignments.bicep' = {
-  name: '${deploymentName}-${uniqueSuffix}--AiServices-RA'
+  name: '${name}-${uniqueSuffix}--AiServices-RA'
   scope: resourceGroup()
   params: {
     aiServicesName: aiDependencies.outputs.aiServicesName
@@ -221,7 +221,7 @@ module aiServiceRoleAssignments 'modules-network-secured/ai-service-role-assignm
 }
 
 module aiSearchRoleAssignments 'modules-network-secured/ai-search-role-assignments.bicep' = {
-  name: '${deploymentName}-${uniqueSuffix}--AiSearch-RA'
+  name: '${name}-${uniqueSuffix}--AiSearch-RA'
   scope: resourceGroup()
   params: {
     aiSearchName: aiDependencies.outputs.aiSearchName
