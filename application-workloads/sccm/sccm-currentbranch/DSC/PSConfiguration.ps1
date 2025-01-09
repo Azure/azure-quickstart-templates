@@ -73,10 +73,16 @@
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
 
-        DownloadAndInstallODBC DownloadAndInstallODBC
+        DownloadAndInstallvcredist DownloadAndInstallvcredist
         {
             Ensure = "Present"
             DependsOn = "[InstallADK]ADKInstall"
+        }
+
+        DownloadAndInstallODBC DownloadAndInstallODBC
+        {
+            Ensure = "Present"
+            DependsOn = "[DownloadAndInstallvcredist]DownloadAndInstallvcredist"
         }
 
         if($Configuration -eq "Standalone")
