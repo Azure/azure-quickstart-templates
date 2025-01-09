@@ -48,3 +48,4 @@ If you want to use an existing Azure OpenAI resource, you will need to update th
 | `Microsoft.CognitiveServices/accounts` | An Azure AI Services as the model-as-a-service endpoint provider (allowed kinds: 'AIServices' and 'OpenAI') |
 | `Microsoft.CognitiveServices/accounts/deployments` | A gpt-4o-mini model is deployed |
 | `Microsoft.Search/searchServices` | An Azure AI Search account  |
+`Tags: `

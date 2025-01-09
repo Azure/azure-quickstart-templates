@@ -28,6 +28,8 @@ languages:
 
 This sample demonstrates building `Ready-To-Code` images containing everything a developer needs (configuration, source, packages, binaries) to minimize the time used for setting up a new Dev Box. The sample relies on Dev Box Image Template to provide flexible approach for building images using Azure Image Builder.
 
+For more details see as well [Dev Box Ready-To-Code Dev Box images template](https://devblogs.microsoft.com/engineering-at-microsoft/dev-box-ready-to-code-dev-box-images-template/) blog post.
+
 ## Deployed Resources
 The sample builds 3 images to demonstrate various configuration options of the Dev Box Image Template. For each image the template creates the following Azure resources:
 - **Azure Image Builder Template**: the image factory used for building an image version.
@@ -63,7 +65,7 @@ The sample includes the following demo images (named after the key git repositor
 
 In addition, all demo images automatically inherit the default functionality like the following from the Dev Box Image Template:
 - Base image from [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/microsoftvisualstudio.visualstudioplustools) with the latest Visual Studio 2022, Microsoft 365 Apps and many other useful developer tools.
-- Chained (AKA based) images support is available.
+- Chained (AKA base) images support is available.
 - For better build performance [Dev Drive](https://devblogs.microsoft.com/engineering-at-microsoft/dev-drive-is-now-available/) is configured as drive Q: with all cloned repositories and their artifacts.
 - Dev Box Image Template makes sure that tools like Visual Studio 2022. Visual Studio Code, SysInternals Suite, Git, Azure Artifacts Credential Provider, WinGet are installed and configured regardless of the base image selected.
 - Smart defaults are applied for better developer scenarios performance.

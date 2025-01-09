@@ -1,5 +1,13 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in December 18, 2024
+
+### Changed
+
+- Template
+  - Update the default size of the virtual machines to use the [Basv2 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/basv2-series?tabs=sizebasic). It is newer, cheaper and more performant than the [Bv1 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/bv1-series?tabs=sizebasic) used until now.
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the December 2024 CU for SharePoint Subscription
+
 ## Enhancements & bug-fixes - Published in November 19, 2024
 
 ### Changed
