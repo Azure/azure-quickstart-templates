@@ -1,5 +1,5 @@
 ---
-description: This template creates a four nodes Azure Local instance in Switchless-Dual-link Networking mode using an ARM template.
+description: This template creates a four nodes Azure Local instance using an ARM template.
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: create-cluster-4Nodes-Switchless-DualLink
 languages:
 - json
 ---
-# creates a four nodes Azure Local instance in Switchless-Dual-link Networking mode 
+# creates a four nodes Azure Local instance in Switchless-Dual-link Networking mode
 
 This template allows you to create a four nodes Azure Local instance in Switchless-Dual-link Networking mode using version 23H2. First you deploy the template in validate mode which does confirm the parameters at the device. Once passed you re-deploy the template with mode set to deploy.
 
