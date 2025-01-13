@@ -63,10 +63,16 @@ configuration Configuration
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
 
-        DownloadAndInstallODBC DownloadAndInstallODBC
+        DownloadAndInstallvcredist DownloadAndInstallvcredist
         {
             Ensure = "Present"
             DependsOn = "[InstallADK]ADKInstall"
+        }
+ 
+        DownloadAndInstallODBC DownloadAndInstallODBC
+        {
+            Ensure = "Present"
+            DependsOn = "[DownloadAndInstallvcredist]DownloadAndInstallvcredist"
         }
 
         DownloadSCCM DownLoadSCCM
