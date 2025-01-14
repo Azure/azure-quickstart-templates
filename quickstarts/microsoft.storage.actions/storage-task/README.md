@@ -1,4 +1,15 @@
-# Create an Azure Storage Actions storage task by using an ARM template
+---
+description: This sample shows how to define the conditions of a storage task.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-task
+languages:
+- bicep
+- json
+---
+# Create a storage task
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage.actions/storage-task/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage.actions/storage-task/PublicDeployment.svg)
@@ -21,4 +32,4 @@ A storage task is a resource that is available with Azure Storage Actions. Azure
 
 ## Prerequisites
 
-An Azure subscription. See [create an account for free](https://azure.microsoft.com/free/?WT.mc_id=A261C142F)
+An Azure subscription. See [create an account for free](https://azure.microsoft.com/free/?WT.mc_id=A261C142F)`Tags: `
