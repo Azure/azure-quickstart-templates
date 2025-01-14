@@ -1,15 +1,15 @@
-@description('The name of storage task.')
+@sys.description('The name of storage task.')
 @minLength(3)
 @maxLength(18)
 param storageTaskName string
 
-@description('The region in which to create the storage task.')
+@sys.description('The region in which to create the storage task.')
 param location string = resourceGroup().location
 
-@description('A description of the storage task.')
+@sys.description('A description of the storage task.')
 param description string
 
-@description('The current date and time. The storage task will run 10 minutes after this time.')
+@sys.description('The current date and time. The storage task will run 10 minutes after this time.')
 param baseTime string = utcNow()
 
 var lockedUntilDate = dateTimeAdd(baseTime, 'P1D')
