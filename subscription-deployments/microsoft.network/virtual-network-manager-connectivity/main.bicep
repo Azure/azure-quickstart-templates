@@ -139,5 +139,5 @@ module deploymentScriptConnectivityConfigs 'modules/avnmDeploymentScript.bicep' 
 }
 
 // output policy resource ids to facilitate cleanup
-output policyDefinitionId string = policy.outputs.policyDefinitionId ?? 'not_deployed'
-output policyAssignmentId string = policy.outputs.policyAssignmentId ?? 'not_deployed'
+output policyDefinitionId string = (networkGroupMembershipType == 'dynamic') ? policy.outputs.policyDefinitionId : 'not_deployed'
+output policyAssignmentId string = (networkGroupMembershipType == 'dynamic') ? policy.outputs.policyAssignmentId : 'not_deployed'
