@@ -6,12 +6,15 @@ param storageTaskName string
 @sys.description('A description of the storage task.')
 param description string
 
+@sys.description('The region in which to create the storage task.')
+param location string = resourceGroup().location
+
 @sys.description('Locks the file for one day.')
 param lockedUntilDate string = dateTimeAdd(utcNow(), 'P1D')
 
 resource storageTask 'Microsoft.StorageActions/storageTasks@2023-01-01' = {
   name: storageTaskName
-  location: resourceGroup().location
+  location: location
   identity: {
     type: 'SystemAssigned'
   }
