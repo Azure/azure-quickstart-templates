@@ -1,0 +1,80 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.32.4.45862",
+      "templateHash": "11663963517791910133"
+    }
+  },
+  "parameters": {
+    "storageTaskName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 18,
+      "metadata": {
+        "description": "The name of storage task."
+      }
+    },
+    "description": {
+      "type": "string",
+      "metadata": {
+        "description": "A description of the storage task."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The region in which to create the storage task."
+      }
+    },
+    "lockedUntilDate": {
+      "type": "string",
+      "defaultValue": "[dateTimeAdd(utcNow(), 'P1D')]",
+      "metadata": {
+        "description": "Locks the file for one day."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.StorageActions/storageTasks",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('storageTaskName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "action": {
+          "if": {
+            "condition": "[[[endsWith(Name, '.docx')]]",
+            "operations": [
+              {
+                "name": "SetBlobImmutabilityPolicy",
+                "onSuccess": "continue",
+                "onFailure": "break",
+                "parameters": {
+                  "untilDate": "[parameters('lockedUntilDate')]",
+                  "mode": "locked"
+                }
+              },
+              {
+                "name": "SetBlobTags",
+                "onSuccess": "continue",
+                "onFailure": "break",
+                "parameters": {
+                  "tagsetImmutabilityUpdatedBy": "StorageTaskQuickstart"
+                }
+              }
+            ]
+          }
+        },
+        "description": "[parameters('description')]",
+        "enabled": true
+      }
+    }
+  ]
+}
