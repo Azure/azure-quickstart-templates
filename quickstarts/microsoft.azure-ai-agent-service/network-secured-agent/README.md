@@ -36,7 +36,7 @@ The deployment creates an isolated network environment:
 
 - **Virtual Network (172.16.0.0/16)**
   - Customer Hub Subnet (172.16.0.0/24): Hosts private endpoints
-  - Agents Subnet (172.16.101.0/24): For container apps and agent workloads
+  - Agents Subnet (172.16.101.0/24): For azure ai agent workloads
 
 - **Private Endpoints**
   - AI Services
@@ -103,76 +103,6 @@ Features:
 - Easy to version control
 - Clear resource dependencies
 
-### 2. PowerShell Script
-```powershell
-.\deploy-network-secured.ps1 `
-    -ResourceGroupName "rg-agents" `
-    -Location "eastus" `
-    -Prefix "demo"
-```
-Features:
-- Azure CLI commands
-- Windows-native experience
-- Procedural approach
-- Detailed error handling
-
-### 3. Bash Script
-```bash
-./deploy-network-secured.sh \
-    -g "rg-agents" \
-    -l "eastus" \
-    -p "demo"
-```
-Features:
-- Azure CLI commands
-- Linux/macOS native experience
-- Shell scripting features
-- Progress tracking
-
-### 4. Python SDK
-```bash
-python deploy_network_secured.py \
-    --subscription "sub-id" \
-    --resource-group "rg-agents" \
-    --location "eastus" \
-    --prefix "demo"
-```
-Features:
-- Azure SDK integration
-- Async/await pattern
-- Object-oriented design
-- Cross-platform support
-
-### 5. .NET SDK
-```bash
-dotnet run -- \
-    --subscription "sub-id" \
-    --resource-group "rg-agents" \
-    --location "eastus" \
-    --prefix "demo"
-```
-Features:
-- Azure Resource Manager SDK
-- Strong typing
-- Modern C# features
-- Enterprise-grade design
-
-### Choosing a Deployment Method
-
-Select based on:
-- Team expertise
-- Development environment
-- Integration requirements
-- Maintenance preferences
-
-All implementations provide:
-- Security restrictions compliance
-- Managed identity usage
-- Private endpoint configuration
-- Minimal RBAC setup
-- Restricted network ranges
-- Detailed logging
-
 ## Module Structure
 
 ```
@@ -189,15 +119,6 @@ modules-network-secured/
 ├── private-endpoint-and-dns.bicep      # Network security
 └── storage-role-assignments.bicep      # Storage RBAC configuration
 ```
-
-## Prerequisites
-
-1. Azure Subscription with required permissions
-2. Azure CLI or PowerShell installed
-3. Network connectivity for private endpoints
-4. For SDK deployments:
-   - Python 3.8+ or .NET 7.0+
-   - Required packages installed
 
 ## Role Assignments
 
