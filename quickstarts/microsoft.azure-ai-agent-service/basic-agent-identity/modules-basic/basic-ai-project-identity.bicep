@@ -24,7 +24,7 @@ var resourceGroupName = resourceGroup().name
 
 var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
 
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' = {
   name: aiProjectName
   location: location
   tags: union(tags, {
@@ -33,10 +33,12 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
   identity: {
     type: 'SystemAssigned'
   }
+  
   properties: {
     // organization
     friendlyName: aiProjectFriendlyName
     description: aiProjectDescription
+    systemDatastoresAuthMode: 'identity'
 
     // dependent resources
     hubResourceId: aiHubId
