@@ -1,15 +1,16 @@
 ---
-description: This set of templates demonstrates how to set up Azure AI Agent Service with virtual network isolation using User Managed Identity authetication for the AI Service/AOAI connection and private network links to connect the agent to your secure data. 
+description: This set of templates demonstrates how to set up Azure AI Agent Service with virtual network isolation using User Managed Identity authetication for the AI Service/AOAI connection and private network links to connect the agent to your secure data.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: network-secured-agents
+urlFragment: network-secured-agent
 languages:
 - bicep
 - json
 ---
-# Network-Secured Azure AI Agent Infrastructure
+
+# Network-Secured Azure AI Agent Infrastructure with User Managed Identity
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/network-secured-agent/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/network-secured-agent/PublicDeployment.svg)
@@ -216,3 +217,6 @@ Storage: privatelink.blob.core.windows.net
 - [Private Endpoint Documentation](https://learn.microsoft.com/en-us/azure/private-link/)
 - [RBAC Documentation](https://learn.microsoft.com/en-us/azure/role-based-access-control/)
 - [Network Security Best Practices](https://learn.microsoft.com/en-us/azure/security/fundamentals/network-best-practices)
+
+`Tags: `
+
