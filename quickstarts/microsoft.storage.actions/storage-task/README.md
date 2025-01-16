@@ -32,4 +32,4 @@ A storage task is a resource that is available with Azure Storage Actions. Azure
 
 ## Prerequisites
 
-An Azure subscription. See [create an account for free](https://azure.microsoft.com/free/?WT.mc_id=A261C142F)`Tags: `
+An Azure subscription. See [create an account for free](https://azure.microsoft.com/free/?WT.mc_id=A261C142F)`Tags: ``Tags: `
