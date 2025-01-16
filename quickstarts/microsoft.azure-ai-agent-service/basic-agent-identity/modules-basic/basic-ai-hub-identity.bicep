@@ -41,7 +41,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' existing =
   scope: resourceGroup(aiServiceAccountSubscriptionId, aiServiceAccountResourceGroupName)
 }
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
@@ -59,7 +59,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
   }
   kind: 'hub'
 
-    resource aiServicesConnection 'connections@2024-07-01-preview' = {
+    resource aiServicesConnection 'connections@2024-10-01-preview' = {
     name: '${aiHubName}-connection-AIServices'
     properties: {
       category: aiServiceKind
