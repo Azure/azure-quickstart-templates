@@ -10,10 +10,10 @@ param nsgName string
 @description('Object Id of Azure Container Instance Service Principal. We have to grant this permission to create hybrid connections in the Azure Relay you specify. To get it: Get-AzADServicePrincipal -DisplayNameBeginsWith \'Azure Container Instance\'')
 param azureContainerInstanceOID string
 
-@description('Name of the subnet to use for cloud shell containers.')
+@description('Name of the subnet to use for Cloud Shell containers.')
 param containerSubnetName string = 'cloudshellsubnet'
 
-@description('Address space of the subnet to add for cloud shell. e.g. 10.0.1.0/26')
+@description('Address space of the subnet to add for Cloud Shell. e.g. 10.0.1.0/26')
 param containerSubnetAddressPrefix string
 
 @description('Name of the subnet to use for private link of relay namespace.')
@@ -40,9 +40,17 @@ param tagName object = {
 param location string = resourceGroup().location
 
 var networkProfileName = 'aci-networkProfile-${location}'
-var contributorRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
-var networkRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')
-var privateDnsZoneName = ((toLower(environment().name) == 'azureusgovernment') ? 'privatelink.servicebus.usgovcloudapi.net' : 'privatelink.servicebus.windows.net')
+var contributorRoleDefinitionId = resourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  'b24988ac-6180-42a0-ab88-20f7382dd24c'
+)
+var networkRoleDefinitionId = resourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  '4d97b98b-1d4f-4787-a291-c67834d212e7'
+)
+var privateDnsZoneName = ((toLower(environment().name) == 'azureusgovernment')
+  ? 'privatelink.servicebus.usgovcloudapi.net'
+  : 'privatelink.servicebus.windows.net')
 var vnetResourceId = resourceId('Microsoft.Network/virtualNetworks', existingVNETName)
 
 resource existingVNET 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
@@ -74,9 +82,6 @@ resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' 
       id: networkSecurityGroup.id
     }
   }
-  dependsOn: [
-    networkSecurityGroup
-  ]
 }
 
 resource networkSecurityGroupDefaultRules 'Microsoft.Network/networkSecurityGroups/defaultSecurityRules@2023-05-01' existing = {
@@ -168,6 +173,9 @@ resource relaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
     addressPrefix: relaySubnetAddressPrefix
     privateEndpointNetworkPolicies: 'Disabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
   }
   dependsOn: [
     containerSubnet
@@ -209,6 +217,9 @@ resource storageSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = 
         ]
       }
     ]
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
   }
   dependsOn: [
     relaySubnet

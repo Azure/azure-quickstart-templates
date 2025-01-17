@@ -222,7 +222,7 @@ param timeZone string = 'Romance Standard Time'
 param autoShutdownTime string = '1900'
 
 @description('Size of the DC virtual machine.')
-param vmDcSize string = 'Standard_B2s'
+param vmDcSize string = 'Standard_B2als_v2'
 
 @description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
@@ -237,7 +237,7 @@ param vmDcSize string = 'Standard_B2s'
 param vmDcStorage string = 'StandardSSD_LRS'
 
 @description('Size of the SQL virtual machine.')
-param vmSqlSize string = 'Standard_B2ms'
+param vmSqlSize string = 'Standard_B2as_v2'
 
 @description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
@@ -252,7 +252,7 @@ param vmSqlSize string = 'Standard_B2ms'
 param vmSqlStorage string = 'StandardSSD_LRS'
 
 @description('Size of the SharePoint virtual machine(s).')
-param vmSharePointSize string = 'Standard_B4ms'
+param vmSharePointSize string = 'Standard_B4as_v2'
 
 @description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
@@ -282,7 +282,7 @@ var resourceGroupNameFormatted = replace(
 var sharePointSettings = {
   isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
   sharePointImagesList: {
-    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
+    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest'
     sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
     sp2016: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest'
   }
@@ -348,7 +348,7 @@ var sharePointSettings = {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/c/e/c/ceca0241-efca-4484-9d76-5661806f16c4/uber-subscription-kb5002658-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -629,7 +629,7 @@ resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'proxyHttpsPort'
-        value: firewall_proxy_settings.https_port
+        value: string(firewall_proxy_settings.https_port)
       }
       {
         name: 'localDomainFqdn'
@@ -810,7 +810,7 @@ resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runComman
       }
       {
         name: 'proxyHttpsPort'
-        value: firewall_proxy_settings.https_port
+        value: string(firewall_proxy_settings.https_port)
       }
       {
         name: 'localDomainFqdn'
@@ -990,7 +990,7 @@ resource vm_sp_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'proxyHttpsPort'
-        value: firewall_proxy_settings.https_port
+        value: string(firewall_proxy_settings.https_port)
       }
       {
         name: 'localDomainFqdn'
@@ -1115,7 +1115,7 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
     name: 'vm-fe${i}-pip'
     location: location
     sku: {
-      name: 'Basic'
+      name: 'Standard'
       tier: 'Regional'
     }
     properties: {
@@ -1229,7 +1229,7 @@ resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
         }
         {
           name: 'proxyHttpsPort'
-          value: firewall_proxy_settings.https_port
+          value: string(firewall_proxy_settings.https_port)
         }
         {
           name: 'localDomainFqdn'
