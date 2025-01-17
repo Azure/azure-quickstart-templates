@@ -92,7 +92,7 @@ param modelSkuName string = 'GlobalStandard'
 param modelCapacity int = 50
 
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
-param modelLocation string = 'westus2'
+param modelLocation string = 'eastus'
 
 
 /* ---------------------------------- Create User Assigned Identity ---------------------------------- */
