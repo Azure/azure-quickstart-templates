@@ -12,7 +12,7 @@ $adfParams = @{
 
 # Delete old triggers
 $triggers = Get-AzDataFactoryV2Trigger @adfParams -ErrorAction SilentlyContinue `
-| Where-Object { $_.Name -match '^msexports(_(setup|daily|monthly|extract))?$' }
+| Where-Object { $_.Name -match '^msexports(_(setup|daily|monthly|extract|FileAdded))?$' }
 $DeploymentScriptOutputs["stopTriggers"] = $triggers | Stop-AzDataFactoryV2Trigger -Force -ErrorAction SilentlyContinue
 $DeploymentScriptOutputs["deleteTriggers"] = $triggers | Remove-AzDataFactoryV2Trigger -Force -ErrorAction SilentlyContinue
 

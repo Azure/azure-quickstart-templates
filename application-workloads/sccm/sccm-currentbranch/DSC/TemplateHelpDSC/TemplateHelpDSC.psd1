@@ -21,6 +21,7 @@ DscResourcesToExport = @(
     'RegisterTaskScheduler',
     'DownloadSCCM',
     'DownloadAndInstallODBC',
+    'DownloadAndInstallvcredist',
     'WaitForExtendSchemaFile',
     'SetAutomaticManagedPageFile',
     'ChangeServices',
