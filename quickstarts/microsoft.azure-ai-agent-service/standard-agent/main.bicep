@@ -182,4 +182,15 @@ module aiSearchRoleAssignments 'modules-standard/ai-search-role-assignments.bice
   }
 }
 
+module addHubapabilityHost 'modules-standard/add-capabilityHost.bicep' = {
+  name: 'capabilityHost-configuration--${uniqueSuffix}-deployment'
+  params: {
+    capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
+    aiHubName: aiHub.outputs.aiHubName
+    aiProjectName: aiProject.outputs.aiProjectName
+    acsConnectionName: aiHub.outputs.acsConnectionName
+    aoaiConnectionName: aiHub.outputs.aoaiConnectionName
+  }
+}
+
 output PROJECT_CONNECTION_STRING string = aiProject.outputs.projectConnectionString

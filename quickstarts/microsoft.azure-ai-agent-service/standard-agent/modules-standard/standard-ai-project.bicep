@@ -34,9 +34,9 @@ var resourceGroupName = resourceGroup().name
 var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
 
 
-var storageConnections = ['${aiProjectName}/workspaceblobstore']
+/* var storageConnections = ['${aiProjectName}/workspaceblobstore']
 var aiSearchConnection = ['${acsConnectionName}']
-var aiServiceConnections = ['${aoaiConnectionName}']
+var aiServiceConnections = ['${aoaiConnectionName}'] */
 
 
 resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
@@ -61,7 +61,7 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
 
   // Resource definition for the capability host
   #disable-next-line BCP081
-  resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
+/*   resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
     name: '${aiProjectName}-${capabilityHostName}'
     properties: {
       capabilityHostKind: 'Agents'
@@ -69,7 +69,7 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
       vectorStoreConnections: aiSearchConnection
       storageConnections: storageConnections
     }
-  }
+  } */
 }
 
 output aiProjectName string = aiProject.name
