@@ -18,14 +18,14 @@ param aiProjectDescription string
 @description('Resource ID of the AI Hub resource')
 param aiHubId string
 
-@description('Name for capabilityHost.')
+/* @description('Name for capabilityHost.')
 param capabilityHostName string 
 
 @description('Name for ACS connection.')
 param acsConnectionName string
 
 @description('Name for ACS connection.')
-param aoaiConnectionName string
+param aoaiConnectionName string */
 
 //for constructing endpoint
 var subscriptionId = subscription().subscriptionId
