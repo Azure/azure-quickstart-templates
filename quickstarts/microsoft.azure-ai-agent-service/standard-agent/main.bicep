@@ -182,7 +182,7 @@ module aiSearchRoleAssignments 'modules-standard/ai-search-role-assignments.bice
   }
 }
 
-module addHubapabilityHost 'modules-standard/add-capabilityHost.bicep' = {
+module addCapabilityHost 'modules-standard/add-capability-host.bicep' = {
   name: 'capabilityHost-configuration--${uniqueSuffix}-deployment'
   params: {
     capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
