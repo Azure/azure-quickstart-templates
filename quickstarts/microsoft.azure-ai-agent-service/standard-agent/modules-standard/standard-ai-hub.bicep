@@ -48,8 +48,8 @@ param aiSearchServiceResourceGroupName string
 @description('Subscription ID of the AI Search resource')
 param aiSearchServiceSubscriptionId string
 
-@description('Name for capabilityHost.')
-param capabilityHostName string 
+/* @description('Name for capabilityHost.')
+param capabilityHostName string  */
 
 @description('AI Service Account kind: either OpenAI or AIServices')
 param aiServiceKind string 
