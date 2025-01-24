@@ -153,7 +153,6 @@ module aiProject 'modules-standard/standard-ai-project.bicep' = {
     location: location
     tags: tags
     aiHubId: aiHub.outputs.aiHubID
-
     // dependent resources
     /* capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
 

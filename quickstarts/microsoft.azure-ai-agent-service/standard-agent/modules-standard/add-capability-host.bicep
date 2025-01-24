@@ -22,7 +22,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existin
 }
 
 resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = {
-  name: aiHubName
+  name: aiProjectName
 }
 
 #disable-next-line BCP081
