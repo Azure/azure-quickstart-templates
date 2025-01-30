@@ -20,7 +20,7 @@ param storageName string
 param UAIPrincipalId string
 
 @description('Unique suffix for resource naming')
-param suffix string
+param suffix string = ''
 
 // Reference existing storage account
 resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' existing = {
