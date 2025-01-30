@@ -63,6 +63,9 @@ param modelCapacity int
 @description('Model/AI Resource deployment location')
 param modelLocation string 
 
+@description('The Kind of AI Service, can be "OpenAI" or "AIService"')
+param aisKind string
+
 // Network Resource Names
 @description('The name of the virtual network')
 param vnetName string = 'agents-vnet-${suffix}'
@@ -215,7 +218,7 @@ resource defaultAiServices 'Microsoft.CognitiveServices/accounts@2024-06-01-prev
   sku: {
     name: 'S0'
   }
-  kind: 'AIServices'
+  kind: aisKind
   identity: {
     type: 'SystemAssigned'
   }
