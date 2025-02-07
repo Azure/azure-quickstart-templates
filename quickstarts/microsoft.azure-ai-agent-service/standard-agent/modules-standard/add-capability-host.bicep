@@ -17,11 +17,11 @@ var storageConnections = ['${aiProjectName}/workspaceblobstore']
 var aiSearchConnection = ['${acsConnectionName}']
 var aiServiceConnections = ['${aoaiConnectionName}']
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' existing = {
   name: aiHubName
 }
 
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = {
+resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' existing = {
   name: aiProjectName
 }
 
@@ -44,4 +44,7 @@ resource projectCapabilityHost 'Microsoft.MachineLearningServices/workspaces/cap
     vectorStoreConnections: aiSearchConnection
     storageConnections: storageConnections
   }
+  dependsOn: [
+    aiHub
+  ]
 }
