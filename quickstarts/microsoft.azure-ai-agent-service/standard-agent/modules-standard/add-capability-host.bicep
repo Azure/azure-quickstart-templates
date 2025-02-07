@@ -44,4 +44,7 @@ resource projectCapabilityHost 'Microsoft.MachineLearningServices/workspaces/cap
     vectorStoreConnections: aiSearchConnection
     storageConnections: storageConnections
   }
+  dependsOn:[
+    aiHub
+  ]
 }
