@@ -39,7 +39,7 @@ var aiSearchConnection = ['${acsConnectionName}']
 var aiServiceConnections = ['${aoaiConnectionName}'] */
 
 
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' = {
   name: aiProjectName
   location: location
   tags: union(tags, {
