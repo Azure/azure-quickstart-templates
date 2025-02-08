@@ -190,6 +190,9 @@ module addCapabilityHost 'modules-standard/add-capability-host.bicep' = {
     acsConnectionName: aiHub.outputs.acsConnectionName
     aoaiConnectionName: aiHub.outputs.aoaiConnectionName
   }
+  dependsOn: [
+    aiSearchRoleAssignments,aiServiceRoleAssignments
+  ]
 }
 
 output PROJECT_CONNECTION_STRING string = aiProject.outputs.projectConnectionString
