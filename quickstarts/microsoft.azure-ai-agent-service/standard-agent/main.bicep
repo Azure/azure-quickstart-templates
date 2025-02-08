@@ -123,7 +123,6 @@ module aiHub 'modules-standard/standard-ai-hub.bicep' = {
     aiHubDescription: aiHubDescription
     location: location
     tags: tags
-    // capabilityHostName: '${name}-${uniqueSuffix}-${capabilityHostName}'
 
     aiSearchName: aiDependencies.outputs.aiSearchName
     aiSearchId: aiDependencies.outputs.aisearchID
@@ -153,11 +152,6 @@ module aiProject 'modules-standard/standard-ai-project.bicep' = {
     location: location
     tags: tags
     aiHubId: aiHub.outputs.aiHubID
-    // dependent resources
-    /* capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
-
-    acsConnectionName: aiHub.outputs.acsConnectionName
-    aoaiConnectionName: aiHub.outputs.aoaiConnectionName */
   }
 }
 
