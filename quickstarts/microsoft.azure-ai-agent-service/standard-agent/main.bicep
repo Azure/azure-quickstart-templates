@@ -57,6 +57,9 @@ param modelCapacity int = 50
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
 param modelLocation string = 'eastus'
 
+@description('AI Service Account kind: either AzureOpenAI or AIServices')
+param aiServiceKind string = 'AIServices'
+
 @description('The AI Service Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created.')
 param aiServiceAccountResourceId string = ''
 
@@ -120,7 +123,6 @@ module aiHub 'modules-standard/standard-ai-hub.bicep' = {
     aiHubDescription: aiHubDescription
     location: location
     tags: tags
-    capabilityHostName: '${name}-${uniqueSuffix}-${capabilityHostName}'
 
     aiSearchName: aiDependencies.outputs.aiSearchName
     aiSearchId: aiDependencies.outputs.aisearchID
@@ -128,6 +130,7 @@ module aiHub 'modules-standard/standard-ai-hub.bicep' = {
     aiSearchServiceSubscriptionId: aiDependencies.outputs.aiSearchServiceSubscriptionId
 
     aiServicesName: aiDependencies.outputs.aiServicesName
+    aiServiceKind: aiServiceKind
     aiServicesId: aiDependencies.outputs.aiservicesID
     aiServicesTarget: aiDependencies.outputs.aiservicesTarget
     aiServiceAccountResourceGroupName:aiDependencies.outputs.aiServiceAccountResourceGroupName
@@ -148,13 +151,7 @@ module aiProject 'modules-standard/standard-ai-project.bicep' = {
     aiProjectDescription: aiProjectDescription
     location: location
     tags: tags
-    
-    // dependent resources
-    capabilityHostName: '${projectName}-${uniqueSuffix}-${capabilityHostName}'
-
     aiHubId: aiHub.outputs.aiHubID
-    acsConnectionName: aiHub.outputs.acsConnectionName
-    aoaiConnectionName: aiHub.outputs.aoaiConnectionName
   }
 }
 
@@ -176,6 +173,20 @@ module aiSearchRoleAssignments 'modules-standard/ai-search-role-assignments.bice
     aiProjectPrincipalId: aiProject.outputs.aiProjectPrincipalId
     aiProjectId: aiProject.outputs.aiProjectResourceId
   }
+}
+
+module addCapabilityHost 'modules-standard/add-capability-host.bicep' = {
+  name: 'capabilityHost-configuration--${uniqueSuffix}-deployment'
+  params: {
+    capabilityHostName: '${uniqueSuffix}-${capabilityHostName}'
+    aiHubName: aiHub.outputs.aiHubName
+    aiProjectName: aiProject.outputs.aiProjectName
+    acsConnectionName: aiHub.outputs.acsConnectionName
+    aoaiConnectionName: aiHub.outputs.aoaiConnectionName
+  }
+  dependsOn: [
+    aiSearchRoleAssignments,aiServiceRoleAssignments
+  ]
 }
 
 output PROJECT_CONNECTION_STRING string = aiProject.outputs.projectConnectionString

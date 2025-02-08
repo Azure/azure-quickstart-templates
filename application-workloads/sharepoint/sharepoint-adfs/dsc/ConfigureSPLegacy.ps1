@@ -23,17 +23,17 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.1.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.2.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.4.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
-    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.5.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
-    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.5.0
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
-    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
 
     # Init
     [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
@@ -111,6 +111,7 @@ configuration ConfigureSPVM
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        
 
         # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
@@ -961,6 +962,7 @@ configuration ConfigureSPVM
             CARootName             = "$DomainNetbiosName-$DCServerName-CA"
             CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "$SharePointSitesAuthority.$DomainFQDN"
+            FriendlyName           = "$SharePointSitesAuthority.$DomainFQDN"
             SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
             KeyLength              = '2048'
             Exportable             = $true

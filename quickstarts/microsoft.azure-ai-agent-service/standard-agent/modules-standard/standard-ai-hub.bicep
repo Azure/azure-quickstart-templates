@@ -48,12 +48,19 @@ param aiSearchServiceResourceGroupName string
 @description('Subscription ID of the AI Search resource')
 param aiSearchServiceSubscriptionId string
 
-@description('Name for capabilityHost.')
-param capabilityHostName string 
+/* @description('Name for capabilityHost.')
+param capabilityHostName string  */
+
+@description('AI Service Account kind: either OpenAI or AIServices')
+param aiServiceKind string 
 
 var acsConnectionName = '${aiHubName}-connection-AISearch'
 
 var aoaiConnection  = '${aiHubName}-connection-AIServices_aoai'
+
+var kindAIServicesExists = aiServiceKind == 'AIServices'
+
+var aiServiceConnectionName = kindAIServicesExists ? '${aiHubName}-connection-AIServices' : aoaiConnection
 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: aiServicesName
@@ -65,7 +72,7 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' exis
   scope: resourceGroup(aiSearchServiceSubscriptionId, aiSearchServiceResourceGroupName)
 }
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
@@ -80,13 +87,14 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
     // dependent resources
     keyVault: keyVaultId
     storageAccount: storageAccountId
+    systemDatastoresAuthMode: 'identity'
   }
   kind: 'hub'
 
   resource aiServicesConnection 'connections@2024-07-01-preview' = {
-    name: '${aiHubName}-connection-AIServices'
+    name: aiServiceConnectionName
     properties: {
-      category: 'AIServices'
+      category: aiServiceKind // either AIServices or AzureOpenAI
       target: aiServicesTarget
       authType: 'AAD'
       isSharedToAll: true
@@ -115,15 +123,16 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview'
 
   // Resource definition for the capability host
   #disable-next-line BCP081
-  resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
+ /*  resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
     name: '${aiHubName}-${capabilityHostName}'
     properties: {
       capabilityHostKind: 'Agents'
     }
-  }
+  } */
   
 }
 
 output aiHubID string = aiHub.id
+output aiHubName string = aiHub.name
 output aoaiConnectionName string = aoaiConnection
 output acsConnectionName string = acsConnectionName

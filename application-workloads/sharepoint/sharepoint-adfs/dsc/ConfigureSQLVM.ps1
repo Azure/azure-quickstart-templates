@@ -9,10 +9,10 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.1.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.2.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.4.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.5.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -40,6 +40,7 @@ configuration ConfigureSQLVM
         WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
         DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        
 
         Script EnableFileSharing {
             GetScript  = { }

@@ -18,9 +18,12 @@ if ($Env:ARTIFACTS_SOURCE_OBJ) {
 }
 
 Write-Host "=== Building images with deployment $Env:DEPLOYMENT_NAME"
-az deployment group create --template-file $imageBicepPath --name $Env:DEPLOYMENT_NAME --subscription $Env:SUBSCRIPTION_ID --resource-group $Env:RESOURCE_GROUP `
+$deploymentOutput = az deployment group create --template-file $imageBicepPath --name $Env:DEPLOYMENT_NAME --subscription $Env:SUBSCRIPTION_ID --resource-group $Env:RESOURCE_GROUP `
     --parameters location=$Env:RESOURCES_LOCATION builderIdentity=$Env:BUILDER_IDENTITY imageIdentity=$Env:IMAGE_IDENTITY galleryName=$Env:GALLERY_NAME `
     ignoreBuildFailure=true imageBuildTimeoutInMinutes=$imageBuildTimeoutInMinutes $imageBuildProfileParam $artifactSourceParam
+
+# Print the deployment output after fixing end-of-line characters in image build logs
+$deploymentOutput -Replace '\\n', [Environment]::NewLine
 
 Write-Host "=== Getting deployment result"
 $deploymentResult = (az deployment group show --subscription $Env:SUBSCRIPTION_ID --resource-group $Env:RESOURCE_GROUP --name $Env:DEPLOYMENT_NAME) | ConvertFrom-Json

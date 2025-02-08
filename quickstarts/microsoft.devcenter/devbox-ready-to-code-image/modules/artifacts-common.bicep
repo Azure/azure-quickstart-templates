@@ -251,6 +251,9 @@ var runAfterAll = concat(
   disableOneDriveDesktopSync,
   [
     {
+      Name: 'WindowsRestart'
+    }
+    {
       name: 'windows-prepare-for-sysprep'
     }
   ]
