@@ -102,23 +102,11 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: keyvaultName
   location: location
   properties: {
-    createMode: 'default'
-    enabledForDeployment: false
-    enabledForDiskEncryption: false
-    enabledForTemplateDeployment: false
-    enableSoftDelete: true
-    enableRbacAuthorization: true
-    enablePurgeProtection: true
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Deny'
-    }
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    softDeleteRetentionInDays: 7
     tenantId: subscription().tenantId
+    sku: { family: 'A', name: 'standard' }
+    enableSoftDelete: true
+    enabledForTemplateDeployment: true
+    accessPolicies: []
   }
 }
 
