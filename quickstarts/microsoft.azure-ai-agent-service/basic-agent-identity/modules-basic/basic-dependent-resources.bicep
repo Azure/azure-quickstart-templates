@@ -4,6 +4,9 @@ param location string = resourceGroup().location
 @description('AI services name')
 param aiServicesName string
 
+@description('The name of the Key Vault')
+param keyvaultName string
+
 @description('Model name for deployment')
 param modelName string 
 
@@ -95,6 +98,18 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' =  {
   }
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
+  name: keyvaultName
+  location: location
+  properties: {
+    tenantId: subscription().tenantId
+    sku: { family: 'A', name: 'standard' }
+    enableSoftDelete: true
+    enabledForTemplateDeployment: true
+    accessPolicies: []
+  }
+}
+
 output aiServicesName string =  aiServiceExists ? existingAIServiceAccount.name : aiServicesName
 output aiservicesID string = aiServiceExists ? existingAIServiceAccount.id : aiServices.id
 output aiservicesTarget string = aiServiceExists ? existingAIServiceAccount.properties.endpoint : aiServices.properties.endpoint
@@ -102,3 +117,4 @@ output aiServiceAccountResourceGroupName string = aiServiceExists ? aiServicePar
 output aiServiceAccountSubscriptionId string = aiServiceExists ? aiServiceParts[2] : subscription().subscriptionId 
 
 output storageId string = storage.id
+output keyvaultId string = keyVault.id
