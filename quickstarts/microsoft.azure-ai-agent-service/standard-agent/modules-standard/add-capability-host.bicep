@@ -45,6 +45,6 @@ resource projectCapabilityHost 'Microsoft.MachineLearningServices/workspaces/cap
     storageConnections: storageConnections
   }
   dependsOn: [
-    aiHub
+    hubCapabilityHost
   ]
 }
