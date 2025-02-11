@@ -9,15 +9,7 @@ using System.Net.Http.Headers;
 using System.Configuration;
 using System.Text;
 using System.Threading;
-using System.Globalization;
-using System.Collections.Generic;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.WindowsAzure.Storage.Table;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
+ 
 // Custom Resource Table Entity
 public class CustomResource : TableEntity
 {
