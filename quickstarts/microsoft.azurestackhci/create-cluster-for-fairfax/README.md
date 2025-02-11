@@ -1,10 +1,10 @@
 ---
-description: This template creates an Azure Stack HCI 23H2 cluster using an ARM template.
+description: This template creates an Azure Stack HCI 23H2 cluster in Fairfax using an ARM template.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: create-cluster
+urlFragment: create-cluster-for-fairfax
 languages:
 - json
 ---
