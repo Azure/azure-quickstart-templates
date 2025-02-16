@@ -241,7 +241,7 @@ function Load-Assembly([string] $Assembly) {
         Add-Type -Assembly $Assembly | Out-Null
     }
     catch {
-        # On Nano Server, Powershell Core Edition is used.  Add-Type is unable to resolve base class assemblies because they are not GAC'd.
+        # On Nano Server, PowerShell Core Edition is used.  Add-Type is unable to resolve base class assemblies because they are not GAC'd.
         # Loading the base class assemblies is not unnecessary as the types will automatically get resolved.
     }
 }

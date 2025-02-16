@@ -121,7 +121,7 @@ When you try to access SCEP, you will get a restricted access error.
 
 To access the endpoint protection client, you need to clean SCEP Policy on the Windows workstation or server.
 
-1. Open **Powershell**
+1. Open **PowerShell**
 
 1. Go to **C:\\Program Files\\Microsoft Security Client\\**
 

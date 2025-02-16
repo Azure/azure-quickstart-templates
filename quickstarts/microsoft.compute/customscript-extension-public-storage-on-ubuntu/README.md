@@ -36,7 +36,7 @@ This template shows a simple example to run scripts which are stored in public s
 
   https://azure.microsoft.com/documentation/articles/xplat-cli-azure-resource-manager/
 
-2. Using Powershell
+2. Using PowerShell
 
   https://azure.microsoft.com/documentation/articles/powershell-azure-resource-manager/
 
