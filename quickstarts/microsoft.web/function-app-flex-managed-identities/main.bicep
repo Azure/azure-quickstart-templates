@@ -104,73 +104,63 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   }
 }
 
-resource userStorageDataOwner 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'uai-data-owner-${resourceToken}'
   location: location
 }
 
-resource userStorageDataContributor 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'uai-ata-contrib-${resourceToken}'
-  location: location
-}
-
-resource userMonitorMetrics 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'uai-monitor-metrics-${resourceToken}'
-  location: location
-}
-
 resource roleAssignmentBlobDataOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, storage.id, userStorageDataOwner.id, 'Storage Blob Data Owner')
+  name: guid(subscription().id, storage.id, userAssignedIdentity.id, 'Storage Blob Data Owner')
   scope: storage
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataOwnerRoleId)
-    principalId: userStorageDataOwner.properties.principalId
+    principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 resource roleAssignmentBlob 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, storage.id, userStorageDataContributor.id, 'Storage Blob Data Contributor')
+  name: guid(subscription().id, storage.id, userAssignedIdentity.id, 'Storage Blob Data Contributor')
   scope: storage
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
-    principalId: userStorageDataContributor.properties.principalId
+    principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 resource roleAssignmentQueueStorage 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, storage.id, userStorageDataContributor.id, 'Storage Queue Data Contributor')
+  name: guid(subscription().id, storage.id, userAssignedIdentity.id, 'Storage Queue Data Contributor')
   scope: storage
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageQueueDataContributorId)
-    principalId: userStorageDataContributor.properties.principalId
+    principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 resource roleAssignmentTableStorage 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, storage.id, userStorageDataContributor.id, 'Storage Table Data Contributor')
+  name: guid(subscription().id, storage.id, userAssignedIdentity.id, 'Storage Table Data Contributor')
   scope: storage
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageTableDataContributorId)
-    principalId: userStorageDataContributor.properties.principalId
+    principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 resource roleAssignmentAppInsights 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, applicationInsights.id, userMonitorMetrics.id, 'Monitoring Metrics Publisher')
+  name: guid(subscription().id, applicationInsights.id, userAssignedIdentity.id, 'Monitoring Metrics Publisher')
   scope: applicationInsights
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', monitoringMetricsPublisherId)
-    principalId: userMonitorMetrics.properties.principalId
+    principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 //********************************************
-// Azure resources required by your function app.
+// Function app and Flex Consumption plan definitions
 //********************************************
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
@@ -193,9 +183,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${userStorageDataOwner.id}':{}
-      '${userStorageDataContributor.id}':{}
-      '${userMonitorMetrics.id}':{}
+      '${userAssignedIdentity.id}':{}
       }
     }
   properties: {
@@ -207,7 +195,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           value: '${storage.properties.primaryEndpoints.blob}${deploymentStorageContainerName}'
           authentication: {
             type: 'UserAssignedIdentity'
-            userAssignedIdentityResourceId: userStorageDataContributor.id
+            userAssignedIdentityResourceId: userAssignedIdentity.id
           }
         }
       }
@@ -226,7 +214,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     properties: {
         AzureWebJobsStorage__accountName: storage.name
         AzureWebJobsStorage__credential : 'managedidentity'
-        APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${userMonitorMetrics.id};Authorization=AAD'
+        APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${userAssignedIdentity.properties.clientId};Authorization=AAD'
       }
   }
 }
