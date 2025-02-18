@@ -70,6 +70,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   properties: {
     Application_Type: 'web'
     WorkspaceResourceId: logAnalytics.id
+    DisableLocalAuth: true
   }
 }
 
@@ -214,6 +215,8 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     properties: {
         AzureWebJobsStorage__accountName: storage.name
         AzureWebJobsStorage__credential : 'managedidentity'
+        AzureWebJobsStorage__clientId: userAssignedIdentity.properties.clientId
+        APPLICATIONINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.properties.InstrumentationKey
         APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${userAssignedIdentity.properties.clientId};Authorization=AAD'
       }
   }
