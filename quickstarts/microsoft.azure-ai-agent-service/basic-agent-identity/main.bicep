@@ -81,6 +81,7 @@ module aiDependencies 'modules-basic/basic-dependent-resources.bicep' = {
     aiServicesName: '${aiServicesName}${uniqueSuffix}'
     aiServiceAccountResourceId: aiServiceAccountResourceId
     storageName: '${storageName}${uniqueSuffix}'
+    keyvaultName: 'kv-${name}-${uniqueSuffix}'
     location: location
 
      // Model deployment parameters
@@ -101,6 +102,8 @@ module aiHub 'modules-basic/basic-ai-hub-identity.bicep' = {
     aiHubFriendlyName: aiHubFriendlyName
     aiHubDescription: aiHubDescription
     location: location
+    keyVaultId: aiDependencies.outputs.keyvaultId
+
     tags: tags
 
     // dependent resources
