@@ -93,6 +93,7 @@ resource waitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   // Documentation: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/capabilityhosts?tabs=bicep
   resource capabilityHost 'Microsoft.MachineLearningServices/workspaces/capabilityHosts@2024-10-01-preview' = {
     name: '${aiProjectName}-${capabilityHostName}'
+    parent: aiProject
     properties: {
       capabilityHostKind: 'Agents'
       aiServicesConnections: aiServiceConnections
@@ -100,7 +101,7 @@ resource waitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       storageConnections: storageConnections
     }
     dependsOn: [
-      aiProject, waitScript
+      waitScript
     ]
   }
 
