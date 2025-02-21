@@ -69,19 +69,41 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
     hubResourceId: aiHubId
   }
   kind: 'project'
+}
 
-  // Resource definition for the capability host
+resource waitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  name: 'WaitForProjectDeployment'
+  location: location
+  kind: 'AzurePowerShell'
+  properties: {
+    azPowerShellVersion: '10.0'
+    scriptContent: '''
+      Write-Output "Starting wait script..."
+      Start-Sleep -Seconds 120  # Wait for 2 minutes
+      Write-Output "Wait completed. Proceeding with deployment..."
+    '''
+    retentionInterval: 'PT1H'
+    cleanupPreference: 'OnSuccess'
+  }
+  dependsOn: [
+    aiProject
+  ]
+}
+// Resource definition for the capability host
   // Documentation: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/capabilityhosts?tabs=bicep
-  resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
+  resource capabilityHost 'Microsoft.MachineLearningServices/workspaces/capabilityHosts@2024-10-01-preview' = {
     name: '${aiProjectName}-${capabilityHostName}'
+    parent: aiProject
     properties: {
       capabilityHostKind: 'Agents'
       aiServicesConnections: aiServiceConnections
       vectorStoreConnections: aiSearchConnection
       storageConnections: storageConnections
     }
+    dependsOn: [
+      waitScript
+    ]
   }
-}
 
 output aiProjectName string = aiProject.name
 output aiProjectResourceId string = aiProject.id

@@ -118,21 +118,45 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview'
     }
   }
 
-  // Resource definition for the capability host
-  // Documentation: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/capabilityhosts?tabs=bicep
-  resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
-    name: capabilityHostName
-    properties: {
-      customerSubnet: subnetId
-      capabilityHostKind: 'Agents'
-    }
-  }
   dependsOn: [
     userAssignedIdentity
     aiServices
     //searchService
   ]
 }
+
+resource waitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  name: 'WaitForProjectDeployment'
+  location: location
+  kind: 'AzurePowerShell'
+  properties: {
+    azPowerShellVersion: '10.0'
+    scriptContent: '''
+      Write-Output "Starting wait script..."
+      Start-Sleep -Seconds 120  # Wait for 2 minutes
+      Write-Output "Wait completed. Proceeding with deployment..."
+    '''
+    retentionInterval: 'PT1H'
+    cleanupPreference: 'OnSuccess'
+  }
+  dependsOn: [
+    aiHub
+  ]
+}
+
+// Resource definition for the capability host
+  // Documentation: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/capabilityhosts?tabs=bicep
+  resource capabilityHost  'Microsoft.MachineLearningServices/workspaces/capabilityHosts@2024-10-01-preview' = {
+    name: capabilityHostName
+    parent: aiHub
+    properties: {
+      customerSubnet: subnetId
+      capabilityHostKind: 'Agents'
+    }
+    dependsOn: [
+      waitScript
+    ]
+  }
 
 output aiHubID string = aiHub.id
 output aoaiConnectionName string = aoaiConnection
