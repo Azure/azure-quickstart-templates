@@ -120,7 +120,7 @@ You can visit <https://azure.com/e/26eea69e35b04cb884b83ce06feadb5c> to estimate
 
 ## More information
 
-Additional notes:
+Additional notes: 
 
 - Using the default options, the complete deployment takes about 1h (but it is worth it).
 - Deploying any post-RTM SharePoint Subscription build adds only an extra 5-10 minutes to the total deployment time (compared to RTM), partly because the updates are installed before the farm is created.
