@@ -171,7 +171,7 @@ resource buildImageTemplateScript 'Microsoft.Resources/deploymentScripts@2020-10
   ]
   properties: {
     forceUpdateTag: guidId
-    azPowerShellVersion: '9.7'
+    azPowerShellVersion: '13.0'
     environmentVariables: [
       {
         name: 'imageTemplateName'
