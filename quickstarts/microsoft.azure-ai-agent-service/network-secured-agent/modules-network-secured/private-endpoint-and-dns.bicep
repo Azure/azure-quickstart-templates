@@ -170,6 +170,9 @@ resource aiServicesDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
       }
     ]
   }
+  dependsOn: [
+    aiServicesLink
+  ]
 }
 
 // Private DNS Zone for AI Search

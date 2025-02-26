@@ -26,6 +26,7 @@ var keyVaultOverride = ''       // Override for existing Key Vault
 var aiServicesOverride = ''     // Override for existing AI Services
 var aiSearchOverride = ''       // Override for existing AI Search
 var userAssignedIdentityOverride = '' // Override for existing managed identity
+var vnetOverride = ''                            // Override for existing VNet
 
 /* ---------------------------------- Deployment Identifiers ---------------------------------- */
 
@@ -117,6 +118,8 @@ var storageName = (storageOverride == '') ? '${defaultStorageName}${uniqueSuffix
 var keyVaultName = (keyVaultOverride == '') ? 'kv-${defaultAiHubName}-${uniqueSuffix}' : keyVaultOverride
 var aiServiceName = (aiServicesOverride == '') ? '${defaultAiServicesName}${uniqueSuffix}' : aiServicesOverride
 var aiSearchName = (aiSearchOverride == '') ? '${defaultAiSearchName}${uniqueSuffix}' : aiSearchOverride
+var vnetName = (vnetOverride == '') ? '${defaultAiHubName}-${uniqueSuffix}-vnet' : vnetOverride
+
 
 var storageNameClean = '${defaultStorageName}${uniqueSuffix}'
 // Dependent resources for the Azure Machine Learning workspace
@@ -128,11 +131,16 @@ module aiDependencies 'modules-network-secured/network-secured-dependent-resourc
     keyvaultName: keyVaultName
     aiServicesName: aiServiceName
     aiSearchName: aiSearchName
+    vnetName: vnetName
+
     tags: tags
     location: location
 
     aiServicesExists: aiServicesOverride != ''
     aiSearchExists: aiSearchOverride != ''
+    storageExists: storageOverride != ''
+    keyvaultExists: keyVaultOverride != ''
+    vnetExists: vnetOverride != ''
 
      // Model deployment parameters
      modelName: modelName
@@ -202,7 +210,7 @@ resource aiSearch 'Microsoft.Search/searchServices@2023-11-01' existing = {
 //    - privatelink.blob.core.windows.net for Storage
 // 3. Links private DNS zones to the VNet for name resolution
 // 4. Configures network policies to restrict access to private endpoints only
-module privateEndpointAndDNS 'modules-network-secured/private-endpoint-and-dns.bicep' = {
+module privateEndpointAndDNS 'modules-network-secured/private-endpoint-and-dns.bicep' = if(vnetOverride == '') {  
   name: '${name}-${uniqueSuffix}--private-endpoint'
   params: {
     aiServicesName: aiDependencies.outputs.aiServicesName    // AI Services to secure
@@ -240,7 +248,7 @@ module aiProject 'modules-network-secured/network-secured-ai-project.bicep' = {
   }
 }
 
-module aiServiceRoleAssignments 'modules-network-secured/ai-service-role-assignments.bicep' = {
+module aiServiceRoleAssignments 'modules-network-secured/ai-service-role-assignments.bicep' = if(aiServicesOverride == '') {
   name: '${name}-${uniqueSuffix}--AiServices-RA'
   scope: resourceGroup()
   params: {
@@ -250,7 +258,7 @@ module aiServiceRoleAssignments 'modules-network-secured/ai-service-role-assignm
   }
 }
 
-module aiSearchRoleAssignments 'modules-network-secured/ai-search-role-assignments.bicep' = {
+module aiSearchRoleAssignments 'modules-network-secured/ai-search-role-assignments.bicep' = if(aiSearchOverride == '') {
   name: '${name}-${uniqueSuffix}--AiSearch-RA'
   scope: resourceGroup()
   params: {

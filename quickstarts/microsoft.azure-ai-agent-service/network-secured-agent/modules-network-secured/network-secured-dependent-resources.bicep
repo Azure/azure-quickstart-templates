@@ -23,6 +23,7 @@ param storageExists bool = false
 param keyvaultExists bool = false
 param aiServicesExists bool = false
 param aiSearchExists bool = false
+param vnetExists bool = false
 
 @description('Azure region of the deployment')
 param location string = resourceGroup().location
@@ -80,15 +81,18 @@ var cxSubnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetNa
 var agentSubnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, agentsSubnetName)
 
 // User-assigned managed identity for secure access
-resource uai 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
-  location: location
+resource uai 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' existing = {
   name: userAssignedIdentityName
 }
 
 /* -------------------------------------------- Virtual Network Resources -------------------------------------------- */
 
+resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' existing = if(vnetExists) {
+  name: vnetName
+}
+
 // Virtual Network with segregated subnets and security controls
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = if(!vnetExists) {
   name: vnetName
   location: location
   properties: {
@@ -283,7 +287,7 @@ resource defaultAiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' = 
 }
 
 // Storage Account with network security controls
-param noZRSRegions array = ['southindia', 'westus']
+param noZRSRegions array = ['southindia', 'westus', 'centraluseuap']
 param sku object = contains(noZRSRegions, location) ? { name: 'Standard_GRS' } : { name: 'Standard_ZRS' }
 var storageNameCleaned = storageExists ? existingStorage.name : replace(storageName, '-', '')
 
@@ -375,11 +379,11 @@ output storageId string =  storageExists ? existingStorage.id : defaultStorage.i
 output storageAccountResourceGroupName string = storageParts[4]
 output storageAccountSubscriptionId string = storageParts[2]
 
-output virtualNetworkName string = virtualNetwork.name
-output virtualNetworkId string = virtualNetwork.id
-output cxSubnetName string = cxSubnetName
-output agentSubnetName string = agentsSubnetName
-output cxSubnetId string = cxSubnetRef
-output agentSubnetId string = agentSubnetRef
+output virtualNetworkName string = vnetExists ? existingVirtualNetwork.name : virtualNetwork.name
+output virtualNetworkId string = vnetExists ? existingVirtualNetwork.id : virtualNetwork.id
+output cxSubnetName string = vnetExists ? existingVirtualNetwork.properties.subnets[0].name : cxSubnetName
+output agentSubnetName string = vnetExists ? existingVirtualNetwork.properties.subnets[1].name : agentsSubnetName
+output cxSubnetId string = vnetExists ? existingVirtualNetwork.properties.subnets[0].id : cxSubnetRef
+output agentSubnetId string = vnetExists ? existingVirtualNetwork.properties.subnets[1].id : agentSubnetRef
 
 output keyvaultId string = keyvaultExists ? existingKeyVault.id : defaultKeyVault.id
