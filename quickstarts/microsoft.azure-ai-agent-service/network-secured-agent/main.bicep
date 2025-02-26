@@ -93,8 +93,10 @@ param modelSkuName string = 'GlobalStandard'
 param modelCapacity int = 50
 
 @description('Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created.')
-param modelLocation string = 'westus2'
+param modelLocation string = 'eastus'
 
+@description('AI service kind, values can be "OpenAI" or "AIService"')
+param aisKind string = 'OpenAI'
 
 /* ---------------------------------- Create User Assigned Identity ---------------------------------- */
 
@@ -135,6 +137,7 @@ module aiDependencies 'modules-network-secured/network-secured-dependent-resourc
 
     tags: tags
     location: location
+    aisKind: aisKind
 
     aiServicesExists: aiServicesOverride != ''
     aiSearchExists: aiSearchOverride != ''
