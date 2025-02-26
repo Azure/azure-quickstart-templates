@@ -1,5 +1,5 @@
 ---
-description: This template provides a way to deploy an Dev Box service with only the required number of reosuces.
+description: This template provides a quick and easy way to set up resouces required to start deploying Dev Boxes.
 page_type: sample
 products:
 - azure
@@ -9,24 +9,14 @@ languages:
 - bicep
 - json
 ---
-# Deploy Dev Box Service with Quick Start
+# Setup Resources To Deploy Dev Boxes
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-builtin-image/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-builtin-image/PublicDeployment.svg)
+This template provides a quick way to set up the resouces needed to begin deploying a new Dev Box. The resources include:
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-builtin-image/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-builtin-image/FairfaxDeployment.svg)
-
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-builtin-image/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-builtin-image/CredScanResult.svg)
-
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.devcenter/devbox-with-builtin-image/BicepVersion.svg)
-
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devcenter%2Fdevbox-with-builtin-image%2Fazuredeploy.json)
-
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devcenter%2Fdevbox-with-builtin-image%2Fazuredeploy.json) 
-
-This template provides a way to deploy a Dev Box service for a quick start experience incluing Dev Center, Dev box Project, Dev box Definition, and Dev box pool with a Microsoft Hosted Network.
+- Dev Center
+- Dev Box Project
+- Dev Box Definition (currently only 1 option is available).
+- Dev Box Pool with a Microsoft Hosted Network. [Learn more on MHNs](https://learn.microsoft.com/en-us/azure/dev-box/how-to-manage-dev-box-pools#create-a-dev-box-pool). 
 
 If you're new to **Dev Box**, see:
 
