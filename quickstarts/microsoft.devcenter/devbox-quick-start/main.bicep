@@ -3,7 +3,7 @@ param devCenterName string = 'default-dc-name'
 param devBoxDefinitionName string = 'default-dbd-name'
 param poolName string = 'default-pool-name'
 
-var location string = resourceGroup().location
+var location = resourceGroup().location
 var poolPropertyAdmin = 'Enabled'
 var poolPropertyNetworkType = 'Managed'
 var poolPropertyNetworkName = 'Network'
