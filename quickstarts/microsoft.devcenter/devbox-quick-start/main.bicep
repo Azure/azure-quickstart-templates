@@ -2,8 +2,8 @@ param projectName string = 'default-project-name'
 param devCenterName string = 'default-dc-name'
 param devBoxDefinitionName string = 'default-dbd-name'
 param poolName string = 'default-pool-name'
-param location string = resourceGroup().location
 
+var location string = resourceGroup().location
 var poolPropertyAdmin = 'Enabled'
 var poolPropertyNetworkType = 'Managed'
 var poolPropertyNetworkName = 'Network'
@@ -63,9 +63,9 @@ resource projectName_pool 'Microsoft.DevCenter/projects/pools@2024-10-01-preview
     licenseType: 'Windows_Client'
     localAdministrator: poolPropertyAdmin
     managedVirtualNetworkRegions: [
-      resourceGroup().location
+      location
     ]
     virtualNetworkType: poolPropertyNetworkType
-    networkConnectionName: '${poolPropertyNetworkName}-${resourceGroup().location}'
+    networkConnectionName: '${poolPropertyNetworkName}-${locaiton}}'
   }
 }
