@@ -3,6 +3,7 @@ param devCenterName string = 'default-dc-name'
 param devBoxDefinitionName string = 'default-dbd-name'
 param poolName string = 'default-pool-name'
 
+var resouceGroupRegion = resourceGroup().location
 var poolPropertyAdmin = 'Enabled'
 var poolPropertyNetworkType = 'Managed'
 var poolPropertyNetworkName = 'Network'
@@ -12,7 +13,7 @@ var storage_512gb = '512gb'
 
 resource devCenter 'Microsoft.DevCenter/devcenters@2024-10-01-preview' = {
   name: devCenterName
-  location: resourceGroup().location
+  location: resouceGroupRegion
   identity: {
     type: 'SystemAssigned'
   }
@@ -32,7 +33,7 @@ resource devCenter 'Microsoft.DevCenter/devcenters@2024-10-01-preview' = {
 
 resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
   name: projectName
-  location: resourceGroup().location
+  location: resouceGroupRegion
   properties: {
     devCenterId: devCenter.id
   }
@@ -41,7 +42,7 @@ resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
 resource devcenterName_devBoxDefinition 'Microsoft.DevCenter/devcenters/devboxdefinitions@2024-08-01-preview' = {
   parent: devCenter
   name: '${devBoxDefinitionName}'
-  location: resourceGroup().location
+  location: resouceGroupRegion
   properties: {
     imageReference: {
       id: '${devCenter.id}/galleries/default/images/${image_win11_ent_vs2022}'
@@ -56,7 +57,7 @@ resource devcenterName_devBoxDefinition 'Microsoft.DevCenter/devcenters/devboxde
 resource projectName_pool 'Microsoft.DevCenter/projects/pools@2024-10-01-preview' = {
   parent: project
   name: '${poolName}'
-  location: resourceGroup().location
+  location: resouceGroupRegion
   properties: {
     devBoxDefinitionName: devBoxDefinitionName
     licenseType: 'Windows_Client'
