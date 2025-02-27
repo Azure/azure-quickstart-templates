@@ -41,7 +41,7 @@ resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
 
 resource devcenterName_devBoxDefinition 'Microsoft.DevCenter/devcenters/devboxdefinitions@2024-08-01-preview' = {
   parent: devCenter
-  name: '${devBoxDefinitionName}'
+  name: devBoxDefinitionName
   location: location
   properties: {
     imageReference: {
@@ -56,7 +56,7 @@ resource devcenterName_devBoxDefinition 'Microsoft.DevCenter/devcenters/devboxde
 
 resource projectName_pool 'Microsoft.DevCenter/projects/pools@2024-10-01-preview' = {
   parent: project
-  name: '${poolName}'
+  name: poolName
   location: location
   properties: {
     devBoxDefinitionName: devBoxDefinitionName
