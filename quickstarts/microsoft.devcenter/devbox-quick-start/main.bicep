@@ -66,6 +66,6 @@ resource projectName_pool 'Microsoft.DevCenter/projects/pools@2024-10-01-preview
       location
     ]
     virtualNetworkType: poolPropertyNetworkType
-    networkConnectionName: '${poolPropertyNetworkName}-${locaiton}}'
+    networkConnectionName: '${poolPropertyNetworkName}-${location}}'
   }
 }
