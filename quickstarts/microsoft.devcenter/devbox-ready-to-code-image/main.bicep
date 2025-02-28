@@ -58,18 +58,18 @@ param ignoreBuildFailure bool = true
 param images types.images = {}
 
 var defaultImages = {
-  // eShop: {
-  //   name: 'quickstart-eShop'
-  //   shouldBuild: true
-  // }
+  eShop: {
+    name: 'quickstart-eShop'
+    shouldBuild: true
+  }
   axios: {
     name: 'quickstart-axios'
     shouldBuild: true
   }
-  // MSBuildSdks: {
-  //   name: 'quickstart-MSBuildSdks'
-  //   shouldBuild: true
-  // }
+  MSBuildSdks: {
+    name: 'quickstart-MSBuildSdks'
+    shouldBuild: true
+  }
 }
 
 var imagesWithDefaults = union(defaultImages, images)
