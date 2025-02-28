@@ -43,7 +43,7 @@ param imageBuildTimeoutInMinutes int = 180
 
 @description('Git repository containing artifacts to be used in the image build')
 param artifactSource types.artifactSource = {
-  Url: 'https://github.com/Azure/azure-quickstart-templates'
+  Url: 'https://github.com/dmgonch/azure-quickstart-templates'
   Path: 'quickstarts/microsoft.devcenter/devbox-ready-to-code-image/tools/artifacts'
   Branch: 'install-vscode-extensions'
 }
