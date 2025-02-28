@@ -45,7 +45,7 @@ param imageBuildTimeoutInMinutes int = 180
 param artifactSource types.artifactSource = {
   Url: 'https://github.com/Azure/azure-quickstart-templates'
   Path: 'quickstarts/microsoft.devcenter/devbox-ready-to-code-image/tools/artifacts'
-  Branch: 'master'
+  Branch: 'install-vscode-extensions'
 }
 
 @description('''
@@ -58,18 +58,18 @@ param ignoreBuildFailure bool = true
 param images types.images = {}
 
 var defaultImages = {
-  eShop: {
-    name: 'quickstart-eShop'
-    shouldBuild: true
-  }
+  // eShop: {
+  //   name: 'quickstart-eShop'
+  //   shouldBuild: true
+  // }
   axios: {
     name: 'quickstart-axios'
     shouldBuild: true
   }
-  MSBuildSdks: {
-    name: 'quickstart-MSBuildSdks'
-    shouldBuild: true
-  }
+  // MSBuildSdks: {
+  //   name: 'quickstart-MSBuildSdks'
+  //   shouldBuild: true
+  // }
 }
 
 var imagesWithDefaults = union(defaultImages, images)
