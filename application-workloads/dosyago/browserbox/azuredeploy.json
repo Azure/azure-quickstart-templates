@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "6.4.0.1",
+  "contentVersion": "10.0.0.1",
   "parameters": {
     "utcValue": {
       "type": "string",
@@ -11,7 +11,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
-      "defaultValue": "[deployment().properties.templateLink.uri]"
+      "defaultValue": "https://github.com/BrowserBox/BrowserBox/blob/boss/spread-channels/azure/dosyago/browserbox/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -68,13 +68,20 @@
         "description": "A secret for the login link."
       }
     },
+    "licenseKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Your valid BrowserBox License Key"
+      }
+    },
     "imageChoice": {
       "type": "string",
-      "defaultValue": "Ubuntu 22.04 LTS (gen 2)",
+      "defaultValue": "Ubuntu 24.04 LTS",
       "allowedValues": [
-        "CentOS 8.5 (gen 2)",
-        "Ubuntu 22.04 LTS (gen 2)",
-        "RedHat 8 LVM (gen 2)"
+        "Debian 12 (gen 2)",
+        "Ubuntu 24.04 LTS",
+        "RedHat 9 LVM (gen 2)"
       ],
       "metadata": {
         "description": "Choose an OS image"
@@ -150,23 +157,23 @@
     }
   },
   "variables": {
-    "CentOS_8.5_gen_2": {
+    "Debian_12_gen_2": {
       "version": "latest",
-      "publisher": "OpenLogic",
-      "offer": "CentOS",
-      "sku": "8_5-gen2"
+      "publisher": "Debian",
+      "offer": "debian-12",
+      "sku": "12-gen2"
     },
-    "Ubuntu_22.04_LTS_gen_2": {
+    "Ubuntu_24.04_LTS": {
       "version": "latest",
       "publisher": "Canonical",
-      "offer": "0001-com-ubuntu-server-jammy",
-      "sku": "22_04-lts-gen2"
+      "offer": "ubuntu-24_04-lts",
+      "sku": "server"
     },
-    "RedHat_8_LVM_gen_2": {
+    "RedHat_9_LVM_gen_2": {
       "version": "latest",
       "publisher": "RedHat",
       "offer": "RHEL",
-      "sku": "8-lvm-gen2"
+      "sku": "9-lvm-gen2"
     },
     "uniqueSuffix": "[uniqueString(resourceGroup().id, deployment().name, parameters('utcValue'))]",
     "publicIPAddressNamePrefix": "BrowserBoxPublicIP",
@@ -192,6 +199,7 @@
     "realToken": "[if(equals(parameters('token'), ''), uniqueString(parameters('randomGUID')), parameters('token'))]",
     "realHostname": "[if(equals(parameters('hostname'), ''), variables('actualHostname'), parameters('hostname'))]",
     "loginLink": "[concat('https://', variables('realHostname'), ':8080/login?token=', variables('realToken'))]",
+    "stopLink": "[concat('https://', variables('realHostname'), ':8080/settings_modal?token=', variables('realToken'))]",
     "deploymentLink": "[concat('https://portal.azure.com/#view/HubsExtension/DeploymentDetailsBlade/~/overview/id/%2Fsubscriptions%2F', subscription().subscriptionId, '%2FresourceGroups%2F', resourceGroup().name, '%2Fproviders%2FMicrosoft.Resources%2Fdeployments%2F', deployment().name)]"
   },
   "resources": [
@@ -486,7 +494,7 @@
         "[resourceId('Microsoft.Insights/actionGroups', concat('YourBrowserBoxEmailList', variables('uniqueSuffix')))]"
       ],
       "properties": {
-        "description": "[concat('Your BrowserBox is ready! Click your Login Link:\n', variables('loginLink'), '\n\nFor commercial closed-source use please purchase a license:\nhttps://dosyago.com\n\nFor support, sales and customizations email anytime:\n hey@dosyago.com\n\nTo shut down your BrowserBox or manage this deployment, visit:\n', variables('deploymentLink'), '\n\nThank you for choosing BrowserBox! Have a safe browse!')]",
+        "description": "[concat('Your BrowserBox is ready! Click your Login Link:\n', variables('loginLink'), '\n\nFor support, sales and customizations email:\n sales@dosyago.com\n\nAfter using, ensure you properly stop BrowserBox and release your licensed seat, by visiting:\n', variables('stopLink'), '\n\nTo manage your Azure deployment for BrowserBox, visit:\n', variables('deploymentLink'), '\n\nBrowserBox (c) DOSAYGO 2018 - 2025')]",
         "severity": 3,
         "enabled": true,
         "evaluationFrequency": "PT1M",
@@ -536,12 +544,13 @@
         "enableAutomaticUpgrade": false,
         "settings": {
           "fileUris": [
-            "[uri(parameters('_artifactsLocation'), concat('installBrowserBox_then_notify.sh', parameters('_artifactsLocationSasToken')))]"
+            "[uri(parameters('_artifactsLocation'), concat('installBrowserBox_then_notify.sh', parameters('_artifactsLocationSasToken')))]",
+            "https://raw.githubusercontent.com/BrowserBox/BrowserBox/refs/heads/boss/spread-channels/azure/dosyago/browserbox/installBrowserBox_then_notify.sh"
           ]
         },
         "suppressFailures": true,
         "protectedSettings": {
-          "commandToExecute": "[concat('bash installBrowserBox_then_notify.sh \"', parameters('adminUsername'), '\" \"', parameters('location'), '\" \"', resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '\" \"', reference(resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix'))), '2020-02-02', 'Full').properties.connectionString, '\" \"', concat('bbNotifications-', variables('uniqueSuffix')), '\" \"', resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix'))), '\" \"', parameters('userEmail'), '\" \"', variables('realHostname'), '\" \"', variables('realToken'), '\" \"', parameters('installDocViewer'), '\" \"', parameters('understanding'), '\" \"', concat(variables('CentOS_8.5_gen_2').sku,'/',variables('Ubuntu_22.04_LTS_gen_2').sku,'/',variables('RedHat_8_LVM_gen_2').sku),'\"')]"
+          "commandToExecute": "[concat('bash installBrowserBox_then_notify.sh \"', parameters('adminUsername'), '\" \"', parameters('location'), '\" \"', resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '\" \"', reference(resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix'))), '2020-02-02', 'Full').properties.connectionString, '\" \"', concat('bbNotifications-', variables('uniqueSuffix')), '\" \"', resourceId('Microsoft.Insights/components', concat('bbNotifications-', variables('uniqueSuffix'))), '\" \"', parameters('userEmail'), '\" \"', variables('realHostname'), '\" \"', variables('realToken'), '\" \"', parameters('installDocViewer'), '\" \"', parameters('understanding'), '\" \"', parameters('licenseKey'), '\" \"', concat(variables('Debian_12_gen_2').sku,'/',variables('Ubuntu_24.04_LTS').sku,'/',variables('RedHat_9_LVM_gen_2').sku), '\"')]"
         }
       }
     }
