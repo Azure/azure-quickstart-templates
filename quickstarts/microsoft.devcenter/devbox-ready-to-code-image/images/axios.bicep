@@ -70,8 +70,9 @@ var winGetPackageArtifacts = [
 // Visual Studio Code extensions
 var visualStudioCodeExtensionArtifacts = [
   for extension in [
-    'GitHub.copilot'
-    'ms-azuretools.vscode-bicep'
+    // TODO: uncomment after this change is committed so the artifact can be found in master branch of the repo since this is the default location of artifactSource as defined in main.bicep
+    // 'GitHub.copilot'
+    // 'ms-azuretools.vscode-bicep'
   ]: {
     name: 'windows-install-visualstudiocode-extension'
     parameters: {
