@@ -1,0 +1,120 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location of the resource"
+            }
+        },
+        "projectName": {
+            "type": "string",
+            "defaultValue": "default-project-name",
+            "metadata": {
+                "description": "The name of the Project resource"
+            }
+        },
+        "devCenterName": {
+            "type": "string",
+            "defaultValue": "default-dc-name",
+            "metadata": {
+                "description": "The name of the Devcenter resource"
+            }
+        },
+        "devBoxDefinitionName": {
+            "type": "string",
+            "defaultValue": "default-dbd-name",
+            "metadata": {
+                "description": "The name of the Dev Dox Definition resource"
+            }
+        },
+        "poolName": {
+            "type": "string",
+            "defaultValue": "default-pool-name",
+            "metadata": {
+                "description": "The name of the Pool resource"
+            }
+        }
+    },
+    "variables": {
+        "poolPropertyAdmin": "Enabled",
+        "poolPropertyNetworkType": "Managed",
+        "poolPropertyNetworkName": "Network",
+        "image-win11-ent-vs2022": "microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2",
+        "compute-16c-64gb": "general_i_16c64gb512ssd_v2",
+        "storage-512gb": "512gb"
+    },
+    "resources": [
+        {
+            "name": "[parameters('devCenterName')]",
+            "type": "Microsoft.DevCenter/devcenters",
+            "apiVersion": "2024-10-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "projectCatalogSettings": {
+                    "catalogItemSyncEnableStatus": "Enabled"
+                },
+                "networkSettings": {
+                    "microsoftHostedNetworkEnableStatus": "Enabled"
+                },
+                "devBoxProvisioningSettings": {
+                    "installAzureMonitorAgentEnableStatus": "Enabled"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DevCenter/projects",
+            "apiVersion": "2023-04-01",
+            "name": "[parameters('projectName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "devCenterId": "[resourceId('Microsoft.DevCenter/devcenters', parameters('devCenterName'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/devcenters', parameters('devCenterName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.DevCenter/devcenters/devboxdefinitions",
+            "apiVersion": "2024-08-01-preview",
+            "name": "[format('{0}/{1}', parameters('devcenterName'), parameters('devBoxDefinitionName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "imageReference": {
+                    "id": "[format('{0}/galleries/default/images/{1}', resourceId('Microsoft.DevCenter/devcenters', parameters('devcenterName')), variables('image-win11-ent-vs2022'))]"
+                },
+                "sku": {
+                    "name": "[variables('compute-16c-64gb')]"
+                },
+                "osStorageType": "[format('ssd_{0}', variables('storage-512gb'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/devcenters', parameters('devCenterName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.DevCenter/projects/pools",
+            "apiVersion": "2024-10-01-preview",
+            "name": "[format('{0}/{1}', parameters('projectName'), parameters('poolName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "devBoxDefinitionName": "[parameters('devBoxDefinitionName')]",
+                "licenseType": "Windows_Client",
+                "localAdministrator": "[variables('poolPropertyAdmin')]",
+                "managedVirtualNetworkRegions": [ "[parameters('location')]" ],
+                "virtualNetworkType": "[variables('poolPropertyNetworkType')]",
+                "networkConnectionName": "[format('{0}-{1}', variables('poolPropertyNetworkName'), parameters('location'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.DevCenter/projects', parameters('projectName'))]"
+            ]
+        }
+    ],
+    "outputs": {}
+}
