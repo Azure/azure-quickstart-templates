@@ -1,4 +1,4 @@
-## Install Chocolatey using Powershell script
+## Install Chocolatey using PowerShell script
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 ## Install VSCode & GIT for OSS Development
@@ -10,5 +10,5 @@ choco install -y visualstudio2019community --package-parameters "--allWorkloads 
 ## Install AzureCLI
 choco install -y azure-cli
 
-## Install Azure Powershell Module Az
+## Install Azure PowerShell Module Az
 install-module Az -AllowClobber -Scope AllUsers -Force -Confirm

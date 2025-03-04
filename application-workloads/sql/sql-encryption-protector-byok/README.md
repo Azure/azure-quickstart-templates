@@ -24,7 +24,7 @@ languages:
 
 This template creates an Azure SQL server, and activate the data encryption protector with the "bring your own key". For that, you will need to provide the Key Vault, and the Key to use.
 
-In order to use an already in place Key Vault, it needs to have the property "soft-delete" enable. You can only do that using command lines (either [Powershell](https://docs.microsoft.com/azure/key-vault/key-vault-soft-delete-powershell) or [CLI](https://docs.microsoft.com/azure/key-vault/key-vault-soft-delete-cli))
+In order to use an already in place Key Vault, it needs to have the property "soft-delete" enable. You can only do that using command lines (either [PowerShell](https://docs.microsoft.com/azure/key-vault/key-vault-soft-delete-powershell) or [CLI](https://docs.microsoft.com/azure/key-vault/key-vault-soft-delete-cli))
 
 Alternatively, you can use the PowerShell file included in this directory to create a Key Vault and generate a key.
 
