@@ -881,7 +881,7 @@ configuration ConfigureSPVM
             Name                 = "$LdapcpSolutionName.wsp"
             Deployed             = $true
             Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
@@ -1159,8 +1159,12 @@ configuration ConfigureSPVM
         Script ConfigureLDAPCP {
             SetScript            = 
             {
-                Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-                [Yvand.LdapClaimsProvider.LDAPCPSE]::CreateConfiguration()
+               try {
+                  Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+                  [Yvand.LdapClaimsProvider.LDAPCPSE]::CreateConfiguration()
+               } catch {
+                  Write-Host "Could not create LDAPCP configuration: $_"
+               }
             }
             GetScript            =  
             {
@@ -1170,14 +1174,19 @@ configuration ConfigureSPVM
             TestScript           = 
             {
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-                $config = [Yvand.LdapClaimsProvider.LDAPCPSE]::GetConfiguration()
-                if ($config -eq $null) {
-                    return $false
-                }
-                else {
-                    return $true
-                }
+                try {
+                  Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+                  $config = [Yvand.LdapClaimsProvider.LDAPCPSE]::GetConfiguration()
+                  if ($config -eq $null) {
+                     return $false
+                  }
+                  else {
+                     return $true
+                  }
+               } catch {
+                  Write-Host "Could not test if LDAPCP configuration exists: $_"
+                  return $true # Skip set if test fails
+               }
             }
             DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
             PsDscRunAsCredential = $DomainAdminCredsQualified
