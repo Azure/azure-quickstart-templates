@@ -1,0 +1,90 @@
+param location string = resourceGroup().location
+param keyVaultName string = 'kv-${uniqueString(resourceGroup().id)}'
+param nspName string = 'networkPerimeter'
+param profileName string = 'networkPerimeterProfile'
+param inboundIpv4AccessRuleName string = 'accessRule1'
+param outboundFqdnAccessRuleName string = 'accessRule2'
+param associationName string = 'networkPerimeterAssociation'
+
+resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
+    name: keyVaultName
+    location: location
+    properties: {
+        sku: {
+            family: 'A'
+            name: 'standard'
+        }
+        tenantId: subscription().tenantId
+        accessPolicies: []
+        enabledForDeployment: false
+        enabledForDiskEncryption: false
+        enabledForTemplateDeployment: false
+        enableSoftDelete: true
+        softDeleteRetentionInDays: 90
+        enableRbacAuthorization: false
+    }
+}
+
+resource networkSecurityPerimeter 'Microsoft.Network/networkSecurityPerimeters@2023-07-01-preview' = {
+    name: nspName
+    location: location
+    properties: {}
+}
+
+resource profile 'Microsoft.Network/networkSecurityPerimeters/profiles@2023-07-01-preview' = {
+    parent: networkSecurityPerimeter
+    name: profileName
+    location: location
+    properties: {}
+}
+
+resource inboundAccessRule 'Microsoft.Network/networkSecurityPerimeters/profiles/accessRules@2023-07-01-preview' = {
+    name: '${nspName}/${profileName}/${inboundIpv4AccessRuleName}'
+    location: location
+    dependsOn: [
+        profile
+    ]
+    properties: {
+        direction: 'Inbound'
+        addressPrefixes: [
+            '100.10.0.0/16'
+        ]
+        fullyQualifiedDomainNames: []
+        subscriptions: []
+        emailAddresses: []
+        phoneNumbers: []
+    }
+}
+
+resource outboundAccessRule 'Microsoft.Network/networkSecurityPerimeters/profiles/accessRules@2023-07-01-preview' = {
+    name: '${nspName}/${profileName}/${outboundFqdnAccessRuleName}'
+    location: location
+    dependsOn: [
+        profile
+    ]
+    properties: {
+        direction: 'Outbound'
+        addressPrefixes: []
+        fullyQualifiedDomainNames: [
+            'contoso.com'
+        ]
+        subscriptions: []
+        emailAddresses: []
+        phoneNumbers: []
+    }
+}
+
+resource resourceAssociation 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-07-01-preview' = {
+    parent: networkSecurityPerimeter
+    name: associationName
+    location: location
+    properties: {
+        privateLinkResource: {
+            id: keyVault.id
+        }
+        profile: {
+            id: profile.id
+        }
+        accessMode: 'Enforced'
+    }
+}
