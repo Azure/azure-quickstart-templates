@@ -1,0 +1,159 @@
+{ 
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", 
+    "contentVersion": "1.0.0.0", 
+    "parameters": { 
+        "location": { 
+            "defaultValue": "[resourceGroup().location]", 
+            "type": "String" 
+        }, 
+        "keyVaultName": { 
+            "type": "String", 
+            "metadata": { 
+                "description": "Name of the Key Vault" 
+            } 
+        }, 
+        "nspName": { 
+            "defaultValue": "myNsp", 
+            "type": "String", 
+            "metadata": { 
+                "description": "Name of the Network Security Perimeter" 
+            } 
+        }, 
+        "profileName": { 
+            "defaultValue": "myProfile", 
+            "type": "String", 
+            "metadata": { 
+                "description": "Name of the NSP Profile" 
+            } 
+        }, 
+        "inboundIpv4AccessRuleName": { 
+            "defaultValue": "nspAccessRule1", 
+            "type": "String", 
+            "metadata": { 
+                "description": "Name of the NSP Inbound Access Rule 1" 
+            } 
+        }, 
+        "outboundFqdnAccessRuleName": { 
+            "defaultValue": "nspAccessRule2", 
+            "type": "String", 
+            "metadata": { 
+                "description": "Name of the NSP Outbound Access Rule 2" 
+            } 
+        }, 
+        "associationName": { 
+            "defaultValue": "myAssociation", 
+            "type": "String", 
+            "metadata": { 
+                "description": "Name of the NSP Resource Association" 
+            } 
+        } 
+    }, 
+    "variables": { 
+        "nspApiVersion": "2023-07-01-preview", 
+        "paasRpApiVersion": "2021-11-01-preview" 
+    }, 
+    "resources": [ 
+        { 
+            "type": "Microsoft.KeyVault/vaults", 
+            "apiVersion": "[variables('paasRpApiVersion')]", 
+            "name": "[parameters('keyVaultName')]", 
+            "location": "[parameters('location')]", 
+            "properties": { 
+                "sku": { 
+                    "family": "A", 
+                    "name": "Standard" 
+                }, 
+                "tenantId": "[subscription().tenantId]", 
+                "accessPolicies": [], 
+                "enabledForDeployment": false, 
+                "enabledForDiskEncryption": false, 
+                "enabledForTemplateDeployment": false, 
+                "enableSoftDelete": true, 
+                "softDeleteRetentionInDays": 90, 
+                "enableRbacAuthorization": false 
+            } 
+        }, 
+        { 
+            "type": "Microsoft.Network/networkSecurityPerimeters", 
+            "apiVersion": "[variables('nspApiVersion')]", 
+            "name": "[parameters('nspName')]", 
+            "location": "[parameters('location')]", 
+            "properties": {} 
+        }, 
+        { 
+            "type": "Microsoft.Network/networkSecurityPerimeters/profiles", 
+            "apiVersion": "[variables('nspApiVersion')]", 
+            "name": "[format('{0}/{1}', parameters('nspName'), parameters('profileName'))]", 
+            "location": "[parameters('location')]", 
+            "dependsOn": [ 
+                "[resourceId('Microsoft.Network/networkSecurityPerimeters', parameters('nspName'))]" 
+            ], 
+            "properties": {} 
+        }, 
+        { 
+            "type": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules", 
+            "apiVersion": "[variables('nspApiVersion')]", 
+            "name": "[format('{0}/{1}/{2}', parameters('nspName'), parameters('profileName'), parameters('inboundIpv4AccessRuleName'))]", 
+            "location": "[parameters('location')]", 
+            "dependsOn": [ 
+                "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]" 
+            ], 
+            "properties": { 
+                "direction": "Inbound", 
+                "addressPrefixes": [ 
+                    "100.10.0.0/16" 
+                ], 
+                "fullyQualifiedDomainNames": [], 
+                "subscriptions": [], 
+                "emailAddresses": [], 
+                "phoneNumbers": [] 
+            } 
+        }, 
+        { 
+            "type": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules", 
+            "apiVersion": "[variables('nspApiVersion')]", 
+            "name": "[format('{0}/{1}/{2}', parameters('nspName'), parameters('profileName'), parameters('outboundFqdnAccessRuleName'))]", 
+            "location": "[parameters('location')]", 
+            "dependsOn": [ 
+                "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]" 
+            ], 
+            "properties": { 
+                "direction": "Outbound", 
+                "addressPrefixes": [], 
+                "fullyQualifiedDomainNames": [ 
+                    "abc.com" 
+                ], 
+                "subscriptions": [], 
+                "emailAddresses": [], 
+                "phoneNumbers": [] 
+            } 
+        }, 
+        { 
+            "type": "Microsoft.Network/networkSecurityPerimeters/resourceAssociations", 
+            "apiVersion": "[variables('nspApiVersion')]", 
+            "name": "[format('{0}/{1}', parameters('nspName'), parameters('associationName'))]", 
+            "location": "[parameters('location')]", 
+            "dependsOn": [ 
+                "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]", 
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]" 
+            ], 
+            "properties": { 
+                "privateLinkResource": { 
+                    "id": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]" 
+                }, 
+                "profile": { 
+                    "id": "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]" 
+                }, 
+                "accessMode": "Enforced" 
+            } 
+        },
+        {
+            "type": "Microsoft.Features/providers/feature",
+            "apiVersion": "2021-07-01",
+            "name": "Microsoft.Network/AllowNSPInPublicPreview",
+            "properties": {
+                "state": "Registered"
+            }
+        }
+    ] 
+}
