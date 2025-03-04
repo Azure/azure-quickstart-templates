@@ -208,7 +208,7 @@ function Download-ElasticSearch
         [Parameter(Mandatory=$true)]
         [string]$targetDrive
     )
-	# download ElasticSearch from a given source URL to destination folder
+	# download Elasticsearch from a given source URL to destination folder
 	try{
 			$source = if ($elasticVersion -match '2.') {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"} else { "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-$elasticVersion.zip" }
 			$destination = "$targetDrive`:\Downloads\ElasticSearch\Elastic-Search.zip"
@@ -395,8 +395,8 @@ function ElasticSearch-VerifyInstall
     $esRequest.Method = "GET"
 	$esResponse = $esRequest.GetResponse()
 	$reader = new-object System.IO.StreamReader($esResponse.GetResponseStream())
-	lmsg 'ElasticSearch service response status: ' $esResponse.StatusCode
-	lmsg 'ElasticSearch service response full text: ' $reader.ReadToEnd()
+	lmsg 'Elasticsearch service response status: ' $esResponse.StatusCode
+	lmsg 'Elasticsearch service response full text: ' $reader.ReadToEnd()
 }
 
 function Jmeter-Download($drive)
