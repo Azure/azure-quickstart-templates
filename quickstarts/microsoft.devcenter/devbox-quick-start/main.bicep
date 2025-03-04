@@ -1,9 +1,18 @@
+@description('The location of the resource')
+param location string = resourceGroup().location
+
+@description('The name of the Project resource')
 param projectName string = 'default-project-name'
+
+@description('The name of the Devcenter resource')
 param devCenterName string = 'default-dc-name'
+
+@description('The name of the Dev Dox Definition resource')
 param devBoxDefinitionName string = 'default-dbd-name'
+
+@description('The name of the Pool resource')
 param poolName string = 'default-pool-name'
 
-var location = resourceGroup().location
 var poolPropertyAdmin = 'Enabled'
 var poolPropertyNetworkType = 'Managed'
 var poolPropertyNetworkName = 'Network'
@@ -66,6 +75,6 @@ resource projectName_pool 'Microsoft.DevCenter/projects/pools@2024-10-01-preview
       location
     ]
     virtualNetworkType: poolPropertyNetworkType
-    networkConnectionName: '${poolPropertyNetworkName}-${location}}'
+    networkConnectionName: '${poolPropertyNetworkName}-${location}'
   }
 }
