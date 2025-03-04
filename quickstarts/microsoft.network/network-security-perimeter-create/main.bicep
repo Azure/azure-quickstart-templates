@@ -6,7 +6,7 @@ param inboundIpv4AccessRuleName string = 'accessRule1'
 param outboundFqdnAccessRuleName string = 'accessRule2'
 param associationName string = 'networkPerimeterAssociation'
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
     name: keyVaultName
     location: location
     properties: {
