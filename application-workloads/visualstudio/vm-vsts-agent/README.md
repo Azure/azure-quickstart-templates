@@ -41,7 +41,7 @@ Click on the **Deploy to Azure** button below. This will open the Azure Portal (
 ## Parameters
 
 - modules
-  Enter the Names and Versions of the Modules to be installed in C:\Modules. This Parameter is a Json Array
+  Enter the Names and Versions of the Modules to be installed in C:\Modules. This Parameter is a JSON Array
   Default Modules and Versions are the following unless overridden:
    - AzureRM 5.6.0
    - AzureAD 2.0.1.3
