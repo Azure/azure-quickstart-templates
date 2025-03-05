@@ -39,11 +39,9 @@ resource profile 'Microsoft.Network/networkSecurityPerimeters/profiles@2023-07-0
 }
 
 resource inboundAccessRule 'Microsoft.Network/networkSecurityPerimeters/profiles/accessRules@2023-07-01-preview' = {
-    name: '${nspName}/${profileName}/${inboundIpv4AccessRuleName}'
+    parent: profile
+    name: inboundIpv4AccessRuleName
     location: location
-    dependsOn: [
-        profile
-    ]
     properties: {
         direction: 'Inbound'
         addressPrefixes: [
@@ -57,11 +55,9 @@ resource inboundAccessRule 'Microsoft.Network/networkSecurityPerimeters/profiles
 }
 
 resource outboundAccessRule 'Microsoft.Network/networkSecurityPerimeters/profiles/accessRules@2023-07-01-preview' = {
-    name: '${nspName}/${profileName}/${outboundFqdnAccessRuleName}'
+    parent: profile
+    name: outboundFqdnAccessRuleName
     location: location
-    dependsOn: [
-        profile
-    ]
     properties: {
         direction: 'Outbound'
         addressPrefixes: []
