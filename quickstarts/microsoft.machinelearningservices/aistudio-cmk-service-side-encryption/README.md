@@ -69,9 +69,9 @@ For AI services CMK configuration the following constraints hold on your encrypt
 
 ## Learn more
 
-If you are new to Azure AI studio, see:
+If you are new to Azure AI Studio, see:
 
-- [Azure AI studio](https://aka.ms/aistudio/docs)
+- [Azure AI Studio](https://aka.ms/aistudio/docs)
 - [AI Studio architecture](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/architecture)
 - [Customer-managed key encryption for Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-services/encryption/cognitive-services-encryption-keys-portal?context=%2Fazure%2Fai-studio%2Fcontext%2Fcontext)
 
