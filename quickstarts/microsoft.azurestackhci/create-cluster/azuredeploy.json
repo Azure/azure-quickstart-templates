@@ -512,6 +512,11 @@
               "eceSecretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
               "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
           }
+      },
+      {
+          "name": "isNodeNameValid",
+          "count": "[length(parameters('physicalNodesSettings'))]",
+          "input": "[if(equals(parameters('clusterName'), parameters('physicalNodesSettings')[copyIndex('isNodeNameValid')].name), 'false', 'true')]"
       }
     ],
     "deploymentSecretsList":[
@@ -737,6 +742,21 @@
         ]
       }
     },
+    "NodesNameValidation": {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "ValidateNodeName",
+      "location": "[resourceGroup().location]",
+      "kind": "AzurePowerShell",
+      "properties": {
+      "forceUpdateTag": "1",
+      "azPowerShellVersion": "7.1",
+      "scriptContent": "[if(contains(variables('isNodeNameValid'), 'false'), 'Write-Error \"Node Names must be unique from Cluster Name\"; throw \"Deployment failed explicitly\"', 'Write-Output \"Node Names is unique with Cluster Name\"')]",
+      "timeout": "PT2M",
+      "cleanupPreference": "Always",
+      "retentionInterval": "P1D"
+      }
+    },
     "HCICluster":{
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
@@ -744,7 +764,8 @@
       "name": "[parameters('clusterName')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-        "edgeDevices"
+        "edgeDevices",
+        "NodesNameValidation"
       ],
       "identity": {
         "type": "SystemAssigned"
