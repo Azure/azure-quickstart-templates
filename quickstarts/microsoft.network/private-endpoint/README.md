@@ -26,7 +26,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fprivate-endpoint%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fprivate-endpoint%2Fazuredeploy.json)
 
-This template allows you to create Priavate Endpoint resource within the same or cross-tenant environment and add dns zone configuration. All the resources are created in the same region as the resource group by default. Modify parameters file to change default values. This is tested with an Azure key vault but can be used for any Azure service that supports private endpoint.
+This template allows you to create Priavate Endpoint resource within the same or cross-tenant environment and add dns zone configuration. All the resources are created in the same region as the resource group by default. Modify parameters file to change default values. This is tested with an Azure Key Vault but can be used for any Azure service that supports private endpoint.
 
 [Private Endpoint Service](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview)
 

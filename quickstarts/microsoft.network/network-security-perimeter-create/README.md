@@ -1,5 +1,5 @@
 ---
-description: This template creates a network security perimeter and it's associated resource for protecting an Azure key vault.
+description: This template creates a network security perimeter and it's associated resource for protecting an Azure Key Vault.
 page_type: sample
 products:
 - azure
