@@ -1,10 +1,10 @@
 param location string = resourceGroup().location
 param keyVaultName string = 'kv-${uniqueString(resourceGroup().id)}'
-param nspName string = 'networkPerimeter'
-param profileName string = 'networkPerimeterProfile'
-param inboundIpv4AccessRuleName string = 'accessRule1'
-param outboundFqdnAccessRuleName string = 'accessRule2'
-param associationName string = 'networkPerimeterAssociation'
+param nspName string = 'networkSecurityPerimeter'
+param profileName string = 'profile1'
+param inboundIpv4AccessRuleName string = 'inboundRule'
+param outboundFqdnAccessRuleName string = 'outboundRule'
+param associationName string = 'networkSecurityPerimeterAssociation'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
     name: keyVaultName
