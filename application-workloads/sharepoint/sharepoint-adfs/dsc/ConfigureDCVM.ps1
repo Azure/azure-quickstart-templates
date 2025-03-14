@@ -253,9 +253,6 @@
         WindowsFeature AddDNS {
             Name = "DNS"; Ensure = "Present" 
         }
-        NetConnectionProfile SetNetworkInterfaceToPrivate {
-            InterfaceAlias = $InterfaceAlias; NetworkCategory = 'Private' 
-        }
         DnsServerAddress SetDNS {
             Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
         }

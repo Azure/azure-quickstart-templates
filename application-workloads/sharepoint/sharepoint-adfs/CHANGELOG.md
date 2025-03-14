@@ -1,5 +1,22 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in February 25, 2025
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2025 CU for SharePoint Subscription
+
+### Fixed
+
+- Template
+  - Fixed connecting to VMs through Azure Bastion
+- DSC Configuration for DC
+  - Removed NetConnectionProfile (to set the network interface as private) as it randomly causes errors
+- DSC Configuration for SPSE
+  - Install the LDAPCP solution as domain admin instead of setup account to improve the reliability
+  - Do not generate an error if creating LDAPCP configuration fails
+
 ## Enhancements & bug-fixes - Published in January 17, 2024
 
 ### Changed
