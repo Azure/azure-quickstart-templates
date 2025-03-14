@@ -172,16 +172,16 @@ module hub 'modules/hub.bicep' = {
 // Outputs
 //==============================================================================
 
-@description('The name of the resource group.')
+@description('Name of the resource group.')
 output name string = hubName
 
-@description('The location the resources wer deployed to.')
+@description('Azure resource location resources were deployed to.')
 output location string = location
 
-@description('Name of the Data Factory.')
-output dataFactorytName string = hub.outputs.dataFactorytName
+@description('Name of the Data Factory instance.')
+output dataFactoryName string = hub.outputs.dataFactoryName
 
-@description('The resource ID of the deployed storage account.')
+@description('Resource ID of the deployed storage account.')
 output storageAccountId string = hub.outputs.storageAccountId
 
 @description('Name of the storage account created for the hub instance. This must be used when connecting FinOps toolkit Power BI reports to your data.')
@@ -190,16 +190,16 @@ output storageAccountName string = hub.outputs.storageAccountName
 @description('URL to use when connecting custom Power BI reports to your data.')
 output storageUrlForPowerBI string = hub.outputs.storageUrlForPowerBI
 
-@description('The resource ID of the Data Explorer cluster.')
+@description('Resource ID of the Data Explorer cluster.')
 output clusterId string = hub.outputs.clusterId
 
-@description('The URI of the Data Explorer cluster.')
+@description('URI of the Data Explorer cluster.')
 output clusterUri string = hub.outputs.clusterUri
 
-@description('The name of the Data Explorer database used for ingesting data.')
+@description('Name of the Data Explorer database used for ingesting data.')
 output ingestionDbName string = hub.outputs.ingestionDbName
 
-@description('The name of the Data Explorer database used for querying data.')
+@description('Name of the Data Explorer database used for querying data.')
 output hubDbName string = hub.outputs.hubDbName
 
 @description('Object ID of the Data Factory managed identity. This will be needed when configuring managed exports.')

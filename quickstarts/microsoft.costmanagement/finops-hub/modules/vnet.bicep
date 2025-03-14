@@ -26,6 +26,7 @@ param tagsByResource object = {}
 //------------------------------------------------------------------------------
 
 var safeHubName = replace(replace(toLower(hubName), '-', ''), '_', '')
+// cSpell:ignore vnet
 var vNetName = '${safeHubName}-vnet-${location}'
 var nsgName = '${vNetName}-nsg'
 var subnets = [
@@ -83,7 +84,7 @@ var subnets = [
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: nsgName
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/networkSecurityGroups') ? tagsByResource['Microsoft.Storage/networkSecurityGroups'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/networkSecurityGroups'] ?? {})
   properties: {
     securityRules: [
       {
@@ -171,7 +172,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
 resource vNet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: vNetName
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/virtualNetworks') ? tagsByResource['Microsoft.Storage/virtualNetworks'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/virtualNetworks'] ?? {})
   properties: {
     addressSpace: {
       addressPrefixes: [virtualNetworkAddressPrefix]
