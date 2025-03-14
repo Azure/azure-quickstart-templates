@@ -1,5 +1,27 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in March 14, 2025
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the March 2025 CU for SharePoint Subscription
+  - Added value `Subscription-25H1` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H1
+  - Enabled accelerated networking on all the virtual machines
+  - Fixed the Bicep warnings by using the safe access (.?) operator
+- DSC Configuration for all VMs
+  - Replace Write-Host with Write-Verbose, to print the log nessage in both the log file and the console
+  - Updated DSC module ComputerManagementDsc to 10.0.0
+- DSC Configuration for SharePoint
+  - Updated DSC module SharePointDsc to 5.6.1
+- DSC Configuration for SQL
+  - Configured the encryption of the SQL traffic, which is used autonmatically by SharePoint Subscription 25H1 and onward
+
+### Fixed
+
+- DSC Configuration for SharePoint 2016
+  - Add a temporary fix to workaround a regression on resource ADObjectPermissionEntry, introduced with module ActiveDirectoryDsc v6.6.0 (https://github.com/dsccommunity/ActiveDirectoryDsc/issues/724)
+
 ## Enhancements & bug-fixes - Published in February 25, 2025
 
 ### Changed
@@ -17,7 +39,7 @@
   - Install the LDAPCP solution as domain admin instead of setup account to improve the reliability
   - Do not generate an error if creating LDAPCP configuration fails
 
-## Enhancements & bug-fixes - Published in January 17, 2024
+## Enhancements & bug-fixes - Published in January 17, 2025
 
 ### Changed
 
