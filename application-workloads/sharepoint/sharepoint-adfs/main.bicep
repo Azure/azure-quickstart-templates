@@ -7,6 +7,7 @@ param location string = resourceGroup().location
 @description('Version of the SharePoint farm to create.')
 @allowed([
   'Subscription-Latest'
+  'Subscription-25H1'
   'Subscription-24H2'
   'Subscription-24H1'
   'Subscription-23H2'
@@ -353,10 +354,18 @@ var sharePointSettings = {
       ]
     }
     {
+      Label: '25H1'
+      Packages: [
+        {
+          DownloadUrl: 'https://download.microsoft.com/download/0b131072-7ee6-41ea-b33a-b3410865f3a0/uber-subscription-kb5002698-fullfile-x64-glb.exe'
+        }
+      ]
+    }
+    {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/6/d/8/6d81a11e-567d-4527-bfc7-e2cbf890254b/uber-subscription-kb5002681-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/0b131072-7ee6-41ea-b33a-b3410865f3a0/uber-subscription-kb5002698-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -464,7 +473,7 @@ var set_proxy_script = 'param([string]$proxyIp, [string]$proxyHttpPort, [string]
 
 // Start creating resources
 // Network security groups for each subnet
-resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
   name: 'vnet-subnet-dc-nsg'
   location: location
   properties: {
@@ -473,7 +482,7 @@ resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2023-11-01' = 
 }
 
 // Setup the network
-resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
+resource virtual_network 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: 'vnet-${uniqueString(resourceGroup().id)}'
   location: location
   properties: {
@@ -498,7 +507,7 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
 }
 
 // Create resources for VM DC
-resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outboundAccessMethod == 'PublicIPAddress') {
+resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (outboundAccessMethod == 'PublicIPAddress') {
   name: 'vm-dc-pip'
   location: location
   sku: {
@@ -515,10 +524,11 @@ resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
 }
 
-resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'vm-dc-nic'
   location: location
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -689,7 +699,7 @@ resource vm_dc_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (au
 }
 
 // Create resources for VM SQL
-resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outboundAccessMethod == 'PublicIPAddress') {
+resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (outboundAccessMethod == 'PublicIPAddress') {
   name: 'vm-sql-pip'
   location: location
   sku: {
@@ -706,13 +716,14 @@ resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbo
   }
 }
 
-resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'vm-sql-nic'
   location: location
   dependsOn: [
-    vm_dc_nic
+    vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
   ]
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -882,7 +893,7 @@ resource vm_sql_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (a
 }
 
 // Create resources for VM SP
-resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outboundAccessMethod == 'PublicIPAddress') {
+resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (outboundAccessMethod == 'PublicIPAddress') {
   name: 'vm-sp-pip'
   location: location
   sku: {
@@ -899,13 +910,14 @@ resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
 }
 
-resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'vm-sp-nic'
   location: location
   dependsOn: [
-    vm_dc_nic
+    vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
   ]
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -973,7 +985,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
-    securityProfile: vmsSettings.vmSharePointSecurityProfile
+    securityProfile: vmsSettings.?vmSharePointSecurityProfile
   }
 }
 
@@ -1116,7 +1128,7 @@ resource vm_sp_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (au
 }
 
 // Create resources for VMs FEs
-resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
+resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = [
   for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1 && outboundAccessMethod == 'PublicIPAddress') {
     name: 'vm-fe${i}-pip'
     location: location
@@ -1135,12 +1147,13 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
   }
 ]
 
-resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
+resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = [
   for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1) {
     name: 'vm-fe${i}-nic'
     location: location
     properties: {
-      ipConfigurations: [
+    enableAcceleratedNetworking: true
+    ipConfigurations: [
         {
           name: 'ipconfig1'
           properties: {
@@ -1159,7 +1172,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
     }
     dependsOn: [
       vm_fe_pip[i]
-      vm_dc_nic
+      vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
     ]
   }
 ]
@@ -1216,7 +1229,7 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
         ]
       }
       licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
-      securityProfile: vmsSettings.vmSharePointSecurityProfile
+      securityProfile: vmsSettings.?vmSharePointSecurityProfile
     }
   }
 ]
@@ -1331,7 +1344,7 @@ resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
 ]
 
 // Resources for Azure Bastion
-resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (enableAzureBastion == true) {
+resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = if (enableAzureBastion == true) {
   parent: virtual_network
   name: 'AzureBastionSubnet'
   properties: {
@@ -1341,7 +1354,7 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' =
   }
 }
 
-resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enableAzureBastion == true) {
+resource bastion_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (enableAzureBastion == true) {
   name: 'bastion-pip'
   location: location
   sku: {
@@ -1356,7 +1369,7 @@ resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enab
   }
 }
 
-resource bastion_def 'Microsoft.Network/bastionHosts@2024-03-01' = if (enableAzureBastion == true) {
+resource bastion_def 'Microsoft.Network/bastionHosts@2024-05-01' = if (enableAzureBastion == true) {
   name: 'bastion'
   location: location
   sku: {
@@ -1392,7 +1405,7 @@ resource bastion_def 'Microsoft.Network/bastionHosts@2024-03-01' = if (enableAzu
 }
 
 // Resources for Azure Firewall
-resource firewall_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
+resource firewall_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
   parent: virtual_network
   name: 'AzureFirewallSubnet'
   properties: {
@@ -1401,7 +1414,7 @@ resource firewall_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' 
   }
 }
 
-resource firewall_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
+resource firewall_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
   name: 'firewall-pip'
   location: location
   sku: {
@@ -1416,7 +1429,7 @@ resource firewall_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (out
   }
 }
 
-resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2023-11-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
+resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2024-05-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
   name: 'firewall-policy-proxy'
   location: location
   properties: {
@@ -1433,7 +1446,7 @@ resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2023-11-01' =
   }
 }
 
-resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-11-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
+resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2024-05-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
   name: 'rules'
   parent: firewall_policy_proxy
   properties: {
@@ -1472,7 +1485,7 @@ resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollection
   }
 }
 
-resource firewall_def 'Microsoft.Network/azureFirewalls@2023-11-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
+resource firewall_def 'Microsoft.Network/azureFirewalls@2024-05-01' = if (outboundAccessMethod == 'AzureFirewallProxy') {
   name: 'firewall'
   location: location
   properties: {
