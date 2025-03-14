@@ -11,6 +11,10 @@ languages:
 ---
 # Standard Agent Setup
 
+> [!IMPORTANT]
+> All Agent templates in this repository are out of date and have been moved. [Please visit the updated repository.](https://github.com/Azure-Samples/azureai-samples/tree/main/scenarios/Agents/setup/standard-agent)
+
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/standard-agent/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/standard-agent/PublicDeployment.svg)
 
