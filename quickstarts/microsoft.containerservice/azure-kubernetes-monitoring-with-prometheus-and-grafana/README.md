@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Create AKS with Prometheus and Grafana with privae link
+# Create AKS with Prometheus and Grafana with private link
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerservice/azure-kubernetes-monitoring-with-prometheus-and-grafana/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.containerservice/azure-kubernetes-monitoring-with-prometheus-and-grafana/PublicDeployment.svg)
