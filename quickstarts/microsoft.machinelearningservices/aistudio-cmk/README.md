@@ -52,7 +52,7 @@ For AI services CMK configuration the following constraints hold on your encrypt
 
 ## Learn more
 
-If you are new to Azure AI studio, see:
+If you are new to Azure AI Studio, see:
 
-- [Azure AI studio](https://aka.ms/aistudio/docs)`Tags: `
+- [Azure AI Studio](https://aka.ms/aistudio/docs)`Tags: `
 `Tags: `
