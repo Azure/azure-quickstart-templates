@@ -28,6 +28,7 @@ In order to deploy this template, you must have Arc enabled the server(s) and in
     - Make a note of the SPNs Object ID
     - Make a note of the SPNs secret (if not already generated , generate one)
 - Make a note of the HCI Resource Provider SPNs Object ID in the tenant.
+- For Fairfax remember to deploy the edge devices template first (azuredeployedgedevices.json) and then deplot the azuredeploy.json. Due to ARM limitations both operations cannot be clubbed together
 
 
 `Tags: Microsoft.AzureStackHCI/clusters, hci`
