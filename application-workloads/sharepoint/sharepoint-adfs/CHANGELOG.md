@@ -1,5 +1,5 @@
 # Change log for Azure template SharePoint-ADFS
-
+ 
 ## Enhancements & bug-fixes - Published in March 14, 2025
 
 ### Changed
