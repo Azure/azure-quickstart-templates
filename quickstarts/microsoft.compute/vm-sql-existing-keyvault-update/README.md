@@ -31,7 +31,7 @@ All resources used in this template must be ARM resources.
 
 ## Azure Key Vault Integration
 
-The Azure Key Vault integration feature will configure your virtual machine to be able to connect to your Azure key vault. It achieves this by installing the latest version of the SQL Server Connector, configuring EKM provider to access Azure Key Vault, and creates the credential to allow you to access your vault. More information on this feature can be found [here](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-ps-sql-keyvault/).
+The Azure Key Vault integration feature will configure your virtual machine to be able to connect to your Azure Key Vault. It achieves this by installing the latest version of the SQL Server Connector, configuring EKM provider to access Azure Key Vault, and creates the credential to allow you to access your vault. More information on this feature can be found [here](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-ps-sql-keyvault/).
 
 This template can be used to enable or change the configuration of Azure Key Vault Integration.
 

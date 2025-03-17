@@ -625,7 +625,7 @@
 
 ## March 2017.3 update
 
-- Azure key vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
+- Azure Key Vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
 - Removed nested templates
 
 ## March 2017.2 update
