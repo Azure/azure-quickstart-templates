@@ -106,7 +106,7 @@ Additionally, it will deploy:
 - Azure Public Load Balancer for Web Access/Gateway
 - Azure Internal Load Balancer for Web Access/Gateway and Connection Brokers
 - Azure Storage Account for VM diagnostics
-- Single Azure Network Security Group, with required rules for HTTP/HTTPs/Gateway via UDP/3391 for RDS
+- Single Azure Network Security Group, with required rules for HTTP/HTTPS/Gateway via UDP/3391 for RDS
 - Single Azure Resource Group containing all resources
 - Single Azure Virtual Network
 - Single Azure Virtual Subnet
