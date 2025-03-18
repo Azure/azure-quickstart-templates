@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure AI Studio basic setup
+# Azure AI Foundry basic setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk-service-side-encryption/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk-service-side-encryption/PublicDeployment.svg)
@@ -44,7 +44,7 @@ This configuration describes the set of resources required to:
 
 **Preview:** 
 
-Azure AI Studio is built on Azure Machine Learning as the primary resource provider and takes a dependency on the Cognitive Services (Azure AI Services) resource provider to surface model endpoints for Azure Speech, Azure Content Safety, And Azure OpenAI service.
+Azure AI Foundry is built on Azure Machine Learning as the primary resource provider and takes a dependency on the Cognitive Services (Azure AI Services) resource provider to surface model endpoints for Azure Speech, Azure Content Safety, And Azure OpenAI service.
 
 An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that is of kind = "hub".
 
@@ -69,10 +69,10 @@ For AI services CMK configuration the following constraints hold on your encrypt
 
 ## Learn more
 
-If you are new to Azure AI Studio, see:
+If you are new to Azure AI Foundry, see:
 
-- [Azure AI Studio](https://aka.ms/aistudio/docs)
-- [AI Studio architecture](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/architecture)
-- [Customer-managed key encryption for Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-services/encryption/cognitive-services-encryption-keys-portal?context=%2Fazure%2Fai-studio%2Fcontext%2Fcontext)
+- [Azure AI Foundry](https://aka.ms/aistudio/docs)
+- [AI Foundry architecture](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/architecture)
+- [Customer-managed key encryption for Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-services/encryption/cognitive-services-encryption-keys-portal?context=%2Fazure%2Fai-studio%2Fcontext%2Fcontext)
 
 `Tags: `
