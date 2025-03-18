@@ -528,7 +528,7 @@ resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'vm-dc-nic'
   location: location
   properties: {
-    enableAcceleratedNetworking: true
+    enableAcceleratedNetworking: false
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -723,7 +723,7 @@ resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
     vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
   ]
   properties: {
-    enableAcceleratedNetworking: true
+    enableAcceleratedNetworking: false
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -917,7 +917,7 @@ resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
     vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
   ]
   properties: {
-    enableAcceleratedNetworking: true
+    enableAcceleratedNetworking: false
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -1152,7 +1152,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = [
     name: 'vm-fe${i}-nic'
     location: location
     properties: {
-    enableAcceleratedNetworking: true
+    enableAcceleratedNetworking: false
     ipConfigurations: [
         {
           name: 'ipconfig1'

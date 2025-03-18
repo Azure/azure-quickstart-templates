@@ -1,5 +1,5 @@
 # Change log for Azure template SharePoint-ADFS
- 
+
 ## Enhancements & bug-fixes - Published in March 14, 2025
 
 ### Changed
@@ -7,7 +7,6 @@
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the March 2025 CU for SharePoint Subscription
   - Added value `Subscription-25H1` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H1
-  - Enabled accelerated networking on all the virtual machines
   - Fixed the Bicep warnings by using the safe access (.?) operator
 - DSC Configuration for all VMs
   - Replace Write-Host with Write-Verbose, to print the log nessage in both the log file and the console
