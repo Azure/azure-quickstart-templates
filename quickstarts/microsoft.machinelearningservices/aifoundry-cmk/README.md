@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure AI Studio basic setup
+# Azure AI Foundry basic setup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-cmk/PublicDeployment.svg)
@@ -25,9 +25,9 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faistudio-cmk%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faistudio-cmk%2Fazuredeploy.json)
 
-This set of templates demonstrates how to set up Azure AI Studio with customer-managed keys for encryption. In this setup, public internet access is enabled, and _Microsoft_-managed identity is used for the AI hub resource.
+This set of templates demonstrates how to set up Azure AI Foundry with customer-managed keys for encryption. In this setup, public internet access is enabled, and _Microsoft_-managed identity is used for the AI hub resource.
 
-Azure AI Studio is built on Azure Machine Learning as the primary resource provider and takes a dependency on the Cognitive Services (Azure AI Services) resource provider to surface model-as-a-service endpoints for Azure Speech, Azure Content Safety, And Azure OpenAI service.
+Azure AI Foundry is built on Azure Machine Learning as the primary resource provider and takes a dependency on the Cognitive Services (Azure AI Services) resource provider to surface model-as-a-service endpoints for Azure Speech, Azure Content Safety, And Azure OpenAI service.
 
 An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that is its kind = "hub".
 
@@ -52,7 +52,7 @@ For AI services CMK configuration the following constraints hold on your encrypt
 
 ## Learn more
 
-If you are new to Azure AI Studio, see:
+If you are new to Azure AI Foundry, see:
 
-- [Azure AI Studio](https://aka.ms/aistudio/docs)`Tags: `
+- [Azure AI Foundry](https://aka.ms/aistudio/docs)`Tags: `
 `Tags: `
