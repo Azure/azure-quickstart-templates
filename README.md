@@ -9,7 +9,7 @@ See the [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-gu
 
 We will reject PRs or remove samples that contain links to non-Microsoft controlled assets, to avoid the risk of potential domain spoofing or hostile takeover. Examples include S3 buckets, non-Microsoft owned Azure storage accounts or non-Azure git repositories.
 
-To fix this, either use Bicep with [modules](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/modules) & [file functions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/bicep-functions-files), or parameterize links to external content.
+To fix this, either use Bicep with [modules](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/modules) & [file functions](https://learn.microsoft.com/azure/azure-resource-manager/bicep/bicep-functions-files), or parameterize links to external content.
 
 ## Code of Conduct
 
