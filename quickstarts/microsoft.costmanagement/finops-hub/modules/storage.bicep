@@ -30,6 +30,7 @@ param tagsByResource object = {}
 @description('Optional. List of scope IDs to monitor and ingest cost for.')
 param scopesToMonitor array
 
+// cSpell:ignore msexport
 @description('Optional. Number of days of data to retain in the msexports container. Default: 0.')
 param msexportRetentionInDays int = 0
 
@@ -67,6 +68,7 @@ var storageAccountSuffix = uniqueSuffix
 var storageAccountName = '${take(safeHubName, 24 - length(storageAccountSuffix))}${storageAccountSuffix}'
 var scriptStorageAccountName = '${take(safeHubName, 16 - length(storageAccountSuffix))}script${storageAccountSuffix}'
 var schemaFiles = {
+  // cSpell:ignore focuscost, pricesheet, reservationdetails, reservationrecommendations, reservationtransactions
   'focuscost_1.0r2': loadTextContent('../schemas/focuscost_1.0r2.json')
   'focuscost_1.0': loadTextContent('../schemas/focuscost_1.0.json')
   'focuscost_1.0-preview(v1)': loadTextContent('../schemas/focuscost_1.0-preview(v1).json')
@@ -79,13 +81,12 @@ var schemaFiles = {
   'reservationtransactions_2023-05-01_mca': loadTextContent('../schemas/reservationtransactions_2023-05-01_mca.json')
 }
 
-// Roles needed to auto-start triggers
+// Roles needed to upload files
 // Storage Blob Data Contributor - used by deployment scripts to write data to blob storage
 // Storage File Data Privileged Contributor - used by deployment scripts to write data to blob storage
 // https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template#use-existing-storage-account
 var blobUploadRbacRoles = [
   'ba92f5b4-2d11-453d-a403-e96b0029c9fe' // Storage Blob Data Contributor - https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor
-  'e40ec5ca-96e0-45a2-b4ff-59039f2c2b59' // Managed Identity Contributor - https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#managed-identity-contributor
   '69566ab7-960f-475b-8e7c-b3118f30c6bd' // Storage File Data Privileged Contributor - https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/storage#storage-file-data-privileged-contributor
 ]
 
@@ -100,7 +101,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
     name: sku
   }
   kind: 'BlockBlobStorage'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/storageAccounts') ? tagsByResource['Microsoft.Storage/storageAccounts'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/storageAccounts'] ?? {})
   properties: union(!enableInfrastructureEncryption ? {} : {
     encryption: {
       keySource: 'Microsoft.Storage'
@@ -120,14 +121,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   })
 }
 
-resource scriptStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' =  {
+resource scriptStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' =  if (!enablePublicAccess){
   name: scriptStorageAccountName
   location: location
   sku: {
     name: 'Standard_LRS' //sku
   }
   kind: 'StorageV2'// 'BlockBlobStorage'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/storageAccounts') ? tagsByResource['Microsoft.Storage/storageAccounts'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/storageAccounts'] ?? {})
   properties: {
     supportsHttpsTrafficOnly: true
     allowSharedKeyAccess: true
@@ -148,39 +149,40 @@ resource scriptStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' =  
   }
 }
 
-resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (!enablePublicAccess) {
+  // cSpell:ignore privatelink
   name: 'privatelink.blob.${environment().suffixes.storage}'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/privateDnsZones') ? tagsByResource['Microsoft.Storage/privateDnsZones'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/privateDnsZones'] ?? {})
   properties: {}
 }
 
-resource dfsPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+resource dfsPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (!enablePublicAccess) {
   name: 'privatelink.dfs.${environment().suffixes.storage}'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/privateDnsZones') ? tagsByResource['Microsoft.Storage/privateDnsZones'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/privateDnsZones'] ?? {})
   properties: {}
 }
 
-resource queuePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+resource queuePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (!enablePublicAccess) {
   name: 'privatelink.queue.${environment().suffixes.storage}'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/privateDnsZones') ? tagsByResource['Microsoft.Storage/privateDnsZones'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/privateDnsZones'] ?? {})
   properties: {}
 }
 
-resource tablePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+resource tablePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (!enablePublicAccess) {
   name: 'privatelink.table.${environment().suffixes.storage}'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Storage/privateDnsZones') ? tagsByResource['Microsoft.Storage/privateDnsZones'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Storage/privateDnsZones'] ?? {})
   properties: {}
 }
 
-resource blobPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+resource blobPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (!enablePublicAccess) {
   parent: blobPrivateDnsZone
   name: '${replace(blobPrivateDnsZone.name, '.', '-')}-link'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateDnsZones/virtualNetworkLinks') ? tagsByResource['Microsoft.Network/privateDnsZones/virtualNetworkLinks'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateDnsZones/virtualNetworkLinks'] ?? {})
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -189,11 +191,11 @@ resource blobPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetwor
   }
 }
 
-resource dfsPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+resource dfsPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (!enablePublicAccess) {
   parent: dfsPrivateDnsZone
   name: '${replace(dfsPrivateDnsZone.name, '.', '-')}-link'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateDnsZones/virtualNetworkLinks') ? tagsByResource['Microsoft.Network/privateDnsZones/virtualNetworkLinks'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateDnsZones/virtualNetworkLinks'] ?? {})
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -202,11 +204,11 @@ resource dfsPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetwork
   }
 }
 
-resource queuePrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+resource queuePrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (!enablePublicAccess) {
   parent: queuePrivateDnsZone
   name: '${replace(queuePrivateDnsZone.name, '.', '-')}-link'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateDnsZones/virtualNetworkLinks') ? tagsByResource['Microsoft.Network/privateDnsZones/virtualNetworkLinks'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateDnsZones/virtualNetworkLinks'] ?? {})
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -215,11 +217,11 @@ resource queuePrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetwo
   }
 }
 
-resource tablePrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+resource tablePrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (!enablePublicAccess) {
   parent: tablePrivateDnsZone
   name: '${replace(tablePrivateDnsZone.name, '.', '-')}-link'
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateDnsZones/virtualNetworkLinks') ? tagsByResource['Microsoft.Network/privateDnsZones/virtualNetworkLinks'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateDnsZones/virtualNetworkLinks'] ?? {})
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -228,10 +230,10 @@ resource tablePrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetwo
   }
 }
 
-resource blobEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+resource blobEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (!enablePublicAccess) {
   name: '${storageAccount.name}-blob-ep'
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateEndpoints') ? tagsByResource['Microsoft.Network/privateEndpoints'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateEndpoints'] ?? {})
   properties: {
     subnet: {
       id: privateEndpointSubnetId
@@ -248,10 +250,10 @@ resource blobEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   }
 }
 
-resource scriptEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+resource scriptEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (!enablePublicAccess) {
   name: '${scriptStorageAccount.name}-blob-ep'
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateEndpoints') ? tagsByResource['Microsoft.Network/privateEndpoints'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateEndpoints'] ?? {})
   properties: {
     subnet: {
       id: privateEndpointSubnetId
@@ -268,10 +270,10 @@ resource scriptEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   }
 }
 
-resource dfsEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+resource dfsEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (!enablePublicAccess) {
   name: '${storageAccount.name}-dfs-ep'
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateEndpoints') ? tagsByResource['Microsoft.Network/privateEndpoints'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateEndpoints'] ?? {})
   properties: {
     subnet: {
       id: privateEndpointSubnetId
@@ -288,7 +290,7 @@ resource dfsEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   }
 }
 
-resource blobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+resource blobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = if (!enablePublicAccess) {
   name: 'storage-endpoint-zone'
   parent: blobEndpoint
   properties: {
@@ -303,7 +305,7 @@ resource blobPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZ
   }
 }
 
-resource dfsPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+resource dfsPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = if (!enablePublicAccess) {
   name: 'dfs-endpoint-zone'
   parent: dfsEndpoint
   properties: {
@@ -318,7 +320,7 @@ resource dfsPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZo
   }
 }
 
-resource scriptPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+resource scriptPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = if (!enablePublicAccess) {
   name: 'blob-endpoint-zone'
   parent: scriptEndpoint
   properties: {
@@ -376,7 +378,7 @@ resource ingestionContainer 'Microsoft.Storage/storageAccounts/blobServices/cont
 // Create managed identity to upload files
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: '${storageAccountName}_blobManager'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.ManagedIdentity/userAssignedIdentities') ? tagsByResource['Microsoft.ManagedIdentity/userAssignedIdentities'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.ManagedIdentity/userAssignedIdentities'] ?? {})
   location: location
 }
 
@@ -394,9 +396,10 @@ resource identityRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-0
 resource uploadSettings 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: '${storageAccountName}_uploadSettings'
   kind: 'AzurePowerShell'
+  // cSpell:ignore chinaeast
   // chinaeast2 is the only region in China that supports deployment scripts
   location: startsWith(location, 'china') ? 'chinaeast2' : location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Resources/deploymentScripts') ? tagsByResource['Microsoft.Resources/deploymentScripts'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Resources/deploymentScripts'] ?? {})
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -411,11 +414,24 @@ resource uploadSettings 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
     scriptEndpoint
     scriptPrivateDnsZoneGroup
   ]
-  properties: {
+  properties: union(enablePublicAccess ? {} : {
+    storageAccountSettings: {
+      storageAccountName: scriptStorageAccount.name
+    }
+    containerSettings: {
+      containerGroupName: '${scriptStorageAccount.name}cg'
+      subnetIds: [
+        {
+          id: scriptSubnetId
+        }
+      ]
+    }
+  }, {
     azPowerShellVersion: '9.0'
     retentionInterval: 'PT1H'
     environmentVariables: [
       {
+        // cSpell:ignore ftkver
         name: 'ftkVersion'
         value: loadTextContent('./ftkver.txt')
       }
@@ -453,19 +469,7 @@ resource uploadSettings 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       }
     ]
     scriptContent: loadTextContent('./scripts/Copy-FileToAzureBlob.ps1')
-    storageAccountSettings: {
-      storageAccountName: scriptStorageAccount.name
-      //storageAccountKey: storageAccount.listKeys().keys[0].value
-    }
-    containerSettings: {
-      containerGroupName: '${scriptStorageAccount.name}cg'
-      subnetIds: [
-        {
-          id: scriptSubnetId
-        }
-      ]
-    }
-  }
+  })
 }
 
 //==============================================================================
