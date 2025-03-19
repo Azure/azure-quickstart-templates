@@ -1,6 +1,6 @@
 # Azure Resource Manager QuickStart Templates
 
-This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at [azure.com](https://azure.microsoft.com/documentation/templates).
+This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at [azure.com](https://learn.microsoft.com/en-us/samples/browse/?expanded=azure&products=azure-resource-manager).
 
 See the [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide) for how to use or contribute to this repo.
 
