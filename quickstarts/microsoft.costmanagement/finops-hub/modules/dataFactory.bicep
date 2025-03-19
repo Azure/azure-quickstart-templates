@@ -64,10 +64,12 @@ param enablePublicAccess bool
 //------------------------------------------------------------------------------
 
 var focusSchemaVersion = '1.0'
+// cSpell:ignore ftkver
 var ftkVersion = loadTextContent('ftkver.txt')
 var exportApiVersion = '2023-07-01-preview'
 var hubDataExplorerName = 'hubDataExplorer'
 
+// cSpell:ignore timeframe
 // Function to generate the body for a Cost Management export
 func getExportBody(exportContainerName string, datasetType string, schemaVersion string, isMonthly bool, exportFormat string, compressionMode string, partitionData string, dataOverwriteBehavior string) string => '{ "properties": { "definition": { "dataSet": { "configuration": { "dataVersion": "${schemaVersion}", "filters": [] }, "granularity": "Daily" }, "timeframe": "${isMonthly ? 'TheLastMonth': 'MonthToDate' }", "type": "${datasetType}" }, "deliveryInfo": { "destination": { "container": "${exportContainerName}", "rootFolderPath": "@{if(startswith(item().scope, \'/\'), substring(item().scope, 1, sub(length(item().scope), 1)) ,item().scope)}", "type": "AzureBlob", "resourceId": "@{variables(\'storageAccountId\')}" } }, "schedule": { "recurrence": "${ isMonthly ? 'Monthly' : 'Daily'}", "recurrencePeriod": { "from": "2024-01-01T00:00:00.000Z", "to": "2050-02-01T00:00:00.000Z" }, "status": "Inactive" }, "format": "${exportFormat}", "partitionData": "${partitionData}", "dataOverwriteBehavior": "${dataOverwriteBehavior}", "compressionMode": "${compressionMode}" }, "id": "@{variables(\'resourceManagementUri\')}@{item().scope}/providers/Microsoft.CostManagement/exports/@{variables(\'exportName\')}", "name": "@{variables(\'exportName\')}", "type": "Microsoft.CostManagement/reports", "identity": { "type": "systemAssigned" }, "location": "global" }'
 
@@ -90,6 +92,7 @@ var datasetPropsDefault = {
 var safeExportContainerName = replace('${exportContainerName}', '-', '_')
 var safeIngestionContainerName = replace('${ingestionContainerName}', '-', '_')
 var safeConfigContainerName = replace('${configContainerName}', '-', '_')
+// cSpell:ignore vnet
 var managedVnetName = 'default'
 
 // Separator used to separate ingestion ID from file name for ingested files
@@ -112,7 +115,6 @@ var allHubTriggers = [
 // Roles needed to auto-start triggers
 var autoStartRbacRoles = [
   '673868aa-7521-48a0-acc6-0f60742d39f5' // Data Factory contributor - https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#data-factory-contributor
-  'e40ec5ca-96e0-45a2-b4ff-59039f2c2b59' // Managed Identity Contributor - https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#managed-identity-contributor
 ]
 
 // Roles for ADF to manage data in storage
@@ -143,6 +145,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
   name: keyVaultName
 }
 
+// cSpell:ignore azuretimezones
 module azuretimezones 'azuretimezones.bicep' = {
   name: 'azuretimezones'
   params: {
@@ -217,9 +220,6 @@ module getStoragePrivateEndpointConnections 'storageEndpoints.bicep' = if (!enab
 
 module approveStoragePrivateEndpointConnections 'storageEndpoints.bicep' = if (!enablePublicAccess) {
   name: 'ApproveStoragePrivateEndpointConnections'
-  dependsOn: [
-    getStoragePrivateEndpointConnections
-  ]
   params: {
     storageAccountName: storageAccount.name
     privateEndpointConnections: getStoragePrivateEndpointConnections.outputs.privateEndpointConnections
@@ -251,9 +251,6 @@ module getKeyVaultPrivateEndpointConnections 'keyVaultEndpoints.bicep' = if (!en
 
 module approveKeyVaultPrivateEndpointConnections 'keyVaultEndpoints.bicep' = if (!enablePublicAccess) {
   name: 'ApproveKeyVaultPrivateEndpointConnections'
-  dependsOn: [
-    getKeyVaultPrivateEndpointConnections
-  ]
   params: {
     keyVaultName: keyVault.name
     privateEndpointConnections: getKeyVaultPrivateEndpointConnections.outputs.privateEndpointConnections
@@ -285,9 +282,6 @@ module getDataExplorerPrivateEndpointConnections 'dataExplorerEndpoints.bicep' =
 
 module approveDataExplorerPrivateEndpointConnections 'dataExplorerEndpoints.bicep' = if (deployDataExplorer && !enablePublicAccess) {
   name: 'ApproveDataExplorerPrivateEndpointConnections'
-  dependsOn: [
-    getDataExplorerPrivateEndpointConnections
-  ]
   params: {
     dataExplorerName: dataExplorerName
     privateEndpointConnections: getDataExplorerPrivateEndpointConnections.outputs.privateEndpointConnections
@@ -302,7 +296,7 @@ module approveDataExplorerPrivateEndpointConnections 'dataExplorerEndpoints.bice
 resource triggerManagerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: '${dataFactory.name}_triggerManager'
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.ManagedIdentity/userAssignedIdentities') ? tagsByResource['Microsoft.ManagedIdentity/userAssignedIdentities'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.ManagedIdentity/userAssignedIdentities'] ?? {})
 }
 
 resource triggerManagerRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for role in autoStartRbacRoles: {
@@ -332,6 +326,7 @@ resource factoryIdentityStorageRoleAssignments 'Microsoft.Authorization/roleAssi
 
 resource deleteOldResources 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: '${dataFactory.name}_deleteOldResources'
+  // cSpell:ignore chinaeast2
   // chinaeast2 is the only region in China that supports deployment scripts
   location: startsWith(location, 'china') ? 'chinaeast2' : location
   identity: {
@@ -344,7 +339,7 @@ resource deleteOldResources 'Microsoft.Resources/deploymentScripts@2020-10-01' =
   dependsOn: [
     triggerManagerRoleAssignments
   ]
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Resources/deploymentScripts') ? tagsByResource['Microsoft.Resources/deploymentScripts'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Resources/deploymentScripts'] ?? {})
   properties: {
     azPowerShellVersion: '8.0'
     retentionInterval: 'PT1H'
@@ -416,6 +411,7 @@ resource stopTriggers 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
 // Linked services
 //------------------------------------------------------------------------------
 
+// cSpell:ignore linkedservices
 resource linkedService_keyVault 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = {
   name: keyVault.name
   parent: dataFactory
@@ -1109,6 +1105,7 @@ resource pipeline_InitializeHub 'Microsoft.DataFactory/factories/pipelines@2018-
               }
               userProperties: []
               typeProperties: {
+                // cSpell:ignore Ingestions
                 command: '.show capacity | where Resource == \'Ingestions\' | project Remaining'
                 commandTimeout: '00:20:00'
               }
@@ -1218,6 +1215,7 @@ resource pipeline_InitializeHub 'Microsoft.DataFactory/factories/pipelines@2018-
                     userProperties: []
                     typeProperties: {
                       command: {
+                        // cSpell:ignore isnull, isnotempty
                         value: '@concat(\'.append HubSettingsLog <| print version="\', variables(\'version\'), \'",scopes=dynamic(\', variables(\'scopes\'), \'),retention=dynamic(\', variables(\'retention\'), \') | extend scopes = iff(isnull(scopes[0]), pack_array(scopes), scopes) | mv-apply scopeObj = scopes on (where isnotempty(scopeObj.scope) | summarize scopes = make_set(scopeObj.scope))\')'
                         type: 'Expression'
                       }
@@ -1251,6 +1249,7 @@ resource pipeline_InitializeHub 'Microsoft.DataFactory/factories/pipelines@2018-
                     }
                     userProperties: []
                     typeProperties: {
+                      // cSpell:ignore externaldata
                       command: '.set-or-replace PricingUnits <| externaldata(x_PricingUnitDescription: string, AccountTypes: string, x_PricingBlockSize: decimal, PricingUnit: string)[@"https://github.com/microsoft/finops-toolkit/releases/download/v${ftkVersion}/PricingUnits.csv"] with (format="csv", ignoreFirstRecord=true) | project-away AccountTypes'
                       commandTimeout: '00:20:00'
                     }
@@ -1861,6 +1860,7 @@ resource pipeline_RunBackfillJob 'Microsoft.DataFactory/factories/pipelines@2018
               typeProperties: {
                 variableName: 'exportName'
                 value: {
+                  // cSpell:ignore costdetails
                   value: '@toLower(concat(variables(\'finOpsHub\'), \'-monthly-costdetails\'))'
                   type: 'Expression'
                 }
@@ -2241,15 +2241,16 @@ resource pipeline_RunExportJobs 'Microsoft.DataFactory/factories/pipelines@2018-
                     }
                     userProperties: []
                     typeProperties: {
+                      method: 'POST'
                       url: {
                         value: '@{replace(toLower(concat(variables(\'resourceManagementUri\'),item().id)), \'com//\', \'com/\')}/run?api-version=${exportApiVersion}'
                         type: 'Expression'
                       }
-                      method: 'POST'
                       headers: {
                         'x-ms-command-name': 'FinOpsToolkit.Hubs.config_RunExportJobs@${ftkVersion}'
                         ClientType: 'FinOpsToolkit.Hubs@${ftkVersion}'
                       }
+                      body: ' '
                       authentication: {
                         type: 'MSI'
                         resource: {
@@ -2728,6 +2729,7 @@ resource pipeline_ExecuteExportsETL 'Microsoft.DataFactory/factories/pipelines@2
         typeProperties: {
           variableName: 'mcaColumnToCheck'
           value: {
+            // cSpell:ignore pricesheet, reservationtransactions, reservationrecommendations
             value: '@if(contains(createArray(\'pricesheet\', \'reservationtransactions\'), toLower(variables(\'exportDatasetType\'))), \'BillingProfileId\', if(equals(toLower(variables(\'exportDatasetType\')), \'reservationrecommendations\'), \'Net Savings\', null))'
             type: 'Expression'
           }
@@ -3189,6 +3191,7 @@ resource pipeline_ExecuteExportsETL 'Microsoft.DataFactory/factories/pipelines@2
         typeProperties: {
           variableName: 'hubDataset'
           value: {
+            // cSpell:ignore focuscost, reservationdetails
             value: '@if(equals(toLower(variables(\'exportDatasetType\')), \'focuscost\'), \'Costs\', if(equals(toLower(variables(\'exportDatasetType\')), \'pricesheet\'), \'Prices\', if(equals(toLower(variables(\'exportDatasetType\')), \'reservationdetails\'), \'CommitmentDiscountUsage\', if(equals(toLower(variables(\'exportDatasetType\')), \'reservationrecommendations\'), \'Recommendations\', if(equals(toLower(variables(\'exportDatasetType\')), \'reservationtransactions\'), \'Transactions\', toLower(variables(\'exportDatasetType\')))))))'
             type: 'Expression'
           }
@@ -3471,6 +3474,7 @@ resource pipeline_ToIngestion 'Microsoft.DataFactory/factories/pipelines@2018-06
             type: 'Expression'
           }
           condition: {
+            // cSpell:ignore endswith
             value: '@and(endswith(item().name, \'.parquet\'), not(startswith(item().name, concat(pipeline().parameters.ingestionId, \'${ingestionIdFileNameSeparator}\'))))'
             type: 'Expression'
           }
@@ -4247,6 +4251,7 @@ resource pipeline_ToDataExplorer 'Microsoft.DataFactory/factories/pipelines@2018
                     userProperties: []
                     typeProperties: {
                       command: {
+                        // cSpell:ignore abfss, toscalar
                         value: '@concat(\'.ingest into table \', pipeline().parameters.table, \' ("abfss://${ingestionContainerName}@${storageAccount.name}.dfs.${environment().suffixes.storage}/\', pipeline().parameters.folderPath, \'/\', pipeline().parameters.fileName, \';managed_identity=system") with (format="parquet", ingestionMappingReference="\', pipeline().parameters.table, \'_mapping", tags="[\\"drop-by:\', pipeline().parameters.ingestionId, \'\\", \\"drop-by:\', pipeline().parameters.folderPath, \'/\', pipeline().parameters.originalFileName, \'\\", \\"drop-by:ftk-version-${ftkVersion}\\"]"); print Success = assert(iff(toscalar($command_results | project-keep HasErrors) == false, true, false), "Ingestion Failed")\')'
                         type: 'Expression'
                       }
@@ -4281,6 +4286,7 @@ resource pipeline_ToDataExplorer 'Microsoft.DataFactory/factories/pipelines@2018
                     }
                     typeProperties: {
                       command: {
+                        // cSpell:ignore startofmonth, strcat, todatetime
                         value: '@concat(\'.drop extents <| .show extents | extend isOldFinalData = (TableName startswith "\', replace(pipeline().parameters.table, \'_raw\', \'_final_v\'), \'" and Tags !has "drop-by:\', pipeline().parameters.ingestionId, \'" and Tags has "drop-by:\', pipeline().parameters.folderPath, \'") | extend isPastFinalRetention = (TableName startswith "\', replace(pipeline().parameters.table, \'_raw\', \'_final_v\'), \'" and todatetime(substring(strcat(replace_string(extract("drop-by:[A-Za-z]+/(\\\\d{4}/\\\\d{2}(/\\\\d{2})?)", 1, Tags), "/", "-"), "-01"), 0, 10)) < datetime_add("month", -\', if(lessOrEquals(variables(\'finalRetentionMonths\'), 0), 0, variables(\'finalRetentionMonths\')), \', startofmonth(now()))) | where isOldFinalData or isPastFinalRetention\')'
                         type: 'Expression'
                       }
@@ -4476,9 +4482,6 @@ resource pipeline_ToDataExplorer 'Microsoft.DataFactory/factories/pipelines@2018
         type: 'Integer'
         defaultValue: 999
       }
-      scope: {
-        type: 'String'
-      }
     }
     annotations: []
   }
@@ -4541,256 +4544,6 @@ resource pipeline_ExecuteIngestionETL 'Microsoft.DataFactory/factories/pipelines
             ]
           }
         ]
-        userProperties: []
-        typeProperties: {
-          on: {
-            value: '@last(array(split(pipeline().parameters.blobPath, \'.\')))'
-            type: 'Expression'
-          }
-          cases: [
-            {
-              value: 'csv'
-              activities: [
-                {
-                  name: 'Convert CSV File'
-                  type: 'Copy'
-                  dependsOn: []
-                  policy: {
-                    timeout: '0.00:10:00'
-                    retry: 0
-                    retryIntervalInSeconds: 30
-                    secureOutput: false
-                    secureInput: false
-                  }
-                  userProperties: []
-                  typeProperties: {
-                    source: {
-                      type: 'DelimitedTextSource'
-                      additionalColumns: {
-                        type: 'Expression'
-                        value: '@activity(\'Load Schema Mappings\').output.firstRow.additionalColumns'
-                      }
-                      storeSettings: {
-                        type: 'AzureBlobFSReadSettings'
-                        recursive: true
-                        enablePartitionDiscovery: false
-                      }
-                      formatSettings: {
-                        type: 'DelimitedTextReadSettings'
-                      }
-                    }
-                    sink: {
-                      type: 'ParquetSink'
-                      storeSettings: {
-                        type: 'AzureBlobFSWriteSettings'
-                      }
-                      formatSettings: {
-                        type: 'ParquetWriteSettings'
-                        fileExtension: '.parquet'
-                      }
-                    }
-                    enableStaging: false
-                    parallelCopies: 1
-                    validateDataConsistency: false
-                    translator: {
-                      value: '@activity(\'Load Schema Mappings\').output.firstRow.translator'
-                      type: 'Expression'
-                    }
-                  }
-                  inputs: [
-                    {
-                      referenceName: dataset_msexports.name
-                      type: 'DatasetReference'
-                      parameters: {
-                        blobPath: {
-                          value: '@pipeline().parameters.blobPath'
-                          type: 'Expression'
-                        }
-                      }
-                    }
-                  ]
-                  outputs: [
-                    {
-                      referenceName: dataset_ingestion.name
-                      type: 'DatasetReference'
-                      parameters: {
-                        blobPath: {
-                          value: '@concat(pipeline().parameters.destinationFolder, \'/\', pipeline().parameters.destinationFile)'
-                          type: 'Expression'
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-            {
-              value: 'gz'
-              activities: [
-                {
-                  name: 'Convert GZip CSV File'
-                  type: 'Copy'
-                  dependsOn: []
-                  policy: {
-                    timeout: '0.00:10:00'
-                    retry: 0
-                    retryIntervalInSeconds: 30
-                    secureOutput: false
-                    secureInput: false
-                  }
-                  userProperties: []
-                  typeProperties: {
-                    source: {
-                      type: 'DelimitedTextSource'
-                      additionalColumns: {
-                        type: 'Expression'
-                        value: '@activity(\'Load Schema Mappings\').output.firstRow.additionalColumns'
-                      }
-                      storeSettings: {
-                        type: 'AzureBlobFSReadSettings'
-                        recursive: true
-                        enablePartitionDiscovery: false
-                      }
-                      formatSettings: {
-                        type: 'DelimitedTextReadSettings'
-                      }
-                    }
-                    sink: {
-                      type: 'ParquetSink'
-                      storeSettings: {
-                        type: 'AzureBlobFSWriteSettings'
-                      }
-                      formatSettings: {
-                        type: 'ParquetWriteSettings'
-                        fileExtension: '.parquet'
-                      }
-                    }
-                    enableStaging: false
-                    parallelCopies: 1
-                    validateDataConsistency: false
-                    translator: {
-                      value: '@activity(\'Load Schema Mappings\').output.firstRow.translator'
-                      type: 'Expression'
-                    }
-                  }
-                  inputs: [
-                    {
-                      referenceName: dataset_msexports_gzip.name
-                      type: 'DatasetReference'
-                      parameters: {
-                        blobPath: {
-                          value: '@pipeline().parameters.blobPath'
-                          type: 'Expression'
-                        }
-                      }
-                    }
-                  ]
-                  outputs: [
-                    {
-                      referenceName: dataset_ingestion.name
-                      type: 'DatasetReference'
-                      parameters: {
-                        blobPath: {
-                          value: '@concat(pipeline().parameters.destinationFolder, \'/\', pipeline().parameters.destinationFile)'
-                          type: 'Expression'
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-            {
-              value: 'parquet'
-              activities: [
-                {
-                  name: 'Move Parquet File'
-                  type: 'Copy'
-                  dependsOn: []
-                  policy: {
-                    timeout: '0.00:05:00'
-                    retry: 0
-                    retryIntervalInSeconds: 30
-                    secureOutput: false
-                    secureInput: false
-                  }
-                  userProperties: []
-                  typeProperties: {
-                    source: {
-                      type: 'ParquetSource'
-                      storeSettings: {
-                        type: 'AzureBlobFSReadSettings'
-                        recursive: true
-                        enablePartitionDiscovery: false
-                      }
-                      formatSettings: {
-                        type: 'ParquetReadSettings'
-                      }
-                    }
-                    sink: {
-                      type: 'ParquetSink'
-                      storeSettings: {
-                        type: 'AzureBlobFSWriteSettings'
-                      }
-                      formatSettings: {
-                        type: 'ParquetWriteSettings'
-                        fileExtension: '.parquet'
-                      }
-                    }
-                    enableStaging: false
-                    parallelCopies: 1
-                    validateDataConsistency: false
-                  }
-                  inputs: [
-                    {
-                      referenceName: dataset_msexports_parquet.name
-                      type: 'DatasetReference'
-                      parameters: {
-                        blobPath: {
-                          value: '@pipeline().parameters.blobPath'
-                          type: 'Expression'
-                        }
-                      }
-                    }
-                  ]
-                  outputs: [
-                    {
-                      referenceName: dataset_ingestion.name
-                      type: 'DatasetReference'
-                      parameters: {
-                        blobPath: {
-                          value: '@concat(pipeline().parameters.destinationFolder, \'/\', pipeline().parameters.destinationFile)'
-                          type: 'Expression'
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-          defaultActivities: [
-            {
-              name: 'Unsupported File Type'
-              type: 'Fail'
-              dependsOn: []
-              userProperties: []
-              typeProperties: {
-                message: {
-                  value: '@concat(\'Unable to ingest the specified export file because the file type is not supported. File: \', pipeline().parameters.blobPath)'
-                  type: 'Expression'
-                }
-                errorCode: 'UnsupportedExportFileType'
-              }
-            }
-          ]
-        }
-      }
-      { // Get Existing Parquet Files
-        name: 'Get Existing Parquet Files'
-        description: 'Get the previously ingested files so we can remove any older data. This is necessary to avoid data duplication in reports.'
-        type: 'GetMetadata'
-        dependsOn: []
         policy: {
           timeout: '0.12:00:00'
           retry: 0
@@ -4998,7 +4751,7 @@ resource startTriggers 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: '${dataFactory.name}_startTriggers'
   // chinaeast2 is the only region in China that supports deployment scripts
   location: startsWith(location, 'china') ? 'chinaeast2' : location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Resources/deploymentScripts') ? tagsByResource['Microsoft.Resources/deploymentScripts'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Resources/deploymentScripts'] ?? {})
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
