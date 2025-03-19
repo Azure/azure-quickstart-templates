@@ -1,4 +1,4 @@
-// Execute this main file to deploy Azure AI Studio resources with key-less authentication via Microsoft Entra ID.
+// Execute this main file to deploy Azure AI Foundry resources with key-less authentication via Microsoft Entra ID.
 
 // Parameters
 @minLength(2)
@@ -6,11 +6,11 @@
 @description('Name for the Azure AI Hub resource and used to derive names of dependent resources.')
 param aiHubName string = 'aih-demo'
 
-@description('Friendly name for your Azure AI Hub resource, displayed in the Studio UI.')
+@description('Friendly name for your Azure AI Hub resource, displayed in the Foundry UI.')
 param aiHubFriendlyName string = 'Demo AI resource'
 
-@description('Description of your Azure AI Hub resource, displayed in the Studio UI.')
-param aiHubDescription string = 'This is an example AI resource for use in Azure AI Studio.'
+@description('Description of your Azure AI Hub resource, displayed in the Foundry UI.')
+param aiHubDescription string = 'This is an example AI resource for use in Azure AI Foundry.'
 
 @description('The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub.')
 param userObjectId string = ''

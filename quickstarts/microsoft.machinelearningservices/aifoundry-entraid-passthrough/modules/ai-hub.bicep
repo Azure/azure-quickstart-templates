@@ -9,10 +9,10 @@ param tags object
 @description('Name for the Azure AI Hub resource.')
 param aiHubName string
 
-@description('Friendly name for your Azure AI Hub resource, displayed in the Studio UI.')
+@description('Friendly name for your Azure AI Hub resource, displayed in the Foundry UI.')
 param aiHubFriendlyName string = aiHubName
 
-@description('Description of your Azure AI Hub resource, displayed in the Studio UI.')
+@description('Description of your Azure AI Hub resource, displayed in the Foundry UI.')
 param aiHubDescription string
 
 @description('Resource ID of the Azure Application Insights resource for storing diagnostics logs.')
