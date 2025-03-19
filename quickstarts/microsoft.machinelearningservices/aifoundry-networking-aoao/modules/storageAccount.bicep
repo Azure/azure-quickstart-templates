@@ -203,7 +203,7 @@ resource storageTableDataContributorRoleDefinition 'Microsoft.Authorization/role
   scope: subscription()
 }
 
-// This role assignment grants the user the required permissions to create a Prompt Flow in Azure AI Studio
+// This role assignment grants the user the required permissions to create a Prompt Flow in Azure AI Foundry
 resource storageAccountContributorUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(userObjectId)) {
   name: guid(storageAccount.id, storageAccountContributorRoleDefinition.id, userObjectId)
   scope: storageAccount

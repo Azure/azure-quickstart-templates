@@ -18,8 +18,8 @@ param hubName string = ''
 @description('Specifies the friendly name of the Azure AI Hub workspace.')
 param hubFriendlyName string = 'Demo AI Hub'
 
-@description('Specifies the description for the Azure AI Hub workspace dispayed in Azure AI Studio.')
-param hubDescription string = 'This is a demo hub for use in Azure AI Studio.'
+@description('Specifies the description for the Azure AI Hub workspace dispayed in Azure AI Foundry.')
+param hubDescription string = 'This is a demo hub for use in Azure AI Foundry.'
 
 @description('Specifies the Isolation mode for the managed network of the Azure AI Hub workspace.')
 @allowed([
@@ -52,11 +52,11 @@ param connectionAuthType string = 'AAD'
 ])
 param systemDatastoresAuthMode string = 'identity'
 
-@description('Specifies the name for the Azure AI Studio Hub Project workspace.')
+@description('Specifies the name for the Azure AI Foundry Hub Project workspace.')
 param projectName string = ''
 
-@description('Specifies the friendly name for the Azure AI Studio Hub Project workspace.')
-param projectFriendlyName string = 'AI Studio Hub Project'
+@description('Specifies the friendly name for the Azure AI Foundry Hub Project workspace.')
+param projectFriendlyName string = 'AI Foundry Hub Project'
 
 @description('Specifies the public network access for the Azure AI Project workspace.')
 @allowed([

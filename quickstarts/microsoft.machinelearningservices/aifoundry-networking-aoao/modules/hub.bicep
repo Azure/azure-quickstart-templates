@@ -8,10 +8,10 @@ param location string
 @description('Specifies the resource tags.')
 param tags object
 
-@description('The SKU name to use for the AI Studio Hub Resource')
+@description('The SKU name to use for the AI Foundry Hub Resource')
 param skuName string = 'Basic'
 
-@description('The SKU tier to use for the AI Studio Hub Resource')
+@description('The SKU tier to use for the AI Foundry Hub Resource')
 @allowed(['Basic', 'Free', 'Premium', 'Standard'])
 param skuTier string = 'Basic'
 
@@ -177,7 +177,7 @@ resource azureMLDataScientistRole 'Microsoft.Authorization/roleDefinitions@2022-
   scope: subscription()
 }
 
-// This role assignment grants the user the required permissions to start a Prompt Flow in a compute service within Azure AI Studio
+// This role assignment grants the user the required permissions to start a Prompt Flow in a compute service within Azure AI Foundry
 resource azureMLDataScientistUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(userObjectId)) {
   name: guid(hub.id, azureMLDataScientistRole.id, userObjectId)
   scope: hub
