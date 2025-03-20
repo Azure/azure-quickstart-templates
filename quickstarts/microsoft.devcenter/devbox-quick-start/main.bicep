@@ -1,6 +1,3 @@
-@description('The location of the resource')
-param location string = resourceGroup().location
-
 @description('The name of the Project resource')
 param projectName string = 'default-project-name'
 
@@ -13,6 +10,7 @@ param devBoxDefinitionName string = 'default-dbd-name'
 @description('The name of the Pool resource')
 param poolName string = 'default-pool-name'
 
+var location = resourceGroup().location
 var poolPropertyAdmin = 'Enabled'
 var poolPropertyNetworkType = 'Managed'
 var poolPropertyNetworkName = 'Network'
