@@ -1,4 +1,4 @@
-// Execute this main file to depoy Azure AI studio resources in the basic security configuraiton
+// Execute this main file to depoy Azure AI Foundry resources in the basic security configuraiton
 
 // Parameters
 @minLength(2)
@@ -9,8 +9,8 @@ param aiHubName string = 'demo'
 @description('Friendly name for your Azure AI resource')
 param aiHubFriendlyName string = 'Demo AI resource'
 
-@description('Description of your Azure AI resource dispayed in AI studio')
-param aiHubDescription string = 'This is an example AI resource for use in Azure AI Studio.'
+@description('Description of your Azure AI resource dispayed in AI Foundry')
+param aiHubDescription string = 'This is an example AI resource for use in Azure AI Foundry.'
 
 @description('Azure region used for the deployment of all resources.')
 param location string = resourceGroup().location
