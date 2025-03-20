@@ -2,7 +2,7 @@
 @description('Specifies a project name that is used for generating resource names.')
 param projectName string
 
-@description('Specifies the location for the cross-region load balancer.  Available in limited regions.')
+@description('Specifies the location for the global load balancer.  Available in limited regions.')
 @allowed([
   'eastus2'
   'westus'
