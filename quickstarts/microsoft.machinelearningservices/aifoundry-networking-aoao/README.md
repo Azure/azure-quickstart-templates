@@ -1,31 +1,31 @@
 ---
-description: This template creates a secure Azure AI Studio environment with robust network and identity security restrictions.
+description: This template creates a secure Azure AI Foundry environment with robust network and identity security restrictions.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: aistudio-networking-aoao
+urlFragment: aifoundry-networking-aoao
 languages:
 - bicep
 - json
 ---
-# Deploy Secure Azure AI Studio with a managed virtual network
+# Deploy Secure Azure AI Foundry with a managed virtual network
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-networking-aoao/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-networking-aoao/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aifoundry-networking-aoao/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aifoundry-networking-aoao/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-networking-aoao/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-networking-aoao/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aifoundry-networking-aoao/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aifoundry-networking-aoao/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-networking-aoao/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-networking-aoao/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aifoundry-networking-aoao/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aifoundry-networking-aoao/CredScanResult.svg)
 
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aistudio-networking-aoao/BicepVersion.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/aifoundry-networking-aoao/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faistudio-networking-aoao%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faistudio-networking-aoao%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faifoundry-networking-aoao%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faifoundry-networking-aoao%2Fazuredeploy.json)
 
-This collection of [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/file) templates demonstrates how to set up an [Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/what-is-ai-studio) environment with managed identity and Azure RBAC to connected [Azure AI Services](https://learn.microsoft.com/en-us/azure/ai-services/what-are-ai-services) and dependent resources and with the managed virtual network isolation mode set to [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-managed-network). For more information, see [How to configure a managed network for Azure AI Studio hubs](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-managed-network).
+This collection of [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/file) templates demonstrates how to set up an [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-ai-foundry) environment with managed identity and Azure RBAC to connected [Azure AI Services](https://learn.microsoft.com/en-us/azure/ai-services/what-are-ai-services) and dependent resources and with the managed virtual network isolation mode set to [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network). For more information, see [How to configure a managed network for Azure AI Foundry hubs](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network).
 
 ## Azure Resources
 
@@ -35,14 +35,14 @@ The Bicep modules deploy the following Azure resources:
 
 | Resource                    | Type                                                                                                                                                                    | Description                                                                                                                                                 |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Azure Application Insights  | [Microsoft.Insights/components](https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/components?pivots=deployment-language-bicep)                       | An Azure Application Insights instance associated with the Azure AI Studio workspace                                                                        |
+| Azure Application Insights  | [Microsoft.Insights/components](https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/components?pivots=deployment-language-bicep)                       | An Azure Application Insights instance associated with the Azure AI Foundry workspace                                                                        |
 | Azure Monitor Log Analytics | [Microsoft.OperationalInsights/workspaces](https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/workspaces?pivots=deployment-language-bicep) | An Azure Log Analytics workspace used to collect diagnostics logs and metrics from Azure resources                                                          |
-| Azure Key Vault             | [Microsoft.KeyVault/vaults](https://learn.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults?pivots=deployment-language-bicep)                               | An Azure Key Vault instance associated with the Azure AI Studio workspace                                                                                   |
-| Azure Storage Account       | [Microsoft.Storage/storageAccounts](https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts)                                                | An Azure Storage instance associated with the Azure AI Studio workspace                                                                                     |
-| Azure Container Registry    | [Microsoft.ContainerRegistry/registries](https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/registries)                                      | An Azure Container Registry instance associated with the Azure AI Studio workspace                                                                          |
-| Azure AI Hub / Project      | [Microsoft.MachineLearningServices/workspaces](https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces)                          | An Azure AI Studio Hub and Project (Azure ML Workspace of kind 'hub' and 'project')                                                                         |
+| Azure Key Vault             | [Microsoft.KeyVault/vaults](https://learn.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults?pivots=deployment-language-bicep)                               | An Azure Key Vault instance associated with the Azure AI Foundry workspace                                                                                   |
+| Azure Storage Account       | [Microsoft.Storage/storageAccounts](https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts)                                                | An Azure Storage instance associated with the Azure AI Foundry workspace                                                                                     |
+| Azure Container Registry    | [Microsoft.ContainerRegistry/registries](https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/registries)                                      | An Azure Container Registry instance associated with the Azure AI Foundry workspace                                                                          |
+| Azure AI Hub / Project      | [Microsoft.MachineLearningServices/workspaces](https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces)                          | An Azure AI Foundry Hub and Project (Azure ML Workspace of kind 'hub' and 'project')                                                                         |
 | Azure AI Services           | [Microsoft.CognitiveServices/accounts](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)                                          | An Azure AI Services as the model-as-a-service endpoint provider including GPT-4o and ADA Text Embeddings model deployments                                 |
-| Azure Virtual Network       | [Microsoft.Network/virtualNetworks](https://learn.microsoft.com/en-us/azure/templates/microsoft.network/virtualnetworks?pivots=deployment-language-bicep)               | A bring-your-own (BYO) virtual network hosting a jumpbox virtual machine to manage Azure AI Studio                                                          |
+| Azure Virtual Network       | [Microsoft.Network/virtualNetworks](https://learn.microsoft.com/en-us/azure/templates/microsoft.network/virtualnetworks?pivots=deployment-language-bicep)               | A bring-your-own (BYO) virtual network hosting a jumpbox virtual machine to manage Azure AI Foundry                                                          |
 | Azure Bastion Host          | [Microsoft.Network/virtualNetworks](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/bastionhosts)                                                    | A Bastion Host defined in the BYO virtual network that provides RDP connectivity to the jumpbox virtual machine                                             |
 | Azure NAT Gateway           | [Microsoft.Network/natGateways](https://learn.microsoft.com/en-us/azure/virtual-network/nat-gateway/nat-overview)                                                       | An Azure NAT Gateway that provides outbound connectivity to the jumpbox virtual machine                                                                     |
 | Azure Private Endpoints     | [Microsoft.Network/privateEndpoints](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/privateendpoints)                                               | Azure Private Endpoints defined in the BYO virtual network for Azure Container Registry, Azure Key Vault, Azure Storage Account, and Azure AI Hub Workspace |
@@ -63,13 +63,13 @@ There are three different configuration modes for outbound traffic from the mana
 | Allow only approved outbound | Outbound traffic is allowed by specifying service tags.               | You want to minimize the risk of data exfiltration, but you need to prepare all required machine learning artifacts in your private environment.</br>\* You want to configure outbound access to an approved list of services, service tags, or FQDNs. |
 | Disabled                     | Inbound and outbound traffic isn't restricted.                        | You want public inbound and outbound from the hub.                                                                                                                                                                                                     |
 
-This set of [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/file) templates demonstrates how to deploy an Azure AI Studio environment with the hub workspace's managed network isolation mode configured to `Allow Internet Outbound`.
+This set of [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/file) templates demonstrates how to deploy an Azure AI Foundry environment with the hub workspace's managed network isolation mode configured to `Allow Internet Outbound`.
 
 The [Azure Private Endpoints](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview) and [Private DNS Zones](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/privatednszones) in the hub workspace managed virtual network are automatically created for you, while the Bicep templates create the [Azure Private Endpoints](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview) and relative [Private DNS Zones](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/privatednszones) in the client virtual network.
 
 ## Managed Virtual Network
 
-When you provision the hub workspace of your Azure AI Studio with an isolation mode equal to the [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-managed-network?tabs=portal#configure-a-managed-virtual-network-to-allow-internet-outbound) isolation mode, the managed virtual network and the Azure Private Endpoints to the dependent resources will not be created if public network access of Azure Key Vault, Azure Container Registry, and Azure Storage Account dependent resources is enabled.
+When you provision the hub workspace of your Azure AI Foundry with an isolation mode equal to the [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network?tabs=portal#configure-a-managed-virtual-network-to-allow-internet-outbound) isolation mode, the managed virtual network and the Azure Private Endpoints to the dependent resources will not be created if public network access of Azure Key Vault, Azure Container Registry, and Azure Storage Account dependent resources is enabled.
 
 The creation of the managed virtual network is deferred until a compute resource is created or provisioning is manually started. When allowing automatic creation, it can take around 30 minutes to create the first compute resource as it is also provisioning the network. For more information, see [Manually provision workspace managed VNet](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-managed-network?view=azureml-api-2#manually-provision-a-managed-vnet).
 
@@ -77,7 +77,7 @@ If you initially create Azure Key Vault, Azure Container Registry, and Azure Sto
 
 In this case, if you want o create the private endpoints to the dependent resources, you need to reprovision the hub manage virtual network in one of the following ways:
 
-- Redeploy the hub workspace using Bicep or Terraform templates. If the isolation mode is set to [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-managed-network?tabs=portal#configure-a-managed-virtual-network-to-allow-internet-outbound) and the dependent resources referenced by the hub workspace have public network access disabled, this operation will trigger the creation of the managed virtual network, if it does not already exist, and the private endpoints to the dependent resources.
+- Redeploy the hub workspace using Bicep or Terraform templates. If the isolation mode is set to [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network?tabs=portal#configure-a-managed-virtual-network-to-allow-internet-outbound) and the dependent resources referenced by the hub workspace have public network access disabled, this operation will trigger the creation of the managed virtual network, if it does not already exist, and the private endpoints to the dependent resources.
 - Execute the following Azure CLI command [az ml workspace provision-network](https://learn.microsoft.com/en-us/cli/azure/ml/workspace?view=azure-cli-latest#az-ml-workspace-provision-network) to reprovision the managed virtual network. The private endpoints will be created with the managed virtual network if the public network access of the dependent resources is disabled.
 
 ```bash
@@ -105,7 +105,7 @@ Here, you will find the private endpoint created by the Bicep templates in the c
 
 ![Key Vault Private Enpoints](./images/key-vault.png)
 
-Also note that when you create a hub workspace with the [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-managed-network?tabs=portal#configure-a-managed-virtual-network-to-allow-internet-outbound) isolation mode, the creation of the managed network is not immediate to save costs. The managed virtual network needs to be manually triggered via the [az ml workspace provision-network](https://learn.microsoft.com/en-us/cli/azure/ml/workspace?view=azure-cli-latest#az-ml-workspace-provision-network) command, or it will be triggered when you create a compute resource or private endpoints to dependent resources.
+Also note that when you create a hub workspace with the [Allow Internet Outbound](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network?tabs=portal#configure-a-managed-virtual-network-to-allow-internet-outbound) isolation mode, the creation of the managed network is not immediate to save costs. The managed virtual network needs to be manually triggered via the [az ml workspace provision-network](https://learn.microsoft.com/en-us/cli/azure/ml/workspace?view=azure-cli-latest#az-ml-workspace-provision-network) command, or it will be triggered when you create a compute resource or private endpoints to dependent resources.
 
 At this time, the creation of an online endpoint does not automatically trigger the creation of a managed virtual network. An error occurs if you try to create an online deployment under the workspace which enabled workspace managed VNet but the managed VNet is not provisioned yet. Workspace managed VNet should be provisioned before you create an online deployment. Follow instructions to manually provision the workspace managed VNet. Once completed, you may start creating online deployments. For more information, see Network isolation with managed online endpoint and Secure your managed online endpoints with network isolation.
 
@@ -113,18 +113,18 @@ At this time, the creation of an online endpoint does not automatically trigger 
 
 The current limitations of managed virtual network are:
 
-- Azure AI Studio currently doesn't support bringing your own virtual network, it only supports managed virtual network isolation.
+- Azure AI Foundry currently doesn't support bringing your own virtual network, it only supports managed virtual network isolation.
 - Once you enable managed virtual network isolation of your Azure AI, you can't disable it.
 - Managed virtual network uses private endpoint connections to access your private resources. You can't have a private endpoint and a service endpoint at the same time for your Azure resources, such as a storage account. We recommend using private endpoints in all scenarios.
 - The managed virtual network is deleted when the Azure AI is deleted.
 - Data exfiltration protection is automatically enabled for the only approved outbound mode. If you add other outbound rules, such as to FQDNs, Microsoft can't guarantee that you're protected from data exfiltration to those outbound destinations.
-- Using FQDN outbound rules increases the cost of the managed virtual network because FQDN rules use Azure Firewall. For more information, see [Pricing](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-managed-network?tabs=portal#pricing).
+- Using FQDN outbound rules increases the cost of the managed virtual network because FQDN rules use Azure Firewall. For more information, see [Pricing](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network?tabs=portal#pricing).
 - FQDN outbound rules only support ports 80 and 443.
 - When using a compute instance with a managed network, use the `az ml compute connect-ssh` command to connect to the compute using SSH.
 
 ## Pricing
 
-According to the [documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/configure-managed-network?tabs=portal#pricing), the hub managed virtual network feature is free. However, you will be charged for the following resources used by the managed virtual network:
+According to the [documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network?tabs=portal#pricing), the hub managed virtual network feature is free. However, you will be charged for the following resources used by the managed virtual network:
 
 - Azure Private Link - Private endpoints used to secure communications between the managed virtual network and Azure resources rely on Azure Private Link. For more information on pricing, see [Azure Private Link pricing](https://azure.microsoft.com/pricing/details/private-link/).
 - FQDN outbound rules - FQDN outbound rules are implemented using Azure Firewall. If you use outbound FQDN rules, charges for Azure Firewall are included in your billing. Azure Firewall SKU is standard. Azure Firewall is provisioned per hub.
@@ -172,7 +172,7 @@ az network bastion rdp \
     --auth-type AAD
 ```
 
-After logging in to the virtual machine, if you open the Edge browser and navigate to the Azure Portal or Azure AI Studio, the browser profile will automatically be configured to the tenant user account used for the VM login.
+After logging in to the virtual machine, if you open the Edge browser and navigate to the Azure Portal or Azure AI Foundry, the browser profile will automatically be configured to the tenant user account used for the VM login.
 
 ## Bicep Parameters
 
@@ -185,13 +185,13 @@ Specify a value for the required parameters in the [main.bicepparam](./main.bice
 | location                                  | string | Specifies the location for all the Azure resources.                                                                         |
 | hubName                                   | string | Specifies the name Azure AI Hub workspace.                                                                                  |
 | hubFriendlyName                           | string | Specifies the friendly name of the Azure AI Hub workspace.                                                                  |
-| hubDescription                            | string | Specifies the description for the Azure AI Hub workspace displayed in Azure AI Studio.                                      |
+| hubDescription                            | string | Specifies the description for the Azure AI Hub workspace displayed in Azure AI Foundry.                                      |
 | hubIsolationMode                          | string | Specifies the isolation mode for the managed network of the Azure AI Hub workspace.                                         |
 | hubPublicNetworkAccess                    | string | Specifies the public network access for the Azure AI Hub workspace.                                                         |
 | connectionAuthType                        | string | Specifies the authentication method for the OpenAI Service connection.                                                      |
 | systemDatastoresAuthMode                  | string | Determines whether to use credentials for the system datastores of the workspace workspaceblobstore and workspacefilestore. |
-| projectName                               | string | Specifies the name for the Azure AI Studio Hub Project workspace.                                                           |
-| projectFriendlyName                       | string | Specifies the friendly name for the Azure AI Studio Hub Project workspace.                                                  |
+| projectName                               | string | Specifies the name for the Azure AI Foundry Hub Project workspace.                                                           |
+| projectFriendlyName                       | string | Specifies the friendly name for the Azure AI Foundry Hub Project workspace.                                                  |
 | projectPublicNetworkAccess                | string | Specifies the public network access for the Azure AI Project workspace.                                                     |
 | logAnalyticsName                          | string | Specifies the name of the Azure Log Analytics resource.                                                                     |
 | logAnalyticsSku                           | string | Specifies the service tier of the workspace: Free, Standalone, PerNode, Per-GB.                                             |
@@ -280,4 +280,4 @@ We suggest reading sensitive configuration data such as passwords or SSH keys fr
 
 For more information, see:
 
-- [Azure AI Studio Documentation](https://aka.ms/aistudio/docs)`Tags: ``Tags: `
+- [Azure AI Foundry Documentation](https://aka.ms/aistudio/docs)`Tags: ``Tags: `
