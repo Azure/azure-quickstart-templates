@@ -78,7 +78,7 @@ The parameter `sshKeyData` should be a string which starts with `ssh-rsa`.
 
   Then you can find your public key in `~/.ssh/id_rsa.pub`, and your private key in `~/.ssh/id_rsa`. Copy and paste the contents of `~/.ssh/id_rsa.pub` as `sshKeyData`.
 
-  Reference: [How to Use SSH with Linux and Mac on Azure](https://azure.microsoft.com/documentation/articles/virtual-machines-linux-use-ssh-key/)
+  Reference: [How to Use SSH with Linux and Mac on Azure](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/mac-create-ssh-keys)
 
 * For Windows Users
 
@@ -87,7 +87,7 @@ The parameter `sshKeyData` should be a string which starts with `ssh-rsa`.
   3. Save the private key as a .ppk file.
   4. When you login the dev-box, use the .ppk file as the private key file for authentication.
 
-  Reference: [How to Use SSH with Windows on Azure](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-use-ssh-key/)
+  Reference: [How to Use SSH with Windows on Azure](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/ssh-from-windows)
 
 ### 1.1.2 Specify your Service Principal
 
