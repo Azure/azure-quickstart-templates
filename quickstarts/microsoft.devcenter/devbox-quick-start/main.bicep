@@ -83,12 +83,12 @@ resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
   }
 }
 
-resource id_id_principalId_roleDefinitionId 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource principalId_roleDefinitionId 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: project
   name: guid(subscription().id, resourceGroup().id, principalId, roleDefinitionId)
   properties: {
+    description: 'Allows deployer to create dev boxes in the project resource.'
     principalId: principalId
-    principalType: principalType
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionId)
   }
 }
