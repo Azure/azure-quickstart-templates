@@ -1,3 +1,30 @@
+@description('Select any region to create resouces. You can default to the same region as the resource group.')
+@allowed([
+  'australiaeast'
+  'brazilsouth'
+  'canadacentral'
+  'centralus'
+  'westeurope'
+  'germanywestcentral'
+  'italynorth'
+  'japaneast'
+  'uksouth'
+  'eastus'
+  'eastus2'
+  'southafricanorth'
+  'southcentralus'
+  'southeastasia'
+  'switzerlandnorth'
+  'swedencentral'
+  'westus3'
+  'centralindia'
+  'eastasia'
+  'northeurope'
+  'koreacentral'
+  ''
+])
+param location string = ''
+
 @description('The name of the Devcenter resource e.g. [devCenterName]')
 param devCenterName string
 
@@ -10,20 +37,13 @@ param devBoxDefinitionName string
 @description('A Microsoft Hosted Network Pool in the region of the resouce group. The name of the Pool resource e.g. [poolName]-[region]-pool')
 param poolName string
 
-var location = resourceGroup().location
-
-// DevCenter Dev Box User role definition id
 var roleDefinitionId = '45d50f46-0b78-4001-a660-4198cbe8cd05'
-var principalId = deployer().objectId // user object id
+var principalId = deployer().objectId
 var principalType = 'User'
-
-// Pool variables
 var formattedPoolName = '${poolName}-${location}-pool'
 var poolPropertyAdmin = 'Enabled'
 var poolPropertyNetworkType = 'Managed'
-var poolPropertyNetworkName = 'Network'
-
-// Dev Box Definition variables
+var poolPropertyNetworkName = 'mhn-network'
 var image_win11_ent_vs2022 = 'microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2'
 var compute_16c_64gb = 'general_i_16c64gb512ssd_v2'
 var storage_512gb = '512gb'
@@ -61,9 +81,9 @@ resource project 'Microsoft.DevCenter/projects@2023-04-01' = {
   }
 }
 
-resource role 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, resourceGroup().id, principalId, roleDefinitionId)
+resource id_id_principalId_roleDefinitionId 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: project
+  name: guid(subscription().id, resourceGroup().id, principalId, roleDefinitionId)
   properties: {
     principalId: principalId
     principalType: principalType
