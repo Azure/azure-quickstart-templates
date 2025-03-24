@@ -16,6 +16,8 @@
   'southeastasia'
   'switzerlandnorth'
   'swedencentral'
+  'westus'
+  'westus2'
   'westus3'
   'centralindia'
   'eastasia'
