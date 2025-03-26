@@ -1,5 +1,5 @@
 ---
-description: This template deploys a load balanced GlassFish (v3 or v4) cluster, consisting of a user defined number of SUSE (OpenSUSE or SLES) VMs.
+description: This template deploys a load balanced GlassFish (v3 or v4) cluster, consisting of a user defined number of SUSE (openSUSE or SLES) VMs.
 page_type: sample
 products:
 - azure
@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fglassfish-on-suse%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fglassfish-on-suse%2Fazuredeploy.json)
 
-This template deploys GlassFish application server onto multiple load balanced SUSE Linux VMs. It is possible to select either OpenSUSE or SLES for the OS, and any release package associated with version 3 or 4 of GlassFish.
+This template deploys GlassFish application server onto multiple load balanced SUSE Linux VMs. It is possible to select either openSUSE or SLES for the OS, and any release package associated with version 3 or 4 of GlassFish.
 
 This template will deploy the following resources:
 
