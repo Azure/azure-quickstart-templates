@@ -1,5 +1,5 @@
 ---
-description: Deploy an Ubuntu/Centos VM With Chef with JSON parameters
+description: Deploy an Ubuntu/CentOS VM With Chef with JSON parameters
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: chef-json-parameters-linux-vm
 languages:
 - json
 ---
-# Chef with JSON parameters on Ubuntu/Centos
+# Chef with JSON parameters on Ubuntu/CentOS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/chef-json-parameters-linux-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/chef/chef-json-parameters-linux-vm/PublicDeployment.svg)
@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fchef-json-parameters-linux-vm%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fchef%2Fchef-json-parameters-linux-vm%2Fazuredeploy.json)
 
- This template provisions a Linux Ubuntu/Centos VM on Azure and bootstraps it with Chef client version 1201.12.
+ This template provisions a Linux Ubuntu/CentOS VM on Azure and bootstraps it with Chef client version 1201.12.
 
 Useful Links for learning about Chef:
 
