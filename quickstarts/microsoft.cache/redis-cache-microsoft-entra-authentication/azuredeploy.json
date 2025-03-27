@@ -1,0 +1,193 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.27.1.19265",
+      "templateHash": "10339364272812551477"
+    }
+  },
+  "parameters": {
+    "redisCacheName": {
+      "type": "string",
+      "defaultValue": "[format('redisCache-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specify the name of the Azure Redis Cache to create."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of all resources"
+      }
+    },
+    "redisCacheSKU": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Specify the pricing tier of the new Azure Redis Cache."
+      }
+    },
+    "redisCacheFamily": {
+      "type": "string",
+      "defaultValue": "C",
+      "allowedValues": [
+        "C",
+        "P"
+      ],
+      "metadata": {
+        "description": "Specify the family for the sku. C = Basic/Standard, P = Premium."
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "metadata": {
+        "description": "Specify the size of the new Azure Redis Cache instance. Valid values: for C (Basic/Standard) family (0, 1, 2, 3, 4, 5, 6), for P (Premium) family (1, 2, 3, 4, 5)"
+      }
+    },
+    "builtInAccessPolicyName": {
+      "type": "string",
+      "defaultValue": "Data Reader",
+      "allowedValues": [
+        "Data Owner",
+        "Data Contributor",
+        "Data Reader"
+      ],
+      "metadata": {
+        "description": "Specify name of Built-In access policy to use as assignment."
+      }
+    },
+    "builtInAccessPolicyAssignmentName": {
+      "type": "string",
+      "defaultValue": "[format('builtInAccessPolicyAssignment-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specify name of custom access policy to create."
+      }
+    },
+    "builtInAccessPolicyAssignmentObjectId": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "Specify the valid objectId(usually it is a GUID) of the Microsoft Entra Service Principal or Managed Identity or User Principal to which the built-in access policy would be assigned."
+      }
+    },
+    "builtInAccessPolicyAssignmentObjectAlias": {
+      "type": "string",
+      "defaultValue": "[format('builtInAccessPolicyApplication-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specify human readable name of principal Id of the Microsoft Entra Application name or Managed Identity name used for built-in policy assignment."
+      }
+    },
+    "customAccessPolicyName": {
+      "type": "string",
+      "defaultValue": "[format('customAccessPolicy-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specify name of custom access policy to create."
+      }
+    },
+    "customAccessPolicyPermissions": {
+      "type": "string",
+      "defaultValue": "+@connection +get +hget allkeys",
+      "metadata": {
+        "description": "Specify the valid permissions for the customer access policy to create. For details refer to https://aka.ms/redis/ConfigureAccessPolicyPermissions"
+      }
+    },
+    "customAccessPolicyAssignmentName": {
+      "type": "string",
+      "defaultValue": "[format('customAccessPolicyAssignment-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specify name of custom access policy to create."
+      }
+    },
+    "customAccessPolicyAssignmentObjectId": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "Specify the valid objectId(usually it is a GUID) of the Microsoft Entra Service Principal or Managed Identity or User Principal to which the custom access policy would be assigned."
+      }
+    },
+    "customAccessPolicyAssignmentObjectAlias": {
+      "type": "string",
+      "defaultValue": "[format('customAccessPolicyApplication-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specify human readable name of principal Id of the Microsoft Entra Application name or Managed Identity name used for custom policy assignment."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2023-08-01",
+      "name": "[parameters('redisCacheName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enableNonSslPort": false,
+        "minimumTlsVersion": "1.2",
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "[parameters('redisCacheFamily')]",
+          "name": "[parameters('redisCacheSKU')]"
+        },
+        "redisConfiguration": {
+          "aad-enabled": "true"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Cache/redis/accessPolicyAssignments",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('redisCacheName'), parameters('builtInAccessPolicyAssignmentName'))]",
+      "properties": {
+        "accessPolicyName": "[parameters('builtInAccessPolicyName')]",
+        "objectId": "[parameters('builtInAccessPolicyAssignmentObjectId')]",
+        "objectIdAlias": "[parameters('builtInAccessPolicyAssignmentObjectAlias')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', parameters('redisCacheName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cache/redis/accessPolicies",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('redisCacheName'), parameters('customAccessPolicyName'))]",
+      "properties": {
+        "permissions": "[parameters('customAccessPolicyPermissions')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', parameters('redisCacheName'))]",
+        "[resourceId('Microsoft.Cache/redis/accessPolicyAssignments', parameters('redisCacheName'), parameters('builtInAccessPolicyAssignmentName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cache/redis/accessPolicyAssignments",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('redisCacheName'), parameters('customAccessPolicyAssignmentName'))]",
+      "properties": {
+        "accessPolicyName": "[parameters('customAccessPolicyName')]",
+        "objectId": "[parameters('customAccessPolicyAssignmentObjectId')]",
+        "objectIdAlias": "[parameters('customAccessPolicyAssignmentObjectAlias')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', parameters('redisCacheName'))]",
+        "[resourceId('Microsoft.Cache/redis/accessPolicies', parameters('redisCacheName'), parameters('customAccessPolicyName'))]"
+      ]
+    }
+  ]
+}

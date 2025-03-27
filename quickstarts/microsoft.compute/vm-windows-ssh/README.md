@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vm-windows-ssh
 languages:
-- json
 - bicep
+- json
 ---
 # Windows Server VM with SSH
 

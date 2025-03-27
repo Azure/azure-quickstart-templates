@@ -1,38 +1,32 @@
 @description('Name of the virtual machine')
-param vmname string = 'myVM'
+param vmname string = 'vm-1'
 
 @description('Size of the virtual machine')
 param vmsize string = 'Standard_D2s_v3'
 
 @description('Name of the virtual network')
-param vnetname string = 'myVnet'
+param vnetname string = 'vnet-1'
 
 @description('Name of the subnet for virtual network')
-param subnetname string = 'mySubnet'
+param subnetname string = 'subnet-1'
 
 @description('Address space for virtual network')
-param vnetaddressspace string = '192.168.0.0/16'
+param vnetaddressspace string = '10.0.0.0/16'
 
 @description('Subnet prefix for virtual network')
-param vnetsubnetprefix string = '192.168.0.0/24'
+param vnetsubnetprefix string = '10.0.0.0/24'
 
 @description('Name of the NAT gateway')
-param natgatewayname string = 'myNATgateway'
+param natgatewayname string = 'nat-gateway'
 
 @description('Name of the virtual machine nic')
-param networkinterfacename string = 'myvmNIC'
+param networkinterfacename string = 'nic-1'
 
 @description('Name of the NAT gateway public IP')
-param publicipname string = 'myPublicIP'
+param publicipname string = 'public-ip-nat'
 
 @description('Name of the virtual machine NSG')
-param nsgname string = 'myVMnsg'
-
-@description('Name of the virtual machine public IP')
-param publicipvmname string = 'myPublicIPVM'
-
-@description('Name of the NAT gateway public IP')
-param publicipprefixname string = 'myPublicIPPrefix'
+param nsgname string = 'nsg-1'
 
 @description('Administrator username for virtual machine')
 param adminusername string
@@ -79,31 +73,6 @@ resource publicip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
 }
 
-resource publicipvm 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
-  name: publicipvmname
-  location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAddressVersion: 'IPv4'
-    publicIPAllocationMethod: 'Static'
-    idleTimeoutInMinutes: 4
-  }
-}
-
-resource publicipprefix 'Microsoft.Network/publicIPPrefixes@2021-05-01' = {
-  name: publicipprefixname
-  location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    prefixLength: 31
-    publicIPAddressVersion: 'IPv4'
-  }
-}
-
 resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: vmname
   location: location
@@ -114,8 +83,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     storageProfile: {
       imageReference: {
         publisher: 'Canonical'
-        offer: 'UbuntuServer'
-        sku: '18.04-LTS'
+        offer: '0001-com-ubuntu-server-jammy'
+        sku: '22_04-lts-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -189,17 +158,12 @@ resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
         id: publicip.id
       }
     ]
-    publicIpPrefixes: [
-      {
-        id: publicipprefix.id
-      }
-    ]
   }
 }
 
-resource mySubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   parent: vnet
-  name: 'mySubnet'
+  name: 'subnet-1'
   properties: {
     addressPrefix: vnetsubnetprefix
     natGateway: {
@@ -216,15 +180,12 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   properties: {
     ipConfigurations: [
       {
-        name: 'ipconfig1'
+        name: 'ipconfig-1'
         properties: {
-          privateIPAddress: '192.168.0.4'
+          privateIPAddress: '10.0.0.4'
           privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: publicipvm.id
-          }
           subnet: {
-            id: mySubnet.id
+            id: subnet.id
           }
           primary: true
           privateIPAddressVersion: 'IPv4'
@@ -238,3 +199,8 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
     }
   }
 }
+
+output location string = location
+output name string = natgateway.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = natgateway.id

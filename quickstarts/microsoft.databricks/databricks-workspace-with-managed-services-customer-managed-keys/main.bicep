@@ -8,6 +8,9 @@ param workspaceName string = 'default'
 ])
 param pricingTier string = 'premium'
 
+@description('Specifies whether to deploy Azure Databricks workspace with secure cluster connectivity (SCC) enabled or not (No Public IP)')
+param enableNoPublicIp bool = true
+
 @description('The object ID of the AzureDatabricks enterprise application.')
 param ObjectID string
 
@@ -42,14 +45,14 @@ module addAccessPolicy './nested_addAccessPolicy.bicep' = {
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {
     name: pricingTier
   }
   properties: {
-    managedResourceGroupId: managedResourceGroupId
+    managedResourceGroupId: '${subscription().id}/resourceGroups/${trimmedMRGName}'
     encryption: {
       entities: {
         managedServices: {
@@ -62,6 +65,11 @@ resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
         }
       }
     }
+    parameters: {		
+					enableNoPublicIp: {
+        value: enableNoPublicIp
+      }
+	  }
   }
 }
 

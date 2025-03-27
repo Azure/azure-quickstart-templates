@@ -9,7 +9,7 @@ resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2022-11-01' 
   properties: {
     accessPolicies: [
       {
-        ObjectID: ObjectID
+        objectId: ObjectID
         tenantId: subscription().tenantId
         permissions: {
           keys: [

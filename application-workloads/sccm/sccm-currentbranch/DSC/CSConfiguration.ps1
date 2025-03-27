@@ -71,11 +71,17 @@
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
 
+        DownloadAndInstallODBC DownloadAndInstallODBC
+        {
+            Ensure = "Present"
+            DependsOn = "[InstallADK]ADKInstall"
+        }
+
         DownloadSCCM DownLoadSCCM
         {
             CM = $CM
             Ensure = "Present"
-            DependsOn = "[InstallADK]ADKInstall"
+            DependsOn = "[DownloadAndInstallODBC]DownloadAndInstallODBC"
         }
 
         SetDNS DnsServerAddress

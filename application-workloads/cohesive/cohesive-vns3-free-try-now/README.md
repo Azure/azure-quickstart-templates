@@ -73,9 +73,9 @@ Once the controller and hosts are deployed a custom script downloads, deploys an
 
 You will need an active Azure Subscription
 
-Before you launch the template please accept the Azure Marketplace terms via Azure CLI or Powershell.
+Before you launch the template please accept the Azure Marketplace terms via Azure CLI or PowerShell.
 
-Powershell
+PowerShell
 
 Get-AzMarketplaceTerms -Publisher "cohesive" -Product "cohesive-vns3-5_0_x" -Name "cohesive-vns3-5_0_x-free" | Set-AzMarketplaceTerms -Accept
 

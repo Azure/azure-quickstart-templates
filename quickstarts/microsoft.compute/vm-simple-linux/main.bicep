@@ -1,4 +1,4 @@
-@description('The name of you Virtual Machine.')
+@description('The name of your Virtual Machine.')
 param vmName string = 'simpleLinuxVM'
 
 @description('Username for the Virtual Machine.')
@@ -20,7 +20,6 @@ param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().
 
 @description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
 @allowed([
-  'Ubuntu-1804'
   'Ubuntu-2004'
   'Ubuntu-2204'
 ])
@@ -49,12 +48,6 @@ param networkSecurityGroupName string = 'SecGroupNet'
 param securityType string = 'TrustedLaunch'
 
 var imageReference = {
-  'Ubuntu-1804': {
-    publisher: 'Canonical'
-    offer: 'UbuntuServer'
-    sku: '18_04-lts-gen2'
-    version: 'latest'
-  }
   'Ubuntu-2004': {
     publisher: 'Canonical'
     offer: '0001-com-ubuntu-server-focal'
@@ -97,7 +90,7 @@ var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
 var maaEndpoint = substring('emptystring', 0, 0)
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2023-09-01' = {
   name: networkInterfaceName
   location: location
   properties: {
@@ -106,7 +99,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: subnet.id
+            id: virtualNetwork.properties.subnets[0].id
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
@@ -121,7 +114,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -143,7 +136,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-0
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -152,20 +145,23 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
         addressPrefix
       ]
     }
+    subnets: [
+      {
+        name: subnetName
+        properties: {
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
+          addressPrefix: subnetAddressPrefix
+          privateEndpointNetworkPolicies: 'Enabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+        }
+      }
+    ]
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
-  parent: virtualNetwork
-  name: subnetName
-  properties: {
-    addressPrefix: subnetAddressPrefix
-    privateEndpointNetworkPolicies: 'Enabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
-  }
-}
-
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: publicIPAddressName
   location: location
   sku: {
@@ -181,7 +177,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: vmName
   location: location
   properties: {
@@ -210,11 +206,11 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
-    securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : json('null'))
+    securityProfile: (securityType == 'TrustedLaunch') ? securityProfileJson : null
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = if ((securityType == 'TrustedLaunch') && ((securityProfileJson.uefiSettings.secureBootEnabled == true) && (securityProfileJson.uefiSettings.vTpmEnabled == true))) {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (securityType == 'TrustedLaunch' && securityProfileJson.uefiSettings.secureBootEnabled && securityProfileJson.uefiSettings.vTpmEnabled) {
   parent: vm
   name: extensionName
   location: location
@@ -223,6 +219,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
     type: extensionName
     typeHandlerVersion: extensionVersion
     autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
     settings: {
       AttestationConfig: {
         MaaSettings: {

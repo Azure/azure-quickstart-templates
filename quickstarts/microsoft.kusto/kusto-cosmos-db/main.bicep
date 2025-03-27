@@ -70,14 +70,27 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
   }
 
   //  We need to authorize the cluster to read Cosmos DB's change feed by assigning the role
-  resource clusterCosmosDbAuthorization 'sqlRoleAssignments' = {
-    name: guid(cluster.id, cosmosDbAccountName)
+  resource clusterCosmosDbDataAuthorization 'sqlRoleAssignments' = {
+    name: guid(cluster.id, cosmosDbAccountName, 'data-plane')
 
     properties: {
       principalId: cluster.identity.principalId
       roleDefinitionId: resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', cosmosDbAccountName, cosmosDataReader)
       scope: resourceId('Microsoft.DocumentDB/databaseAccounts', cosmosDbAccountName)
     }
+  }
+}
+
+//  We also need to authorize the cluster to read Cosmos DB's account properties
+resource clusterCosmosDbRbacAuthorization 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(cluster.id, cosmosDbAccountName, 'rbac')
+  scope:  cosmosDbAccount
+
+  properties: {
+    description: 'Giving RBAC reader on Cosmos DB'
+    principalId: cluster.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId:  resourceId('Microsoft.Authorization/roleDefinitions', 'fbdf93bf-df7d-467e-a4d2-9458aa1360c8')
   }
 }
 
@@ -107,8 +120,8 @@ resource cluster 'Microsoft.Kusto/clusters@2022-11-11' = {
       }
     }
 
-    resource eventConnection 'dataConnections' = {
-      name: 'eventConnection'
+    resource cosmosDbConnection 'dataConnections' = {
+      name: 'cosmosDbConnection'
       location: location
       //  Here we need to explicitely declare dependencies
       //  Since we do not use those resources in the event connection
@@ -116,8 +129,10 @@ resource cluster 'Microsoft.Kusto/clusters@2022-11-11' = {
       dependsOn: [
         //  We need the table to be present in the database
         kustoScript
-        //  We need the cluster to be receiver on the Event Hub
-        cosmosDbAccount::clusterCosmosDbAuthorization
+        //  We need the cluster to be able to read Cosmos DB change feed
+        cosmosDbAccount::clusterCosmosDbDataAuthorization
+        //  We need the cluster to be able to read Cosmos DB properties
+        cosmosDbAccount::clusterCosmosDbDataAuthorization
       ]
       kind: 'CosmosDb'
       properties: {

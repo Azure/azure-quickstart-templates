@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.28.1.47646",
+      "templateHash": "15296976888752807985"
+    }
+  },
   "parameters": {
     "virtualNetworkName": {
       "type": "string",
@@ -13,6 +20,20 @@
       "type": "string",
       "metadata": {
         "description": "Username for the Virtual Machine."
+      }
+    },
+    "secureBoot": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Secure Boot setting of the virtual machine."
+      }
+    },
+    "vTPM": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "vTPM setting of the virtual machine."
       }
     },
     "location": {
@@ -72,9 +93,46 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
     }
   },
   "variables": {
+    "copy": [
+      {
+        "name": "azureFirewallIpConfigurations",
+        "count": "[length(range(0, parameters('numberOfFirewallPublicIPAddresses')))]",
+        "input": {
+          "name": "[format('IpConf{0}', range(0, parameters('numberOfFirewallPublicIPAddresses'))[copyIndex('azureFirewallIpConfigurations')])]",
+          "properties": {
+            "subnet": "[if(equals(range(0, parameters('numberOfFirewallPublicIPAddresses'))[copyIndex('azureFirewallIpConfigurations')], 0), variables('azureFirewallSubnetJSON'), null())]",
+            "publicIPAddress": {
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}{1}', variables('publicIPNamePrefix'), add(range(0, parameters('numberOfFirewallPublicIPAddresses'))[range(0, parameters('numberOfFirewallPublicIPAddresses'))[copyIndex('azureFirewallIpConfigurations')]], 1)))]"
+            }
+          }
+        }
+      }
+    ],
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "vnetAddressPrefix": "10.0.0.0/16",
     "serversSubnetPrefix": "10.0.2.0/24",
     "azureFirewallSubnetPrefix": "10.0.1.0/24",
@@ -89,56 +147,43 @@
     "jumpBoxSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('jumpBoxSubnetName'))]",
     "serverNicName": "ServerNic",
     "serverSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('serversSubnetName'))]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sajumpbox')]",
+    "storageAccountName": "[format('{0}sajumpbox', uniqueString(resourceGroup().id))]",
     "azfwRouteTableName": "AzfwRouteTable",
     "firewallName": "firewall1",
     "publicIPNamePrefix": "publicIP",
-    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
+    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
     "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
-    "copy": [
-      {
-        "name": "azureFirewallIpConfigurations",
-        "count": "[parameters('numberOfFirewallPublicIPAddresses')]",
-        "input": {
-          "name": "[concat('IpConf', copyIndex('azureFirewallIpConfigurations'))]",
-          "properties": {
-            "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
-            "publicIPAddress": {
-              "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPNamePrefix'), add(copyIndex('azureFirewallIpConfigurations'), 1)))]"
-            }
-          }
-        }
-      }
-    ],
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
+      },
+      "patchSettings": {
+        "patchMode": "AutomaticByPlatform"
       }
     },
-    "networkSecurityGroupName": "[concat(variables('serversSubnetName'), '-nsg')]"
+    "networkSecurityGroupName": "[format('{0}-nsg', variables('serversSubnetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
-      "kind": "Storage",
-      "properties": {}
+      "kind": "Storage"
     },
     {
       "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2023-09-01",
       "name": "[variables('azfwRouteTableName')]",
-      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "disableBgpRoutePropagation": false,
@@ -155,22 +200,16 @@
       }
     },
     {
-      "comments": "Simple Network Security Group for subnet [variables('serversSubnetName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('networkSecurityGroupName')]",
-      "location": "[parameters('location')]",
-      "properties": {}
+      "location": "[parameters('location')]"
     },
     {
-      "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/routeTables', variables('azfwRouteTableName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "tags": {
         "displayName": "[parameters('virtualNetworkName')]"
       },
@@ -206,19 +245,24 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/routeTables', variables('azfwRouteTableName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
-      "name": "[concat(variables('publicIPNamePrefix'), add(copyIndex(), 1))]",
+      "copy": {
+        "name": "publicIPAddress",
+        "count": "[length(range(0, parameters('numberOfFirewallPublicIPAddresses')))]"
+      },
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}{1}', variables('publicIPNamePrefix'), add(range(0, parameters('numberOfFirewallPublicIPAddresses'))[copyIndex()], 1))]",
       "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), null(), parameters('availabilityZones'))]",
       "sku": {
         "name": "Standard"
-      },
-      "copy": {
-        "name": "publicIpCopy",
-        "count": "[parameters('numberOfFirewallPublicIPAddresses')]"
       },
       "properties": {
         "publicIPAllocationMethod": "Static",
@@ -226,18 +270,18 @@
       }
     },
     {
-      "name": "[variables('jumpBoxPublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('jumpBoxPublicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
-      "name": "[variables('jumpBoxNsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('jumpBoxNsgName')]",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -258,15 +302,10 @@
       }
     },
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('JumpBoxNicName')]",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('jumpBoxNicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('jumpBoxPublicIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jumpBoxNsgName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -285,16 +324,18 @@
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jumpBoxNsgName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jumpBoxNsgName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('jumpBoxPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('ServerNicName')]",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('serverNicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -307,26 +348,28 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
-      "name": "JumpBox",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2023-09-01",
+      "name": "JumpBox",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
-      ],
+      "tags": {
+        "AzSecPackAutoConfigReady": true
+      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "MicrosoftCBLMariner",
+            "offer": "cbl-mariner",
+            "sku": "cbl-mariner-2-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -337,41 +380,76 @@
           "computerName": "JumpBox",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpBoxNicName'))]"
             }
           ]
         },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpBoxNicName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
     },
     {
-      "name": "Server",
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-12-01",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', 'JumpBox', variables('extensionName'))]",
       "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
+          }
+        }
+      },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
-      ],
+        "[resourceId('Microsoft.Compute/virtualMachines', 'JumpBox')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
+      "name": "Server",
+      "location": "[parameters('location')]",
+      "tags": {
+        "AzSecPackAutoConfigReady": true
+      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "MicrosoftCBLMariner",
+            "offer": "cbl-mariner",
+            "sku": "cbl-mariner-2-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -382,33 +460,71 @@
           "computerName": "Server",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('serverNicName'))]"
             }
           ]
+        },
+        "securityProfile": {
+          "uefiSettings": {
+            "secureBootEnabled": "[parameters('secureBoot')]",
+            "vTpmEnabled": "[parameters('vTPM')]"
+          },
+          "securityType": "TrustedLaunch"
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('serverNicName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-07-01",
+      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', 'Server', variables('extensionName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'Server')]"
+      ]
+    },
+    {
       "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2023-09-01",
       "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",
-      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "publicIpCopy"
-      ],
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), null(), parameters('availabilityZones'))]",
       "properties": {
         "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
         "applicationRuleCollections": [
@@ -424,11 +540,11 @@
                   "name": "appRule1",
                   "protocols": [
                     {
-                      "port": "80",
+                      "port": 80,
                       "protocolType": "http"
                     },
                     {
-                      "port": "443",
+                      "port": 443,
                       "protocolType": "https"
                     }
                   ],
@@ -471,8 +587,11 @@
         "additionalProperties": {
           "Network.SNAT.PrivateRanges": "[parameters('privateRanges')]"
         }
-      }
+      },
+      "dependsOn": [
+        "publicIPAddress",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     }
   ]
 }
-

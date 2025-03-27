@@ -20,6 +20,7 @@ DscResourcesToExport = @(
     'ChangeSQLServicesAccount',
     'RegisterTaskScheduler',
     'DownloadSCCM',
+    'DownloadAndInstallODBC',
     'WaitForExtendSchemaFile',
     'SetAutomaticManagedPageFile',
     'ChangeServices',
@@ -29,7 +30,8 @@ DscResourcesToExport = @(
     'InstallFeatureForSCCM',
     'SetCustomPagingFile',
     'SetupDomain',
-    'FileReadAccessShare'
+    'FileReadAccessShare',
+    'DownloadAndInstallvcredist'
 )
 
 # Version number of this module.

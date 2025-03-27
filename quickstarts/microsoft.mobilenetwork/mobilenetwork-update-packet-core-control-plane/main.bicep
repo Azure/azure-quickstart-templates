@@ -11,6 +11,7 @@ param existingSiteId string
 @allowed([
   'EPC'
   '5GC'
+  'EPC + 5GC'
 ])
 param existingPacketCoreNetworkTechnology string = '5GC'
 
@@ -46,7 +47,7 @@ param mobileNetworkCode string = '01'
 
 
 #disable-next-line BCP081
-resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01' = {
+resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2024-04-01' = {
   name: mobileNetworkName
   location: location
   properties: {
@@ -58,7 +59,7 @@ resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-11-01
 }
 
 #disable-next-line BCP081
-resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01' = {
+resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2024-04-01' = {
   parent: exampleMobileNetwork
   name: existingSliceName
   location: location
@@ -70,7 +71,7 @@ resource existingSlice 'Microsoft.MobileNetwork/mobileNetworks/slices@2022-11-01
 }
 
 #disable-next-line BCP081
-resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-11-01' = {
+resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2024-04-01' = {
   name: existingSiteName
   location: location
   dependsOn: [

@@ -6,21 +6,10 @@ param location string = resourceGroup().location
 @maxLength(63)
 param streamAnalyticsJobName string
 
-@description('Number of Streaming Units')
-@minValue(1)
-@maxValue(48)
-@allowed([
-  1
-  3
-  6
-  12
-  18
-  24
-  30
-  36
-  42
-  48
-])
+@description('You can choose the number of Streaming Units, ranging from 3, 7, 10, 20, 30, in multiples of 10, and continuing up to 660.')
+@minValue(3)
+@maxValue(660)
+
 param numberOfStreamingUnits int
 
 resource streamingJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-preview' = {
@@ -28,7 +17,7 @@ resource streamingJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-previe
   location: location
   properties: {
     sku: {
-      name: 'Standard'
+      name: 'StandardV2'
     }
     outputErrorPolicy: 'Stop'
     eventsOutOfOrderPolicy: 'Adjust'
@@ -44,3 +33,8 @@ resource streamingJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-previe
     }
   }
 }
+
+output location string = location
+output name string = streamingJob.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = streamingJob.id

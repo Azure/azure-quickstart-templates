@@ -63,12 +63,24 @@ configuration Configuration
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
 
+        DownloadAndInstallvcredist DownloadAndInstallvcredist
+        {
+            Ensure = "Present"
+            DependsOn = "[InstallADK]ADKInstall"
+        }
+ 
+        DownloadAndInstallODBC DownloadAndInstallODBC
+        {
+            Ensure = "Present"
+            DependsOn = "[DownloadAndInstallvcredist]DownloadAndInstallvcredist"
+        }
+
         DownloadSCCM DownLoadSCCM
         {
             CM = $CM
             ExtPath = $LogPath
             Ensure = "Present"
-            DependsOn = "[InstallADK]ADKInstall"
+            DependsOn = "[DownloadAndInstallODBC]DownloadAndInstallODBC"
         }
 
         SetDNS DnsServerAddress

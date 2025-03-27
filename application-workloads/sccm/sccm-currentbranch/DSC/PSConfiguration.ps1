@@ -72,13 +72,26 @@
             Ensure = "Present"
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
+
+        DownloadAndInstallvcredist DownloadAndInstallvcredist
+        {
+            Ensure = "Present"
+            DependsOn = "[InstallADK]ADKInstall"
+        }
+
+        DownloadAndInstallODBC DownloadAndInstallODBC
+        {
+            Ensure = "Present"
+            DependsOn = "[DownloadAndInstallvcredist]DownloadAndInstallvcredist"
+        }
+
         if($Configuration -eq "Standalone")
         {
             DownloadSCCM DownLoadSCCM
             {
                 CM = $CM
                 Ensure = "Present"
-                DependsOn = "[InstallADK]ADKInstall"
+                DependsOn = "[DownloadAndInstallODBC]DownloadAndInstallODBC"
             }
 
             SetDNS DnsServerAddress
@@ -120,7 +133,7 @@
             {
                 DNSIPAddress = $DNSIPAddress
                 Ensure = "Present"
-                DependsOn = "[InstallADK]ADKInstall"
+                DependsOn = "[DownloadAndInstallODBC]DownloadAndInstallODBC"
             }
 
             WaitForConfigurationFile WaitCSJoinDomain

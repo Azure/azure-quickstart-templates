@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: storage-blob-container
 languages:
-- json
 - bicep
+- json
 ---
 # Create an Azure Storage Account and Blob Container on Azure
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-blob-container/PublicLastTestDate.svg)

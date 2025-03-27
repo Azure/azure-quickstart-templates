@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: internal-loadbalancer-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a standard internal load balancer
 
@@ -26,9 +26,13 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Finternal-loadbalancer-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Finternal-loadbalancer-create%2Fazuredeploy.json)
 
-This template creates a standard internal load balancer with the front-end connected to a virtual network subnet, virtual network, and network interface.
+This template creates a standard internal Azure Load Balancer with backend pool containing two virtual machines. The Azure Load Balancer is assigned a static IP in the Virtual Network and is configured to load balance on Port 80. Health probes are configured to check the status of the virtual machines.
 
-A load-balancing rule for port 80 is configured as part of the template deployment. The template disables outbound SNAT for the backend pool.
+![Diagram of internal load balancer with backend pool of virtual machines.](images/internalLoadBalancerCreate.png)
+
+As part of the deployment, Azure Bastion is deployed for virtual machine management, and NAT Gateway is deployed for outbound connectivity. This template also deploys a Storage Account, Virtual Network & subnets, and network interfaces.
+
+To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-internal-bicep.md) article.
 
 Outbound rules are not created as part of this template.  For more information on providing outbound connectivity to the backend pool see, [What is Virtual Network NAT?](https://docs.microsoft.com/azure/virtual-network/nat-overview).
 

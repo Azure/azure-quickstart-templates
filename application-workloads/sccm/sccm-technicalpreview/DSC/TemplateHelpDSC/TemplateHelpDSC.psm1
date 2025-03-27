@@ -354,13 +354,13 @@ class WaitForExtendSchemaFile
     [void] Set()
     {
         $_FilePath = "\\$($this.MachineName)\$($this.ExtFolder)"
-        $extadschpath = Join-Path -Path $_FilePath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
+        $extadschpath = Join-Path -Path $_FilePath -ChildPath "cd.preview\SMSSETUP\BIN\X64\extadsch.exe"
         
         while(!(Test-Path $extadschpath))
         {
             Write-Verbose "Wait for extadsch.exe exist on $($this.MachineName), will try 10 seconds later..."
             Start-Sleep -Seconds 10
-            $extadschpath = Join-Path -Path $_FilePath -ChildPath "SMSSETUP\BIN\X64\extadsch.exe"
+            $extadschpath = Join-Path -Path $_FilePath -ChildPath "cd.preview\SMSSETUP\BIN\X64\extadsch.exe"
         }
 
         Write-Verbose "Extended the Active Directory schema..."
@@ -526,14 +526,15 @@ class DownloadSCCM
         $_ExtPath = $this.ExtPath
         $cmpath = "c:\$_CM.exe"
         $cmsourcepath = "c:\$_CM"
-
+ 
         Write-Verbose "Downloading SCCM installation source..."
         $cmurl = "https://go.microsoft.com/fwlink/?linkid=2077212&clcid=0x409"
         $WebClient = New-Object System.Net.WebClient
         $WebClient.DownloadFile($cmurl,$cmpath)
         if(!(Test-Path $cmsourcepath))
         {
-            Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+            New-Item -ItemType Directory -Path $cmsourcepath
+            Start-Process -WorkingDirectory ($cmsourcepath) -Filepath ($cmpath) -ArgumentList ('/s') -wait
         }
     }
 
@@ -551,6 +552,51 @@ class DownloadSCCM
     }
 
     [DownloadSCCM] Get()
+    {
+        return $this
+    }
+}
+
+[DscResource()]
+class DownloadAndInstallODBC
+{
+    [DscProperty(key)]
+    [Ensure] $Ensure
+
+    [void] Set()
+    {
+        $odbcPath = "C:\msodbcsql.msi"
+        
+        Write-Verbose "Downloading ODBC installation source..."
+        $OdbcUrl = "http://go.microsoft.com/fwlink/?linkid=2220989"
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($OdbcUrl,$odbcPath)
+
+        Write-Verbose "installing ODBC..."
+        Start-Process -FilePath $odbcPath  -ArgumentList ('/qn', 'IACCEPTMSODBCSQLLICENSETERMS=YES') -Wait
+        Write-Verbose "ODBC installed Successfully!"
+    
+    }
+
+    [bool] Test()
+    {
+        #This minorVersion is the installed msodbc version.
+        $minorVersion = [version]'18.1.2.1'
+
+        $key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Default)
+        $subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\MSODBCSQL18")
+        if($subKey)
+        {
+            if(($msobcVersion = $subKey.GetValue('InstalledVersion')) -ne $null)
+            {
+                return ([version]$msobcVersion -ge $minorVersion)
+            }
+        }
+        return $false
+    
+    }
+
+    [DownloadAndInstallODBC] Get()
     {
         return $this
     }
@@ -1828,4 +1874,63 @@ class FileReadAccessShare
         return $this
     }
     
+}
+
+[DscResource()]
+class DownloadAndInstallvcredist
+{
+    [DscProperty(key)]
+    [Ensure] $Ensure
+ 
+    [void] Set()
+    {
+        $vcredist64Path = "C:\VC_redist.x64.exe"
+        $vcredist86Path = "C:\VC_redist.x86.exe"
+        Write-Verbose "Downloading Microsoft Visual C++ Redistributable(x64) installation source..."
+        $vcredistUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($vcredistUrl,$vcredist64Path)
+ 
+        Write-Verbose "installing Microsoft Visual C++ Redistributable(x64)..."
+        Start-Process -FilePath $vcredist64Path  -ArgumentList ('/install', '/quiet') -Wait
+        Write-Verbose "Microsoft Visual C++ Redistributable(x64) installed Successfully!"
+ 
+        Write-Verbose "Downloading Microsoft Visual C++ Redistributable(x86) installation source..."
+        $vcredistUrl = "https://aka.ms/vs/17/release/vc_redist.x86.exe"
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($vcredistUrl,$vcredist86Path)
+ 
+        Write-Verbose "installing Microsoft Visual C++ Redistributable(x86)..."
+        Start-Process -FilePath $vcredist86Path  -ArgumentList ('/install', '/quiet') -Wait
+        Write-Verbose "Microsoft Visual C++ Redistributable(x86) installed Successfully!"
+ 
+    
+    }
+ 
+    [bool] Test()
+    {
+        #This minorVersion is the installed Microsoft Visual C++ Redistributable version.
+        $minorVersion = [version]'14.34.0.0'
+ 
+        $key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
+        $sub64Key =  $key.OpenSubKey("SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64")
+        $sub86Key =  $key.OpenSubKey("SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86")
+        if($sub64Key -and $sub86Key)
+        {
+            $vcredist64Version = $sub64Key.GetValue('Version')
+            $vcredist86Version = $sub86Key.GetValue('Version')
+            if(($vcredist64Version -ne $null) -and ($vcredist86Version -ne $null))
+            {
+                $vcredist64Version = $vcredist64Version -replace '^v',''
+                $vcredist86Version = $vcredist86Version -replace '^v',''
+                return (([version]$vcredist64Version -ge $minorVersion) -and ([version]$vcredist86Version -ge $minorVersion))
+            }
+        }
+        return $false
+    }
+ 
+    [DownloadAndInstallvcredist] Get()
+    {
+        return $this
+    }
 }

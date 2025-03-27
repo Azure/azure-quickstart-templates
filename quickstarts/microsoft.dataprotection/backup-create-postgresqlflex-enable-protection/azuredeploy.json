@@ -1,0 +1,341 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.170.59819",
+      "templateHash": "8921296674789610846"
+    }
+  },
+  "parameters": {
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "[format('vault{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Vault"
+      }
+    },
+    "vaultStorageRedundancy": {
+      "type": "string",
+      "defaultValue": "GeoRedundant",
+      "allowedValues": [
+        "LocallyRedundant",
+        "GeoRedundant"
+      ],
+      "metadata": {
+        "description": "Change Vault Storage Type (not allowed if the vault has registered backups)"
+      }
+    },
+    "backupPolicyName": {
+      "type": "string",
+      "defaultValue": "[format('policy{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Backup Policy"
+      }
+    },
+    "retentionDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "minValue": 1,
+      "maxValue": 35,
+      "metadata": {
+        "description": "Retention duration in days"
+      }
+    },
+    "pgFlexServerName": {
+      "type": "string",
+      "defaultValue": "[format('pgflex{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the PgFlex server"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": "GeneralPurpose",
+      "allowedValues": [
+        "Basic",
+        "GeneralPurpose",
+        "MemoryOptimized"
+      ],
+      "metadata": {
+        "description": "Azure database for PostgreSQL pricing tier"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_D2ds_v4",
+      "metadata": {
+        "description": "Azure database for PostgreSQL Flexible Server sku name "
+      }
+    },
+    "storageSize": {
+      "type": "int",
+      "defaultValue": 32,
+      "metadata": {
+        "description": "Azure database for PostgreSQL Flexible Server Storage Size in GB "
+      }
+    },
+    "postgresqlVersion": {
+      "type": "string",
+      "defaultValue": "14",
+      "allowedValues": [
+        "11",
+        "12",
+        "13",
+        "14"
+      ],
+      "metadata": {
+        "description": "PostgreSQL version"
+      }
+    },
+    "backupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "metadata": {
+        "description": "PostgreSQL Flexible Server backup retention days"
+      }
+    },
+    "geoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Geo-Redundant Backup setting"
+      }
+    },
+    "haMode": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "ZoneRedundant",
+        "SameZone"
+      ],
+      "metadata": {
+        "description": "High Availability Mode"
+      }
+    },
+    "isActiveDirectoryAuthEnabled": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Active Directory Authetication"
+      }
+    },
+    "isPostgreSQLAuthEnabled": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "PostgreSQL Authetication"
+      }
+    }
+  },
+  "variables": {
+    "roleDefinitionIdForPgFlex": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'c088a766-074b-43ba-90d4-1fb21feae531')]",
+    "roleDefinitionIdForDiscovery": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+    "dataSourceType": "Microsoft.DBforPostgreSQL/flexibleServers",
+    "resourceType": "Microsoft.DBforPostgreSQL/flexibleServers",
+    "retentionDuration": "[format('P{0}D', parameters('retentionDays'))]",
+    "repeatingTimeInterval": "R/2021-05-20T22:00:00+00:00/PT12H",
+    "roleNameGuidForPgFlex": "[guid(resourceGroup().id, variables('roleDefinitionIdForPgFlex'), resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')))]",
+    "roleNameGuidForDiscovery": "[guid(resourceGroup().id, variables('roleDefinitionIdForDiscovery'), resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataProtection/backupVaults",
+      "apiVersion": "2021-01-01",
+      "name": "[parameters('vaultName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "systemAssigned"
+      },
+      "properties": {
+        "storageSettings": [
+          {
+            "datastoreType": "VaultStore",
+            "type": "[parameters('vaultStorageRedundancy')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DataProtection/backupVaults/backupPolicies",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('backupPolicyName'))]",
+      "properties": {
+        "policyRules": [
+          {
+            "backupParameters": {
+              "backupType": "full",
+              "objectType": "AzureBackupParams"
+            },
+            "trigger": {
+              "schedule": {
+                "repeatingTimeIntervals": [
+                  "[variables('repeatingTimeInterval')]"
+                ]
+              },
+              "taggingCriteria": [
+                {
+                  "tagInfo": {
+                    "tagName": "Default"
+                  },
+                  "taggingPriority": 99,
+                  "isDefault": true
+                }
+              ],
+              "objectType": "ScheduleBasedTriggerContext"
+            },
+            "dataStore": {
+              "dataStoreType": "VaultStore",
+              "objectType": "DataStoreInfoBase"
+            },
+            "name": "BackupHourly",
+            "objectType": "AzureBackupRule"
+          },
+          {
+            "lifecycles": [
+              {
+                "sourceDataStore": {
+                  "dataStoreType": "VaultStore",
+                  "objectType": "DataStoreInfoBase"
+                },
+                "deleteAfter": {
+                  "objectType": "AbsoluteDeleteOption",
+                  "duration": "[variables('retentionDuration')]"
+                }
+              }
+            ],
+            "isDefault": true,
+            "name": "Default",
+            "objectType": "AzureRetentionRule"
+          }
+        ],
+        "datasourceTypes": [
+          "[variables('dataSourceType')]"
+        ],
+        "objectType": "BackupPolicy"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2022-12-01",
+      "name": "[parameters('pgFlexServerName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('skuTier')]"
+      },
+      "properties": {
+        "createMode": "Default",
+        "version": "[parameters('postgresqlVersion')]",
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "authConfig": {
+          "activeDirectoryAuth": "[parameters('isActiveDirectoryAuthEnabled')]",
+          "passwordAuth": "[parameters('isPostgreSQLAuthEnabled')]",
+          "tenantId": "[subscription().tenantId]"
+        },
+        "storage": {
+          "storageSizeGB": "[parameters('storageSize')]"
+        },
+        "backup": {
+          "backupRetentionDays": "[parameters('backupRetentionDays')]",
+          "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+        },
+        "highAvailability": {
+          "mode": "[parameters('haMode')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('roleNameGuidForPgFlex')]",
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')), '2021-01-01', 'full').identity.principalId]",
+        "roleDefinitionId": "[variables('roleDefinitionIdForPgFlex')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgFlexServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('roleNameGuidForDiscovery')]",
+      "properties": {
+        "roleDefinitionId": "[variables('roleDefinitionIdForDiscovery')]",
+        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')), '2021-01-01', 'full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgFlexServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataProtection/backupVaults/backupInstances",
+      "apiVersion": "2023-12-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('pgFlexServerName'))]",
+      "properties": {
+        "objectType": "BackupInstance",
+        "dataSourceInfo": {
+          "objectType": "Datasource",
+          "resourceID": "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgFlexServerName'))]",
+          "resourceName": "[parameters('pgFlexServerName')]",
+          "resourceType": "[variables('resourceType')]",
+          "resourceUri": "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgFlexServerName'))]",
+          "resourceLocation": "[parameters('location')]",
+          "datasourceType": "[variables('dataSourceType')]"
+        },
+        "policyInfo": {
+          "policyId": "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgFlexServerName'))]"
+      ]
+    }
+  ]
+}

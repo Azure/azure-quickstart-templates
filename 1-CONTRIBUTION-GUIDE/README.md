@@ -62,7 +62,7 @@ Note, that for samples that follow the best practices for artifacts in the repo,
 
 ## Contribution Guide
 
-To make sure your template is added to Azure.com index, please follow these guidelines.  PRs that doe not follow these guidelines will not be merged.
+To make sure your template is added to Azure.com index, please follow these guidelines.  PRs that do not follow these guidelines will not be merged.
 
 ## Files, folders and naming conventions
 
@@ -77,9 +77,9 @@ To make sure your template is added to Azure.com index, please follow these guid
   + **subscription-deployments** - contains sample templates that must be deployed at the subscription scope.
   + **tenant-deployments** - contains sample templates that must be deployed at the tenant scope.
 
-+ **Protip** - Try to keep the name of your template folder short so that it fits inside the Github folder name column width.
++ **Protip** - Try to keep the name of your template folder short so that it fits inside the GitHub folder name column width.
 
-1. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md** file, that should be in the format **UPPERCASE.lowercase**.
+1. GitHub uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md** file, that should be in the format **UPPERCASE.lowercase**.
 
 1. Include a **README.md** file that explains how the template works.
 
@@ -156,7 +156,7 @@ See also [Best practices for Bicep](https://docs.microsoft.com/azure/azure-resou
 
 ## README.md
 
-The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [Github Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections:
+The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections:
 
 + Deploy to Azure/AzureGov button
 + Visualize button

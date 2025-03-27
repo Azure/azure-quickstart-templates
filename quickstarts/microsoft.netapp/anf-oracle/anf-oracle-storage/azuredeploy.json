@@ -1,0 +1,523 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "2646137371488932621"
+    }
+  },
+  "parameters": {
+    "UniqueSystemID": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 12,
+      "metadata": {
+        "description": "System ID for Oracle to create unique volume group and volume names. Minimum 3 and maximum 12 characters."
+      }
+    },
+    "AvailabilityZone": {
+      "type": "string",
+      "allowedValues": [
+        "None",
+        "1",
+        "2",
+        "3"
+      ],
+      "metadata": {
+        "description": "Availability Zone. This is None when proximity placement group is selected."
+      }
+    },
+    "ProximityPlacementGroupName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 0,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of proximity placement group. This is optional when Availability Zone is selected."
+      }
+    },
+    "ProximityPlacementGroupResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 0,
+      "maxLength": 90,
+      "metadata": {
+        "description": "Resource group name for the proximity placement group. This is optional when Availability Zone is selected."
+      }
+    },
+    "NetworkFeatures": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Basic or Standard network features available to the volume"
+      }
+    },
+    "LdapEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specifies whether LDAP is enabled or not for all the volumes."
+      }
+    },
+    "NoOfOracleDataVolumes": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 8,
+      "metadata": {
+        "description": "Number of Oracle data volumes. Minimum 1 and maximum 8 data volumes."
+      }
+    },
+    "OracleDatabaseSizeInTebibytes": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 800,
+      "metadata": {
+        "description": "Total size of the database. This and the number of data volumes and addition capacity for snapshots will be used to calculate the size of each individual data volume."
+      }
+    },
+    "OracleThroughputInMebibytesPerSecond": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Total throughput in MiB/s for the database. This will be used to calculate the throughput of each data volume."
+      }
+    },
+    "CapacityPool": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "metadata": {
+        "description": "Name of Capacity Pool in Azure NetApp Files (ANF) account. All the volumes are created using this capacity pool."
+      }
+    },
+    "AdditionalCapacityForSnapshotsPercentage": {
+      "type": "int",
+      "defaultValue": 20,
+      "minValue": 0,
+      "maxValue": 100,
+      "metadata": {
+        "description": "Additional capacity provisioned for each data volume to keep local snapshots. Possible values 0% - 100%. The default of 20% is usually sufficient to retain multiple snapshots."
+      }
+    },
+    "TagKey": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 512,
+      "metadata": {
+        "description": "If a Tag Key is specified, it will be added to each volume created by this ARM template."
+      }
+    },
+    "TagValue": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 256,
+      "metadata": {
+        "description": "If a Tag Value is specified, it will be added to each volume created by this ARM template. The value will only be added if Tag Key was specified."
+      }
+    },
+    "AzureNetappFilesLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "minLength": 1,
+      "maxLength": 1024,
+      "metadata": {
+        "description": "Azure NetApp Files (ANF) Location. If the resource group location is different than ANF location, ANF location needs to be specified."
+      }
+    },
+    "ANFNetappAccount": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Name of Azure NetApp Files (ANF) account."
+      }
+    },
+    "VirtualNetwork": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "metadata": {
+        "description": "Virtual Network name for the subnet."
+      }
+    },
+    "DelegatedSubnet": {
+      "type": "string",
+      "defaultValue": "default",
+      "minLength": 1,
+      "maxLength": 1024,
+      "metadata": {
+        "description": "Delegated Subnet name."
+      }
+    },
+    "DataSizeInGibibytes": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Manually specify the size of each data volume or use “auto” to let ARM calculate. See documentation for details."
+      }
+    },
+    "DataPerformanceInMebibytesPerSecond": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Manually specify the performance of each data volume or use “auto” to let ARM calculate. See documentation for details."
+      }
+    },
+    "NFSVersion": {
+      "type": "string",
+      "defaultValue": "NFSv4.1",
+      "allowedValues": [
+        "NFSv3",
+        "NFSv4.1"
+      ],
+      "metadata": {
+        "description": "NFS Protocol version for all volumes."
+      }
+    },
+    "LogSizeInGibibytes": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify capacity (in GiB). Possible values can be auto or integer value representing size."
+      }
+    },
+    "LogPerformanceInMebibytesPerSecond": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+      }
+    },
+    "LogMirrorSizeInGibibytes": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify capacity (in GiB). Possible values can be \"auto\", none or integer values (min 100 GiB) representing size."
+      }
+    },
+    "LogMirrorPerformanceInMebibytesPerSecond": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+      }
+    },
+    "BinarySizeInGibibytes": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify capacity (in GiB). Possible values can be \"auto\", none or integer values (min 100 GiB) representing size."
+      }
+    },
+    "BinaryPerformanceInMebibytesPerSecond": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+      }
+    },
+    "BackupSizeInGibibytes": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify capacity (in GiB). Possible values can be \"auto\", none or integer values (min 100 GiB) representing size."
+      }
+    },
+    "BackupPerformanceInMebibytesPerSecond": {
+      "type": "string",
+      "defaultValue": "auto",
+      "minLength": 1,
+      "maxLength": 16,
+      "metadata": {
+        "description": "Specify throughput in MiB/s. Possible values can be \"auto\" or integer values (min 1 MiB/s) representing throughput."
+      }
+    }
+  },
+  "variables": {
+    "copy": [
+      {
+        "name": "dataVolumePayloads",
+        "count": "[length(range(0, parameters('NoOfOracleDataVolumes')))]",
+        "input": {
+          "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+          "name": "[format('{0}-ora-data{1}', parameters('UniqueSystemID'), add(range(0, parameters('NoOfOracleDataVolumes'))[copyIndex('dataVolumePayloads')], 1))]",
+          "tags": "[variables('volumeTag')]",
+          "zones": "[variables('zones')]",
+          "properties": {
+            "creationToken": "[format('{0}-ora-data{1}', parameters('UniqueSystemID'), add(range(0, parameters('NoOfOracleDataVolumes'))[copyIndex('dataVolumePayloads')], 1))]",
+            "ldapEnabled": "[parameters('LdapEnabled')]",
+            "networkFeatures": "[parameters('NetworkFeatures')]",
+            "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+            "usageThreshold": "[mul(variables('_1GBInBytes'), variables('dataVolumeSize'))]",
+            "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+            "volumeSpecName": "[format('ora-data{0}', add(range(0, parameters('NoOfOracleDataVolumes'))[copyIndex('dataVolumePayloads')], 1))]",
+            "kerberosEnabled": false,
+            "throughputMibps": "[variables('dataVolumeThroughput')]",
+            "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+            "exportPolicy": {
+              "rules": [
+                {
+                  "ruleIndex": 1,
+                  "unixReadOnly": false,
+                  "unixReadWrite": true,
+                  "cifs": false,
+                  "kerberos5ReadOnly": false,
+                  "kerberos5ReadWrite": false,
+                  "kerberos5iReadOnly": false,
+                  "kerberos5iReadWrite": false,
+                  "kerberos5pReadOnly": false,
+                  "kerberos5pReadWrite": false,
+                  "nfsv3": "[if(equals(parameters('NFSVersion'), 'NFSv3'), 'true', 'false')]",
+                  "nfsv41": "[if(equals(parameters('NFSVersion'), 'NFSv4.1'), 'true', 'false')]",
+                  "allowedClients": "0.0.0.0/0",
+                  "hasRootAccess": true
+                }
+              ]
+            },
+            "protocolTypes": [
+              "[parameters('NFSVersion')]"
+            ]
+          }
+        }
+      }
+    ],
+    "location": "[parameters('AzureNetappFilesLocation')]",
+    "OracleApplicationType": "ORACLE",
+    "_1GBInBytes": "[mul(1024, mul(1024, 1024))]",
+    "_1TBInGiB": 1024,
+    "volumeGroupName": "[format('{0}/Oracle-{1}-VolumeGroup', parameters('ANFNetappAccount'), parameters('UniqueSystemID'))]",
+    "tagPayload": {
+      "[format('{0}', parameters('TagKey'))]": "[parameters('TagValue')]"
+    },
+    "emptyTag": {},
+    "volumeTag": "[if(equals(parameters('TagKey'), ''), variables('emptyTag'), variables('tagPayload'))]",
+    "zones": "[if(empty(parameters('ProximityPlacementGroupName')), if(equals(parameters('AvailabilityZone'), 'None'), createArray(), array(parameters('AvailabilityZone'))), null())]",
+    "proximityPlacementGroup": "[if(empty(parameters('ProximityPlacementGroupName')), null(), resourceId(parameters('ProximityPlacementGroupResourceGroup'), 'Microsoft.Compute/proximityPlacementGroups', parameters('ProximityPlacementGroupName')))]",
+    "autoDataVolumeSize": "[min(mul(variables('_1TBInGiB'), 100), int(div(add(mul(variables('_1TBInGiB'), parameters('OracleDatabaseSizeInTebibytes')), int(div(mul(parameters('AdditionalCapacityForSnapshotsPercentage'), mul(variables('_1TBInGiB'), parameters('OracleDatabaseSizeInTebibytes'))), 100))), parameters('NoOfOracleDataVolumes'))))]",
+    "dataVolumeSize": "[if(equals(parameters('DataSizeInGibibytes'), 'auto'), variables('autoDataVolumeSize'), int(parameters('DataSizeInGibibytes')))]",
+    "dataVolumeThroughput": "[if(equals(parameters('DataPerformanceInMebibytesPerSecond'), 'auto'), int(div(int(parameters('OracleThroughputInMebibytesPerSecond')), parameters('NoOfOracleDataVolumes'))), int(parameters('DataPerformanceInMebibytesPerSecond')))]",
+    "autoLogVolumeSize": 100,
+    "autoLogThroughput": 150,
+    "logVolumeSize": "[if(equals(parameters('LogSizeInGibibytes'), 'auto'), variables('autoLogVolumeSize'), int(parameters('LogSizeInGibibytes')))]",
+    "logVolumeThroughput": "[if(equals(parameters('LogPerformanceInMebibytesPerSecond'), 'auto'), variables('autoLogThroughput'), int(parameters('LogPerformanceInMebibytesPerSecond')))]",
+    "autoLogMirrorVolumeSize": 100,
+    "autoLogMirrorThroughput": 150,
+    "logMirrorVolumeSize": "[if(equals(parameters('LogMirrorSizeInGibibytes'), 'auto'), variables('autoLogMirrorVolumeSize'), if(equals(parameters('LogMirrorSizeInGibibytes'), 'none'), 0, int(parameters('LogMirrorSizeInGibibytes'))))]",
+    "logMirrorVolumeThroughput": "[if(equals(parameters('LogMirrorPerformanceInMebibytesPerSecond'), 'auto'), variables('autoLogMirrorThroughput'), int(parameters('LogMirrorPerformanceInMebibytesPerSecond')))]",
+    "autoBinaryVolumeSize": 100,
+    "autoBinaryThroughput": 64,
+    "binaryVolumeSize": "[if(equals(parameters('BinarySizeInGibibytes'), 'auto'), variables('autoBinaryVolumeSize'), if(equals(parameters('BinarySizeInGibibytes'), 'none'), 0, int(parameters('BinarySizeInGibibytes'))))]",
+    "binaryVolumeThroughput": "[if(equals(parameters('BinaryPerformanceInMebibytesPerSecond'), 'auto'), variables('autoBinaryThroughput'), int(parameters('BinaryPerformanceInMebibytesPerSecond')))]",
+    "autoBackupVolumeSize": "[min(mul(variables('_1TBInGiB'), 100), int(div(mul(variables('_1TBInGiB'), parameters('OracleDatabaseSizeInTebibytes')), 2)))]",
+    "autoBackupThroughput": 150,
+    "backupVolumeSize": "[if(equals(parameters('BackupSizeInGibibytes'), 'auto'), variables('autoBackupVolumeSize'), if(equals(parameters('BackupSizeInGibibytes'), 'none'), 0, int(parameters('BackupSizeInGibibytes'))))]",
+    "backupVolumeThroughput": "[if(equals(parameters('BackupPerformanceInMebibytesPerSecond'), 'auto'), variables('autoBackupThroughput'), int(parameters('BackupPerformanceInMebibytesPerSecond')))]",
+    "logVolumePayload": {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+      "name": "[format('{0}-ora-log', parameters('UniqueSystemID'))]",
+      "tags": "[variables('volumeTag')]",
+      "zones": "[variables('zones')]",
+      "properties": {
+        "creationToken": "[format('{0}-ora-log', parameters('UniqueSystemID'))]",
+        "ldapEnabled": "[parameters('LdapEnabled')]",
+        "networkFeatures": "[parameters('NetworkFeatures')]",
+        "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+        "usageThreshold": "[mul(variables('_1GBInBytes'), variables('logVolumeSize'))]",
+        "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+        "volumeSpecName": "ora-log",
+        "kerberosEnabled": false,
+        "throughputMibps": "[variables('logVolumeThroughput')]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+        "exportPolicy": {
+          "rules": [
+            {
+              "ruleIndex": 1,
+              "unixReadOnly": false,
+              "unixReadWrite": true,
+              "cifs": false,
+              "kerberos5ReadOnly": false,
+              "kerberos5ReadWrite": false,
+              "kerberos5iReadOnly": false,
+              "kerberos5iReadWrite": false,
+              "kerberos5pReadOnly": false,
+              "kerberos5pReadWrite": false,
+              "nfsv3": "[if(equals(parameters('NFSVersion'), 'NFSv3'), 'true', 'false')]",
+              "nfsv41": "[if(equals(parameters('NFSVersion'), 'NFSv4.1'), 'true', 'false')]",
+              "allowedClients": "0.0.0.0/0",
+              "hasRootAccess": true
+            }
+          ]
+        },
+        "protocolTypes": [
+          "[parameters('NFSVersion')]"
+        ]
+      }
+    },
+    "logMirrorVolumePayload": {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+      "name": "[format('{0}-ora-log-mirror', parameters('UniqueSystemID'))]",
+      "tags": "[variables('volumeTag')]",
+      "zones": "[variables('zones')]",
+      "properties": {
+        "creationToken": "[format('{0}-ora-log-mirror', parameters('UniqueSystemID'))]",
+        "ldapEnabled": "[parameters('LdapEnabled')]",
+        "networkFeatures": "[parameters('NetworkFeatures')]",
+        "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+        "usageThreshold": "[mul(variables('_1GBInBytes'), variables('logMirrorVolumeSize'))]",
+        "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+        "volumeSpecName": "ora-log-mirror",
+        "kerberosEnabled": false,
+        "throughputMibps": "[variables('logMirrorVolumeThroughput')]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+        "exportPolicy": {
+          "rules": [
+            {
+              "ruleIndex": 1,
+              "unixReadOnly": false,
+              "unixReadWrite": true,
+              "cifs": false,
+              "kerberos5ReadOnly": false,
+              "kerberos5ReadWrite": false,
+              "kerberos5iReadOnly": false,
+              "kerberos5iReadWrite": false,
+              "kerberos5pReadOnly": false,
+              "kerberos5pReadWrite": false,
+              "nfsv3": "[if(equals(parameters('NFSVersion'), 'NFSv3'), 'true', 'false')]",
+              "nfsv41": "[if(equals(parameters('NFSVersion'), 'NFSv4.1'), 'true', 'false')]",
+              "allowedClients": "0.0.0.0/0",
+              "hasRootAccess": true
+            }
+          ]
+        },
+        "protocolTypes": [
+          "[parameters('NFSVersion')]"
+        ]
+      }
+    },
+    "binaryVolumePayload": {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+      "name": "[format('{0}-ora-binary', parameters('UniqueSystemID'))]",
+      "tags": "[variables('volumeTag')]",
+      "zones": "[variables('zones')]",
+      "properties": {
+        "creationToken": "[format('{0}-ora-binary', parameters('UniqueSystemID'))]",
+        "ldapEnabled": "[parameters('LdapEnabled')]",
+        "networkFeatures": "[parameters('NetworkFeatures')]",
+        "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+        "usageThreshold": "[mul(variables('_1GBInBytes'), variables('binaryVolumeSize'))]",
+        "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+        "volumeSpecName": "ora-binary",
+        "kerberosEnabled": false,
+        "throughputMibps": "[variables('binaryVolumeThroughput')]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+        "exportPolicy": {
+          "rules": [
+            {
+              "ruleIndex": 1,
+              "unixReadOnly": false,
+              "unixReadWrite": true,
+              "cifs": false,
+              "kerberos5ReadOnly": false,
+              "kerberos5ReadWrite": false,
+              "kerberos5iReadOnly": false,
+              "kerberos5iReadWrite": false,
+              "kerberos5pReadOnly": false,
+              "kerberos5pReadWrite": false,
+              "nfsv3": "[if(equals(parameters('NFSVersion'), 'NFSv3'), 'true', 'false')]",
+              "nfsv41": "[if(equals(parameters('NFSVersion'), 'NFSv4.1'), 'true', 'false')]",
+              "allowedClients": "0.0.0.0/0",
+              "hasRootAccess": true
+            }
+          ]
+        },
+        "protocolTypes": [
+          "[parameters('NFSVersion')]"
+        ]
+      }
+    },
+    "backupVolumePayload": {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+      "name": "[format('{0}-ora-backup', parameters('UniqueSystemID'))]",
+      "tags": "[variables('volumeTag')]",
+      "zones": "[variables('zones')]",
+      "properties": {
+        "creationToken": "[format('{0}-ora-backup', parameters('UniqueSystemID'))]",
+        "ldapEnabled": "[parameters('LdapEnabled')]",
+        "networkFeatures": "[parameters('NetworkFeatures')]",
+        "proximityPlacementGroup": "[variables('proximityPlacementGroup')]",
+        "usageThreshold": "[mul(variables('_1GBInBytes'), variables('backupVolumeSize'))]",
+        "capacityPoolResourceId": "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('ANFNetappAccount'), parameters('CapacityPool'))]",
+        "volumeSpecName": "ora-backup",
+        "kerberosEnabled": false,
+        "throughputMibps": "[variables('backupVolumeThroughput')]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetwork'), parameters('DelegatedSubnet'))]",
+        "exportPolicy": {
+          "rules": [
+            {
+              "ruleIndex": 1,
+              "unixReadOnly": false,
+              "unixReadWrite": true,
+              "cifs": false,
+              "kerberos5ReadOnly": false,
+              "kerberos5ReadWrite": false,
+              "kerberos5iReadOnly": false,
+              "kerberos5iReadWrite": false,
+              "kerberos5pReadOnly": false,
+              "kerberos5pReadWrite": false,
+              "nfsv3": "[if(equals(parameters('NFSVersion'), 'NFSv3'), 'true', 'false')]",
+              "nfsv41": "[if(equals(parameters('NFSVersion'), 'NFSv4.1'), 'true', 'false')]",
+              "allowedClients": "0.0.0.0/0",
+              "hasRootAccess": true
+            }
+          ]
+        },
+        "protocolTypes": [
+          "[parameters('NFSVersion')]"
+        ]
+      }
+    },
+    "emptyArray": [],
+    "volumesPayloadArray": "[concat(array(variables('dataVolumePayloads')), array(variables('logVolumePayload')), if(equals(parameters('LogMirrorSizeInGibibytes'), 'none'), variables('emptyArray'), array(variables('logMirrorVolumePayload'))), if(equals(parameters('BinarySizeInGibibytes'), 'none'), variables('emptyArray'), array(variables('binaryVolumePayload'))), if(equals(parameters('BackupSizeInGibibytes'), 'none'), variables('emptyArray'), array(variables('backupVolumePayload'))))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.NetApp/netAppAccounts/volumeGroups",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('volumeGroupName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "groupMetaData": {
+          "groupDescription": "[format('Primary database for {0}', parameters('UniqueSystemID'))]",
+          "applicationType": "[variables('OracleApplicationType')]",
+          "applicationIdentifier": "[parameters('UniqueSystemID')]"
+        },
+        "volumes": "[variables('volumesPayloadArray')]"
+      }
+    }
+  ]
+}

@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: sql-vm-new-storage
 languages:
-- json
 - bicep
+- json
 ---
 # SQL Server VM with performance optimized storage settings
 

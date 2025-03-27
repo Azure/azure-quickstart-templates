@@ -1,14 +1,15 @@
 ---
-description: This template creates three new Azure VMs on an existing VNET&#58; Two VMs are configured as SQL Server 2014 AlwaysOn Availability Group replica nodes and one VM is configured as a File Share Witness for automated cluster failover. In addition to these VMs, the following additional Azure resources are also configured&#58; Internal load balancer, Storage accounts.  To configure clustering, SQL Server and AlwaysOn within each VM, PowerShell DSC is leveraged.  For Active Directory support, existing Active Directory domain controllers should already be deployed on the existing VNET.
+description: This template creates three new Azure VMs on an existing VNET&#58; Two VMs are configured as SQL Server 2014 availability group replica nodes and one VM is configured as a File Share Witness for automated cluster failover. In addition to these VMs, the following additional Azure resources are also configured&#58; Internal load balancer, Storage accounts.  To configure clustering, SQL Server, and an availability group within each VM, PowerShell DSC is leveraged.  For Active Directory support, existing Active Directory domain controllers should already be deployed on the existing VNET.
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: sql-server-2014-alwayson-existing-vnet-and-ad
 languages:
+- bicep
 - json
 ---
-# Deploys SQL Server 2014 AlwaysOn AG on existing VNET & AD
+# Deploys SQL Server 2014 AG on existing VNET & AD
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/PublicDeployment.svg)
@@ -19,7 +20,9 @@ languages:
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/CredScanResult.svg)
 
-This template will create a SQL Server 2014 Always On Availability Group using the PowerShell DSC Extension in an existing Azure Virtual Network and Active Directory environment.
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/BicepVersion.svg)
+
+This template will create a SQL Server 2014 availability group using the PowerShell DSC Extension in an existing Azure Virtual Network and Active Directory environment.
 
 This template creates the following resources:
 
