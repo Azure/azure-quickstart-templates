@@ -16,7 +16,7 @@ function Log([string] $message, [switch] $asError) {
 }
 
 RunWithRetries { Connect-AzAccount -Identity | Out-Null }
-RunWithRetries { Install-Module -Name Az.ImageBuilder -AllowPrerelease -Force | Out-Null }
+RunWithRetries { Install-Module -Name Az.ImageBuilder -AllowPrerelease -Force -Verbose }
 
 $preBuildPauseSeconds = 30
 Log "=== Pausing for $preBuildPauseSeconds seconds for the template and prerequisites to complete initialization"
