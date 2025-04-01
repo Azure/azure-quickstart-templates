@@ -26,7 +26,7 @@ var locations = [
 var roleDefinitionId = guid('sql-role-definition-', principalId, databaseAccount.id)
 var roleAssignmentId = guid(roleDefinitionId, principalId, databaseAccount.id)
 
-resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2024-11-15' = {
   name: accountName
   kind: 'GlobalDocumentDB'
   location: location
@@ -41,8 +41,9 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   }
 }
 
-resource sqlRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-04-15' = {
-  name: '${databaseAccount.name}/${roleDefinitionId}'
+resource sqlRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' = {
+  parent: databaseAccount
+  name: roleDefinitionId
   properties: {
     roleName: roleDefinitionName
     type: 'CustomRole'
@@ -57,8 +58,9 @@ resource sqlRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinit
   }
 }
 
-resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-04-15' = {
-  name: '${databaseAccount.name}/${roleAssignmentId}'
+resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-11-15' = {
+  parent: databaseAccount
+  name: roleAssignmentId
   properties: {
     roleDefinitionId: sqlRoleDefinition.id
     principalId: principalId
