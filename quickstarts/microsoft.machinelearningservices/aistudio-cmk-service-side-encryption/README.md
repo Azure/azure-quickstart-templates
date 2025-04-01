@@ -49,7 +49,7 @@ Azure AI Studio is built on Azure Machine Learning as the primary resource provi
 An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that is of kind = "hub".
 
 For AI services CMK configuration the following constraints hold on your encryption key:
-- The selected key must be an RSA (Supported Json Web Key Types are ['RSA', 'RSA-HSM']) 2048 bit key. 
+- The selected key must be an RSA (Supported JSON Web Key Types are ['RSA', 'RSA-HSM']) 2048 bit key.
 - No other key-size/asymmetric key-type is supported.
 - Only Azure Key vault 'access policies' permission model is supported, not Azure RBAC.
 - Encryption cannot be enforced on AI services at first template execution if AI services does not yet exist, because the system-assigned managed identity that will be created will need to be granted access to your key vault.
@@ -69,9 +69,9 @@ For AI services CMK configuration the following constraints hold on your encrypt
 
 ## Learn more
 
-If you are new to Azure AI studio, see:
+If you are new to Azure AI Studio, see:
 
-- [Azure AI studio](https://aka.ms/aistudio/docs)
+- [Azure AI Studio](https://aka.ms/aistudio/docs)
 - [AI Studio architecture](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/architecture)
 - [Customer-managed key encryption for Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-services/encryption/cognitive-services-encryption-keys-portal?context=%2Fazure%2Fai-studio%2Fcontext%2Fcontext)
 

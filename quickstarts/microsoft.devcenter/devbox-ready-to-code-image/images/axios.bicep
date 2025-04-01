@@ -58,7 +58,7 @@ var winGetPackageIds = [
   'Microsoft.Azure.AZCopy.10'
 ]
 
-var additionalArtifacts = [
+var winGetPackageArtifacts = [
   {
     name: 'windows-install-winget-packages'
     parameters: {
@@ -66,6 +66,21 @@ var additionalArtifacts = [
     }
   }
 ]
+
+// Visual Studio Code extensions
+var visualStudioCodeExtensionArtifacts = [
+  for extension in [
+    'GitHub.copilot'
+    'ms-azuretools.vscode-bicep'
+  ]: {
+    name: 'windows-install-visualstudiocode-extension'
+    parameters: {
+      ExtensionName: extension
+    }
+  }
+]
+
+var additionalArtifacts = concat(winGetPackageArtifacts, visualStudioCodeExtensionArtifacts)
 
 module devBoxImage '../modules/devbox-image.bicep' = {
   name: 'axios-${uniqueString(deployment().name, resourceGroup().name)}'
