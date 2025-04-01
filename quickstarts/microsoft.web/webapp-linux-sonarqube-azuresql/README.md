@@ -35,7 +35,7 @@ using the official Sonarqube image and backed by an Azure SQL Server.
 - **Not Compatible**: Sonarqube v8.2 and below.
 
 Sonarqube 7.8 and above does require extra configurations in order for 
-the embedded ElasticSearch to be reliable (as in production environment),
+the embedded Elasticsearch to be reliable (as in production environment),
 so in order to run it in an Azure App Service Web App we are setting
 an explicit configuration `SONAR_ES_BOOTSTRAP_CHECKS_DISABLE` as `true`.
 

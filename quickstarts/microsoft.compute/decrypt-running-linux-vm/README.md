@@ -28,7 +28,7 @@ This template disables encryption on a running Linux VM . This template assumes 
 References:
 
 - [White paper](https://azure.microsoft.com/documentation/articles/azure-security-disk-encryption/)
-- [Explore Azure Disk Encryption with Azure Powershell](https://blogs.msdn.microsoft.com/azuresecurity/2015/11/16/explore-azure-disk-encryption-with-azure-powershell/)
+- [Explore Azure Disk Encryption with Azure PowerShell](https://blogs.msdn.microsoft.com/azuresecurity/2015/11/16/explore-azure-disk-encryption-with-azure-powershell/)
 - [Explore Azure Disk Encryption with Azure PowerShell – Part 2](http://blogs.msdn.com/b/azuresecurity/archive/2015/11/21/explore-azure-disk-encryption-with-azure-powershell-part-2.aspx)
 
 `Tags:Microsoft.Compute/virtualMachines/extensions, AzureDiskEncryptionForLinux, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, [variables('extensionName')]`

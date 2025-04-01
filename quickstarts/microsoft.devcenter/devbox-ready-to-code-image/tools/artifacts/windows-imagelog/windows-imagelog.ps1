@@ -53,7 +53,7 @@ $repoLogFilePath = 'c:\.tools\RepoLogs'
 $reportHeader = "Image Build Report at " + $currentTime.ToUniversalTime() + $newLine + "More details can be found at $imageInfoJsonFile"
 
 try {
-    # Create Json log file location
+    # Create JSON log file location
     mkdir "$imageInfoJsonDir" -Force
 
     # Build json data to be output to file
@@ -84,7 +84,7 @@ try {
     }
     Add-VarForLogging -varName "Repos" -varValue $repoOut
 
-    # Write Json file 
+    # Write JSON file
     Write-Host "Write json output file to " $imageInfoJsonFile
     $global:varLogArray | ConvertTo-Json -Depth 10 | Out-File -FilePath $imageInfoJsonFile
     Get-Content $imageInfoJsonFile
