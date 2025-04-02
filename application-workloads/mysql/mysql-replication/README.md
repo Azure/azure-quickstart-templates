@@ -137,7 +137,7 @@ mysql> show slave status\G;
 
 ## How to backup databases to Azure blob storage
 
-- There are several ways to take mysql backups as shown at [Mysql Backup and Recovery](https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html). The example below shows mysql dump from the slave.
+- There are several ways to take mysql backups as shown at [MySQL Backup and Recovery](https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html). The example below shows mysql dump from the slave.
 
 ```sh
 # Create backups directory if not already created (modify folder as required)
