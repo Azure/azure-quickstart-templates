@@ -1,10 +1,13 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 //======================================================================================================================
 // Ingestion database
 // Used for data ingestion, normalization, and cleansing.
 //
 // Data ingestion workflow:
 // - All data is ingested into tables named "*_raw". These tables have a union schema to support multiple sources and versions.
-// - All data is transformed to the latest FOCUS schema using an update policy into a table named after the version (e.g., "1.0" = "_v1_0").
+// - All data is transformed to the latest FOCUS schema using an update policy into a table named after the version (for example, "1.0" = "_v1_0").
 // - Data ingestion from previous version of hubs will remain in the versioned tables.
 // - Data is read from versioned functions in the Hub database. See HubSetup.kql for details.
 //
@@ -113,9 +116,8 @@ parse_resourceid(resourceId: string) {
         dynamic([true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false]),
         segments, dynamic([])), '/'), '//', '/'));
     let xRT = iff(isempty(x_ResourceProvider) or isempty(x_ResourceTypePath), '', strcat(x_ResourceProvider, '/', x_ResourceTypePath));
-    let types = split(toscalar(database('Ingestion').ResourceTypes | summarize types = make_set(strcat(x_ResourceType, '=', SingularDisplayName)) | extend types = strcat('||', strcat_array(types, '||')), '||'), strcat('||', xRT, '='));
-    let ResourceType = iff(array_length(types) < 2, '', split(types[1], '||')[0]);
-    bag_pack('ResourceId', ResourceId, 'ResourceName', ResourceName, 'ResourceType', coalesce(ResourceType, xRT), 'SubAccountId', SubAccountId, 'x_ResourceGroupName', x_ResourceGroupName, 'x_ResourceProvider', x_ResourceProvider, 'x_ResourceType', xRT)
+    // TODO: Remove ResourceType in 0.9
+    bag_pack('ResourceId', ResourceId, 'ResourceName', ResourceName, 'ResourceType', xRT, 'SubAccountId', SubAccountId, 'x_ResourceGroupName', x_ResourceGroupName, 'x_ResourceProvider', x_ResourceProvider, 'x_ResourceType', xRT)
 }
 
 
@@ -879,21 +881,23 @@ Costs_transform_v1_0()
         isnotempty(ResourceId), ResourceId,
         ChargeCategory == 'Purchase' and isnotempty(CommitmentDiscountId), CommitmentDiscountId,
         ResourceId)
-    | extend tmp_ResourceDetails = parse_resourceid(ResourceId)
     | extend ResourceName = tolower(case(
         isnotempty(ResourceName), ResourceName,
         ChargeCategory == 'Purchase' and isnotempty(CommitmentDiscountName), CommitmentDiscountName,
-        isnotempty(ResourceId), tmp_ResourceDetails.ResourceName,
+        isnotempty(ResourceId), parse_resourceid(ResourceId).ResourceName,
         ResourceName))
-    | extend ResourceType = case(
-        isnotempty(ResourceType), ResourceType,
-        isnotempty(ResourceId) and isnotempty(tmp_ResourceDetails.ResourceType), tmp_ResourceDetails.ResourceType,
-        ChargeCategory == 'Purchase' and isnotempty(CommitmentDiscountType), CommitmentDiscountType,
-        ResourceType)
     | extend x_ResourceType = case(
         isnotempty(x_ResourceType), x_ResourceType,
-        isnotempty(ResourceId) and isnotempty(tmp_ResourceDetails.x_ResourceType), tmp_ResourceDetails.x_ResourceType,
+        isnotempty(ResourceId), parse_resourceid(ResourceId).x_ResourceType,
         x_ResourceType)
+    | extend ResourceType = case(
+        // Use existing resource type display name unless it's an internal resource type ID
+        isnotempty(ResourceType) and tolower(ResourceType) != tolower(x_ResourceType) and ResourceType !contains '/', ResourceType,
+        // Use CommitmentDiscountType for commitment discount purchases
+        ChargeCategory == 'Purchase' and isnotempty(CommitmentDiscountType), CommitmentDiscountType,
+        // Look up display name from internal type
+        isnotempty(x_ResourceType), coalesce(resource_type(x_ResourceType).SingularDisplayName, ResourceType, x_ResourceType),
+        ResourceType)
     //
     // Sort columns and apply final transforms
     | project
@@ -901,7 +905,7 @@ Costs_transform_v1_0()
         BilledCost,
         BillingAccountId,
         BillingAccountName,
-        BillingAccountType,          // Azure 1.0-preview(v1)+
+        BillingAccountType,
         BillingCurrency,
         BillingPeriodEnd,
         BillingPeriodStart,
@@ -1010,10 +1014,7 @@ Costs_transform_v1_0()
         x_ResellerId,                // Azure 1.0-preview(v1)+
         x_ResellerName,              // Azure 1.0-preview(v1)+
         x_ResourceGroupName = tolower(x_ResourceGroupName),  // Azure 1.0-preview(v1)+
-        x_ResourceType = tolower(case(
-            isnotempty(ResourceType), ResourceType,
-            ChargeCategory == 'Purchase' and CommitmentDiscountType == 'Reservation', '',
-            ResourceType)),          // Azure 1.0-preview(v1)+
+        x_ResourceType,              // Azure 1.0-preview(v1)+
         x_ServiceCode,               // AWS 1.0
         x_ServiceId,                 // GCP Jan 2024
         x_ServicePeriodEnd,          // Azure 1.0-preview(v1)+
@@ -1245,12 +1246,11 @@ CommitmentDiscountUsage_transform_v1_0()
     //
     // Handle resource columns
     | extend ResourceId = tolower(InstanceId)
-    // TODO: Switch to use parse_resourceid()
-    | parse ResourceId with "/subscriptions/" SubAccountId "/resourcegroups/" x_ResourceGroupName "/providers/" tmp_ResourceProvider "/" tmp_ResourceProviderPath
-    | extend segments = split(tmp_ResourceProviderPath, '/')
-    | mv-apply element = segments on (extend index = row_number() | where index % 2 == 0 | summarize ResourceName = strcat_array(make_list(element), '/'))
-    | mv-apply element = segments on (extend index = row_number() | where index % 2 == 1 | summarize x_ResourceType = strcat_array(make_list(element), '/'))
-    | extend x_ResourceType = strcat(tmp_ResourceProvider, '/', x_ResourceType)
+    | extend tmp_ResourceDetails = parse_resourceid(ResourceId)
+    | extend ResourceName        = tostring(tmp_ResourceDetails.ResourceName)
+    | extend SubAccountId        = tostring(tmp_ResourceDetails.SubAccountId)
+    | extend x_ResourceGroupName = tostring(tmp_ResourceDetails.x_ResourceGroupName)
+    | extend x_ResourceType      = tostring(tmp_ResourceDetails.x_ResourceType)
     | lookup kind=leftouter (ResourceTypes | distinct x_ResourceType, ResourceType = SingularDisplayName) on x_ResourceType
     | lookup kind=leftouter (Services | distinct x_ResourceType, ServiceName, ServiceCategory, x_ServiceModel) on x_ResourceType
     //
@@ -1275,8 +1275,8 @@ CommitmentDiscountUsage_transform_v1_0()
         x_CommitmentDiscountNormalizedGroup = iff(InstanceFlexibilityGroup == 'NA', '', InstanceFlexibilityGroup),
         x_CommitmentDiscountNormalizedRatio = InstanceFlexibilityRatio,
         x_CommitmentDiscountQuantity        = UsedHours * InstanceFlexibilityRatio,
-        x_IngestionTime                     = ingestion_time(),             // Hubs add-on
-        x_ResourceGroupName                 = extract('/resourcegroups/([^/]+)/', 1, ResourceId),
+        x_IngestionTime                     = ingestion_time(),
+        x_ResourceGroupName,
         x_ResourceType,
         // x_RowId = hash_sha256(strcat(
         //     // DO NOT CHANGE COLUMNS OR COLUMN ORDER
